@@ -1,4 +1,4 @@
-use crate::{context::LemmyContext, utils::is_mod_or_admin};
+use crate::{context::FastJobContext, utils::is_mod_or_admin};
 use actix_web::web::Json;
 use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, InstanceId, PersonId, PostId},
@@ -22,17 +22,17 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
 use lemmy_email::notifications::{send_mention_email, send_reply_email};
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::mention::scrape_text_for_mentions,
 };
 use url::Url;
 
 pub async fn build_comment_response(
-  context: &LemmyContext,
+  context: &FastJobContext,
   comment_id: CommentId,
   local_user_view: Option<LocalUserView>,
   local_instance_id: InstanceId,
-) -> LemmyResult<CommentResponse> {
+) -> FastJobResult<CommentResponse> {
   let local_user = local_user_view.map(|l| l.local_user);
   let comment_view = CommentView::read(
     &mut context.pool(),
@@ -45,10 +45,10 @@ pub async fn build_comment_response(
 }
 
 pub async fn build_community_response(
-  context: &LemmyContext,
+  context: &FastJobContext,
   local_user_view: LocalUserView,
   community_id: CommunityId,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> FastJobResult<Json<CommunityResponse>> {
   let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
     .await
     .is_ok();
@@ -69,11 +69,11 @@ pub async fn build_community_response(
 }
 
 pub async fn build_post_response(
-  context: &LemmyContext,
+  context: &FastJobContext,
   community_id: CommunityId,
   local_user_view: LocalUserView,
   post_id: PostId,
-) -> LemmyResult<Json<PostResponse>> {
+) -> FastJobResult<Json<PostResponse>> {
   let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
     .await
     .is_ok();
@@ -97,8 +97,8 @@ pub async fn send_local_notifs(
   person: &Person,
   community: &Community,
   do_send_email: bool,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   let parent_creator =
     notify_parent_creator(person, post, comment_opt, community, do_send_email, context).await?;
 
@@ -122,8 +122,8 @@ async fn notify_parent_creator(
   comment_opt: Option<&Comment>,
   community: &Community,
   do_send_email: bool,
-  context: &LemmyContext,
-) -> LemmyResult<Option<PersonId>> {
+  context: &FastJobContext,
+) -> FastJobResult<Option<PersonId>> {
   let Some(comment) = comment_opt else {
     return Ok(None);
   };
@@ -193,8 +193,8 @@ async fn send_local_mentions(
   parent_creator_id: Option<PersonId>,
   community: &Community,
   do_send_email: bool,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   let content = if let Some(comment) = comment_opt {
     &comment.content
   } else {
@@ -251,8 +251,8 @@ async fn insert_post_or_comment_mention(
   mention_user_view: &LocalUserView,
   post: &Post,
   comment_opt: Option<&Comment>,
-  context: &LemmyContext,
-) -> LemmyResult<(Url, String)> {
+  context: &FastJobContext,
+) -> FastJobResult<(Url, String)> {
   if let Some(comment) = &comment_opt {
     let person_comment_mention_form = PersonCommentMentionInsertForm {
       recipient_id: mention_user_view.person.id,
@@ -291,8 +291,8 @@ pub async fn check_notifications_allowed(
   potential_blocker_id: PersonId,
   community_instance_id: InstanceId,
   post: &Post,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   let pool = &mut context.pool();
   PersonActions::read_block(pool, potential_blocker_id, post.creator_id).await?;
   InstanceActions::read_block(pool, potential_blocker_id, community_instance_id).await?;
@@ -304,7 +304,7 @@ pub async fn check_notifications_allowed(
     .unwrap_or_default();
   if post_notifications == PostNotifications::Mute {
     // The specific error type is irrelevant
-    return Err(LemmyErrorType::NotFound.into());
+    return Err(FastJobErrorType::NotFound.into());
   }
 
   Ok(())

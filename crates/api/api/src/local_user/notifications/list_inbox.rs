@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_inbox_combined::{
   impls::InboxCombinedQuery,
@@ -8,13 +8,13 @@ use lemmy_db_views_inbox_combined::{
   ListInboxResponse,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_inbox(
   data: Query<ListInbox>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListInboxResponse>> {
+) -> FastJobResult<Json<ListInboxResponse>> {
   let person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;
 

@@ -19,7 +19,7 @@ use lemmy_db_schema::{
   utils::{build_db_pool, get_conn, now},
 };
 use lemmy_db_schema_file::{enums::PostSortType, schema::post};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serial_test::serial;
 use std::{fmt::Display, num::NonZeroU32, str::FromStr};
 use url::Url;
@@ -45,7 +45,7 @@ fn get_option<T: FromStr + Display>(suffix: &str, default: T) -> Result<T, T::Er
 
 #[tokio::test]
 #[serial]
-async fn db_perf() -> LemmyResult<()> {
+async fn db_perf() -> FastJobResult<()> {
   let args = CmdArgs {
     communities: get_option("COMMUNITIES", 3.try_into()?)?,
     people: get_option("PEOPLE", 3.try_into()?)?,
@@ -179,7 +179,7 @@ async fn db_perf() -> LemmyResult<()> {
   Ok(())
 }
 
-fn site() -> LemmyResult<Site> {
+fn site() -> FastJobResult<Site> {
   Ok(Site {
     id: Default::default(),
     name: String::new(),

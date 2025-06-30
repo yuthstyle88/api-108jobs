@@ -1,14 +1,14 @@
 use crate::{send_email, user_language};
 use lemmy_db_schema::utils::DbPool;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{error::LemmyResult, settings::structs::Settings};
+use lemmy_utils::{error::FastJobResult, settings::structs::Settings};
 
 /// Send a new applicant email notification to all admins
 pub async fn send_new_applicant_email_to_admins(
   applicant_username: &str,
   pool: &mut DbPool<'_>,
   settings: &Settings,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   // Collect the admins with emails
   let admins = LocalUserView::list_admins_with_emails(pool).await?;
 
@@ -34,7 +34,7 @@ pub async fn send_new_report_email_to_admins(
   reported_username: &str,
   pool: &mut DbPool<'_>,
   settings: &Settings,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   // Collect the admins with emails
   let admins = LocalUserView::list_admins_with_emails(pool).await?;
 

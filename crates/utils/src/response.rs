@@ -1,4 +1,4 @@
-use crate::error::{LemmyError, LemmyErrorType};
+use crate::error::{FastJobError, FastJobErrorType};
 use actix_web::{dev::ServiceResponse, middleware::ErrorHandlerResponse, HttpResponse};
 
 pub fn jsonify_plain_text_errors<BODY>(
@@ -12,16 +12,16 @@ pub fn jsonify_plain_text_errors<BODY>(
   }
   // We're assuming that any LemmyError is already in JSON format, so we don't need to do anything
   if let Some(maybe_error) = maybe_error {
-    if maybe_error.as_error::<LemmyError>().is_some() {
+    if maybe_error.as_error::<FastJobError>().is_some() {
       return Ok(ErrorHandlerResponse::Response(res.map_into_left_body()));
     }
   }
 
   let (req, res_parts) = res.into_parts();
   let lemmy_err_type = if let Some(error) = res_parts.error() {
-    LemmyErrorType::Unknown(error.to_string())
+    FastJobErrorType::Unknown(error.to_string())
   } else {
-    LemmyErrorType::Unknown("couldnt build json".into())
+    FastJobErrorType::Unknown("couldnt build json".into())
   };
 
   let response = HttpResponse::build(res_parts.status()).json(lemmy_err_type);
@@ -35,7 +35,7 @@ pub fn jsonify_plain_text_errors<BODY>(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::error::{LemmyError, LemmyErrorType};
+  use crate::error::{FastJobError, FastJobErrorType};
   use actix_web::{
     error::ErrorInternalServerError,
     http::StatusCode,
@@ -60,8 +60,8 @@ mod tests {
 
   #[actix_web::test]
   async fn test_lemmy_errors_are_not_modified() {
-    async fn lemmy_error_service() -> actix_web::Result<String, LemmyError> {
-      Err(LemmyError::from(LemmyErrorType::EmailAlreadyExists))
+    async fn lemmy_error_service() -> actix_web::Result<String, FastJobError> {
+      Err(FastJobError::from(FastJobErrorType::EmailAlreadyExists))
     }
 
     check_for_jsonification(
@@ -75,21 +75,21 @@ mod tests {
   #[actix_web::test]
   async fn test_generic_errors_are_jsonified_as_unknown_errors() {
     async fn generic_error_service() -> actix_web::Result<String, Error> {
-      Err(ErrorInternalServerError("This is not a LemmyError"))
+      Err(ErrorInternalServerError("This is not a FastJobError"))
     }
 
     check_for_jsonification(
       generic_error_service,
       StatusCode::INTERNAL_SERVER_ERROR,
-      "{\"error\":\"unknown\",\"message\":\"This is not a LemmyError\"}",
+      "{\"error\":\"unknown\",\"message\":\"This is not a FastJobError\"}",
     )
     .await;
   }
 
   #[actix_web::test]
   async fn test_anyhow_errors_wrapped_in_lemmy_errors_are_jsonified_correctly() {
-    async fn anyhow_error_service() -> actix_web::Result<String, LemmyError> {
-      Err(LemmyError::from(anyhow::anyhow!("This is the inner error")))
+    async fn anyhow_error_service() -> actix_web::Result<String, FastJobError> {
+      Err(FastJobError::from(anyhow::anyhow!("This is the inner error")))
     }
 
     check_for_jsonification(

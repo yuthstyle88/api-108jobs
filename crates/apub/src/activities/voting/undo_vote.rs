@@ -11,20 +11,20 @@ use activitypub_federation::{
   protocol::verification::verify_urls_match,
   traits::{ActivityHandler, Actor},
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{person::ApubPerson, PostOrComment},
   utils::{functions::verify_person_in_community, protocol::InCommunity},
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl UndoVote {
   pub(in crate::activities::voting) fn new(
     vote: Vote,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Self> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Self> {
     Ok(UndoVote {
       actor: actor.id().into(),
       object: vote,
@@ -36,8 +36,8 @@ impl UndoVote {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UndoVote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -47,7 +47,7 @@ impl ActivityHandler for UndoVote {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let community = self.object.community(context).await?;
     verify_person_in_community(&self.actor, &community, context).await?;
     verify_urls_match(self.actor.inner(), self.object.actor.inner())?;
@@ -55,7 +55,7 @@ impl ActivityHandler for UndoVote {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let actor = self.actor.dereference(context).await?;
     let object = self.object.object.dereference(context).await?;
     match object {

@@ -18,10 +18,10 @@ mod tests {
     update::Update,
   };
   use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_lemmy_community_activities() -> LemmyResult<()> {
+  fn test_parse_lemmy_community_activities() -> FastJobResult<()> {
     test_parse_lemmy_item::<AnnounceActivity>(
       "assets/lemmy/activities/community/announce_create_page.json",
     )?;

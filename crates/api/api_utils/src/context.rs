@@ -12,7 +12,7 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct LemmyContext {
+pub struct FastJobContext {
   pool: ActualDbPool,
   client: Arc<ClientWithMiddleware>,
   /// Pictrs requests must bypass proxy. Unfortunately no_proxy can only be set on ClientBuilder
@@ -22,15 +22,15 @@ pub struct LemmyContext {
   rate_limit_cell: RateLimit,
 }
 
-impl LemmyContext {
+impl FastJobContext {
   pub fn create(
     pool: ActualDbPool,
     client: ClientWithMiddleware,
     pictrs_client: ClientWithMiddleware,
     secret: Secret,
     rate_limit_cell: RateLimit,
-  ) -> LemmyContext {
-    LemmyContext {
+  ) -> FastJobContext {
+    FastJobContext {
       pool,
       client: Arc::new(client),
       pictrs_client: Arc::new(pictrs_client),
@@ -64,7 +64,7 @@ impl LemmyContext {
   ///
   /// Do not use this in production code.
   #[allow(clippy::expect_used)]
-  pub async fn init_test_federation_config() -> FederationConfig<LemmyContext> {
+  pub async fn init_test_federation_config() -> FederationConfig<FastJobContext> {
     // call this to run migrations
     let pool = build_db_pool_for_tests();
 
@@ -78,7 +78,7 @@ impl LemmyContext {
 
     let rate_limit_cell = RateLimit::with_test_config();
 
-    let context = LemmyContext::create(
+    let context = FastJobContext::create(
       pool,
       client.clone(),
       client,
@@ -96,7 +96,7 @@ impl LemmyContext {
       .await
       .expect("build federation config")
   }
-  pub async fn init_test_context() -> Data<LemmyContext> {
+  pub async fn init_test_context() -> Data<FastJobContext> {
     let config = Self::init_test_federation_config().await;
     config.to_request_data()
   }

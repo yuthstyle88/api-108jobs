@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_community_mod_of_any_or_admin_action};
+use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_of_any_or_admin_action};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_report_combined::{
@@ -7,15 +7,15 @@ use lemmy_db_views_report_combined::{
   impls::ReportCombinedQuery,
   ReportCombinedView,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Lists reports for a community if an id is supplied
 /// or returns all reports for communities a user moderates
 pub async fn list_reports(
   data: Query<ListReports>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListReportsResponse>> {
+) -> FastJobResult<Json<ListReportsResponse>> {
   let my_reports_only = data.my_reports_only;
 
   // Only check mod or admin status when not viewing my reports

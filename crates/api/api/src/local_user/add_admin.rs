@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserUpdateForm},
@@ -12,13 +12,13 @@ use lemmy_db_views_person::{
   api::{AddAdmin, AddAdminResponse},
   impls::PersonQuery,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn add_admin(
   data: Json<AddAdmin>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<AddAdminResponse>> {
+) -> FastJobResult<Json<AddAdminResponse>> {
   let my_person_id = local_user_view.person.id;
 
   // Make sure user is an admin

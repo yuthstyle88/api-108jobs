@@ -43,7 +43,7 @@ use lemmy_db_schema::{
   PersonContentType,
 };
 use lemmy_db_schema_file::schema::{comment, person, person_content_combined, post};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl PersonContentCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -115,13 +115,13 @@ impl PaginationCursorBuilder for PersonContentCombinedView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
     let pids = cursor.prefixes_and_ids();
     let (prefix, id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     let mut query = person_content_combined::table
       .select(Self::CursorData::as_select())
@@ -130,7 +130,7 @@ impl PaginationCursorBuilder for PersonContentCombinedView {
     query = match prefix {
       'C' => query.filter(person_content_combined::comment_id.eq(id)),
       'P' => query.filter(person_content_combined::post_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -170,7 +170,7 @@ impl PersonContentCombinedQuery {
     pool: &mut DbPool<'_>,
     user: Option<&LocalUserView>,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<Vec<PersonContentCombinedView>> {
+  ) -> FastJobResult<Vec<PersonContentCombinedView>> {
     let my_person_id = user.as_ref().map(|u| u.local_user.person_id);
     let item_creator = person::id;
 
@@ -289,7 +289,7 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -305,7 +305,7 @@ mod tests {
     sara_comment_2: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
@@ -356,7 +356,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -364,7 +364,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_combined() -> LemmyResult<()> {
+  async fn test_combined() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

@@ -4,7 +4,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     get_url_blocklist,
     is_admin,
@@ -32,7 +32,7 @@ use lemmy_db_views_site::{
   SiteView,
 };
 use lemmy_utils::{
-  error::LemmyResult,
+  error::FastJobResult,
   utils::{
     slurs::check_slurs_opt,
     validation::{
@@ -47,9 +47,9 @@ use lemmy_utils::{
 
 pub async fn update_site(
   data: Json<EditSite>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SiteResponse>> {
+) -> FastJobResult<Json<SiteResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
   let site = site_view.site;
@@ -188,7 +188,7 @@ pub async fn update_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> LemmyResult<()> {
+fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> FastJobResult<()> {
   // Check that the slur regex compiles, and return the regex if valid...
   // Prioritize using new slur regex from the request; if not provided, use the existing regex.
   let slur_regex = build_and_check_regex(
@@ -232,14 +232,14 @@ mod tests {
   use lemmy_db_schema::source::local_site::LocalSite;
   use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
   use lemmy_db_views_site::api::EditSite;
-  use lemmy_utils::error::LemmyErrorType;
+  use lemmy_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_update_payload() {
     let invalid_payloads = [
       (
         "EditSite name matches LocalSite slur filter",
-        LemmyErrorType::Slurs,
+        FastJobErrorType::Slurs,
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
@@ -254,7 +254,7 @@ mod tests {
       ),
       (
         "EditSite name matches new slur filter",
-        LemmyErrorType::Slurs,
+        FastJobErrorType::Slurs,
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
@@ -270,7 +270,7 @@ mod tests {
       ),
       (
         "EditSite listing type is Subscribed, which is invalid",
-        LemmyErrorType::InvalidDefaultPostListingType,
+        FastJobErrorType::InvalidDefaultPostListingType,
         &LocalSite {
           private_instance: true,
           federation_enabled: false,
@@ -285,7 +285,7 @@ mod tests {
       ),
       (
         "EditSite requires application, but neither it nor LocalSite has an application question",
-        LemmyErrorType::ApplicationQuestionRequired,
+        FastJobErrorType::ApplicationQuestionRequired,
         &LocalSite {
           private_instance: true,
           federation_enabled: false,

@@ -15,7 +15,7 @@ use activitypub_federation::{
 };
 use lemmy_api_utils::{
   build_response::send_local_notifs,
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_is_mod_or_admin, check_post_deleted_or_removed},
 };
 use lemmy_apub_objects::{
@@ -38,7 +38,7 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable},
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use serde_json::{from_value, to_value};
 use url::Url;
 
@@ -47,8 +47,8 @@ impl CreateOrUpdateNote {
     comment: Comment,
     person_id: PersonId,
     kind: CreateOrUpdateType,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     // TODO: might be helpful to add a comment method to retrieve community directly
     let post_id = comment.post_id;
     let post = Post::read(&mut context.pool(), post_id).await?;
@@ -101,8 +101,8 @@ impl CreateOrUpdateNote {
 
 #[async_trait::async_trait]
 impl ActivityHandler for CreateOrUpdateNote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -112,7 +112,7 @@ impl ActivityHandler for CreateOrUpdateNote {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let post = self.object.get_parents(context).await?.0;
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
@@ -127,7 +127,7 @@ impl ActivityHandler for CreateOrUpdateNote {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let site_view = SiteView::read_local(&mut context.pool()).await?;
     let local_instance_id = site_view.site.instance_id;
 

@@ -16,12 +16,12 @@ use activitypub_federation::{
   traits::{ActivityHandler, Collection},
 };
 use futures::future::join_all;
-use lemmy_api_utils::{context::LemmyContext, utils::generate_outbox_url};
+use lemmy_api_utils::{context::FastJobContext, utils::generate_outbox_url};
 use lemmy_apub_objects::objects::community::ApubCommunity;
 use lemmy_db_schema::{source::site::Site, utils::FETCH_LIMIT_MAX};
 use lemmy_db_schema_file::enums::PostSortType;
 use lemmy_db_views_post::impls::PostQuery;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -30,11 +30,11 @@ pub(crate) struct ApubCommunityOutbox(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityOutbox {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = GroupOutbox;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
-  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
     let site = Site::read_local(&mut data.pool()).await?;
 
     let post_views = PostQuery {
@@ -77,7 +77,7 @@ impl Collection for ApubCommunityOutbox {
     group_outbox: &GroupOutbox,
     expected_domain: &Url,
     _data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     verify_domains_match(expected_domain, &group_outbox.id)?;
     Ok(())
   }
@@ -86,7 +86,7 @@ impl Collection for ApubCommunityOutbox {
     apub: Self::Kind,
     _owner: &Self::Owner,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let mut outbox_activities = apub.ordered_items;
     if outbox_activities.len() > FETCH_LIMIT_MAX {
       outbox_activities = outbox_activities

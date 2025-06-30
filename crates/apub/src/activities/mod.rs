@@ -31,7 +31,7 @@ use activitypub_federation::{
 use either::Either;
 use following::send_accept_or_reject_follow;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_is_mod_or_admin,
 };
@@ -45,7 +45,7 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{FederationError, LemmyError, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobResult};
 use serde::Serialize;
 use tracing::info;
 use url::{ParseError, Url};
@@ -62,8 +62,8 @@ pub mod voting;
 /// doesn't have a site ban.
 async fn verify_person(
   person_id: &ObjectId<ApubPerson>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   Ok(())
@@ -77,8 +77,8 @@ async fn verify_person(
 pub(crate) async fn verify_mod_action(
   mod_id: &ObjectId<ApubPerson>,
   community: &Community,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   // mod action comes from the same instance as the community, so it was presumably done
   // by an instance admin.
   // TODO: federate instance admin status and check it here
@@ -99,7 +99,7 @@ pub(crate) async fn verify_mod_action(
   .await
 }
 
-pub(crate) fn check_community_deleted_or_removed(community: &Community) -> LemmyResult<()> {
+pub(crate) fn check_community_deleted_or_removed(community: &Community) -> FastJobResult<()> {
   if community.deleted || community.removed {
     Err(FederationError::CannotCreatePostOrCommentInDeletedOrRemovedCommunity)?
   } else {
@@ -109,7 +109,7 @@ pub(crate) fn check_community_deleted_or_removed(community: &Community) -> Lemmy
 
 /// Generate a unique ID for an activity, in the format:
 /// `http(s)://example.com/receive/create/202daf0a-1489-45df-8d2e-c8a3173fed36`
-fn generate_activity_id<T>(kind: T, context: &LemmyContext) -> Result<Url, ParseError>
+fn generate_activity_id<T>(kind: T, context: &FastJobContext) -> Result<Url, ParseError>
 where
   T: ToString,
 {
@@ -138,14 +138,14 @@ fn generate_announce_activity_id(
 }
 
 async fn send_lemmy_activity<Activity, ActorT>(
-  data: &Data<LemmyContext>,
+  data: &Data<FastJobContext>,
   activity: Activity,
   actor: &ActorT,
   send_targets: ActivitySendTargets,
   sensitive: bool,
-) -> LemmyResult<()>
+) -> FastJobResult<()>
 where
-  Activity: ActivityHandler + Serialize + Send + Sync + Clone + ActivityHandler<Error = LemmyError>,
+  Activity: ActivityHandler + Serialize + Send + Sync + Clone + ActivityHandler<Error =FastJobError>,
   ActorT: Actor + GetActorType,
 {
   info!("Saving outgoing activity to queue {}", activity.id());
@@ -169,7 +169,7 @@ where
   Ok(())
 }
 
-pub async fn handle_outgoing_activities(context: Data<LemmyContext>) {
+pub async fn handle_outgoing_activities(context: Data<FastJobContext>) {
   while let Some(data) = ActivityChannel::retrieve_activity().await {
     if let Err(e) = match_outgoing_activities(data, &context).await {
       tracing::warn!("error while saving outgoing activity to db: {e}");
@@ -179,8 +179,8 @@ pub async fn handle_outgoing_activities(context: Data<LemmyContext>) {
 
 pub async fn match_outgoing_activities(
   data: SendActivityData,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let context = context.clone();
   let fed_task = async {
     use SendActivityData::*;

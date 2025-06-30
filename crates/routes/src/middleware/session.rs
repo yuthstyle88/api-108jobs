@@ -8,18 +8,18 @@ use actix_web::{
 use core::future::Ready;
 use futures_util::future::LocalBoxFuture;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };
 use std::{future::ready, rc::Rc};
 
 #[derive(Clone)]
 pub struct SessionMiddleware {
-  context: LemmyContext,
+  context: FastJobContext,
 }
 
 impl SessionMiddleware {
-  pub fn new(context: LemmyContext) -> Self {
+  pub fn new(context: FastJobContext) -> Self {
     SessionMiddleware { context }
   }
 }
@@ -45,7 +45,7 @@ where
 
 pub struct SessionService<S> {
   service: Rc<S>,
-  context: LemmyContext,
+  context: FastJobContext,
 }
 
 impl<S, B> Service<ServiceRequest> for SessionService<S>
@@ -101,7 +101,7 @@ where
 mod tests {
 
   use actix_web::test::TestRequest;
-  use lemmy_api_utils::{claims::Claims, context::LemmyContext};
+  use lemmy_api_utils::{claims::Claims, context::FastJobContext};
   use lemmy_db_schema::{
     source::{
       instance::Instance,
@@ -110,14 +110,14 @@ mod tests {
     },
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_session_auth() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_session_auth() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
 
     let inserted_instance =
       Instance::read_or_create(&mut context.pool(), "my_domain.tld".to_string()).await?;

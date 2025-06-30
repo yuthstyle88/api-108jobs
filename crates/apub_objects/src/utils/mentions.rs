@@ -5,14 +5,14 @@ use activitypub_federation::{
   kinds::link::MentionType,
   traits::Actor,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::{comment::Comment, person::Person, post::Post},
   traits::Crud,
   utils::DbPool,
 };
 use lemmy_utils::{
-  error::{FederationError, LemmyResult},
+  error::{FederationError, FastJobResult},
   utils::mention::scrape_text_for_mentions,
 };
 use serde::{Deserialize, Serialize};
@@ -44,8 +44,8 @@ pub struct MentionsAndAddresses {
 /// Addresses are the persons / addresses that go in the cc field.
 pub async fn collect_non_local_mentions(
   comment: &ApubComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<MentionsAndAddresses> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<MentionsAndAddresses> {
   let parent_creator = get_comment_parent_creator(&mut context.pool(), comment).await?;
   let mut addressed_ccs: Vec<Url> = vec![parent_creator.id()];
 
@@ -72,7 +72,7 @@ pub async fn collect_non_local_mentions(
 
   for mention in mentions {
     let identifier = format!("{}@{}", mention.name, mention.domain);
-    let person = webfinger_resolve_actor::<LemmyContext, ApubPerson>(&identifier, context).await;
+    let person = webfinger_resolve_actor::<FastJobContext, ApubPerson>(&identifier, context).await;
     if let Ok(person) = person {
       addressed_ccs.push(person.ap_id.to_string().parse()?);
 
@@ -97,7 +97,7 @@ pub async fn collect_non_local_mentions(
 async fn get_comment_parent_creator(
   pool: &mut DbPool<'_>,
   comment: &Comment,
-) -> LemmyResult<ApubPerson> {
+) -> FastJobResult<ApubPerson> {
   let parent_creator_id = if let Some(parent_comment_id) = comment.parent_comment_id() {
     let parent_comment = Comment::read(pool, parent_comment_id).await?;
     parent_comment.creator_id

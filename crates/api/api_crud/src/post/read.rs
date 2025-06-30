@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_private_instance, is_mod_or_admin_opt, update_read_comments},
 };
 use lemmy_db_schema::{
@@ -19,13 +19,13 @@ use lemmy_db_views_post::{
 };
 use lemmy_db_views_search_combined::impls::SearchCombinedQuery;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_post(
   data: Query<GetPost>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetPostResponse>> {
+) -> FastJobResult<Json<GetPostResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
   let local_instance_id = site_view.site.instance_id;
@@ -43,7 +43,7 @@ pub async fn get_post(
       .await?
       .post_id
   } else {
-    Err(LemmyErrorType::NotFound)?
+    Err(FastJobErrorType::NotFound)?
   };
 
   // Check to see if the person is a mod or admin, to show deleted / removed

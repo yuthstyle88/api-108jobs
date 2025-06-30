@@ -5,10 +5,10 @@ pub mod vote;
 mod tests {
   use crate::protocol::activities::voting::{undo_vote::UndoVote, vote::Vote};
   use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_lemmy_voting() -> LemmyResult<()> {
+  fn test_parse_lemmy_voting() -> FastJobResult<()> {
     test_parse_lemmy_item::<Vote>("assets/lemmy/activities/voting/like_note.json")?;
     test_parse_lemmy_item::<Vote>("assets/lemmy/activities/voting/dislike_page.json")?;
 

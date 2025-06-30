@@ -9,7 +9,7 @@ use strum::{Display, EnumIter};
 #[serde(tag = "error", content = "message", rename_all = "snake_case")]
 #[non_exhaustive]
 // TODO: order these based on the crate they belong to (utils, federation, db, api)
-pub enum LemmyErrorType {
+pub enum FastJobErrorType {
   BlockKeywordTooShort,
   BlockKeywordTooLong,
   CouldntUpdateKeywords,
@@ -232,28 +232,28 @@ cfg_if! {
   if #[cfg(feature = "full")] {
 
     use std::{fmt, backtrace::Backtrace};
-    pub type LemmyResult<T> = Result<T, LemmyError>;
+    pub type FastJobResult<T> = Result<T, FastJobError>;
 
-    pub struct LemmyError {
-      pub error_type: LemmyErrorType,
+    pub struct FastJobError {
+      pub error_type: FastJobErrorType,
       pub inner: anyhow::Error,
       pub context: Backtrace,
     }
 
-    /// Maximum number of items in an array passed as API parameter. See [[LemmyErrorType::TooManyItems]]
+    /// Maximum number of items in an array passed as API parameter. See [[FastJobErrorType::TooManyItems]]
     pub(crate) const MAX_API_PARAM_ELEMENTS: usize = 10_000;
 
-    impl<T> From<T> for LemmyError
+    impl<T> From<T> for FastJobError
     where
       T: Into<anyhow::Error>,
     {
       fn from(t: T) -> Self {
         let cause = t.into();
         let error_type = match cause.downcast_ref::<diesel::result::Error>() {
-          Some(&diesel::NotFound) => LemmyErrorType::NotFound,
-          _ => LemmyErrorType::Unknown(format!("{}", &cause))
+          Some(&diesel::NotFound) => FastJobErrorType::NotFound,
+          _ => FastJobErrorType::Unknown(format!("{}", &cause))
       };
-        LemmyError {
+        FastJobError {
           error_type,
           inner: cause,
           context: Backtrace::capture(),
@@ -261,9 +261,9 @@ cfg_if! {
       }
     }
 
-    impl Debug for LemmyError {
+    impl Debug for FastJobError {
       fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LemmyError")
+        f.debug_struct("FastJobError")
          .field("message", &self.error_type)
          .field("inner", &self.inner)
          .field("context", &self.context)
@@ -271,7 +271,7 @@ cfg_if! {
       }
     }
 
-    impl fmt::Display for LemmyError {
+    impl fmt::Display for FastJobError {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: ", &self.error_type)?;
         writeln!(f, "{}", self.inner)?;
@@ -279,11 +279,11 @@ cfg_if! {
       }
     }
 
-    impl actix_web::error::ResponseError for LemmyError {
+    impl actix_web::error::ResponseError for FastJobError {
       fn status_code(&self) -> actix_web::http::StatusCode {
         match self.error_type {
-          LemmyErrorType::IncorrectLogin => actix_web::http::StatusCode::UNAUTHORIZED,
-          LemmyErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
+          FastJobErrorType::IncorrectLogin => actix_web::http::StatusCode::UNAUTHORIZED,
+          FastJobErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
           _ => actix_web::http::StatusCode::BAD_REQUEST,
         }
       }
@@ -293,10 +293,10 @@ cfg_if! {
       }
     }
 
-    impl From<LemmyErrorType> for LemmyError {
-      fn from(error_type: LemmyErrorType) -> Self {
+    impl From<FastJobErrorType> for FastJobError {
+      fn from(error_type: FastJobErrorType) -> Self {
         let inner = anyhow::anyhow!("{}", error_type);
-        LemmyError {
+        FastJobError {
           error_type,
           inner,
           context: Backtrace::capture(),
@@ -304,43 +304,43 @@ cfg_if! {
       }
     }
 
-    impl From<FederationError> for LemmyError {
+    impl From<FederationError> for FastJobError {
       fn from(error_type: FederationError) -> Self {
         let inner = anyhow::anyhow!("{}", error_type);
-        LemmyError {
-          error_type: LemmyErrorType::FederationError { error: Some(error_type) },
+        FastJobError {
+          error_type: FastJobErrorType::FederationError { error: Some(error_type) },
           inner,
           context: Backtrace::capture(),
         }
       }
     }
 
-    impl From<FederationError> for LemmyErrorType {
+    impl From<FederationError> for FastJobErrorType {
       fn from(error: FederationError) -> Self {
-        LemmyErrorType::FederationError { error: Some(error) }
+        FastJobErrorType::FederationError { error: Some(error) }
       }
     }
 
-    pub trait LemmyErrorExt<T, E: Into<anyhow::Error>> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T>;
+    pub trait FastJobErrorExt<T, E: Into<anyhow::Error>> {
+      fn with_fastjob_type(self, error_type: FastJobErrorType) -> FastJobResult<T>;
     }
 
-    impl<T, E: Into<anyhow::Error>> LemmyErrorExt<T, E> for Result<T, E> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T> {
-        self.map_err(|error| LemmyError {
+    impl<T, E: Into<anyhow::Error>> FastJobErrorExt<T, E> for Result<T, E> {
+      fn with_fastjob_type(self, error_type: FastJobErrorType) -> FastJobResult<T> {
+        self.map_err(|error| FastJobError {
           error_type,
           inner: error.into(),
           context: Backtrace::capture(),
         })
       }
     }
-    pub trait LemmyErrorExt2<T> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T>;
+    pub trait FastJobErrorExt2<T> {
+      fn with_fastjob_type(self, error_type: FastJobErrorType) -> FastJobResult<T>;
       fn into_anyhow(self) -> Result<T, anyhow::Error>;
     }
 
-    impl<T> LemmyErrorExt2<T> for LemmyResult<T> {
-      fn with_lemmy_type(self, error_type: LemmyErrorType) -> LemmyResult<T> {
+    impl<T> FastJobErrorExt2<T> for FastJobResult<T> {
+      fn with_fastjob_type(self, error_type: FastJobErrorType) -> FastJobResult<T> {
         self.map_err(|mut e| {
           e.error_type = error_type;
           e
@@ -362,8 +362,8 @@ cfg_if! {
       use strum::IntoEnumIterator;
 
       #[test]
-      fn deserializes_no_message() -> LemmyResult<()> {
-        let err = LemmyError::from(LemmyErrorType::BlockedUrl).error_response();
+      fn deserializes_no_message() -> FastJobResult<()> {
+        let err = FastJobError::from(FastJobErrorType::BlockedUrl).error_response();
         let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
         assert_eq!(&json, "{\"error\":\"blocked_url\"}");
 
@@ -371,9 +371,9 @@ cfg_if! {
       }
 
       #[test]
-      fn deserializes_with_message() -> LemmyResult<()> {
-        let reg_banned = LemmyErrorType::PictrsResponseError(String::from("reason"));
-        let err = LemmyError::from(reg_banned).error_response();
+      fn deserializes_with_message() -> FastJobResult<()> {
+        let reg_banned = FastJobErrorType::PictrsResponseError(String::from("reason"));
+        let err = FastJobError::from(reg_banned).error_response();
         let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
         assert_eq!(
           &json,
@@ -385,19 +385,19 @@ cfg_if! {
 
       #[test]
       fn test_convert_diesel_errors() {
-        let not_found_error = LemmyError::from(diesel::NotFound);
-        assert_eq!(LemmyErrorType::NotFound, not_found_error.error_type);
+        let not_found_error = FastJobError::from(diesel::NotFound);
+        assert_eq!(FastJobErrorType::NotFound, not_found_error.error_type);
         assert_eq!(404, not_found_error.status_code());
 
-        let other_error = LemmyError::from(diesel::result::Error::NotInTransaction);
-        assert!(matches!(other_error.error_type, LemmyErrorType::Unknown{..}));
+        let other_error = FastJobError::from(diesel::result::Error::NotInTransaction);
+        assert!(matches!(other_error.error_type, FastJobErrorType::Unknown{..}));
         assert_eq!(400, other_error.status_code());
       }
 
       /// Check if errors match translations. Disabled because many are not translated at all.
       #[test]
       #[ignore]
-      fn test_translations_match() -> LemmyResult<()> {
+      fn test_translations_match() -> FastJobResult<()> {
         #[derive(Deserialize)]
         struct Err {
           error: String,
@@ -405,7 +405,7 @@ cfg_if! {
 
         let translations = read_to_string("translations/translations/en.json")?;
 
-        for e in LemmyErrorType::iter() {
+        for e in FastJobErrorType::iter() {
           let msg = serde_json::to_string(&e)?;
           let msg: Err = serde_json::from_str(&msg)?;
           let msg = msg.error;

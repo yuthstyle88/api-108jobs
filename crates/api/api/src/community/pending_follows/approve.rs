@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_mod_or_admin,
 };
@@ -9,13 +9,13 @@ use lemmy_db_schema::{source::community::CommunityActions, traits::Followable};
 use lemmy_db_views_community::api::ApproveCommunityPendingFollower;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn post_pending_follows_approve(
   data: Json<ApproveCommunityPendingFollower>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   is_mod_or_admin(&mut context.pool(), &local_user_view, data.community_id).await?;
 
   let activity_data = if data.approve {

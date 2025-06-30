@@ -3,14 +3,14 @@ use activitypub_federation::{
   fetch::webfinger::{extract_webfinger_name, Webfinger, WebfingerLink, WEBFINGER_CONTENT_TYPE},
 };
 use actix_web::{web, web::Query, HttpResponse};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::{community::Community, person::Person},
   traits::ApubActor,
 };
 use lemmy_utils::{
   cache_header::cache_3days,
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
 };
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -36,8 +36,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 /// https://radical.town/.well-known/webfinger?resource=acct:felix@radical.town
 async fn get_webfinger_response(
   info: Query<Params>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let name = extract_webfinger_name(&info.resource, &context)?;
 
   let links = if name == context.settings().hostname {
@@ -95,12 +95,12 @@ async fn get_webfinger_response(
 fn webfinger_link_for_actor(
   url: Option<Url>,
   kind: &str,
-  context: &LemmyContext,
-) -> LemmyResult<Vec<WebfingerLink>> {
+  context: &FastJobContext,
+) -> FastJobResult<Vec<WebfingerLink>> {
   if let Some(url) = url {
     let type_key = "https://www.w3.org/ns/activitystreams#type"
       .parse()
-      .with_lemmy_type(LemmyErrorType::InvalidUrl)?;
+      .with_fastjob_type(FastJobErrorType::InvalidUrl)?;
 
     let mut vec = vec![
       WebfingerLink {

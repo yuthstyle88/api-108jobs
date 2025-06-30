@@ -4,7 +4,7 @@
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use lettre::{
@@ -38,9 +38,9 @@ async fn send_email(
   to_username: &str,
   html: &str,
   settings: &Settings,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   static MAILER: OnceLock<AsyncSmtpTransport> = OnceLock::new();
-  let email_config = settings.email.clone().ok_or(LemmyErrorType::NoEmailSetup)?;
+  let email_config = settings.email.clone().ok_or(FastJobErrorType::NoEmailSetup)?;
 
   #[expect(clippy::expect_used)]
   let mailer = MAILER.get_or_init(|| {
@@ -59,14 +59,14 @@ async fn send_email(
     .from(
       smtp_from_address
         .parse()
-        .with_lemmy_type(LemmyErrorType::InvalidEmailAddress(
+        .with_fastjob_type(FastJobErrorType::InvalidEmailAddress(
           smtp_from_address.into(),
         ))?,
     )
     .to(Mailbox::new(
       Some(to_username.to_string()),
       Address::from_str(to_email)
-        .with_lemmy_type(LemmyErrorType::InvalidEmailAddress(to_email.into()))?,
+        .with_fastjob_type(FastJobErrorType::InvalidEmailAddress(to_email.into()))?,
     ))
     .message_id(Some(format!("<{}@{}>", Uuid::new_v4(), settings.hostname)))
     .subject(subject)
@@ -74,12 +74,12 @@ async fn send_email(
       plain_text,
       html.to_string(),
     ))
-    .with_lemmy_type(LemmyErrorType::EmailSendFailed)?;
+    .with_fastjob_type(FastJobErrorType::EmailSendFailed)?;
 
   mailer
     .send(email)
     .await
-    .with_lemmy_type(LemmyErrorType::EmailSendFailed)?;
+    .with_fastjob_type(FastJobErrorType::EmailSendFailed)?;
 
   Ok(())
 }
@@ -93,10 +93,10 @@ fn user_language(local_user_view: &LocalUserView) -> Lang {
   })
 }
 
-fn user_email(local_user_view: &LocalUserView) -> LemmyResult<SensitiveString> {
+fn user_email(local_user_view: &LocalUserView) -> FastJobResult<SensitiveString> {
   local_user_view
     .local_user
     .email
     .clone()
-    .ok_or(LemmyErrorType::EmailRequired.into())
+    .ok_or(FastJobErrorType::EmailRequired.into())
 }

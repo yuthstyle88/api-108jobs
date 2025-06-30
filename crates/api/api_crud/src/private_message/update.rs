@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{get_url_blocklist, process_markdown, slur_regex},
@@ -17,20 +17,20 @@ use lemmy_db_views_private_message::{
   PrivateMessageView,
 };
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn update_private_message(
   data: Json<EditPrivateMessage>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageResponse>> {
+) -> FastJobResult<Json<PrivateMessageResponse>> {
   // Checking permissions
   let private_message_id = data.private_message_id;
   let orig_private_message = PrivateMessage::read(&mut context.pool(), private_message_id).await?;
   if local_user_view.person.id != orig_private_message.creator_id {
-    Err(LemmyErrorType::EditPrivateMessageNotAllowed)?
+    Err(FastJobErrorType::EditPrivateMessageNotAllowed)?
   }
 
   // Doing the update

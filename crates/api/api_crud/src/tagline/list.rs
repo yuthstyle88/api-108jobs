@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::tagline::Tagline;
 use lemmy_db_views_site::api::{ListTaglines, ListTaglinesResponse};
-use lemmy_utils::error::LemmyError;
+use lemmy_utils::error::FastJobError;
 
 pub async fn list_taglines(
   data: Query<ListTaglines>,
-  context: Data<LemmyContext>,
-) -> Result<Json<ListTaglinesResponse>, LemmyError> {
+  context: Data<FastJobContext>,
+) -> Result<Json<ListTaglinesResponse>, FastJobError> {
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(Tagline::from_cursor(cursor, &mut context.pool()).await?)
   } else {

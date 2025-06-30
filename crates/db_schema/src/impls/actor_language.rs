@@ -31,7 +31,7 @@ use lemmy_db_schema_file::schema::{
   site,
   site_language,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use tokio::sync::OnceCell;
 
 pub const UNDETERMINED_ID: LanguageId = LanguageId(0);
@@ -40,7 +40,7 @@ impl LocalUserLanguage {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<Vec<LanguageId>> {
+  ) -> FastJobResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
 
     let langs = local_user_language::table
@@ -59,7 +59,7 @@ impl LocalUserLanguage {
     pool: &mut DbPool<'_>,
     language_ids: Vec<LanguageId>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let lang_ids = convert_update_languages(conn, language_ids).await?;
 
@@ -78,7 +78,7 @@ impl LocalUserLanguage {
             .filter(local_user_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)?;
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)?;
 
           let forms = lang_ids
             .iter()
@@ -98,7 +98,7 @@ impl LocalUserLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)
         }
         .scope_boxed()
       })
@@ -107,7 +107,7 @@ impl LocalUserLanguage {
 }
 
 impl SiteLanguage {
-  pub async fn read_local_raw(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  pub async fn read_local_raw(pool: &mut DbPool<'_>) -> FastJobResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
     site::table
       .inner_join(local_site::table)
@@ -116,10 +116,10 @@ impl SiteLanguage {
       .select(site_language::language_id)
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, for_site_id: SiteId) -> LemmyResult<Vec<LanguageId>> {
+  pub async fn read(pool: &mut DbPool<'_>, for_site_id: SiteId) -> FastJobResult<Vec<LanguageId>> {
     let conn = &mut get_conn(pool).await?;
     let langs = site_language::table
       .filter(site_language::site_id.eq(for_site_id))
@@ -135,7 +135,7 @@ impl SiteLanguage {
     pool: &mut DbPool<'_>,
     language_ids: Vec<LanguageId>,
     site: &Site,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let for_site_id = site.id;
     let instance_id = site.instance_id;
@@ -156,7 +156,7 @@ impl SiteLanguage {
             .filter(site_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)?;
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)?;
 
           let forms = lang_ids
             .iter()
@@ -173,7 +173,7 @@ impl SiteLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)?;
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)?;
 
           CommunityLanguage::limit_languages(conn, instance_id).await?;
 
@@ -191,7 +191,7 @@ impl CommunityLanguage {
     pool: &mut DbPool<'_>,
     for_language_id: LanguageId,
     for_community_id: CommunityId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     use lemmy_db_schema_file::schema::community_language::dsl::community_language;
     let conn = &mut get_conn(pool).await?;
 
@@ -204,7 +204,7 @@ impl CommunityLanguage {
     if is_allowed {
       Ok(())
     } else {
-      Err(LemmyErrorType::LanguageNotAllowed)?
+      Err(FastJobErrorType::LanguageNotAllowed)?
     }
   }
 
@@ -215,7 +215,7 @@ impl CommunityLanguage {
   async fn limit_languages(
     conn: &mut AsyncPgConnection,
     for_instance_id: InstanceId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     use lemmy_db_schema_file::schema::{
       community::dsl as c,
       community_language::dsl as cl,
@@ -241,7 +241,7 @@ impl CommunityLanguage {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<Vec<LanguageId>> {
+  ) -> FastJobResult<Vec<LanguageId>> {
     use lemmy_db_schema_file::schema::community_language::dsl::{
       community_id,
       community_language,
@@ -261,7 +261,7 @@ impl CommunityLanguage {
     pool: &mut DbPool<'_>,
     mut language_ids: Vec<LanguageId>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     if language_ids.is_empty() {
       language_ids = SiteLanguage::read_local_raw(pool).await?;
     }
@@ -291,7 +291,7 @@ impl CommunityLanguage {
             .filter(community_language::language_id.ne_all(&lang_ids))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)?;
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)?;
 
           // Insert new languages
           insert_into(community_language::table)
@@ -303,7 +303,7 @@ impl CommunityLanguage {
             .do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLanguages)
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLanguages)
         }
         .scope_boxed()
       })
@@ -316,7 +316,7 @@ pub async fn validate_post_language(
   language_id: Option<LanguageId>,
   community_id: CommunityId,
   local_user_id: LocalUserId,
-) -> LemmyResult<LanguageId> {
+) -> FastJobResult<LanguageId> {
   use lemmy_db_schema_file::schema::{
     community_language::dsl as cl,
     local_user_language::dsl as ul,
@@ -352,7 +352,7 @@ pub async fn validate_post_language(
 async fn convert_update_languages(
   conn: &mut AsyncPgConnection,
   language_ids: Vec<LanguageId>,
-) -> LemmyResult<Vec<LanguageId>> {
+) -> FastJobResult<Vec<LanguageId>> {
   if language_ids.is_empty() {
     Ok(
       Language::read_all(&mut conn.into())
@@ -371,7 +371,7 @@ async fn convert_update_languages(
 async fn convert_read_languages(
   conn: &mut AsyncPgConnection,
   language_ids: Vec<LanguageId>,
-) -> LemmyResult<Vec<LanguageId>> {
+) -> FastJobResult<Vec<LanguageId>> {
   static ALL_LANGUAGES_COUNT: OnceCell<i64> = OnceCell::const_new();
   let count: usize = (*ALL_LANGUAGES_COUNT
     .get_or_init(|| async {
@@ -412,14 +412,14 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
-  async fn test_langs1(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  async fn test_langs1(pool: &mut DbPool<'_>) -> FastJobResult<Vec<LanguageId>> {
     Ok(vec![
       Language::read_id_from_code(pool, "en").await?,
       Language::read_id_from_code(pool, "fr").await?,
       Language::read_id_from_code(pool, "ru").await?,
     ])
   }
-  async fn test_langs2(pool: &mut DbPool<'_>) -> LemmyResult<Vec<LanguageId>> {
+  async fn test_langs2(pool: &mut DbPool<'_>) -> FastJobResult<Vec<LanguageId>> {
     Ok(vec![
       Language::read_id_from_code(pool, "fi").await?,
       Language::read_id_from_code(pool, "se").await?,
@@ -428,7 +428,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_convert_update_languages() -> LemmyResult<()> {
+  async fn test_convert_update_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -446,7 +446,7 @@ mod tests {
   }
   #[tokio::test]
   #[serial]
-  async fn test_convert_read_languages() -> LemmyResult<()> {
+  async fn test_convert_read_languages() -> FastJobResult<()> {
     use lemmy_db_schema_file::schema::language::dsl::{id, language};
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
@@ -467,7 +467,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_site_languages() -> LemmyResult<()> {
+  async fn test_site_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -490,7 +490,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_user_languages() -> LemmyResult<()> {
+  async fn test_user_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -522,7 +522,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_community_languages() -> LemmyResult<()> {
+  async fn test_community_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -577,7 +577,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_validate_post_language() -> LemmyResult<()> {
+  async fn test_validate_post_language() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
@@ -602,7 +602,7 @@ mod tests {
     // no overlap in user/community languages, so defaults to undetermined
     let def1 = validate_post_language(pool, None, community.id, local_user.id).await;
     assert_eq!(
-      Some(LemmyErrorType::LanguageNotAllowed),
+      Some(FastJobErrorType::LanguageNotAllowed),
       def1.err().map(|e| e.error_type)
     );
 

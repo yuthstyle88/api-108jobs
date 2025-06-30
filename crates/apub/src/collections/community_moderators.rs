@@ -6,13 +6,13 @@ use activitypub_federation::{
   protocol::verification::verify_domains_match,
   traits::Collection,
 };
-use lemmy_api_utils::{context::LemmyContext, utils::generate_moderators_url};
+use lemmy_api_utils::{context::FastJobContext, utils::generate_moderators_url};
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   utils::functions::handle_community_moderators,
 };
 use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -21,11 +21,11 @@ pub(crate) struct ApubCommunityModerators(());
 #[async_trait::async_trait]
 impl Collection for ApubCommunityModerators {
   type Owner = ApubCommunity;
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = GroupModerators;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
-  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn read_local(owner: &Self::Owner, data: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
     let moderators = CommunityModeratorView::for_community(&mut data.pool(), owner.id).await?;
     let ordered_items = moderators
       .into_iter()
@@ -42,7 +42,7 @@ impl Collection for ApubCommunityModerators {
     group_moderators: &GroupModerators,
     expected_domain: &Url,
     _data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     verify_domains_match(&group_moderators.id, expected_domain)?;
     Ok(())
   }
@@ -51,7 +51,7 @@ impl Collection for ApubCommunityModerators {
     apub: Self::Kind,
     owner: &Self::Owner,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     handle_community_moderators(&apub.ordered_items, owner, data).await?;
 
     // This return value is unused, so just set an empty vec
@@ -83,8 +83,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_community_moderators() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_community_moderators() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (new_mod, site) = parse_lemmy_person(&context).await?;
     let community = parse_lemmy_community(&context).await?;
     let community_id = community.id;

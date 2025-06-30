@@ -3,13 +3,13 @@ use actix_web::{
   web::Data,
   HttpResponse,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{newtypes::DbUrl, source::post::Post};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use sitemap_rs::{url::Url, url_set::UrlSet};
 use tracing::info;
 
-fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> LemmyResult<UrlSet> {
+fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> FastJobResult<UrlSet> {
   let urls = posts
     .into_iter()
     .map_while(|(url, date_time)| {
@@ -23,7 +23,7 @@ fn generate_urlset(posts: Vec<(DbUrl, chrono::DateTime<chrono::Utc>)>) -> LemmyR
   Ok(UrlSet::new(urls)?)
 }
 
-pub async fn get_sitemap(context: Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+pub async fn get_sitemap(context: Data<FastJobContext>) -> FastJobResult<HttpResponse> {
   info!("Generating sitemap...",);
   let posts = Post::list_for_sitemap(&mut context.pool()).await?;
   info!("Loaded latest {} posts", posts.len());
@@ -46,12 +46,12 @@ pub(crate) mod tests {
   use chrono::{DateTime, NaiveDate, Utc};
   use elementtree::Element;
   use lemmy_db_schema::newtypes::DbUrl;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use url::Url;
 
   #[tokio::test]
-  async fn test_generate_urlset() -> LemmyResult<()> {
+  async fn test_generate_urlset() -> FastJobResult<()> {
     let posts: Vec<(DbUrl, DateTime<Utc>)> = vec![
       (
         Url::parse("https://example.com")?.into(),

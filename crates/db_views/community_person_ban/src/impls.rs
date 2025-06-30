@@ -11,14 +11,14 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::community_actions;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl CommunityPersonBanView {
   pub async fn check(
     pool: &mut DbPool<'_>,
     from_person_id: PersonId,
     from_community_id: CommunityId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((from_person_id, from_community_id))
@@ -27,6 +27,6 @@ impl CommunityPersonBanView {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::PersonIsBannedFromCommunity.into())
+      .ok_or(FastJobErrorType::PersonIsBannedFromCommunity.into())
   }
 }

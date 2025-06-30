@@ -6,7 +6,7 @@ use community_featured::ApubCommunityFeatured;
 use community_follower::ApubCommunityFollower;
 use community_moderators::ApubCommunityModerators;
 use community_outbox::ApubCommunityOutbox;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::group::Group,
@@ -25,7 +25,7 @@ pub(crate) mod community_outbox;
 pub fn fetch_community_collections(
   community: ApubCommunity,
   group: Group,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
 ) {
   spawn_try_task(async move {
     let outbox: CollectionId<ApubCommunityOutbox> = group.outbox.into();
@@ -39,7 +39,7 @@ pub fn fetch_community_collections(
       featured.dereference(&community, &context).await.ok();
     }
     if let Some(moderators) = group.attributed_to {
-      if let AttributedTo::Lemmy(l) = moderators {
+      if let AttributedTo::FastJob(l) = moderators {
         let moderators: CollectionId<ApubCommunityModerators> = l.moderators().into();
         moderators.dereference(&community, &context).await.ok();
       } else if let AttributedTo::Peertube(p) = moderators {

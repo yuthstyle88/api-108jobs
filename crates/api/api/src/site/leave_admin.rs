@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::{
     actor_language::SiteLanguage,
@@ -16,14 +16,14 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::impls::PersonQuery;
 use lemmy_db_views_site::{api::GetSiteResponse, SiteView};
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   VERSION,
 };
 
 pub async fn leave_admin(
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<GetSiteResponse>> {
+) -> FastJobResult<Json<GetSiteResponse>> {
   let my_person_id = local_user_view.person.id;
 
   is_admin(&local_user_view)?;
@@ -40,7 +40,7 @@ pub async fn leave_admin(
   )
   .await?;
   if admins.len() == 1 {
-    Err(LemmyErrorType::CannotLeaveAdmin)?
+    Err(FastJobErrorType::CannotLeaveAdmin)?
   }
 
   LocalUser::update(

@@ -8,7 +8,7 @@ use crate::{
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
 };
 use lemmy_apub_objects::objects::{
@@ -29,7 +29,7 @@ use lemmy_db_schema::{
   },
   traits::Likeable,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub mod undo_vote;
 pub mod vote;
@@ -40,8 +40,8 @@ pub(crate) async fn send_like_activity(
   community: Community,
   previous_score: Option<i16>,
   new_score: i16,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let object_id: ObjectId<PostOrComment> = object_id.into();
   let actor: ApubPerson = actor.into();
   let community: ApubCommunity = community.into();
@@ -69,8 +69,8 @@ async fn vote_comment(
   vote_type: &VoteType,
   actor: ApubPerson,
   comment: &ApubComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let comment_id = comment.id;
   let mut like_form = CommentLikeForm::new(actor.id, comment_id, vote_type.into());
   let person_id = actor.id;
@@ -86,8 +86,8 @@ async fn vote_post(
   vote_type: &VoteType,
   actor: ApubPerson,
   post: &ApubPost,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let post_id = post.id;
   let mut like_form = PostLikeForm::new(post.id, actor.id, vote_type.into());
   let person_id = actor.id;
@@ -102,8 +102,8 @@ async fn vote_post(
 async fn undo_vote_comment(
   actor: ApubPerson,
   comment: &ApubComment,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let comment_id = comment.id;
   let person_id = actor.id;
   CommentActions::remove_like(&mut context.pool(), person_id, comment_id).await?;
@@ -113,8 +113,8 @@ async fn undo_vote_comment(
 async fn undo_vote_post(
   actor: ApubPerson,
   post: &ApubPost,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let post_id = post.id;
   let person_id = actor.id;
   PostActions::remove_like(&mut context.pool(), person_id, post_id).await?;

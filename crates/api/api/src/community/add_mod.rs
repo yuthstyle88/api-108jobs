@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_mod_action,
 };
@@ -18,13 +18,13 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::{AddModToCommunity, AddModToCommunityResponse};
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn add_mod_to_community(
   data: Json<AddModToCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<AddModToCommunityResponse>> {
+) -> FastJobResult<Json<AddModToCommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   // Verify that only mods or admins can add mod
   check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;

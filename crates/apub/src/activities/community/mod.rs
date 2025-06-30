@@ -6,7 +6,7 @@ use crate::{
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId, traits::Actor};
 use either::Either;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_apub_objects::objects::{
   community::ApubCommunity,
   instance::ApubSite,
@@ -24,7 +24,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub mod announce;
 pub mod collection_add;
@@ -54,8 +54,8 @@ pub(crate) async fn send_activity_in_community(
   community: &ApubCommunity,
   extra_inboxes: ActivitySendTargets,
   is_mod_action: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   // If community is local only, don't send anything out
   if !community.visibility.can_federate() {
     return Ok(());
@@ -85,8 +85,8 @@ async fn report_inboxes(
   object_id: ObjectId<ReportableObjects>,
   receiver: &Either<ApubSite, ApubCommunity>,
   report_creator: &ApubPerson,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<ActivitySendTargets> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<ActivitySendTargets> {
   // send report to the community where object was posted
   let mut inboxes = ActivitySendTargets::to_inbox(receiver.shared_inbox_or_inbox());
 
@@ -130,8 +130,8 @@ fn local_community(site_or_community: &Either<ApubSite, ApubCommunity>) -> Optio
 async fn verify_mod_or_admin_action(
   person_id: &ObjectId<ApubPerson>,
   site_or_community: &Either<ApubSite, ApubCommunity>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   match site_or_community {
     Either::Left(site) => {
       // admin action comes from the correct instance, so it was presumably done

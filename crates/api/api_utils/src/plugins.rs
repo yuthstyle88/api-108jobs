@@ -3,7 +3,7 @@ use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
 use extism_convert::Json;
 use lemmy_db_views_site::api::PluginMetadata;
 use lemmy_utils::{
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::SETTINGS,
   VERSION,
 };
@@ -24,11 +24,11 @@ use tracing::warn;
 const GET_PLUGIN_TIMEOUT: Duration = Duration::from_secs(1);
 
 /// Call a plugin hook without rewriting data
-pub fn plugin_hook_after<T>(name: &'static str, data: &T) -> LemmyResult<()>
+pub fn plugin_hook_after<T>(name: &'static str, data: &T) -> FastJobResult<()>
 where
   T: Clone + Serialize + for<'b> Deserialize<'b> + Sync + Send + 'static,
 {
-  let plugins = LemmyPlugins::init();
+  let plugins = FastJobPlugins::init();
   if !plugins.loaded(name) {
     return Ok(());
   }
@@ -40,7 +40,7 @@ where
   Ok(())
 }
 
-fn run_plugin_hook_after<T>(plugins: LemmyPlugins, name: &'static str, data: T) -> LemmyResult<()>
+fn run_plugin_hook_after<T>(plugins: FastJobPlugins, name: &'static str, data: T) -> FastJobResult<()>
 where
   T: Clone + Serialize + for<'b> Deserialize<'b>,
 {
@@ -49,18 +49,18 @@ where
       let params: Json<T> = data.clone().into();
       plugin
         .call::<Json<T>, ()>(name, params)
-        .map_err(|e| LemmyErrorType::PluginError(e.to_string()))?;
+        .map_err(|e| FastJobErrorType::PluginError(e.to_string()))?;
     }
   }
   Ok(())
 }
 
 /// Call a plugin hook which can rewrite data
-pub async fn plugin_hook_before<T>(name: &'static str, data: T) -> LemmyResult<T>
+pub async fn plugin_hook_before<T>(name: &'static str, data: T) -> FastJobResult<T>
 where
   T: Clone + Serialize + for<'a> Deserialize<'a> + Sync + Send + 'static,
 {
-  let plugins = LemmyPlugins::init();
+  let plugins = FastJobPlugins::init();
   if !plugins.loaded(name) {
     return Ok(data);
   }
@@ -71,17 +71,17 @@ where
       if let Some(plugin) = p.get(name)? {
         let r = plugin
           .call(name, res)
-          .map_err(|e| LemmyErrorType::PluginError(e.to_string()))?;
+          .map_err(|e| FastJobErrorType::PluginError(e.to_string()))?;
         res = r;
       }
     }
-    Ok::<_, LemmyError>(res.0)
+    Ok::<_, FastJobError>(res.0)
   })
   .await?
 }
 
 pub fn plugin_metadata() -> Vec<PluginMetadata> {
-  LemmyPlugins::init()
+  FastJobPlugins::init()
     .0
     .into_iter()
     .map(|p| p.metadata)
@@ -89,16 +89,16 @@ pub fn plugin_metadata() -> Vec<PluginMetadata> {
 }
 
 #[derive(Clone)]
-struct LemmyPlugins(Vec<LemmyPlugin>);
+struct FastJobPlugins(Vec<FastJobPlugin>);
 
 #[derive(Clone)]
-struct LemmyPlugin {
+struct FastJobPlugin {
   plugin_pool: Pool<()>,
   metadata: PluginMetadata,
 }
 
-impl LemmyPlugin {
-  fn init(path: &PathBuf) -> LemmyResult<Self> {
+impl FastJobPlugin {
+  fn init(path: &PathBuf) -> FastJobResult<Self> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let mut manifest: Manifest = serde_json::from_reader(reader)?;
@@ -113,13 +113,13 @@ impl LemmyPlugin {
     let builder = PluginBuilder::new(manifest).with_wasi(true);
     let metadata: PluginMetadata = builder.clone().build()?.call("metadata", 0)?;
     plugin_pool.add_builder((), builder);
-    Ok(LemmyPlugin {
+    Ok(FastJobPlugin {
       plugin_pool,
       metadata,
     })
   }
 
-  fn get(&self, name: &'static str) -> LemmyResult<Option<PoolPlugin>> {
+  fn get(&self, name: &'static str) -> FastJobResult<Option<PoolPlugin>> {
     let p = self
       .plugin_pool
       .get(&(), GET_PLUGIN_TIMEOUT)?
@@ -133,18 +133,18 @@ impl LemmyPlugin {
   }
 }
 
-impl LemmyPlugins {
+impl FastJobPlugins {
   /// Load and initialize all plugins
   fn init() -> Self {
     // TODO: use std::sync::OnceLock once get_mut_or_init() is stabilized
     // https://doc.rust-lang.org/std/sync/struct.OnceLock.html#method.get_mut_or_init
-    static PLUGINS: Lazy<LemmyPlugins> = Lazy::new(|| {
+    static PLUGINS: Lazy<FastJobPlugins> = Lazy::new(|| {
       let dir = env::var("LEMMY_PLUGIN_PATH").unwrap_or("plugins".to_string());
       let plugin_paths = match read_dir(dir) {
         Ok(r) => r,
         Err(e) => {
           warn!("Failed to read plugin folder: {e}");
-          return LemmyPlugins(vec![]);
+          return FastJobPlugins(vec![]);
         }
       };
 
@@ -153,12 +153,12 @@ impl LemmyPlugins {
         .map(|p| p.path())
         .filter(|p| p.extension() == Some(OsStr::new("json")))
         .flat_map(|p| {
-          LemmyPlugin::init(&p)
+          FastJobPlugin::init(&p)
             .inspect_err(|e| warn!("Failed to load plugin {}: {e}", p.to_string_lossy()))
             .ok()
         })
         .collect();
-      LemmyPlugins(plugins)
+      FastJobPlugins(plugins)
     });
     PLUGINS.deref().clone()
   }

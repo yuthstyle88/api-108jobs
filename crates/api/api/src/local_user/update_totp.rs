@@ -1,10 +1,10 @@
 use crate::check_totp_2fa_valid;
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{UpdateTotp, UpdateTotpResponse};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Enable or disable two-factor-authentication. The current setting is determined from
 /// [LocalUser.totp_2fa_enabled].
@@ -17,8 +17,8 @@ use lemmy_utils::error::LemmyResult;
 pub async fn update_totp(
   data: Json<UpdateTotp>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UpdateTotpResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UpdateTotpResponse>> {
   check_totp_2fa_valid(
     &local_user_view,
     &Some(data.totp_token.clone()),

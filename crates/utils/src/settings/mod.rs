@@ -1,4 +1,4 @@
-use crate::{error::LemmyResult, location_info};
+use crate::{error::FastJobResult, location_info};
 use anyhow::{anyhow, Context};
 use deser_hjson::from_str;
 use regex::Regex;
@@ -38,7 +38,7 @@ impl Settings {
   /// Note: The env var `LEMMY_DATABASE_URL` is parsed in
   /// `lemmy_db_schema/src/lib.rs::get_database_url_from_env()`
   /// Warning: Only call this once.
-  pub(crate) fn init() -> LemmyResult<Self> {
+  pub(crate) fn init() -> FastJobResult<Self> {
     let path =
       env::var("LEMMY_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string());
     let plain = fs::read_to_string(path)?;
@@ -92,7 +92,7 @@ impl Settings {
     WEBFINGER_REGEX.clone()
   }
 
-  pub fn pictrs(&self) -> LemmyResult<PictrsConfig> {
+  pub fn pictrs(&self) -> FastJobResult<PictrsConfig> {
     self
       .pictrs
       .clone()
@@ -111,7 +111,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_load_config() -> LemmyResult<()> {
+  fn test_load_config() -> FastJobResult<()> {
     Settings::init()?;
     Ok(())
   }

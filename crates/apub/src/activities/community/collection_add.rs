@@ -13,7 +13,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{generate_featured_url, generate_moderators_url},
 };
 use lemmy_apub_objects::{
@@ -35,7 +35,7 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Joinable},
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl CollectionAdd {
@@ -43,8 +43,8 @@ impl CollectionAdd {
     community: &ApubCommunity,
     added_mod: &ApubPerson,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let id = generate_activity_id(AddType::Add, context)?;
     let add = CollectionAdd {
       actor: actor.id().into(),
@@ -65,8 +65,8 @@ impl CollectionAdd {
     community: &ApubCommunity,
     featured_post: &ApubPost,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let id = generate_activity_id(AddType::Add, context)?;
     let add = CollectionAdd {
       actor: actor.id().into(),
@@ -92,8 +92,8 @@ impl CollectionAdd {
 
 #[async_trait::async_trait]
 impl ActivityHandler for CollectionAdd {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -103,7 +103,7 @@ impl ActivityHandler for CollectionAdd {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
     verify_person_in_community(&self.actor, &community, context).await?;
@@ -111,7 +111,7 @@ impl ActivityHandler for CollectionAdd {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let (community, collection_type) =
       Community::get_by_collection_url(&mut context.pool(), &self.target.into()).await?;
     match collection_type {
@@ -161,8 +161,8 @@ pub(crate) async fn send_add_mod_to_community(
   community_id: CommunityId,
   updated_mod_id: PersonId,
   added: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let actor: ApubPerson = actor.into();
   let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
     .await?
@@ -181,8 +181,8 @@ pub(crate) async fn send_feature_post(
   post: Post,
   actor: Person,
   featured: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let actor: ApubPerson = actor.into();
   let post: ApubPost = post.into();
   let community = Community::read(&mut context.pool(), post.community_id)

@@ -12,27 +12,27 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::private_message_report;
-use lemmy_utils::error::{FederationError, LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for PrivateMessageReport {
   type Form = PrivateMessageReportForm;
   type IdType = PrivateMessageReportId;
   type ObjectIdType = PrivateMessageId;
 
-  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message_report::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateReport)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateReport)
   }
 
   async fn resolve(
     pool: &mut DbPool<'_>,
     report_id: Self::IdType,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(private_message_report::table.find(report_id))
       .set((
@@ -42,14 +42,14 @@ impl Reportable for PrivateMessageReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+      .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
   async fn resolve_apub(
     _pool: &mut DbPool<'_>,
     _object_id: Self::ObjectIdType,
     _report_creator_id: PersonId,
     _resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     Err(FederationError::Unreachable.into())
   }
 
@@ -58,15 +58,15 @@ impl Reportable for PrivateMessageReport {
     _pool: &mut DbPool<'_>,
     _pm_id_: PrivateMessageId,
     _by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
-    Err(LemmyErrorType::NotFound.into())
+  ) -> FastJobResult<usize> {
+    Err(FastJobErrorType::NotFound.into())
   }
 
   async fn unresolve(
     pool: &mut DbPool<'_>,
     report_id: Self::IdType,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(private_message_report::table.find(report_id))
       .set((
@@ -76,6 +76,6 @@ impl Reportable for PrivateMessageReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+      .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 }

@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::post::{PostActions, PostReadForm, PostSavedForm},
   traits::{Readable, Saveable},
@@ -9,13 +9,13 @@ use lemmy_db_views_post::{
   api::{PostResponse, SavePost},
   PostView,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn save_post(
   data: Json<SavePost>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> FastJobResult<Json<PostResponse>> {
   let post_saved_form = PostSavedForm::new(data.post_id, local_user_view.person.id);
 
   if data.save {

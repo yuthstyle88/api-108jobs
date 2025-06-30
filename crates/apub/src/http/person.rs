@@ -4,10 +4,10 @@ use crate::{
 };
 use activitypub_federation::{config::Data, traits::Object};
 use actix_web::{web::Path, HttpResponse};
-use lemmy_api_utils::{context::LemmyContext, utils::generate_outbox_url};
+use lemmy_api_utils::{context::FastJobContext, utils::generate_outbox_url};
 use lemmy_apub_objects::objects::person::ApubPerson;
 use lemmy_db_schema::{source::person::Person, traits::ApubActor};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -18,13 +18,13 @@ pub struct PersonQuery {
 /// Return the ActivityPub json representation of a local person over HTTP.
 pub(crate) async fn get_apub_person_http(
   info: Path<PersonQuery>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let user_name = info.into_inner().user_name;
   // TODO: this needs to be able to read deleted persons, so that it can send tombstones
   let person: ApubPerson = Person::read_from_name(&mut context.pool(), &user_name, true)
     .await?
-    .ok_or(LemmyErrorType::NotFound)?
+    .ok_or(FastJobErrorType::NotFound)?
     .into();
 
   if !person.deleted {
@@ -38,11 +38,11 @@ pub(crate) async fn get_apub_person_http(
 
 pub(crate) async fn get_apub_person_outbox(
   info: Path<PersonQuery>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let person = Person::read_from_name(&mut context.pool(), &info.user_name, false)
     .await?
-    .ok_or(LemmyErrorType::NotFound)?;
+    .ok_or(FastJobErrorType::NotFound)?;
   let outbox_id = generate_outbox_url(&person.ap_id)?.into();
   let outbox = EmptyOutbox::new(outbox_id)?;
   create_apub_response(&outbox)

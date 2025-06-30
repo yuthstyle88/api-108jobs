@@ -12,7 +12,7 @@ use activitypub_federation::{
   protocol::verification::{verify_domains_match, verify_urls_match},
   traits::{ActivityHandler, Actor, Object},
 };
-use lemmy_api_utils::{build_response::send_local_notifs, context::LemmyContext};
+use lemmy_api_utils::{build_response::send_local_notifs, context::FastJobContext};
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson, post::ApubPost},
   utils::{
@@ -31,7 +31,7 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable},
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl CreateOrUpdatePage {
@@ -40,8 +40,8 @@ impl CreateOrUpdatePage {
     actor: &ApubPerson,
     community: &ApubCommunity,
     kind: CreateOrUpdateType,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<CreateOrUpdatePage> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<CreateOrUpdatePage> {
     let id = generate_activity_id(kind.clone(), context)?;
     Ok(CreateOrUpdatePage {
       actor: actor.id().into(),
@@ -57,8 +57,8 @@ impl CreateOrUpdatePage {
     post: Post,
     person_id: PersonId,
     kind: CreateOrUpdateType,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let community_id = post.community_id;
     let person: ApubPerson = Person::read(&mut context.pool(), person_id).await?.into();
     let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
@@ -83,8 +83,8 @@ impl CreateOrUpdatePage {
 
 #[async_trait::async_trait]
 impl ActivityHandler for CreateOrUpdatePage {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -94,7 +94,7 @@ impl ActivityHandler for CreateOrUpdatePage {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
     verify_person_in_community(&self.actor, &community, context).await?;
@@ -105,7 +105,7 @@ impl ActivityHandler for CreateOrUpdatePage {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let site_view = SiteView::read_local(&mut context.pool()).await?;
 
     let post = ApubPost::from_json(self.object, context).await?;

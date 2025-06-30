@@ -15,7 +15,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{
     community::ApubCommunity,
@@ -34,7 +34,7 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl ResolveReport {
@@ -43,8 +43,8 @@ impl ResolveReport {
     actor: &ApubPerson,
     report_creator: &ApubPerson,
     receiver: &Either<ApubSite, ApubCommunity>,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let kind = ResolveType::Resolve;
     let id = generate_activity_id(kind.clone(), &context)?;
     let object = Report::new(&object_id, report_creator, receiver, None, &context)?;
@@ -63,8 +63,8 @@ impl ResolveReport {
 
 #[async_trait::async_trait]
 impl ActivityHandler for ResolveReport {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -74,7 +74,7 @@ impl ActivityHandler for ResolveReport {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     self.object.verify(context).await?;
     let receiver = self.object.to[0].dereference(context).await?;
     verify_person_in_site_or_community(&self.actor, &receiver, context).await?;
@@ -83,7 +83,7 @@ impl ActivityHandler for ResolveReport {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let reporter = self.object.actor.dereference(context).await?;
     let actor = self.actor.dereference(context).await?;
     match self.object.object.dereference(context).await? {

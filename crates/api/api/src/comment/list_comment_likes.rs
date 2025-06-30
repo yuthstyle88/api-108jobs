@@ -1,19 +1,19 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_mod_or_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_mod_or_admin};
 use lemmy_db_views_comment::{
   api::{ListCommentLikes, ListCommentLikesResponse},
   CommentView,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_vote::VoteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Lists likes for a comment
 pub async fn list_comment_likes(
   data: Query<ListCommentLikes>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListCommentLikesResponse>> {
+) -> FastJobResult<Json<ListCommentLikesResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
 
   let comment_view = CommentView::read(

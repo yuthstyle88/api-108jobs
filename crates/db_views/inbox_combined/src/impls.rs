@@ -56,7 +56,7 @@ use lemmy_db_schema_file::schema::{
   private_message,
 };
 use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl InboxCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -151,7 +151,7 @@ impl InboxCombinedViewInternal {
     my_person_id: PersonId,
     local_instance_id: InstanceId,
     show_bot_accounts: bool,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     use diesel::dsl::count;
     let conn = &mut get_conn(pool).await?;
 
@@ -187,7 +187,7 @@ impl InboxCombinedViewInternal {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -207,13 +207,13 @@ impl PaginationCursorBuilder for InboxCombinedView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
     let pids = cursor.prefixes_and_ids();
     let (prefix, id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     let mut query = inbox_combined::table
       .select(Self::CursorData::as_select())
@@ -224,7 +224,7 @@ impl PaginationCursorBuilder for InboxCombinedView {
       'C' => query.filter(inbox_combined::person_comment_mention_id.eq(id)),
       'P' => query.filter(inbox_combined::person_post_mention_id.eq(id)),
       'M' => query.filter(inbox_combined::private_message_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -249,7 +249,7 @@ impl InboxCombinedQuery {
     pool: &mut DbPool<'_>,
     my_person_id: PersonId,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<Vec<InboxCombinedView>> {
+  ) -> FastJobResult<Vec<InboxCombinedView>> {
     let conn = &mut get_conn(pool).await?;
 
     let item_creator = person::id;
@@ -466,7 +466,7 @@ mod tests {
     InboxDataType,
   };
   use lemmy_db_views_private_message::PrivateMessageView;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -481,7 +481,7 @@ mod tests {
     sara_comment: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
@@ -528,7 +528,7 @@ mod tests {
     })
   }
 
-  async fn setup_private_messages(data: &Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn setup_private_messages(data: &Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     let sara_timmy_message_form =
       PrivateMessageInsertForm::new(data.sara.id, data.timmy.id, "sara to timmy".into());
     PrivateMessage::create(pool, &sara_timmy_message_form).await?;
@@ -548,7 +548,7 @@ mod tests {
     Ok(())
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -556,7 +556,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn replies() -> LemmyResult<()> {
+  async fn replies() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -613,7 +613,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn mentions() -> LemmyResult<()> {
+  async fn mentions() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -766,7 +766,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn read_private_messages() -> LemmyResult<()> {
+  async fn read_private_messages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -815,7 +815,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn ensure_private_message_person_block() -> LemmyResult<()> {
+  async fn ensure_private_message_person_block() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -858,7 +858,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn ensure_private_message_instance_block() -> LemmyResult<()> {
+  async fn ensure_private_message_instance_block() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

@@ -15,20 +15,20 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::tag;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Tag {
   pub async fn get_by_community(
     pool: &mut DbPool<'_>,
     search_community_id: CommunityId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     tag::table
       .filter(tag::community_id.eq(search_community_id))
       .filter(tag::deleted.eq(false))
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -37,22 +37,22 @@ impl Crud for Tag {
   type UpdateForm = TagUpdateForm;
   type IdType = TagId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(tag::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateTag)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateTag)
   }
 
-  async fn update(pool: &mut DbPool<'_>, pid: TagId, form: &Self::UpdateForm) -> LemmyResult<Self> {
+  async fn update(pool: &mut DbPool<'_>, pid: TagId, form: &Self::UpdateForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(tag::table.find(pid))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateTag)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateTag)
   }
 }
 

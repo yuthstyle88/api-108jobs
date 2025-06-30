@@ -5,14 +5,14 @@ use activitypub_federation::{
   kinds::object::ImageType,
   protocol::values::MediaTypeMarkdown,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   impls::actor_language::UNDETERMINED_ID,
   newtypes::{DbUrl, LanguageId},
   source::language::Language,
   utils::DbPool,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use std::{future::Future, ops::Deref};
 use url::Url;
@@ -36,8 +36,8 @@ impl Source {
 pub trait InCommunity {
   fn community(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> impl Future<Output = LemmyResult<ApubCommunity>> + Send;
+    context: &Data<FastJobContext>,
+  ) -> impl Future<Output = FastJobResult<ApubCommunity>> + Send;
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -60,7 +60,7 @@ impl ImageObject {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AttributedTo {
-  Lemmy(PersonOrGroupModerators),
+  FastJob(PersonOrGroupModerators),
   Peertube(Vec<AttributedToPeertube>),
 }
 
@@ -81,7 +81,7 @@ pub struct AttributedToPeertube {
 impl AttributedTo {
   pub fn url(self) -> Option<DbUrl> {
     match self {
-      AttributedTo::Lemmy(l) => Some(l.moderators().into()),
+      AttributedTo::FastJob(l) => Some(l.moderators().into()),
       AttributedTo::Peertube(_) => None,
     }
   }
@@ -135,7 +135,7 @@ impl LanguageTag {
   pub(crate) async fn new_single(
     lang: LanguageId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<LanguageTag> {
+  ) -> FastJobResult<LanguageTag> {
     let lang = Language::read_from_id(pool, lang).await?;
 
     // undetermined
@@ -152,7 +152,7 @@ impl LanguageTag {
   pub(crate) async fn new_multiple(
     lang_ids: Vec<LanguageId>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<LanguageTag>> {
+  ) -> FastJobResult<Vec<LanguageTag>> {
     let mut langs = Vec::<Language>::new();
 
     for l in lang_ids {
@@ -172,14 +172,14 @@ impl LanguageTag {
   pub(crate) async fn to_language_id_single(
     lang: Self,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<LanguageId> {
+  ) -> FastJobResult<LanguageId> {
     Language::read_id_from_code(pool, &lang.identifier).await
   }
 
   pub(crate) async fn to_language_id_multiple(
     langs: Vec<Self>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<LanguageId>> {
+  ) -> FastJobResult<Vec<LanguageId>> {
     let mut language_ids = Vec::new();
 
     for l in langs {

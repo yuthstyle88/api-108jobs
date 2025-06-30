@@ -30,7 +30,7 @@ use lemmy_db_schema_file::schema::{
   person_actions,
 };
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -41,35 +41,35 @@ impl Crud for Person {
   type IdType = PersonId;
 
   // Override this, so that you don't get back deleted
-  async fn read(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Self> {
+  async fn read(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     person::table
       .filter(person::deleted.eq(false))
       .find(person_id)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePerson)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePerson)
   }
   async fn update(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     form: &PersonUpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(person::table.find(person_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePerson)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 }
 
@@ -78,7 +78,7 @@ impl Person {
   ///
   /// This is necessary for federation, because Activitypub doesn't distinguish between these
   /// actions.
-  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> LemmyResult<Self> {
+  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
@@ -87,14 +87,14 @@ impl Person {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePerson)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<Person> {
+  ) -> FastJobResult<Person> {
     let conn = &mut get_conn(pool).await?;
 
     // Set the local user email to none, only if they aren't banned locally.
@@ -132,10 +132,10 @@ impl Person {
       ))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePerson)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
-  pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> LemmyResult<()> {
+  pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
       person::table
@@ -145,7 +145,7 @@ impl Person {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::UsernameAlreadyExists.into())
+    .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
   }
 }
 
@@ -159,7 +159,7 @@ impl ApubActor for Person {
   async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     person::table
       .filter(person::deleted.eq(false))
@@ -167,14 +167,14 @@ impl ApubActor for Person {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   async fn read_from_name(
     pool: &mut DbPool<'_>,
     from_name: &str,
     include_deleted: bool,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut q = person::table
       .into_boxed()
@@ -186,14 +186,14 @@ impl ApubActor for Person {
     q.first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   async fn read_from_name_and_domain(
     pool: &mut DbPool<'_>,
     person_name: &str,
     for_domain: &str,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     person::table
@@ -204,20 +204,20 @@ impl ApubActor for Person {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(FastJobErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'u', settings)
   }
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl> {
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/u/{name}"))?.into())
   }
@@ -227,7 +227,7 @@ impl Followable for PersonActions {
   type Form = PersonFollowerForm;
   type IdType = PersonId;
 
-  async fn follow(pool: &mut DbPool<'_>, form: &PersonFollowerForm) -> LemmyResult<Self> {
+  async fn follow(pool: &mut DbPool<'_>, form: &PersonFollowerForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -237,26 +237,26 @@ impl Followable for PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
   }
 
   /// Currently no user following
-  async fn follow_accepted(_: &mut DbPool<'_>, _: CommunityId, _: PersonId) -> LemmyResult<Self> {
-    Err(LemmyErrorType::NotFound.into())
+  async fn follow_accepted(_: &mut DbPool<'_>, _: CommunityId, _: PersonId) -> FastJobResult<Self> {
+    Err(FastJobErrorType::NotFound.into())
   }
 
   async fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     target_id: Self::IdType,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(person_actions::table.find((person_id, target_id)))
       .set_null(person_actions::followed_at)
       .set_null(person_actions::follow_pending)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
   }
 }
 
@@ -265,7 +265,7 @@ impl Blockable for PersonActions {
   type ObjectIdType = PersonId;
   type ObjectType = Person;
 
-  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -275,23 +275,23 @@ impl Blockable for PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::PersonBlockAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::PersonBlockAlreadyExists)
   }
 
-  async fn unblock(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn unblock(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(person_actions::table.find((form.person_id, form.target_id)))
       .set_null(person_actions::blocked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::PersonBlockAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::PersonBlockAlreadyExists)
   }
 
   async fn read_block(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     recipient_id: Self::ObjectIdType,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = person_actions::table
       .find((person_id, recipient_id))
@@ -301,13 +301,13 @@ impl Blockable for PersonActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::PersonIsBlocked.into())
+      .ok_or(FastJobErrorType::PersonIsBlocked.into())
   }
 
   async fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Self::ObjectType>> {
+  ) -> FastJobResult<Vec<Self::ObjectType>> {
     let conn = &mut get_conn(pool).await?;
     let target_person_alias = diesel::alias!(person as person1);
 
@@ -323,7 +323,7 @@ impl Blockable for PersonActions {
       .order_by(person_actions::blocked_at)
       .load::<Person>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -331,7 +331,7 @@ impl PersonActions {
   pub async fn follower_inboxes(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> FastJobResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     person_actions::table
       .filter(person_actions::followed_at.is_not_null())
@@ -341,10 +341,10 @@ impl PersonActions {
       .distinct()
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn note(pool: &mut DbPool<'_>, form: &PersonNoteForm) -> LemmyResult<Self> {
+  pub async fn note(pool: &mut DbPool<'_>, form: &PersonNoteForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
       .values(form)
@@ -354,21 +354,21 @@ impl PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn delete_note(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     target_id: PersonId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(person_actions::table.find((person_id, target_id)))
       .set_null(person_actions::note)
       .set_null(person_actions::noted_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn like(
@@ -376,13 +376,13 @@ impl PersonActions {
     person_id: PersonId,
     target_id: PersonId,
     like_score: i16,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let (upvotes_inc, downvotes_inc) = match like_score {
       1 => (1, 0),
       -1 => (0, 1),
-      _ => return Err(LemmyErrorType::NotFound.into()),
+      _ => return Err(FastJobErrorType::NotFound.into()),
     };
 
     let voted_at = Utc::now();
@@ -407,7 +407,7 @@ impl PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Removes a person like. A previous_score of zero throws an error.
@@ -416,13 +416,13 @@ impl PersonActions {
     person_id: PersonId,
     target_id: PersonId,
     previous_score: i16,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let (upvotes_inc, downvotes_inc) = match previous_score {
       1 => (-1, 0),
       -1 => (0, -1),
-      _ => return Err(LemmyErrorType::NotFound.into()),
+      _ => return Err(FastJobErrorType::NotFound.into()),
     };
     let voted_at = Utc::now();
 
@@ -446,7 +446,7 @@ impl PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -464,13 +464,13 @@ mod tests {
     traits::{Crud, Followable, Likeable},
     utils::{build_db_pool_for_tests, uplete},
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -526,7 +526,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn follow() -> LemmyResult<()> {
+  async fn follow() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
@@ -554,7 +554,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

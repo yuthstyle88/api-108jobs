@@ -8,33 +8,33 @@ use diesel::{insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
 use lemmy_db_schema_file::schema::tagline;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for Tagline {
   type InsertForm = TaglineInsertForm;
   type UpdateForm = TaglineUpdateForm;
   type IdType = TaglineId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(tagline::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateTagline)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateTagline)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     tagline_id: TaglineId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(tagline::table.find(tagline_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateTagline)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateTagline)
   }
 }
 
@@ -44,7 +44,7 @@ impl Tagline {
     cursor_data: Option<Tagline>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
     let query = tagline::table.limit(limit).into_boxed();
@@ -55,24 +55,24 @@ impl Tagline {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn get_random(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn get_random(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     tagline::table
       .order(random())
       .limit(1)
       .first::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn to_cursor(&self) -> PaginationCursor {
     PaginationCursor::new_single('T', self.id.0)
   }
 
-  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let id = cursor.first_id()?;
     Self::read(pool, TaglineId(id)).await
   }

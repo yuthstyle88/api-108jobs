@@ -14,7 +14,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor, Object},
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, multi_community::ApubMultiCommunity, person::ApubPerson},
   utils::{
@@ -32,14 +32,14 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 pub(crate) async fn send_update_community(
   community: Community,
   actor: Person,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let community: ApubCommunity = community.into();
   let actor: ApubPerson = actor.into();
   let id = generate_activity_id(UpdateType::Update, &context)?;
@@ -67,8 +67,8 @@ pub(crate) async fn send_update_community(
 pub(crate) async fn send_update_multi_community(
   multi: MultiCommunity,
   actor: Person,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let multi: ApubMultiCommunity = multi.into();
   let actor: ApubPerson = actor.into();
   let id = generate_activity_id(UpdateType::Update, &context)?;
@@ -89,8 +89,8 @@ pub(crate) async fn send_update_multi_community(
 
 #[async_trait::async_trait]
 impl ActivityHandler for Update {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -100,7 +100,7 @@ impl ActivityHandler for Update {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     match &self.object {
       Either::Left(c) => {
         let community = self.community(context).await?;
@@ -114,7 +114,7 @@ impl ActivityHandler for Update {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     match self.object {
       Either::Left(ref c) => {
         let old_community = self.community(context).await?;

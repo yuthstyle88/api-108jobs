@@ -16,7 +16,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{remove_or_restore_user_data, remove_or_restore_user_data_in_community},
 };
 use lemmy_apub_objects::{
@@ -32,7 +32,7 @@ use lemmy_db_schema::{
   },
   traits::{Bannable, Crud},
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl UndoBlockUser {
@@ -42,8 +42,8 @@ impl UndoBlockUser {
     mod_: &ApubPerson,
     restore_data: bool,
     reason: Option<String>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let block = BlockUser::new(target, user, mod_, None, reason, None, context).await?;
     let to = to(target)?;
 
@@ -74,8 +74,8 @@ impl UndoBlockUser {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UndoBlockUser {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -85,13 +85,13 @@ impl ActivityHandler for UndoBlockUser {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     verify_domains_match(self.actor.inner(), self.object.actor.inner())?;
     self.object.verify(context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let expires_at = self.object.end_time;
     let mod_person = self.actor.dereference(context).await?;
     let blocked_person = self.object.object.dereference(context).await?;

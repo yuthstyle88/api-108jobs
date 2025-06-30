@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::{
   comment_reply::CommentReply,
   person_comment_mention::PersonCommentMention,
@@ -8,12 +8,12 @@ use lemmy_db_schema::source::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn mark_all_notifications_read(
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let person_id = local_user_view.person.id;
 
   // Mark all comment_replies as read

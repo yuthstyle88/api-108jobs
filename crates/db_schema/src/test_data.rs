@@ -9,7 +9,7 @@ use crate::{
   traits::Crud,
   utils::DbPool,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub struct TestData {
   pub instance: Instance,
@@ -17,7 +17,7 @@ pub struct TestData {
 }
 
 impl TestData {
-  pub async fn create(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let site_form = SiteInsertForm::new("test site".to_string(), instance.id);
@@ -34,7 +34,7 @@ impl TestData {
     Ok(Self { instance, site })
   }
 
-  pub async fn delete(self, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  pub async fn delete(self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, self.instance.id).await?;
     Site::delete(pool, self.site.id).await?;
     Ok(())

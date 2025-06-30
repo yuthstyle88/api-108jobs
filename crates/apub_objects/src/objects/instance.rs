@@ -22,7 +22,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, proxy_image_link_opt_apub, slur_regex},
 };
 use lemmy_db_schema::{
@@ -37,7 +37,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::ActorType;
 use lemmy_utils::{
-  error::{FederationError, LemmyError, LemmyResult},
+  error::{FederationError, FastJobError, FastJobResult},
   utils::{
     markdown::markdown_to_html,
     slurs::{check_slurs, check_slurs_opt},
@@ -65,15 +65,15 @@ impl From<Site> for ApubSite {
 
 #[async_trait::async_trait]
 impl Object for ApubSite {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Instance;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     Some(self.last_refreshed_at)
   }
 
-  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> LemmyResult<Option<Self>> {
+  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> FastJobResult<Option<Self>> {
     Ok(
       Site::read_from_apub_id(&mut data.pool(), &object_id.into())
         .await?
@@ -81,11 +81,11 @@ impl Object for ApubSite {
     )
   }
 
-  async fn delete(self, _data: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, _data: &Data<Self::DataType>) -> FastJobResult<()> {
     Err(FederationError::CantDeleteSite.into())
   }
 
-  async fn into_json(self, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn into_json(self, data: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
     let site_id = self.id;
     let langs = SiteLanguage::read(&mut data.pool(), site_id).await?;
     let language = LanguageTag::new_multiple(langs, &mut data.pool()).await?;
@@ -116,7 +116,7 @@ impl Object for ApubSite {
     apub: &Self::Kind,
     expected_domain: &Url,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     check_apub_id_valid_with_strictness(apub.id.inner(), true, data).await?;
     verify_domains_match(expected_domain, apub.id.inner())?;
     verify_is_remote_object(&apub.id, data)?;
@@ -128,7 +128,7 @@ impl Object for ApubSite {
     Ok(())
   }
 
-  async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> LemmyResult<Self> {
+  async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> FastJobResult<Self> {
     let domain = apub
       .id
       .inner()
@@ -194,8 +194,8 @@ impl GetActorType for ApubSite {
 /// Try to fetch the instance actor (to make things like instance rules available).
 pub(crate) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
   object_id: &T,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<InstanceId> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<InstanceId> {
   let object_id: Url = object_id.clone().into();
   let instance_id = Site::instance_ap_id_from_url(object_id);
   let site = ObjectId::<ApubSite>::from(instance_id.clone())
@@ -227,8 +227,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_instance() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_instance() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let site = parse_lemmy_instance(&context).await?;
 
     assert_eq!(site.name, "Enterprise");

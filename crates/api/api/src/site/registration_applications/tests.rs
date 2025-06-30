@@ -6,7 +6,7 @@ use crate::site::registration_applications::{
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
 use lemmy_api_crud::site::update::update_site;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   newtypes::InstanceId,
   source::{
@@ -28,12 +28,12 @@ use lemmy_db_views_registration_applications::api::{
 };
 use lemmy_db_views_site::api::EditSite;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   CACHE_DURATION_API,
 };
 use serial_test::serial;
 
-async fn create_test_site(context: &Data<LemmyContext>) -> LemmyResult<(TestData, LocalUserView)> {
+async fn create_test_site(context: &Data<FastJobContext>) -> FastJobResult<(TestData, LocalUserView)> {
   let pool = &mut context.pool();
   let data = TestData::create(pool).await?;
 
@@ -69,7 +69,7 @@ async fn signup(
   instance_id: InstanceId,
   name: &str,
   email: Option<&str>,
-) -> LemmyResult<(LocalUser, RegistrationApplication)> {
+) -> FastJobResult<(LocalUser, RegistrationApplication)> {
   let person_insert_form = PersonInsertForm::test_form(instance_id, name);
   let person = Person::create(pool, &person_insert_form).await?;
 
@@ -94,9 +94,9 @@ async fn signup(
 }
 
 async fn get_application_statuses(
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   admin: LocalUserView,
-) -> LemmyResult<(
+) -> FastJobResult<(
   Json<GetUnreadRegistrationApplicationCountResponse>,
   Json<ListRegistrationApplicationsResponse>,
   Json<ListRegistrationApplicationsResponse>,
@@ -124,8 +124,8 @@ async fn get_application_statuses(
 #[serial]
 #[tokio::test]
 #[expect(clippy::indexing_slicing)]
-async fn test_application_approval() -> LemmyResult<()> {
-  let context = LemmyContext::init_test_context().await;
+async fn test_application_approval() -> FastJobResult<()> {
+  let context = FastJobContext::init_test_context().await;
   let pool = &mut context.pool();
 
   let (data, admin_local_user_view) = create_test_site(&context).await?;
@@ -207,7 +207,7 @@ async fn test_application_approval() -> LemmyResult<()> {
   )
   .await;
   // Approval should be processed up until email sending is attempted
-  assert!(approval.is_err_and(|e| e.error_type == LemmyErrorType::NoEmailSetup));
+  assert!(approval.is_err_and(|e| e.error_type == FastJobErrorType::NoEmailSetup));
 
   expected_unread_applications -= 1;
 
@@ -300,7 +300,7 @@ async fn test_application_approval() -> LemmyResult<()> {
     admin_local_user_view.clone(),
   )
   .await;
-  assert!(deny.is_err_and(|e| e.error_type == LemmyErrorType::NoEmailSetup));
+  assert!(deny.is_err_and(|e| e.error_type == FastJobErrorType::NoEmailSetup));
 
   expected_unread_applications -= 1;
 

@@ -6,11 +6,11 @@ use activitypub_federation::{
 use diesel::NotFound;
 use either::Either::*;
 use itertools::Itertools;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::SiteOrMultiOrCommunityOrUser;
 use lemmy_db_schema::{newtypes::InstanceId, traits::ApubActor};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 pub mod search;
 
@@ -20,12 +20,12 @@ pub mod search;
 /// to fetch via webfinger from the original instance.
 pub async fn resolve_ap_identifier<ActorType, DbActor>(
   identifier: &str,
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   local_user_view: &Option<LocalUserView>,
   include_deleted: bool,
-) -> LemmyResult<ActorType>
+) -> FastJobResult<ActorType>
 where
-  ActorType: Object<DataType = LemmyContext, Error = LemmyError>
+  ActorType: Object<DataType =FastJobContext, Error =FastJobError>
     + Object
     + Actor
     + From<DbActor>
@@ -39,7 +39,7 @@ where
     let (name, domain) = identifier
       .splitn(2, '@')
       .collect_tuple()
-      .ok_or(LemmyErrorType::InvalidUrl)?;
+      .ok_or(FastJobErrorType::InvalidUrl)?;
     let actor = DbActor::read_from_name_and_domain(&mut context.pool(), name, domain)
       .await
       .ok()

@@ -4,13 +4,13 @@ use activitypub_federation::{
   kinds::activity::AddType,
   protocol::helpers::deserialize_one_or_many,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   utils::protocol::InCommunity,
 };
 use lemmy_db_schema::source::community::Community;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -30,7 +30,7 @@ pub struct CollectionAdd {
 }
 
 impl InCommunity for CollectionAdd {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let (community, _) =
       Community::get_by_collection_url(&mut context.pool(), &self.clone().target.into()).await?;
     Ok(community.into())

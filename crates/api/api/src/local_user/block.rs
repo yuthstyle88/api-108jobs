@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::person::{PersonActions, PersonBlockForm},
   traits::Blockable,
@@ -9,20 +9,20 @@ use lemmy_db_views_person::{
   api::{BlockPerson, BlockPersonResponse},
   PersonView,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn user_block_person(
   data: Json<BlockPerson>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<BlockPersonResponse>> {
+) -> FastJobResult<Json<BlockPersonResponse>> {
   let target_id = data.person_id;
   let my_person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;
 
   // Don't let a person block themselves
   if target_id == my_person_id {
-    Err(LemmyErrorType::CantBlockYourself)?
+    Err(FastJobErrorType::CantBlockYourself)?
   }
 
   let person_block_form = PersonBlockForm::new(my_person_id, target_id);
@@ -32,7 +32,7 @@ pub async fn user_block_person(
     .ok();
 
   if target_user.is_some_and(|t| t.local_user.admin) {
-    Err(LemmyErrorType::CantBlockAdmin)?
+    Err(FastJobErrorType::CantBlockAdmin)?
   }
 
   if data.block {

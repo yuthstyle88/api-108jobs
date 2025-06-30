@@ -6,11 +6,11 @@ use crate::{
 use diesel::{ExpressionMethods, Insertable, OptionalExtension, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::federation_queue_state;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl FederationQueueState {
   /// load state or return a default empty value
-  pub async fn load(pool: &mut DbPool<'_>, instance_id: InstanceId) -> LemmyResult<Self> {
+  pub async fn load(pool: &mut DbPool<'_>, instance_id: InstanceId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       federation_queue_state::table
@@ -28,7 +28,7 @@ impl FederationQueueState {
         }),
     )
   }
-  pub async fn upsert(pool: &mut DbPool<'_>, state: &FederationQueueState) -> LemmyResult<usize> {
+  pub async fn upsert(pool: &mut DbPool<'_>, state: &FederationQueueState) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     state
@@ -38,6 +38,6 @@ impl FederationQueueState {
       .set(state)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateFederationQueueState)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateFederationQueueState)
   }
 }

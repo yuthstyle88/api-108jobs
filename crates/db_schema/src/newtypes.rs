@@ -21,7 +21,7 @@ use {
     sql_types::Text,
   },
   diesel_ltree::Ltree,
-  lemmy_utils::error::{LemmyErrorType, LemmyResult},
+  lemmy_utils::error::{FastJobErrorType, FastJobResult},
 };
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -519,13 +519,13 @@ impl PaginationCursor {
       .collect()
   }
 
-  pub fn first_id(&self) -> LemmyResult<i32> {
+  pub fn first_id(&self) -> FastJobResult<i32> {
     Ok(
       self
         .prefixes_and_ids()
         .as_slice()
         .first()
-        .ok_or(LemmyErrorType::CouldntParsePaginationToken)?
+        .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
         .1,
     )
   }

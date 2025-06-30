@@ -8,28 +8,28 @@ use crate::{
 use diesel::QueryDsl;
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::language;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Language {
-  pub async fn read_all(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn read_all(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     language::table
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn read_from_id(pool: &mut DbPool<'_>, id_: LanguageId) -> LemmyResult<Self> {
+  pub async fn read_from_id(pool: &mut DbPool<'_>, id_: LanguageId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     language::table
       .find(id_)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Attempts to find the given language code and return its ID.
-  pub async fn read_id_from_code(pool: &mut DbPool<'_>, code_: &str) -> LemmyResult<LanguageId> {
+  pub async fn read_id_from_code(pool: &mut DbPool<'_>, code_: &str) -> FastJobResult<LanguageId> {
     let conn = &mut get_conn(pool).await?;
     let res = language::table
       .filter(language::code.eq(code_))
@@ -47,13 +47,13 @@ impl Language {
 mod tests {
 
   use crate::{source::language::Language, utils::build_db_pool_for_tests};
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_languages() -> LemmyResult<()> {
+  async fn test_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

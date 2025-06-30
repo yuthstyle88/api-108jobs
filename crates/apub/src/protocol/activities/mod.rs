@@ -24,16 +24,16 @@ mod tests {
     voting::{undo_vote::UndoVote, vote::Vote},
   };
   use lemmy_apub_objects::utils::test::test_json;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_smithereen_activities() -> LemmyResult<()> {
+  fn test_parse_smithereen_activities() -> FastJobResult<()> {
     test_json::<CreateOrUpdateNote>("assets/smithereen/activities/create_note.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_pleroma_activities() -> LemmyResult<()> {
+  fn test_parse_pleroma_activities() -> FastJobResult<()> {
     test_json::<CreateOrUpdateNote>("assets/pleroma/activities/create_note.json")?;
     test_json::<Delete>("assets/pleroma/activities/delete.json")?;
     test_json::<Follow>("assets/pleroma/activities/follow.json")?;
@@ -41,7 +41,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_mastodon_activities() -> LemmyResult<()> {
+  fn test_parse_mastodon_activities() -> FastJobResult<()> {
     test_json::<CreateOrUpdateNote>("assets/mastodon/activities/create_note.json")?;
     test_json::<Delete>("assets/mastodon/activities/delete.json")?;
     test_json::<Follow>("assets/mastodon/activities/follow.json")?;
@@ -53,7 +53,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_lotide_activities() -> LemmyResult<()> {
+  fn test_parse_lotide_activities() -> FastJobResult<()> {
     test_json::<Follow>("assets/lotide/activities/follow.json")?;
     test_json::<CreateOrUpdatePage>("assets/lotide/activities/create_page.json")?;
     test_json::<CreateOrUpdatePage>("assets/lotide/activities/create_page_image.json")?;
@@ -62,7 +62,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_friendica_activities() -> LemmyResult<()> {
+  fn test_parse_friendica_activities() -> FastJobResult<()> {
     test_json::<CreateOrUpdatePage>("assets/friendica/activities/create_page_1.json")?;
     test_json::<CreateOrUpdatePage>("assets/friendica/activities/create_page_2.json")?;
     test_json::<CreateOrUpdateNote>("assets/friendica/activities/create_note.json")?;
@@ -75,7 +75,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_gnusocial_activities() -> LemmyResult<()> {
+  fn test_parse_gnusocial_activities() -> FastJobResult<()> {
     test_json::<CreateOrUpdatePage>("assets/gnusocial/activities/create_page.json")?;
     test_json::<CreateOrUpdateNote>("assets/gnusocial/activities/create_note.json")?;
     test_json::<Vote>("assets/gnusocial/activities/like_note.json")?;
@@ -83,20 +83,20 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_peertube_activities() -> LemmyResult<()> {
+  fn test_parse_peertube_activities() -> FastJobResult<()> {
     test_json::<AnnounceActivity>("assets/peertube/activities/announce_video.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_mbin_activities() -> LemmyResult<()> {
+  fn test_parse_mbin_activities() -> FastJobResult<()> {
     test_json::<AcceptFollow>("assets/mbin/activities/accept.json")?;
     test_json::<Report>("assets/mbin/activities/flag.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_wordpress_activities() -> LemmyResult<()> {
+  fn test_parse_wordpress_activities() -> FastJobResult<()> {
     test_json::<AnnounceActivity>("assets/wordpress/activities/announce.json")?;
     Ok(())
   }

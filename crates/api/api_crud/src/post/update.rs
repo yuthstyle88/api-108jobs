@@ -4,7 +4,7 @@ use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
@@ -35,7 +35,7 @@ use lemmy_db_views_post::{
 };
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::{
     slurs::check_slurs,
     validation::{
@@ -51,9 +51,9 @@ use std::ops::Deref;
 
 pub async fn update_post(
   data: Json<EditPost>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> FastJobResult<Json<PostResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let url = diesel_url_update(data.url.as_deref())?;
@@ -118,7 +118,7 @@ pub async fn update_post(
 
   // Verify that only the creator can edit
   if !Post::is_post_creator(local_user_view.person.id, orig_post.post.creator_id) {
-    Err(LemmyErrorType::NoPostEditAllowed)?
+    Err(FastJobErrorType::NoPostEditAllowed)?
   }
 
   let language_id = validate_post_language(

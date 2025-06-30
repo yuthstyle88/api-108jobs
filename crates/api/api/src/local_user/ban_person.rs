@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
@@ -18,13 +18,13 @@ use lemmy_db_views_person::{
   api::{BanPerson, BanPersonResponse},
   PersonView,
 };
-use lemmy_utils::{error::LemmyResult, utils::validation::is_valid_body_field};
+use lemmy_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_site(
   data: Json<BanPerson>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<BanPersonResponse>> {
+) -> FastJobResult<Json<BanPersonResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
   let my_person_id = local_user_view.person.id;
 

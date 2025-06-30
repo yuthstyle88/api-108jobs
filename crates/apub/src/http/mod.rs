@@ -15,7 +15,7 @@ use actix_web::{
   HttpRequest,
   HttpResponse,
 };
-use lemmy_api_utils::{context::LemmyContext, plugins::plugin_hook_after};
+use lemmy_api_utils::{context::FastJobContext, plugins::plugin_hook_after};
 use lemmy_apub_objects::{
   objects::{SiteOrMultiOrCommunityOrUser, UserOrCommunity},
   protocol::tombstone::Tombstone,
@@ -30,7 +30,7 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::CommunityVisibility;
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_utils::{
-  error::{FederationError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FederationError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   FEDERATION_CONTEXT,
 };
 use serde::{Deserialize, Serialize};
@@ -51,10 +51,10 @@ const INCOMING_ACTIVITY_TIMEOUT: Duration = Duration::from_secs(9);
 pub async fn shared_inbox(
   request: HttpRequest,
   body: Bytes,
-  data: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  data: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let receive_fut =
-    receive_activity_with_hook::<SharedInboxActivities, UserOrCommunity, LemmyContext>(
+    receive_activity_with_hook::<SharedInboxActivities, UserOrCommunity, FastJobContext>(
       request, body, Dummy, &data,
     );
   // Set a timeout shorter than `REQWEST_TIMEOUT` for processing incoming activities. This is to
@@ -63,18 +63,18 @@ pub async fn shared_inbox(
   // consider the activity broken and move on.
   timeout(INCOMING_ACTIVITY_TIMEOUT, receive_fut)
     .await
-    .with_lemmy_type(FederationError::InboxTimeout.into())?
+    .with_fastjob_type(FederationError::InboxTimeout.into())?
 }
 
 struct Dummy;
 
-impl ReceiveActivityHook<SharedInboxActivities, UserOrCommunity, LemmyContext> for Dummy {
+impl ReceiveActivityHook<SharedInboxActivities, UserOrCommunity, FastJobContext> for Dummy {
   async fn hook(
     self,
     activity: &SharedInboxActivities,
     _actor: &UserOrCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     // Store received activities in the database. This ensures that the same activity doesn't get
     // received and processed more than once, which would be a waste of resources.
     debug!("Received activity {}", activity.id().to_string());
@@ -95,7 +95,7 @@ impl ReceiveActivityHook<SharedInboxActivities, UserOrCommunity, LemmyContext> f
 /// headers.
 ///
 /// actix-web doesn't allow pretty-print for json so we need to do this manually.
-fn create_apub_response<T>(data: &T) -> LemmyResult<HttpResponse>
+fn create_apub_response<T>(data: &T) -> FastJobResult<HttpResponse>
 where
   T: Serialize,
 {
@@ -109,7 +109,7 @@ where
   )
 }
 
-fn create_apub_tombstone_response<T: Into<Url>>(id: T) -> LemmyResult<HttpResponse> {
+fn create_apub_tombstone_response<T: Into<Url>>(id: T) -> FastJobResult<HttpResponse> {
   let tombstone = Tombstone::new(id.into());
   let json = serde_json::to_string_pretty(&WithContext::new(
     tombstone,
@@ -140,8 +140,8 @@ pub struct ActivityQuery {
 /// Return the ActivityPub json representation of a local activity over HTTP.
 pub(crate) async fn get_activity(
   info: web::Path<ActivityQuery>,
-  context: web::Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: web::Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let settings = context.settings();
   let activity_id = Url::parse(&format!(
     "{}/activities/{}/{}",
@@ -161,10 +161,10 @@ pub(crate) async fn get_activity(
 }
 
 /// Ensure that the community is public and not removed/deleted.
-fn check_community_fetchable(community: &Community) -> LemmyResult<()> {
+fn check_community_fetchable(community: &Community) -> FastJobResult<()> {
   check_community_removed_or_deleted(community)?;
   if !community.visibility.can_federate() {
-    return Err(LemmyErrorType::NotFound.into());
+    return Err(FastJobErrorType::NotFound.into());
   }
   Ok(())
 }
@@ -173,8 +173,8 @@ fn check_community_fetchable(community: &Community) -> LemmyResult<()> {
 async fn check_community_content_fetchable(
   community: &Community,
   request: &HttpRequest,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   use CommunityVisibility::*;
   check_community_removed_or_deleted(community)?;
   match community.visibility {
@@ -201,16 +201,16 @@ async fn check_community_content_fetchable(
         context.client().execute(req).await?.error_for_status()?;
         Ok(())
       } else {
-        Err(LemmyErrorType::NotFound.into())
+        Err(FastJobErrorType::NotFound.into())
       }
     }
-    LocalOnlyPublic | LocalOnlyPrivate => Err(LemmyErrorType::NotFound.into()),
+    LocalOnlyPublic | LocalOnlyPrivate => Err(FastJobErrorType::NotFound.into()),
   }
 }
 
-fn check_community_removed_or_deleted(community: &Community) -> LemmyResult<()> {
+fn check_community_removed_or_deleted(community: &Community) -> FastJobResult<()> {
   if community.deleted || community.removed {
-    Err(LemmyErrorType::Deleted)?
+    Err(FastJobErrorType::Deleted)?
   }
   Ok(())
 }

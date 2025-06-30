@@ -6,7 +6,7 @@ use activitypub_federation::{
   protocol::helpers::deserialize_one_or_many,
 };
 use anyhow::anyhow;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::tombstone::Tombstone,
@@ -16,7 +16,7 @@ use lemmy_db_schema::{
   source::{community::Community, post::Post},
   traits::Crud,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -46,7 +46,7 @@ pub struct Delete {
 }
 
 impl InCommunity for Delete {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let community_id = match DeletableObjects::read_from_db(self.object.id(), context).await? {
       DeletableObjects::Community(c) => c.id,
       DeletableObjects::Comment(c) => {

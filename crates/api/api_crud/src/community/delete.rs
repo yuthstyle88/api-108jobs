@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
   build_response::build_community_response,
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_mod_action, is_top_mod},
 };
@@ -13,13 +13,13 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::{CommunityResponse, DeleteCommunity};
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn delete_community(
   data: Json<DeleteCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityResponse>> {
+) -> FastJobResult<Json<CommunityResponse>> {
   // Fetch the community mods
   let community_mods =
     CommunityModeratorView::for_community(&mut context.pool(), data.community_id).await?;

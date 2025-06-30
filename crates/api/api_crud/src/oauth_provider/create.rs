@@ -1,20 +1,20 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::oauth_provider::{OAuthProvider, OAuthProviderInsertForm},
   traits::Crud,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::CreateOAuthProvider;
-use lemmy_utils::error::LemmyError;
+use lemmy_utils::error::FastJobError;
 use url::Url;
 
 pub async fn create_oauth_provider(
   data: Json<CreateOAuthProvider>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> Result<Json<OAuthProvider>, LemmyError> {
+) -> Result<Json<OAuthProvider>, FastJobError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

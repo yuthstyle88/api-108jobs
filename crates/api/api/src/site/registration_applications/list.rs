@@ -1,6 +1,6 @@
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::{
@@ -9,14 +9,14 @@ use lemmy_db_views_registration_applications::{
   RegistrationApplicationView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Lists registration applications, filterable by undenied only.
 pub async fn list_registration_applications(
   data: Query<ListRegistrationApplications>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListRegistrationApplicationsResponse>> {
+) -> FastJobResult<Json<ListRegistrationApplicationsResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   // Make sure user is an admin

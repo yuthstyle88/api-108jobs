@@ -3,7 +3,7 @@ use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_user_action, get_url_blocklist, process_markdown_opt, slur_regex},
@@ -19,15 +19,15 @@ use lemmy_db_views_comment::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
 
 pub async fn update_comment(
   data: Json<EditComment>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<CommentResponse>> {
   let comment_id = data.comment_id;
   let local_instance_id = local_user_view.person.instance_id;
   let orig_comment = CommentView::read(
@@ -47,7 +47,7 @@ pub async fn update_comment(
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {
-    Err(LemmyErrorType::NoCommentEditAllowed)?
+    Err(FastJobErrorType::NoCommentEditAllowed)?
   }
 
   let language_id = validate_post_language(

@@ -25,7 +25,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   utils::{check_is_mod_or_admin, get_url_blocklist, process_markdown, slur_regex},
 };
@@ -40,7 +40,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{FederationError, LemmyError, LemmyResult},
+  error::{FederationError, FastJobError, FastJobResult},
   utils::markdown::markdown_to_html,
 };
 use std::ops::Deref;
@@ -64,9 +64,9 @@ impl From<Comment> for ApubComment {
 
 #[async_trait::async_trait]
 impl Object for ApubComment {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Note;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     None
@@ -75,7 +75,7 @@ impl Object for ApubComment {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       Comment::read_from_apub_id(&mut context.pool(), object_id)
         .await?
@@ -83,7 +83,7 @@ impl Object for ApubComment {
     )
   }
 
-  async fn delete(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     if !self.deleted {
       let form = CommentUpdateForm {
         deleted: Some(true),
@@ -94,7 +94,7 @@ impl Object for ApubComment {
     Ok(())
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Note> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> FastJobResult<Note> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
 
@@ -138,8 +138,8 @@ impl Object for ApubComment {
   async fn verify(
     note: &Note,
     expected_domain: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     verify_domains_match(note.id.inner(), expected_domain)?;
     verify_domains_match(note.attributed_to.inner(), note.id.inner())?;
     let community = Box::pin(note.community(context)).await?;
@@ -187,7 +187,7 @@ impl Object for ApubComment {
   /// Converts a `Note` to `Comment`.
   ///
   /// If the parent community, post and comment(s) are not known locally, these are also fetched.
-  async fn from_json(note: Note, context: &Data<LemmyContext>) -> LemmyResult<ApubComment> {
+  async fn from_json(note: Note, context: &Data<FastJobContext>) -> FastJobResult<ApubComment> {
     let creator = note.attributed_to.dereference(context).await?;
     let (post, parent_comment) = note.get_parents(context).await?;
 
@@ -250,8 +250,8 @@ pub(crate) mod tests {
 
   async fn prepare_comment_test(
     url: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(ApubPerson, ApubCommunity, ApubPost, ApubSite)> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<(ApubPerson, ApubCommunity, ApubPost, ApubSite)> {
     // use separate counter so this doesn't affect tests
     let context2 = context.clone();
     let (person, site) = parse_lemmy_person(&context2).await?;
@@ -264,8 +264,8 @@ pub(crate) mod tests {
 
   async fn cleanup(
     (person, community, post, site): (ApubPerson, ApubCommunity, ApubPost, ApubSite),
-    context: &LemmyContext,
-  ) -> LemmyResult<()> {
+    context: &FastJobContext,
+  ) -> FastJobResult<()> {
     Post::delete(&mut context.pool(), post.id).await?;
     Community::delete(&mut context.pool(), community.id).await?;
     Person::delete(&mut context.pool(), person.id).await?;
@@ -276,8 +276,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  pub(crate) async fn test_parse_lemmy_comment() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  pub(crate) async fn test_parse_lemmy_comment() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/comment/38741")?;
     let data = prepare_comment_test(&url, &context).await?;
@@ -303,8 +303,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_comment() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_comment() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/comment/38741")?;
     let data = prepare_comment_test(&url, &context).await?;

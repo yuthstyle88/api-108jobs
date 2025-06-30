@@ -1,7 +1,7 @@
 use lemmy_api_utils::utils::is_admin;
 use lemmy_db_schema_file::enums::CommunityVisibility;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub mod create;
 pub mod delete;
@@ -15,7 +15,7 @@ pub mod update;
 fn check_community_visibility_allowed(
   visibility: Option<CommunityVisibility>,
   local_user_view: &LocalUserView,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   use CommunityVisibility::*;
   if visibility == Some(Private) || visibility == Some(Unlisted) {
     is_admin(local_user_view)?;

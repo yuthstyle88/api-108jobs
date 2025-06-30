@@ -1,5 +1,5 @@
 use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod create;
 pub mod read;
@@ -8,11 +8,11 @@ pub mod update;
 /// Checks whether the default post listing type is valid for a site.
 pub fn site_default_post_listing_type_check(
   default_post_listing_type: &Option<ListingType>,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   if let Some(listing_type) = default_post_listing_type {
     // Only allow all or local as default listing types...
     if listing_type != &ListingType::All && listing_type != &ListingType::Local {
-      Err(LemmyErrorType::InvalidDefaultPostListingType)?
+      Err(FastJobErrorType::InvalidDefaultPostListingType)?
     } else {
       Ok(())
     }
@@ -26,7 +26,7 @@ pub fn application_question_check(
   current_application_question: &Option<String>,
   new_application_question: &Option<String>,
   registration_mode: RegistrationMode,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   let has_no_question: bool =
     current_application_question.is_none() && new_application_question.is_none();
   let is_nullifying_question: bool = new_application_question == &Some(String::new());
@@ -34,7 +34,7 @@ pub fn application_question_check(
   if registration_mode == RegistrationMode::RequireApplication
     && (has_no_question || is_nullifying_question)
   {
-    Err(LemmyErrorType::ApplicationQuestionRequired)?
+    Err(FastJobErrorType::ApplicationQuestionRequired)?
   } else {
     Ok(())
   }

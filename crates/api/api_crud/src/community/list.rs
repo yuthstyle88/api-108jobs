@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_community::{
   api::{ListCommunities, ListCommunitiesResponse},
@@ -8,13 +8,13 @@ use lemmy_db_views_community::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_communities(
   data: Query<ListCommunities>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<ListCommunitiesResponse>> {
+) -> FastJobResult<Json<ListCommunitiesResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?;
 
   check_private_instance(&local_user_view, &local_site.local_site)?;

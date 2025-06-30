@@ -3,7 +3,7 @@ use actix_web::{web::Json, HttpRequest};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
   claims::Claims,
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     check_email_verified,
     check_local_user_valid,
@@ -42,7 +42,7 @@ use lemmy_email::{
   admin::send_new_applicant_email_to_admins,
 };
 use lemmy_utils::{
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::{
     slurs::{check_slurs, check_slurs_opt},
     validation::is_valid_actor_name,
@@ -67,8 +67,8 @@ struct TokenResponse {
 pub async fn register(
   data: Json<Register>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -76,14 +76,14 @@ pub async fn register(
     local_site.registration_mode == RegistrationMode::RequireApplication;
 
   if local_site.registration_mode == RegistrationMode::Closed {
-    Err(LemmyErrorType::RegistrationClosed)?
+    Err(FastJobErrorType::RegistrationClosed)?
   }
 
   password_length_check(&data.password)?;
   honeypot_check(&data.honeypot)?;
 
   if local_site.require_email_verification && data.email.is_none() {
-    Err(LemmyErrorType::EmailRequired)?
+    Err(FastJobErrorType::EmailRequired)?
   }
 
   // make sure the registration answer is provided when the registration application is required
@@ -93,7 +93,7 @@ pub async fn register(
 
   // Make sure passwords match
   if data.password != data.password_verify {
-    Err(LemmyErrorType::PasswordsDoNotMatch)?
+    Err(FastJobErrorType::PasswordsDoNotMatch)?
   }
 
   if local_site.site_setup && local_site.captcha_enabled {
@@ -211,8 +211,8 @@ pub async fn register(
 pub async fn authenticate_with_oauth(
   data: Json<AuthenticateWithOauth>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -226,7 +226,7 @@ pub async fn authenticate_with_oauth(
 
   // validate inputs
   if data.oauth_provider_id == OAuthProviderId(0) || data.code.is_empty() || data.code.len() > 300 {
-    return Err(LemmyErrorType::OauthAuthorizationInvalid)?;
+    return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
   // validate the redirect_uri
@@ -235,7 +235,7 @@ pub async fn authenticate_with_oauth(
     || !redirect_uri.path().eq(&String::from("/oauth/callback"))
     || !redirect_uri.query().unwrap_or("").is_empty()
   {
-    Err(LemmyErrorType::OauthAuthorizationInvalid)?
+    Err(FastJobErrorType::OauthAuthorizationInvalid)?
   }
 
   // validate the PKCE challenge
@@ -248,10 +248,10 @@ pub async fn authenticate_with_oauth(
   let oauth_provider = OAuthProvider::read(pool, oauth_provider_id)
     .await
     .ok()
-    .ok_or(LemmyErrorType::OauthAuthorizationInvalid)?;
+    .ok_or(FastJobErrorType::OauthAuthorizationInvalid)?;
 
   if !oauth_provider.enabled {
-    return Err(LemmyErrorType::OauthAuthorizationInvalid)?;
+    return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
   let token_response = oauth_request_access_token(
@@ -295,12 +295,12 @@ pub async fn authenticate_with_oauth(
 
     // prevent registration if registration is closed
     if local_site.registration_mode == RegistrationMode::Closed {
-      Err(LemmyErrorType::RegistrationClosed)?
+      Err(FastJobErrorType::RegistrationClosed)?
     }
 
     // prevent registration if registration is closed for OAUTH providers
     if !local_site.oauth_registration {
-      return Err(LemmyErrorType::OauthRegistrationClosed)?;
+      return Err(FastJobErrorType::OauthRegistrationClosed)?;
     }
 
     // Extract the OAUTH email claim from the returned user_info
@@ -335,7 +335,7 @@ pub async fn authenticate_with_oauth(
 
         user_view.local_user.clone()
       } else {
-        return Err(LemmyErrorType::EmailAlreadyExists)?;
+        return Err(FastJobErrorType::EmailAlreadyExists)?;
       }
     } else {
       // No user was found by email => Register as new user
@@ -357,7 +357,7 @@ pub async fn authenticate_with_oauth(
             let username = tx_data
               .username
               .as_ref()
-              .ok_or(LemmyErrorType::RegistrationUsernameRequired)?;
+              .ok_or(FastJobErrorType::RegistrationUsernameRequired)?;
 
             check_slurs(username, &slur_regex)?;
             check_slurs_opt(&data.answer, &slur_regex)?;
@@ -439,9 +439,9 @@ pub async fn authenticate_with_oauth(
 async fn create_person(
   username: String,
   site_view: &SiteView,
-  context: &LemmyContext,
+  context: &FastJobContext,
   conn: &mut AsyncPgConnection,
-) -> Result<Person, LemmyError> {
+) -> Result<Person, FastJobError> {
   let actor_keypair = generate_actor_keypair()?;
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
@@ -481,7 +481,7 @@ async fn create_local_user(
   language_tags: Vec<String>,
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
-) -> Result<LocalUser, LemmyError> {
+) -> Result<LocalUser, FastJobError> {
   let conn_ = &mut conn.into();
   let all_languages = Language::read_all(conn_).await?;
   // use hashset to avoid duplicates
@@ -517,21 +517,21 @@ async fn create_local_user(
 fn validate_registration_answer(
   require_registration_application: bool,
   answer: &Option<String>,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   if require_registration_application && answer.is_none() {
-    Err(LemmyErrorType::RegistrationApplicationAnswerRequired)?
+    Err(FastJobErrorType::RegistrationApplicationAnswerRequired)?
   }
 
   Ok(())
 }
 
 async fn oauth_request_access_token(
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   oauth_provider: &OAuthProvider,
   code: &str,
   pkce_code_verifier: Option<&str>,
   redirect_uri: &str,
-) -> LemmyResult<TokenResponse> {
+) -> FastJobResult<TokenResponse> {
   let mut form = vec![
     ("client_id", &*oauth_provider.client_id),
     ("client_secret", &*oauth_provider.client_secret),
@@ -552,24 +552,24 @@ async fn oauth_request_access_token(
     .form(&form[..])
     .send()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
 
   // Extract the access token
   let token_response = response
     .json::<TokenResponse>()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
 
   Ok(token_response)
 }
 
 async fn oidc_get_user_info(
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   oauth_provider: &OAuthProvider,
   access_token: &str,
-) -> LemmyResult<serde_json::Value> {
+) -> FastJobResult<serde_json::Value> {
   // Request the user info from the OAUTH provider
   let response = context
     .client()
@@ -578,30 +578,30 @@ async fn oidc_get_user_info(
     .bearer_auth(access_token)
     .send()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
 
   // Extract the OAUTH user_id claim from the returned user_info
   let user_info = response
     .json::<serde_json::Value>()
     .await
-    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
 
   Ok(user_info)
 }
 
-fn read_user_info(user_info: &serde_json::Value, key: &str) -> LemmyResult<String> {
+fn read_user_info(user_info: &serde_json::Value, key: &str) -> FastJobResult<String> {
   if let Some(value) = user_info.get(key) {
     let result = serde_json::from_value::<String>(value.clone())
-      .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+      .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
     return Ok(result);
   }
-  Err(LemmyErrorType::OauthLoginFailed)?
+  Err(FastJobErrorType::OauthLoginFailed)?
 }
 
 #[allow(clippy::expect_used)]
-fn check_code_verifier(code_verifier: &str) -> LemmyResult<()> {
+fn check_code_verifier(code_verifier: &str) -> FastJobResult<()> {
   static VALID_CODE_VERIFIER_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-._~]{43,128}$").expect("compile regex"));
 
@@ -610,6 +610,6 @@ fn check_code_verifier(code_verifier: &str) -> LemmyResult<()> {
   if check {
     Ok(())
   } else {
-    Err(LemmyErrorType::InvalidCodeVerifier.into())
+    Err(FastJobErrorType::InvalidCodeVerifier.into())
   }
 }

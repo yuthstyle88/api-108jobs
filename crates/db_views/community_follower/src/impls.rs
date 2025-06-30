@@ -25,7 +25,7 @@ use lemmy_db_schema_file::{
   enums::{CommunityFollowerState, CommunityVisibility},
   schema::{community, community_actions, person},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CommunityFollowerView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -41,7 +41,7 @@ impl CommunityFollowerView {
     pool: &mut DbPool<'_>,
     instance_id: InstanceId,
     published_since: chrono::DateTime<Utc>,
-  ) -> LemmyResult<Vec<(CommunityId, DbUrl)>> {
+  ) -> FastJobResult<Vec<(CommunityId, DbUrl)>> {
     let conn = &mut get_conn(pool).await?;
     // In most cases this will fetch the same url many times (the shared inbox url)
     // PG will only send a single copy to rust, but it has to scan through all follower rows (same
@@ -60,13 +60,13 @@ impl CommunityFollowerView {
       .distinct() // only need each community_id, inbox combination once
       .load::<(CommunityId, DbUrl)>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn get_community_follower_inboxes(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> FastJobResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     let res = Self::joins()
       .filter(community_actions::community_id.eq(community_id))
@@ -82,17 +82,17 @@ impl CommunityFollowerView {
   pub async fn count_community_followers(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::community_id.eq(community_id))
       .select(count_star())
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn for_person(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Vec<Self>> {
+  pub async fn for_person(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::person_id.eq(person_id))
@@ -103,7 +103,7 @@ impl CommunityFollowerView {
       .order_by(community::title)
       .load::<CommunityFollowerView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn list_approval_required(
@@ -116,7 +116,7 @@ impl CommunityFollowerView {
     cursor_data: Option<CommunityActions>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<PendingFollow>> {
+  ) -> FastJobResult<Vec<PendingFollow>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
     let (person_alias, community_follower_alias) = diesel::alias!(
@@ -195,7 +195,7 @@ impl CommunityFollowerView {
   pub async fn count_approval_required(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(community_actions::community_id.eq(community_id))
@@ -203,13 +203,13 @@ impl CommunityFollowerView {
       .select(count(community_actions::community_id))
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
   pub async fn check_private_community_action(
     pool: &mut DbPool<'_>,
     from_person_id: PersonId,
     community: &Community,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     if community.visibility != CommunityVisibility::Private {
       return Ok(());
     }
@@ -223,13 +223,13 @@ impl CommunityFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(FastJobErrorType::NotFound.into())
   }
   pub async fn check_has_followers_from_instance(
     community_id: CommunityId,
     instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(exists(
       Self::joins()
@@ -240,14 +240,14 @@ impl CommunityFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(FastJobErrorType::NotFound.into())
   }
 
   pub async fn is_follower(
     community_id: CommunityId,
     instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(exists(
       Self::joins()
@@ -258,7 +258,7 @@ impl CommunityFollowerView {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(FastJobErrorType::NotFound.into())
   }
 }
 
@@ -274,15 +274,15 @@ impl PaginationCursorBuilder for CommunityFollowerView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     let (_, community_id) = pids
       .get(1)
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     CommunityActions::read(pool, CommunityId(*community_id), PersonId(*person_id)).await
   }
 }
@@ -314,7 +314,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_has_followers_from_instance() -> LemmyResult<()> {
+  async fn test_has_followers_from_instance() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

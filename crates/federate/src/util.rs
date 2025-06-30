@@ -17,7 +17,7 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::error::LemmyError;
+use lemmy_utils::error::FastJobError;
 use moka::future::Cache;
 use reqwest::Url;
 use std::{
@@ -168,7 +168,7 @@ pub(crate) async fn get_actor_cached(
             .into(),
         )),
       };
-      Result::<_, LemmyError>::Ok(Arc::new(actor))
+      Result::<_, FastJobError>::Ok(Arc::new(actor))
     })
     .await
     .map_err(|e| anyhow::anyhow!("err getting actor {actor_type:?} {actor_apub_id}: {e:?}"))
@@ -190,7 +190,7 @@ pub(crate) async fn get_activity_cached(
       Ok(Some(Arc::new(SentActivity::read(pool, activity_id).await?)))
     })
     .await
-    .map_err(|e: Arc<LemmyError>| anyhow::anyhow!("err getting activity: {e:?}"))
+    .map_err(|e: Arc<FastJobError>| anyhow::anyhow!("err getting activity: {e:?}"))
 }
 
 /// return the most current activity id (with 1 second cache)

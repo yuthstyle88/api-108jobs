@@ -18,7 +18,7 @@ use diesel::{
   RunQueryDsl,
 };
 use diesel_migrations::MigrationHarness;
-use lemmy_utils::{error::LemmyResult, settings::SETTINGS};
+use lemmy_utils::{error::FastJobResult, settings::SETTINGS};
 use std::time::Instant;
 use tracing::debug;
 
@@ -178,7 +178,7 @@ pub enum Branch {
   ReplaceableSchemaNotRebuilt,
 }
 
-pub fn run(options: Options) -> LemmyResult<Branch> {
+pub fn run(options: Options) -> FastJobResult<Branch> {
   let db_url = SETTINGS.get_database_url();
 
   // Migrations don't support async connection, and this function doesn't need to be async
@@ -250,7 +250,7 @@ pub fn run(options: Options) -> LemmyResult<Branch> {
   Ok(output)
 }
 
-fn run_replaceable_schema(conn: &mut PgConnection) -> LemmyResult<()> {
+fn run_replaceable_schema(conn: &mut PgConnection) -> FastJobResult<()> {
   conn.transaction(|conn| {
     conn
       .batch_execute(&replaceable_schema())
@@ -266,7 +266,7 @@ fn run_replaceable_schema(conn: &mut PgConnection) -> LemmyResult<()> {
   })
 }
 
-fn revert_replaceable_schema(conn: &mut PgConnection) -> LemmyResult<()> {
+fn revert_replaceable_schema(conn: &mut PgConnection) -> FastJobResult<()> {
   conn
     .batch_execute("DROP SCHEMA IF EXISTS r CASCADE;")
     .with_context(|| format!("Failed to revert SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
@@ -324,7 +324,7 @@ mod tests {
     *,
   };
   use diesel_ltree::Ltree;
-  use lemmy_utils::{error::LemmyResult, settings::SETTINGS};
+  use lemmy_utils::{error::FastJobResult, settings::SETTINGS};
   use serial_test::serial;
   // The number of migrations that should be run to set up some test data.
   // Currently, this includes migrations until
@@ -374,7 +374,7 @@ mod tests {
 
   #[test]
   #[serial]
-  fn test_schema_setup() -> LemmyResult<()> {
+  fn test_schema_setup() -> FastJobResult<()> {
     let o = Options::default();
     let db_url = SETTINGS.get_database_url();
     let mut conn = PgConnection::establish(&db_url)?;
@@ -424,7 +424,7 @@ mod tests {
     Ok(())
   }
 
-  fn insert_test_data(conn: &mut PgConnection) -> LemmyResult<()> {
+  fn insert_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
     // Users
     conn.batch_execute(&format!(
       "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
@@ -510,7 +510,7 @@ mod tests {
     Ok(())
   }
 
-  fn check_test_data(conn: &mut PgConnection) -> LemmyResult<()> {
+  fn check_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
     use crate::schema::{comment, comment_reply, community, person, post};
 
     // Check users

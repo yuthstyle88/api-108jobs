@@ -2,7 +2,7 @@ use crate::fetcher::resolve_ap_identifier;
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_private_instance, is_mod_or_admin_opt, read_site_for_actor},
 };
 use lemmy_apub_objects::objects::community::ApubCommunity;
@@ -14,17 +14,17 @@ use lemmy_db_views_community::{
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_community(
   data: Query<GetCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetCommunityResponse>> {
+) -> FastJobResult<Json<GetCommunityResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   if data.name.is_none() && data.id.is_none() {
-    Err(LemmyErrorType::NoIdGiven)?
+    Err(FastJobErrorType::NoIdGiven)?
   }
 
   check_private_instance(&local_user_view, &local_site)?;

@@ -4,7 +4,7 @@ use activitypub_federation::{config::Data, http_signatures::generate_actor_keypa
 use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     generate_inbox_url,
     get_url_blocklist,
@@ -30,7 +30,7 @@ use lemmy_db_views_site::{
   SiteView,
 };
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::{
     slurs::check_slurs,
     validation::{
@@ -45,9 +45,9 @@ use url::Url;
 
 pub async fn create_site(
   data: Json<CreateSite>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SiteResponse>> {
+) -> FastJobResult<Json<SiteResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   // Make sure user is an admin; other types of users should not create site data...
@@ -144,10 +144,10 @@ pub async fn create_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> LemmyResult<()> {
+fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> FastJobResult<()> {
   // Make sure the site hasn't already been set up...
   if local_site.site_setup {
-    Err(LemmyErrorType::SiteAlreadyExists)?
+    Err(FastJobErrorType::SiteAlreadyExists)?
   };
 
   // Check that the slur regex compiles, and returns the regex if valid...
@@ -190,14 +190,14 @@ mod tests {
   use lemmy_db_schema::source::local_site::LocalSite;
   use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
   use lemmy_db_views_site::api::CreateSite;
-  use lemmy_utils::error::LemmyErrorType;
+  use lemmy_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_create_payload() {
     let invalid_payloads = [
       (
         "CreateSite attempted on set up LocalSite",
-        LemmyErrorType::SiteAlreadyExists,
+        FastJobErrorType::SiteAlreadyExists,
         &LocalSite {
           site_setup: true,
           private_instance: true,
@@ -212,7 +212,7 @@ mod tests {
       ),
       (
         "CreateSite name matches LocalSite slur filter",
-        LemmyErrorType::Slurs,
+        FastJobErrorType::Slurs,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -228,7 +228,7 @@ mod tests {
       ),
       (
         "CreateSite name matches new slur filter",
-        LemmyErrorType::Slurs,
+        FastJobErrorType::Slurs,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -245,7 +245,7 @@ mod tests {
       ),
       (
         "CreateSite listing type is Subscribed, which is invalid",
-        LemmyErrorType::InvalidDefaultPostListingType,
+        FastJobErrorType::InvalidDefaultPostListingType,
         &LocalSite {
           site_setup: false,
           private_instance: true,
@@ -261,7 +261,7 @@ mod tests {
       ),
       (
         "CreateSite requires application, but neither it nor LocalSite has an application question",
-        LemmyErrorType::ApplicationQuestionRequired,
+        FastJobErrorType::ApplicationQuestionRequired,
         &LocalSite {
           site_setup: false,
           private_instance: true,

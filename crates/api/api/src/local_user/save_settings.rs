@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
 use lemmy_db_schema::{
@@ -21,7 +21,7 @@ use lemmy_db_views_site::{
 };
 use lemmy_email::account::send_verification_email;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::validation::{
     check_blocking_keywords_are_valid,
     is_valid_bio_field,
@@ -33,9 +33,9 @@ use std::ops::Deref;
 
 pub async fn save_user_settings(
   data: Json<SaveUserSettings>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   let slur_regex = slur_regex(&context).await?;
@@ -71,7 +71,7 @@ pub async fn save_user_settings(
   // value
   if let Some(email) = &email {
     if email.is_none() && site_view.local_site.require_email_verification {
-      Err(LemmyErrorType::EmailRequired)?
+      Err(FastJobErrorType::EmailRequired)?
     }
   }
 
@@ -92,7 +92,7 @@ pub async fn save_user_settings(
 
   if let Some(send_notifications_to_email) = data.send_notifications_to_email {
     if site_view.local_site.disable_email_notifications && send_notifications_to_email {
-      return Err(LemmyErrorType::EmailNotificationsDisabled.into());
+      return Err(FastJobErrorType::EmailNotificationsDisabled.into());
     }
   }
 

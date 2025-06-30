@@ -7,10 +7,10 @@ use activitypub_federation::{
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{newtypes::ActivityId, source::activity::SentActivity};
 use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+  error::{FastJobError, FastJobResult},
   federate_retry_sleep_duration,
   FEDERATION_CONTEXT,
 };
@@ -89,7 +89,7 @@ pub(crate) struct SendRetryTask<'a> {
   pub initial_fail_count: i32,
   /// For logging purposes
   pub domain: String,
-  pub context: Data<LemmyContext>,
+  pub context: Data<FastJobContext>,
   pub stop: CancellationToken,
 }
 
@@ -167,9 +167,9 @@ struct DummyActivity {
 
 #[async_trait::async_trait]
 impl ActivityHandler for DummyActivity {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
 
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -179,11 +179,11 @@ impl ActivityHandler for DummyActivity {
     &self.actor
   }
 
-  async fn verify(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<Self::DataType>) -> FastJobResult<()> {
     Ok(())
   }
 
-  async fn receive(self, _context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, _context: &Data<FastJobContext>) -> FastJobResult<()> {
     Ok(())
   }
 }

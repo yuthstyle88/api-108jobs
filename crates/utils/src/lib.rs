@@ -81,7 +81,7 @@ pub static FEDERATION_CONTEXT: LazyLock<Value> = LazyLock::new(|| {
 /// * logs errors
 /// * attaches the spawned task to the tracing span of the caller for better logging
 pub fn spawn_try_task(
-  task: impl futures::Future<Output = Result<(), error::LemmyError>> + Send + 'static,
+  task: impl futures::Future<Output = Result<(), error::FastJobError >> + Send + 'static,
 ) {
   use tracing::Instrument;
   tokio::spawn(

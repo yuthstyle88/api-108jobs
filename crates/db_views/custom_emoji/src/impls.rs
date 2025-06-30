@@ -7,7 +7,7 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{custom_emoji, custom_emoji_keyword};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::collections::HashMap;
 
 type SelectionType = (
@@ -32,7 +32,7 @@ impl CustomEmojiView {
     )
   }
 
-  pub async fn get(pool: &mut DbPool<'_>, emoji_id: CustomEmojiId) -> LemmyResult<Self> {
+  pub async fn get(pool: &mut DbPool<'_>, emoji_id: CustomEmojiId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let emojis = Self::joins()
       .filter(custom_emoji::id.eq(emoji_id))
@@ -45,11 +45,11 @@ impl CustomEmojiView {
     {
       Ok(emoji)
     } else {
-      Err(LemmyErrorType::NotFound.into())
+      Err(FastJobErrorType::NotFound.into())
     }
   }
 
-  pub async fn list(pool: &mut DbPool<'_>, category: &Option<String>) -> LemmyResult<Vec<Self>> {
+  pub async fn list(pool: &mut DbPool<'_>, category: &Option<String>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins().into_boxed();

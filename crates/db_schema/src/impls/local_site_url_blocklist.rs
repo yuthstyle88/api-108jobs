@@ -5,10 +5,10 @@ use crate::{
 use diesel::dsl::insert_into;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use lemmy_db_schema_file::schema::local_site_url_blocklist;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalSiteUrlBlocklist {
-  pub async fn replace(pool: &mut DbPool<'_>, url_blocklist: Vec<String>) -> LemmyResult<usize> {
+  pub async fn replace(pool: &mut DbPool<'_>, url_blocklist: Vec<String>) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     conn
@@ -28,25 +28,25 @@ impl LocalSiteUrlBlocklist {
             .values(forms)
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateLocalSiteUrlBlocklist)
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateLocalSiteUrlBlocklist)
         }
         .scope_boxed()
       })
       .await
   }
 
-  async fn clear(conn: &mut AsyncPgConnection) -> LemmyResult<usize> {
+  async fn clear(conn: &mut AsyncPgConnection) -> FastJobResult<usize> {
     diesel::delete(local_site_url_blocklist::table)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
-  pub async fn get_all(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn get_all(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     local_site_url_blocklist::table
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }

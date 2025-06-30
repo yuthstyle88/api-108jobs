@@ -5,12 +5,12 @@ use activitypub_federation::{
   protocol::helpers::deserialize_one,
 };
 use either::Either;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, instance::ApubSite, person::ApubPerson, ReportableObjects},
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -31,19 +31,19 @@ pub struct Report {
 }
 
 impl Report {
-  pub fn reason(&self) -> LemmyResult<String> {
+  pub fn reason(&self) -> FastJobResult<String> {
     self
       .summary
       .clone()
       .or(self.content.clone())
-      .ok_or(LemmyErrorType::NotFound.into())
+      .ok_or(FastJobErrorType::NotFound.into())
   }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub(crate) enum ReportObject {
-  Lemmy(ObjectId<ReportableObjects>),
+  FastJob(ObjectId<ReportableObjects>),
   /// Mastodon sends an array containing user id and one or more post ids
   Mastodon(Vec<Url>),
 }
@@ -51,10 +51,10 @@ pub(crate) enum ReportObject {
 impl ReportObject {
   pub(crate) async fn dereference(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<ReportableObjects> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<ReportableObjects> {
     match self {
-      ReportObject::Lemmy(l) => l.dereference(context).await,
+      ReportObject::FastJob(l) => l.dereference(context).await,
       ReportObject::Mastodon(objects) => {
         for o in objects {
           // Find the first reported item which can be dereferenced as post or comment (Lemmy can
@@ -64,17 +64,17 @@ impl ReportObject {
             return deref;
           }
         }
-        Err(LemmyErrorType::NotFound.into())
+        Err(FastJobErrorType::NotFound.into())
       }
     }
   }
 
   pub(crate) async fn object_id(
     &self,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<ObjectId<ReportableObjects>> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<ObjectId<ReportableObjects>> {
     match self {
-      ReportObject::Lemmy(l) => Ok(l.clone()),
+      ReportObject::FastJob(l) => Ok(l.clone()),
       ReportObject::Mastodon(objects) => {
         for o in objects {
           // Same logic as above, but return the ID and not the object itself.
@@ -85,16 +85,16 @@ impl ReportObject {
             return Ok(o.clone().into());
           }
         }
-        Err(LemmyErrorType::NotFound.into())
+        Err(FastJobErrorType::NotFound.into())
       }
     }
   }
 }
 
 impl InCommunity for Report {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     match self.to[0].dereference(context).await? {
-      Either::Left(_) => Err(LemmyErrorType::NotFound.into()),
+      Either::Left(_) => Err(FastJobErrorType::NotFound.into()),
       Either::Right(c) => Ok(c),
     }
   }

@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
   build_response::build_comment_response,
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_bot_account, check_community_user_action, check_local_vote_mode},
@@ -21,14 +21,14 @@ use lemmy_db_views_comment::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_comment(
   data: Json<CreateCommentLike>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<CommentResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let comment_id = data.comment_id;

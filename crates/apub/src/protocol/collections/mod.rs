@@ -15,11 +15,11 @@ mod tests {
     group_outbox::GroupOutbox,
   };
   use lemmy_apub_objects::utils::test::{test_json, test_parse_lemmy_item};
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
 
   #[test]
-  fn test_parse_lemmy_collections() -> LemmyResult<()> {
+  fn test_parse_lemmy_collections() -> FastJobResult<()> {
     test_parse_lemmy_item::<GroupFollowers>("assets/lemmy/collections/group_followers.json")?;
     let outbox =
       test_parse_lemmy_item::<GroupOutbox>("assets/lemmy/collections/group_outbox.json")?;
@@ -31,7 +31,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_mastodon_collections() -> LemmyResult<()> {
+  fn test_parse_mastodon_collections() -> FastJobResult<()> {
     test_json::<GroupFeatured>("assets/mastodon/collections/featured.json")?;
     Ok(())
   }

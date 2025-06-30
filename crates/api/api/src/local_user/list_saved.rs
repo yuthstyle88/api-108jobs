@@ -1,6 +1,6 @@
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person_saved_combined::{
@@ -10,13 +10,13 @@ use lemmy_db_views_person_saved_combined::{
   PersonSavedCombinedView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_person_saved(
   data: Query<ListPersonSaved>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListPersonSavedResponse>> {
+) -> FastJobResult<Json<ListPersonSavedResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?;
 
   check_private_instance(&Some(local_user_view.clone()), &local_site.local_site)?;

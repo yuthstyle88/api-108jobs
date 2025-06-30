@@ -2,7 +2,7 @@ use super::comment_sort_type_with_default;
 use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_apub_objects::objects::community::ApubCommunity;
 use lemmy_db_schema::{
   newtypes::PaginationCursor,
@@ -16,7 +16,7 @@ use lemmy_db_views_comment::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,
@@ -27,9 +27,9 @@ struct CommentsCommonOutput {
 /// A common fetcher for both the CommentView, and CommentSlimView.
 async fn list_comments_common(
   data: Query<GetComments>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<CommentsCommonOutput> {
+) -> FastJobResult<CommentsCommonOutput> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
@@ -106,9 +106,9 @@ async fn list_comments_common(
 
 pub async fn list_comments(
   data: Query<GetComments>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetCommentsResponse>> {
+) -> FastJobResult<Json<GetCommentsResponse>> {
   let common = list_comments_common(data, context, local_user_view).await?;
 
   Ok(Json(GetCommentsResponse {
@@ -120,9 +120,9 @@ pub async fn list_comments(
 
 pub async fn list_comments_slim(
   data: Query<GetComments>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetCommentsSlimResponse>> {
+) -> FastJobResult<Json<GetCommentsSlimResponse>> {
   let common = list_comments_common(data, context, local_user_view).await?;
 
   let comments = common

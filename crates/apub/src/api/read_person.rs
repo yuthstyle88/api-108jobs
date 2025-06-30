@@ -2,7 +2,7 @@ use super::resolve_person_id_from_id_or_username;
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_private_instance, is_admin, read_site_for_actor},
 };
 use lemmy_db_views_community_moderator::CommunityModeratorView;
@@ -12,13 +12,13 @@ use lemmy_db_views_person::{
   PersonView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn read_person(
   data: Query<GetPersonDetails>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetPersonDetailsResponse>> {
+) -> FastJobResult<Json<GetPersonDetailsResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
   let local_instance_id = site_view.site.instance_id;

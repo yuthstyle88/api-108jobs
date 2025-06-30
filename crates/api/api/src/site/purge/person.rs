@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{is_admin, purge_user_account},
 };
@@ -17,13 +17,13 @@ use lemmy_db_schema::{
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::api::PurgePerson;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn purge_person(
   data: Json<PurgePerson>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
 
   // Only let admin purge an item

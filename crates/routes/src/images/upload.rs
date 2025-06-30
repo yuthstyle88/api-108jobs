@@ -1,7 +1,7 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   request::PictrsResponse,
   utils::{is_admin, is_mod_or_admin},
 };
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::CommunityIdQuery;
 use lemmy_db_views_local_image::api::UploadImageResponse;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Body;
 use std::time::Duration;
 use UploadType::*;
@@ -32,10 +32,10 @@ pub async fn upload_image(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   if context.settings().pictrs()?.image_upload_disabled {
-    return Err(LemmyErrorType::ImageUploadDisabled.into());
+    return Err(FastJobErrorType::ImageUploadDisabled.into());
   }
 
   Ok(Json(
@@ -47,8 +47,8 @@ pub async fn upload_user_avatar(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
   delete_old_image(&local_user_view.person.avatar, &context).await?;
 
@@ -65,8 +65,8 @@ pub async fn upload_user_banner(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
   delete_old_image(&local_user_view.person.banner, &context).await?;
 
@@ -84,8 +84,8 @@ pub async fn upload_community_icon(
   query: Query<CommunityIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
   is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
@@ -106,8 +106,8 @@ pub async fn upload_community_banner(
   query: Query<CommunityIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
   is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
@@ -127,8 +127,8 @@ pub async fn upload_site_icon(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   is_admin(&local_user_view)?;
   let site = Site::read_local(&mut context.pool()).await?;
 
@@ -148,8 +148,8 @@ pub async fn upload_site_banner(
   req: HttpRequest,
   body: Payload,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UploadImageResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UploadImageResponse>> {
   is_admin(&local_user_view)?;
   let site = Site::read_local(&mut context.pool()).await?;
 
@@ -170,8 +170,8 @@ pub async fn do_upload_image(
   body: Payload,
   upload_type: UploadType,
   local_user_view: &LocalUserView,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<UploadImageResponse> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<UploadImageResponse> {
   let pictrs = context.settings().pictrs()?;
   let max_upload_size = pictrs.max_upload_size.map(|m| m.to_string());
   let image_url = format!("{}image", pictrs.url);
@@ -236,7 +236,7 @@ pub async fn do_upload_image(
   let image = images
     .files
     .pop()
-    .ok_or(LemmyErrorType::InvalidImageUpload)?;
+    .ok_or(FastJobErrorType::InvalidImageUpload)?;
 
   let url = image.image_url(&context.settings().get_protocol_and_hostname())?;
   Ok(UploadImageResponse {

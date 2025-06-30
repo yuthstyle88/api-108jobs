@@ -26,14 +26,14 @@ use lemmy_db_schema_file::{
   enums::CommunityVisibility,
   schema::{community, community_actions, local_user, person, registration_application},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUser {
   pub async fn create(
     pool: &mut DbPool<'_>,
     form: &LocalUserInsertForm,
     languages: Vec<LanguageId>,
-  ) -> LemmyResult<LocalUser> {
+  ) -> FastJobResult<LocalUser> {
     let conn = &mut get_conn(pool).await?;
     let mut form_with_encrypted_password = form.clone();
 
@@ -56,7 +56,7 @@ impl LocalUser {
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
     form: &LocalUserUpdateForm,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let res = diesel::update(local_user::table.find(local_user_id))
       .set(form)
@@ -67,22 +67,22 @@ impl LocalUser {
       Err(Error::QueryBuilderError(_)) => Ok(0),
       other => other,
     }
-    .with_lemmy_type(LemmyErrorType::CouldntUpdateUser)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
-  pub async fn delete(pool: &mut DbPool<'_>, id: LocalUserId) -> LemmyResult<usize> {
+  pub async fn delete(pool: &mut DbPool<'_>, id: LocalUserId) -> FastJobResult<usize> {
     let conn = &mut *get_conn(pool).await?;
     diesel::delete(local_user::table.find(id))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn update_password(
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
     new_password: &str,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let password_hash = hash(new_password, DEFAULT_COST)?;
 
@@ -90,30 +90,30 @@ impl LocalUser {
       .set((local_user::password_encrypted.eq(password_hash),))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateUser)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
-  pub async fn set_all_users_email_verified(pool: &mut DbPool<'_>) -> LemmyResult<Vec<Self>> {
+  pub async fn set_all_users_email_verified(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_user::table)
       .set(local_user::email_verified.eq(true))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateUser)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
   pub async fn set_all_users_registration_applications_accepted(
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_user::table)
       .set(local_user::accepted_application.eq(true))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateUser)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
-  pub async fn delete_old_denied_local_users(pool: &mut DbPool<'_>) -> LemmyResult<usize> {
+  pub async fn delete_old_denied_local_users(pool: &mut DbPool<'_>) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     // Make sure:
@@ -138,10 +138,10 @@ impl LocalUser {
     diesel::delete(persons)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
-  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> LemmyResult<()> {
+  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<()> {
     use diesel::dsl::{exists, select};
     let conn = &mut get_conn(pool).await?;
     select(not(exists(local_user::table.filter(
@@ -150,14 +150,14 @@ impl LocalUser {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::EmailAlreadyExists.into())
+    .ok_or(FastJobErrorType::EmailAlreadyExists.into())
   }
 
   // TODO: maybe move this and pass in LocalUserView
   pub async fn export_backup(
     pool: &mut DbPool<'_>,
     person_id_: PersonId,
-  ) -> LemmyResult<UserBackupLists> {
+  ) -> FastJobResult<UserBackupLists> {
     use lemmy_db_schema_file::schema::{
       comment,
       comment_actions,
@@ -236,7 +236,7 @@ impl LocalUser {
     pool: &mut DbPool<'_>,
     admin_person_id: PersonId,
     target_person_ids: Vec<PersonId>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     // Build the list of persons
@@ -256,7 +256,7 @@ impl LocalUser {
     if res.person_id == admin_person_id {
       Ok(())
     } else {
-      Err(LemmyErrorType::NotHigherAdmin)?
+      Err(FastJobErrorType::NotHigherAdmin)?
     }
   }
 
@@ -266,7 +266,7 @@ impl LocalUser {
     for_community_id: CommunityId,
     admin_person_id: PersonId,
     target_person_ids: Vec<PersonId>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     // Build the list of persons
@@ -288,13 +288,13 @@ impl LocalUser {
       .select(community_actions::person_id);
 
     let res = admins.union_all(mods).get_results::<PersonId>(conn).await?;
-    let first_person = res.as_slice().first().ok_or(LemmyErrorType::NotHigherMod)?;
+    let first_person = res.as_slice().first().ok_or(FastJobErrorType::NotHigherMod)?;
 
     // If the first result sorted by published is the acting mod
     if *first_person == admin_person_id {
       Ok(())
     } else {
-      Err(LemmyErrorType::NotHigherMod)?
+      Err(FastJobErrorType::NotHigherMod)?
     }
   }
 }
@@ -396,12 +396,12 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_admin_higher_check() -> LemmyResult<()> {
+  async fn test_admin_higher_check() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -440,7 +440,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_email_taken() -> LemmyResult<()> {
+  async fn test_email_taken() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

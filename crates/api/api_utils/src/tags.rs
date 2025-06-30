@@ -1,4 +1,4 @@
-use crate::{context::LemmyContext, utils::check_community_mod_action};
+use crate::{context::FastJobContext, utils::check_community_mod_action};
 use lemmy_db_schema::{
   newtypes::TagId,
   source::{
@@ -8,16 +8,16 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::collections::HashSet;
 
 pub async fn update_post_tags(
-  context: &LemmyContext,
+  context: &FastJobContext,
   post: &Post,
   community: &CommunityView,
   tags: &[TagId],
   local_user_view: &LocalUserView,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   let is_author = Post::is_post_creator(local_user_view.person.id, post.creator_id);
 
   if !is_author {
@@ -33,7 +33,7 @@ pub async fn update_post_tags(
   // validate tags
   let valid_tags: HashSet<TagId> = community.post_tags.0.iter().map(|t| t.id).collect();
   if !valid_tags.is_superset(&tags.iter().copied().collect()) {
-    return Err(LemmyErrorType::TagNotInCommunity.into());
+    return Err(FastJobErrorType::TagNotInCommunity.into());
   }
 
   let insert_tags = tags

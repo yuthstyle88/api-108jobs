@@ -13,7 +13,7 @@ use diesel::{
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use lemmy_db_schema_file::schema::{image_details, local_image, remote_image};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use url::Url;
 
 impl LocalImage {
@@ -21,7 +21,7 @@ impl LocalImage {
     pool: &mut DbPool<'_>,
     form: &LocalImageForm,
     image_details_form: &ImageDetailsInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     conn
       .run_transaction(|conn| {
@@ -30,7 +30,7 @@ impl LocalImage {
             .values(form)
             .get_result::<Self>(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntCreateImage);
+            .with_fastjob_type(FastJobErrorType::CouldntCreateImage);
 
           ImageDetails::create(&mut conn.into(), image_details_form).await?;
 
@@ -45,7 +45,7 @@ impl LocalImage {
     pool: &mut DbPool<'_>,
     alias: &str,
     person_id: PersonId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     select(exists(
@@ -58,29 +58,29 @@ impl LocalImage {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(FastJobErrorType::NotFound.into())
   }
 
-  pub async fn delete_by_alias(pool: &mut DbPool<'_>, alias: &str) -> LemmyResult<Self> {
+  pub async fn delete_by_alias(pool: &mut DbPool<'_>, alias: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_image::table.filter(local_image::pictrs_alias.eq(alias)))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   /// Delete many aliases. Should be used with a pictrs purge.
-  pub async fn delete_by_aliases(pool: &mut DbPool<'_>, aliases: &[String]) -> LemmyResult<usize> {
+  pub async fn delete_by_aliases(pool: &mut DbPool<'_>, aliases: &[String]) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_image::table.filter(local_image::pictrs_alias.eq_any(aliases)))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 }
 
 impl RemoteImage {
-  pub async fn create(pool: &mut DbPool<'_>, links: Vec<Url>) -> LemmyResult<usize> {
+  pub async fn create(pool: &mut DbPool<'_>, links: Vec<Url>) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     let forms = links
       .into_iter()
@@ -91,10 +91,10 @@ impl RemoteImage {
       .on_conflict_do_nothing()
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateImage)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateImage)
   }
 
-  pub async fn validate(pool: &mut DbPool<'_>, link_: DbUrl) -> LemmyResult<()> {
+  pub async fn validate(pool: &mut DbPool<'_>, link_: DbUrl) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     select(exists(
@@ -103,12 +103,12 @@ impl RemoteImage {
     .get_result::<bool>(conn)
     .await?
     .then_some(())
-    .ok_or(LemmyErrorType::NotFound.into())
+    .ok_or(FastJobErrorType::NotFound.into())
   }
 }
 
 impl ImageDetails {
-  pub async fn create(pool: &mut DbPool<'_>, form: &ImageDetailsInsertForm) -> LemmyResult<usize> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &ImageDetailsInsertForm) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(image_details::table)
@@ -116,6 +116,6 @@ impl ImageDetails {
       .on_conflict_do_nothing()
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateImage)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateImage)
   }
 }

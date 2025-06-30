@@ -15,7 +15,7 @@ use activitypub_federation::{
   protocol::verification::{verify_domains_match, verify_urls_match},
   traits::{Actor, Object},
 };
-use lemmy_api_utils::{context::LemmyContext, utils::purge_user_account};
+use lemmy_api_utils::{context::FastJobContext, utils::purge_user_account};
 use lemmy_apub_objects::{
   objects::{
     comment::ApubComment,
@@ -41,7 +41,7 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
 use url::Url;
 
@@ -56,8 +56,8 @@ pub(crate) async fn send_apub_delete_in_community(
   object: DeletableObjects,
   reason: Option<String>,
   deleted: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let actor = ApubPerson::from(actor);
   let is_mod_action = reason.is_some();
   let to = generate_to(&community)?;
@@ -83,8 +83,8 @@ pub(crate) async fn send_apub_delete_private_message(
   actor: &ApubPerson,
   pm: DbPrivateMessage,
   deleted: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let recipient_id = pm.recipient_id;
   let recipient: ApubPerson = Person::read(&mut context.pool(), recipient_id)
     .await?
@@ -105,8 +105,8 @@ pub(crate) async fn send_apub_delete_private_message(
 pub async fn send_apub_delete_user(
   person: Person,
   remove_data: bool,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let person: ApubPerson = person.into();
 
   let deletable = DeletableObjects::Person(person.clone());
@@ -130,8 +130,8 @@ pub enum DeletableObjects {
 impl DeletableObjects {
   pub(crate) async fn read_from_db(
     ap_id: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<DeletableObjects> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<DeletableObjects> {
     if let Some(c) = ApubCommunity::read_from_id(ap_id.clone(), context).await? {
       return Ok(DeletableObjects::Community(c));
     }
@@ -164,8 +164,8 @@ impl DeletableObjects {
 pub(in crate::activities) async fn verify_delete_activity(
   activity: &Delete,
   is_mod_action: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let object = DeletableObjects::read_from_db(activity.object.id(), context).await?;
   match object {
     DeletableObjects::Community(community) => {
@@ -220,8 +220,8 @@ async fn verify_delete_post_or_comment(
   object_id: &Url,
   community: &ApubCommunity,
   is_mod_action: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   verify_person_in_community(actor, community, context).await?;
   if is_mod_action {
     verify_mod_action(actor, community, context).await?;
@@ -238,8 +238,8 @@ async fn receive_delete_action(
   actor: &ObjectId<ApubPerson>,
   deleted: bool,
   do_purge_user_account: Option<bool>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   match DeletableObjects::read_from_db(object, context).await? {
     DeletableObjects::Community(community) => {
       if community.local {

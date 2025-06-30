@@ -5,7 +5,7 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   sensitive::SensitiveString,
   source::{
@@ -16,7 +16,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::ActorType;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 use url::Url;
 
@@ -39,9 +39,9 @@ impl From<MultiCommunity> for ApubMultiCommunity {
 
 #[async_trait::async_trait]
 impl Object for ApubMultiCommunity {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Feed;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     Some(self.last_refreshed_at)
@@ -50,7 +50,7 @@ impl Object for ApubMultiCommunity {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       MultiCommunity::read_from_ap_id(&mut context.pool(), &object_id.into())
         .await?
@@ -58,11 +58,11 @@ impl Object for ApubMultiCommunity {
     )
   }
 
-  async fn delete(self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
-    Err(LemmyErrorType::NotFound.into())
+  async fn delete(self, _context: &Data<Self::DataType>) -> FastJobResult<()> {
+    Err(FastJobErrorType::NotFound.into())
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
     let site_view = SiteView::read_local(&mut context.pool()).await?;
     let site = ApubSite(site_view.site.clone());
     let creator = Person::read(&mut context.pool(), self.creator_id).await?;
@@ -83,13 +83,13 @@ impl Object for ApubMultiCommunity {
   async fn verify(
     json: &Self::Kind,
     expected_domain: &Url,
-    _context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    _context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     verify_domains_match(expected_domain, json.id.inner())?;
     Ok(())
   }
 
-  async fn from_json(json: Self::Kind, context: &Data<LemmyContext>) -> LemmyResult<Self> {
+  async fn from_json(json: Self::Kind, context: &Data<FastJobContext>) -> FastJobResult<Self> {
     let creator = json.attributed_to.dereference(context).await?;
     let form = MultiCommunityInsertForm {
       creator_id: creator.id,

@@ -5,33 +5,33 @@ use crate::{
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::local_site;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalSite {
-  pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> LemmyResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(local_site::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateSite)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateSite)
   }
 
-  pub async fn update(pool: &mut DbPool<'_>, form: &LocalSiteUpdateForm) -> LemmyResult<Self> {
+  pub async fn update(pool: &mut DbPool<'_>, form: &LocalSiteUpdateForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_site::table)
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateSite)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateSite)
   }
 
-  pub async fn delete(pool: &mut DbPool<'_>) -> LemmyResult<usize> {
+  pub async fn delete(pool: &mut DbPool<'_>) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_site::table)
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 }
 
@@ -52,21 +52,21 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
-  async fn read_local_site(pool: &mut DbPool<'_>) -> LemmyResult<LocalSite> {
+  async fn read_local_site(pool: &mut DbPool<'_>) -> FastJobResult<LocalSite> {
     let conn = &mut get_conn(pool).await?;
     local_site::table
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   async fn prepare_site_with_community(
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<(TestData, Person, Community)> {
+  ) -> FastJobResult<(TestData, Person, Community)> {
     let data = TestData::create(pool).await?;
 
     let new_person = PersonInsertForm::test_form(data.instance.id, "thommy_site_agg");
@@ -86,7 +86,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -156,7 +156,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_soft_delete() -> LemmyResult<()> {
+  async fn test_soft_delete() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

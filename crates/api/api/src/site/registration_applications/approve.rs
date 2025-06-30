@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserUpdateForm},
@@ -16,13 +16,13 @@ use lemmy_db_views_registration_applications::{
   RegistrationApplicationView,
 };
 use lemmy_email::account::{send_application_approved_email, send_application_denied_email};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn approve_registration_application(
   data: Json<ApproveRegistrationApplication>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<RegistrationApplicationResponse>> {
+) -> FastJobResult<Json<RegistrationApplicationResponse>> {
   let app_id = data.id;
 
   // Only let admins do this

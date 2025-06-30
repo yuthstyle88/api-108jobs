@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_inbox_combined::{api::GetUnreadCountResponse, InboxCombinedViewInternal};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn unread_count(
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<GetUnreadCountResponse>> {
+) -> FastJobResult<Json<GetUnreadCountResponse>> {
   let person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;
   let show_bot_accounts = local_user_view.local_user.show_bot_accounts;

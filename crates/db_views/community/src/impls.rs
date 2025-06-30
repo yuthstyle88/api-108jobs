@@ -42,7 +42,7 @@ use lemmy_db_schema_file::{
     person,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -63,7 +63,7 @@ impl CommunityView {
     community_id: CommunityId,
     my_local_user: Option<&'_ LocalUser>,
     is_mod_or_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_local_user.person_id())
       .filter(community::id.eq(community_id))
@@ -82,7 +82,7 @@ impl CommunityView {
     query
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -95,7 +95,7 @@ impl PaginationCursorBuilder for CommunityView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
     Community::read(pool, CommunityId(id)).await
   }
@@ -115,7 +115,7 @@ pub struct CommunityQuery<'a> {
 }
 
 impl CommunityQuery<'_> {
-  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> LemmyResult<Vec<CommunityView>> {
+  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommunityView>> {
     use lemmy_db_schema::CommunitySortType::*;
     let conn = &mut get_conn(pool).await?;
     let o = self;
@@ -198,12 +198,12 @@ impl CommunityQuery<'_> {
 
     pq.load::<CommunityView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
 impl MultiCommunityView {
-  pub async fn read(pool: &mut DbPool<'_>, id: MultiCommunityId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, id: MultiCommunityId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       multi_community::table
@@ -218,7 +218,7 @@ impl MultiCommunityView {
     pool: &mut DbPool<'_>,
     owner_id: Option<PersonId>,
     followed_by: Option<PersonId>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut query = multi_community::table
       .left_join(multi_community_follow::table)
@@ -235,7 +235,7 @@ impl MultiCommunityView {
       .select(MultiCommunityView::as_select())
       .load::<MultiCommunityView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -265,7 +265,7 @@ mod tests {
     CommunitySortType,
   };
   use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-  use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
   use serial_test::serial;
   use std::collections::HashSet;
   use url::Url;
@@ -277,7 +277,7 @@ mod tests {
     site: Site,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let person_name = "tegan".to_string();
@@ -349,7 +349,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     for Community { id, .. } in data.communities {
       Community::delete(pool, id).await?;
     }
@@ -361,7 +361,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn follow_state() -> LemmyResult<()> {
+  async fn follow_state() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -427,7 +427,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn local_only_community() -> LemmyResult<()> {
+  async fn local_only_community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -472,7 +472,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community_sort_name() -> LemmyResult<()> {
+  async fn community_sort_name() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -483,7 +483,7 @@ mod tests {
     };
     let communities = query.list(&data.site, pool).await?;
     for (i, c) in communities.iter().enumerate().skip(1) {
-      let prev = communities.get(i - 1).ok_or(LemmyErrorType::NotFound)?;
+      let prev = communities.get(i - 1).ok_or(FastJobErrorType::NotFound)?;
       assert!(c.community.title.cmp(&prev.community.title).is_ge());
     }
 
@@ -493,7 +493,7 @@ mod tests {
     };
     let communities = query.list(&data.site, pool).await?;
     for (i, c) in communities.iter().enumerate().skip(1) {
-      let prev = communities.get(i - 1).ok_or(LemmyErrorType::NotFound)?;
+      let prev = communities.get(i - 1).ok_or(FastJobErrorType::NotFound)?;
       assert!(c.community.title.cmp(&prev.community.title).is_le());
     }
 
@@ -502,7 +502,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn can_mod() -> LemmyResult<()> {
+  async fn can_mod() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -549,7 +549,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_multi_community_list() -> LemmyResult<()> {
+  async fn test_multi_community_list() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

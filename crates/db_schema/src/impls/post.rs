@@ -43,7 +43,7 @@ use lemmy_db_schema_file::{
   schema::{community, person, post, post_actions},
 };
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorExt2, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -53,44 +53,44 @@ impl Crud for Post {
   type UpdateForm = PostUpdateForm;
   type IdType = PostId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(post::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     post_id: PostId,
     new_post: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(post::table.find(post_id))
       .set(new_post)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 }
 
 impl Post {
-  pub async fn read_xx(pool: &mut DbPool<'_>, id: PostId) -> LemmyResult<Self> {
+  pub async fn read_xx(pool: &mut DbPool<'_>, id: PostId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     post::table
       .find(id)
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn insert_apub(
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
     form: &PostInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(post::table)
       .values(form)
@@ -100,13 +100,13 @@ impl Post {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
   pub async fn list_featured_for_community(
     pool: &mut DbPool<'_>,
     the_community_id: CommunityId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     post::table
       .filter(post::community_id.eq(the_community_id))
@@ -117,12 +117,12 @@ impl Post {
       .limit(FETCH_LIMIT_MAX.try_into()?)
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn list_for_sitemap(
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<(DbUrl, chrono::DateTime<Utc>)>> {
+  ) -> FastJobResult<Vec<(DbUrl, chrono::DateTime<Utc>)>> {
     let conn = &mut get_conn(pool).await?;
     post::table
       .select((post::ap_id, coalesce(post::updated_at, post::published_at)))
@@ -134,13 +134,13 @@ impl Post {
       .limit(SITEMAP_LIMIT)
       .load::<(DbUrl, chrono::DateTime<Utc>)>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn permadelete_for_creator(
     pool: &mut DbPool<'_>,
     for_creator_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(post::table.filter(post::creator_id.eq(for_creator_id)))
@@ -153,14 +153,14 @@ impl Post {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   async fn creator_post_ids_in_community(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<Vec<PostId>> {
+  ) -> FastJobResult<Vec<PostId>> {
     let conn = &mut get_conn(pool).await?;
 
     post::table
@@ -169,7 +169,7 @@ impl Post {
       .select(post::id)
       .load::<PostId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Diesel can't update from join unfortunately, so you sometimes need to fetch a list of post_ids
@@ -178,7 +178,7 @@ impl Post {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<Vec<PostId>> {
+  ) -> FastJobResult<Vec<PostId>> {
     let conn = &mut get_conn(pool).await?;
 
     post::table
@@ -188,7 +188,7 @@ impl Post {
       .select(post::id)
       .load::<PostId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn update_removed_for_creator_and_community(
@@ -196,7 +196,7 @@ impl Post {
     creator_id: PersonId,
     community_id: CommunityId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     update(post::table)
@@ -205,7 +205,7 @@ impl Post {
       .set((post::removed.eq(removed), post::updated_at.eq(Utc::now())))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   pub async fn update_removed_for_creator_and_instance(
@@ -213,7 +213,7 @@ impl Post {
     creator_id: PersonId,
     instance_id: InstanceId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let post_ids = Self::creator_post_ids_in_instance(pool, creator_id, instance_id).await?;
 
     let conn = &mut get_conn(pool).await?;
@@ -223,14 +223,14 @@ impl Post {
       .set((post::removed.eq(removed), post::updated_at.eq(Utc::now())))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   pub async fn update_removed_for_creator(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     update(post::table)
@@ -238,7 +238,7 @@ impl Post {
       .set((post::removed.eq(removed), post::updated_at.eq(Utc::now())))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   pub fn is_post_creator(person_id: PersonId, post_creator_id: PersonId) -> bool {
@@ -248,7 +248,7 @@ impl Post {
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: Url,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let object_id: DbUrl = object_id.into();
     post::table
@@ -257,13 +257,13 @@ impl Post {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn delete_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: Url,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let object_id: DbUrl = object_id.into();
 
@@ -271,13 +271,13 @@ impl Post {
       .set(post::deleted.eq(true))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   pub async fn user_scheduled_post_count(
     person_id: PersonId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     let conn = &mut get_conn(pool).await?;
 
     post::table
@@ -294,10 +294,10 @@ impl Post {
       .select(count(post::id))
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn update_ranks(pool: &mut DbPool<'_>, post_id: PostId) -> LemmyResult<Self> {
+  pub async fn update_ranks(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     // Diesel can't update based on a join, which is necessary for the scaled_rank
@@ -323,15 +323,15 @@ impl Post {
       ))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
-  pub fn local_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/post/{}", self.id))?)
   }
 
   /// The comment was created locally and sent back, indicating that the community accepted it
-  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     if self.local && self.federation_pending {
       let form = PostUpdateForm {
         federation_pending: Some(false),
@@ -347,10 +347,10 @@ impl Likeable for PostActions {
   type Form = PostLikeForm;
   type IdType = PostId;
 
-  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    validate_like(form.like_score).with_lemmy_type(LemmyErrorType::CouldntLikePost)?;
+    validate_like(form.like_score).with_fastjob_type(FastJobErrorType::CouldntLikePost)?;
 
     insert_into(post_actions::table)
       .values(form)
@@ -360,27 +360,27 @@ impl Likeable for PostActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntLikePost)
+      .with_fastjob_type(FastJobErrorType::CouldntLikePost)
   }
 
   async fn remove_like(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     post_id: Self::IdType,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(post_actions::table.find((person_id, post_id)))
       .set_null(post_actions::like_score)
       .set_null(post_actions::liked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntLikePost)
+      .with_fastjob_type(FastJobErrorType::CouldntLikePost)
   }
 
   async fn remove_all_likes(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(post_actions::table.filter(post_actions::person_id.eq(person_id)))
@@ -388,14 +388,14 @@ impl Likeable for PostActions {
       .set_null(post_actions::liked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   async fn remove_likes_in_community(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let post_ids = Post::creator_post_ids_in_community(pool, person_id, community_id).await?;
 
     let conn = &mut get_conn(pool).await?;
@@ -405,13 +405,13 @@ impl Likeable for PostActions {
       .set_null(post_actions::liked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePost)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 }
 
 impl Saveable for PostActions {
   type Form = PostSavedForm;
-  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(post_actions::table)
       .values(form)
@@ -421,26 +421,26 @@ impl Saveable for PostActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntSavePost)
+      .with_fastjob_type(FastJobErrorType::CouldntSavePost)
   }
-  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(post_actions::table.find((form.person_id, form.post_id)))
       .set_null(post_actions::saved_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntSavePost)
+      .with_fastjob_type(FastJobErrorType::CouldntSavePost)
   }
 }
 
 impl Readable for PostActions {
   type Form = PostReadForm;
 
-  async fn mark_as_read(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<usize> {
+  async fn mark_as_read(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<usize> {
     Self::mark_many_as_read(pool, std::slice::from_ref(form)).await
   }
 
-  async fn mark_as_unread(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn mark_as_unread(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
@@ -451,10 +451,10 @@ impl Readable for PostActions {
     .set_null(post_actions::read_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntMarkPostAsRead)
+    .with_fastjob_type(FastJobErrorType::CouldntMarkPostAsRead)
   }
 
-  async fn mark_many_as_read(pool: &mut DbPool<'_>, forms: &[Self::Form]) -> LemmyResult<usize> {
+  async fn mark_many_as_read(pool: &mut DbPool<'_>, forms: &[Self::Form]) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(post_actions::table)
@@ -464,13 +464,13 @@ impl Readable for PostActions {
       .set(post_actions::read_at.eq(now().nullable()))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntMarkPostAsRead)
+      .with_fastjob_type(FastJobErrorType::CouldntMarkPostAsRead)
   }
 }
 
 impl Hideable for PostActions {
   type Form = PostHideForm;
-  async fn hide(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn hide(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(post_actions::table)
@@ -480,10 +480,10 @@ impl Hideable for PostActions {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntHidePost)
+      .with_fastjob_type(FastJobErrorType::CouldntHidePost)
   }
 
-  async fn unhide(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn unhide(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
@@ -494,7 +494,7 @@ impl Hideable for PostActions {
     .set_null(post_actions::hidden_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntHidePost)
+    .with_fastjob_type(FastJobErrorType::CouldntHidePost)
   }
 }
 
@@ -502,7 +502,7 @@ impl ReadComments for PostActions {
   type Form = PostReadCommentsForm;
   type IdType = PostId;
 
-  async fn update_read_comments(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn update_read_comments(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(post_actions::table)
@@ -512,14 +512,14 @@ impl ReadComments for PostActions {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateReadComments)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateReadComments)
   }
 
   async fn remove_read_comments(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     post_id: Self::IdType,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
@@ -531,7 +531,7 @@ impl ReadComments for PostActions {
     .set_null(post_actions::read_comments_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdateReadComments)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateReadComments)
   }
 }
 
@@ -547,25 +547,25 @@ impl PostActions {
     pool: &mut DbPool<'_>,
     post_id: PostId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     post_actions::table
       .find((person_id, post_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     let (_, post_id) = pids
       .get(1)
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     Self::read(pool, PostId(*post_id), PersonId(*person_id)).await
   }
 
@@ -574,7 +574,7 @@ impl PostActions {
     person_id: PersonId,
     new_state: PostNotifications,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<PostActions> {
+  ) -> FastJobResult<PostActions> {
     let conn = &mut get_conn(pool).await?;
     let form = (
       post_actions::person_id.eq(person_id),
@@ -589,7 +589,7 @@ impl PostActions {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -615,14 +615,14 @@ mod tests {
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
   use chrono::DateTime;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -761,7 +761,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -865,7 +865,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates_soft_delete() -> LemmyResult<()> {
+  async fn test_aggregates_soft_delete() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

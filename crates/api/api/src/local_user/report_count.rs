@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_community_mod_of_any_or_admin_action};
+use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_of_any_or_admin_action};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_report_combined::ReportCombinedViewInternal;
 use lemmy_db_views_reports::api::{GetReportCount, GetReportCountResponse};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn report_count(
   data: Query<GetReportCount>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<GetReportCountResponse>> {
+) -> FastJobResult<Json<GetReportCountResponse>> {
   check_community_mod_of_any_or_admin_action(&local_user_view, &mut context.pool()).await?;
 
   let count = ReportCombinedViewInternal::get_report_count(

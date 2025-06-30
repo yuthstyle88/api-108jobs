@@ -2,7 +2,7 @@ use super::{check_multi_community_creator, send_federation_update};
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::multi_community::{MultiCommunity, MultiCommunityUpdateForm},
   traits::Crud,
@@ -11,13 +11,13 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::UpdateMultiCommunity;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn update_multi_community(
   data: Json<UpdateMultiCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   check_multi_community_creator(data.id, &local_user_view, &context).await?;
 
   let form = MultiCommunityUpdateForm {

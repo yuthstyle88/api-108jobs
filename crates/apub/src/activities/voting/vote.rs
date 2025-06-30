@@ -10,14 +10,14 @@ use activitypub_federation::{
   fetch::object_id::ObjectId,
   traits::{ActivityHandler, Actor},
 };
-use lemmy_api_utils::{context::LemmyContext, utils::check_bot_account};
+use lemmy_api_utils::{context::FastJobContext, utils::check_bot_account};
 use lemmy_apub_objects::{
   objects::{person::ApubPerson, PostOrComment},
   utils::{functions::verify_person_in_community, protocol::InCommunity},
 };
 use lemmy_db_schema_file::enums::FederationMode;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl Vote {
@@ -25,8 +25,8 @@ impl Vote {
     object_id: ObjectId<PostOrComment>,
     actor: &ApubPerson,
     kind: VoteType,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Vote> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Vote> {
     Ok(Vote {
       actor: actor.id().into(),
       object: object_id,
@@ -38,8 +38,8 @@ impl Vote {
 
 #[async_trait::async_trait]
 impl ActivityHandler for Vote {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -49,13 +49,13 @@ impl ActivityHandler for Vote {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let community = self.community(context).await?;
     verify_person_in_community(&self.actor, &community, context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let actor = self.actor.dereference(context).await?;
     let object = self.object.dereference(context).await?;
 

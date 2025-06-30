@@ -2,14 +2,14 @@ use super::check_community_content_fetchable;
 use crate::http::{create_apub_response, create_apub_tombstone_response, redirect_remote_object};
 use activitypub_federation::{config::Data, traits::Object};
 use actix_web::{web, HttpRequest, HttpResponse};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::post::ApubPost;
 use lemmy_db_schema::{
   newtypes::PostId,
   source::{community::Community, post::Post},
   traits::Crud,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -20,9 +20,9 @@ pub(crate) struct PostQuery {
 /// Return the ActivityPub json representation of a local post over HTTP.
 pub(crate) async fn get_apub_post(
   info: web::Path<PostQuery>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   request: HttpRequest,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   let id = PostId(info.post_id.parse::<i32>()?);
   // Can't use PostView here because it excludes deleted/removed/local-only items
   let post: ApubPost = Post::read(&mut context.pool(), id).await?.into();

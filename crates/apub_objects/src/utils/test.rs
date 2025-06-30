@@ -4,19 +4,19 @@ use crate::{
 };
 use activitypub_federation::{config::Data, protocol::context::WithContext, traits::Object};
 use assert_json_diff::assert_json_include;
-use lemmy_api_utils::context::LemmyContext;
-use lemmy_utils::error::LemmyResult;
+use lemmy_api_utils::context::FastJobContext;
+use lemmy_utils::error::FastJobResult;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{collections::HashMap, fs::File, io::BufReader};
 use url::Url;
 
-pub fn file_to_json_object<T: DeserializeOwned>(path: &str) -> LemmyResult<T> {
+pub fn file_to_json_object<T: DeserializeOwned>(path: &str) -> FastJobResult<T> {
   let file = File::open(path)?;
   let reader = BufReader::new(file);
   Ok(serde_json::from_reader(reader)?)
 }
 
-pub fn test_json<T: DeserializeOwned>(path: &str) -> LemmyResult<WithContext<T>> {
+pub fn test_json<T: DeserializeOwned>(path: &str) -> FastJobResult<WithContext<T>> {
   file_to_json_object::<WithContext<T>>(path)
 }
 
@@ -24,7 +24,7 @@ pub fn test_json<T: DeserializeOwned>(path: &str) -> LemmyResult<WithContext<T>>
 /// Ensures that there are no breaking changes in sent data.
 pub fn test_parse_lemmy_item<T: Serialize + DeserializeOwned + std::fmt::Debug>(
   path: &str,
-) -> LemmyResult<T> {
+) -> FastJobResult<T> {
   // parse file as T
   let parsed = file_to_json_object::<T>(path)?;
 
@@ -35,7 +35,7 @@ pub fn test_parse_lemmy_item<T: Serialize + DeserializeOwned + std::fmt::Debug>(
   Ok(parsed)
 }
 
-pub(crate) async fn parse_lemmy_instance(context: &Data<LemmyContext>) -> LemmyResult<ApubSite> {
+pub(crate) async fn parse_lemmy_instance(context: &Data<FastJobContext>) -> FastJobResult<ApubSite> {
   let json: Instance = file_to_json_object("../apub/assets/lemmy/objects/instance.json")?;
   let id = Url::parse("https://enterprise.lemmy.ml/")?;
   ApubSite::verify(&json, &id, context).await?;
@@ -45,8 +45,8 @@ pub(crate) async fn parse_lemmy_instance(context: &Data<LemmyContext>) -> LemmyR
 }
 
 pub async fn parse_lemmy_person(
-  context: &Data<LemmyContext>,
-) -> LemmyResult<(ApubPerson, ApubSite)> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<(ApubPerson, ApubSite)> {
   let site = parse_lemmy_instance(context).await?;
   let json = file_to_json_object("../apub/assets/lemmy/objects/person.json")?;
   let url = Url::parse("https://enterprise.lemmy.ml/u/picard")?;
@@ -56,7 +56,7 @@ pub async fn parse_lemmy_person(
   Ok((person, site))
 }
 
-pub async fn parse_lemmy_community(context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+pub async fn parse_lemmy_community(context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
   // use separate counter so this doesn't affect tests
   let context2 = context.clone();
   let mut json: Group = file_to_json_object("../apub/assets/lemmy/objects/group.json")?;

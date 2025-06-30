@@ -30,7 +30,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use html2text::{from_read_with_decorator, render::TrivialDecorator};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
   utils::{check_nsfw_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
@@ -46,7 +46,7 @@ use lemmy_db_schema::{
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+  error::{FastJobError, FastJobResult},
   spawn_try_task,
   utils::{
     markdown::markdown_to_html,
@@ -78,9 +78,9 @@ impl From<Post> for ApubPost {
 
 #[async_trait::async_trait]
 impl Object for ApubPost {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Page;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     None
@@ -89,7 +89,7 @@ impl Object for ApubPost {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       Post::read_from_apub_id(&mut context.pool(), object_id)
         .await?
@@ -97,7 +97,7 @@ impl Object for ApubPost {
     )
   }
 
-  async fn delete(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     if !self.deleted {
       let form = PostUpdateForm {
         deleted: Some(true),
@@ -110,7 +110,7 @@ impl Object for ApubPost {
 
   // Turn a Lemmy post into an ActivityPub page that can be sent out over the network.
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<Page> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> FastJobResult<Page> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
     let community_id = self.community_id;
@@ -138,7 +138,7 @@ impl Object for ApubPost {
     let page = Page {
       kind: PageType::Page,
       id: self.ap_id.clone().into(),
-      attributed_to: AttributedTo::Lemmy(creator.ap_id.into()),
+      attributed_to: AttributedTo::FastJob(creator.ap_id.into()),
       to: generate_to(&community)?,
       cc: vec![],
       name: Some(self.name.clone()),
@@ -161,7 +161,7 @@ impl Object for ApubPost {
     page: &Page,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     verify_domains_match(page.id.inner(), expected_domain)?;
     if let Err(e) = verify_is_remote_object(&page.id, context) {
       if let Ok(post) = page.id.dereference_local(context).await {
@@ -182,7 +182,7 @@ impl Object for ApubPost {
     Ok(())
   }
 
-  async fn from_json(page: Page, context: &Data<Self::DataType>) -> LemmyResult<ApubPost> {
+  async fn from_json(page: Page, context: &Data<Self::DataType>) -> FastJobResult<ApubPost> {
     let local_site = SiteView::read_local(&mut context.pool())
       .await
       .ok()
@@ -324,8 +324,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_post() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_post() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (person, site) = parse_lemmy_person(&context).await?;
     let community = parse_lemmy_community(&context).await?;
 
@@ -351,8 +351,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_convert_mastodon_post_title() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_convert_mastodon_post_title() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let community = parse_lemmy_community(&context).await?;
 
     let json = file_to_json_object("../apub/assets/mastodon/objects/person.json")?;

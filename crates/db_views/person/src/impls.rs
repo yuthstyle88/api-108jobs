@@ -19,7 +19,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::schema::{local_user, person};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for PersonView {
   type CursorData = Person;
@@ -31,7 +31,7 @@ impl PaginationCursorBuilder for PersonView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
     Person::read(pool, PersonId(id)).await
   }
@@ -57,7 +57,7 @@ impl PersonView {
     my_person_id: Option<PersonId>,
     local_instance_id: InstanceId,
     is_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_person_id, local_instance_id)
       .filter(person::id.eq(person_id))
@@ -71,7 +71,7 @@ impl PersonView {
     query
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -89,7 +89,7 @@ impl PersonQuery {
     my_person_id: Option<PersonId>,
     local_instance_id: InstanceId,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<PersonView>> {
+  ) -> FastJobResult<Vec<PersonView>> {
     let conn = &mut get_conn(pool).await?;
     let mut query = PersonView::joins(my_person_id, local_instance_id)
       .filter(person::deleted.eq(false))
@@ -137,7 +137,7 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -148,7 +148,7 @@ mod tests {
     bob_local_user: LocalUser,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let alice_form = PersonInsertForm {
@@ -176,7 +176,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     LocalUser::delete(pool, data.alice_local_user.id).await?;
     LocalUser::delete(pool, data.bob_local_user.id).await?;
     Person::delete(pool, data.alice.id).await?;
@@ -187,7 +187,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn exclude_deleted() -> LemmyResult<()> {
+  async fn exclude_deleted() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -214,7 +214,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn list_admins() -> LemmyResult<()> {
+  async fn list_admins() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -253,7 +253,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn note() -> LemmyResult<()> {
+  async fn note() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

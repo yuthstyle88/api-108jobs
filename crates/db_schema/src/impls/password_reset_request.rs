@@ -12,14 +12,14 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::password_reset_request;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PasswordResetRequest {
   pub async fn create(
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
     token_: String,
-  ) -> LemmyResult<PasswordResetRequest> {
+  ) -> FastJobResult<PasswordResetRequest> {
     let form = PasswordResetRequestForm {
       local_user_id,
       token: token_.into(),
@@ -29,17 +29,17 @@ impl PasswordResetRequest {
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePasswordResetRequest)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePasswordResetRequest)
   }
 
-  pub async fn read_and_delete(pool: &mut DbPool<'_>, token_: &str) -> LemmyResult<Self> {
+  pub async fn read_and_delete(pool: &mut DbPool<'_>, token_: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     delete(password_reset_request::table)
       .filter(password_reset_request::token.eq(token_))
       .filter(password_reset_request::published_at.gt(now.into_sql::<Timestamptz>() - 1.days()))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 }
 
@@ -56,13 +56,13 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_password_reset() -> LemmyResult<()> {
+  async fn test_password_reset() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

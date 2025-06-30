@@ -20,7 +20,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     check_nsfw_allowed,
     generate_featured_url,
@@ -43,7 +43,7 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+  error::{FastJobError, FastJobResult},
   utils::{
     markdown::markdown_to_html,
     slurs::{check_slurs, check_slurs_opt},
@@ -56,7 +56,7 @@ use url::Url;
 
 #[allow(clippy::type_complexity)]
 pub static FETCH_COMMUNITY_COLLECTIONS: OnceCell<
-  fn(ApubCommunity, Group, Data<LemmyContext>) -> (),
+  fn(ApubCommunity, Group, Data<FastJobContext>) -> (),
 > = OnceCell::new();
 
 #[derive(Clone, Debug)]
@@ -77,9 +77,9 @@ impl From<Community> for ApubCommunity {
 
 #[async_trait::async_trait]
 impl Object for ApubCommunity {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Group;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     Some(self.last_refreshed_at)
@@ -88,7 +88,7 @@ impl Object for ApubCommunity {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       Community::read_from_apub_id(&mut context.pool(), &object_id.into())
         .await?
@@ -96,7 +96,7 @@ impl Object for ApubCommunity {
     )
   }
 
-  async fn delete(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let form = CommunityUpdateForm {
       deleted: Some(true),
       ..Default::default()
@@ -105,7 +105,7 @@ impl Object for ApubCommunity {
     Ok(())
   }
 
-  async fn into_json(self, data: &Data<Self::DataType>) -> LemmyResult<Group> {
+  async fn into_json(self, data: &Data<Self::DataType>) -> FastJobResult<Group> {
     let community_id = self.id;
     let langs = CommunityLanguage::read(&mut data.pool(), community_id).await?;
     let language = LanguageTag::new_multiple(langs, &mut data.pool()).await?;
@@ -132,7 +132,7 @@ impl Object for ApubCommunity {
       published: Some(self.published_at),
       updated: self.updated_at,
       posting_restricted_to_mods: Some(self.posting_restricted_to_mods),
-      attributed_to: Some(AttributedTo::Lemmy(
+      attributed_to: Some(AttributedTo::FastJob(
         generate_moderators_url(&self.ap_id)?.into(),
       )),
       manually_approves_followers: Some(self.visibility == CommunityVisibility::Private),
@@ -145,7 +145,7 @@ impl Object for ApubCommunity {
     group: &Group,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     check_apub_id_valid_with_strictness(group.id.inner(), true, context).await?;
     verify_domains_match(expected_domain, group.id.inner())?;
 
@@ -158,7 +158,7 @@ impl Object for ApubCommunity {
   }
 
   /// Converts a `Group` to `Community`, inserts it into the database and updates moderators.
-  async fn from_json(group: Group, context: &Data<Self::DataType>) -> LemmyResult<ApubCommunity> {
+  async fn from_json(group: Group, context: &Data<Self::DataType>) -> FastJobResult<ApubCommunity> {
     let local_site = SiteView::read_local(&mut context.pool())
       .await
       .ok()
@@ -280,8 +280,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_community() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_community() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let site = parse_lemmy_instance(&context).await?;
     let community = parse_lemmy_community(&context).await?;
 

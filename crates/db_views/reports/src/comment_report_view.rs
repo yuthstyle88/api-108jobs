@@ -24,7 +24,7 @@ use lemmy_db_schema_file::schema::{
   person_actions,
   post,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CommentReportView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -98,13 +98,13 @@ impl CommentReportView {
     pool: &mut DbPool<'_>,
     report_id: CommentReportId,
     my_person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins(my_person_id)
       .filter(comment_report::id.eq(report_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }

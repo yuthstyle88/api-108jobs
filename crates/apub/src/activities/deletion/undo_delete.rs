@@ -6,7 +6,7 @@ use crate::{
   protocol::activities::deletion::{delete::Delete, undo_delete::UndoDelete},
 };
 use activitypub_federation::{config::Data, kinds::activity::UndoType, traits::ActivityHandler};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::person::ApubPerson;
 use lemmy_db_schema::{
   source::{
@@ -24,13 +24,13 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobErrorType, FastJobResult};
 use url::Url;
 
 #[async_trait::async_trait]
 impl ActivityHandler for UndoDelete {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -46,7 +46,7 @@ impl ActivityHandler for UndoDelete {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     if self.object.summary.is_some() {
       UndoDelete::receive_undo_remove_action(
         &self.actor.dereference(context).await?,
@@ -67,8 +67,8 @@ impl UndoDelete {
     to: Vec<Url>,
     community: Option<&Community>,
     summary: Option<String>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<UndoDelete> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<UndoDelete> {
     let object = Delete::new(actor, object, to.clone(), community, summary, context)?;
 
     let id = generate_activity_id(UndoType::Undo, context)?;
@@ -86,8 +86,8 @@ impl UndoDelete {
   pub(in crate::activities) async fn receive_undo_remove_action(
     actor: &ApubPerson,
     object: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     match DeletableObjects::read_from_db(object, context).await? {
       DeletableObjects::Community(community) => {
         if community.local {
@@ -147,8 +147,8 @@ impl UndoDelete {
         .await?;
       }
       // TODO these need to be implemented yet, for now, return errors
-      DeletableObjects::PrivateMessage(_) => Err(LemmyErrorType::NotFound)?,
-      DeletableObjects::Person(_) => Err(LemmyErrorType::NotFound)?,
+      DeletableObjects::PrivateMessage(_) => Err(FastJobErrorType::NotFound)?,
+      DeletableObjects::Person(_) => Err(FastJobErrorType::NotFound)?,
     }
     Ok(())
   }

@@ -17,7 +17,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{remove_or_restore_user_data, remove_or_restore_user_data_in_community},
 };
 use lemmy_apub_objects::{
@@ -33,7 +33,7 @@ use lemmy_db_schema::{
   },
   traits::{Bannable, Crud},
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl BlockUser {
@@ -44,8 +44,8 @@ impl BlockUser {
     remove_data: Option<bool>,
     reason: Option<String>,
     expires: Option<DateTime<Utc>>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<BlockUser> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<BlockUser> {
     let to = to(target)?;
     Ok(BlockUser {
       actor: mod_.id().into(),
@@ -68,8 +68,8 @@ impl BlockUser {
     remove_data: bool,
     reason: Option<String>,
     expires: Option<DateTime<Utc>>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let block = BlockUser::new(
       target,
       user,
@@ -97,8 +97,8 @@ impl BlockUser {
 
 #[async_trait::async_trait]
 impl ActivityHandler for BlockUser {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -108,7 +108,7 @@ impl ActivityHandler for BlockUser {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     match self.target.dereference(context).await? {
       SiteOrCommunity::Site(_site) => {
         verify_is_public(&self.to, &self.cc)?;
@@ -122,7 +122,7 @@ impl ActivityHandler for BlockUser {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let expires_at = self.end_time;
     let mod_person = self.actor.dereference(context).await?;
     let blocked_person = self.object.dereference(context).await?;

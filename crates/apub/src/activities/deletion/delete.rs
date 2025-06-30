@@ -6,7 +6,7 @@ use crate::{
   protocol::{activities::deletion::delete::Delete, IdOrNestedObject},
 };
 use activitypub_federation::{config::Data, kinds::activity::DeleteType, traits::ActivityHandler};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::person::ApubPerson;
 use lemmy_db_schema::{
   source::{
@@ -27,13 +27,13 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Reportable},
 };
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobErrorType, FastJobResult};
 use url::Url;
 
 #[async_trait::async_trait]
 impl ActivityHandler for Delete {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -43,12 +43,12 @@ impl ActivityHandler for Delete {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     verify_delete_activity(self, self.summary.is_some(), context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     if let Some(reason) = self.summary {
       // We set reason to empty string if it doesn't exist, to distinguish between delete and
       // remove. Here we change it back to option, so we don't write it to db.
@@ -84,8 +84,8 @@ impl Delete {
     to: Vec<Url>,
     community: Option<&Community>,
     summary: Option<String>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Delete> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Delete> {
     let id = generate_activity_id(DeleteType::Delete, context)?;
     let cc: Option<Url> = community.map(|c| c.ap_id.clone().into());
     Ok(Delete {
@@ -105,8 +105,8 @@ pub(in crate::activities) async fn receive_remove_action(
   actor: &ApubPerson,
   object: &Url,
   reason: Option<String>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   match DeletableObjects::read_from_db(object, context).await? {
     DeletableObjects::Community(community) => {
       if community.local {
@@ -169,8 +169,8 @@ pub(in crate::activities) async fn receive_remove_action(
       .await?;
     }
     // TODO these need to be implemented yet, for now, return errors
-    DeletableObjects::PrivateMessage(_) => Err(LemmyErrorType::NotFound)?,
-    DeletableObjects::Person(_) => Err(LemmyErrorType::NotFound)?,
+    DeletableObjects::PrivateMessage(_) => Err(FastJobErrorType::NotFound)?,
+    DeletableObjects::Person(_) => Err(FastJobErrorType::NotFound)?,
   }
   Ok(())
 }

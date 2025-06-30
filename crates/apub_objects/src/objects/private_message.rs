@@ -16,7 +16,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   utils::{check_private_messages_enabled, get_url_blocklist, process_markdown, slur_regex},
 };
@@ -30,7 +30,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   utils::markdown::markdown_to_html,
 };
 use semver::{Version, VersionReq};
@@ -55,9 +55,9 @@ impl From<DbPrivateMessage> for ApubPrivateMessage {
 
 #[async_trait::async_trait]
 impl Object for ApubPrivateMessage {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = PrivateMessage;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     None
@@ -66,7 +66,7 @@ impl Object for ApubPrivateMessage {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       DbPrivateMessage::read_from_apub_id(&mut context.pool(), object_id)
         .await?
@@ -74,12 +74,12 @@ impl Object for ApubPrivateMessage {
     )
   }
 
-  async fn delete(self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, _context: &Data<Self::DataType>) -> FastJobResult<()> {
     // do nothing, because pm can't be fetched over http
-    Err(LemmyErrorType::NotFound.into())
+    Err(FastJobErrorType::NotFound.into())
   }
 
-  async fn into_json(self, context: &Data<Self::DataType>) -> LemmyResult<PrivateMessage> {
+  async fn into_json(self, context: &Data<Self::DataType>) -> FastJobResult<PrivateMessage> {
     let creator_id = self.creator_id;
     let creator = Person::read(&mut context.pool(), creator_id).await?;
 
@@ -115,7 +115,7 @@ impl Object for ApubPrivateMessage {
     note: &PrivateMessage,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     verify_domains_match(note.id.inner(), expected_domain)?;
     verify_domains_match(note.attributed_to.inner(), note.id.inner())?;
     verify_is_remote_object(&note.id, context)?;
@@ -129,7 +129,7 @@ impl Object for ApubPrivateMessage {
   async fn from_json(
     note: PrivateMessage,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<ApubPrivateMessage> {
+  ) -> FastJobResult<ApubPrivateMessage> {
     let creator = note.attributed_to.dereference(context).await?;
     let recipient = note.to[0].dereference(context).await?;
     PersonActions::read_block(&mut context.pool(), recipient.id, creator.id).await?;
@@ -180,8 +180,8 @@ mod tests {
 
   async fn prepare_comment_test(
     url: &Url,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(ApubPerson, ApubPerson, ApubSite)> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<(ApubPerson, ApubPerson, ApubSite)> {
     let context2 = context.clone();
     let lemmy_person = file_to_json_object("../apub/assets/lemmy/objects/person.json")?;
     let site = parse_lemmy_instance(&context2).await?;
@@ -196,8 +196,8 @@ mod tests {
 
   async fn cleanup(
     (person1, person2, site): (ApubPerson, ApubPerson, ApubSite),
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     Person::delete(&mut context.pool(), person1.id).await?;
     Person::delete(&mut context.pool(), person2.id).await?;
     Site::delete(&mut context.pool(), site.id).await?;
@@ -206,8 +206,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_pm() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_pm() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/private_message/1621")?;
     let data = prepare_comment_test(&url, &context).await?;
@@ -232,8 +232,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_pm() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_pm() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let test_data = TestData::create(&mut context.pool()).await?;
     let url = Url::parse("https://enterprise.lemmy.ml/private_message/1621")?;
     let data = prepare_comment_test(&url, &context).await?;

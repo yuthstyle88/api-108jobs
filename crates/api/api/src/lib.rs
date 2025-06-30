@@ -2,7 +2,7 @@ use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
 use captcha::Captcha;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
 use regex::Regex;
@@ -19,7 +19,7 @@ pub mod site;
 pub mod sitemap;
 
 /// Converts the captcha to a base64 encoded wav audio file
-pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> LemmyResult<String> {
+pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> FastJobResult<String> {
   let letters = captcha.as_wav();
 
   // Decode each wav file, concatenate the samples
@@ -32,7 +32,7 @@ pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> LemmyResult<String> {
     let samples16 = reader
       .into_samples::<i16>()
       .collect::<Result<Vec<_>, _>>()
-      .with_lemmy_type(LemmyErrorType::CouldntCreateAudioCaptcha)?;
+      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
     concat_samples.extend(samples16);
   }
 
@@ -40,31 +40,31 @@ pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> LemmyResult<String> {
   let mut output_buffer = Cursor::new(vec![]);
   if let Some(header) = any_header {
     let mut writer = hound::WavWriter::new(&mut output_buffer, header)
-      .with_lemmy_type(LemmyErrorType::CouldntCreateAudioCaptcha)?;
+      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
     let mut writer16 = writer.get_i16_writer(concat_samples.len().try_into()?);
     for sample in concat_samples {
       writer16.write_sample(sample);
     }
     writer16
       .flush()
-      .with_lemmy_type(LemmyErrorType::CouldntCreateAudioCaptcha)?;
+      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
     writer
       .finalize()
-      .with_lemmy_type(LemmyErrorType::CouldntCreateAudioCaptcha)?;
+      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
 
     Ok(base64.encode(output_buffer.into_inner()))
   } else {
-    Err(LemmyErrorType::CouldntCreateAudioCaptcha)?
+    Err(FastJobErrorType::CouldntCreateAudioCaptcha)?
   }
 }
 
 /// Check size of report
-pub(crate) fn check_report_reason(reason: &str, slur_regex: &Regex) -> LemmyResult<()> {
+pub(crate) fn check_report_reason(reason: &str, slur_regex: &Regex) -> FastJobResult<()> {
   check_slurs(reason, slur_regex)?;
   if reason.is_empty() {
-    Err(LemmyErrorType::ReportReasonRequired)?
+    Err(FastJobErrorType::ReportReasonRequired)?
   } else if reason.chars().count() > 1000 {
-    Err(LemmyErrorType::ReportTooLong)?
+    Err(FastJobErrorType::ReportTooLong)?
   } else {
     Ok(())
   }
@@ -74,22 +74,22 @@ pub(crate) fn check_totp_2fa_valid(
   local_user_view: &LocalUserView,
   totp_token: &Option<String>,
   site_name: &str,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   // Throw an error if their token is missing
   let token = totp_token
     .as_deref()
-    .ok_or(LemmyErrorType::MissingTotpToken)?;
+    .ok_or(FastJobErrorType::MissingTotpToken)?;
   let secret = local_user_view
     .local_user
     .totp_2fa_secret
     .as_deref()
-    .ok_or(LemmyErrorType::MissingTotpSecret)?;
+    .ok_or(FastJobErrorType::MissingTotpSecret)?;
 
   let totp = build_totp_2fa(site_name, &local_user_view.person.name, secret)?;
 
   let check_passed = totp.check_current(token)?;
   if !check_passed {
-    return Err(LemmyErrorType::IncorrectTotpToken.into());
+    return Err(FastJobErrorType::IncorrectTotpToken.into());
   }
 
   Ok(())
@@ -99,11 +99,11 @@ pub(crate) fn generate_totp_2fa_secret() -> String {
   Secret::generate_secret().to_string()
 }
 
-fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> LemmyResult<TOTP> {
+fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> FastJobResult<TOTP> {
   let sec = Secret::Raw(secret.as_bytes().to_vec());
   let sec_bytes = sec
     .to_bytes()
-    .with_lemmy_type(LemmyErrorType::CouldntParseTotpSecret)?;
+    .with_fastjob_type(FastJobErrorType::CouldntParseTotpSecret)?;
 
   TOTP::new(
     totp_rs::Algorithm::SHA1,
@@ -114,7 +114,7 @@ fn build_totp_2fa(hostname: &str, username: &str, secret: &str) -> LemmyResult<T
     Some(hostname.to_string()),
     username.to_string(),
   )
-  .with_lemmy_type(LemmyErrorType::CouldntGenerateTotp)
+  .with_fastjob_type(FastJobErrorType::CouldntGenerateTotp)
 }
 
 #[cfg(test)]

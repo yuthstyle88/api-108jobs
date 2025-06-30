@@ -1,6 +1,6 @@
 use crate::fetcher::resolve_ap_identifier;
 use activitypub_federation::config::Data;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::person::ApubPerson;
 use lemmy_db_schema::{
   newtypes::{CommunityId, PersonId},
@@ -8,7 +8,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod list_comments;
 pub mod list_person_content;
@@ -90,12 +90,12 @@ fn comment_sort_type_with_default(
 async fn resolve_person_id_from_id_or_username(
   person_id: &Option<PersonId>,
   username: &Option<String>,
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   local_user_view: &Option<LocalUserView>,
-) -> LemmyResult<PersonId> {
+) -> FastJobResult<PersonId> {
   // Check to make sure a person name or an id is given
   if username.is_none() && person_id.is_none() {
-    Err(LemmyErrorType::NoIdGiven)?
+    Err(FastJobErrorType::NoIdGiven)?
   }
 
   Ok(match person_id {
@@ -106,7 +106,7 @@ async fn resolve_person_id_from_id_or_username(
           .await?
           .id
       } else {
-        Err(LemmyErrorType::NotFound)?
+        Err(FastJobErrorType::NotFound)?
       }
     }
   })

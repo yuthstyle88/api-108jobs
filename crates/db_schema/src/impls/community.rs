@@ -41,7 +41,7 @@ use lemmy_db_schema_file::{
   schema::{comment, community, community_actions, instance, post},
 };
 use lemmy_utils::{
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_COMMUNITY,
 };
@@ -55,7 +55,7 @@ impl Crud for Community {
   type UpdateForm = CommunityUpdateForm;
   type IdType = CommunityId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let community_ = insert_into(community::table)
@@ -73,19 +73,19 @@ impl Crud for Community {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(community::table.find(community_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateCommunity)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateCommunity)
   }
 }
 
 impl Joinable for CommunityActions {
   type Form = CommunityModeratorForm;
-  async fn join(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn join(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -98,16 +98,16 @@ impl Joinable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityModeratorAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityModeratorAlreadyExists)
   }
 
-  async fn leave(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn leave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(community_actions::table.find((form.person_id, form.community_id)))
       .set_null(community_actions::became_moderator_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityModeratorAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityModeratorAlreadyExists)
   }
 }
 
@@ -122,7 +122,7 @@ impl Community {
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
     form: &CommunityInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let is_new_community = match &form.ap_id {
       Some(id) => Community::read_from_apub_id(pool, id).await?.is_none(),
       None => true,
@@ -152,7 +152,7 @@ impl Community {
   pub async fn get_by_collection_url(
     pool: &mut DbPool<'_>,
     url: &DbUrl,
-  ) -> LemmyResult<(Community, CollectionType)> {
+  ) -> FastJobResult<(Community, CollectionType)> {
     let conn = &mut get_conn(pool).await?;
     let res = community::table
       .filter(community::moderators_url.eq(url))
@@ -169,7 +169,7 @@ impl Community {
       if let Ok(c) = res {
         Ok((c, CollectionType::Featured))
       } else {
-        Err(LemmyErrorType::NotFound.into())
+        Err(FastJobErrorType::NotFound.into())
       }
     }
   }
@@ -178,7 +178,7 @@ impl Community {
     community_id: CommunityId,
     posts: Vec<Post>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     for p in &posts {
       debug_assert!(p.community_id == community_id);
@@ -199,7 +199,7 @@ impl Community {
     pool: &mut DbPool<'_>,
     type_: &Option<ListingType>,
     show_nsfw: Option<bool>,
-  ) -> LemmyResult<CommunityId> {
+  ) -> FastJobResult<CommunityId> {
     let conn = &mut get_conn(pool).await?;
 
     // This is based on the random page selection algorithm in MediaWiki. It assigns a random number
@@ -255,7 +255,7 @@ impl Community {
       .returning(community::id)
       .get_result::<CommunityId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -265,7 +265,7 @@ impl Community {
       .and(community::deleted.eq(false))
   }
 
-  pub fn build_tag_ap_id(&self, tag_name: &str) -> LemmyResult<DbUrl> {
+  pub fn build_tag_ap_id(&self, tag_name: &str) -> FastJobResult<DbUrl> {
     #[allow(clippy::expect_used)]
     // convert a readable name to an id slug that is appended to the community URL to get a unique
     // tag url (ap_id).
@@ -274,7 +274,7 @@ impl Community {
     let tag_name_lower = tag_name.to_lowercase();
     let id_slug = VALID_ID_SLUG.replace_all(&tag_name_lower, "-");
     if id_slug.is_empty() {
-      Err(LemmyErrorType::InvalidUrl)?
+      Err(FastJobErrorType::InvalidUrl)?
     }
     Ok(Url::parse(&format!("{}/tag/{}", self.ap_id, &id_slug))?.into())
   }
@@ -283,13 +283,13 @@ impl Community {
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
     new_subscribers: i64,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(community::table.find(for_community_id))
       .set(community::dsl::subscribers.eq(new_subscribers))
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateCommunity)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateCommunity)
   }
 }
 
@@ -298,20 +298,20 @@ impl CommunityActions {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .find((person_id, community_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn delete_mods_for_community(
     pool: &mut DbPool<'_>,
     for_community_id: CommunityId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
@@ -320,25 +320,25 @@ impl CommunityActions {
     .set_null(community_actions::became_moderator_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::NotFound)
+    .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn leave_mod_team_for_all_communities(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(community_actions::table.filter(community_actions::person_id.eq(for_person_id)))
       .set_null(community_actions::became_moderator_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn get_person_moderated_communities(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
-  ) -> LemmyResult<Vec<CommunityId>> {
+  ) -> FastJobResult<Vec<CommunityId>> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .filter(community_actions::became_moderator_at.is_not_null())
@@ -346,7 +346,7 @@ impl CommunityActions {
       .select(community_actions::community_id)
       .load::<CommunityId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Checks to make sure the acting moderator was added earlier than the target moderator
@@ -355,7 +355,7 @@ impl CommunityActions {
     for_community_id: CommunityId,
     mod_person_id: PersonId,
     target_person_ids: Vec<PersonId>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     // Build the list of persons
@@ -377,7 +377,7 @@ impl CommunityActions {
     if res == mod_person_id {
       Ok(())
     } else {
-      Err(LemmyErrorType::NotHigherMod)?
+      Err(FastJobErrorType::NotHigherMod)?
     }
   }
 
@@ -389,7 +389,7 @@ impl CommunityActions {
   pub async fn check_accept_activity_in_community(
     pool: &mut DbPool<'_>,
     remote_community_id: CommunityId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let follow_action = community_actions::table
       .filter(community_actions::followed_at.is_not_null())
@@ -405,7 +405,7 @@ impl CommunityActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::CommunityHasNoFollowers.into())
+      .ok_or(FastJobErrorType::CommunityHasNoFollowers.into())
   }
 
   pub async fn approve_follower(
@@ -413,7 +413,7 @@ impl CommunityActions {
     community_id: CommunityId,
     follower_id: PersonId,
     approver_id: PersonId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((follower_id, community_id))
@@ -431,7 +431,7 @@ impl CommunityActions {
   pub async fn fetch_largest_subscribed_community(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Option<CommunityId>> {
+  ) -> FastJobResult<Option<CommunityId>> {
     static CACHE: LazyLock<Cache<PersonId, Option<CommunityId>>> = LazyLock::new(|| {
       Cache::builder()
         .max_capacity(1000)
@@ -450,16 +450,16 @@ impl CommunityActions {
           .first::<CommunityId>(conn)
           .await
           .optional()
-          .with_lemmy_type(LemmyErrorType::NotFound)
+          .with_fastjob_type(FastJobErrorType::NotFound)
       })
       .await
-      .map_err(|_e: Arc<LemmyError>| LemmyErrorType::NotFound.into())
+      .map_err(|_e: Arc<FastJobError>| FastJobErrorType::NotFound.into())
   }
 }
 
 impl Bannable for CommunityActions {
   type Form = CommunityPersonBanForm;
-  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -472,17 +472,17 @@ impl Bannable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityUserAlreadyBanned)
+      .with_fastjob_type(FastJobErrorType::CommunityUserAlreadyBanned)
   }
 
-  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(community_actions::table.find((form.person_id, form.community_id)))
       .set_null(community_actions::received_ban_at)
       .set_null(community_actions::ban_expires_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityUserAlreadyBanned)
+      .with_fastjob_type(FastJobErrorType::CommunityUserAlreadyBanned)
   }
 }
 
@@ -490,7 +490,7 @@ impl Followable for CommunityActions {
   type Form = CommunityFollowerForm;
   type IdType = CommunityId;
 
-  async fn follow(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn follow(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -503,13 +503,13 @@ impl Followable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
   }
   async fn follow_accepted(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((person_id, community_id))
@@ -519,14 +519,14 @@ impl Followable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
   }
 
   async fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     community_id: Self::IdType,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(community_actions::table.find((person_id, community_id)))
       .set_null(community_actions::followed_at)
@@ -534,7 +534,7 @@ impl Followable for CommunityActions {
       .set_null(community_actions::follow_approver_id)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
   }
 }
 
@@ -543,7 +543,7 @@ impl Blockable for CommunityActions {
   type ObjectIdType = CommunityId;
   type ObjectType = Community;
 
-  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(community_actions::table)
       .values(form)
@@ -556,12 +556,12 @@ impl Blockable for CommunityActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CommunityBlockAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CommunityBlockAlreadyExists)
   }
   async fn unblock(
     pool: &mut DbPool<'_>,
     community_block_form: &Self::Form,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(community_actions::table.find((
       community_block_form.person_id,
@@ -570,14 +570,14 @@ impl Blockable for CommunityActions {
     .set_null(community_actions::blocked_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CommunityBlockAlreadyExists)
+    .with_fastjob_type(FastJobErrorType::CommunityBlockAlreadyExists)
   }
 
   async fn read_block(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     community_id: Self::ObjectIdType,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = community_actions::table
       .find((person_id, community_id))
@@ -587,13 +587,13 @@ impl Blockable for CommunityActions {
       .get_result::<bool>(conn)
       .await?
       .then_some(())
-      .ok_or(LemmyErrorType::CommunityIsBlocked.into())
+      .ok_or(FastJobErrorType::CommunityIsBlocked.into())
   }
 
   async fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Self::ObjectType>> {
+  ) -> FastJobResult<Vec<Self::ObjectType>> {
     let conn = &mut get_conn(pool).await?;
     community_actions::table
       .filter(community_actions::blocked_at.is_not_null())
@@ -605,7 +605,7 @@ impl Blockable for CommunityActions {
       .order_by(community_actions::blocked_at)
       .load::<Community>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -613,21 +613,21 @@ impl ApubActor for Community {
   async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     community::table
       .filter(community::ap_id.eq(object_id))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   async fn read_from_name(
     pool: &mut DbPool<'_>,
     community_name: &str,
     include_deleted: bool,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let mut q = community::table
       .into_boxed()
@@ -639,14 +639,14 @@ impl ApubActor for Community {
     q.first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   async fn read_from_name_and_domain(
     pool: &mut DbPool<'_>,
     community_name: &str,
     for_domain: &str,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     community::table
       .inner_join(instance::table)
@@ -656,20 +656,20 @@ impl ApubActor for Community {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(FastJobErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'c', settings)
   }
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl> {
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
   }
@@ -698,13 +698,13 @@ mod tests {
     traits::{Bannable, Crud, Followable, Joinable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -865,7 +865,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

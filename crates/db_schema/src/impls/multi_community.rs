@@ -31,7 +31,7 @@ use lemmy_db_schema_file::schema::{
   person,
 };
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -43,7 +43,7 @@ impl Crud for MultiCommunity {
   type UpdateForm = MultiCommunityUpdateForm;
   type IdType = MultiCommunityId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &MultiCommunityInsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &MultiCommunityInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       insert_into(multi_community::table)
@@ -57,7 +57,7 @@ impl Crud for MultiCommunity {
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     form: &MultiCommunityUpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       update(multi_community::table.find(id))
@@ -69,7 +69,7 @@ impl Crud for MultiCommunity {
 }
 
 impl MultiCommunity {
-  pub async fn read_from_name(pool: &mut DbPool<'_>, multi_name: &str) -> LemmyResult<Self> {
+  pub async fn read_from_name(pool: &mut DbPool<'_>, multi_name: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       multi_community::table
@@ -81,21 +81,21 @@ impl MultiCommunity {
     )
   }
 
-  pub async fn read_from_ap_id(pool: &mut DbPool<'_>, ap_id: &DbUrl) -> LemmyResult<Option<Self>> {
+  pub async fn read_from_ap_id(pool: &mut DbPool<'_>, ap_id: &DbUrl) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     multi_community::table
       .filter(multi_community::ap_id.eq(ap_id))
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn create_entry(
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     new_community: &Community,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let count: i64 = multi_community::table
       .left_join(multi_community_entry::table)
@@ -104,7 +104,7 @@ impl MultiCommunity {
       .first(conn)
       .await?;
     if count >= MULTI_COMMUNITY_ENTRY_LIMIT.into() {
-      return Err(LemmyErrorType::MultiCommunityEntryLimitReached.into());
+      return Err(FastJobErrorType::MultiCommunityEntryLimitReached.into());
     }
 
     insert_into(multi_community_entry::table)
@@ -121,7 +121,7 @@ impl MultiCommunity {
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     old_community: &Community,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     delete(
       multi_community_entry::table
@@ -136,7 +136,7 @@ impl MultiCommunity {
   pub async fn follow(
     pool: &mut DbPool<'_>,
     form: &MultiCommunityFollowForm,
-  ) -> LemmyResult<MultiCommunityFollow> {
+  ) -> FastJobResult<MultiCommunityFollow> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       insert_into(multi_community_follow::table)
@@ -156,7 +156,7 @@ impl MultiCommunity {
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     multi_community_id: MultiCommunityId,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     delete(
       multi_community_follow::table
@@ -171,7 +171,7 @@ impl MultiCommunity {
   pub async fn follower_inboxes(
     pool: &mut DbPool<'_>,
     multi_community_id: MultiCommunityId,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> FastJobResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     multi_community_follow::table
       .inner_join(person::table)
@@ -181,13 +181,13 @@ impl MultiCommunity {
       .load(conn)
       .await
       .optional()?
-      .ok_or(LemmyErrorType::NotFound.into())
+      .ok_or(FastJobErrorType::NotFound.into())
   }
 
   pub async fn upsert(
     pool: &mut DbPool<'_>,
     form: &MultiCommunityInsertForm,
-  ) -> LemmyResult<MultiCommunity> {
+  ) -> FastJobResult<MultiCommunity> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       insert_into(multi_community::table)
@@ -205,10 +205,10 @@ impl MultiCommunity {
     pool: &mut DbPool<'_>,
     id: MultiCommunityId,
     new_communities: &Vec<CommunityId>,
-  ) -> LemmyResult<(Vec<Community>, Vec<Community>, bool)> {
+  ) -> FastJobResult<(Vec<Community>, Vec<Community>, bool)> {
     let conn = &mut get_conn(pool).await?;
     if new_communities.len() >= usize::try_from(MULTI_COMMUNITY_ENTRY_LIMIT)? {
-      return Err(LemmyErrorType::MultiCommunityEntryLimitReached.into());
+      return Err(FastJobErrorType::MultiCommunityEntryLimitReached.into());
     }
 
     let removed: Vec<CommunityId> = delete(
@@ -262,7 +262,7 @@ impl MultiCommunity {
   pub async fn read_entry_ap_ids(
     pool: &mut DbPool<'_>,
     multi_name: &str,
-  ) -> LemmyResult<Vec<DbUrl>> {
+  ) -> FastJobResult<Vec<DbUrl>> {
     let conn = &mut get_conn(pool).await?;
     let entries = multi_community::table
       .inner_join(multi_community_entry::table.inner_join(community::table))
@@ -284,7 +284,7 @@ impl MultiCommunity {
     pool: &mut DbPool<'_>,
     multi_id: MultiCommunityId,
     community_id: CommunityId,
-  ) -> LemmyResult<bool> {
+  ) -> FastJobResult<bool> {
     let conn = &mut get_conn(pool).await?;
     Ok(
       select(exists(
@@ -298,12 +298,12 @@ impl MultiCommunity {
     )
   }
 
-  pub fn format_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  pub fn format_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = self
       .ap_id
       .inner()
       .domain()
-      .ok_or(LemmyErrorType::NotFound)?;
+      .ok_or(FastJobErrorType::NotFound)?;
 
     format_actor_url(&self.name, domain, 'u', settings)
   }
@@ -323,7 +323,7 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -333,7 +333,7 @@ mod tests {
     community: Community,
   }
 
-  async fn setup(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn setup(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let form = PersonInsertForm::test_form(instance.id, "bobby");
@@ -362,7 +362,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_multi_community_apub() -> LemmyResult<()> {
+  async fn test_multi_community_apub() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = setup(pool).await?;

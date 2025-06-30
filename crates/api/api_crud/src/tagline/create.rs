@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{get_url_blocklist, is_admin, process_markdown, slur_regex},
 };
 use lemmy_db_schema::{
@@ -10,13 +10,13 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{CreateTagline, TaglineResponse};
-use lemmy_utils::error::LemmyError;
+use lemmy_utils::error::FastJobError;
 
 pub async fn create_tagline(
   data: Json<CreateTagline>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> Result<Json<TaglineResponse>, LemmyError> {
+) -> Result<Json<TaglineResponse>, FastJobError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

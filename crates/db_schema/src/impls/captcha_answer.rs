@@ -5,23 +5,23 @@ use crate::{
 use diesel::{delete, dsl::exists, insert_into, select, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::captcha_answer::dsl::{answer, captcha_answer};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CaptchaAnswer {
-  pub async fn insert(pool: &mut DbPool<'_>, captcha: &CaptchaAnswerForm) -> LemmyResult<Self> {
+  pub async fn insert(pool: &mut DbPool<'_>, captcha: &CaptchaAnswerForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(captcha_answer)
       .values(captcha)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateCaptchaAnswer)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateCaptchaAnswer)
   }
 
   pub async fn check_captcha(
     pool: &mut DbPool<'_>,
     to_check: CheckCaptchaAnswer,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
     // fetch requested captcha
@@ -39,7 +39,7 @@ impl CaptchaAnswer {
 
     captcha_exists
       .then_some(())
-      .ok_or(LemmyErrorType::CaptchaIncorrect.into())
+      .ok_or(FastJobErrorType::CaptchaIncorrect.into())
   }
 }
 
@@ -50,12 +50,12 @@ mod tests {
     source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm, CheckCaptchaAnswer},
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_captcha_happy_path() -> LemmyResult<()> {
+  async fn test_captcha_happy_path() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -82,7 +82,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_captcha_repeat_answer_fails() -> LemmyResult<()> {
+  async fn test_captcha_repeat_answer_fails() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

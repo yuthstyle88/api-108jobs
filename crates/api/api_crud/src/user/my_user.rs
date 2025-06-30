@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::check_local_user_valid};
+use lemmy_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use lemmy_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
@@ -14,12 +14,12 @@ use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::MyUserInfo;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn get_my_user(
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<MyUserInfo>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<MyUserInfo>> {
   check_local_user_valid(&local_user_view)?;
 
   // Build the local user with parallel queries and add it to site response

@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{context::LemmyContext, utils::is_admin};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::oauth_provider::{OAuthProvider, OAuthProviderUpdateForm},
   traits::Crud,
@@ -9,13 +9,13 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::EditOAuthProvider;
-use lemmy_utils::error::LemmyError;
+use lemmy_utils::error::FastJobError;
 
 pub async fn update_oauth_provider(
   data: Json<EditOAuthProvider>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> Result<Json<OAuthProvider>, LemmyError> {
+) -> Result<Json<OAuthProvider>, FastJobError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 

@@ -4,20 +4,20 @@ use crate::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::secret::dsl::secret;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Secret {
   /// Initialize the Secrets from the DB.
   /// Warning: You should only call this once.
-  pub async fn init(pool: &mut DbPool<'_>) -> LemmyResult<Secret> {
+  pub async fn init(pool: &mut DbPool<'_>) -> FastJobResult<Secret> {
     Self::read_secrets(pool).await
   }
 
-  async fn read_secrets(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  async fn read_secrets(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     secret
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }

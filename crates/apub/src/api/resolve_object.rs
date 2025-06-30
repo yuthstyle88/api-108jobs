@@ -2,7 +2,7 @@ use crate::fetcher::search::{search_query_to_object_id, search_query_to_object_i
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
 use either::Either::*;
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_db_views_comment::CommentView;
 use lemmy_db_views_community::{CommunityView, MultiCommunityView};
 use lemmy_db_views_local_user::LocalUserView;
@@ -10,13 +10,13 @@ use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
 use lemmy_db_views_search_combined::{SearchCombinedView, SearchResponse};
 use lemmy_db_views_site::{api::ResolveObject, SiteView};
-use lemmy_utils::error::{LemmyErrorExt2, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
 
 pub async fn resolve_object(
   data: Query<ResolveObject>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<SearchResponse>> {
+) -> FastJobResult<Json<SearchResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   check_private_instance(&local_user_view, &local_site)?;
 
@@ -30,8 +30,8 @@ pub async fn resolve_object(
 pub(super) async fn resolve_object_internal(
   query: &str,
   local_user_view: &Option<LocalUserView>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<SearchCombinedView> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<SearchCombinedView> {
   use SearchCombinedView::*;
 
   // If we get a valid personId back we can safely assume that the user is authenticated,
@@ -45,7 +45,7 @@ pub(super) async fn resolve_object_internal(
     // user isn't authenticated only allow a local search.
     search_query_to_object_id_local(query, context).await
   }
-  .with_lemmy_type(LemmyErrorType::NotFound)?;
+  .with_fastjob_type(FastJobErrorType::NotFound)?;
 
   let my_person_id = local_user_view.as_ref().map(|l| l.person.id);
   let local_user = local_user_view.as_ref().map(|l| l.local_user.clone());
@@ -86,8 +86,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_object_visibility() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_object_visibility() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -136,10 +136,10 @@ mod tests {
 
     // Deleted objects should not be resolvable without authentication
     let res = resolve_object_internal(&query, &None, &context).await;
-    assert!(res.is_err_and(|e| e.error_type == LemmyErrorType::NotFound));
+    assert!(res.is_err_and(|e| e.error_type == FastJobErrorType::NotFound));
     // Deleted objects should not be resolvable by regular users
     let res = resolve_object_internal(&query, &Some(regular_user.clone()), &context).await;
-    assert!(res.is_err_and(|e| e.error_type == LemmyErrorType::NotFound));
+    assert!(res.is_err_and(|e| e.error_type == FastJobErrorType::NotFound));
     // Deleted objects should be resolvable by admins
     let res = resolve_object_internal(&query, &Some(admin_user.clone()), &context).await?;
     assert_response(res, &post);

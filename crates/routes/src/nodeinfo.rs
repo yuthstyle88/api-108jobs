@@ -1,10 +1,10 @@
 use actix_web::{web, Error, HttpResponse, Result};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   cache_header::{cache_1hour, cache_3days},
-  error::LemmyResult,
+  error::FastJobResult,
   VERSION,
 };
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     );
 }
 
-async fn node_info_well_known(context: web::Data<LemmyContext>) -> LemmyResult<HttpResponse> {
+async fn node_info_well_known(context: web::Data<FastJobContext>) -> FastJobResult<HttpResponse> {
   let node_info = NodeInfoWellKnown {
     links: vec![NodeInfoWellKnownLinks {
       rel: Url::parse("http://nodeinfo.diaspora.software/ns/schema/2.1")?,
@@ -42,7 +42,7 @@ async fn node_info_well_known(context: web::Data<LemmyContext>) -> LemmyResult<H
   Ok(HttpResponse::Ok().json(node_info))
 }
 
-async fn node_info(context: web::Data<LemmyContext>) -> Result<HttpResponse, Error> {
+async fn node_info(context: web::Data<FastJobContext>) -> Result<HttpResponse, Error> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   // Since there are 3 registration options,

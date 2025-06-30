@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use either::Either;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_admin,
 };
@@ -15,13 +15,13 @@ use lemmy_db_views_reports::{
   api::{CommunityReportResponse, ResolveCommunityReport},
   CommunityReportView,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn resolve_community_report(
   data: Json<ResolveCommunityReport>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommunityReportResponse>> {
+) -> FastJobResult<Json<CommunityReportResponse>> {
   is_admin(&local_user_view)?;
 
   let report_id = data.report_id;

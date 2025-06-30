@@ -11,7 +11,7 @@ use activitypub_federation::{
   kinds::activity::AnnounceType,
   traits::{ActivityHandler, Actor},
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::community::ApubCommunity,
   utils::{
@@ -20,14 +20,14 @@ use lemmy_apub_objects::{
   },
 };
 use lemmy_db_schema::source::{activity::ActivitySendTargets, community::CommunityActions};
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobErrorType, FastJobResult};
 use serde_json::Value;
 use url::Url;
 
 #[async_trait::async_trait]
 impl ActivityHandler for RawAnnouncableActivities {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -74,8 +74,8 @@ impl AnnounceActivity {
   pub(crate) fn new(
     object: RawAnnouncableActivities,
     community: &ApubCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<AnnounceActivity> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<AnnounceActivity> {
     let inner_kind = object
       .other
       .get("type")
@@ -101,8 +101,8 @@ impl AnnounceActivity {
   pub async fn send(
     object: RawAnnouncableActivities,
     community: &ApubCommunity,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let announce = AnnounceActivity::new(object.clone(), community, context)?;
     let inboxes = ActivitySendTargets::to_local_community_followers(community.id);
     send_lemmy_activity(context, announce, community, inboxes.clone(), false).await?;
@@ -130,8 +130,8 @@ impl AnnounceActivity {
 
 #[async_trait::async_trait]
 impl ActivityHandler for AnnounceActivity {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -141,11 +141,11 @@ impl ActivityHandler for AnnounceActivity {
     self.actor.inner()
   }
 
-  async fn verify(&self, _context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, _context: &Data<Self::DataType>) -> FastJobResult<()> {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let object: AnnouncableActivities = self.object.object(context).await?.try_into()?;
 
     // This is only for sending, not receiving so we reject it.
@@ -196,12 +196,12 @@ impl TryFrom<AnnouncableActivities> for RawAnnouncableActivities {
 ///       problem compared to receiving unsolicited posts.
 async fn can_accept_activity_in_community(
   community: &Option<ApubCommunity>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   if let Some(community) = community {
     // Local only community can't federate
     if !community.visibility.can_federate() {
-      return Err(LemmyErrorType::NotFound.into());
+      return Err(FastJobErrorType::NotFound.into());
     }
     if !community.local {
       CommunityActions::check_accept_activity_in_community(&mut context.pool(), community.id)

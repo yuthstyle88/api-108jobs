@@ -13,7 +13,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::comment_report;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for CommentReport {
   type Form = CommentReportForm;
@@ -23,13 +23,13 @@ impl Reportable for CommentReport {
   ///
   /// * `conn` - the postgres connection
   /// * `comment_report_form` - the filled CommentReportForm to insert
-  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(comment_report::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreateReport)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateReport)
   }
 
   /// resolve a comment report
@@ -41,7 +41,7 @@ impl Reportable for CommentReport {
     pool: &mut DbPool<'_>,
     report_id_: Self::IdType,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(comment_report::table.find(report_id_))
       .set((
@@ -51,7 +51,7 @@ impl Reportable for CommentReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+      .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 
   async fn resolve_apub(
@@ -59,7 +59,7 @@ impl Reportable for CommentReport {
     object_id: Self::ObjectIdType,
     report_creator_id: PersonId,
     resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(
       comment_report::table.filter(
@@ -75,14 +75,14 @@ impl Reportable for CommentReport {
     ))
     .execute(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+    .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 
   async fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
     comment_id_: CommentId,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(comment_report::table.filter(comment_report::comment_id.eq(comment_id_)))
       .set((
@@ -92,7 +92,7 @@ impl Reportable for CommentReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+      .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 
   /// unresolve a comment report
@@ -104,7 +104,7 @@ impl Reportable for CommentReport {
     pool: &mut DbPool<'_>,
     report_id_: Self::IdType,
     by_resolver_id: PersonId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     update(comment_report::table.find(report_id_))
       .set((
@@ -114,6 +114,6 @@ impl Reportable for CommentReport {
       ))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntResolveReport)
+      .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 }

@@ -7,7 +7,7 @@ use activitypub_federation::{
 };
 use futures::future::join_all;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
 use lemmy_db_schema::{
@@ -20,7 +20,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::CommunityFollowerState;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use tracing::info;
 use url::Url;
 
@@ -28,10 +28,10 @@ pub struct ApubFeedCollection;
 
 #[async_trait::async_trait]
 impl Collection for ApubFeedCollection {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = FeedCollection;
   type Owner = ApubMultiCommunity;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   async fn read_local(
     owner: &Self::Owner,
@@ -49,8 +49,8 @@ impl Collection for ApubFeedCollection {
   async fn verify(
     json: &Self::Kind,
     expected_domain: &Url,
-    _context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    _context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     verify_domains_match(expected_domain, &json.id.clone().into())?;
     Ok(())
   }
@@ -58,8 +58,8 @@ impl Collection for ApubFeedCollection {
   async fn from_json(
     json: Self::Kind,
     owner: &Self::Owner,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Self> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Self> {
     let communities = join_all(
       json
         .items
@@ -68,7 +68,7 @@ impl Collection for ApubFeedCollection {
     )
     .await
     .into_iter()
-    .flat_map(|c: LemmyResult<CommunityId>| match c {
+    .flat_map(|c: FastJobResult<CommunityId>| match c {
       Ok(c) => Some(c),
       Err(e) => {
         info!("Failed to fetch multi-community item: {e}");

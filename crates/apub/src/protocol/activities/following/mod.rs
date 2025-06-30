@@ -11,10 +11,10 @@ mod tests {
     undo_follow::UndoFollow,
   };
   use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_lemmy_accept_follow() -> LemmyResult<()> {
+  fn test_parse_lemmy_accept_follow() -> FastJobResult<()> {
     test_parse_lemmy_item::<Follow>("assets/lemmy/activities/following/follow.json")?;
     test_parse_lemmy_item::<AcceptFollow>("assets/lemmy/activities/following/accept.json")?;
     test_parse_lemmy_item::<UndoFollow>("assets/lemmy/activities/following/undo_follow.json")?;

@@ -6,23 +6,23 @@ use crate::{
 use diesel::{delete, dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::federation_allowlist;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl FederationAllowList {
-  pub async fn allow(pool: &mut DbPool<'_>, form: &FederationAllowListForm) -> LemmyResult<Self> {
+  pub async fn allow(pool: &mut DbPool<'_>, form: &FederationAllowListForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(federation_allowlist::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntAllowInstance)
+      .with_fastjob_type(FastJobErrorType::CouldntAllowInstance)
   }
-  pub async fn unallow(pool: &mut DbPool<'_>, instance_id_: InstanceId) -> LemmyResult<usize> {
+  pub async fn unallow(pool: &mut DbPool<'_>, instance_id_: InstanceId) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     delete(federation_allowlist::table.filter(federation_allowlist::instance_id.eq(instance_id_)))
       .execute(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::Deleted)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 }
 
@@ -36,7 +36,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_allowlist_insert_and_clear() -> LemmyResult<()> {
+  async fn test_allowlist_insert_and_clear() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let instances = vec![

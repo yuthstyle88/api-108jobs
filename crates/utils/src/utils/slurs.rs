@@ -1,4 +1,4 @@
-use crate::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use regex::Regex;
 
 pub fn remove_slurs(test: &str, slur_regex: &Regex) -> String {
@@ -19,15 +19,15 @@ pub(crate) fn slur_check<'a>(test: &'a str, slur_regex: &'a Regex) -> Result<(),
   }
 }
 
-pub fn check_slurs(text: &str, slur_regex: &Regex) -> LemmyResult<()> {
+pub fn check_slurs(text: &str, slur_regex: &Regex) -> FastJobResult<()> {
   if let Err(slurs) = slur_check(text, slur_regex) {
-    Err(anyhow::anyhow!("{}", slurs_vec_to_str(&slurs))).with_lemmy_type(LemmyErrorType::Slurs)
+    Err(anyhow::anyhow!("{}", slurs_vec_to_str(&slurs))).with_fastjob_type(FastJobErrorType::Slurs)
   } else {
     Ok(())
   }
 }
 
-pub fn check_slurs_opt(text: &Option<String>, slur_regex: &Regex) -> LemmyResult<()> {
+pub fn check_slurs_opt(text: &Option<String>, slur_regex: &Regex) -> FastJobResult<()> {
   match text {
     Some(t) => check_slurs(t, slur_regex),
     None => Ok(()),
@@ -44,14 +44,14 @@ pub(crate) fn slurs_vec_to_str(slurs: &[&str]) -> String {
 mod test {
 
   use crate::{
-    error::LemmyResult,
+    error::FastJobResult,
     utils::slurs::{remove_slurs, slur_check, slurs_vec_to_str},
   };
   use pretty_assertions::assert_eq;
   use regex::RegexBuilder;
 
   #[test]
-  fn test_slur_filter() -> LemmyResult<()> {
+  fn test_slur_filter() -> FastJobResult<()> {
     let slur_regex = RegexBuilder::new(r"(fag(g|got|tard)?\b|cock\s?sucker(s|ing)?|ni[gq]{2}[e3]?r[sz]?|mudslime?s?|kikes?|\bspi(c|k)s?\b|\bchinks?|gooks?|bitch(es|ing|y)?|whor(es?|ing)|\btr(a|@)nn?(y|ies?)|\b(b|re|r)tard(ed)?s?)").case_insensitive(true).build()?;
     let test =
       "faggot test kike tranny cocksucker retardeds. Capitalized Niggerz. This is a bunch of other safe text.";

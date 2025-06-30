@@ -12,7 +12,7 @@ use crate::{
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::person_post_mention;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for PersonPostMention {
   type InsertForm = PersonPostMentionInsertForm;
@@ -22,7 +22,7 @@ impl Crud for PersonPostMention {
   async fn create(
     pool: &mut DbPool<'_>,
     person_post_mention_form: &Self::InsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     // since the return here isnt utilized, we dont need to do an update
     // but get_result doesn't return the existing row here
@@ -36,20 +36,20 @@ impl Crud for PersonPostMention {
       .set(person_post_mention_form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePersonPostMention)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePersonPostMention)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     person_post_mention_id: PersonPostMentionId,
     person_post_mention_form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(person_post_mention::table.find(person_post_mention_id))
       .set(person_post_mention_form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePersonPostMention)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePersonPostMention)
   }
 }
 
@@ -57,7 +57,7 @@ impl PersonPostMention {
   pub async fn mark_all_as_read(
     pool: &mut DbPool<'_>,
     for_recipient_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(
       person_post_mention::table
@@ -67,14 +67,14 @@ impl PersonPostMention {
     .set(person_post_mention::read.eq(true))
     .get_results::<Self>(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdatePersonPostMention)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePersonPostMention)
   }
 
   pub async fn read_by_post_and_person(
     pool: &mut DbPool<'_>,
     for_post_id: PostId,
     for_recipient_id: PersonId,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     person_post_mention::table
       .filter(person_post_mention::post_id.eq(for_post_id))
@@ -82,6 +82,6 @@ impl PersonPostMention {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }

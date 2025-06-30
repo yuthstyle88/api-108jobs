@@ -3,7 +3,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
 use futures::future::join;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_conflicting_like_filters, check_private_instance},
 };
 use lemmy_apub_objects::objects::community::ApubCommunity;
@@ -16,13 +16,13 @@ use lemmy_db_views_search_combined::{
   SearchResponse,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn search(
   data: Query<Search>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<SearchResponse>> {
+) -> FastJobResult<Json<SearchResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
 

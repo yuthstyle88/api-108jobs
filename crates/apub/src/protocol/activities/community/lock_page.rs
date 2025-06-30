@@ -4,13 +4,13 @@ use activitypub_federation::{
   kinds::activity::UndoType,
   protocol::helpers::deserialize_one_or_many,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson, post::ApubPost},
   utils::protocol::InCommunity,
 };
 use lemmy_db_schema::{source::community::Community, traits::Crud};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 use url::Url;
@@ -53,7 +53,7 @@ pub struct UndoLockPage {
 }
 
 impl InCommunity for LockPage {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let post = self.object.dereference(context).await?;
     let community = Community::read(&mut context.pool(), post.community_id).await?;
     Ok(community.into())

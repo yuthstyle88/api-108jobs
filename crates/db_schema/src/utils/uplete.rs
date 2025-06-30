@@ -252,7 +252,7 @@ mod tests {
     SelectableExpression,
   };
   use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -278,7 +278,7 @@ mod tests {
   async fn expect_rows(
     conn: &mut DbConn<'_>,
     expected: &[(Option<i32>, Option<i32>)],
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let rows: Vec<(Option<i32>, Option<i32>)> = t::table
       .select((t::a, t::b))
       .order_by(t::id1)
@@ -293,7 +293,7 @@ mod tests {
   // tests rely on
   #[tokio::test]
   #[serial]
-  async fn test_count() -> LemmyResult<()> {
+  async fn test_count() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let mut conn = get_conn(pool).await?;
@@ -402,7 +402,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_all_null() -> LemmyResult<()> {
+  async fn test_all_null() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let mut conn = get_conn(pool).await?;

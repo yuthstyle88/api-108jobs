@@ -6,27 +6,27 @@ use crate::{
 use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use lemmy_db_schema_file::schema::local_user_keyword_block;
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUserKeywordBlock {
   pub async fn read(
     pool: &mut DbPool<'_>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<Vec<String>> {
+  ) -> FastJobResult<Vec<String>> {
     let conn = &mut get_conn(pool).await?;
     local_user_keyword_block::table
       .filter(local_user_keyword_block::local_user_id.eq(for_local_user_id))
       .select(local_user_keyword_block::keyword)
       .load(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn update(
     pool: &mut DbPool<'_>,
     blocking_keywords: Vec<String>,
     for_local_user_id: LocalUserId,
-  ) -> LemmyResult<usize> {
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     // No need to update if keywords unchanged
     conn
@@ -37,7 +37,7 @@ impl LocalUserKeywordBlock {
             .filter(local_user_keyword_block::keyword.ne_all(&blocking_keywords))
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateKeywords)?;
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateKeywords)?;
           let forms = blocking_keywords
             .into_iter()
             .map(|k| LocalUserKeywordBlockForm {
@@ -50,7 +50,7 @@ impl LocalUserKeywordBlock {
             .on_conflict_do_nothing()
             .execute(conn)
             .await
-            .with_lemmy_type(LemmyErrorType::CouldntUpdateKeywords)
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateKeywords)
         }
         .scope_boxed()
       })

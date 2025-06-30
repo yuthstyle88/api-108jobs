@@ -70,7 +70,7 @@ use lemmy_db_schema_file::{
   },
 };
 use lemmy_db_views_community::MultiCommunityView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -187,13 +187,13 @@ impl PaginationCursorBuilder for SearchCombinedView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
     let pids = cursor.prefixes_and_ids();
     let (prefix, id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     let mut query = search_combined::table
       .select(Self::CursorData::as_select())
@@ -205,7 +205,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
       'O' => query.filter(search_combined::community_id.eq(id)),
       'E' => query.filter(search_combined::person_id.eq(id)),
       'M' => query.filter(search_combined::multi_community_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -238,7 +238,7 @@ impl SearchCombinedQuery {
     pool: &mut DbPool<'_>,
     user: &Option<LocalUserView>,
     site_local: &Site,
-  ) -> LemmyResult<Vec<SearchCombinedView>> {
+  ) -> FastJobResult<Vec<SearchCombinedView>> {
     let my_person_id = user.as_ref().map(|u| u.local_user.person_id);
     let item_creator = person::id;
 
@@ -508,7 +508,7 @@ mod tests {
     SearchSortType,
     SearchType,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -531,7 +531,7 @@ mod tests {
     comment_in_nsfw_post: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
     let site_form = SiteInsertForm::new("test_site".to_string(), instance.id);
     let site = Site::create(pool, &site_form).await?;
@@ -554,7 +554,7 @@ mod tests {
       ..CommunityInsertForm::new(
         instance.id,
         "asklemmy".to_string(),
-        "Ask Lemmy".to_owned(),
+        "Ask FastJob".to_owned(),
         "pubkey".to_string(),
       )
     };
@@ -646,7 +646,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -654,7 +654,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn combined() -> LemmyResult<()> {
+  async fn combined() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -831,7 +831,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community() -> LemmyResult<()> {
+  async fn community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -905,7 +905,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn person() -> LemmyResult<()> {
+  async fn person() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -987,7 +987,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn post() -> LemmyResult<()> {
+  async fn post() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1118,7 +1118,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn nsfw_post() -> LemmyResult<()> {
+  async fn nsfw_post() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1147,7 +1147,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn nsfw_comment() -> LemmyResult<()> {
+  async fn nsfw_comment() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1177,7 +1177,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment() -> LemmyResult<()> {
+  async fn comment() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1284,7 +1284,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn multi_community() -> LemmyResult<()> {
+  async fn multi_community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

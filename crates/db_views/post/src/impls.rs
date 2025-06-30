@@ -69,7 +69,7 @@ use lemmy_db_schema_file::{
     post_actions,
   },
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use tracing::debug;
 
 impl PaginationCursorBuilder for PostView {
@@ -81,7 +81,7 @@ impl PaginationCursorBuilder for PostView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
     Post::read(pool, PostId(id)).await
   }
@@ -125,7 +125,7 @@ impl PostView {
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
     is_mod_or_admin: bool,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
 
@@ -172,7 +172,7 @@ impl PostView {
       .text("PostView::read")
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// List all the read posts for your person, ordered by the read date.
@@ -183,7 +183,7 @@ impl PostView {
     page_back: Option<bool>,
     limit: Option<i64>,
     no_limit: Option<bool>,
-  ) -> LemmyResult<Vec<PostView>> {
+  ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = PostView::joins(Some(my_person.id), my_person.instance_id)
@@ -207,7 +207,7 @@ impl PostView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// List all the hidden posts for your person, ordered by the hide date.
@@ -218,7 +218,7 @@ impl PostView {
     page_back: Option<bool>,
     limit: Option<i64>,
     no_limit: Option<bool>,
-  ) -> LemmyResult<Vec<PostView>> {
+  ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = PostView::joins(Some(my_person.id), my_person.instance_id)
@@ -242,7 +242,7 @@ impl PostView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn to_post_actions_cursor(&self) -> PaginationCursor {
@@ -277,7 +277,7 @@ impl PostQuery<'_> {
     &self,
     site: &Site,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Option<Post>> {
+  ) -> FastJobResult<Option<Post>> {
     // first get one page for the most popular community to get an upper bound for the page end for
     // the real query. the reason this is needed is that when fetching posts for a single
     // community PostgreSQL can optimize the query to use an index on e.g. (=, >=, >=, >=) and
@@ -333,7 +333,7 @@ impl PostQuery<'_> {
     cursor_before_data: Option<Post>,
     largest_subscribed_for_prefetch: Option<CommunityId>,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Vec<PostView>> {
+  ) -> FastJobResult<Vec<PostView>> {
     let o = self;
     let limit = limit_fetch(o.limit)?;
 
@@ -373,7 +373,7 @@ impl PostQuery<'_> {
         query = query.filter(post::community_id.eq_any(communities))
       }
       (Some(_), Some(_)) => {
-        return Err(LemmyErrorType::CannotCombineCommunityIdAndMultiCommunityId.into())
+        return Err(FastJobErrorType::CannotCombineCommunityIdAndMultiCommunityId.into())
       }
       (None, None) => {
         if let (Some(ListingType::Subscribed), Some(id)) =
@@ -543,10 +543,10 @@ impl PostQuery<'_> {
       .text("PostQuery::list")
       .load::<PostView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn list(&self, site: &Site, pool: &mut DbPool<'_>) -> LemmyResult<Vec<PostView>> {
+  pub async fn list(&self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<PostView>> {
     let cursor_before_data = self.prefetch_cursor_before_data(site, pool).await?;
 
     self
@@ -608,7 +608,7 @@ mod tests {
   };
   use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility, ListingType};
   use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use std::{
@@ -658,7 +658,7 @@ mod tests {
       }
     }
 
-    async fn setup() -> LemmyResult<Data> {
+    async fn setup() -> FastJobResult<Data> {
       let actual_pool = build_db_pool()?;
       let pool = &mut (&actual_pool).into();
       let data = TestData::create(pool).await?;
@@ -813,7 +813,7 @@ mod tests {
         site: data.site,
       })
     }
-    async fn teardown(data: Data) -> LemmyResult<()> {
+    async fn teardown(data: Data) -> FastJobResult<()> {
       let pool = &mut data.pool2();
       let num_deleted = Post::delete(pool, data.post.id).await?;
       Community::delete(pool, data.community.id).await?;
@@ -839,7 +839,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_with_person(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_with_person(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -898,7 +898,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_no_person(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_no_person(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -929,7 +929,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_block_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_block_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -952,7 +952,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_like(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_like(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1019,7 +1019,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn person_note(data: &mut Data) -> LemmyResult<()> {
+  async fn person_note(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1067,7 +1067,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_person_vote_totals(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_person_vote_totals(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1219,7 +1219,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_read_only(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_read_only(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1245,7 +1245,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn creator_info(data: &mut Data) -> LemmyResult<()> {
+  async fn creator_info(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
     let community_id = data.community.id;
@@ -1368,7 +1368,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_person_language(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_person_language(data: &mut Data) -> FastJobResult<()> {
     const EL_POSTO: &str = "el posto";
 
     let pool = &data.pool();
@@ -1435,7 +1435,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_removed(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_removed(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1469,7 +1469,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_deleted(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_deleted(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1508,7 +1508,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hidden_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_hidden_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1545,7 +1545,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_instance_block(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_instance_block(data: &mut Data) -> FastJobResult<()> {
     const POST_FROM_BLOCKED_INSTANCE: &str = "post on blocked instance";
     const POST_LISTING_WITH_BLOCKED: [&str; 4] = [
       POST_FROM_BLOCKED_INSTANCE,
@@ -1618,7 +1618,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn pagination_includes_each_post_once(data: &mut Data) -> LemmyResult<()> {
+  async fn pagination_includes_each_post_once(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1725,7 +1725,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hide_read(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_hide_read(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1774,7 +1774,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hide_hidden(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_hide_hidden(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1820,7 +1820,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hide_nsfw(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_hide_nsfw(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1854,7 +1854,7 @@ mod tests {
     assert!(
       &post_listings_show_nsfw
         .first()
-        .ok_or(LemmyErrorType::NotFound)?
+        .ok_or(FastJobErrorType::NotFound)?
         .post
         .nsfw
     );
@@ -1865,7 +1865,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn local_only_instance(data: &mut Data) -> LemmyResult<()> {
+  async fn local_only_instance(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1914,7 +1914,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_local_user_banned_from_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_local_user_banned_from_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1956,7 +1956,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_local_user_not_banned_from_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_local_user_not_banned_from_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1977,7 +1977,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_local_user_banned(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_local_user_banned(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2027,7 +2027,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn speed_check(data: &mut Data) -> LemmyResult<()> {
+  async fn speed_check(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2079,7 +2079,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_no_comments_only(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_no_comments_only(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2109,7 +2109,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_private_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_private_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2208,7 +2208,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hide_media(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listings_hide_media(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2268,7 +2268,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_with_blocked_keywords(data: &mut Data) -> LemmyResult<()> {
+  async fn post_with_blocked_keywords(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2341,7 +2341,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_tags_present(data: &mut Data) -> LemmyResult<()> {
+  async fn post_tags_present(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -2369,7 +2369,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_multi_community(data: &mut Data) -> LemmyResult<()> {
+  async fn post_listing_multi_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 

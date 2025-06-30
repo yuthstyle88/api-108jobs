@@ -76,7 +76,7 @@ use lemmy_db_schema_file::{
     post,
   },
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl ModlogCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -252,13 +252,13 @@ impl PaginationCursorBuilder for ModlogCombinedView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
     let pids = cursor.prefixes_and_ids();
     let (prefix, id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     let mut query = modlog_combined::table
       .select(Self::CursorData::as_select())
@@ -282,7 +282,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
       'O' => query.filter(modlog_combined::mod_remove_community_id.eq(id)),
       'P' => query.filter(modlog_combined::mod_remove_post_id.eq(id)),
       'Q' => query.filter(modlog_combined::mod_transfer_community_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
 
     let token = query.first(conn).await?;
@@ -309,7 +309,7 @@ pub struct ModlogCombinedQuery<'a> {
 }
 
 impl ModlogCombinedQuery<'_> {
-  pub async fn list(self, pool: &mut DbPool<'_>) -> LemmyResult<Vec<ModlogCombinedView>> {
+  pub async fn list(self, pool: &mut DbPool<'_>) -> FastJobResult<Vec<ModlogCombinedView>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(self.limit)?;
 
@@ -678,7 +678,7 @@ mod tests {
     ModlogActionType,
   };
   use lemmy_db_schema_file::enums::CommunityVisibility;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -695,7 +695,7 @@ mod tests {
     comment_2: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_rcv");
@@ -752,7 +752,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -760,7 +760,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn admin_types() -> LemmyResult<()> {
+  async fn admin_types() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -983,7 +983,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn mod_types() -> LemmyResult<()> {
+  async fn mod_types() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1385,7 +1385,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn hide_modlog_names() -> LemmyResult<()> {
+  async fn hide_modlog_names() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

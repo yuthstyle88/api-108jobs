@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::{
   email_verification::EmailVerification,
   local_user::{LocalUser, LocalUserUpdateForm},
@@ -10,12 +10,12 @@ use lemmy_db_views_site::{
   SiteView,
 };
 use lemmy_email::{account::send_email_verified_email, admin::send_new_applicant_email_to_admins};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn verify_email(
   data: Json<VerifyEmail>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<SuccessResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let token = data.token.clone();
   let verification = EmailVerification::read_for_token(&mut context.pool(), &token).await?;

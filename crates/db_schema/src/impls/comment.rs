@@ -32,7 +32,7 @@ use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use lemmy_db_schema_file::schema::{comment, comment_actions, community, post};
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorExt2, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -41,7 +41,7 @@ impl Comment {
   pub async fn permadelete_for_creator(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
@@ -52,14 +52,14 @@ impl Comment {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   pub async fn update_removed_for_creator(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
       .set((
@@ -68,7 +68,7 @@ impl Comment {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -76,7 +76,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<Vec<CommentId>> {
+  ) -> FastJobResult<Vec<CommentId>> {
     let conn = &mut get_conn(pool).await?;
 
     comment::table
@@ -86,7 +86,7 @@ impl Comment {
       .select(comment::id)
       .load::<CommentId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -94,7 +94,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     instance_id: InstanceId,
-  ) -> LemmyResult<Vec<CommentId>> {
+  ) -> FastJobResult<Vec<CommentId>> {
     let conn = &mut get_conn(pool).await?;
     let community_join = community::table.on(post::community_id.eq(community::id));
 
@@ -106,7 +106,7 @@ impl Comment {
       .select(comment::id)
       .load::<CommentId>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn update_removed_for_creator_and_community(
@@ -114,7 +114,7 @@ impl Comment {
     creator_id: PersonId,
     community_id: CommunityId,
     removed: bool,
-  ) -> LemmyResult<Vec<CommentId>> {
+  ) -> FastJobResult<Vec<CommentId>> {
     let comment_ids =
       Self::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
 
@@ -137,7 +137,7 @@ impl Comment {
     creator_id: PersonId,
     instance_id: InstanceId,
     removed: bool,
-  ) -> LemmyResult<Vec<CommentId>> {
+  ) -> FastJobResult<Vec<CommentId>> {
     let comment_ids = Self::creator_comment_ids_in_instance(pool, creator_id, instance_id).await?;
     let conn = &mut get_conn(pool).await?;
 
@@ -156,7 +156,7 @@ impl Comment {
     pool: &mut DbPool<'_>,
     comment_form: &CommentInsertForm,
     parent_path: Option<&Ltree>,
-  ) -> LemmyResult<Comment> {
+  ) -> FastJobResult<Comment> {
     Self::insert_apub(pool, None, comment_form, parent_path).await
   }
 
@@ -165,7 +165,7 @@ impl Comment {
     timestamp: Option<DateTime<Utc>>,
     comment_form: &CommentInsertForm,
     parent_path: Option<&Ltree>,
-  ) -> LemmyResult<Comment> {
+  ) -> FastJobResult<Comment> {
     let conn = &mut get_conn(pool).await?;
     let comment_form = (comment_form, parent_path.map(|p| comment::path.eq(p)));
 
@@ -178,20 +178,20 @@ impl Comment {
         .set(comment_form)
         .get_result::<Self>(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::CouldntCreateComment)
+        .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
     } else {
       insert_into(comment::table)
         .values(comment_form)
         .get_result::<Self>(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::CouldntCreateComment)
+        .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
     }
   }
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: Url,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let object_id: DbUrl = object_id.into();
     comment::table
@@ -199,7 +199,7 @@ impl Comment {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn parent_comment_id(&self) -> Option<CommentId> {
@@ -212,22 +212,22 @@ impl Comment {
       None
     }
   }
-  pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> LemmyResult<Self> {
+  pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.find(comment_id))
       .set(comment::hot_rank.eq(hot_rank(comment::score, comment::published_at)))
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
-  pub fn local_url(&self, settings: &Settings) -> LemmyResult<Url> {
+  pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/comment/{}", self.id))?)
   }
 
   /// The comment was created locally and sent back, indicating that the community accepted it
-  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     if self.local && self.federation_pending {
       let form = CommentUpdateForm {
         federation_pending: Some(false),
@@ -245,7 +245,7 @@ impl Crud for Comment {
   type IdType = CommentId;
 
   /// Use [[Comment::create]]
-  async fn create(pool: &mut DbPool<'_>, comment_form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, comment_form: &Self::InsertForm) -> FastJobResult<Self> {
     debug_assert!(false);
     Comment::create(pool, comment_form, None).await
   }
@@ -254,13 +254,13 @@ impl Crud for Comment {
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
     comment_form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.find(comment_id))
       .set(comment_form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 }
 
@@ -268,10 +268,10 @@ impl Likeable for CommentActions {
   type Form = CommentLikeForm;
   type IdType = CommentId;
 
-  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    validate_like(form.like_score).with_lemmy_type(LemmyErrorType::CouldntLikeComment)?;
+    validate_like(form.like_score).with_fastjob_type(FastJobErrorType::CouldntLikeComment)?;
 
     insert_into(comment_actions::table)
       .values(form)
@@ -281,26 +281,26 @@ impl Likeable for CommentActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntLikeComment)
+      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
   }
   async fn remove_like(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     comment_id: Self::IdType,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(comment_actions::table.find((person_id, comment_id)))
       .set_null(comment_actions::like_score)
       .set_null(comment_actions::liked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntLikeComment)
+      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
   }
 
   async fn remove_all_likes(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(comment_actions::table.filter(comment_actions::person_id.eq(creator_id)))
@@ -308,14 +308,14 @@ impl Likeable for CommentActions {
       .set_null(comment_actions::liked_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   async fn remove_likes_in_community(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> LemmyResult<uplete::Count> {
+  ) -> FastJobResult<uplete::Count> {
     let comment_ids =
       Comment::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
 
@@ -328,13 +328,13 @@ impl Likeable for CommentActions {
     .set_null(comment_actions::liked_at)
     .get_result(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdateComment)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 }
 
 impl Saveable for CommentActions {
   type Form = CommentSavedForm;
-  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<Self> {
+  async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(comment_actions::table)
       .values(form)
@@ -344,15 +344,15 @@ impl Saveable for CommentActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntSaveComment)
+      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
   }
-  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> LemmyResult<uplete::Count> {
+  async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(comment_actions::table.find((form.person_id, form.comment_id)))
       .set_null(comment_actions::saved_at)
       .get_result(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntSaveComment)
+      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
   }
 }
 
@@ -361,14 +361,14 @@ impl CommentActions {
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
     person_id: PersonId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     comment_actions::table
       .find((person_id, comment_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -388,14 +388,14 @@ mod tests {
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
   use diesel_ltree::Ltree;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
@@ -508,7 +508,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_aggregates() -> LemmyResult<()> {
+  async fn test_aggregates() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

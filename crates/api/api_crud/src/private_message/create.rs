@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_private_messages_enabled, get_url_blocklist, process_markdown, slur_regex},
@@ -19,13 +19,13 @@ use lemmy_db_views_private_message::{
   PrivateMessageView,
 };
 use lemmy_email::notifications::send_private_message_email;
-use lemmy_utils::{error::LemmyResult, utils::validation::is_valid_body_field};
+use lemmy_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn create_private_message(
   data: Json<CreatePrivateMessage>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageResponse>> {
+) -> FastJobResult<Json<PrivateMessageResponse>> {
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;

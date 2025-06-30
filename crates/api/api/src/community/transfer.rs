@@ -2,7 +2,7 @@ use actix_web::web::{Data, Json};
 use anyhow::Context;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_community_user_action, is_admin, is_top_mod},
 };
 use lemmy_db_schema::{
@@ -20,7 +20,7 @@ use lemmy_db_views_community::{
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   location_info,
 };
 
@@ -29,9 +29,9 @@ use lemmy_utils::{
 
 pub async fn transfer_community(
   data: Json<TransferCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<GetCommunityResponse>> {
+) -> FastJobResult<Json<GetCommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   let mut community_mods =
     CommunityModeratorView::for_community(&mut context.pool(), community.id).await?;
@@ -41,7 +41,7 @@ pub async fn transfer_community(
   // Make sure transferrer is either the top community mod, or an admin
   if !(is_top_mod(&local_user_view, &community_mods).is_ok() || is_admin(&local_user_view).is_ok())
   {
-    Err(LemmyErrorType::NotAnAdmin)?
+    Err(FastJobErrorType::NotAnAdmin)?
   }
 
   // You have to re-do the community_moderator table, reordering it.

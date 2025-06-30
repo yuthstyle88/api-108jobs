@@ -1,17 +1,17 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::password_length_check};
+use lemmy_api_utils::{context::FastJobContext, utils::password_length_check};
 use lemmy_db_schema::source::{
   local_user::LocalUser,
   login_token::LoginToken,
   password_reset_request::PasswordResetRequest,
 };
 use lemmy_db_views_site::api::{PasswordChangeAfterReset, SuccessResponse};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn change_password_after_reset(
   data: Json<PasswordChangeAfterReset>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<SuccessResponse>> {
   // Fetch the user_id from the token
   let token = data.token.clone();
   let local_user_id = PasswordResetRequest::read_and_delete(&mut context.pool(), &token)
@@ -22,7 +22,7 @@ pub async fn change_password_after_reset(
 
   // Make sure passwords match
   if data.password != data.password_verify {
-    Err(LemmyErrorType::PasswordsDoNotMatch)?
+    Err(FastJobErrorType::PasswordsDoNotMatch)?
   }
 
   // Update the user with the new password

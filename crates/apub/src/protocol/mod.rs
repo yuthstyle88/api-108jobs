@@ -1,7 +1,7 @@
 use activitypub_federation::{config::Data, fetch::fetch_object_http};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::utils::protocol::Id;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
@@ -27,7 +27,7 @@ impl<Kind: Id + DeserializeOwned + Send> IdOrNestedObject<Kind> {
       IdOrNestedObject::NestedObject(n) => n.object_id(),
     }
   }
-  pub(crate) async fn object(self, context: &Data<LemmyContext>) -> LemmyResult<Kind> {
+  pub(crate) async fn object(self, context: &Data<FastJobContext>) -> FastJobResult<Kind> {
     match self {
       // TODO: move IdOrNestedObject struct to library and make fetch_object_http private
       IdOrNestedObject::Id(i) => Ok(fetch_object_http(&i, context).await?.object),

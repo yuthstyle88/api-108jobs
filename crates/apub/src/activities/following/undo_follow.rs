@@ -9,7 +9,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{person::ApubPerson, CommunityOrMulti};
 use lemmy_db_schema::{
   source::{
@@ -20,15 +20,15 @@ use lemmy_db_schema::{
   },
   traits::Followable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl UndoFollow {
   pub async fn send(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let object = Follow::new(actor, target, context)?;
     let undo = UndoFollow {
       actor: actor.id().into(),
@@ -44,8 +44,8 @@ impl UndoFollow {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UndoFollow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -55,7 +55,7 @@ impl ActivityHandler for UndoFollow {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     verify_urls_match(self.actor.inner(), self.object.actor.inner())?;
     verify_person(&self.actor, context).await?;
     self.object.verify(context).await?;
@@ -65,7 +65,7 @@ impl ActivityHandler for UndoFollow {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let person = self.actor.dereference(context).await?;
     let object = self.object.object.dereference(context).await?;
 

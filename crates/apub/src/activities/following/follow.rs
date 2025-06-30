@@ -9,7 +9,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{person::ApubPerson, CommunityOrMulti},
   utils::functions::verify_person_in_community,
@@ -25,15 +25,15 @@ use lemmy_db_schema::{
   traits::Followable,
 };
 use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobErrorType, FastJobResult};
 use url::Url;
 
 impl Follow {
   pub(in crate::activities::following) fn new(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Follow> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Follow> {
     Ok(Follow {
       actor: actor.id().into(),
       object: target.id().into(),
@@ -46,8 +46,8 @@ impl Follow {
   pub async fn send(
     actor: &ApubPerson,
     target: &CommunityOrMulti,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let follow = Follow::new(actor, target, context)?;
     let inbox = ActivitySendTargets::to_inbox(target.shared_inbox_or_inbox());
     send_lemmy_activity(context, follow, actor, inbox, true).await
@@ -56,8 +56,8 @@ impl Follow {
 
 #[async_trait::async_trait]
 impl ActivityHandler for Follow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -67,7 +67,7 @@ impl ActivityHandler for Follow {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     verify_person(&self.actor, context).await?;
     let object = self.object.dereference(context).await?;
     if let Right(Left(c)) = object {
@@ -79,7 +79,7 @@ impl ActivityHandler for Follow {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     use CommunityVisibility::*;
     let actor = self.actor.dereference(context).await?;
     let object = self.object.dereference(context).await?;
@@ -101,7 +101,7 @@ impl ActivityHandler for Follow {
           Public | Unlisted => CommunityFollowerState::Accepted,
           Private => CommunityFollowerState::ApprovalRequired,
           // Dont allow following local-only community via federation.
-          LocalOnlyPrivate | LocalOnlyPublic => return Err(LemmyErrorType::NotFound.into()),
+          LocalOnlyPrivate | LocalOnlyPublic => return Err(FastJobErrorType::NotFound.into()),
         };
         let form = CommunityFollowerForm::new(c.id, actor.id, follow_state);
         CommunityActions::follow(&mut context.pool(), &form).await?;

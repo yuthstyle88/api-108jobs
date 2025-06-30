@@ -3,23 +3,23 @@ use actix_web::{
   HttpRequest,
 };
 use bcrypt::verify;
-use lemmy_api_utils::{claims::Claims, context::LemmyContext, utils::password_length_check};
+use lemmy_api_utils::{claims::Claims, context::FastJobContext, utils::password_length_check};
 use lemmy_db_schema::source::{local_user::LocalUser, login_token::LoginToken};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{ChangePassword, LoginResponse};
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn change_password(
   data: Json<ChangePassword>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<LoginResponse>> {
+) -> FastJobResult<Json<LoginResponse>> {
   password_length_check(&data.new_password)?;
 
   // Make sure passwords match
   if data.new_password != data.new_password_verify {
-    Err(LemmyErrorType::PasswordsDoNotMatch)?
+    Err(FastJobErrorType::PasswordsDoNotMatch)?
   }
 
   // Check the old password
@@ -31,7 +31,7 @@ pub async fn change_password(
   };
 
   if !valid {
-    Err(LemmyErrorType::IncorrectLogin)?
+    Err(FastJobErrorType::IncorrectLogin)?
   }
 
   let local_user_id = local_user_view.local_user.id;

@@ -10,7 +10,7 @@ use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::private_message;
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
@@ -20,26 +20,26 @@ impl Crud for PrivateMessage {
   type UpdateForm = PrivateMessageUpdateForm;
   type IdType = PrivateMessageId;
 
-  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> LemmyResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePrivateMessage)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePrivateMessage)
   }
 
   async fn update(
     pool: &mut DbPool<'_>,
     private_message_id: PrivateMessageId,
     form: &Self::UpdateForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(private_message::table.find(private_message_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePrivateMessage)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePrivateMessage)
   }
 }
 
@@ -48,7 +48,7 @@ impl PrivateMessage {
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
     form: &PrivateMessageInsertForm,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(private_message::table)
       .values(form)
@@ -60,13 +60,13 @@ impl PrivateMessage {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntCreatePrivateMessage)
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePrivateMessage)
   }
 
   pub async fn mark_all_as_read(
     pool: &mut DbPool<'_>,
     for_recipient_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(
       private_message::table
@@ -76,13 +76,13 @@ impl PrivateMessage {
     .set(private_message::read.eq(true))
     .get_results::<Self>(conn)
     .await
-    .with_lemmy_type(LemmyErrorType::CouldntUpdatePrivateMessage)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePrivateMessage)
   }
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: Url,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     let object_id: DbUrl = object_id.into();
     private_message::table
@@ -90,9 +90,9 @@ impl PrivateMessage {
       .first(conn)
       .await
       .optional()
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub fn local_url(&self, settings: &Settings) -> LemmyResult<DbUrl> {
+  pub fn local_url(&self, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/private_message/{}", self.id))?.into())
   }
@@ -101,7 +101,7 @@ impl PrivateMessage {
     pool: &mut DbPool<'_>,
     for_creator_id: PersonId,
     removed: bool,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(private_message::table.filter(private_message::creator_id.eq(for_creator_id)))
       .set((
@@ -110,7 +110,7 @@ impl PrivateMessage {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::CouldntUpdatePrivateMessage)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePrivateMessage)
   }
 }
 
@@ -126,14 +126,14 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

@@ -1,4 +1,4 @@
-use crate::context::LemmyContext;
+use crate::context::FastJobContext;
 use activitypub_federation::config::Data;
 use either::Either;
 use futures::future::BoxFuture;
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::BanFromCommunity;
 use lemmy_db_views_post::api::DeletePost;
 use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
 use tokio::{
   sync::{
@@ -30,7 +30,7 @@ use tokio::{
 use url::Url;
 
 type MatchOutgoingActivitiesBoxed =
-  Box<for<'a> fn(SendActivityData, &'a Data<LemmyContext>) -> BoxFuture<'a, LemmyResult<()>>>;
+  Box<for<'a> fn(SendActivityData, &'a Data<FastJobContext>) -> BoxFuture<'a, FastJobResult<()>>>;
 
 /// This static is necessary so that the api_common crates don't need to depend on lemmy_apub
 pub static MATCH_OUTGOING_ACTIVITIES: OnceLock<MatchOutgoingActivitiesBoxed> = OnceLock::new();
@@ -139,7 +139,7 @@ impl ActivityChannel {
     lock.recv().await
   }
 
-  pub fn submit_activity(data: SendActivityData, _context: &Data<LemmyContext>) -> LemmyResult<()> {
+  pub fn submit_activity(data: SendActivityData, _context: &Data<FastJobContext>) -> FastJobResult<()> {
     // could do `ACTIVITY_CHANNEL.keepalive_sender.lock()` instead and get rid of weak_sender,
     // not sure which way is more efficient
     if let Some(sender) = ACTIVITY_CHANNEL.weak_sender.upgrade() {
@@ -148,7 +148,7 @@ impl ActivityChannel {
     Ok(())
   }
 
-  pub async fn close(outgoing_activities_task: JoinHandle<()>) -> LemmyResult<()> {
+  pub async fn close(outgoing_activities_task: JoinHandle<()>) -> FastJobResult<()> {
     ACTIVITY_CHANNEL.keepalive_sender.lock().await.take();
     outgoing_activities_task.await?;
     Ok(())

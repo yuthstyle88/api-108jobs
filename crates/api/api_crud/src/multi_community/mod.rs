@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
 use lemmy_db_schema::{
@@ -16,7 +16,7 @@ use lemmy_db_views_community::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod create;
 pub mod create_entry;
@@ -29,14 +29,14 @@ pub mod update;
 async fn check_multi_community_creator(
   id: MultiCommunityId,
   local_user_view: &LocalUserView,
-  context: &LemmyContext,
-) -> LemmyResult<MultiCommunity> {
+  context: &FastJobContext,
+) -> FastJobResult<MultiCommunity> {
   let multi = MultiCommunity::read(&mut context.pool(), id).await?;
   if multi.local && local_user_view.local_user.admin {
     return Ok(multi);
   }
   if multi.creator_id != local_user_view.person.id {
-    return Err(LemmyErrorType::MultiCommunityUpdateWrongUser.into());
+    return Err(FastJobErrorType::MultiCommunityUpdateWrongUser.into());
   }
   Ok(multi)
 }
@@ -44,8 +44,8 @@ async fn check_multi_community_creator(
 async fn send_federation_update(
   multi: MultiCommunity,
   local_user_view: LocalUserView,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   ActivityChannel::submit_activity(
     SendActivityData::UpdateMultiCommunity(multi, local_user_view.person),
     context,
@@ -55,8 +55,8 @@ async fn send_federation_update(
 
 async fn get_multi(
   id: MultiCommunityId,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<GetMultiCommunityResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<GetMultiCommunityResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?;
   let multi_community_view = MultiCommunityView::read(&mut context.pool(), id).await?;
   let communities = CommunityQuery {

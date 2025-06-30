@@ -15,7 +15,7 @@ use activitypub_federation::{
 };
 use either::Either;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     check_comment_deleted_or_removed,
     check_community_deleted_removed,
@@ -40,7 +40,7 @@ use lemmy_db_schema::{
   },
   traits::Reportable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl Report {
@@ -49,14 +49,14 @@ impl Report {
     actor: &ApubPerson,
     receiver: &Either<ApubSite, ApubCommunity>,
     reason: Option<String>,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<Self> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<Self> {
     let kind = FlagType::Flag;
     let id = generate_activity_id(kind.clone(), context)?;
     Ok(Report {
       actor: actor.id().into(),
       to: [receiver.id().into()],
-      object: ReportObject::Lemmy(object_id.clone()),
+      object: ReportObject::FastJob(object_id.clone()),
       summary: reason,
       content: None,
       kind,
@@ -69,8 +69,8 @@ impl Report {
     actor: &ApubPerson,
     receiver: &Either<ApubSite, ApubCommunity>,
     reason: String,
-    context: Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let report = Self::new(&object_id, actor, receiver, Some(reason), &context)?;
     let inboxes = report_inboxes(object_id, receiver, actor, &context).await?;
 
@@ -80,8 +80,8 @@ impl Report {
 
 #[async_trait::async_trait]
 impl ActivityHandler for Report {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -91,13 +91,13 @@ impl ActivityHandler for Report {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let receiver = self.to[0].dereference(context).await?;
     verify_person_in_site_or_community(&self.actor, &receiver, context).await?;
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let actor = self.actor.dereference(context).await?;
     let reason = self.reason()?;
     match self.object.dereference(context).await? {

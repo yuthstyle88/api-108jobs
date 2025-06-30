@@ -22,14 +22,14 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::schema::local_site;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use rand::{distr::Alphanumeric, Rng};
 use tracing::info;
 use url::Url;
 
-pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> LemmyResult<SiteView> {
+pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
   let conn = &mut get_conn(pool).await?;
   // Check to see if local_site exists, without the cache wrapper
   if select(not(exists(local_site::table.as_query())))
@@ -40,7 +40,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Lem
 
     let domain = settings
       .get_hostname_without_port()
-      .with_lemmy_type(LemmyErrorType::Unknown("must have domain".into()))?;
+      .with_fastjob_type(FastJobErrorType::Unknown("must have domain".into()))?;
 
     conn
       .run_transaction(|conn| {

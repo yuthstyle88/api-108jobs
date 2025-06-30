@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{get_url_blocklist, process_markdown, slur_regex},
 };
 use lemmy_db_schema::source::person::{PersonActions, PersonNoteForm};
@@ -8,15 +8,15 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::api::NotePerson;
 use lemmy_db_views_site::api::SuccessResponse;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs, validation::is_valid_body_field},
 };
 
 pub async fn user_note_person(
   data: Json<NotePerson>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let target_id = data.person_id;
   let person_id = local_user_view.person.id;
 
@@ -25,7 +25,7 @@ pub async fn user_note_person(
 
   // Don't let a person note themselves
   if target_id == person_id {
-    Err(LemmyErrorType::CantNoteYourself)?
+    Err(FastJobErrorType::CantNoteYourself)?
   }
 
   // If the note is empty, delete it

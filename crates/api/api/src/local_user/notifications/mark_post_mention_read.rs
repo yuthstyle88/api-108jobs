@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::person_post_mention::{PersonPostMention, PersonPostMentionUpdateForm},
   traits::Crud,
@@ -7,19 +7,19 @@ use lemmy_db_schema::{
 use lemmy_db_views_inbox_combined::api::MarkPersonPostMentionAsRead;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn mark_post_mention_as_read(
   data: Json<MarkPersonPostMentionAsRead>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let person_post_mention_id = data.person_post_mention_id;
   let read_person_post_mention =
     PersonPostMention::read(&mut context.pool(), person_post_mention_id).await?;
 
   if local_user_view.person.id != read_person_post_mention.recipient_id {
-    Err(LemmyErrorType::CouldntUpdatePost)?
+    Err(FastJobErrorType::CouldntUpdatePost)?
   }
 
   let person_post_mention_id = read_person_post_mention.id;

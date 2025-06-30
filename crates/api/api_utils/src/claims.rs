@@ -1,4 +1,4 @@
-use crate::context::LemmyContext;
+use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -7,7 +7,7 @@ use lemmy_db_schema::{
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -20,14 +20,14 @@ pub struct Claims {
 }
 
 impl Claims {
-  pub async fn validate(jwt: &str, context: &LemmyContext) -> LemmyResult<LocalUserId> {
+  pub async fn validate(jwt: &str, context: &FastJobContext) -> FastJobResult<LocalUserId> {
     let mut validation = Validation::default();
     validation.validate_exp = false;
     validation.required_spec_claims.remove("exp");
     let jwt_secret = &context.secret().jwt_secret;
     let key = DecodingKey::from_secret(jwt_secret.as_ref());
     let claims =
-      decode::<Claims>(jwt, &key, &validation).with_lemmy_type(LemmyErrorType::NotLoggedIn)?;
+      decode::<Claims>(jwt, &key, &validation).with_fastjob_type(FastJobErrorType::NotLoggedIn)?;
     let user_id = LocalUserId(claims.claims.sub.parse()?);
     LoginToken::validate(&mut context.pool(), user_id, jwt).await?;
     Ok(user_id)
@@ -36,8 +36,8 @@ impl Claims {
   pub async fn generate(
     user_id: LocalUserId,
     req: HttpRequest,
-    context: &LemmyContext,
-  ) -> LemmyResult<SensitiveString> {
+    context: &FastJobContext,
+  ) -> FastJobResult<SensitiveString> {
     let hostname = context.settings().hostname.clone();
     let my_claims = Claims {
       sub: user_id.0.to_string(),
@@ -71,7 +71,7 @@ impl Claims {
 #[cfg(test)]
 mod tests {
 
-  use crate::{claims::Claims, context::LemmyContext};
+  use crate::{claims::Claims, context::FastJobContext};
   use actix_web::test::TestRequest;
   use lemmy_db_schema::{
     source::{
@@ -81,14 +81,14 @@ mod tests {
     },
     traits::Crud,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_should_not_validate_user_token_after_password_change() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_should_not_validate_user_token_after_password_change() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;

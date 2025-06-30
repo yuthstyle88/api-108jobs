@@ -18,7 +18,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{
     generate_outbox_url,
     get_url_blocklist,
@@ -34,7 +34,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::ActorType;
 use lemmy_utils::{
-  error::{LemmyError, LemmyResult},
+  error::{FastJobError, FastJobResult},
   utils::{
     markdown::markdown_to_html,
     slurs::{check_slurs, check_slurs_opt},
@@ -61,9 +61,9 @@ impl From<DbPerson> for ApubPerson {
 
 #[async_trait::async_trait]
 impl Object for ApubPerson {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = Person;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     Some(self.last_refreshed_at)
@@ -72,7 +72,7 @@ impl Object for ApubPerson {
   async fn read_from_id(
     object_id: Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<Option<Self>> {
+  ) -> FastJobResult<Option<Self>> {
     Ok(
       DbPerson::read_from_apub_id(&mut context.pool(), &object_id.into())
         .await?
@@ -80,7 +80,7 @@ impl Object for ApubPerson {
     )
   }
 
-  async fn delete(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let form = PersonUpdateForm {
       deleted: Some(true),
       ..Default::default()
@@ -89,7 +89,7 @@ impl Object for ApubPerson {
     Ok(())
   }
 
-  async fn into_json(self, _context: &Data<Self::DataType>) -> LemmyResult<Person> {
+  async fn into_json(self, _context: &Data<Self::DataType>) -> FastJobResult<Person> {
     let kind = if self.bot_account {
       UserTypes::Service
     } else {
@@ -120,7 +120,7 @@ impl Object for ApubPerson {
     person: &Person,
     expected_domain: &Url,
     context: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     let slur_regex = slur_regex(context).await?;
     check_slurs(&person.preferred_username, &slur_regex)?;
     check_slurs_opt(&person.name, &slur_regex)?;
@@ -134,7 +134,7 @@ impl Object for ApubPerson {
     Ok(())
   }
 
-  async fn from_json(person: Person, context: &Data<Self::DataType>) -> LemmyResult<ApubPerson> {
+  async fn from_json(person: Person, context: &Data<Self::DataType>) -> FastJobResult<ApubPerson> {
     let instance_id = fetch_instance_actor_for_object(&person.id, context).await?;
 
     let slur_regex = slur_regex(context).await?;
@@ -223,8 +223,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_lemmy_person() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_lemmy_person() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (person, site) = parse_lemmy_person(&context).await?;
 
     assert_eq!(person.display_name, Some("Jean-Luc Picard".to_string()));
@@ -237,8 +237,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_parse_pleroma_person() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_parse_pleroma_person() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
 
     // create and parse a fake pleroma instance actor, to avoid network request during test
     let mut json: Instance = file_to_json_object("../apub/assets/lemmy/objects/instance.json")?;
@@ -263,8 +263,8 @@ pub(crate) mod tests {
 
   async fn cleanup(
     (person, site): (ApubPerson, ApubSite),
-    context: &LemmyContext,
-  ) -> LemmyResult<()> {
+    context: &FastJobContext,
+  ) -> FastJobResult<()> {
     DbPerson::delete(&mut context.pool(), person.id).await?;
     Site::delete(&mut context.pool(), site.id).await?;
     Ok(())

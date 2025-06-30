@@ -1,7 +1,7 @@
 use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{context::LemmyContext, utils::check_community_mod_action};
+use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_action};
 use lemmy_db_schema::{
   source::{
     community::Community,
@@ -11,13 +11,13 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_community::api::{CreateCommunityTag, DeleteCommunityTag, UpdateCommunityTag};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{error::LemmyResult, utils::validation::tag_name_length_check};
+use lemmy_utils::{error::FastJobResult, utils::validation::tag_name_length_check};
 
 pub async fn create_community_tag(
   data: Json<CreateCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<Tag>> {
+) -> FastJobResult<Json<Tag>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
 
   tag_name_length_check(&data.display_name)?;
@@ -38,9 +38,9 @@ pub async fn create_community_tag(
 
 pub async fn update_community_tag(
   data: Json<UpdateCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<Tag>> {
+) -> FastJobResult<Json<Tag>> {
   let tag = Tag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 
@@ -62,9 +62,9 @@ pub async fn update_community_tag(
 
 pub async fn delete_community_tag(
   data: Json<DeleteCommunityTag>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<Tag>> {
+) -> FastJobResult<Json<Tag>> {
   let tag = Tag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 

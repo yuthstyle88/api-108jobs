@@ -12,10 +12,10 @@ mod tests {
     private_message::CreateOrUpdatePrivateMessage,
   };
   use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_lemmy_create_or_update() -> LemmyResult<()> {
+  fn test_parse_lemmy_create_or_update() -> FastJobResult<()> {
     test_parse_lemmy_item::<CreateOrUpdatePage>(
       "assets/lemmy/activities/create_or_update/create_page.json",
     )?;

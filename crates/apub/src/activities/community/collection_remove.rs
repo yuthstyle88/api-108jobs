@@ -10,7 +10,7 @@ use activitypub_federation::{
   traits::{ActivityHandler, Actor},
 };
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{generate_featured_url, generate_moderators_url},
 };
 use lemmy_apub_objects::{
@@ -30,7 +30,7 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Joinable},
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl CollectionRemove {
@@ -38,8 +38,8 @@ impl CollectionRemove {
     community: &ApubCommunity,
     removed_mod: &ApubPerson,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let id = generate_activity_id(RemoveType::Remove, context)?;
     let remove = CollectionRemove {
       actor: actor.id().into(),
@@ -60,8 +60,8 @@ impl CollectionRemove {
     community: &ApubCommunity,
     featured_post: &ApubPost,
     actor: &ApubPerson,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<()> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     let id = generate_activity_id(RemoveType::Remove, context)?;
     let remove = CollectionRemove {
       actor: actor.id().into(),
@@ -87,8 +87,8 @@ impl CollectionRemove {
 
 #[async_trait::async_trait]
 impl ActivityHandler for CollectionRemove {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -98,7 +98,7 @@ impl ActivityHandler for CollectionRemove {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let community = self.community(context).await?;
     verify_visibility(&self.to, &self.cc, &community)?;
     verify_person_in_community(&self.actor, &community, context).await?;
@@ -106,7 +106,7 @@ impl ActivityHandler for CollectionRemove {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     let (community, collection_type) =
       Community::get_by_collection_url(&mut context.pool(), &self.target.into()).await?;
     match collection_type {

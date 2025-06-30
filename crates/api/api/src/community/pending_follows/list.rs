@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_community_mod_of_any_or_admin_action};
+use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_of_any_or_admin_action};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_community_follower::{
   api::{ListCommunityPendingFollows, ListCommunityPendingFollowsResponse},
@@ -7,13 +7,13 @@ use lemmy_db_views_community_follower::{
   PendingFollow,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn get_pending_follows_list(
   data: Query<ListCommunityPendingFollows>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListCommunityPendingFollowsResponse>> {
+) -> FastJobResult<Json<ListCommunityPendingFollowsResponse>> {
   check_community_mod_of_any_or_admin_action(&local_user_view, &mut context.pool()).await?;
   let all_communities =
     data.all_communities.unwrap_or_default() && local_user_view.local_user.admin;

@@ -6,7 +6,7 @@ use activitypub_federation::{
   traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{context::LemmyContext, utils::check_expire_time};
+use lemmy_api_utils::{context::FastJobContext, utils::check_expire_time};
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, instance::ApubSite},
   protocol::{group::Group, instance::Instance},
@@ -19,7 +19,7 @@ use lemmy_db_schema::{
   utils::DbPool,
 };
 use lemmy_db_views_community::api::BanFromCommunity;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use serde::Deserialize;
 use url::Url;
 
@@ -40,9 +40,9 @@ pub enum InstanceOrGroup {
 
 #[async_trait::async_trait]
 impl Object for SiteOrCommunity {
-  type DataType = LemmyContext;
+  type DataType = FastJobContext;
   type Kind = InstanceOrGroup;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
     Some(match self {
@@ -51,7 +51,7 @@ impl Object for SiteOrCommunity {
     })
   }
 
-  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> LemmyResult<Option<Self>>
+  async fn read_from_id(object_id: Url, data: &Data<Self::DataType>) -> FastJobResult<Option<Self>>
   where
     Self: Sized,
   {
@@ -64,14 +64,14 @@ impl Object for SiteOrCommunity {
     })
   }
 
-  async fn delete(self, data: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn delete(self, data: &Data<Self::DataType>) -> FastJobResult<()> {
     match self {
       SiteOrCommunity::Site(i) => i.delete(data).await,
       SiteOrCommunity::Community(c) => c.delete(data).await,
     }
   }
 
-  async fn into_json(self, data: &Data<Self::DataType>) -> LemmyResult<Self::Kind> {
+  async fn into_json(self, data: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
     Ok(match self {
       SiteOrCommunity::Site(i) => InstanceOrGroup::Instance(Box::new(i.into_json(data).await?)),
       SiteOrCommunity::Community(c) => InstanceOrGroup::Group(Box::new(c.into_json(data).await?)),
@@ -82,14 +82,14 @@ impl Object for SiteOrCommunity {
     apub: &Self::Kind,
     expected_domain: &Url,
     data: &Data<Self::DataType>,
-  ) -> LemmyResult<()> {
+  ) -> FastJobResult<()> {
     match apub {
       InstanceOrGroup::Instance(i) => ApubSite::verify(i, expected_domain, data).await,
       InstanceOrGroup::Group(g) => ApubCommunity::verify(g, expected_domain, data).await,
     }
   }
 
-  async fn from_json(apub: Self::Kind, data: &Data<Self::DataType>) -> LemmyResult<Self>
+  async fn from_json(apub: Self::Kind, data: &Data<Self::DataType>) -> FastJobResult<Self>
   where
     Self: Sized,
   {
@@ -111,7 +111,7 @@ impl SiteOrCommunity {
   }
 }
 
-async fn generate_cc(target: &SiteOrCommunity, pool: &mut DbPool<'_>) -> LemmyResult<Vec<Url>> {
+async fn generate_cc(target: &SiteOrCommunity, pool: &mut DbPool<'_>) -> FastJobResult<Vec<Url>> {
   Ok(match target {
     SiteOrCommunity::Site(_) => Site::read_remote_sites(pool)
       .await?
@@ -129,8 +129,8 @@ pub(crate) async fn send_ban_from_site(
   remove_or_restore_data: Option<bool>,
   ban: bool,
   expires: Option<i64>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let site = SiteOrCommunity::Site(Site::read_local(&mut context.pool()).await?.into());
   let expires = check_expire_time(expires)?;
 
@@ -163,8 +163,8 @@ pub(crate) async fn send_ban_from_community(
   community_id: CommunityId,
   banned_person: Person,
   data: BanFromCommunity,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let community: ApubCommunity = Community::read(&mut context.pool(), community_id)
     .await?
     .into();
@@ -194,7 +194,7 @@ pub(crate) async fn send_ban_from_community(
   }
 }
 
-fn to(target: &SiteOrCommunity) -> LemmyResult<Vec<Url>> {
+fn to(target: &SiteOrCommunity) -> FastJobResult<Vec<Url>> {
   Ok(if let SiteOrCommunity::Community(c) = target {
     generate_to(c)?
   } else {
@@ -209,7 +209,7 @@ async fn update_removed_for_instance(
   site: &ApubSite,
   removed: bool,
   pool: &mut DbPool<'_>,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   Post::update_removed_for_creator_and_instance(pool, blocked_person.id, site.instance_id, removed)
     .await?;
   Comment::update_removed_for_creator_and_instance(

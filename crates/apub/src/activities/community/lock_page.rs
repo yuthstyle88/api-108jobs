@@ -14,7 +14,7 @@ use activitypub_federation::{
   kinds::activity::UndoType,
   traits::ActivityHandler,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::community::ApubCommunity,
   utils::{
@@ -32,13 +32,13 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 #[async_trait::async_trait]
 impl ActivityHandler for LockPage {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -81,8 +81,8 @@ impl ActivityHandler for LockPage {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UndoLockPage {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -128,8 +128,8 @@ pub(crate) async fn send_lock_post(
   actor: Person,
   locked: bool,
   reason: Option<String>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let community: ApubCommunity = Community::read(&mut context.pool(), post.community_id)
     .await?
     .into();

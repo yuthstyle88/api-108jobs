@@ -11,13 +11,13 @@ use lemmy_db_schema_file::schema::{instance, local_site, local_site_rate_limit, 
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
   build_cache,
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   CacheLock,
 };
 use std::sync::{Arc, LazyLock};
 
 impl SiteView {
-  pub async fn read_local(pool: &mut DbPool<'_>) -> LemmyResult<Self> {
+  pub async fn read_local(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     static CACHE: CacheLock<SiteView> = LazyLock::new(build_cache);
     CACHE
       .try_get_with((), async move {
@@ -33,14 +33,14 @@ impl SiteView {
           .first(conn)
           .await
           .optional()?
-          .ok_or(LemmyErrorType::LocalSiteNotSetup)?;
+          .ok_or(FastJobErrorType::LocalSiteNotSetup)?;
         Ok(local_site)
       })
       .await
-      .map_err(|e: Arc<LemmyError>| anyhow::anyhow!("err getting local site: {e:?}").into())
+      .map_err(|e: Arc<FastJobError>| anyhow::anyhow!("err getting local site: {e:?}").into())
   }
 
-  pub async fn read_multicomm_follower(pool: &mut DbPool<'_>) -> LemmyResult<Person> {
+  pub async fn read_multicomm_follower(pool: &mut DbPool<'_>) -> FastJobResult<Person> {
     let site_view = SiteView::read_local(pool).await?;
     Person::read(pool, site_view.local_site.multi_comm_follower).await
   }

@@ -2,7 +2,7 @@ use activitypub_federation::{config::UrlVerifier, error::Error as ActivityPubErr
 use async_trait::async_trait;
 use lemmy_apub_objects::utils::functions::{check_apub_id_valid, local_site_data_cached};
 use lemmy_db_schema::utils::ActualDbPool;
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType};
+use lemmy_utils::error::{FederationError, FastJobError, FastJobErrorType};
 use url::Url;
 
 pub mod activities;
@@ -29,23 +29,23 @@ impl UrlVerifier for VerifyUrlData {
 
     use FederationError::*;
     check_apub_id_valid(url, &local_site_data).map_err(|err| match err {
-      LemmyError {
+      FastJobError {
         error_type:
-          LemmyErrorType::FederationError {
+          FastJobErrorType::FederationError {
             error: Some(FederationDisabled),
           },
         ..
       } => ActivityPubError::Other("Federation disabled".into()),
-      LemmyError {
+      FastJobError {
         error_type:
-          LemmyErrorType::FederationError {
+          FastJobErrorType::FederationError {
             error: Some(DomainBlocked(domain)),
           },
         ..
       } => ActivityPubError::Other(format!("Domain {domain:?} is blocked")),
-      LemmyError {
+      FastJobError {
         error_type:
-          LemmyErrorType::FederationError {
+          FastJobErrorType::FederationError {
             error: Some(DomainNotInAllowList(domain)),
           },
         ..

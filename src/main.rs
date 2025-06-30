@@ -1,7 +1,7 @@
 use clap::Parser;
-use lemmy_server::{start_lemmy_server, CmdArgs};
+use lemmy_server::{start_fastjob_server, CmdArgs};
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
 };
 use tracing::level_filters::LevelFilter;
@@ -10,7 +10,7 @@ use tracing_subscriber::EnvFilter;
 pub extern crate rustls;
 
 #[tokio::main]
-pub async fn main() -> LemmyResult<()> {
+pub async fn main() -> FastJobResult<()> {
   let filter = EnvFilter::builder()
     .with_default_directive(LevelFilter::INFO.into())
     .from_env_lossy();
@@ -27,8 +27,8 @@ pub async fn main() -> LemmyResult<()> {
 
   rustls::crypto::ring::default_provider()
     .install_default()
-    .map_err(|_e| LemmyErrorType::Unknown("Failed to install rustls crypto provider".into()))?;
+    .map_err(|_e| FastJobErrorType::Unknown("Failed to install rustls crypto provider".into()))?;
 
-  start_lemmy_server(args).await?;
+  start_fastjob_server(args).await?;
   Ok(())
 }

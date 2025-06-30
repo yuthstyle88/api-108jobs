@@ -1,4 +1,4 @@
-use crate::error::{LemmyErrorType, LemmyResult};
+use crate::error::{FastJobErrorType, FastJobResult};
 use markdown_it::MarkdownIt;
 use regex::RegexSet;
 use std::sync::LazyLock;
@@ -37,9 +37,9 @@ pub fn markdown_to_html(text: &str) -> String {
   MARKDOWN_PARSER.parse(text).xrender()
 }
 
-pub fn markdown_check_for_blocked_urls(text: &str, blocklist: &RegexSet) -> LemmyResult<()> {
+pub fn markdown_check_for_blocked_urls(text: &str, blocklist: &RegexSet) -> FastJobResult<()> {
   if blocklist.is_match(text) {
-    Err(LemmyErrorType::BlockedUrl)?
+    Err(FastJobErrorType::BlockedUrl)?
   }
   Ok(())
 }
@@ -87,8 +87,8 @@ mod tests {
       // Links with added nofollow attribute
       (
         "links",
-        "[Lemmy](https://join-lemmy.org/ \"Join Lemmy!\")",
-        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join Lemmy!\">Lemmy</a></p>\n"
+        "[FastJob](https://join-lemmy.org/ \"Join FastJob!\")",
+        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join FastJob!\">FastJob</a></p>\n"
       ),
       // Remote images with proxy
       (
@@ -155,7 +155,7 @@ mod tests {
   // This replicates the logic when saving url blocklist patterns and querying them.
   // Refer to lemmy_api_crud::site::update::update_site and
   // lemmy_api_common::utils::get_url_blocklist().
-  fn create_url_blocklist_test_regex_set(patterns: Vec<&str>) -> LemmyResult<RegexSet> {
+  fn create_url_blocklist_test_regex_set(patterns: Vec<&str>) -> FastJobResult<RegexSet> {
     let url_blocklist = patterns.iter().map(|&s| s.to_string()).collect();
     let valid_urls = check_urls_are_valid(&url_blocklist)?;
     let regexes = valid_urls.iter().map(|p| format!(r"\b{}\b", escape(p)));
@@ -164,7 +164,7 @@ mod tests {
   }
 
   #[test]
-  fn test_url_blocking() -> LemmyResult<()> {
+  fn test_url_blocking() -> FastJobResult<()> {
     let set = create_url_blocklist_test_regex_set(vec!["example.com/"])?;
 
     assert!(

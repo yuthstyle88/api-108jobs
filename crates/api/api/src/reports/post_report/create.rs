@@ -3,7 +3,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use either::Either;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_community_user_action, check_post_deleted_or_removed, slur_regex},
 };
@@ -19,14 +19,14 @@ use lemmy_db_views_reports::{
 };
 use lemmy_db_views_site::SiteView;
 use lemmy_email::admin::send_new_report_email_to_admins;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Creates a post report and notifies the moderators of the community
 pub async fn create_post_report(
   data: Json<CreatePostReport>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostReportResponse>> {
+) -> FastJobResult<Json<PostReportResponse>> {
   let reason = data.reason.trim().to_string();
   let slur_regex = slur_regex(&context).await?;
   check_report_reason(&reason, &slur_regex)?;

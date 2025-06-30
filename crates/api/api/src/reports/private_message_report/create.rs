@@ -1,6 +1,6 @@
 use crate::check_report_reason;
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::{context::LemmyContext, utils::slur_regex};
+use lemmy_api_utils::{context::FastJobContext, utils::slur_regex};
 use lemmy_db_schema::{
   source::{
     private_message::PrivateMessage,
@@ -15,13 +15,13 @@ use lemmy_db_views_reports::{
 };
 use lemmy_db_views_site::SiteView;
 use lemmy_email::admin::send_new_report_email_to_admins;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn create_pm_report(
   data: Json<CreatePrivateMessageReport>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PrivateMessageReportResponse>> {
+) -> FastJobResult<Json<PrivateMessageReportResponse>> {
   let reason = data.reason.trim().to_string();
   let slur_regex = slur_regex(&context).await?;
   check_report_reason(&reason, &slur_regex)?;
@@ -32,7 +32,7 @@ pub async fn create_pm_report(
 
   // Make sure that only the recipient of the private message can create a report
   if person_id != private_message.recipient_id {
-    Err(LemmyErrorType::CouldntCreateReport)?
+    Err(FastJobErrorType::CouldntCreateReport)?
   }
 
   let report_form = PrivateMessageReportForm {

@@ -17,7 +17,7 @@ use lemmy_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::schema::{local_user, person, registration_application};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;
@@ -28,7 +28,7 @@ impl PaginationCursorBuilder for RegistrationApplicationView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
     RegistrationApplication::read(pool, RegistrationApplicationId(id)).await
   }
@@ -50,31 +50,31 @@ impl RegistrationApplicationView {
       .left_join(admin_join)
   }
 
-  pub async fn read(pool: &mut DbPool<'_>, id: RegistrationApplicationId) -> LemmyResult<Self> {
+  pub async fn read(pool: &mut DbPool<'_>, id: RegistrationApplicationId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(registration_application::id.eq(id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn read_by_person(pool: &mut DbPool<'_>, person_id: PersonId) -> LemmyResult<Self> {
+  pub async fn read_by_person(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(person::id.eq(person_id))
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Returns the current unread registration_application count
   pub async fn get_unread_count(
     pool: &mut DbPool<'_>,
     verified_email_only: bool,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins()
@@ -89,7 +89,7 @@ impl RegistrationApplicationView {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -103,7 +103,7 @@ pub struct RegistrationApplicationQuery {
 }
 
 impl RegistrationApplicationQuery {
-  pub async fn list(self, pool: &mut DbPool<'_>) -> LemmyResult<Vec<RegistrationApplicationView>> {
+  pub async fn list(self, pool: &mut DbPool<'_>) -> FastJobResult<Vec<RegistrationApplicationView>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(self.limit)?;
     let o = self;
@@ -131,7 +131,7 @@ impl RegistrationApplicationQuery {
     paginated_query
       .load::<RegistrationApplicationView>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -153,13 +153,13 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

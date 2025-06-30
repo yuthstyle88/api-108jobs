@@ -7,14 +7,14 @@ use crate::protocol::activities::following::{
 };
 use activitypub_federation::{config::Data, kinds::activity::FollowType, traits::ActivityHandler};
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{person::ApubPerson, CommunityOrMulti, UserOrCommunityOrMulti};
 use lemmy_db_schema::{
   newtypes::{CommunityId, PersonId},
   source::{activity::ActivitySendTargets, community::Community, person::Person},
   traits::Crud,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use serde::Serialize;
 
 pub(crate) mod accept;
@@ -26,8 +26,8 @@ pub async fn send_follow(
   target: CommunityOrMulti,
   person: Person,
   follow: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let actor: ApubPerson = person.into();
   if follow {
     Follow::send(&actor, &target, context).await
@@ -40,8 +40,8 @@ pub async fn send_accept_or_reject_follow(
   community_id: CommunityId,
   person_id: PersonId,
   accepted: bool,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let community = Community::read(&mut context.pool(), community_id).await?;
   let person = Person::read(&mut context.pool(), person_id).await?;
 
@@ -61,13 +61,13 @@ pub async fn send_accept_or_reject_follow(
 
 /// Wrapper type which is needed because we cant implement ActorT for Either.
 async fn send_activity_from_user_or_community_or_multi<Activity>(
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
   activity: Activity,
   target: UserOrCommunityOrMulti,
   send_targets: ActivitySendTargets,
-) -> LemmyResult<()>
+) -> FastJobResult<()>
 where
-  Activity: ActivityHandler + Serialize + Send + Sync + Clone + ActivityHandler<Error = LemmyError>,
+  Activity: ActivityHandler + Serialize + Send + Sync + Clone + ActivityHandler<Error =FastJobError>,
 {
   match target {
     Left(user) => send_lemmy_activity(context, activity, &user, send_targets, true).await,

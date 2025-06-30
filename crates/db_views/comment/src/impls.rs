@@ -52,7 +52,7 @@ use lemmy_db_schema_file::{
   },
   schema::{comment, community, community_actions, local_user_language, person, post},
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;
@@ -63,7 +63,7 @@ impl PaginationCursorBuilder for CommentView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
     Comment::read(pool, CommentId(id)).await
   }
@@ -104,7 +104,7 @@ impl CommentView {
     comment_id: CommentId,
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
-  ) -> LemmyResult<Self> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins(my_local_user.person_id(), local_instance_id)
@@ -129,7 +129,7 @@ impl CommentView {
     query
       .first::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn map_to_slim(self) -> CommentSlimView {
@@ -164,7 +164,7 @@ pub struct CommentQuery<'a> {
 }
 
 impl CommentQuery<'_> {
-  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> LemmyResult<Vec<CommentView>> {
+  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommentView>> {
     let conn = &mut get_conn(pool).await?;
     let o = self;
 
@@ -347,7 +347,7 @@ mod tests {
     utils::build_db_pool_for_tests,
   };
   use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -365,7 +365,7 @@ mod tests {
     site: Site,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let timmy_person_form = PersonInsertForm::test_form(inserted_instance.id, "timmy");
@@ -479,7 +479,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_crud() -> LemmyResult<()> {
+  async fn test_crud() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -531,7 +531,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_comment_tree() -> LemmyResult<()> {
+  async fn test_comment_tree() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -608,7 +608,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_languages() -> LemmyResult<()> {
+  async fn test_languages() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -667,7 +667,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_distinguished_first() -> LemmyResult<()> {
+  async fn test_distinguished_first() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -692,7 +692,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_creator_is_moderator() -> LemmyResult<()> {
+  async fn test_creator_is_moderator() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -721,7 +721,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_creator_is_admin() -> LemmyResult<()> {
+  async fn test_creator_is_admin() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -744,7 +744,7 @@ mod tests {
     cleanup(data, pool).await
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     CommentActions::remove_like(
       pool,
       data.timmy_local_user_view.person.id,
@@ -766,7 +766,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn local_only_instance() -> LemmyResult<()> {
+  async fn local_only_instance() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -814,7 +814,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_listing_local_user_banned_from_community() -> LemmyResult<()> {
+  async fn comment_listing_local_user_banned_from_community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -855,7 +855,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_listing_local_user_not_banned_from_community() -> LemmyResult<()> {
+  async fn comment_listing_local_user_not_banned_from_community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -875,7 +875,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_listings_hide_nsfw() -> LemmyResult<()> {
+  async fn comment_listings_hide_nsfw() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -904,7 +904,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_listing_private_community() -> LemmyResult<()> {
+  async fn comment_listing_private_community() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let mut data = init_data(pool).await?;
@@ -997,7 +997,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_removed() -> LemmyResult<()> {
+  async fn comment_removed() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let mut data = init_data(pool).await?;

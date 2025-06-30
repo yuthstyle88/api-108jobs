@@ -8,7 +8,7 @@ use crate::{
 };
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::LemmyContext, utils::check_private_instance};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_apub_objects::objects::community::ApubCommunity;
 use lemmy_db_schema::{
   newtypes::PostId,
@@ -22,13 +22,13 @@ use lemmy_db_views_post::{
   PostView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_posts(
   data: Query<GetPosts>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetPostsResponse>> {
+) -> FastJobResult<Json<GetPostsResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   check_private_instance(&local_user_view, &site_view.local_site)?;

@@ -15,7 +15,7 @@ use diesel_async::{
   RunQueryDsl,
 };
 use lemmy_utils::{
-  error::{LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use std::future::Future;
@@ -47,9 +47,9 @@ where
   fn create(
     pool: &mut DbPool<'_>,
     form: &Self::InsertForm,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send;
+  ) -> impl Future<Output = FastJobResult<Self>> + Send;
 
-  fn read(pool: &mut DbPool<'_>, id: Self::IdType) -> impl Future<Output = LemmyResult<Self>> + Send
+  fn read(pool: &mut DbPool<'_>, id: Self::IdType) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Send,
   {
@@ -59,7 +59,7 @@ where
       query
         .first(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::NotFound)
+        .with_fastjob_type(FastJobErrorType::NotFound)
     }
   }
 
@@ -69,19 +69,19 @@ where
     pool: &mut DbPool<'_>,
     id: Self::IdType,
     form: &Self::UpdateForm,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send;
+  ) -> impl Future<Output = FastJobResult<Self>> + Send;
 
   fn delete(
     pool: &mut DbPool<'_>,
     id: Self::IdType,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send {
+  ) -> impl Future<Output = FastJobResult<usize>> + Send {
     async {
       let query: Delete<Find<Self>> = diesel::delete(Self::table().find(id));
       let conn = &mut *get_conn(pool).await?;
       query
         .execute(conn)
         .await
-        .with_lemmy_type(LemmyErrorType::Deleted)
+        .with_fastjob_type(FastJobErrorType::Deleted)
     }
   }
 }
@@ -92,21 +92,21 @@ pub trait Followable {
   fn follow(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn follow_accepted(
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     person_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn unfollow(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     item_id: Self::IdType,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -116,13 +116,13 @@ pub trait Joinable {
   fn join(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn leave(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -133,21 +133,21 @@ pub trait Likeable {
   fn like(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn remove_like(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     item_id: Self::IdType,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 
   fn remove_all_likes(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 
@@ -155,7 +155,7 @@ pub trait Likeable {
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
     community_id: CommunityId,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -165,13 +165,13 @@ pub trait Bannable {
   fn ban(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn unban(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -181,13 +181,13 @@ pub trait Saveable {
   fn save(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn unsave(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -197,19 +197,19 @@ pub trait Readable {
   fn mark_as_read(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
   fn mark_many_as_read(
     pool: &mut DbPool<'_>,
     forms: &[Self::Form],
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
   fn mark_as_unread(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -220,14 +220,14 @@ pub trait ReadComments {
   fn update_read_comments(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn remove_read_comments(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     item_id: Self::IdType,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -237,13 +237,13 @@ pub trait Hideable {
   fn hide(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn unhide(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
 }
@@ -255,20 +255,20 @@ pub trait Blockable {
   fn block(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn unblock(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<uplete::Count>> + Send
+  ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
   fn read_block(
     pool: &mut DbPool<'_>,
     for_person_id: PersonId,
     for_item_id: Self::ObjectIdType,
-  ) -> impl Future<Output = LemmyResult<()>> + Send
+  ) -> impl Future<Output = FastJobResult<()>> + Send
   where
     Self: Sized;
 
@@ -276,7 +276,7 @@ pub trait Blockable {
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     // Note: cant use lemmyresult because of try_pool
-  ) -> impl Future<Output = LemmyResult<Vec<Self::ObjectType>>> + Send
+  ) -> impl Future<Output = FastJobResult<Vec<Self::ObjectType>>> + Send
   where
     Self: Sized;
 }
@@ -288,14 +288,14 @@ pub trait Reportable {
   fn report(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
-  ) -> impl Future<Output = LemmyResult<Self>> + Send
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
   fn resolve(
     pool: &mut DbPool<'_>,
     report_id: Self::IdType,
     resolver_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
   fn resolve_apub(
@@ -303,21 +303,21 @@ pub trait Reportable {
     object_id: Self::ObjectIdType,
     report_creator_id: PersonId,
     resolver_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
   fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
     comment_id_: Self::ObjectIdType,
     by_resolver_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
   fn unresolve(
     pool: &mut DbPool<'_>,
     report_id: Self::IdType,
     resolver_id: PersonId,
-  ) -> impl Future<Output = LemmyResult<usize>> + Send
+  ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
 }
@@ -326,7 +326,7 @@ pub trait ApubActor {
   fn read_from_apub_id(
     pool: &mut DbPool<'_>,
     object_id: &DbUrl,
-  ) -> impl Future<Output = LemmyResult<Option<Self>>> + Send
+  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
   where
     Self: Sized;
   /// - actor_name is the name of the community or user to read.
@@ -335,19 +335,19 @@ pub trait ApubActor {
     pool: &mut DbPool<'_>,
     actor_name: &str,
     include_deleted: bool,
-  ) -> impl Future<Output = LemmyResult<Option<Self>>> + Send
+  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
   where
     Self: Sized;
   fn read_from_name_and_domain(
     pool: &mut DbPool<'_>,
     actor_name: &str,
     protocol_domain: &str,
-  ) -> impl Future<Output = LemmyResult<Option<Self>>> + Send
+  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
   where
     Self: Sized;
 
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> LemmyResult<DbUrl>;
-  fn actor_url(&self, settings: &Settings) -> LemmyResult<Url>;
+  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl>;
+  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url>;
 }
 
 pub trait InternalToCombinedView {
@@ -367,7 +367,7 @@ pub trait PaginationCursorBuilder {
   fn from_cursor(
     cursor: &PaginationCursor,
     conn: &mut DbPool<'_>,
-  ) -> impl Future<Output = LemmyResult<Self::CursorData>> + Send
+  ) -> impl Future<Output = FastJobResult<Self::CursorData>> + Send
   where
     Self: Sized;
 }

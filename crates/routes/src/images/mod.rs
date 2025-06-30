@@ -1,14 +1,14 @@
 use actix_web::web::*;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub mod delete;
 pub mod download;
 pub mod upload;
 mod utils;
 
-pub async fn pictrs_health(context: Data<LemmyContext>) -> LemmyResult<Json<SuccessResponse>> {
+pub async fn pictrs_health(context: Data<FastJobContext>) -> FastJobResult<Json<SuccessResponse>> {
   let pictrs_config = context.settings().pictrs()?;
   let url = format!("{}healthz", pictrs_config.url);
 

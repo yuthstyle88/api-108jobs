@@ -1,4 +1,4 @@
-use crate::error::{LemmyErrorExt, LemmyErrorType, LemmyResult, MAX_API_PARAM_ELEMENTS};
+use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS};
 use clearurls::UrlCleaner;
 use invisible_characters::INVISIBLE_CHARS;
 use itertools::Itertools;
@@ -36,7 +36,7 @@ fn has_newline(name: &str) -> bool {
   name.contains('\n')
 }
 
-pub fn is_valid_actor_name(name: &str, actor_name_max_length: i32) -> LemmyResult<()> {
+pub fn is_valid_actor_name(name: &str, actor_name_max_length: i32) -> FastJobResult<()> {
   // Only allow characters from a single alphabet per username. This avoids problems with lookalike
   // characters like `o` which looks identical in Latin and Cyrillic, and can be used to imitate
   // other users. Checks for additional alphabets can be added in the same way.
@@ -46,12 +46,12 @@ pub fn is_valid_actor_name(name: &str, actor_name_max_length: i32) -> LemmyResul
   });
 
   let actor_name_max_length: usize = actor_name_max_length.try_into()?;
-  min_length_check(name, 3, LemmyErrorType::InvalidName)?;
-  max_length_check(name, actor_name_max_length, LemmyErrorType::InvalidName)?;
+  min_length_check(name, 3, FastJobErrorType::InvalidName)?;
+  max_length_check(name, actor_name_max_length, FastJobErrorType::InvalidName)?;
   if VALID_ACTOR_NAME_REGEX.is_match(name) {
     Ok(())
   } else {
-    Err(LemmyErrorType::InvalidName.into())
+    Err(FastJobErrorType::InvalidName.into())
   }
 }
 
@@ -72,7 +72,7 @@ fn has_3_permitted_display_chars(name: &str) -> bool {
 }
 
 // Can't do a regex here, reverse lookarounds not supported
-pub fn is_valid_display_name(name: &str, actor_name_max_length: i32) -> LemmyResult<()> {
+pub fn is_valid_display_name(name: &str, actor_name_max_length: i32) -> FastJobResult<()> {
   let actor_name_max_length: usize = actor_name_max_length.try_into()?;
   let check = !name.starts_with('@')
     && !name.starts_with(INVISIBLE_CHARS)
@@ -80,85 +80,85 @@ pub fn is_valid_display_name(name: &str, actor_name_max_length: i32) -> LemmyRes
     && !has_newline(name)
     && has_3_permitted_display_chars(name);
   if !check {
-    Err(LemmyErrorType::InvalidDisplayName.into())
+    Err(FastJobErrorType::InvalidDisplayName.into())
   } else {
     Ok(())
   }
 }
 
-pub fn is_valid_matrix_id(matrix_id: &str) -> LemmyResult<()> {
+pub fn is_valid_matrix_id(matrix_id: &str) -> FastJobResult<()> {
   let check = VALID_MATRIX_ID_REGEX.is_match(matrix_id) && !has_newline(matrix_id);
   if !check {
-    Err(LemmyErrorType::InvalidMatrixId.into())
+    Err(FastJobErrorType::InvalidMatrixId.into())
   } else {
     Ok(())
   }
 }
 
-pub fn is_valid_post_title(title: &str) -> LemmyResult<()> {
+pub fn is_valid_post_title(title: &str) -> FastJobResult<()> {
   let length = title.trim().chars().count();
   let check =
     (3..=200).contains(&length) && !has_newline(title) && has_3_permitted_display_chars(title);
   if !check {
-    Err(LemmyErrorType::InvalidPostTitle.into())
+    Err(FastJobErrorType::InvalidPostTitle.into())
   } else {
     Ok(())
   }
 }
 
 /// This could be post bodies, comments, notes, or any description field
-pub fn is_valid_body_field(body: &str, post: bool) -> LemmyResult<()> {
+pub fn is_valid_body_field(body: &str, post: bool) -> FastJobResult<()> {
   if post {
-    max_length_check(body, POST_BODY_MAX_LENGTH, LemmyErrorType::InvalidBodyField)?;
+    max_length_check(body, POST_BODY_MAX_LENGTH, FastJobErrorType::InvalidBodyField)?;
   } else {
-    max_length_check(body, BODY_MAX_LENGTH, LemmyErrorType::InvalidBodyField)?;
+    max_length_check(body, BODY_MAX_LENGTH, FastJobErrorType::InvalidBodyField)?;
   };
   Ok(())
 }
 
-pub fn is_valid_bio_field(bio: &str) -> LemmyResult<()> {
-  max_length_check(bio, BIO_MAX_LENGTH, LemmyErrorType::BioLengthOverflow)
+pub fn is_valid_bio_field(bio: &str) -> FastJobResult<()> {
+  max_length_check(bio, BIO_MAX_LENGTH, FastJobErrorType::BioLengthOverflow)
 }
 
-pub fn is_valid_alt_text_field(alt_text: &str) -> LemmyResult<()> {
+pub fn is_valid_alt_text_field(alt_text: &str) -> FastJobResult<()> {
   max_length_check(
     alt_text,
     ALT_TEXT_MAX_LENGTH,
-    LemmyErrorType::AltTextLengthOverflow,
+    FastJobErrorType::AltTextLengthOverflow,
   )?;
 
   Ok(())
 }
 
 /// Checks the site name length, the limit as defined in the DB.
-pub fn site_name_length_check(name: &str) -> LemmyResult<()> {
-  min_length_check(name, SITE_NAME_MIN_LENGTH, LemmyErrorType::SiteNameRequired)?;
+pub fn site_name_length_check(name: &str) -> FastJobResult<()> {
+  min_length_check(name, SITE_NAME_MIN_LENGTH, FastJobErrorType::SiteNameRequired)?;
   max_length_check(
     name,
     SITE_NAME_MAX_LENGTH,
-    LemmyErrorType::SiteNameLengthOverflow,
+    FastJobErrorType::SiteNameLengthOverflow,
   )
 }
 
 /// Checks the site / community description length, the limit as defined in the DB.
-pub fn site_or_community_description_length_check(description: &str) -> LemmyResult<()> {
+pub fn site_or_community_description_length_check(description: &str) -> FastJobResult<()> {
   max_length_check(
     description,
     SITE_DESCRIPTION_MAX_LENGTH,
-    LemmyErrorType::SiteDescriptionLengthOverflow,
+    FastJobErrorType::SiteDescriptionLengthOverflow,
   )
 }
 
-pub fn tag_name_length_check(tag_name: &str) -> LemmyResult<()> {
+pub fn tag_name_length_check(tag_name: &str) -> FastJobResult<()> {
   min_length_check(
     tag_name,
     TAG_NAME_MIN_LENGTH,
-    LemmyErrorType::InvalidTagName,
+    FastJobErrorType::InvalidTagName,
   )?;
   max_length_check(
     tag_name,
     TAG_NAME_MAX_LENGTH,
-    LemmyErrorType::InvalidTagName,
+    FastJobErrorType::InvalidTagName,
   )
 }
 
@@ -168,7 +168,7 @@ pub fn tag_name_length_check(tag_name: &str) -> LemmyResult<()> {
 /// HTML frontends specify maximum input length using `maxlength` attribute.
 /// For consistency we use the same counting method (UTF-16 code units).
 /// https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength
-fn max_length_check(item: &str, max_length: usize, max_msg: LemmyErrorType) -> LemmyResult<()> {
+fn max_length_check(item: &str, max_length: usize, max_msg: FastJobErrorType) -> FastJobResult<()> {
   let len = item.encode_utf16().count();
   if len > max_length {
     Err(max_msg.into())
@@ -177,7 +177,7 @@ fn max_length_check(item: &str, max_length: usize, max_msg: LemmyErrorType) -> L
   }
 }
 
-fn min_length_check(item: &str, min_length: usize, min_msg: LemmyErrorType) -> LemmyResult<()> {
+fn min_length_check(item: &str, min_length: usize, min_msg: FastJobErrorType) -> FastJobResult<()> {
   let len = item.encode_utf16().count();
   if len < min_length {
     Err(min_msg.into())
@@ -187,12 +187,12 @@ fn min_length_check(item: &str, min_length: usize, min_msg: LemmyErrorType) -> L
 }
 
 /// Attempts to build a regex and check it for common errors before inserting into the DB.
-pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> LemmyResult<Regex> {
+pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> FastJobResult<Regex> {
   // Placeholder regex which doesnt match anything
   // https://stackoverflow.com/a/940840
   let match_nothing = RegexBuilder::new("a^")
     .build()
-    .with_lemmy_type(LemmyErrorType::InvalidRegex);
+    .with_fastjob_type(FastJobErrorType::InvalidRegex);
   if let Some(regex) = regex_str_opt {
     if regex.is_empty() {
       match_nothing
@@ -200,14 +200,14 @@ pub fn build_and_check_regex(regex_str_opt: Option<&str>) -> LemmyResult<Regex> 
       RegexBuilder::new(regex)
         .case_insensitive(true)
         .build()
-        .with_lemmy_type(LemmyErrorType::InvalidRegex)
+        .with_fastjob_type(FastJobErrorType::InvalidRegex)
         .and_then(|regex| {
           // NOTE: It is difficult to know, in the universe of user-crafted regex, which ones
           // may match against any string text. To keep it simple, we'll match the regex
           // against an innocuous string - a single number - which should help catch a regex
           // that accidentally matches against all strings.
           if regex.is_match("1") {
-            Err(LemmyErrorType::PermissiveRegex.into())
+            Err(FastJobErrorType::PermissiveRegex.into())
           } else {
             Ok(regex)
           }
@@ -236,30 +236,30 @@ pub fn clean_urls_in_text(text: &str) -> String {
   }
 }
 
-pub fn is_valid_url(url: &Url) -> LemmyResult<()> {
+pub fn is_valid_url(url: &Url) -> FastJobResult<()> {
   if !ALLOWED_POST_URL_SCHEMES.contains(&url.scheme()) {
-    Err(LemmyErrorType::InvalidUrlScheme)?
+    Err(FastJobErrorType::InvalidUrlScheme)?
   }
 
   max_length_check(
     url.as_str(),
     URL_MAX_LENGTH,
-    LemmyErrorType::UrlLengthOverflow,
+    FastJobErrorType::UrlLengthOverflow,
   )?;
 
   Ok(())
 }
 
-pub fn is_url_blocked(url: &Url, blocklist: &RegexSet) -> LemmyResult<()> {
+pub fn is_url_blocked(url: &Url, blocklist: &RegexSet) -> FastJobResult<()> {
   if blocklist.is_match(url.as_str()) {
-    Err(LemmyErrorType::BlockedUrl)?
+    Err(FastJobErrorType::BlockedUrl)?
   }
 
   Ok(())
 }
 
 /// Check that urls are valid, and also remove the scheme, and uniques
-pub fn check_urls_are_valid(urls: &Vec<String>) -> LemmyResult<Vec<String>> {
+pub fn check_urls_are_valid(urls: &Vec<String>) -> FastJobResult<Vec<String>> {
   let mut parsed_urls = vec![];
   for url in urls {
     parsed_urls.push(build_url_str_without_scheme(url)?);
@@ -269,24 +269,24 @@ pub fn check_urls_are_valid(urls: &Vec<String>) -> LemmyResult<Vec<String>> {
   Ok(unique_urls)
 }
 
-pub fn check_blocking_keywords_are_valid(blocking_keywords: &Vec<String>) -> LemmyResult<()> {
+pub fn check_blocking_keywords_are_valid(blocking_keywords: &Vec<String>) -> FastJobResult<()> {
   for keyword in blocking_keywords {
     min_length_check(
       keyword,
       MIN_LENGTH_BLOCKING_KEYWORD,
-      LemmyErrorType::BlockKeywordTooShort,
+      FastJobErrorType::BlockKeywordTooShort,
     )?;
     max_length_check(
       keyword,
       MAX_LENGTH_BLOCKING_KEYWORD,
-      LemmyErrorType::BlockKeywordTooLong,
+      FastJobErrorType::BlockKeywordTooLong,
     )?;
   }
   check_api_elements_count(blocking_keywords.len())?;
   Ok(())
 }
 
-pub fn build_url_str_without_scheme(url_str: &str) -> LemmyResult<String> {
+pub fn build_url_str_without_scheme(url_str: &str) -> FastJobResult<String> {
   // Parse and check for errors
   let mut url = Url::parse(url_str).or_else(|e| {
     if e == ParseError::RelativeUrlWithoutBase {
@@ -299,12 +299,12 @@ pub fn build_url_str_without_scheme(url_str: &str) -> LemmyResult<String> {
   // Set the scheme to http, then remove the http:// part
   url
     .set_scheme("http")
-    .map_err(|_e| LemmyErrorType::InvalidUrl)?;
+    .map_err(|_e| FastJobErrorType::InvalidUrl)?;
 
   let mut out = url
     .to_string()
     .get(7..)
-    .ok_or(LemmyErrorType::InvalidUrl)?
+    .ok_or(FastJobErrorType::InvalidUrl)?
     .to_string();
 
   // Remove trailing / if necessary
@@ -354,9 +354,9 @@ pub fn truncate_description(text: &str) -> String {
   truncate_for_db(text, SITE_DESCRIPTION_MAX_LENGTH)
 }
 
-pub fn check_api_elements_count(len: usize) -> LemmyResult<()> {
+pub fn check_api_elements_count(len: usize) -> FastJobResult<()> {
   if len >= MAX_API_PARAM_ELEMENTS {
-    Err(LemmyErrorType::TooManyItems)?
+    Err(FastJobErrorType::TooManyItems)?
   }
   Ok(())
 }
@@ -364,7 +364,7 @@ pub fn check_api_elements_count(len: usize) -> LemmyResult<()> {
 mod tests {
 
   use crate::{
-    error::{LemmyErrorType, LemmyResult},
+    error::{FastJobErrorType, FastJobResult},
     utils::validation::{
       build_and_check_regex,
       check_urls_are_valid,
@@ -393,7 +393,7 @@ mod tests {
   const URL_TRACKING_REMOVED: &str = "https://example.com/path/123?user+name=random+user&id=123";
 
   #[test]
-  fn test_clean_url_params() -> LemmyResult<()> {
+  fn test_clean_url_params() -> FastJobResult<()> {
     let url = Url::parse(URL_WITH_TRACKING)?;
     let cleaned = clean_url(&url);
     let expected = Url::parse(URL_TRACKING_REMOVED)?;
@@ -407,7 +407,7 @@ mod tests {
   }
 
   #[test]
-  fn test_clean_body() -> LemmyResult<()> {
+  fn test_clean_body() -> FastJobResult<()> {
     let text = format!("[a link]({URL_WITH_TRACKING})");
     let cleaned = clean_urls_in_text(&text);
     let expected = format!("[a link]({URL_TRACKING_REMOVED})");
@@ -506,7 +506,7 @@ Line3",
   }
 
   #[test]
-  fn test_valid_site_name() -> LemmyResult<()> {
+  fn test_valid_site_name() -> FastJobResult<()> {
     let valid_names = [
       (0..SITE_NAME_MAX_LENGTH).map(|_| 'A').collect::<String>(),
       String::from("A"),
@@ -516,9 +516,9 @@ Line3",
         &(0..SITE_NAME_MAX_LENGTH + 1)
           .map(|_| 'A')
           .collect::<String>(),
-        LemmyErrorType::SiteNameLengthOverflow,
+        FastJobErrorType::SiteNameLengthOverflow,
       ),
-      (&String::new(), LemmyErrorType::SiteNameRequired),
+      (&String::new(), FastJobErrorType::SiteNameRequired),
     ];
 
     valid_names.iter().for_each(|valid_name| {
@@ -555,7 +555,7 @@ Line3",
 
     assert!(
       invalid_result.is_err()
-        && invalid_result.is_err_and(|e| e.error_type.eq(&LemmyErrorType::BioLengthOverflow))
+        && invalid_result.is_err_and(|e| e.error_type.eq(&FastJobErrorType::BioLengthOverflow))
     );
   }
 
@@ -578,12 +578,12 @@ Line3",
       invalid_result.is_err()
         && invalid_result.is_err_and(|e| e
           .error_type
-          .eq(&LemmyErrorType::SiteDescriptionLengthOverflow))
+          .eq(&FastJobErrorType::SiteDescriptionLengthOverflow))
     );
   }
 
   #[test]
-  fn test_valid_slur_regex() -> LemmyResult<()> {
+  fn test_valid_slur_regex() -> FastJobResult<()> {
     let valid_regex = Some("(foo|bar)");
     build_and_check_regex(valid_regex)?;
 
@@ -603,9 +603,9 @@ Line3",
   #[test]
   fn test_too_permissive_slur_regex() {
     let match_everything_regexes = [
-      (Some("["), LemmyErrorType::InvalidRegex),
-      (Some("(foo|bar|)"), LemmyErrorType::PermissiveRegex),
-      (Some(".*"), LemmyErrorType::PermissiveRegex),
+      (Some("["), FastJobErrorType::InvalidRegex),
+      (Some("(foo|bar|)"), FastJobErrorType::PermissiveRegex),
+      (Some(".*"), FastJobErrorType::PermissiveRegex),
     ];
 
     match_everything_regexes
@@ -624,14 +624,14 @@ Line3",
   }
 
   #[test]
-  fn test_check_url_valid() -> LemmyResult<()> {
+  fn test_check_url_valid() -> FastJobResult<()> {
     assert!(is_valid_url(&Url::parse("http://example.com")?).is_ok());
     assert!(is_valid_url(&Url::parse("https://example.com")?).is_ok());
     assert!(is_valid_url(&Url::parse("https://example.com")?).is_ok());
     assert!(is_valid_url(&Url::parse("ftp://example.com")?)
-      .is_err_and(|e| e.error_type.eq(&LemmyErrorType::InvalidUrlScheme)));
+      .is_err_and(|e| e.error_type.eq(&FastJobErrorType::InvalidUrlScheme)));
     assert!(is_valid_url(&Url::parse("javascript:void")?)
-      .is_err_and(|e| e.error_type.eq(&LemmyErrorType::InvalidUrlScheme)));
+      .is_err_and(|e| e.error_type.eq(&FastJobErrorType::InvalidUrlScheme)));
 
     let magnet_link="magnet:?xt=urn:btih:4b390af3891e323778959d5abfff4b726510f14c&dn=Ravel%20Complete%20Piano%20Sheet%20Music%20-%20Public%20Domain&tr=udp%3A%2F%2Fopen.tracker.cl%3A1337%2Fannounce";
     assert!(is_valid_url(&Url::parse(magnet_link)?).is_ok());
@@ -643,14 +643,14 @@ Line3",
     }
     let long_url = Url::parse(&long_str)?;
     assert!(
-      is_valid_url(&long_url).is_err_and(|e| e.error_type.eq(&LemmyErrorType::UrlLengthOverflow))
+      is_valid_url(&long_url).is_err_and(|e| e.error_type.eq(&FastJobErrorType::UrlLengthOverflow))
     );
 
     Ok(())
   }
 
   #[test]
-  fn test_url_block() -> LemmyResult<()> {
+  fn test_url_block() -> FastJobResult<()> {
     let set = regex::RegexSet::new(vec![
       r"(https://)?example\.org/page/to/article",
       r"(https://)?example\.net/?",
@@ -667,7 +667,7 @@ Line3",
   }
 
   #[test]
-  fn test_url_parsed() -> LemmyResult<()> {
+  fn test_url_parsed() -> FastJobResult<()> {
     // Make sure the scheme is removed, and uniques also
     assert_eq!(
       &check_urls_are_valid(&vec![
@@ -687,7 +687,7 @@ Line3",
   }
 
   #[test]
-  fn test_truncate() -> LemmyResult<()> {
+  fn test_truncate() -> FastJobResult<()> {
     assert_eq!("Hell", truncate_for_db("Hello", 4));
     assert_eq!("word", truncate_for_db("word", 10));
     assert_eq!("Wales: ", truncate_for_db("Wales: 🏴󠁧󠁢󠁷󠁬󠁳󠁿", 10));

@@ -4,14 +4,14 @@ use activitypub_federation::{
   fetch::object_id::ObjectId,
   protocol::helpers::deserialize_one_or_many,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::note::Note,
   utils::{mentions::MentionOrValue, protocol::InCommunity},
 };
 use lemmy_db_schema::{source::community::Community, traits::Crud};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -32,7 +32,7 @@ pub struct CreateOrUpdateNote {
 }
 
 impl InCommunity for CreateOrUpdateNote {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let post = self.object.get_parents(context).await?.0;
     let community = Community::read(&mut context.pool(), post.community_id).await?;
     Ok(community.into())

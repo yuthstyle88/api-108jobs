@@ -4,7 +4,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
@@ -31,7 +31,7 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{CreatePost, PostResponse};
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::LemmyResult,
+  error::FastJobResult,
   utils::{
     slurs::check_slurs,
     validation::{
@@ -46,9 +46,9 @@ use lemmy_utils::{
 
 pub async fn create_post(
   data: Json<CreatePost>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> FastJobResult<Json<PostResponse>> {
   honeypot_check(&data.honeypot)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 

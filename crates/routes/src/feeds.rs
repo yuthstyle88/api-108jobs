@@ -2,7 +2,7 @@ use actix_web::{error::ErrorBadRequest, web, Error, HttpRequest, HttpResponse, R
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_private_instance, local_user_view_from_jwt},
 };
 use lemmy_db_schema::{
@@ -18,7 +18,7 @@ use lemmy_db_views_post::{impls::PostQuery, PostView};
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   cache_header::cache_1hour,
-  error::{LemmyError, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
@@ -89,7 +89,7 @@ static RSS_NAMESPACE: LazyLock<BTreeMap<String, String>> = LazyLock::new(|| {
 
 async fn get_all_feed(
   info: web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<FastJobContext>,
 ) -> Result<HttpResponse, Error> {
   Ok(
     get_feed_data(
@@ -104,7 +104,7 @@ async fn get_all_feed(
 
 async fn get_local_feed(
   info: web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<FastJobContext>,
 ) -> Result<HttpResponse, Error> {
   Ok(
     get_feed_data(
@@ -118,11 +118,11 @@ async fn get_local_feed(
 }
 
 async fn get_feed_data(
-  context: &LemmyContext,
+  context: &FastJobContext,
   listing_type: ListingType,
   sort_type: PostSortType,
   limit: i64,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   check_private_instance(&None, &site_view.local_site)?;
@@ -161,7 +161,7 @@ async fn get_feed_data(
 async fn get_feed(
   req: HttpRequest,
   info: web::Query<Params>,
-  context: web::Data<LemmyContext>,
+  context: web::Data<FastJobContext>,
 ) -> Result<HttpResponse, Error> {
   let req_type: String = req.match_info().get("type").unwrap_or("none").parse()?;
   let param: String = req.match_info().get("name").unwrap_or("none").parse()?;
@@ -172,7 +172,7 @@ async fn get_feed(
     "front" => RequestType::Front,
     "inbox" => RequestType::Inbox,
     "modlog" => RequestType::Modlog,
-    _ => return Err(ErrorBadRequest(LemmyError::from(anyhow!("wrong_type")))),
+    _ => return Err(ErrorBadRequest(FastJobError::from(anyhow!("wrong_type")))),
   };
 
   let builder = match request_type {
@@ -198,14 +198,14 @@ async fn get_feed(
 }
 
 async fn get_feed_user(
-  context: &LemmyContext,
+  context: &FastJobContext,
   limit: &i64,
   user_name: &str,
-) -> LemmyResult<Channel> {
+) -> FastJobResult<Channel> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let person = Person::read_from_name(&mut context.pool(), user_name, false)
     .await?
-    .ok_or(LemmyErrorType::NotFound)?;
+    .ok_or(FastJobErrorType::NotFound)?;
 
   check_private_instance(&None, &site_view.local_site)?;
 
@@ -240,17 +240,17 @@ async fn get_feed_user(
 }
 
 async fn get_feed_community(
-  context: &LemmyContext,
+  context: &FastJobContext,
   sort_type: &PostSortType,
   limit: &i64,
   community_name: &str,
-) -> LemmyResult<Channel> {
+) -> FastJobResult<Channel> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let community = Community::read_from_name(&mut context.pool(), community_name, false)
     .await?
-    .ok_or(LemmyErrorType::NotFound)?;
+    .ok_or(FastJobErrorType::NotFound)?;
   if !community.visibility.can_view_without_login() {
-    return Err(LemmyErrorType::NotFound.into());
+    return Err(FastJobErrorType::NotFound.into());
   }
 
   check_private_instance(&None, &site_view.local_site)?;
@@ -282,11 +282,11 @@ async fn get_feed_community(
 }
 
 async fn get_feed_front(
-  context: &LemmyContext,
+  context: &FastJobContext,
   sort_type: &PostSortType,
   limit: &i64,
   jwt: &str,
-) -> LemmyResult<Channel> {
+) -> FastJobResult<Channel> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_user = local_user_view_from_jwt(jwt, context).await?;
 
@@ -319,7 +319,7 @@ async fn get_feed_front(
   Ok(channel)
 }
 
-async fn get_feed_inbox(context: &LemmyContext, jwt: &str) -> LemmyResult<Channel> {
+async fn get_feed_inbox(context: &FastJobContext, jwt: &str) -> FastJobResult<Channel> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_instance_id = site_view.site.instance_id;
   let local_user = local_user_view_from_jwt(jwt, context).await?;
@@ -354,7 +354,7 @@ async fn get_feed_inbox(context: &LemmyContext, jwt: &str) -> LemmyResult<Channe
 }
 
 /// Gets your ModeratorView modlog
-async fn get_feed_modlog(context: &LemmyContext, jwt: &str) -> LemmyResult<Channel> {
+async fn get_feed_modlog(context: &FastJobContext, jwt: &str) -> FastJobResult<Channel> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_user = local_user_view_from_jwt(jwt, context).await?;
   check_private_instance(&Some(local_user.clone()), &site_view.local_site)?;
@@ -388,8 +388,8 @@ async fn get_feed_modlog(context: &LemmyContext, jwt: &str) -> LemmyResult<Chann
 
 fn create_reply_and_mention_items(
   inbox: Vec<InboxCombinedView>,
-  context: &LemmyContext,
-) -> LemmyResult<Vec<Item>> {
+  context: &FastJobContext,
+) -> FastJobResult<Vec<Item>> {
   let reply_items: Vec<Item> = inbox
     .iter()
     .map(|r| match r {
@@ -434,7 +434,7 @@ fn create_reply_and_mention_items(
         )
       }
     })
-    .collect::<LemmyResult<Vec<Item>>>()?;
+    .collect::<FastJobResult<Vec<Item>>>()?;
 
   Ok(reply_items)
 }
@@ -442,7 +442,7 @@ fn create_reply_and_mention_items(
 fn create_modlog_items(
   modlog: Vec<ModlogCombinedView>,
   settings: &Settings,
-) -> LemmyResult<Vec<Item>> {
+) -> FastJobResult<Vec<Item>> {
   // All of these go to your modlog url
   let modlog_url = format!(
     "{}/modlog?listing_type=ModeratorView",
@@ -657,7 +657,7 @@ fn create_modlog_items(
         settings,
       ),
     })
-    .collect::<LemmyResult<Vec<Item>>>()?;
+    .collect::<FastJobResult<Vec<Item>>>()?;
 
   Ok(modlog_items)
 }
@@ -693,7 +693,7 @@ fn build_modlog_item(
   action: &str,
   reason: &Option<String>,
   settings: &Settings,
-) -> LemmyResult<Item> {
+) -> FastJobResult<Item> {
   let guid = Some(Guid {
     permalink: true,
     value: action.to_owned(),
@@ -725,7 +725,7 @@ fn build_item(
   url: &str,
   content: &str,
   settings: &Settings,
-) -> LemmyResult<Item> {
+) -> FastJobResult<Item> {
   // TODO add images
   let guid = Some(Guid {
     permalink: true,
@@ -749,7 +749,7 @@ fn build_item(
   })
 }
 
-fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> LemmyResult<Vec<Item>> {
+fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult<Vec<Item>> {
   let mut items: Vec<Item> = Vec::new();
 
   for p in posts {

@@ -34,7 +34,7 @@ use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
 use lemmy_db_schema_file::schema_setup;
 use lemmy_utils::{
-  error::{LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::{structs::Settings, SETTINGS},
   utils::validation::clean_url,
 };
@@ -92,16 +92,16 @@ pub async fn get_conn<'a, 'b: 'a>(pool: &'a mut DbPool<'b>) -> Result<DbConn<'a>
 }
 
 impl DbConn<'_> {
-  pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> LemmyResult<R>
+  pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> FastJobResult<R>
   where
-    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, LemmyResult<R>>
+    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, FastJobResult<R>>
       + Send
       + 'a,
     R: Send + 'a,
   {
     self
       .deref_mut()
-      .transaction::<_, LemmyError, _>(callback)
+      .transaction::<_, FastJobError, _>(callback)
       .await
   }
 }
@@ -294,11 +294,11 @@ pub fn fuzzy_search(q: &str) -> String {
   format!("%{replaced}%")
 }
 
-pub fn limit_fetch(limit: Option<i64>) -> LemmyResult<i64> {
+pub fn limit_fetch(limit: Option<i64>) -> FastJobResult<i64> {
   Ok(match limit {
     Some(limit) => {
       if !(1..=FETCH_LIMIT_MAX.try_into()?).contains(&limit) {
-        return Err(LemmyErrorType::InvalidFetchLimit.into());
+        return Err(FastJobErrorType::InvalidFetchLimit.into());
       }
       limit
     }
@@ -343,43 +343,43 @@ pub fn diesel_required_string_update(opt: Option<&str>) -> Option<String> {
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB update.
 /// Also cleans the url params.
-pub fn diesel_url_update(opt: Option<&str>) -> LemmyResult<Option<Option<DbUrl>>> {
+pub fn diesel_url_update(opt: Option<&str>) -> FastJobResult<Option<Option<DbUrl>>> {
   match opt {
     // An empty string is an erase
     Some("") => Ok(Some(None)),
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(Some(clean_url(&u).into())))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_fastjob_type(FastJobErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB update (for non
 /// nullable properties). Also cleans the url params.
-pub fn diesel_required_url_update(opt: Option<&str>) -> LemmyResult<Option<DbUrl>> {
+pub fn diesel_required_url_update(opt: Option<&str>) -> FastJobResult<Option<DbUrl>> {
   match opt {
     // An empty string is no change
     Some("") => Ok(None),
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(clean_url(&u).into()))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_fastjob_type(FastJobErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
 
 /// Takes an optional API URL-type input, and converts it to an optional diesel DB create.
 /// Also cleans the url params.
-pub fn diesel_url_create(opt: Option<&str>) -> LemmyResult<Option<DbUrl>> {
+pub fn diesel_url_create(opt: Option<&str>) -> FastJobResult<Option<DbUrl>> {
   match opt {
     Some(str_url) => Url::parse(str_url)
       .map(|u| Some(clean_url(&u).into()))
-      .with_lemmy_type(LemmyErrorType::InvalidUrl),
+      .with_fastjob_type(FastJobErrorType::InvalidUrl),
     None => Ok(None),
   }
 }
 
 /// Sets a few additional config options necessary for starting lemmy
-fn build_config_options_uri_segment(config: &str) -> LemmyResult<String> {
+fn build_config_options_uri_segment(config: &str) -> FastJobResult<String> {
   let mut url = Url::parse(config)?;
 
   // Set `lemmy.protocol_and_hostname` so triggers can use it
@@ -488,7 +488,7 @@ impl ServerCertVerifier for NoCertVerifier {
   }
 }
 
-pub fn build_db_pool() -> LemmyResult<ActualDbPool> {
+pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
   let db_url = SETTINGS.get_database_url();
   // diesel-async does not support any TLS connections out of the box, so we need to manually
   // provide a setup function which handles creating the connection
@@ -629,7 +629,7 @@ pub(crate) fn format_actor_url(
   domain: &str,
   prefix: char,
   settings: &Settings,
-) -> LemmyResult<Url> {
+) -> FastJobResult<Url> {
   let local_protocol_and_hostname = settings.get_protocol_and_hostname();
   let local_hostname = &settings.hostname;
   let url = if domain != local_hostname {
@@ -644,11 +644,11 @@ pub(crate) fn format_actor_url(
 ///
 /// Uses a default NotFound error, that you should map to
 /// CouldntLikeComment/CouldntLikePost.
-pub(crate) fn validate_like(like_score: i16) -> LemmyResult<()> {
+pub(crate) fn validate_like(like_score: i16) -> FastJobResult<()> {
   if [-1, 1].contains(&like_score) {
     Ok(())
   } else {
-    Err(LemmyErrorType::NotFound.into())
+    Err(FastJobErrorType::NotFound.into())
   }
 }
 
@@ -683,7 +683,7 @@ mod tests {
   }
 
   #[test]
-  fn test_diesel_option_overwrite_to_url() -> LemmyResult<()> {
+  fn test_diesel_option_overwrite_to_url() -> FastJobResult<()> {
     assert!(matches!(diesel_url_update(None), Ok(None)));
     assert!(matches!(diesel_url_update(Some("")), Ok(Some(None))));
     assert!(diesel_url_update(Some("invalid_url")).is_err());

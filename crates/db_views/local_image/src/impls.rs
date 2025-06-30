@@ -9,7 +9,7 @@ use lemmy_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::schema::{local_image, person, post};
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalImageView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -25,7 +25,7 @@ impl LocalImageView {
     cursor_data: Option<LocalImage>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
@@ -41,20 +41,20 @@ impl LocalImageView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn get_all_by_person_id(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .filter(local_image::person_id.eq(person_id))
       .select(Self::as_select())
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn get_all_paged(
@@ -62,7 +62,7 @@ impl LocalImageView {
     cursor_data: Option<LocalImage>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
@@ -75,7 +75,7 @@ impl LocalImageView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -89,14 +89,14 @@ impl PaginationCursorBuilder for LocalImageView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
 
     // This isn't an id, but a string
     let alias = cursor
       .0
       .split_at_checked(1)
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
       .1;
 
     let token = local_image::table

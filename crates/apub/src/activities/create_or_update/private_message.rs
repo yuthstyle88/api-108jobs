@@ -10,18 +10,18 @@ use activitypub_federation::{
   protocol::verification::{verify_domains_match, verify_urls_match},
   traits::{ActivityHandler, Actor, Object},
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{person::ApubPerson, private_message::ApubPrivateMessage};
 use lemmy_db_schema::source::activity::ActivitySendTargets;
 use lemmy_db_views_private_message::PrivateMessageView;
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 pub(crate) async fn send_create_or_update_pm(
   pm_view: PrivateMessageView,
   kind: CreateOrUpdateType,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let actor: ApubPerson = pm_view.creator.into();
   let recipient: ApubPerson = pm_view.recipient.into();
 
@@ -41,8 +41,8 @@ pub(crate) async fn send_create_or_update_pm(
 
 #[async_trait::async_trait]
 impl ActivityHandler for CreateOrUpdatePrivateMessage {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -52,7 +52,7 @@ impl ActivityHandler for CreateOrUpdatePrivateMessage {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     verify_person(&self.actor, context).await?;
     verify_domains_match(self.actor.inner(), self.object.id.inner())?;
     verify_domains_match(self.to[0].inner(), self.object.to[0].inner())?;
@@ -61,7 +61,7 @@ impl ActivityHandler for CreateOrUpdatePrivateMessage {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<Self::DataType>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<Self::DataType>) -> FastJobResult<()> {
     ApubPrivateMessage::from_json(self.object, context).await?;
     Ok(())
   }

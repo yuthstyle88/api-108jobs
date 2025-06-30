@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_private_instance, is_mod_or_admin_opt},
 };
 use lemmy_db_schema::traits::PaginationCursorBuilder;
@@ -11,13 +11,13 @@ use lemmy_db_views_modlog_combined::{
   ModlogCombinedView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn get_mod_log(
   data: Query<GetModlog>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<GetModlogResponse>> {
+) -> FastJobResult<Json<GetModlogResponse>> {
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   check_private_instance(&local_user_view, &local_site)?;
@@ -111,8 +111,8 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_mod_remove_or_restore_data() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_mod_remove_or_restore_data() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
 
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;

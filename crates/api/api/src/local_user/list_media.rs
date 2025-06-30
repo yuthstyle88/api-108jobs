@@ -1,18 +1,18 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_image::{
   api::{ListMedia, ListMediaResponse},
   LocalImageView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_media(
   data: Query<ListMedia>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<ListMediaResponse>> {
+) -> FastJobResult<Json<ListMediaResponse>> {
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(LocalImageView::from_cursor(cursor, &mut context.pool()).await?)
   } else {

@@ -7,10 +7,10 @@ use actix_web::{
   HttpResponse,
   Responder,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::images::RemoteImage;
 use lemmy_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use url::Url;
 
@@ -18,8 +18,8 @@ pub async fn get_image(
   filename: Path<String>,
   Query(params): Query<ImageGetParams>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let name = &filename.into_inner();
 
   // If there are no query params, the URL is original
@@ -42,8 +42,8 @@ pub async fn get_image(
 pub async fn image_proxy(
   Query(params): Query<ImageProxyParams>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Either<HttpResponse<()>, HttpResponse<BoxBody>>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Either<HttpResponse<()>, HttpResponse<BoxBody>>> {
   let url = Url::parse(&params.url)?;
   let encoded_url = utf8_percent_encode(&params.url, NON_ALPHANUMERIC).to_string();
 
@@ -85,8 +85,8 @@ pub async fn image_proxy(
 pub(super) async fn do_get_image(
   url: String,
   req: HttpRequest,
-  context: &LemmyContext,
-) -> LemmyResult<HttpResponse> {
+  context: &FastJobContext,
+) -> FastJobResult<HttpResponse> {
   let mut client_req = adapt_request(&req, url, context);
 
   if let Some(addr) = req.head().peer_addr {

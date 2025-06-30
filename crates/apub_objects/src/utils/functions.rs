@@ -11,7 +11,7 @@ use activitypub_federation::{
 };
 use either::Either;
 use html2md::parse_html;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::{
     community::{Community, CommunityActions, CommunityModeratorForm},
@@ -26,7 +26,7 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_community_person_ban::CommunityPersonBanView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{FederationError, LemmyError, LemmyResult},
+  error::{FederationError, FastJobError, FastJobResult},
   CacheLock,
   CACHE_DURATION_FEDERATION,
 };
@@ -68,7 +68,7 @@ pub struct LocalSiteData {
   blocked_instances: Vec<Instance>,
 }
 
-pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<LocalSiteData>> {
+pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> FastJobResult<Arc<LocalSiteData>> {
   // All incoming and outgoing federation actions read the blocklist/allowlist and slur filters
   // multiple times. This causes a huge number of database reads if we hit the db directly. So we
   // cache these values for a short time, which will already make a huge difference and ensures that
@@ -92,7 +92,7 @@ pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<Lo
             Instance::blocklist
           ))?;
 
-        Ok::<_, LemmyError>(Arc::new(LocalSiteData {
+        Ok::<_, FastJobError>(Arc::new(LocalSiteData {
           local_site,
           allowed_instances,
           blocked_instances,
@@ -105,8 +105,8 @@ pub async fn local_site_data_cached(pool: &mut DbPool<'_>) -> LemmyResult<Arc<Lo
 pub async fn check_apub_id_valid_with_strictness(
   apub_id: &Url,
   is_strict: bool,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   let domain = apub_id
     .domain()
     .ok_or(FederationError::UrlWithoutDomain)?
@@ -149,7 +149,7 @@ pub async fn check_apub_id_valid_with_strictness(
 /// - the correct scheme (either http or https)
 /// - URL being in the allowlist (if it is active)
 /// - URL not being in the blocklist (if it is active)
-pub fn check_apub_id_valid(apub_id: &Url, local_site_data: &LocalSiteData) -> LemmyResult<()> {
+pub fn check_apub_id_valid(apub_id: &Url, local_site_data: &LocalSiteData) -> FastJobResult<()> {
   let domain = apub_id
     .domain()
     .ok_or(FederationError::UrlWithoutDomain)?
@@ -201,8 +201,8 @@ impl<L: GetActorType, R: GetActorType> GetActorType for either::Either<L, R> {
 pub async fn handle_community_moderators(
   new_mods: &Vec<ObjectId<ApubPerson>>,
   community: &ApubCommunity,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let community_id = community.id;
   let current_moderators =
     CommunityModeratorView::for_community(&mut context.pool(), community_id).await?;
@@ -234,7 +234,7 @@ pub async fn handle_community_moderators(
 }
 
 /// Marks object as public only if the community is public
-pub fn generate_to(community: &Community) -> LemmyResult<Vec<Url>> {
+pub fn generate_to(community: &Community) -> FastJobResult<Vec<Url>> {
   let ap_id = community.ap_id.clone().into();
   if community.visibility == CommunityVisibility::Public {
     Ok(vec![ap_id, public()])
@@ -251,8 +251,8 @@ pub fn generate_to(community: &Community) -> LemmyResult<Vec<Url>> {
 pub async fn verify_person_in_community(
   person_id: &ObjectId<ApubPerson>,
   community: &ApubCommunity,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   let person_id = person.id;
@@ -265,8 +265,8 @@ pub async fn verify_person_in_community(
 pub async fn verify_person_in_site_or_community(
   person_id: &ObjectId<ApubPerson>,
   site_or_community: &Either<ApubSite, ApubCommunity>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   let person = person_id.dereference(context).await?;
   InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
   if let Either::Right(community) = site_or_community {
@@ -277,7 +277,7 @@ pub async fn verify_person_in_site_or_community(
   Ok(())
 }
 
-pub fn verify_is_public(to: &[Url], cc: &[Url]) -> LemmyResult<()> {
+pub fn verify_is_public(to: &[Url], cc: &[Url]) -> FastJobResult<()> {
   if ![to, cc].iter().any(|set| set.contains(&public())) {
     Err(FederationError::ObjectIsNotPublic)?
   } else {
@@ -287,7 +287,7 @@ pub fn verify_is_public(to: &[Url], cc: &[Url]) -> LemmyResult<()> {
 
 /// Returns an error if object visibility doesnt match community visibility
 /// (ie content in private community must also be private).
-pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> LemmyResult<()> {
+pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> FastJobResult<()> {
   use CommunityVisibility::*;
   let object_is_public = [to, cc].iter().any(|set| set.contains(&public()));
   match community.visibility {
@@ -300,8 +300,8 @@ pub fn verify_visibility(to: &[Url], cc: &[Url], community: &ApubCommunity) -> L
 pub async fn append_attachments_to_comment(
   content: String,
   attachments: &[Attachment],
-  context: &Data<LemmyContext>,
-) -> LemmyResult<String> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<String> {
   let mut content = content;
   // Don't modify comments with no attachments
   if !attachments.is_empty() {

@@ -6,7 +6,7 @@ use actix_web::{
 use bcrypt::verify;
 use lemmy_api_utils::{
   claims::Claims,
-  context::LemmyContext,
+  context::FastJobContext,
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
 use lemmy_db_views_local_user::LocalUserView;
@@ -14,13 +14,13 @@ use lemmy_db_views_site::{
   api::{Login, LoginResponse},
   SiteView,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
   data: Json<Login>,
   req: HttpRequest,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<LoginResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<LoginResponse>> {
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   // Fetch that username / email
@@ -36,7 +36,7 @@ pub async fn login(
     .and_then(|password_encrypted| verify(&data.password, password_encrypted).ok())
     .unwrap_or(false);
   if !valid {
-    Err(LemmyErrorType::IncorrectLogin)?
+    Err(FastJobErrorType::IncorrectLogin)?
   }
   check_local_user_deleted(&local_user_view)?;
   check_email_verified(&local_user_view, &site_view)?;

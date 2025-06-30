@@ -2,7 +2,7 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId, traits::O
 use actix_web::web::Json;
 use futures::{future::try_join_all, StreamExt};
 use itertools::Itertools;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{
   comment::ApubComment,
   community::ApubCommunity,
@@ -27,7 +27,7 @@ use lemmy_db_views_site::{
   impls::user_backup_list_to_user_settings_backup,
 };
 use lemmy_utils::{
-  error::LemmyResult,
+  error::FastJobResult,
   spawn_try_task,
   utils::validation::check_api_elements_count,
 };
@@ -39,8 +39,8 @@ const PARALLELISM: usize = 10;
 
 pub async fn export_settings(
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<UserSettingsBackup>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<UserSettingsBackup>> {
   let lists = LocalUser::export_backup(&mut context.pool(), local_user_view.person.id).await?;
   let settings = user_backup_list_to_user_settings_backup(local_user_view, lists);
 
@@ -50,8 +50,8 @@ pub async fn export_settings(
 pub async fn import_settings(
   data: Json<UserSettingsBackup>,
   local_user_view: LocalUserView,
-  context: Data<LemmyContext>,
-) -> LemmyResult<Json<SuccessResponse>> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<SuccessResponse>> {
   let person_form = PersonUpdateForm {
     display_name: data.display_name.clone().map(Some),
     bio: data.bio.clone().map(Some),
@@ -124,7 +124,7 @@ pub async fn import_settings(
         let form =
           CommunityFollowerForm::new(community.id, person_id, CommunityFollowerState::Pending);
         CommunityActions::follow(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        FastJobResult::Ok(())
       },
     )
     .await?;
@@ -141,7 +141,7 @@ pub async fn import_settings(
         let post = saved.dereference(&context).await?;
         let form = PostSavedForm::new(post.id, person_id);
         PostActions::save(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        FastJobResult::Ok(())
       },
     )
     .await?;
@@ -158,7 +158,7 @@ pub async fn import_settings(
         let comment = saved.dereference(&context).await?;
         let form = CommentSavedForm::new(person_id, comment.id);
         CommentActions::save(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        FastJobResult::Ok(())
       },
     )
     .await?;
@@ -175,7 +175,7 @@ pub async fn import_settings(
         let community = blocked.dereference(&context).await?;
         let form = CommunityBlockForm::new(community.id, person_id);
         CommunityActions::block(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        FastJobResult::Ok(())
       },
     )
     .await?;
@@ -192,7 +192,7 @@ pub async fn import_settings(
         let target = blocked.dereference(&context).await?;
         let form = PersonBlockForm::new(person_id, target.id);
         PersonActions::block(&mut context.pool(), &form).await?;
-        LemmyResult::Ok(())
+        FastJobResult::Ok(())
       },
     )
     .await?;
@@ -201,7 +201,7 @@ pub async fn import_settings(
       let instance = Instance::read_or_create(&mut context.pool(), domain.clone()).await?;
       let form = InstanceBlockForm::new(person_id, instance.id);
       InstanceActions::block(&mut context.pool(), &form).await?;
-      LemmyResult::Ok(())
+      FastJobResult::Ok(())
     }))
     .await?;
 
@@ -216,13 +216,13 @@ pub async fn import_settings(
 
 async fn fetch_and_import<Kind, Fut>(
   objects: Vec<ObjectId<Kind>>,
-  context: &Data<LemmyContext>,
-  import_fn: impl FnMut((ObjectId<Kind>, Data<LemmyContext>)) -> Fut,
-) -> LemmyResult<String>
+  context: &Data<FastJobContext>,
+  import_fn: impl FnMut((ObjectId<Kind>, Data<FastJobContext>)) -> Fut,
+) -> FastJobResult<String>
 where
   Kind: Object + Send + 'static,
   for<'de2> <Kind as Object>::Kind: Deserialize<'de2>,
-  Fut: Future<Output = LemmyResult<()>>,
+  Fut: Future<Output = FastJobResult<()>>,
 {
   let mut failed_items = vec![];
   futures::stream::iter(
@@ -238,7 +238,7 @@ where
   .await
   .into_iter()
   .enumerate()
-  .for_each(|(i, r): (usize, LemmyResult<()>)| {
+  .for_each(|(i, r): (usize, FastJobResult<()>)| {
     if r.is_err() {
       if let Some(object) = objects.get(i) {
         failed_items.push(object.inner().clone());
@@ -254,7 +254,7 @@ pub(crate) mod tests {
   use super::*;
   use crate::api::user_settings_backup::{export_settings, import_settings};
   use actix_web::web::Json;
-  use lemmy_api_utils::context::LemmyContext;
+  use lemmy_api_utils::context::FastJobContext;
   use lemmy_db_schema::{
     source::{
       community::{Community, CommunityActions, CommunityFollowerForm, CommunityInsertForm},
@@ -265,15 +265,15 @@ pub(crate) mod tests {
   };
   use lemmy_db_views_community_follower::CommunityFollowerView;
   use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
   use serial_test::serial;
   use std::time::Duration;
   use tokio::time::sleep;
 
   #[tokio::test]
   #[serial]
-  async fn test_settings_export_import() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_settings_export_import() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -323,8 +323,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn disallow_large_backup() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn disallow_large_backup() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 
@@ -349,7 +349,7 @@ pub(crate) mod tests {
 
     assert_eq!(
       imported.err().map(|e| e.error_type),
-      Some(LemmyErrorType::TooManyItems)
+      Some(FastJobErrorType::TooManyItems)
     );
 
     Person::delete(pool, export_user.person.id).await?;
@@ -360,8 +360,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn import_partial_backup() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn import_partial_backup() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let pool = &mut context.pool();
     let data = TestData::create(pool).await?;
 

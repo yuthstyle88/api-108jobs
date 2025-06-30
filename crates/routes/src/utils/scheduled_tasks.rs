@@ -15,7 +15,7 @@ use diesel::{
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::send_webmention,
 };
@@ -43,13 +43,13 @@ use lemmy_db_schema_file::schema::{
   sent_activity,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest_middleware::ClientWithMiddleware;
 use std::time::Duration;
 use tracing::{info, warn};
 
 /// Schedules various cleanup tasks for lemmy in a background thread
-pub async fn setup(context: Data<LemmyContext>) -> LemmyResult<()> {
+pub async fn setup(context: Data<FastJobContext>) -> FastJobResult<()> {
   // https://github.com/mdsherry/clokwerk/issues/38
   let mut scheduler = AsyncScheduler::with_tz(Utc);
 
@@ -133,7 +133,7 @@ pub async fn setup(context: Data<LemmyContext>) -> LemmyResult<()> {
 
 /// Update the hot_rank columns for the aggregates tables
 /// Runs in batches until all necessary rows are updated once
-async fn update_hot_ranks(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn update_hot_ranks(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Updating hot ranks for all history...");
 
   let mut conn = get_conn(pool).await?;
@@ -175,7 +175,7 @@ async fn process_ranks_in_batches(
   table_name: &str,
   where_clause: &str,
   set_clause: &str,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   let process_start_time: DateTime<Utc> = Utc.timestamp_opt(0, 0).single().unwrap_or_default();
 
   let update_batch_size = 1000; // Bigger batches than this tend to cause seq scans
@@ -200,7 +200,7 @@ async fn process_ranks_in_batches(
     .get_results::<HotRanksUpdateResult>(conn)
     .await
     .map_err(|e| {
-      LemmyErrorType::Unknown(format!("Failed to update {} hot_ranks: {}", table_name, e))
+      FastJobErrorType::Unknown(format!("Failed to update {} hot_ranks: {}", table_name, e))
     })?;
 
     processed_rows_count += updated_rows.len();
@@ -215,7 +215,7 @@ async fn process_ranks_in_batches(
 
 /// Post aggregates is a special case, since it needs to join to the community_aggregates
 /// table, to get the active monthly user counts.
-async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) -> LemmyResult<()> {
+async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) -> FastJobResult<()> {
   let process_start_time: DateTime<Utc> = Utc.timestamp_opt(0, 0).single().unwrap_or_default();
 
   let update_batch_size = 1000; // Bigger batches than this tend to cause seq scans
@@ -245,7 +245,7 @@ async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) 
     .get_results::<HotRanksUpdateResult>(conn)
     .await
     .map_err(|e| {
-      LemmyErrorType::Unknown(format!("Failed to update post_aggregates hot_ranks: {}", e))
+      FastJobErrorType::Unknown(format!("Failed to update post_aggregates hot_ranks: {}", e))
     })?;
 
     processed_rows_count += updated_rows.len();
@@ -258,7 +258,7 @@ async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) 
   Ok(())
 }
 
-async fn delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   let mut conn = get_conn(pool).await?;
 
   diesel::delete(
@@ -272,7 +272,7 @@ async fn delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> LemmyResult<()
 }
 
 /// Clear old activities (this table gets very large)
-async fn clear_old_activities(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn clear_old_activities(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Clearing old activities...");
   let mut conn = get_conn(pool).await?;
 
@@ -292,14 +292,14 @@ async fn clear_old_activities(pool: &mut DbPool<'_>) -> LemmyResult<()> {
   Ok(())
 }
 
-async fn delete_old_denied_users(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn delete_old_denied_users(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   LocalUser::delete_old_denied_local_users(pool).await?;
   info!("Done.");
   Ok(())
 }
 
 /// overwrite posts and comments 30d after deletion
-async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Overwriting deleted posts...");
   let mut conn = get_conn(pool).await?;
 
@@ -331,7 +331,7 @@ async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> LemmyRes
 }
 
 /// Re-calculate the site and community active counts every 12 hours
-async fn active_counts(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Updating active site and community aggregates ...");
 
   let mut conn = get_conn(pool).await?;
@@ -364,7 +364,7 @@ async fn active_counts(pool: &mut DbPool<'_>) -> LemmyResult<()> {
 }
 
 /// Set banned to false after ban expires
-async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Updating banned column if it expires ...");
   let mut conn = get_conn(pool).await?;
 
@@ -389,7 +389,7 @@ async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
 }
 
 /// Set banned to false after ban expires
-async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> LemmyResult<()> {
+async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Delete instance blocks when expired ...");
   let mut conn = get_conn(pool).await?;
 
@@ -402,7 +402,7 @@ async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> LemmyResul
 }
 
 /// Find all unpublished posts with scheduled date in the future, and publish them.
-async fn publish_scheduled_posts(context: &Data<LemmyContext>) -> LemmyResult<()> {
+async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResult<()> {
   let pool = &mut context.pool();
   let local_instance_id = SiteView::read_local(pool).await?.instance.id;
   let mut conn = get_conn(pool).await?;
@@ -458,7 +458,7 @@ async fn publish_scheduled_posts(context: &Data<LemmyContext>) -> LemmyResult<()
 async fn update_instance_software(
   pool: &mut DbPool<'_>,
   client: &ClientWithMiddleware,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   info!("Updating instances software and versions...");
   let mut conn = get_conn(pool).await?;
 
@@ -545,7 +545,7 @@ mod tests {
   use lemmy_api_utils::request::client_builder;
   use lemmy_db_schema::test_data::TestData;
   use lemmy_utils::{
-    error::{LemmyErrorType, LemmyResult},
+    error::{FastJobErrorType, FastJobResult},
     settings::structs::Settings,
   };
   use pretty_assertions::assert_eq;
@@ -553,29 +553,29 @@ mod tests {
   use serial_test::serial;
 
   #[tokio::test]
-  async fn test_nodeinfo_lemmy_ml() -> LemmyResult<()> {
+  async fn test_nodeinfo_lemmy_ml() -> FastJobResult<()> {
     let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
     let form = build_update_instance_form("lemmy.ml", &client)
       .await
-      .ok_or(LemmyErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(LemmyErrorType::NotFound)?, "lemmy");
+      .ok_or(FastJobErrorType::NotFound)?;
+    assert_eq!(form.software.ok_or(FastJobErrorType::NotFound)?, "lemmy");
     Ok(())
   }
 
   #[tokio::test]
-  async fn test_nodeinfo_mastodon_social() -> LemmyResult<()> {
+  async fn test_nodeinfo_mastodon_social() -> FastJobResult<()> {
     let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
     let form = build_update_instance_form("mastodon.social", &client)
       .await
-      .ok_or(LemmyErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(LemmyErrorType::NotFound)?, "mastodon");
+      .ok_or(FastJobErrorType::NotFound)?;
+    assert_eq!(form.software.ok_or(FastJobErrorType::NotFound)?, "mastodon");
     Ok(())
   }
 
   #[tokio::test]
   #[serial]
-  async fn test_scheduled_tasks_no_errors() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_scheduled_tasks_no_errors() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let data = TestData::create(&mut context.pool()).await?;
 
     active_counts(&mut context.pool()).await?;

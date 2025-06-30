@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
     check_community_mod_action,
@@ -22,13 +22,13 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::api::{BanFromCommunity, BanFromCommunityResponse};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
-use lemmy_utils::{error::LemmyResult, utils::validation::is_valid_body_field};
+use lemmy_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_community(
   data: Json<BanFromCommunity>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<BanFromCommunityResponse>> {
+) -> FastJobResult<Json<BanFromCommunityResponse>> {
   let banned_person_id = data.person_id;
   let my_person_id = local_user_view.person.id;
   let expires_at = check_expire_time(data.expires_at)?;

@@ -10,10 +10,10 @@ mod tests {
     undo_delete::UndoDelete,
   };
   use lemmy_apub_objects::utils::test::test_parse_lemmy_item;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_parse_lemmy_deletion() -> LemmyResult<()> {
+  fn test_parse_lemmy_deletion() -> FastJobResult<()> {
     test_parse_lemmy_item::<Delete>("assets/lemmy/activities/deletion/remove_note.json")?;
     test_parse_lemmy_item::<Delete>("assets/lemmy/activities/deletion/delete_page.json")?;
 

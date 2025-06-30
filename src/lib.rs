@@ -12,7 +12,7 @@ use actix_web::{
 use clap::{Parser, Subcommand};
 use lemmy_api::sitemap::get_sitemap;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   request::client_builder,
   send_activity::{ActivityChannel, MATCH_OUTGOING_ACTIVITIES},
   utils::local_site_rate_limit_to_rate_limit_config,
@@ -44,7 +44,7 @@ use lemmy_routes::{
   webfinger,
 };
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   rate_limit::RateLimit,
   response::jsonify_plain_text_errors,
   settings::{structs::Settings, SETTINGS},
@@ -72,7 +72,7 @@ const ACTIVITY_SENDING_TIMEOUT: Duration = Duration::from_secs(125);
 #[command(
   version,
   about = "A link aggregator for the fediverse",
-  long_about = "A link aggregator for the fediverse.\n\nThis is the Lemmy backend API server. This will connect to a PostgreSQL database, run any pending migrations and start accepting API requests."
+  long_about = "A link aggregator for the fediverse.\n\nThis is the FastJob backend API server. This will connect to a PostgreSQL database, run any pending migrations and start accepting API requests."
 )]
 // TODO: Instead of defining individual env vars, only specify prefix once supported by clap.
 //       https://github.com/clap-rs/clap/issues/3221
@@ -139,7 +139,7 @@ enum MigrationSubcommand {
 }
 
 /// Placing the main function in lib.rs allows other crates to import it and embed Lemmy
-pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
+pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   if let Some(CmdSubcommand::Migration {
     subcommand,
     all,
@@ -162,7 +162,7 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
   }
 
   // Print version number to log
-  println!("Starting Lemmy v{VERSION}");
+  println!("Starting FastJob v{VERSION}");
 
   // return error 503 while running db migrations and startup tasks
   let mut startup_server_handle = None;
@@ -200,7 +200,7 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let context = LemmyContext::create(
+  let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
@@ -231,10 +231,10 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
     .set(Box::new(move |d, c| {
       Box::pin(match_outgoing_activities(d, c))
     }))
-    .map_err(|_e| LemmyErrorType::Unknown("couldnt set function pointer".into()))?;
+    .map_err(|_e| FastJobErrorType::Unknown("couldnt set function pointer".into()))?;
   FETCH_COMMUNITY_COLLECTIONS
     .set(fetch_community_collections)
-    .map_err(|_e| LemmyErrorType::Unknown("couldnt set function pointer".into()))?;
+    .map_err(|_e| FastJobErrorType::Unknown("couldnt set function pointer".into()))?;
 
   let request_data = federation_config.to_request_data();
   let outgoing_activities_task =
@@ -306,12 +306,12 @@ pub async fn start_lemmy_server(args: CmdArgs) -> LemmyResult<()> {
 }
 
 /// Creates temporary HTTP server which returns status 503 for all requests.
-fn create_startup_server() -> LemmyResult<ServerHandle> {
+fn create_startup_server() -> FastJobResult<ServerHandle> {
   let startup_server = HttpServer::new(move || {
     App::new().wrap(ErrorHandlers::new().default_handler(move |req| {
       let (req, _) = req.into_parts();
       let response =
-        HttpResponse::ServiceUnavailable().json(json!({"error": "Lemmy is currently starting"}));
+        HttpResponse::ServiceUnavailable().json(json!({"error": "FastJob is currently starting"}));
       let service_response = ServiceResponse::new(req, response);
       Ok(ErrorHandlerResponse::Response(
         service_response.map_into_right_body(),
@@ -326,10 +326,10 @@ fn create_startup_server() -> LemmyResult<ServerHandle> {
 }
 
 fn create_http_server(
-  federation_config: FederationConfig<LemmyContext>,
+  federation_config: FederationConfig<FastJobContext>,
   settings: Settings,
   site_view: SiteView,
-) -> LemmyResult<ServerHandle> {
+) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
@@ -337,7 +337,7 @@ fn create_http_server(
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
-    let context: LemmyContext = federation_config.deref().clone();
+    let context: FastJobContext = federation_config.deref().clone();
     let rate_limit = federation_config.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);

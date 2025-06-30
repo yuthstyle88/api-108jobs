@@ -9,16 +9,16 @@ use activitypub_federation::{
   protocol::verification::verify_urls_match,
   traits::{ActivityHandler, Actor},
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::{activity::ActivitySendTargets, community::CommunityActions},
   traits::Followable,
 };
-use lemmy_utils::error::{LemmyError, LemmyResult};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use url::Url;
 
 impl RejectFollow {
-  pub async fn send(follow: Follow, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  pub async fn send(follow: Follow, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let user_or_community = follow.object.dereference_local(context).await?;
     let person = follow.actor.clone().dereference(context).await?;
     let reject = RejectFollow {
@@ -36,8 +36,8 @@ impl RejectFollow {
 /// Handle rejected follows
 #[async_trait::async_trait]
 impl ActivityHandler for RejectFollow {
-  type DataType = LemmyContext;
-  type Error = LemmyError;
+  type DataType = FastJobContext;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     &self.id
@@ -47,7 +47,7 @@ impl ActivityHandler for RejectFollow {
     self.actor.inner()
   }
 
-  async fn verify(&self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn verify(&self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     verify_urls_match(self.actor.inner(), self.object.object.inner())?;
     self.object.verify(context).await?;
     if let Some(to) = &self.to {
@@ -56,7 +56,7 @@ impl ActivityHandler for RejectFollow {
     Ok(())
   }
 
-  async fn receive(self, context: &Data<LemmyContext>) -> LemmyResult<()> {
+  async fn receive(self, context: &Data<FastJobContext>) -> FastJobResult<()> {
     let community = self.actor.dereference(context).await?;
     let person = self.object.actor.dereference(context).await?;
 

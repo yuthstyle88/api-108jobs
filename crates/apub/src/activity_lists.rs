@@ -20,13 +20,13 @@ use crate::protocol::activities::{
   voting::{undo_vote::UndoVote, vote::Vote},
 };
 use activitypub_federation::{config::Data, traits::ActivityHandler};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::{
   objects::community::ApubCommunity,
   protocol::page::Page,
   utils::protocol::InCommunity,
 };
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -74,7 +74,7 @@ pub enum AnnouncableActivities {
 }
 
 impl InCommunity for AnnouncableActivities {
-  async fn community(&self, context: &Data<LemmyContext>) -> LemmyResult<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     use AnnouncableActivities::*;
     match self {
       CreateOrUpdateNoteWrapper(a) => a.community(context).await,
@@ -92,7 +92,7 @@ impl InCommunity for AnnouncableActivities {
       UndoLockPost(a) => a.object.community(context).await,
       Report(a) => a.community(context).await,
       ResolveReport(a) => a.object.community(context).await,
-      Page(_) => Err(LemmyErrorType::NotFound.into()),
+      Page(_) => Err(FastJobErrorType::NotFound.into()),
     }
   }
 }
@@ -102,10 +102,10 @@ mod tests {
 
   use crate::activity_lists::SharedInboxActivities;
   use lemmy_apub_objects::utils::test::{test_json, test_parse_lemmy_item};
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
 
   #[test]
-  fn test_shared_inbox() -> LemmyResult<()> {
+  fn test_shared_inbox() -> FastJobResult<()> {
     test_parse_lemmy_item::<SharedInboxActivities>(
       "assets/lemmy/activities/deletion/delete_user.json",
     )?;

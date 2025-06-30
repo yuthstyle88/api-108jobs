@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::comment::{CommentActions, CommentSavedForm},
   traits::Saveable,
@@ -9,13 +9,13 @@ use lemmy_db_views_comment::{
   CommentView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn save_comment(
   data: Json<SaveComment>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<CommentResponse>> {
   let comment_saved_form = CommentSavedForm::new(local_user_view.person.id, data.comment_id);
 
   if data.save {

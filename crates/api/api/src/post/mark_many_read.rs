@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{source::post::PostActions, traits::Readable};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::MarkManyPostsAsRead;
 use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::{error::LemmyResult, utils::validation::check_api_elements_count};
+use lemmy_utils::{error::FastJobResult, utils::validation::check_api_elements_count};
 
 pub async fn mark_posts_as_read(
   data: Json<MarkManyPostsAsRead>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<SuccessResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let post_ids = &data.post_ids;
   check_api_elements_count(post_ids.len())?;
 

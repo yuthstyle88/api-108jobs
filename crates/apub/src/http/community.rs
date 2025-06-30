@@ -20,7 +20,7 @@ use actix_web::{
   HttpRequest,
   HttpResponse,
 };
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{
   community::ApubCommunity,
   multi_community::ApubMultiCommunity,
@@ -33,7 +33,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::CommunityVisibility;
 use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_utils::error::{LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
@@ -49,12 +49,12 @@ pub struct CommunityIsFollowerQuery {
 /// Return the ActivityPub json representation of a local community over HTTP.
 pub(crate) async fn get_apub_community_http(
   info: Path<CommunityPath>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let community: ApubCommunity =
     Community::read_from_name(&mut context.pool(), &info.community_name, true)
       .await?
-      .ok_or(LemmyErrorType::NotFound)?
+      .ok_or(FastJobErrorType::NotFound)?
       .into();
 
   if community.deleted || community.removed {
@@ -70,12 +70,12 @@ pub(crate) async fn get_apub_community_http(
 pub(crate) async fn get_apub_community_followers(
   info: Path<CommunityPath>,
   query: Query<CommunityIsFollowerQuery>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   request: HttpRequest,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   let community = Community::read_from_name(&mut context.pool(), &info.community_name, false)
     .await?
-    .ok_or(LemmyErrorType::NotFound)?;
+    .ok_or(FastJobErrorType::NotFound)?;
   if let Some(is_follower) = &query.is_follower {
     return check_is_follower(community, is_follower, context, request).await;
   }
@@ -88,9 +88,9 @@ pub(crate) async fn get_apub_community_followers(
 async fn check_is_follower(
   community: Community,
   is_follower: &ObjectId<SiteOrMultiOrCommunityOrUser>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   request: HttpRequest,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   if community.visibility != CommunityVisibility::Private {
     return Ok(HttpResponse::BadRequest().body("must be a private community"));
   }
@@ -122,13 +122,13 @@ async fn check_is_follower(
 /// activities like votes or comments).
 pub(crate) async fn get_apub_community_outbox(
   info: Path<CommunityPath>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   request: HttpRequest,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   let community: ApubCommunity =
     Community::read_from_name(&mut context.pool(), &info.community_name, false)
       .await?
-      .ok_or(LemmyErrorType::NotFound)?
+      .ok_or(FastJobErrorType::NotFound)?
       .into();
   check_community_content_fetchable(&community, &request, &context).await?;
   let outbox = ApubCommunityOutbox::read_local(&community, &context).await?;
@@ -137,12 +137,12 @@ pub(crate) async fn get_apub_community_outbox(
 
 pub(crate) async fn get_apub_community_moderators(
   info: Path<CommunityPath>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let community: ApubCommunity =
     Community::read_from_name(&mut context.pool(), &info.community_name, false)
       .await?
-      .ok_or(LemmyErrorType::NotFound)?
+      .ok_or(FastJobErrorType::NotFound)?
       .into();
   check_community_fetchable(&community)?;
   let moderators = ApubCommunityModerators::read_local(&community, &context).await?;
@@ -152,13 +152,13 @@ pub(crate) async fn get_apub_community_moderators(
 /// Returns collection of featured (stickied) posts.
 pub(crate) async fn get_apub_community_featured(
   info: Path<CommunityPath>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   request: HttpRequest,
-) -> LemmyResult<HttpResponse> {
+) -> FastJobResult<HttpResponse> {
   let community: ApubCommunity =
     Community::read_from_name(&mut context.pool(), &info.community_name, false)
       .await?
-      .ok_or(LemmyErrorType::NotFound)?
+      .ok_or(FastJobErrorType::NotFound)?
       .into();
   check_community_content_fetchable(&community, &request, &context).await?;
   let featured = ApubCommunityFeatured::read_local(&community, &context).await?;
@@ -172,8 +172,8 @@ pub(crate) struct MultiCommunityQuery {
 
 pub(crate) async fn get_apub_person_multi_community(
   query: Path<MultiCommunityQuery>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let multi: ApubMultiCommunity =
     MultiCommunity::read_from_name(&mut context.pool(), &query.multi_name)
       .await?
@@ -184,8 +184,8 @@ pub(crate) async fn get_apub_person_multi_community(
 
 pub(crate) async fn get_apub_person_multi_community_follows(
   query: Path<MultiCommunityQuery>,
-  context: Data<LemmyContext>,
-) -> LemmyResult<HttpResponse> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<HttpResponse> {
   let multi = MultiCommunity::read_from_name(&mut context.pool(), &query.multi_name)
     .await?
     .into();
@@ -215,8 +215,8 @@ pub(crate) mod tests {
   async fn init(
     deleted: bool,
     visibility: CommunityVisibility,
-    context: &Data<LemmyContext>,
-  ) -> LemmyResult<(TestData, Community, Path<CommunityPath>)> {
+    context: &Data<FastJobContext>,
+  ) -> FastJobResult<(TestData, Community, Path<CommunityPath>)> {
     let data = TestData::create(&mut context.pool()).await?;
 
     let community_form = CommunityInsertForm {
@@ -237,7 +237,7 @@ pub(crate) mod tests {
     Ok((data, community, path))
   }
 
-  async fn decode_response<T: DeserializeOwned>(res: HttpResponse) -> LemmyResult<T> {
+  async fn decode_response<T: DeserializeOwned>(res: HttpResponse) -> FastJobResult<T> {
     let body = to_bytes(res.into_body()).await.unwrap_or_default();
     let body = std::str::from_utf8(&body)?;
     Ok(serde_json::from_str(body)?)
@@ -245,8 +245,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_get_community() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_get_community() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (data, community, path) = init(false, CommunityVisibility::Public, &context).await?;
     let request = TestRequest::default().to_http_request();
 
@@ -284,8 +284,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_get_deleted_community() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_get_deleted_community() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (data, _, path) = init(true, CommunityVisibility::Public, &context).await?;
     let request = TestRequest::default().to_http_request();
 
@@ -315,8 +315,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_get_local_only_community() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_get_local_only_community() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (data, _, path) = init(false, CommunityVisibility::LocalOnlyPrivate, &context).await?;
     let request = TestRequest::default().to_http_request();
 
@@ -341,8 +341,8 @@ pub(crate) mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn test_outbox_deleted_user() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_outbox_deleted_user() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let (data, community, path) = init(false, CommunityVisibility::Public, &context).await?;
     let request = TestRequest::default().to_http_request();
 

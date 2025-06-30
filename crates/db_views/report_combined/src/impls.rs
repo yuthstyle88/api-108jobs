@@ -44,7 +44,7 @@ use lemmy_db_schema_file::schema::{
   private_message_report,
   report_combined,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl ReportCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -158,7 +158,7 @@ impl ReportCombinedViewInternal {
     pool: &mut DbPool<'_>,
     user: &LocalUserView,
     community_id: Option<CommunityId>,
-  ) -> LemmyResult<i64> {
+  ) -> FastJobResult<i64> {
     use diesel::dsl::count;
 
     let conn = &mut get_conn(pool).await?;
@@ -186,7 +186,7 @@ impl ReportCombinedViewInternal {
     query
       .first::<i64>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -206,13 +206,13 @@ impl PaginationCursorBuilder for ReportCombinedView {
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<Self::CursorData> {
+  ) -> FastJobResult<Self::CursorData> {
     let conn = &mut get_conn(pool).await?;
     let pids = cursor.prefixes_and_ids();
     let (prefix, id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     let mut query = report_combined::table
       .select(Self::CursorData::as_select())
@@ -223,7 +223,7 @@ impl PaginationCursorBuilder for ReportCombinedView {
       'P' => query.filter(report_combined::post_report_id.eq(id)),
       'M' => query.filter(report_combined::private_message_report_id.eq(id)),
       'Y' => query.filter(report_combined::community_report_id.eq(id)),
-      _ => return Err(LemmyErrorType::CouldntParsePaginationToken.into()),
+      _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
 
@@ -250,7 +250,7 @@ impl ReportCombinedQuery {
     self,
     pool: &mut DbPool<'_>,
     user: &LocalUserView,
-  ) -> LemmyResult<Vec<ReportCombinedView>> {
+  ) -> FastJobResult<Vec<ReportCombinedView>> {
     let my_person_id = user.local_user.person_id;
 
     let conn = &mut get_conn(pool).await?;
@@ -488,7 +488,7 @@ mod tests {
     ReportType,
   };
   use lemmy_db_schema_file::schema::report_combined;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -505,7 +505,7 @@ mod tests {
     comment: Comment,
   }
 
-  async fn init_data(pool: &mut DbPool<'_>) -> LemmyResult<Data> {
+  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
     let timmy_form = PersonInsertForm::test_form(inserted_instance.id, "timmy_rcv");
@@ -584,7 +584,7 @@ mod tests {
     })
   }
 
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> LemmyResult<()> {
+  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
 
     Ok(())
@@ -592,7 +592,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn combined() -> LemmyResult<()> {
+  async fn combined() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -763,7 +763,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn private_message_reports() -> LemmyResult<()> {
+  async fn private_message_reports() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -827,7 +827,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn post_reports() -> LemmyResult<()> {
+  async fn post_reports() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -959,7 +959,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_reports() -> LemmyResult<()> {
+  async fn comment_reports() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1075,7 +1075,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community_reports() -> LemmyResult<()> {
+  async fn community_reports() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1142,7 +1142,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn violates_instance_rules() -> LemmyResult<()> {
+  async fn violates_instance_rules() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
@@ -1232,7 +1232,7 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn my_reports_only() -> LemmyResult<()> {
+  async fn my_reports_only() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;

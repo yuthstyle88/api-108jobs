@@ -1,18 +1,18 @@
 use activitypub_federation::config::Data;
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_community::{
   api::{ListMultiCommunities, ListMultiCommunitiesResponse},
   MultiCommunityView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_multi_communities(
   data: Query<ListMultiCommunities>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> LemmyResult<Json<ListMultiCommunitiesResponse>> {
+) -> FastJobResult<Json<ListMultiCommunitiesResponse>> {
   let followed_by = if let Some(true) = data.followed_only {
     local_user_view.map(|l| l.person.id)
   } else {

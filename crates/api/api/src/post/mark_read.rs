@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::post::{PostActions, PostReadForm},
   traits::Readable,
@@ -9,13 +9,13 @@ use lemmy_db_views_post::{
   api::{MarkPostAsRead, PostResponse},
   PostView,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 pub async fn mark_post_as_read(
   data: Json<MarkPostAsRead>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<PostResponse>> {
+) -> FastJobResult<Json<PostResponse>> {
   let person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;
   let post_id = data.post_id;

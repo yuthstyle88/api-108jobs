@@ -1,5 +1,5 @@
 use crate::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::proxy_image_link,
 };
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_post::api::{LinkMetadata, OpenGraphData};
 use lemmy_utils::{
-  error::{FederationError, LemmyError, LemmyErrorExt, LemmyErrorType, LemmyResult},
+  error::{FederationError, FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::{PictrsImageMode, Settings},
   REQWEST_TIMEOUT,
   VERSION,
@@ -40,7 +40,7 @@ use urlencoding::encode;
 use webpage::HTML;
 
 pub fn client_builder(settings: &Settings) -> ClientBuilder {
-  let user_agent = format!("Lemmy/{VERSION}; +{}", settings.get_protocol_and_hostname());
+  let user_agent = format!("FastJob/{VERSION}; +{}", settings.get_protocol_and_hostname());
 
   Client::builder()
     .user_agent(user_agent.clone())
@@ -53,11 +53,11 @@ pub fn client_builder(settings: &Settings) -> ClientBuilder {
 /// Fetches metadata for the given link and optionally generates thumbnail.
 pub async fn fetch_link_metadata(
   url: &Url,
-  context: &LemmyContext,
+  context: &FastJobContext,
   recursion: bool,
-) -> LemmyResult<LinkMetadata> {
+) -> FastJobResult<LinkMetadata> {
   if url.scheme() != "http" && url.scheme() != "https" {
-    return Err(LemmyErrorType::InvalidUrl.into());
+    return Err(FastJobErrorType::InvalidUrl.into());
   }
 
   // Resolve the domain and throw an error if it points to any internal IP,
@@ -80,7 +80,7 @@ pub async fn fetch_link_metadata(
         }
       });
     if invalid_ip {
-      return Err(LemmyErrorType::InvalidUrl.into());
+      return Err(FastJobErrorType::InvalidUrl.into());
     }
   }
 
@@ -167,11 +167,11 @@ pub async fn fetch_link_metadata(
 async fn collect_bytes_until_limit(
   response: Response,
   requested_bytes: usize,
-) -> Result<Vec<u8>, LemmyError> {
+) -> Result<Vec<u8>, FastJobError> {
   let mut stream = response.bytes_stream();
   let mut bytes = Vec::with_capacity(requested_bytes);
   while let Some(chunk) = stream.next().await {
-    let chunk = chunk.map_err(LemmyError::from)?;
+    let chunk = chunk.map_err(FastJobError::from)?;
     // we may go over the requested size here but the important part is we don't keep aggregating
     // more chunks than needed
     bytes.extend_from_slice(&chunk);
@@ -194,8 +194,8 @@ pub async fn generate_post_link_metadata(
   post: Post,
   custom_thumbnail: Option<Url>,
   send_activity: impl FnOnce(Post) -> Option<SendActivityData> + Send + 'static,
-  context: Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: Data<FastJobContext>,
+) -> FastJobResult<()> {
   let metadata = match &post.url {
     Some(url) => fetch_link_metadata(url, &context, false)
       .await
@@ -262,7 +262,7 @@ pub async fn generate_post_link_metadata(
 }
 
 /// Extract site metadata from HTML Opengraph attributes.
-fn extract_opengraph_data(html_bytes: &[u8], url: &Url) -> LemmyResult<OpenGraphData> {
+fn extract_opengraph_data(html_bytes: &[u8], url: &Url) -> FastJobResult<OpenGraphData> {
   let html = String::from_utf8_lossy(html_bytes);
 
   let mut page = HTML::from_string(html.to_string(), None)?;
@@ -379,26 +379,26 @@ struct PictrsPurgeResponse {
 /// - Pictrs might not be set up
 pub async fn purge_image_from_pictrs_url(
   image_url: &Url,
-  context: &LemmyContext,
-) -> LemmyResult<()> {
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   is_image_content_type(context.pictrs_client(), image_url).await?;
 
   let alias = image_url
     .path_segments()
-    .ok_or(LemmyErrorType::ImageUrlMissingPathSegments)?
+    .ok_or(FastJobErrorType::ImageUrlMissingPathSegments)?
     .next_back()
-    .ok_or(LemmyErrorType::ImageUrlMissingLastPathSegment)?;
+    .ok_or(FastJobErrorType::ImageUrlMissingLastPathSegment)?;
 
   purge_image_from_pictrs(alias, context).await
 }
 
-pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> LemmyResult<()> {
+pub async fn purge_image_from_pictrs(alias: &str, context: &FastJobContext) -> FastJobResult<()> {
   let pictrs_config = context.settings().pictrs()?;
   let purge_url = format!("{}internal/purge?alias={}", pictrs_config.url, alias);
 
   let pictrs_api_key = pictrs_config
     .api_key
-    .ok_or(LemmyErrorType::PictrsApiKeyNotProvided)?;
+    .ok_or(FastJobErrorType::PictrsApiKeyNotProvided)?;
   let response = context
     .pictrs_client()
     .post(&purge_url)
@@ -408,7 +408,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
     .await?
     .error_for_status()?;
 
-  let response: PictrsPurgeResponse = response.json().await.map_err(LemmyError::from)?;
+  let response: PictrsPurgeResponse = response.json().await.map_err(FastJobError::from)?;
 
   // Pictrs purges return all aliases.
   let aliases = response.aliases;
@@ -420,7 +420,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
 
   match response.msg.as_str() {
     "ok" => Ok(()),
-    _ => Err(LemmyErrorType::PictrsPurgeResponseError(response.msg))?,
+    _ => Err(FastJobErrorType::PictrsPurgeResponseError(response.msg))?,
   }
 }
 
@@ -431,7 +431,7 @@ pub async fn purge_image_from_pictrs(alias: &str, context: &LemmyContext) -> Lem
 /// This is a low-level function that doesn't check if the user is allowed to delete the image
 /// alias. Callers MUST check if the user has permission to delete the alias
 /// before calling this function (the user is an admin or the image belongs to the user).
-pub async fn delete_image_alias(alias: &str, context: &LemmyContext) -> LemmyResult<()> {
+pub async fn delete_image_alias(alias: &str, context: &FastJobContext) -> FastJobResult<()> {
   let pictrs_config = context.settings().pictrs()?;
   let url = format!("{}internal/delete?alias={}", pictrs_config.url, &alias);
 
@@ -456,8 +456,8 @@ pub async fn delete_image_alias(alias: &str, context: &LemmyContext) -> LemmyRes
 async fn generate_pictrs_thumbnail(
   post: &Post,
   image_url: &Url,
-  context: &LemmyContext,
-) -> LemmyResult<Url> {
+  context: &FastJobContext,
+) -> FastJobResult<Url> {
   let pictrs_config = context.settings().pictrs()?;
 
   match pictrs_config.image_mode {
@@ -493,7 +493,7 @@ async fn generate_pictrs_thumbnail(
   let image = res
     .files
     .first()
-    .ok_or(LemmyErrorType::PictrsResponseError(res.msg))?;
+    .ok_or(FastJobErrorType::PictrsResponseError(res.msg))?;
 
   let form = LocalImageForm {
     pictrs_alias: image.file.clone(),
@@ -516,8 +516,8 @@ async fn generate_pictrs_thumbnail(
 /// We don't need to check for image mode, as that's already been done
 pub async fn fetch_pictrs_proxied_image_details(
   image_url: &Url,
-  context: &LemmyContext,
-) -> LemmyResult<PictrsFileDetails> {
+  context: &FastJobContext,
+) -> FastJobResult<PictrsFileDetails> {
   let pictrs_url = context.settings().pictrs()?.url;
   let encoded_image_url = encode(image_url.as_str());
 
@@ -531,7 +531,7 @@ pub async fn fetch_pictrs_proxied_image_details(
     .send()
     .await?
     .error_for_status()
-    .with_lemmy_type(LemmyErrorType::NotAnImageType)?;
+    .with_fastjob_type(FastJobErrorType::NotAnImageType)?;
 
   let details_url = format!("{pictrs_url}image/details/original?proxy={encoded_image_url}");
 
@@ -550,18 +550,18 @@ pub async fn fetch_pictrs_proxied_image_details(
 
 // TODO: get rid of this by reading content type from db
 
-async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> LemmyResult<()> {
+async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> FastJobResult<()> {
   let response = client.get(url.as_str()).send().await?;
   if response
     .headers()
     .get("Content-Type")
-    .ok_or(LemmyErrorType::NoContentTypeHeader)?
+    .ok_or(FastJobErrorType::NoContentTypeHeader)?
     .to_str()?
     .starts_with("image/")
   {
     Ok(())
   } else {
-    Err(LemmyErrorType::NotAnImageType)?
+    Err(FastJobErrorType::NotAnImageType)?
   }
 }
 
@@ -569,10 +569,10 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Lemm
 mod tests {
 
   use crate::{
-    context::LemmyContext,
+    context::FastJobContext,
     request::{extract_opengraph_data, fetch_link_metadata},
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -580,8 +580,8 @@ mod tests {
   // These helped with testing
   #[tokio::test]
   #[serial]
-  async fn test_link_metadata() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_link_metadata() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let sample_url = Url::parse("https://gitlab.com/IzzyOnDroid/repo/-/wikis/FAQ")?;
     let sample_res = fetch_link_metadata(&sample_url, &context, false).await?;
     assert_eq!(
@@ -609,7 +609,7 @@ mod tests {
   }
 
   #[test]
-  fn test_resolve_image_url() -> LemmyResult<()> {
+  fn test_resolve_image_url() -> FastJobResult<()> {
     // url that lists the opengraph fields
     let url = Url::parse("https://example.com/one/two.html")?;
 

@@ -22,7 +22,7 @@ use lemmy_db_schema_file::schema::{
   post,
   post_actions,
 };
-use lemmy_utils::error::{LemmyErrorExt, LemmyErrorType, LemmyResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl VoteView {
   pub fn to_post_actions_cursor(&self) -> PaginationCursor {
@@ -36,15 +36,15 @@ impl VoteView {
   pub async fn from_post_actions_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<PostActions> {
+  ) -> FastJobResult<PostActions> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     let (_, post_id) = pids
       .get(1)
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     PostActions::read(pool, PostId(*post_id), PersonId(*person_id)).await
   }
@@ -55,7 +55,7 @@ impl VoteView {
     cursor_data: Option<PostActions>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     use lemmy_db_schema::source::post::post_actions_keys as key;
 
     let conn = &mut get_conn(pool).await?;
@@ -98,7 +98,7 @@ impl VoteView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn to_comment_actions_cursor(&self) -> PaginationCursor {
@@ -111,15 +111,15 @@ impl VoteView {
   pub async fn from_comment_actions_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> LemmyResult<CommentActions> {
+  ) -> FastJobResult<CommentActions> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
       .first()
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
     let (_, comment_id) = pids
       .get(1)
-      .ok_or(LemmyErrorType::CouldntParsePaginationToken)?;
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
     CommentActions::read(pool, CommentId(*comment_id), PersonId(*person_id)).await
   }
@@ -130,7 +130,7 @@ impl VoteView {
     cursor_data: Option<CommentActions>,
     page_back: Option<bool>,
     limit: Option<i64>,
-  ) -> LemmyResult<Vec<Self>> {
+  ) -> FastJobResult<Vec<Self>> {
     use lemmy_db_schema::source::comment::comment_actions_keys as key;
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
@@ -172,7 +172,7 @@ impl VoteView {
     paginated_query
       .load::<Self>(conn)
       .await
-      .with_lemmy_type(LemmyErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -190,13 +190,13 @@ mod tests {
     traits::{Bannable, Crud, Likeable},
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[tokio::test]
   #[serial]
-  async fn post_and_comment_vote_views() -> LemmyResult<()> {
+  async fn post_and_comment_vote_views() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

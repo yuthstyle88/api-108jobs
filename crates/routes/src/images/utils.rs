@@ -9,15 +9,15 @@ use actix_web::{
 use diesel::NotFound;
 use futures::stream::{Stream, StreamExt};
 use http::HeaderValue;
-use lemmy_api_utils::{context::LemmyContext, request::delete_image_alias};
+use lemmy_api_utils::{context::FastJobContext, request::delete_image_alias};
 use lemmy_db_schema::newtypes::DbUrl;
-use lemmy_utils::{error::LemmyResult, REQWEST_TIMEOUT};
+use lemmy_utils::{error::FastJobResult, REQWEST_TIMEOUT};
 use reqwest_middleware::RequestBuilder;
 
 pub(super) fn adapt_request(
   request: &HttpRequest,
   url: String,
-  context: &LemmyContext,
+  context: &FastJobContext,
 ) -> RequestBuilder {
   // remove accept-encoding header so that pictrs doesn't compress the response
   const INVALID_HEADERS: &[HeaderName] = &[ACCEPT_ENCODING, HOST];
@@ -98,8 +98,8 @@ pub(super) fn convert_header<'a>(
 /// When adding a new avatar, banner or similar image, delete the old one.
 pub(super) async fn delete_old_image(
   old_image: &Option<DbUrl>,
-  context: &Data<LemmyContext>,
-) -> LemmyResult<()> {
+  context: &Data<FastJobContext>,
+) -> FastJobResult<()> {
   if let Some(old_image) = old_image {
     let alias = old_image.as_str().split('/').next_back().ok_or(NotFound)?;
     delete_image_alias(alias, context).await?;

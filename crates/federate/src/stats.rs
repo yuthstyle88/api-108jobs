@@ -4,7 +4,7 @@ use lemmy_db_schema::{
   newtypes::InstanceId,
   utils::{ActualDbPool, DbPool},
 };
-use lemmy_utils::{error::LemmyResult, federate_retry_sleep_duration};
+use lemmy_utils::{error::FastJobResult, federate_retry_sleep_duration};
 use std::{collections::HashMap, time::Duration};
 use tokio::{sync::mpsc::UnboundedReceiver, time::interval};
 use tracing::{debug, info, warn};
@@ -51,7 +51,7 @@ async fn print_stats(
 async fn print_stats_with_error(
   pool: &mut DbPool<'_>,
   stats: &HashMap<InstanceId, FederationQueueStateWithDomain>,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   let last_id = get_latest_activity_id(pool).await?;
 
   // it's expected that the values are a bit out of date, everything < SAVE_STATE_EVERY should be

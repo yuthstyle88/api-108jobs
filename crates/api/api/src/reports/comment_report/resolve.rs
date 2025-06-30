@@ -2,7 +2,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use either::Either;
 use lemmy_api_utils::{
-  context::LemmyContext,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_community_mod_action,
 };
@@ -12,14 +12,14 @@ use lemmy_db_views_reports::{
   api::{CommentReportResponse, ResolveCommentReport},
   CommentReportView,
 };
-use lemmy_utils::error::LemmyResult;
+use lemmy_utils::error::FastJobResult;
 
 /// Resolves or unresolves a comment report and notifies the moderators of the community
 pub async fn resolve_comment_report(
   data: Json<ResolveCommentReport>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentReportResponse>> {
+) -> FastJobResult<Json<CommentReportResponse>> {
   let report_id = data.report_id;
   let person_id = local_user_view.person.id;
   let report = CommentReportView::read(&mut context.pool(), report_id, person_id).await?;

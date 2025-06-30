@@ -3,7 +3,7 @@ use activitypub_federation::config::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
-  context::LemmyContext,
+  context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
@@ -30,16 +30,16 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{LemmyErrorType, LemmyResult},
+  error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
   MAX_COMMENT_DEPTH_LIMIT,
 };
 
 pub async fn create_comment(
   data: Json<CreateComment>,
-  context: Data<LemmyContext>,
+  context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> LemmyResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<CommentResponse>> {
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;
@@ -72,7 +72,7 @@ pub async fn create_comment(
     .await
     .is_ok();
   if post.locked && !is_mod_or_admin {
-    Err(LemmyErrorType::Locked)?
+    Err(FastJobErrorType::Locked)?
   }
 
   // Fetch the parent, if it exists
@@ -86,7 +86,7 @@ pub async fn create_comment(
   // Strange issue where sometimes the post ID of the parent comment is incorrect
   if let Some(parent) = parent_opt.as_ref() {
     if parent.post_id != post_id {
-      Err(LemmyErrorType::CouldntCreateComment)?
+      Err(FastJobErrorType::CouldntCreateComment)?
     }
     check_comment_depth(parent)?;
   }
@@ -185,11 +185,11 @@ pub async fn create_comment(
   ))
 }
 
-pub fn check_comment_depth(comment: &Comment) -> LemmyResult<()> {
+pub fn check_comment_depth(comment: &Comment) -> FastJobResult<()> {
   let path = &comment.path.0;
   let length = path.split('.').count();
   if length > MAX_COMMENT_DEPTH_LIMIT {
-    Err(LemmyErrorType::MaxCommentDepthReached)?
+    Err(FastJobErrorType::MaxCommentDepthReached)?
   } else {
     Ok(())
   }

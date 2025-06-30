@@ -1,14 +1,14 @@
 use crate::objects::SearchableObjects;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use either::Either::*;
-use lemmy_api_utils::context::LemmyContext;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::traits::ApubActor;
 use lemmy_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 
 pub async fn markdown_rewrite_remote_links_opt(
   src: Option<String>,
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
 ) -> Option<String> {
   match src {
     Some(t) => Some(markdown_rewrite_remote_links(t, context).await),
@@ -24,7 +24,7 @@ pub async fn markdown_rewrite_remote_links_opt(
 /// for the API.
 pub async fn markdown_rewrite_remote_links(
   mut src: String,
-  context: &Data<LemmyContext>,
+  context: &Data<FastJobContext>,
 ) -> String {
   let links_offsets = markdown_find_links(&src);
 
@@ -46,7 +46,7 @@ pub async fn markdown_rewrite_remote_links(
   src
 }
 
-pub(crate) async fn to_local_url(url: &str, context: &Data<LemmyContext>) -> Option<Url> {
+pub(crate) async fn to_local_url(url: &str, context: &Data<FastJobContext>) -> Option<Url> {
   let local_domain = &context.settings().get_protocol_and_hostname();
   let object_id = ObjectId::<SearchableObjects>::parse(url).ok()?;
   let object_domain = object_id.inner().domain();
@@ -76,14 +76,14 @@ mod tests {
     traits::Crud,
   };
   use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::LemmyResult;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
   #[serial]
   #[tokio::test]
-  async fn test_markdown_rewrite_remote_links() -> LemmyResult<()> {
-    let context = LemmyContext::init_test_context().await;
+  async fn test_markdown_rewrite_remote_links() -> FastJobResult<()> {
+    let context = FastJobContext::init_test_context().await;
     let data = TestData::create(&mut context.pool()).await?;
     let community = Community::create(
       &mut context.pool(),
@@ -139,7 +139,7 @@ mod tests {
       ),
     ];
 
-    let context = LemmyContext::init_test_context().await;
+    let context = FastJobContext::init_test_context().await;
     for (msg, input, expected) in &tests {
       let result = markdown_rewrite_remote_links(input.to_string(), &context).await;
 

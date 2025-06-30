@@ -5,7 +5,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::LemmyResult,
+  error::FastJobResult,
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
@@ -37,7 +37,7 @@ pub async fn send_reply_email(
   parent_comment: &Option<Comment>,
   post: &Post,
   settings: &Settings,
-) -> LemmyResult<()> {
+) -> FastJobResult<()> {
   let inbox_link = inbox_link(settings);
   let lang = user_language(parent_user_view);
   let content = markdown_to_html(&comment.content);

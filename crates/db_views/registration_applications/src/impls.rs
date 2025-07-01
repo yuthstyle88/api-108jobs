@@ -151,6 +151,7 @@ impl TryFrom<RegisterRequest> for Register {
     if form.password != form.password_verify {
       Err(FastJobErrorType::PasswordsDoNotMatch)?
     }
+
     if form.email.is_none() {
       Err(FastJobErrorType::EmailRequired)?
     }

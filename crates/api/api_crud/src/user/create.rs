@@ -112,7 +112,7 @@ pub async fn register(
   // Also fixes a bug which allows users to log in when registrations are changed to closed.
   let accepted_application = Some(!require_registration_application);
 
-  // Show nsfw content if param is true, or if content_warning exists
+  // Show self_promotion content if param is true, or if content_warning exists
   let self_promotion = data
     .self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
@@ -207,7 +207,7 @@ pub async fn authenticate_with_oauth(
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
 
-  // Show nsfw content if param is true, or if content_warning exists
+  // Show self_promotion content if param is true, or if content_warning exists
   let self_promotion = data
     .self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());

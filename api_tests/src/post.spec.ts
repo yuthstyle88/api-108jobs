@@ -95,7 +95,7 @@ async function assertPostFederation(
   expect(postOne?.post.body).toBe(postTwo?.post.body);
   // TODO url clears arent working
   // expect(postOne?.post.url).toBe(postTwo?.post.url);
-  expect(postOne?.post.nsfw).toBe(postTwo?.post.nsfw);
+  expect(postOne?.post.self_promotion).toBe(postTwo?.post.self_promotion);
   expect(postOne?.post.embed_title).toBe(postTwo?.post.embed_title);
   expect(postOne?.post.embed_description).toBe(postTwo?.post.embed_description);
   expect(postOne?.post.embed_video_url).toBe(postTwo?.post.embed_video_url);
@@ -982,7 +982,7 @@ test("Rewrite markdown links", async () => {
 test("Don't allow NSFW posts on instances that disable it", async () => {
   // Disallow NSFW on gamma
   let editSiteForm: EditSite = {
-    disallow_nsfw_content: true,
+    disallow_self_promotion_content: true,
   };
   await gamma.editSite(editSiteForm);
 
@@ -996,7 +996,7 @@ test("Don't allow NSFW posts on instances that disable it", async () => {
   // Make a NSFW post
   let postRes = await createPost(beta, betaCommunity.community.id);
   let form: EditPost = {
-    nsfw: true,
+    self_promotion: true,
     post_id: postRes.post_view.post.id,
   };
   let updatePost = await beta.editPost(form);
@@ -1016,11 +1016,11 @@ test("Don't allow NSFW posts on instances that disable it", async () => {
   }
   let gammaPost = await createPost(gamma, gammaCommunity.community.id);
   let form2: EditPost = {
-    nsfw: true,
+    self_promotion: true,
     post_id: gammaPost.post_view.post.id,
   };
   await expect(gamma.editPost(form2)).rejects.toStrictEqual(
-    new LemmyError("nsfw_not_allowed"),
+    new LemmyError("self_promotion_not_allowed"),
   );
 });
 

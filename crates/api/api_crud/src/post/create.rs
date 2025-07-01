@@ -9,7 +9,7 @@ use lemmy_api_utils::{
   send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{
-    check_community_user_action, check_nsfw_allowed, get_url_blocklist, honeypot_check,
+    check_community_user_action, check_self_promotion_allowed, get_url_blocklist, honeypot_check,
     process_markdown_opt, send_webmention, slur_regex,
   },
 };
@@ -48,7 +48,7 @@ pub async fn create_post(
   let body = process_markdown_opt(&data.body, &slur_regex, &url_blocklist, &context).await?;
   let url = diesel_url_create(data.url.as_deref())?;
   let custom_thumbnail = diesel_url_create(data.custom_thumbnail.as_deref())?;
-  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
+  check_self_promotion_allowed(data.self_promotion, Some(&local_site))?;
 
   if let Some(url) = &url {
     is_url_blocked(url, &url_blocklist)?;

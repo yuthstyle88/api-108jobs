@@ -524,11 +524,11 @@ mod tests {
     timmy_post: Post,
     timmy_post_2: Post,
     sara_post: Post,
-    nsfw_post: Post,
+    self_promotion_post: Post,
     timmy_comment: Comment,
     sara_comment: Comment,
     sara_comment_2: Comment,
-    comment_in_nsfw_post: Comment,
+    comment_in_self_promotion_post: Comment,
   }
 
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
@@ -581,13 +581,13 @@ mod tests {
     let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, community_2.id);
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
-    let nsfw_post_form = PostInsertForm {
-      body: Some("nsfw post inside here".into()),
+    let self_promotion_post_form = PostInsertForm {
+      body: Some("self_promotion post inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
-      nsfw: Some(true),
-      ..PostInsertForm::new("nsfw post prv".into(), timmy.id, community.id)
+      self_promotion: Some(true),
+      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id, community.id)
     };
-    let nsfw_post = Post::create(pool, &nsfw_post_form).await?;
+    let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
     let timmy_comment_form =
       CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into());
@@ -601,12 +601,12 @@ mod tests {
       CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
     let sara_comment_2 = Comment::create(pool, &sara_comment_form_2, None).await?;
 
-    let comment_in_nsfw_post_form = CommentInsertForm::new(
+    let comment_in_self_promotion_post_form = CommentInsertForm::new(
       sara.id,
-      nsfw_post.id,
-      "sara comment in nsfw post prv 2".into(),
+      self_promotion_post.id,
+      "sara comment in self_promotion post prv 2".into(),
     );
-    let comment_in_nsfw_post = Comment::create(pool, &comment_in_nsfw_post_form, None).await?;
+    let comment_in_self_promotion_post = Comment::create(pool, &comment_in_self_promotion_post_form, None).await?;
 
     // Timmy likes and dislikes a few things
     let timmy_like_post_form = PostLikeForm::new(timmy_post.id, timmy.id, 1);
@@ -638,11 +638,11 @@ mod tests {
       timmy_post,
       timmy_post_2,
       sara_post,
-      nsfw_post,
+      self_promotion_post,
       timmy_comment,
       sara_comment,
       sara_comment_2,
-      comment_in_nsfw_post,
+      comment_in_self_promotion_post,
     })
   }
 
@@ -1118,24 +1118,24 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn nsfw_post() -> FastJobResult<()> {
+  async fn self_promotion_post() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    let nsfw_post_search = SearchCombinedQuery {
+    let self_promotion_post_search = SearchCombinedQuery {
       type_: Some(SearchType::Posts),
       self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(4, nsfw_post_search);
+    assert_length!(4, self_promotion_post_search);
 
-    // Make sure the first is the nsfw
-    if let SearchCombinedView::Post(v) = &nsfw_post_search[0] {
-      assert_eq!(data.nsfw_post.id, v.post.id);
-      assert!(v.post.nsfw);
+    // Make sure the first is the self_promotion
+    if let SearchCombinedView::Post(v) = &self_promotion_post_search[0] {
+      assert_eq!(data.self_promotion_post.id, v.post.id);
+      assert!(v.post.self_promotion);
     } else {
       panic!("wrong type");
     }
@@ -1147,25 +1147,25 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn nsfw_comment() -> FastJobResult<()> {
+  async fn self_promotion_comment() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    let nsfw_comment_search = SearchCombinedQuery {
+    let self_promotion_comment_search = SearchCombinedQuery {
       type_: Some(SearchType::Comments),
       self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(4, nsfw_comment_search);
+    assert_length!(4, self_promotion_comment_search);
 
-    // Make sure the first is the nsfw
-    if let SearchCombinedView::Comment(v) = &nsfw_comment_search[0] {
-      assert_eq!(data.comment_in_nsfw_post.id, v.comment.id);
-      assert_eq!(data.nsfw_post.id, v.post.id);
-      assert!(v.post.nsfw);
+    // Make sure the first is the self_promotion
+    if let SearchCombinedView::Comment(v) = &self_promotion_comment_search[0] {
+      assert_eq!(data.comment_in_self_promotion_post.id, v.comment.id);
+      assert_eq!(data.self_promotion_post.id, v.post.id);
+      assert!(v.post.self_promotion);
     } else {
       panic!("wrong type");
     }

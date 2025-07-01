@@ -141,7 +141,7 @@ pub async fn save_user_settings(
     show_read_posts: data.show_read_posts,
     send_notifications_to_email: data.send_notifications_to_email,
     self_promotion: data.self_promotion,
-    blur_nsfw: data.blur_nsfw,
+    blur_self_promotion: data.blur_self_promotion,
     show_bot_accounts: data.show_bot_accounts,
     default_post_sort_type,
     default_post_time_range_seconds,

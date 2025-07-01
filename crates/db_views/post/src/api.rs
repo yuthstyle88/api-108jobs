@@ -165,7 +165,7 @@ pub struct GetPosts {
   pub show_hidden: Option<bool>,
   /// If true, then show the read posts (even if your user setting is to hide them)
   pub show_read: Option<bool>,
-  /// If true, then show the nsfw posts (even if your user setting is to hide them)
+  /// If true, then show the self_promotion posts (even if your user setting is to hide them)
   pub self_promotion: Option<bool>,
   /// If false, then show posts with media attached (even if your user setting is to hide them)
   pub hide_media: Option<bool>,

@@ -672,7 +672,7 @@ mod tests {
       published_at: inserted_post.published_at,
       removed: false,
       locked: false,
-      nsfw: false,
+      self_promotion: false,
       deleted: false,
       updated_at: None,
       embed_title: None,

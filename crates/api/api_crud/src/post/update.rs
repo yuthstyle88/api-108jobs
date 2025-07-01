@@ -10,7 +10,7 @@ use lemmy_api_utils::{
   tags::update_post_tags,
   utils::{
     check_community_user_action,
-    check_nsfw_allowed,
+    check_self_promotion_allowed,
     get_url_blocklist,
     process_markdown_opt,
     send_webmention,
@@ -69,7 +69,7 @@ pub async fn update_post(
       .as_deref(),
   );
 
-  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
+  check_self_promotion_allowed(data.self_promotion, Some(&local_site))?;
 
   let alt_text = diesel_string_update(data.alt_text.as_deref());
 

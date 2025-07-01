@@ -70,7 +70,7 @@ function assertCommunityFederation(
   expect(communityOne?.community.published_at).toBe(
     communityTwo?.community.published_at,
   );
-  expect(communityOne?.community.nsfw).toBe(communityTwo?.community.nsfw);
+  expect(communityOne?.community.self_promotion).toBe(communityTwo?.community.self_promotion);
   expect(communityOne?.community.removed).toBe(communityTwo?.community.removed);
   expect(communityOne?.community.deleted).toBe(communityTwo?.community.deleted);
 }

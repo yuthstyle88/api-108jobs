@@ -153,7 +153,7 @@ pub struct CreateSite {
   pub post_downvotes: Option<FederationMode>,
   pub comment_upvotes: Option<FederationMode>,
   pub comment_downvotes: Option<FederationMode>,
-  pub disallow_nsfw_content: Option<bool>,
+  pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
   pub suggested_communities: Option<MultiCommunityId>,
 }
@@ -259,7 +259,7 @@ pub struct EditSite {
   pub registration_mode: Option<RegistrationMode>,
   /// Whether to email admins for new reports.
   pub reports_email_admins: Option<bool>,
-  /// If present, nsfw content is visible by default. Should be displayed by frontends/clients
+  /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
   /// when the site is first opened by a user.
   pub content_warning: Option<String>,
   /// Whether or not external auth methods can auto-register users.
@@ -273,7 +273,7 @@ pub struct EditSite {
   /// What kind of comment downvotes your site allows.
   pub comment_downvotes: Option<FederationMode>,
   /// Block NSFW content being created
-  pub disallow_nsfw_content: Option<bool>,
+  pub disallow_self_promotion_content: Option<bool>,
   /// Dont send email notifications to users for new replies, mentions etc
   pub disable_email_notifications: Option<bool>,
   /// A multicommunity with suggested communities which is shown on the homepage
@@ -472,10 +472,10 @@ pub struct ResendVerificationEmail {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Saves settings for your user.
 pub struct SaveUserSettings {
-  /// Show nsfw posts.
+  /// Show self_promotion posts.
   pub self_promotion: Option<bool>,
-  /// Blur nsfw posts.
-  pub blur_nsfw: Option<bool>,
+  /// Blur self_promotion posts.
+  pub blur_self_promotion: Option<bool>,
   /// Your user's theme.
   pub theme: Option<String>,
   /// The default post listing type, usually "local"

@@ -496,11 +496,11 @@ pub async fn get_url_blocklist(context: &FastJobContext) -> FastJobResult<RegexS
   )
 }
 
-pub fn check_nsfw_allowed(nsfw: Option<bool>, local_site: Option<&LocalSite>) -> FastJobResult<()> {
-  let is_nsfw = nsfw.unwrap_or_default();
-  let nsfw_disallowed = local_site.is_some_and(|s| s.disallow_nsfw_content);
+pub fn check_self_promotion_allowed(self_promotion: Option<bool>, local_site: Option<&LocalSite>) -> FastJobResult<()> {
+  let is_self_promotion = self_promotion.unwrap_or_default();
+  let self_promotion_disallowed = local_site.is_some_and(|s| s.disallow_self_promotion_content);
 
-  if nsfw_disallowed && is_nsfw {
+  if self_promotion_disallowed && is_self_promotion {
     Err(FastJobErrorType::NsfwNotAllowed)?
   }
 

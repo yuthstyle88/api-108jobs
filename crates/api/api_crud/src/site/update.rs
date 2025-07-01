@@ -113,7 +113,7 @@ pub async fn update_site(
     post_downvotes: data.post_downvotes,
     comment_upvotes: data.comment_upvotes,
     comment_downvotes: data.comment_downvotes,
-    disallow_nsfw_content: data.disallow_nsfw_content,
+    disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
     suggested_communities: data.suggested_communities,
     ..Default::default()

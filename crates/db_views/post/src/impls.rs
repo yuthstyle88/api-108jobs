@@ -1811,11 +1811,11 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hide_nsfw(data: &mut Data) -> FastJobResult<()> {
+  async fn post_listings_hide_self_promotion(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    // Mark a post as nsfw
+    // Mark a post as self_promotion
     let update_form = PostUpdateForm {
       self_promotion: Some(true),
       ..Default::default()
@@ -1823,9 +1823,9 @@ mod tests {
 
     Post::update(pool, data.post_with_tags.id, &update_form).await?;
 
-    // Make sure you don't see the nsfw post in the regular results
-    let post_listings_hide_nsfw = data.default_post_query().list(&data.site, pool).await?;
-    assert_eq!(vec![POST_BY_BOT, POST], names(&post_listings_hide_nsfw));
+    // Make sure you don't see the self_promotion post in the regular results
+    let post_listings_hide_self_promotion = data.default_post_query().list(&data.site, pool).await?;
+    assert_eq!(vec![POST_BY_BOT, POST], names(&post_listings_hide_self_promotion));
 
     // Make sure it does come back with the self_promotion option
     let post_listings_self_promotion = PostQuery {
@@ -1841,7 +1841,7 @@ mod tests {
       names(&post_listings_self_promotion)
     );
 
-    // Make sure that nsfw field is true.
+    // Make sure that self_promotion field is true.
     assert!(
       &post_listings_self_promotion
         .first()

@@ -257,7 +257,7 @@ impl TryFrom<RegisterRequest> for Register {
           person_id: sara_local_user.person_id,
           email: sara_local_user.email,
           self_promotion: sara_local_user.self_promotion,
-          blur_nsfw: sara_local_user.blur_nsfw,
+          blur_self_promotion: sara_local_user.blur_self_promotion,
           theme: sara_local_user.theme,
           default_post_sort_type: sara_local_user.default_post_sort_type,
           default_comment_sort_type: sara_local_user.default_comment_sort_type,

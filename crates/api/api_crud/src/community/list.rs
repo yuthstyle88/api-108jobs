@@ -27,7 +27,7 @@ pub async fn list_communities(
     None
   };
 
-  // Show nsfw content if param is true, or if content_warning exists
+  // Show self_promotion content if param is true, or if content_warning exists
   let self_promotion = data
     .self_promotion
     .unwrap_or(local_site.site.content_warning.is_some());

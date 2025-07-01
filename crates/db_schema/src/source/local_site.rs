@@ -79,7 +79,7 @@ pub struct LocalSite {
   /// A default time range limit to apply to post sorts, in seconds.
   pub default_post_time_range_seconds: Option<i32>,
   /// Block NSFW content being created
-  pub disallow_nsfw_content: bool,
+  pub disallow_self_promotion_content: bool,
   pub users: i64,
   pub posts: i64,
   pub comments: i64,
@@ -156,7 +156,7 @@ pub struct LocalSiteInsertForm {
   #[new(default)]
   pub default_post_time_range_seconds: Option<i32>,
   #[new(default)]
-  pub disallow_nsfw_content: bool,
+  pub disallow_self_promotion_content: bool,
   #[new(default)]
   pub disable_email_notifications: bool,
   #[new(default)]
@@ -196,7 +196,7 @@ pub struct LocalSiteUpdateForm {
   pub comment_upvotes: Option<FederationMode>,
   pub comment_downvotes: Option<FederationMode>,
   pub default_post_time_range_seconds: Option<Option<i32>>,
-  pub disallow_nsfw_content: Option<bool>,
+  pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
   pub suggested_communities: Option<MultiCommunityId>,
 }

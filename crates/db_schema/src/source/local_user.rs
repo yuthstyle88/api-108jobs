@@ -52,7 +52,7 @@ pub struct LocalUser {
   pub totp_2fa_secret: Option<SensitiveString>,
   /// Open links in a new tab.
   pub open_links_in_new_tab: bool,
-  pub blur_nsfw: bool,
+  pub blur_self_promotion: bool,
   /// Whether infinite scroll is enabled.
   pub infinite_scroll_enabled: bool,
   /// Whether the person is an admin.
@@ -121,7 +121,7 @@ pub struct LocalUserInsertForm {
   #[new(default)]
   pub open_links_in_new_tab: Option<bool>,
   #[new(default)]
-  pub blur_nsfw: Option<bool>,
+  pub blur_self_promotion: Option<bool>,
   #[new(default)]
   pub infinite_scroll_enabled: Option<bool>,
   #[new(default)]
@@ -179,7 +179,7 @@ pub struct LocalUserUpdateForm {
   pub accepted_application: Option<bool>,
   pub totp_2fa_secret: Option<Option<String>>,
   pub open_links_in_new_tab: Option<bool>,
-  pub blur_nsfw: Option<bool>,
+  pub blur_self_promotion: Option<bool>,
   pub infinite_scroll_enabled: Option<bool>,
   pub admin: Option<bool>,
   pub post_listing_mode: Option<PostListingMode>,

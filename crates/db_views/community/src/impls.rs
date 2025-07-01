@@ -148,7 +148,7 @@ impl CommunityQuery<'_> {
       };
     }
 
-    // Don't show blocked communities and communities on blocked instances. nsfw communities are
+    // Don't show blocked communities and communities on blocked instances. self_promotion communities are
     // also hidden (based on profile setting)
     query = query.filter(instance_actions::blocked_at.is_null());
     query = query.filter(community_actions::blocked_at.is_null());
@@ -296,7 +296,6 @@ mod tests {
           instance.id,
           "test_community_1".to_string(),
           "nada1".to_owned(),
-          "pubkey".to_string(),
         ),
       )
       .await?,
@@ -306,7 +305,6 @@ mod tests {
           instance.id,
           "test_community_2".to_string(),
           "nada2".to_owned(),
-          "pubkey".to_string(),
         ),
       )
       .await?,
@@ -316,7 +314,6 @@ mod tests {
           instance.id,
           "test_community_3".to_string(),
           "nada3".to_owned(),
-          "pubkey".to_string(),
         ),
       )
       .await?,
@@ -335,8 +332,6 @@ mod tests {
       ap_id: url.clone().into(),
       last_refreshed_at: Default::default(),
       inbox_url: url.into(),
-      private_key: None,
-      public_key: String::new(),
       instance_id: Default::default(),
       content_warning: None,
     };
@@ -561,14 +556,12 @@ mod tests {
       data.local_user.person_id,
       data.instance.id,
       "multi2".to_string(),
-      String::new(),
     );
     let multi = MultiCommunity::create(pool, &form).await?;
     let form = MultiCommunityInsertForm::new(
       person2.id,
       person2.instance_id,
       "multi2".to_string(),
-      String::new(),
     );
     let multi2 = MultiCommunity::create(pool, &form).await?;
 

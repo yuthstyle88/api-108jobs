@@ -36,7 +36,7 @@ pub struct Site {
   /// The site inbox
   pub inbox_url: DbUrl,
   pub instance_id: InstanceId,
-  /// If present, nsfw content is visible by default. Should be displayed by frontends/clients
+  /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
   /// when the site is first opened by a user.
   pub content_warning: Option<String>,
 }

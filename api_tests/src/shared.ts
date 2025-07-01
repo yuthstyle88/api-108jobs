@@ -714,7 +714,7 @@ export async function saveUserSettingsBio(
 ): Promise<SuccessResponse> {
   let form: SaveUserSettings = {
     self_promotion: true,
-    blur_nsfw: false,
+    blur_self_promotion: false,
     theme: "darkly",
     default_post_sort_type: "Active",
     default_listing_type: "All",
@@ -732,7 +732,7 @@ export async function saveUserSettingsFederated(
   let bio = "a changed bio";
   let form: SaveUserSettings = {
     self_promotion: false,
-    blur_nsfw: true,
+    blur_self_promotion: true,
     default_post_sort_type: "Hot",
     default_listing_type: "All",
     interface_language: "",

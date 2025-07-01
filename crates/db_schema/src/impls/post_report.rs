@@ -130,7 +130,6 @@ mod tests {
       inserted_instance.id,
       "test community_4".to_string(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
 

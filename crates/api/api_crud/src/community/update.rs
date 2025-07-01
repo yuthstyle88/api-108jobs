@@ -7,7 +7,7 @@ use lemmy_api_utils::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
     check_community_mod_action,
-    check_nsfw_allowed,
+    check_self_promotion_allowed,
     get_url_blocklist,
     process_markdown_opt,
     slur_regex,
@@ -40,7 +40,7 @@ pub async fn update_community(
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   check_slurs_opt(&data.title, &slur_regex)?;
-  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
+  check_self_promotion_allowed(data.self_promotion, Some(&local_site))?;
 
   let sidebar = diesel_string_update(
     process_markdown_opt(&data.sidebar, &slur_regex, &url_blocklist, &context)

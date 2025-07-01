@@ -887,14 +887,14 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn comment_listings_hide_nsfw() -> FastJobResult<()> {
+  async fn comment_listings_hide_self_promotion() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Mark a post as nsfw
+    // Mark a post as self_promotion
     let update_form = PostUpdateForm {
-      nsfw: Some(true),
+      self_promotion: Some(true),
       ..Default::default()
     };
     Post::update(pool, data.post.id, &update_form).await?;
@@ -903,11 +903,11 @@ mod tests {
     let comments = CommentQuery::default().list(&data.site, pool).await?;
     assert_eq!(0, comments.len());
 
-    // Mark site as nsfw
+    // Mark site as self_promotion
     let mut site = data.site.clone();
-    site.content_warning = Some("nsfw".to_string());
+    site.content_warning = Some("self_promotion".to_string());
 
-    // Now comments of nsfw post are returned
+    // Now comments of self_promotion post are returned
     let comments = CommentQuery::default().list(&site, pool).await?;
     assert_eq!(6, comments.len());
 

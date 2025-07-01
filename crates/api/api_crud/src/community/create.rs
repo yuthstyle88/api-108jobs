@@ -4,7 +4,7 @@ use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
   utils::{
-    check_nsfw_allowed,
+    check_self_promotion_allowed,
     generate_followers_url,
     generate_inbox_url,
     get_url_blocklist,
@@ -54,7 +54,7 @@ pub async fn create_community(
     Err(FastJobErrorType::OnlyAdminsCanCreateCommunities)?
   }
 
-  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
+  check_self_promotion_allowed(data.self_promotion, Some(&local_site))?;
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   check_slurs(&data.name, &slur_regex)?;

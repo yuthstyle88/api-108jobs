@@ -52,7 +52,8 @@ use lemmy_db_schema_file::{
   },
   schema::{comment, community, community_actions, local_user_language, person, post},
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use crate::api::{CreateComment, CreateCommentRequest};
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;
@@ -147,7 +148,18 @@ impl CommentView {
     }
   }
 }
+impl TryFrom<CreateCommentRequest> for CreateComment {
+  type Error = FastJobError;
 
+  fn try_from(value: CreateCommentRequest) -> Result<Self, Self::Error> {
+    Ok(Self {
+      content: value.content,
+      post_id: value.post_id,
+      parent_id: Some(value.parent_id),
+      language_id: Some(value.language_id),
+    })
+  }
+}
 #[derive(Default)]
 pub struct CommentQuery<'a> {
   pub listing_type: Option<ListingType>,

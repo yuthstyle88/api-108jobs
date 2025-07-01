@@ -26,6 +26,17 @@ pub struct CreateComment {
   pub language_id: Option<LanguageId>,
 }
 
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Create a comment.
+pub struct CreateCommentRequest {
+  pub content: String,
+  pub post_id: PostId,
+  pub parent_id: CommentId,
+  pub language_id: LanguageId,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

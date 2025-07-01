@@ -7,13 +7,8 @@ use lemmy_api_utils::{
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
-    check_community_user_action,
-    check_post_deleted_or_removed,
-    get_url_blocklist,
-    is_mod_or_admin,
-    process_markdown,
-    slur_regex,
-    update_read_comments,
+    check_community_user_action, check_post_deleted_or_removed, get_url_blocklist, is_mod_or_admin,
+    process_markdown, slur_regex, update_read_comments,
   },
 };
 use lemmy_db_schema::{
@@ -25,7 +20,7 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Likeable},
 };
-use lemmy_db_views_comment::api::{CommentResponse, CreateComment};
+use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
 use lemmy_db_views_site::SiteView;
@@ -36,10 +31,11 @@ use lemmy_utils::{
 };
 
 pub async fn create_comment(
-  data: Json<CreateComment>,
+  data: Json<CreateCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {
+  let data: CreateComment = data.into_inner().try_into()?;
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;

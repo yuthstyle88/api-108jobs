@@ -32,7 +32,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::api::Register;
+use lemmy_db_views_registration_applications::api::{Register, RegisterForm};
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
@@ -65,11 +65,12 @@ struct TokenResponse {
 }
 
 pub async fn register(
-  data: Json<Register>,
+  data: Json<RegisterForm>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
+  let data: Register = data.into_inner().try_into()?;
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
   let require_registration_application =

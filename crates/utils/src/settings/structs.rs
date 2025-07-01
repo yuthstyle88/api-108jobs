@@ -148,7 +148,7 @@ pub struct DatabaseConfig {
   ///
   /// For an explanation of how to use connection URIs, see PostgreSQL's documentation:
   /// https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6
-  #[default("postgres://lemmy:password@localhost:5432/lemmy")]
+  #[default("postgres://postgres@localhost:5432/fastwork")]
   #[doku(example = "postgresql:///lemmy?user=lemmy&host=/var/run/postgresql")]
   pub(crate) connection: String,
 
@@ -156,7 +156,7 @@ pub struct DatabaseConfig {
   ///
   /// A high value here can result in errors "could not resize shared memory segment". In this case
   /// it is necessary to increase shared memory size in Docker: https://stackoverflow.com/a/56754077
-  #[default(30)]
+  #[default(5)]
   pub pool_size: usize,
 }
 

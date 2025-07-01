@@ -72,6 +72,23 @@ pub struct Register {
   pub answer: Option<String>,
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct RegisterForm {
+  pub username: String,
+  pub password: SensitiveString,
+  pub password_verify: SensitiveString,
+  /// email is mandatory if email verification is enabled on the server
+  pub email: Option<SensitiveString>,
+  /// The UUID of the captcha item.
+  pub captcha_uuid: Option<String>,
+  /// Your captcha answer.
+  pub captcha_answer: Option<String>,
+}
+
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

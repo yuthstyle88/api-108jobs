@@ -17,7 +17,8 @@ use lemmy_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::schema::{local_user, person, registration_application};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use crate::api::{Register, RegisterForm};
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;
@@ -132,6 +133,44 @@ impl RegistrationApplicationQuery {
       .load::<RegistrationApplicationView>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+}
+
+
+impl TryFrom<RegisterForm> for Register {
+  type Error = FastJobError;
+
+  fn try_from(form: RegisterForm) -> Result<Self, Self::Error> {
+    if form.username.trim().is_empty() {
+      Err(FastJobErrorType::InvalidName)?
+    }
+    if form.password.len() < 8 {
+      Err(FastJobErrorType::InvalidPassword)?
+    }
+    if form.password != form.password_verify {
+      Err(FastJobErrorType::PasswordsDoNotMatch)?
+    }
+    if form.email.is_none() {
+      Err(FastJobErrorType::EmailRequired)?
+    }
+
+    if let Some(email) = &form.email {
+      if !email.contains('@') {
+        Err(FastJobErrorType::InvalidEmailAddress("Invalid email address".to_string()))?
+      }
+    }
+
+    Ok(Register {
+      username: form.username,
+      password: form.password,
+      password_verify: Default::default(),
+      show_nsfw: None,
+      email: form.email,
+      captcha_uuid: form.captcha_uuid,
+      captcha_answer: form.captcha_answer,
+      honeypot: None,
+      answer: None,
+    })
   }
 }
 

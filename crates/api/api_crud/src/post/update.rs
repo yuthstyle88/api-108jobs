@@ -1,6 +1,5 @@
 use super::convert_published_time;
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
@@ -70,7 +69,7 @@ pub async fn update_post(
       .as_deref(),
   );
 
-  check_nsfw_allowed(data.nsfw, Some(&local_site))?;
+  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
 
   let alt_text = diesel_string_update(data.alt_text.as_deref());
 
@@ -149,7 +148,7 @@ pub async fn update_post(
     url,
     body,
     alt_text,
-    nsfw: data.nsfw,
+    self_promotion: data.self_promotion,
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
     scheduled_publish_time_at,

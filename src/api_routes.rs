@@ -158,16 +158,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_apub::api::{
-  list_comments::{list_comments, list_comments_slim},
-  list_person_content::list_person_content,
-  list_posts::list_posts,
-  read_community::get_community,
-  read_person::read_person,
-  resolve_object::resolve_object,
-  search::search,
-  user_settings_backup::{export_settings, import_settings},
-};
 use lemmy_routes::images::{
   delete::{
     delete_community_banner,
@@ -212,12 +202,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
       .service(
         resource("/search")
           .wrap(rate_limit.search())
-          .route(get().to(search)),
       )
       .service(
         resource("/resolve_object")
           .wrap(rate_limit.search())
-          .route(get().to(resolve_object)),
       )
       // Community
       .service(
@@ -228,8 +216,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
       )
       .service(
         scope("/community")
-          .route("", get().to(get_community))
-          .route("", put().to(update_community))
+         .route("", put().to(update_community))
           .route("/random", get().to(get_random_community))
           .route("/list", get().to(list_communities))
           .route("/follow", post().to(follow_community))
@@ -290,7 +277,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/hide", post().to(hide_post))
           .route("/lock", post().to(lock_post))
           .route("/feature", post().to(feature_post))
-          .route("/list", get().to(list_posts))
           .route("/like", post().to(like_post))
           .route("/like/list", get().to(list_post_likes))
           .route("/save", put().to(save_post))
@@ -320,8 +306,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/like", post().to(like_comment))
           .route("/like/list", get().to(list_comment_likes))
           .route("/save", put().to(save_comment))
-          .route("/list", get().to(list_comments))
-          .route("/list/slim", get().to(list_comments_slim))
           .route("/report", post().to(create_comment_report))
           .route("/report/resolve", put().to(resolve_comment_report)),
       )
@@ -404,8 +388,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .service(
             scope("/settings")
               .wrap(rate_limit.import_user_settings())
-              .route("/export", get().to(export_settings))
-              .route("/import", post().to(import_settings)),
           )
           .service(
             resource("/data/export")
@@ -416,8 +398,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
       // User actions
       .service(
         scope("/person")
-          .route("", get().to(read_person))
-          .route("/content", get().to(list_person_content))
           .route("/note", post().to(user_note_person)),
       )
       // Admin Actions

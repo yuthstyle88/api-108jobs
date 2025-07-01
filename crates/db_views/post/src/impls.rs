@@ -237,7 +237,7 @@ pub struct PostQuery<'a> {
   pub local_user: Option<&'a LocalUser>,
   pub show_hidden: Option<bool>,
   pub show_read: Option<bool>,
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub hide_media: Option<bool>,
   pub no_comments_only: Option<bool>,
   pub keyword_blocks: Option<Vec<String>>,
@@ -373,10 +373,10 @@ impl PostQuery<'_> {
       ListingType::Suggested => query = query.filter(suggested_communities()),
     }
 
-    if !o.no_self_promotion.unwrap_or(o.local_user.no_self_promotion(site)) {
+    if !o.self_promotion.unwrap_or(o.local_user.self_promotion(site)) {
       query = query
-        .filter(post::nsfw.eq(false))
-        .filter(community::nsfw.eq(false));
+        .filter(post::self_promotion.eq(false))
+        .filter(community::self_promotion.eq(false));
     };
 
     if !o.local_user.show_bot_accounts() {
@@ -544,7 +544,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
       language_id: data.language_id,
       custom_thumbnail: data.custom_thumbnail,
       honeypot: None,
-      nsfw: None,
+      self_promotion: None,
       tags: None,
       scheduled_publish_time_at: None,
     })
@@ -671,7 +671,6 @@ mod tests {
         data.instance.id,
         "test_community_3".to_string(),
         "nada".to_owned(),
-        "pubkey".to_string(),
       );
       let community = Community::create(pool, &new_community).await?;
 
@@ -1546,7 +1545,6 @@ mod tests {
       blocked_instance.id,
       "test_community_4".to_string(),
       "none".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1609,7 +1607,6 @@ mod tests {
       data.instance.id,
       "yes".to_string(),
       "yes".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1809,7 +1806,7 @@ mod tests {
 
     // Mark a post as nsfw
     let update_form = PostUpdateForm {
-      nsfw: Some(true),
+      self_promotion: Some(true),
       ..Default::default()
     };
 
@@ -1819,10 +1816,10 @@ mod tests {
     let post_listings_hide_nsfw = data.default_post_query().list(&data.site, pool).await?;
     assert_eq!(vec![POST_BY_BOT, POST], names(&post_listings_hide_nsfw));
 
-    // Make sure it does come back with the no_self_promotion option
-    let post_listings_no_self_promotion = PostQuery {
+    // Make sure it does come back with the self_promotion option
+    let post_listings_self_promotion = PostQuery {
       sort: Some(PostSortType::New),
-      no_self_promotion: Some(true),
+      self_promotion: Some(true),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -1830,16 +1827,16 @@ mod tests {
     .await?;
     assert_eq!(
       vec![POST_WITH_TAGS, POST_BY_BOT, POST],
-      names(&post_listings_no_self_promotion)
+      names(&post_listings_self_promotion)
     );
 
     // Make sure that nsfw field is true.
     assert!(
-      &post_listings_no_self_promotion
+      &post_listings_self_promotion
         .first()
         .ok_or(FastJobErrorType::NotFound)?
         .post
-        .nsfw
+        .self_promotion
     );
 
     Ok(())
@@ -2361,7 +2358,6 @@ mod tests {
       data.instance.id,
       "test_community_4".to_string(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let community_1 = Community::create(pool, &form).await?;
 
@@ -2372,7 +2368,6 @@ mod tests {
       data.instance.id,
       "test_community_5".to_string(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let community_2 = Community::create(pool, &form).await?;
 
@@ -2383,7 +2378,6 @@ mod tests {
       data.tegan.person.id,
       data.tegan.person.instance_id,
       "test multi".to_string(),
-      String::new(),
     );
     let multi = MultiCommunity::create(pool, &form).await?;
     MultiCommunity::update_entries(pool, multi.id, &vec![community_1.id, community_2.id]).await?;

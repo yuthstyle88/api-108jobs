@@ -1,5 +1,4 @@
 use crate::nodeinfo::{NodeInfo, NodeInfoWellKnown};
-use activitypub_federation::config::Data;
 use chrono::{DateTime, TimeZone, Utc};
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};
 use diesel::{
@@ -46,6 +45,7 @@ use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest_middleware::ClientWithMiddleware;
 use std::time::Duration;
+use actix_web::web::Data;
 use tracing::{info, warn};
 
 /// Schedules various cleanup tasks for lemmy in a background thread
@@ -91,35 +91,6 @@ pub async fn setup(context: Data<FastJobContext>) -> FastJobResult<()> {
       delete_instance_block_when_expired(&mut context.pool())
         .await
         .inspect_err(|e| warn!("Failed to delete expired instance bans: {e}"))
-        .ok();
-    }
-  });
-
-  let context_1 = context.reset_request_count();
-  // Daily tasks:
-  // - Overwrite deleted & removed posts and comments every day
-  // - Delete old denied users
-  // - Update instance software
-  // - Delete old outgoing activities
-  scheduler.every(CTimeUnits::days(1)).run(move || {
-    let context = context_1.reset_request_count();
-
-    async move {
-      overwrite_deleted_posts_and_comments(&mut context.pool())
-        .await
-        .inspect_err(|e| warn!("Failed to overwrite deleted posts/comments: {e}"))
-        .ok();
-      delete_old_denied_users(&mut context.pool())
-        .await
-        .inspect_err(|e| warn!("Failed to delete old denied users: {e}"))
-        .ok();
-      update_instance_software(&mut context.pool(), context.client())
-        .await
-        .inspect_err(|e| warn!("Failed to update instance software: {e}"))
-        .ok();
-      clear_old_activities(&mut context.pool())
-        .await
-        .inspect_err(|e| warn!("Failed to clear old activities: {e}"))
         .ok();
     }
   });
@@ -571,24 +542,5 @@ mod tests {
     assert_eq!(form.software.ok_or(FastJobErrorType::NotFound)?, "mastodon");
     Ok(())
   }
-
-  #[tokio::test]
-  #[serial]
-  async fn test_scheduled_tasks_no_errors() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-    let data = TestData::create(&mut context.pool()).await?;
-
-    active_counts(&mut context.pool()).await?;
-    update_hot_ranks(&mut context.pool()).await?;
-    update_banned_when_expired(&mut context.pool()).await?;
-    delete_instance_block_when_expired(&mut context.pool()).await?;
-    clear_old_activities(&mut context.pool()).await?;
-    overwrite_deleted_posts_and_comments(&mut context.pool()).await?;
-    delete_old_denied_users(&mut context.pool()).await?;
-    update_instance_software(&mut context.pool(), context.client()).await?;
-    delete_expired_captcha_answers(&mut context.pool()).await?;
-    publish_scheduled_posts(&context).await?;
-    data.delete(&mut context.pool()).await?;
-    Ok(())
-  }
+  
 }

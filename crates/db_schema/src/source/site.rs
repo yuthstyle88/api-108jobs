@@ -36,10 +36,6 @@ pub struct Site {
   pub last_refreshed_at: DateTime<Utc>,
   /// The site inbox
   pub inbox_url: DbUrl,
-  #[serde(skip)]
-  pub private_key: Option<SensitiveString>,
-  // TODO: mark as `serde(skip)` in next major release as its not needed for api
-  pub public_key: String,
   pub instance_id: InstanceId,
   /// If present, nsfw content is visible by default. Should be displayed by frontends/clients
   /// when the site is first opened by a user.
@@ -69,10 +65,6 @@ pub struct SiteInsertForm {
   #[new(default)]
   pub inbox_url: Option<DbUrl>,
   #[new(default)]
-  pub private_key: Option<String>,
-  #[new(default)]
-  pub public_key: Option<String>,
-  #[new(default)]
   pub content_warning: Option<String>,
 }
 
@@ -91,7 +83,5 @@ pub struct SiteUpdateForm {
   pub ap_id: Option<DbUrl>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub inbox_url: Option<DbUrl>,
-  pub private_key: Option<Option<String>>,
-  pub public_key: Option<String>,
   pub content_warning: Option<Option<String>>,
 }

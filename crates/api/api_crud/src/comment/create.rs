@@ -1,6 +1,5 @@
 use crate::community_use_pending;
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,

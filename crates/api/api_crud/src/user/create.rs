@@ -1,4 +1,3 @@
-use activitypub_federation::{config::Data, http_signatures::generate_actor_keypair};
 use actix_web::{web::Json, HttpRequest};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
@@ -51,6 +50,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
+use actix_web::web::Data;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -113,8 +113,8 @@ pub async fn register(
   let accepted_application = Some(!require_registration_application);
 
   // Show nsfw content if param is true, or if content_warning exists
-  let no_self_promotion = data
-    .no_self_promotion
+  let self_promotion = data
+    .self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
 
   let language_tags = get_language_tags(&req);
@@ -133,7 +133,7 @@ pub async fn register(
         // Create the local user
         let local_user_form = LocalUserInsertForm {
           email: tx_data.email.as_deref().map(str::to_lowercase),
-          no_self_promotion: Some(no_self_promotion),
+          self_promotion: Some(self_promotion),
           accepted_application,
           ..LocalUserInsertForm::new(person.id, Some(tx_data.password.to_string()))
         };
@@ -208,8 +208,8 @@ pub async fn authenticate_with_oauth(
   let local_site = site_view.local_site.clone();
 
   // Show nsfw content if param is true, or if content_warning exists
-  let no_self_promotion = data
-    .no_self_promotion
+  let self_promotion = data
+    .self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
 
   let language_tags = get_language_tags(&req);
@@ -360,7 +360,7 @@ pub async fn authenticate_with_oauth(
             // Create the local user
             let local_user_form = LocalUserInsertForm {
               email: Some(str::to_lowercase(&email)),
-              no_self_promotion: Some(no_self_promotion),
+              self_promotion: Some(self_promotion),
               accepted_application: Some(!require_registration_application),
               email_verified: Some(oauth_provider.auto_verify_email),
               ..LocalUserInsertForm::new(person.id, None)
@@ -432,7 +432,6 @@ async fn create_person(
   context: &FastJobContext,
   conn: &mut AsyncPgConnection,
 ) -> Result<Person, FastJobError> {
-  let actor_keypair = generate_actor_keypair()?;
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
 
@@ -440,10 +439,8 @@ async fn create_person(
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
-    private_key: Some(actor_keypair.private_key),
     ..PersonInsertForm::new(
       username.clone(),
-      actor_keypair.public_key,
       site_view.site.instance_id,
     )
   };

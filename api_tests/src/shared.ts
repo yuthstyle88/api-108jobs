@@ -687,7 +687,7 @@ export async function registerUser(
     username,
     password,
     password_verify: password,
-    no_self_promotion: true,
+    self_promotion: true,
   };
   let login_response = await api.register(form);
 
@@ -713,7 +713,7 @@ export async function saveUserSettingsBio(
   api: LemmyHttp,
 ): Promise<SuccessResponse> {
   let form: SaveUserSettings = {
-    no_self_promotion: true,
+    self_promotion: true,
     blur_nsfw: false,
     theme: "darkly",
     default_post_sort_type: "Active",
@@ -731,7 +731,7 @@ export async function saveUserSettingsFederated(
 ): Promise<SuccessResponse> {
   let bio = "a changed bio";
   let form: SaveUserSettings = {
-    no_self_promotion: false,
+    self_promotion: false,
     blur_nsfw: true,
     default_post_sort_type: "Hot",
     default_listing_type: "All",

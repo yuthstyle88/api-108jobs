@@ -324,14 +324,13 @@ mod tests {
       local_instance.id,
       "test_community_3".to_string(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
 
     // insert remote user
     let remote_instance = Instance::read_or_create(pool, "other_domain.tld".to_string()).await?;
     let person_form =
-      PersonInsertForm::new("name".to_string(), "pubkey".to_string(), remote_instance.id);
+      PersonInsertForm::new("name".to_string(), remote_instance.id);
     let person = Person::create(pool, &person_form).await?;
 
     // community has no follower from remote instance, returns error

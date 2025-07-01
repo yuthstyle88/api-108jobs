@@ -3,7 +3,6 @@ use crate::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::proxy_image_link,
 };
-use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;
@@ -33,6 +32,7 @@ use reqwest::{
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
+use actix_web::web::Data;
 use tokio::net::lookup_host;
 use tracing::{info, warn};
 use url::Url;
@@ -211,7 +211,7 @@ pub async fn generate_post_link_metadata(
   // Decide if we are allowed to generate local thumbnail
   let site = Site::read_local(&mut context.pool()).await?;
   let allow_sensitive = site.content_warning.is_some();
-  let allow_generate_thumbnail = allow_sensitive || !post.nsfw;
+  let allow_generate_thumbnail = allow_sensitive || !post.self_promotion;
 
   // Proxy the post url itself if it is an image
   let url = if let (true, Some(url)) = (is_image_post, post.url.clone()) {
@@ -579,35 +579,7 @@ mod tests {
 
   // These helped with testing
   #[tokio::test]
-  #[serial]
-  async fn test_link_metadata() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-    let sample_url = Url::parse("https://gitlab.com/IzzyOnDroid/repo/-/wikis/FAQ")?;
-    let sample_res = fetch_link_metadata(&sample_url, &context, false).await?;
-    assert_eq!(
-      Some("FAQ · Wiki · IzzyOnDroid / repo · GitLab".to_string()),
-      sample_res.opengraph_data.title
-    );
-    assert_eq!(
-      Some("The F-Droid compatible repo at https://apt.izzysoft.de/fdroid/".to_string()),
-      sample_res.opengraph_data.description
-    );
-    assert_eq!(
-      Some(
-        Url::parse("https://gitlab.com/uploads/-/system/project/avatar/4877469/iod_logo.png")?
-          .into()
-      ),
-      sample_res.opengraph_data.image
-    );
-    assert_eq!(None, sample_res.opengraph_data.embed_video_url);
-    assert_eq!(
-      Some(mime::TEXT_HTML_UTF_8.to_string()),
-      sample_res.content_type
-    );
-
-    Ok(())
-  }
-
+  
   #[test]
   fn test_resolve_image_url() -> FastJobResult<()> {
     // url that lists the opengraph fields

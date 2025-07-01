@@ -121,7 +121,7 @@ pub struct CreateCommunity {
   /// A banner URL.
   pub banner: Option<String>,
   /// Whether its an NSFW community.
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   /// Whether to restrict posting only to moderators.
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
@@ -162,7 +162,7 @@ pub struct EditCommunity {
   /// A shorter, one line description of your community.
   pub description: Option<String>,
   /// Whether its an NSFW community.
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   /// Whether to restrict posting only to moderators.
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
@@ -209,7 +209,7 @@ pub struct GetCommunityResponse {
 /// Fetches a random community
 pub struct GetRandomCommunity {
   pub type_: Option<ListingType>,
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -234,7 +234,7 @@ pub struct ListCommunities {
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
   pub time_range_seconds: Option<i32>,
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

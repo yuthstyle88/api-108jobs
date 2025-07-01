@@ -12,6 +12,7 @@ use {
   i_love_jesus::CursorKeysModule,
   lemmy_db_schema_file::schema::{community, community_actions},
 };
+use lemmy_db_schema_file::schema::community::self_promotion;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -39,15 +40,11 @@ pub struct Community {
   /// Whether the community has been deleted by its creator.
   pub deleted: bool,
   /// Whether its an NSFW community.
-  pub nsfw: bool,
+  pub self_promotion: bool,
   /// The federated ap_id.
   pub ap_id: DbUrl,
   /// Whether the community is local.
   pub local: bool,
-  #[serde(skip)]
-  pub private_key: Option<SensitiveString>,
-  #[serde(skip)]
-  pub public_key: String,
   #[serde(skip)]
   pub last_refreshed_at: DateTime<Utc>,
   /// A URL for an icon.
@@ -103,7 +100,6 @@ pub struct CommunityInsertForm {
   pub instance_id: InstanceId,
   pub name: String,
   pub title: String,
-  pub public_key: String,
   #[new(default)]
   pub sidebar: Option<String>,
   #[new(default)]
@@ -115,13 +111,11 @@ pub struct CommunityInsertForm {
   #[new(default)]
   pub deleted: Option<bool>,
   #[new(default)]
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   #[new(default)]
   pub ap_id: Option<DbUrl>,
   #[new(default)]
   pub local: Option<bool>,
-  #[new(default)]
-  pub private_key: Option<String>,
   #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
   #[new(default)]
@@ -156,11 +150,9 @@ pub struct CommunityUpdateForm {
   pub published_at: Option<DateTime<Utc>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
-  pub public_key: Option<String>,
-  pub private_key: Option<Option<String>>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub icon: Option<Option<DbUrl>>,
   pub banner: Option<Option<DbUrl>>,

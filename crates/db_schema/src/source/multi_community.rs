@@ -27,10 +27,6 @@ pub struct MultiCommunity {
   pub local: bool,
   pub deleted: bool,
   pub ap_id: DbUrl,
-  #[serde(skip)]
-  pub public_key: String,
-  #[serde(skip)]
-  pub private_key: Option<SensitiveString>,
   #[serde(skip, default = "placeholder_apub_url")]
   pub inbox_url: DbUrl,
   #[serde(skip)]
@@ -48,7 +44,6 @@ pub struct MultiCommunityInsertForm {
   pub creator_id: PersonId,
   pub instance_id: InstanceId,
   pub name: String,
-  pub public_key: String,
   #[new(default)]
   pub ap_id: Option<DbUrl>,
   #[new(default)]
@@ -59,8 +54,6 @@ pub struct MultiCommunityInsertForm {
   pub description: Option<String>,
   #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
-  #[new(default)]
-  pub private_key: Option<SensitiveString>,
   #[new(default)]
   pub inbox_url: Option<DbUrl>,
   #[new(default)]

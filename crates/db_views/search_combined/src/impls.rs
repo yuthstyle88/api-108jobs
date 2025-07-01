@@ -226,7 +226,7 @@ pub struct SearchCombinedQuery {
   pub post_url_only: Option<bool>,
   pub liked_only: Option<bool>,
   pub disliked_only: Option<bool>,
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -356,10 +356,10 @@ impl SearchCombinedQuery {
     }
 
     // NSFW
-    let user_and_site_nsfw = user.as_ref().map(|u| &u.local_user).no_self_promotion(site_local);
-    if !self.no_self_promotion.unwrap_or(user_and_site_nsfw) {
-      let safe_community = community::nsfw.eq(false);
-      let safe_post_and_community = post::nsfw.eq(false).and(safe_community);
+    let user_and_site_self_promotion = user.as_ref().map(|u| &u.local_user).self_promotion(site_local);
+    if !self.self_promotion.unwrap_or(user_and_site_self_promotion) {
+      let safe_community = community::self_promotion.eq(false);
+      let safe_post_and_community = post::self_promotion.eq(false).and(safe_community);
 
       query = query.filter(
         search_combined::community_id
@@ -1125,7 +1125,7 @@ mod tests {
 
     let nsfw_post_search = SearchCombinedQuery {
       type_: Some(SearchType::Posts),
-      no_self_promotion: Some(true),
+      self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1154,7 +1154,7 @@ mod tests {
 
     let nsfw_comment_search = SearchCombinedQuery {
       type_: Some(SearchType::Comments),
-      no_self_promotion: Some(true),
+      self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)

@@ -1,6 +1,5 @@
 use crate::multi_community::get_multi;
-use activitypub_federation::config::Data;
-use actix_web::web::{Json, Query};
+use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_community::api::{GetMultiCommunity, GetMultiCommunityResponse};
 use lemmy_utils::error::FastJobResult;

@@ -24,7 +24,6 @@ full = [
   "diesel-derive-newtype",
   "bcrypt",
   "lemmy_utils",
-  "activitypub_federation",
   "regex",
   "serde_json",
   "diesel_ltree",
@@ -48,7 +47,6 @@ serde_with = { workspace = true }
 url = { workspace = true }
 strum = { workspace = true }
 serde_json = { workspace = true, optional = true }
-activitypub_federation = { workspace = true, optional = true }
 lemmy_utils = { workspace = true, optional = true }
 lemmy_db_schema_file = { workspace = true }
 bcrypt = { workspace = true, optional = true }

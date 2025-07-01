@@ -58,7 +58,6 @@ lemmy_utils = { workspace = true }
 extism = { workspace = true }
 extism-convert = { workspace = true }
 reqwest-middleware = { workspace = true }
-activitypub_federation = { workspace = true }
 mime = { version = "0.3.17" }
 mime_guess = "2.0.5"
 infer = "0.19.0"

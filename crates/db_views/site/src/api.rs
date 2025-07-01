@@ -39,7 +39,6 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
-use lemmy_db_views_readable_federation_state::ReadableFederationState;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -77,7 +76,7 @@ pub struct AuthenticateWithOauth {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
   pub username: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
@@ -324,16 +323,12 @@ pub struct GetSiteResponse {
   pub active_plugins: Vec<PluginMetadata>,
 }
 
-#[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct InstanceWithFederationState {
   #[serde(flatten)]
   pub instance: Instance,
-  /// if federation to this instance is or was active, show state of outgoing federation to this
-  /// instance
-  pub federation_state: Option<ReadableFederationState>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -478,7 +473,7 @@ pub struct ResendVerificationEmail {
 /// Saves settings for your user.
 pub struct SaveUserSettings {
   /// Show nsfw posts.
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   /// Blur nsfw posts.
   pub blur_nsfw: Option<bool>,
   /// Your user's theme.

@@ -1,14 +1,12 @@
-use crate::request::client_builder;
-use activitypub_federation::config::{Data, FederationConfig};
 use lemmy_db_schema::{
   source::secret::Secret,
-  utils::{build_db_pool_for_tests, ActualDbPool, DbPool},
+  utils::{ActualDbPool, DbPool},
 };
 use lemmy_utils::{
   rate_limit::RateLimit,
   settings::{structs::Settings, SETTINGS},
 };
-use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -59,45 +57,5 @@ impl FastJobContext {
   pub fn rate_limit_cell(&self) -> &RateLimit {
     &self.rate_limit_cell
   }
-
-  /// Initialize a context for use in tests which blocks federation network calls.
-  ///
-  /// Do not use this in production code.
-  #[allow(clippy::expect_used)]
-  pub async fn init_test_federation_config() -> FederationConfig<FastJobContext> {
-    // call this to run migrations
-    let pool = build_db_pool_for_tests();
-
-    let client = client_builder(&SETTINGS).build().expect("build client");
-
-    let client = ClientBuilder::new(client).build();
-    let secret = Secret {
-      id: 0,
-      jwt_secret: String::new().into(),
-    };
-
-    let rate_limit_cell = RateLimit::with_test_config();
-
-    let context = FastJobContext::create(
-      pool,
-      client.clone(),
-      client,
-      secret,
-      rate_limit_cell.clone(),
-    );
-
-    FederationConfig::builder()
-      .domain(context.settings().hostname.clone())
-      .app_data(context)
-      .debug(true)
-      // Dont allow any network fetches
-      .http_fetch_limit(0)
-      .build()
-      .await
-      .expect("build federation config")
-  }
-  pub async fn init_test_context() -> Data<FastJobContext> {
-    let config = Self::init_test_federation_config().await;
-    config.to_request_data()
-  }
+  
 }

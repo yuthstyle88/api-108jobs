@@ -1,5 +1,4 @@
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},

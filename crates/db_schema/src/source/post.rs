@@ -39,7 +39,7 @@ pub struct Post {
   /// Whether the post is deleted.
   pub deleted: bool,
   /// Whether the post is NSFW.
-  pub nsfw: bool,
+  pub self_promotion: bool,
   /// A title for the link.
   pub embed_title: Option<String>,
   /// A description for the link.
@@ -99,7 +99,7 @@ pub struct PostInsertForm {
   pub creator_id: PersonId,
   pub community_id: CommunityId,
   #[new(default)]
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   #[new(default)]
   pub url: Option<DbUrl>,
   #[new(default)]
@@ -147,7 +147,7 @@ pub struct PostInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = post))]
 pub struct PostUpdateForm {
   pub name: Option<String>,
-  pub nsfw: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub url: Option<Option<DbUrl>>,
   pub body: Option<Option<String>>,
   pub removed: Option<bool>,

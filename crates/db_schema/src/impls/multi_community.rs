@@ -343,12 +343,11 @@ mod tests {
       instance.id,
       "TIL".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let community = Community::create(pool, &form).await?;
 
     let form =
-      MultiCommunityInsertForm::new(person.id, instance.id, "multi".to_string(), String::new());
+      MultiCommunityInsertForm::new(person.id, instance.id, "multi".to_string());
     let multi = MultiCommunity::create(pool, &form).await?;
     assert_eq!(form.creator_id, multi.creator_id);
     assert_eq!(form.name, multi.name);

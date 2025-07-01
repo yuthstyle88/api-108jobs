@@ -1,5 +1,4 @@
 use crate::context::FastJobContext;
-use activitypub_federation::config::Data;
 use either::Either;
 use futures::future::BoxFuture;
 use lemmy_db_schema::{
@@ -19,6 +18,7 @@ use lemmy_db_views_post::api::DeletePost;
 use lemmy_db_views_private_message::PrivateMessageView;
 use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
+use actix_web::web::Data;
 use tokio::{
   sync::{
     mpsc,

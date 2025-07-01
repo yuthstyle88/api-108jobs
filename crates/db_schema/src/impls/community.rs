@@ -198,7 +198,7 @@ impl Community {
   pub async fn get_random_community_id(
     pool: &mut DbPool<'_>,
     type_: &Option<ListingType>,
-    no_self_promotion: Option<bool>,
+    self_promotion: Option<bool>,
   ) -> FastJobResult<CommunityId> {
     let conn = &mut get_conn(pool).await?;
 
@@ -229,8 +229,8 @@ impl Community {
         query = query.filter(community::local);
       }
 
-      if !no_self_promotion.unwrap_or(false) {
-        query = query.filter(not(community::nsfw));
+      if !self_promotion.unwrap_or(false) {
+        query = query.filter(not(community::self_promotion));
       }
 
       query
@@ -720,7 +720,6 @@ mod tests {
       inserted_instance.id,
       "TIL".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -730,15 +729,13 @@ mod tests {
       title: "nada".to_owned(),
       sidebar: None,
       description: None,
-      nsfw: false,
+      self_promotion: false,
       removed: false,
       deleted: false,
       published_at: inserted_community.published_at,
       updated_at: None,
       ap_id: inserted_community.ap_id.clone(),
       local: true,
-      private_key: None,
-      public_key: "pubkey".to_owned(),
       last_refreshed_at: inserted_community.published_at,
       icon: None,
       banner: None,
@@ -883,7 +880,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -891,7 +887,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg_2".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let another_inserted_community = Community::create(pool, &another_community).await?;
 

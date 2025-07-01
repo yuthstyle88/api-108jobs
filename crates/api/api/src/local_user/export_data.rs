@@ -1,5 +1,4 @@
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_views_community_moderator::CommunityModeratorView;

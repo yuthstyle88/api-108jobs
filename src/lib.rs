@@ -1,6 +1,5 @@
 pub mod api_routes;
 
-use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
@@ -17,17 +16,10 @@ use lemmy_api_utils::{
   send_activity::{ActivityChannel, MATCH_OUTGOING_ACTIVITIES},
   utils::local_site_rate_limit_to_rate_limit_config,
 };
-use lemmy_apub::{
-  activities::{handle_outgoing_activities, match_outgoing_activities},
-  collections::fetch_community_collections,
-  VerifyUrlData,
-  FEDERATION_HTTP_FETCH_LIMIT,
-};
-use lemmy_apub_objects::objects::{community::FETCH_COMMUNITY_COLLECTIONS, instance::ApubSite};
+
 use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
 use lemmy_db_schema_file::schema_setup;
 use lemmy_db_views_site::SiteView;
-use lemmy_federate::{Opts, SendManager};
 use lemmy_routes::{
   feeds,
   middleware::{
@@ -212,72 +204,20 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     serve_prometheus(prometheus, context.clone())?;
   }
 
-  let mut federation_config_builder = FederationConfig::builder();
-  federation_config_builder
-    .domain(SETTINGS.hostname.clone())
-    .app_data(context.clone())
-    .client(client.clone())
-    .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
-    .debug(cfg!(debug_assertions))
-    .http_signature_compat(true)
-    .url_verifier(Box::new(VerifyUrlData(context.inner_pool().clone())));
-  if site_view.local_site.federation_signed_fetch {
-    let site: ApubSite = site_view.site.clone().into();
-    federation_config_builder.signed_fetch_actor(&site);
-  }
-  let federation_config = federation_config_builder.build().await?;
-
-  MATCH_OUTGOING_ACTIVITIES
-    .set(Box::new(move |d, c| {
-      Box::pin(match_outgoing_activities(d, c))
-    }))
-    .map_err(|_e| FastJobErrorType::Unknown("couldnt set function pointer".into()))?;
-  FETCH_COMMUNITY_COLLECTIONS
-    .set(fetch_community_collections)
-    .map_err(|_e| FastJobErrorType::Unknown("couldnt set function pointer".into()))?;
-
-  let request_data = federation_config.to_request_data();
-  let outgoing_activities_task =
-    tokio::task::spawn(handle_outgoing_activities(request_data.clone()));
-
-  if !args.disable_scheduled_tasks {
-    // Schedules various cleanup tasks for the DB
-    let _scheduled_tasks = tokio::task::spawn(scheduled_tasks::setup(request_data.clone()));
-  }
-
+  
   let server = if !args.disable_http_server {
     if let Some(startup_server_handle) = startup_server_handle {
       startup_server_handle.stop(true).await;
     }
 
     Some(create_http_server(
-      federation_config.clone(),
+      context.clone(),
       SETTINGS.clone(),
-      site_view,
     )?)
   } else {
     None
   };
 
-  // This FederationConfig instance is exclusively used to send activities, so we can safely
-  // increase the timeout without affecting timeouts for resolving objects anywhere.
-  let federation_sender_config = if !args.disable_activity_sending {
-    let mut federation_sender_config = federation_config_builder.clone();
-    federation_sender_config.request_timeout(ACTIVITY_SENDING_TIMEOUT);
-    Some(federation_sender_config.build().await?)
-  } else {
-    None
-  };
-  let federate = federation_sender_config.map(|cfg| {
-    SendManager::run(
-      Opts {
-        process_index: args.federate_process_index,
-        process_count: args.federate_process_count,
-      },
-      cfg,
-      SETTINGS.federation.clone(),
-    )
-  });
   let mut interrupt = tokio::signal::unix::signal(SignalKind::interrupt())?;
   let mut terminate = tokio::signal::unix::signal(SignalKind::terminate())?;
 
@@ -295,12 +235,6 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   if let Some(server) = server {
     server.stop(true).await;
   }
-  if let Some(federate) = federate {
-    federate.cancel().await?;
-  }
-
-  // Wait for outgoing apub sends to complete
-  ActivityChannel::close(outgoing_activities_task).await?;
 
   Ok(())
 }
@@ -326,9 +260,8 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
 }
 
 fn create_http_server(
-  federation_config: FederationConfig<FastJobContext>,
+  config: FastJobContext,
   settings: Settings,
-  site_view: SiteView,
 ) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
@@ -337,8 +270,8 @@ fn create_http_server(
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
-    let context: FastJobContext = federation_config.deref().clone();
-    let rate_limit = federation_config.rate_limit_cell().clone();
+    let context: FastJobContext = config.clone();
+    let rate_limit = config.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);
     let app = App::new()
@@ -353,7 +286,6 @@ fn create_http_server(
       .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
-      .wrap(FederationMiddleware::new(federation_config.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(
@@ -364,12 +296,6 @@ fn create_http_server(
     // The routes
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))
-      .configure(|cfg| {
-        if site_view.local_site.federation_enabled {
-          lemmy_apub::http::routes::config(cfg);
-          webfinger::config(cfg);
-        }
-      })
       .configure(feeds::config)
       .configure(nodeinfo::config)
       .service(

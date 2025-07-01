@@ -39,10 +39,6 @@ pub struct Person {
   /// Whether the person is local to our site.
   pub local: bool,
   #[serde(skip)]
-  pub private_key: Option<SensitiveString>,
-  #[serde(skip)]
-  pub public_key: String,
-  #[serde(skip)]
   pub last_refreshed_at: DateTime<Utc>,
   /// A URL for a banner.
   pub banner: Option<DbUrl>,
@@ -69,14 +65,11 @@ pub struct Person {
 #[cfg_attr(feature = "full", diesel(table_name = person))]
 pub struct PersonInsertForm {
   pub name: String,
-  pub public_key: String,
   pub instance_id: InstanceId,
   #[new(default)]
   pub display_name: Option<String>,
   #[new(default)]
   pub avatar: Option<DbUrl>,
-  #[new(default)]
-  pub published_at: Option<DateTime<Utc>>,
   #[new(default)]
   pub updated_at: Option<DateTime<Utc>>,
   #[new(default)]
@@ -85,8 +78,6 @@ pub struct PersonInsertForm {
   pub bio: Option<String>,
   #[new(default)]
   pub local: Option<bool>,
-  #[new(default)]
-  pub private_key: Option<String>,
   #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
   #[new(default)]
@@ -111,8 +102,6 @@ pub struct PersonUpdateForm {
   pub ap_id: Option<DbUrl>,
   pub bio: Option<Option<String>>,
   pub local: Option<bool>,
-  pub public_key: Option<String>,
-  pub private_key: Option<Option<String>>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub banner: Option<Option<DbUrl>>,
   pub deleted: Option<bool>,

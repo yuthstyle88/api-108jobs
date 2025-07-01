@@ -7,12 +7,7 @@ use std::{
 use url::Url;
 #[cfg(feature = "full")]
 use {
-  activitypub_federation::{
-    fetch::collection_id::CollectionId,
-    fetch::object_id::ObjectId,
-    traits::Collection,
-    traits::Object,
-  },
+
   diesel::{
     backend::Backend,
     deserialize::FromSql,
@@ -386,42 +381,6 @@ impl Into<Url> for DbUrl {
   }
 }
 
-#[cfg(feature = "full")]
-impl<T> From<DbUrl> for ObjectId<T>
-where
-  T: Object + Send + 'static,
-  for<'de2> <T as Object>::Kind: Deserialize<'de2>,
-{
-  fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    ObjectId::from(url)
-  }
-}
-
-#[cfg(feature = "full")]
-impl<T> From<DbUrl> for CollectionId<T>
-where
-  T: Collection + Send + 'static,
-  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
-{
-  fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    CollectionId::from(url)
-  }
-}
-
-#[cfg(feature = "full")]
-impl<T> From<CollectionId<T>> for DbUrl
-where
-  T: Collection,
-  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
-{
-  fn from(value: CollectionId<T>) -> Self {
-    let url: Url = value.into();
-    url.into()
-  }
-}
-
 impl Deref for DbUrl {
   type Target = Url;
 
@@ -448,16 +407,6 @@ where
   }
 }
 
-#[cfg(feature = "full")]
-impl<Kind> From<ObjectId<Kind>> for DbUrl
-where
-  Kind: Object + Send + 'static,
-  for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
-{
-  fn from(id: ObjectId<Kind>) -> Self {
-    DbUrl(Box::new(id.into()))
-  }
-}
 
 impl InstanceId {
   pub fn inner(self) -> i32 {

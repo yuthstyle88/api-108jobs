@@ -1,5 +1,4 @@
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,

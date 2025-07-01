@@ -1,5 +1,4 @@
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
@@ -141,7 +140,7 @@ pub async fn save_user_settings(
     show_avatars: data.show_avatars,
     show_read_posts: data.show_read_posts,
     send_notifications_to_email: data.send_notifications_to_email,
-    no_self_promotion: data.no_self_promotion,
+    self_promotion: data.self_promotion,
     blur_nsfw: data.blur_nsfw,
     show_bot_accounts: data.show_bot_accounts,
     default_post_sort_type,

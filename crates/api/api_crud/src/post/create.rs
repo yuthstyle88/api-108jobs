@@ -1,7 +1,6 @@
 use super::convert_published_time;
 use crate::community_use_pending;
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
@@ -49,7 +48,7 @@ pub async fn create_post(
   let body = process_markdown_opt(&data.body, &slur_regex, &url_blocklist, &context).await?;
   let url = diesel_url_create(data.url.as_deref())?;
   let custom_thumbnail = diesel_url_create(data.custom_thumbnail.as_deref())?;
-  check_nsfw_allowed(data.nsfw, Some(&local_site))?;
+  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
 
   if let Some(url) = &url {
     is_url_blocked(url, &url_blocklist)?;
@@ -79,10 +78,10 @@ pub async fn create_post(
   check_community_user_action(&local_user_view, community, &mut context.pool()).await?;
 
   // Ensure that all posts in NSFW communities are marked as NSFW
-  let nsfw = if community.nsfw {
+  let self_promotion = if community.self_promotion {
     Some(true)
   } else {
-    data.nsfw
+    data.self_promotion
   };
 
   if community.posting_restricted_to_mods {
@@ -109,7 +108,7 @@ pub async fn create_post(
     url,
     body,
     alt_text: data.alt_text.clone(),
-    nsfw,
+    self_promotion,
     language_id: Some(language_id),
     federation_pending: Some(community_use_pending(community, &context).await),
     scheduled_publish_time_at,

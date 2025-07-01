@@ -1,4 +1,3 @@
-use activitypub_federation::http_signatures::generate_actor_keypair;
 use chrono::Utc;
 use diesel::{
   dsl::{exists, not, select},
@@ -49,17 +48,14 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           let instance = Instance::read_or_create(&mut conn.into(), domain).await?;
 
           if let Some(setup) = &settings.setup {
-            let person_keypair = generate_actor_keypair()?;
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
 
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
               ap_id: Some(person_ap_id.clone()),
               inbox_url: Some(generate_inbox_url()?),
-              private_key: Some(person_keypair.private_key),
               ..PersonInsertForm::new(
                 setup.admin_username.clone(),
-                person_keypair.public_key,
                 instance.id,
               )
             };
@@ -74,7 +70,6 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           };
 
           // Add an entry for the site table
-          let site_key_pair = generate_actor_keypair()?;
           let site_ap_id = Url::parse(&settings.get_protocol_and_hostname())?;
 
           let name = settings
@@ -86,9 +81,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             ap_id: Some(site_ap_id.clone().into()),
             last_refreshed_at: Some(Utc::now()),
             inbox_url: Some(generate_inbox_url()?),
-            private_key: Some(site_key_pair.private_key),
-            public_key: Some(site_key_pair.public_key),
-            ..SiteInsertForm::new(name, instance.id)
+             ..SiteInsertForm::new(name, instance.id)
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;
           // create multi-comm follower account
@@ -99,10 +92,9 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             .collect();
           let name = format!("multicomm{}", r);
           let form = PersonInsertForm {
-            private_key: site.private_key.map(SensitiveString::into_inner),
             inbox_url: Some(site.inbox_url),
             bot_account: Some(true),
-            ..PersonInsertForm::new(name, site.public_key, instance.id)
+            ..PersonInsertForm::new(name, instance.id)
           };
           let multi_comm_follower = Person::create(&mut conn.into(), &form).await?;
 

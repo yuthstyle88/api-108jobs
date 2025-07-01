@@ -147,7 +147,7 @@ pub struct Search {
   pub liked_only: Option<bool>,
   pub disliked_only: Option<bool>,
   /// If true, then show the nsfw posts (even if your user setting is to hide them)
-  pub no_self_promotion: Option<bool>,
+  pub self_promotion: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

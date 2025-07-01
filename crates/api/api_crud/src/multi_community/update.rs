@@ -1,6 +1,5 @@
 use super::{check_multi_community_creator, send_federation_update};
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{

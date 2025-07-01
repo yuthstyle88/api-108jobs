@@ -514,13 +514,12 @@ mod tests {
     use crate::schema::{comment, comment_reply, community, person, post};
 
     // Check users
-    let users: Vec<(i32, String, Option<String>, String, String)> = person::table
+    let users: Vec<(i32, String, Option<String>, String)> = person::table
       .select((
         person::id,
         person::name,
         person::display_name,
         person::ap_id,
-        person::public_key,
       ))
       .order_by(person::id)
       .load(conn)
@@ -531,21 +530,18 @@ mod tests {
     assert_eq!(users[0].1, USER1_NAME);
     assert_eq!(users[0].2.clone().unwrap(), USER1_PREFERRED_NAME);
     assert_eq!(users[0].3, USER1_ACTOR_ID);
-    assert_eq!(users[0].4, USER1_PUBLIC_KEY);
 
     assert_eq!(users[1].0, TEST_USER_ID_2);
     assert_eq!(users[1].1, USER2_NAME);
     assert_eq!(users[1].2.clone().unwrap(), USER2_PREFERRED_NAME);
     assert_eq!(users[1].3, USER2_ACTOR_ID);
-    assert_eq!(users[1].4, USER2_PUBLIC_KEY);
 
     // Check communities
-    let communities: Vec<(i32, String, String, String)> = community::table
+    let communities: Vec<(i32, String, String)> = community::table
       .select((
         community::id,
         community::name,
         community::ap_id,
-        community::public_key,
       ))
       .load(conn)
       .map_err(|e| anyhow!("Failed to read communities: {}", e))?;
@@ -554,7 +550,6 @@ mod tests {
     assert_eq!(communities[0].0, TEST_COMMUNITY_ID_1);
     assert_eq!(communities[0].1, COMMUNITY_NAME);
     assert_eq!(communities[0].2, COMMUNITY_ACTOR_ID);
-    assert_eq!(communities[0].3, COMMUNITY_PUBLIC_KEY);
 
     let posts: Vec<(i32, String, String, Option<String>, i32, i32)> = post::table
       .select((

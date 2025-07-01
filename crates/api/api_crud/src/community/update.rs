@@ -1,6 +1,5 @@
 use super::check_community_visibility_allowed;
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::build_community_response,
@@ -41,7 +40,7 @@ pub async fn update_community(
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   check_slurs_opt(&data.title, &slur_regex)?;
-  check_nsfw_allowed(data.nsfw, Some(&local_site))?;
+  check_nsfw_allowed(data.self_promotion, Some(&local_site))?;
 
   let sidebar = diesel_string_update(
     process_markdown_opt(&data.sidebar, &slur_regex, &url_blocklist, &context)
@@ -77,7 +76,7 @@ pub async fn update_community(
     title: data.title.clone(),
     sidebar,
     description,
-    nsfw: data.nsfw,
+    self_promotion: data.self_promotion,
     posting_restricted_to_mods: data.posting_restricted_to_mods,
     visibility: data.visibility,
     updated_at: Some(Some(Utc::now())),

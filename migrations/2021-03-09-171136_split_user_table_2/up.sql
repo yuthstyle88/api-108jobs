@@ -15,7 +15,7 @@ CREATE TABLE local_user (
     password_encrypted text NOT NULL,
     email text UNIQUE,
     admin boolean DEFAULT FALSE NOT NULL,
-    no_self_promotion boolean DEFAULT FALSE NOT NULL,
+    self_promotion boolean DEFAULT FALSE NOT NULL,
     theme character varying(20) DEFAULT 'darkly' ::character varying NOT NULL,
     default_sort_type smallint DEFAULT 0 NOT NULL,
     default_listing_type smallint DEFAULT 1 NOT NULL,
@@ -27,13 +27,13 @@ CREATE TABLE local_user (
 );
 
 -- Copy the local users over to the new table
-INSERT INTO local_user (person_id, password_encrypted, email, admin, no_self_promotion, theme, default_sort_type, default_listing_type, lang, show_avatars, send_notifications_to_email, matrix_user_id)
+INSERT INTO local_user (person_id, password_encrypted, email, admin, self_promotion, theme, default_sort_type, default_listing_type, lang, show_avatars, send_notifications_to_email, matrix_user_id)
 SELECT
     id,
     password_encrypted,
     email,
     admin,
-    no_self_promotion,
+    self_promotion,
     theme,
     default_sort_type,
     default_listing_type,
@@ -51,7 +51,7 @@ ALTER TABLE person
     DROP COLUMN password_encrypted,
     DROP COLUMN email,
     DROP COLUMN admin,
-    DROP COLUMN no_self_promotion,
+    DROP COLUMN self_promotion,
     DROP COLUMN theme,
     DROP COLUMN default_sort_type,
     DROP COLUMN default_listing_type,

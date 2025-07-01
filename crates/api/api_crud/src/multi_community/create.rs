@@ -1,6 +1,5 @@
 use crate::multi_community::get_multi;
-use activitypub_federation::config::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use lemmy_api_utils::{context::FastJobContext, utils::slur_regex};
 use lemmy_db_schema::{
   source::multi_community::{MultiCommunity, MultiCommunityInsertForm},
@@ -36,14 +35,12 @@ pub async fn create_multi_community(
     title: data.title.clone(),
     description: data.description.clone(),
     ap_id: Some(ap_id.into()),
-    private_key: site_view.site.private_key,
     inbox_url: Some(site_view.site.inbox_url),
     following_url: Some(following_url.into()),
     ..MultiCommunityInsertForm::new(
       local_user_view.person.id,
       local_user_view.person.instance_id,
       data.name.clone(),
-      site_view.site.public_key,
     )
   };
   let multi = MultiCommunity::create(&mut context.pool(), &form).await?;

@@ -151,7 +151,7 @@ impl Person {
 
 impl PersonInsertForm {
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
-    Self::new(name.to_owned(), "pubkey".to_string(), instance_id)
+    Self::new(name.to_owned(), instance_id)
   }
 }
 
@@ -493,8 +493,6 @@ mod tests {
       bio: None,
       local: true,
       bot_account: false,
-      private_key: None,
-      public_key: "pubkey".to_owned(),
       last_refreshed_at: inserted_person.published_at,
       inbox_url: inserted_person.inbox_url.clone(),
       matrix_user_id: None,
@@ -572,7 +570,6 @@ mod tests {
       inserted_instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;

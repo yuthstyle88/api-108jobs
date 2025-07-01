@@ -388,8 +388,7 @@ pub async fn build_federated_instances(
     let all = Instance::read_all_with_fed_state(pool).await?;
     for (instance, federation_state, is_blocked, is_allowed) in all {
       let i = InstanceWithFederationState {
-        instance,
-        federation_state: federation_state.map(std::convert::Into::into),
+        instance
       };
       if is_blocked {
         // blocked instances will only have an entry here if they had been federated with in the
@@ -1037,47 +1036,6 @@ mod tests {
 
     // Too long ban term, changes to None (permanent ban)
     assert_eq!(limit_expire_time(Utc::now() + Days::new(365 * 11))?, None);
-
-    Ok(())
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn test_proxy_image_link() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-
-    // image from local domain is unchanged
-    let local_url = Url::parse("http://lemmy-alpha/image.png")?;
-    let proxied = proxy_image_link_internal(
-      local_url.clone(),
-      PictrsImageMode::ProxyAllImages,
-      false,
-      &context,
-    )
-    .await?;
-    assert_eq!(&local_url, proxied.inner());
-
-    // image from remote domain is proxied
-    let remote_image = Url::parse("http://lemmy-beta/image.png")?;
-    let proxied = proxy_image_link_internal(
-      remote_image.clone(),
-      PictrsImageMode::ProxyAllImages,
-      false,
-      &context,
-    )
-    .await?;
-    assert_eq!(
-      "https://lemmy-alpha/api/v4/image/proxy?url=http%3A%2F%2Flemmy-beta%2Fimage.png",
-      proxied.as_str()
-    );
-
-    // This fails, because the details can't be fetched without pictrs running,
-    // And a remote image won't be inserted.
-    assert!(
-      RemoteImage::validate(&mut context.pool(), remote_image.into())
-        .await
-        .is_ok()
-    );
 
     Ok(())
   }

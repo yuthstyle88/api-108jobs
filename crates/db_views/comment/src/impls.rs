@@ -235,10 +235,10 @@ impl CommentQuery<'_> {
       query = query.filter(filter_blocked());
     };
 
-    if !o.local_user.no_self_promotion(site) {
+    if !o.local_user.self_promotion(site) {
       query = query
-        .filter(post::nsfw.eq(false))
-        .filter(community::nsfw.eq(false));
+        .filter(post::self_promotion.eq(false))
+        .filter(community::self_promotion.eq(false));
     };
 
     query = o.local_user.visible_communities_only(query);

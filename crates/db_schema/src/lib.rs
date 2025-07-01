@@ -122,7 +122,6 @@ pub enum InboxDataType {
   CommentReply,
   CommentMention,
   PostMention,
-  PrivateMessage,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
@@ -143,7 +142,6 @@ pub enum ReportType {
   All,
   Posts,
   Comments,
-  PrivateMessages,
   Communities,
 }
 

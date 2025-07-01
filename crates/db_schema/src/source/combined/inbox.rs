@@ -3,7 +3,6 @@ use crate::newtypes::{
   InboxCombinedId,
   PersonCommentMentionId,
   PersonPostMentionId,
-  PrivateMessageId,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
@@ -29,5 +28,4 @@ pub struct InboxCombined {
   pub comment_reply_id: Option<CommentReplyId>,
   pub person_comment_mention_id: Option<PersonCommentMentionId>,
   pub person_post_mention_id: Option<PersonPostMentionId>,
-  pub private_message_id: Option<PrivateMessageId>,
 }

@@ -21,7 +21,6 @@ use lemmy_db_schema::{
     oauth_provider::{OAuthProvider, PublicOAuthProvider},
     person::Person,
     post::Post,
-    private_message::PrivateMessage,
     tagline::Tagline,
   },
 };
@@ -521,8 +520,6 @@ pub struct SaveUserSettings {
   /// Whether user avatars or inline images in the UI that are gifs should be allowed to play or
   /// should be paused
   pub enable_animated_images: Option<bool>,
-  /// Whether a user can send / receive private messages
-  pub enable_private_messages: Option<bool>,
   /// Whether to auto-collapse bot comments.
   pub collapse_bot_comments: Option<bool>,
   /// Some vote display mode settings
@@ -694,7 +691,6 @@ pub struct ResolveObject {
 pub enum PostOrCommentOrPrivateMessage {
   Post(Post),
   Comment(Comment),
-  PrivateMessage(PrivateMessage),
 }
 
 /// Backup of user data. This struct should never be changed so that the data can be used as a

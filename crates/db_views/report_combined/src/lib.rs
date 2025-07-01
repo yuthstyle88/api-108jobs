@@ -7,21 +7,18 @@ use lemmy_db_schema::source::{
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
-  private_message::PrivateMessage,
-  private_message_report::PrivateMessageReport,
 };
 use lemmy_db_views_reports::{
   CommentReportView,
   CommunityReportView,
   PostReportView,
-  PrivateMessageReportView,
 };
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
   lemmy_db_schema::{
-    utils::queries::{local_user_is_admin, person1_select, person2_select},
+    utils::queries::{local_user_is_admin, person1_select, },
     Person1AliasAllColumnsTuple,
     Person2AliasAllColumnsTuple,
   },
@@ -44,15 +41,11 @@ pub struct ReportCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment_report: Option<CommentReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub private_message_report: Option<PrivateMessageReport>,
-  #[cfg_attr(feature = "full", diesel(embed))]
   pub community_report: Option<CommunityReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub report_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment: Option<Comment>,
-  #[cfg_attr(feature = "full", diesel(embed))]
-  pub private_message: Option<PrivateMessage>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full",
@@ -62,13 +55,6 @@ pub struct ReportCombinedViewInternal {
     )
   )]
   pub item_creator: Option<Person>,
-  #[cfg_attr(feature = "full",
-    diesel(
-      select_expression_type = Nullable<Person2AliasAllColumnsTuple>,
-      select_expression = person2_select().nullable()
-    )
-  )]
-  pub resolver: Option<Person>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub community: Option<Community>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -95,6 +81,5 @@ pub struct ReportCombinedViewInternal {
 pub enum ReportCombinedView {
   Post(PostReportView),
   Comment(CommentReportView),
-  PrivateMessage(PrivateMessageReportView),
   Community(CommunityReportView),
 }

@@ -69,25 +69,6 @@ pub async fn send_reply_email(
   Ok(())
 }
 
-pub async fn send_private_message_email(
-  sender: &LocalUserView,
-  local_recipient: &LocalUserView,
-  content: &str,
-  settings: &Settings,
-) {
-  let inbox_link = inbox_link(settings);
-  let lang = user_language(local_recipient);
-  let sender_name = &sender.person.name;
-  let content = markdown_to_html(content);
-  send_email_to_user(
-    local_recipient,
-    &lang.notification_private_message_subject(sender_name),
-    &lang.notification_private_message_body(inbox_link, &content, sender_name),
-    settings,
-  )
-  .await;
-}
-
 async fn send_email_to_user(
   local_user_view: &LocalUserView,
   subject: &str,

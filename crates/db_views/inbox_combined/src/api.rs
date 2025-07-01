@@ -48,12 +48,3 @@ pub struct MarkPersonPostMentionAsRead {
   pub person_post_mention_id: PersonPostMentionId,
   pub read: bool,
 }
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Mark a private message as read.
-pub struct MarkPrivateMessageAsRead {
-  pub private_message_id: PrivateMessageId,
-  pub read: bool,
-}

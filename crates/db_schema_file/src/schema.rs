@@ -356,7 +356,6 @@ diesel::table! {
         comment_reply_id -> Nullable<Int4>,
         person_comment_mention_id -> Nullable<Int4>,
         person_post_mention_id -> Nullable<Int4>,
-        private_message_id -> Nullable<Int4>,
     }
 }
 
@@ -523,7 +522,6 @@ diesel::table! {
         totp_2fa_enabled -> Bool,
         enable_keyboard_navigation -> Bool,
         enable_animated_images -> Bool,
-        enable_private_messages -> Bool,
         collapse_bot_comments -> Bool,
         default_comment_sort_type -> CommentSortTypeEnum,
         auto_mark_fetched_posts_as_read -> Bool,
@@ -982,36 +980,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    private_message (id) {
-        id -> Int4,
-        creator_id -> Int4,
-        recipient_id -> Int4,
-        content -> Text,
-        deleted -> Bool,
-        read -> Bool,
-        published_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        #[max_length = 255]
-        ap_id -> Varchar,
-        local -> Bool,
-        removed -> Bool,
-    }
-}
 
-diesel::table! {
-    private_message_report (id) {
-        id -> Int4,
-        creator_id -> Int4,
-        private_message_id -> Int4,
-        original_pm_text -> Text,
-        reason -> Text,
-        resolved -> Bool,
-        resolver_id -> Nullable<Int4>,
-        published_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
 
 diesel::table! {
     received_activity (ap_id) {
@@ -1044,7 +1013,6 @@ diesel::table! {
         published_at -> Timestamptz,
         post_report_id -> Nullable<Int4>,
         comment_report_id -> Nullable<Int4>,
-        private_message_report_id -> Nullable<Int4>,
         community_report_id -> Nullable<Int4>,
     }
 }
@@ -1168,7 +1136,6 @@ diesel::joinable!(federation_queue_state -> instance (instance_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
-diesel::joinable!(inbox_combined -> private_message (private_message_id));
 diesel::joinable!(instance_actions -> instance (instance_id));
 diesel::joinable!(instance_actions -> person (person_id));
 diesel::joinable!(local_image -> person (person_id));
@@ -1245,13 +1212,11 @@ diesel::joinable!(post_actions -> post (post_id));
 diesel::joinable!(post_report -> post (post_id));
 diesel::joinable!(post_tag -> post (post_id));
 diesel::joinable!(post_tag -> tag (tag_id));
-diesel::joinable!(private_message_report -> private_message (private_message_id));
 diesel::joinable!(registration_application -> local_user (local_user_id));
 diesel::joinable!(registration_application -> person (admin_id));
 diesel::joinable!(report_combined -> comment_report (comment_report_id));
 diesel::joinable!(report_combined -> community_report (community_report_id));
 diesel::joinable!(report_combined -> post_report (post_report_id));
-diesel::joinable!(report_combined -> private_message_report (private_message_report_id));
 diesel::joinable!(search_combined -> comment (comment_id));
 diesel::joinable!(search_combined -> community (community_id));
 diesel::joinable!(search_combined -> multi_community (multi_community_id));
@@ -1327,8 +1292,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   post_report,
   post_tag,
   previously_run_sql,
-  private_message,
-  private_message_report,
   received_activity,
   registration_application,
   remote_image,

@@ -11,7 +11,6 @@ use lemmy_db_schema::{
     person_comment_mention::PersonCommentMention,
     person_post_mention::PersonPostMention,
     post::{Post, PostActions},
-    private_message::PrivateMessage,
     tag::TagsView,
   },
   InboxDataType,
@@ -51,8 +50,6 @@ pub struct InboxCombinedViewInternal {
   pub person_comment_mention: Option<PersonCommentMention>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_post_mention: Option<PersonPostMention>,
-  #[cfg_attr(feature = "full", diesel(embed))]
-  pub private_message: Option<PrivateMessage>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment: Option<Comment>,
   #[cfg_attr(feature = "full", diesel(embed))]

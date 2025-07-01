@@ -2,7 +2,6 @@ use crate::newtypes::{
   CommentReportId,
   CommunityReportId,
   PostReportId,
-  PrivateMessageReportId,
   ReportCombinedId,
 };
 use chrono::{DateTime, Utc};
@@ -28,6 +27,5 @@ pub struct ReportCombined {
   pub published_at: DateTime<Utc>,
   pub post_report_id: Option<PostReportId>,
   pub comment_report_id: Option<CommentReportId>,
-  pub private_message_report_id: Option<PrivateMessageReportId>,
   pub community_report_id: Option<CommunityReportId>,
 }

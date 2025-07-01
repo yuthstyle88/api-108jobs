@@ -99,7 +99,6 @@ fn is_ignored_trigger(chunk: &str) -> bool {
     "refresh_community",
     "refresh_post_like",
     "refresh_post",
-    "refresh_private_message",
     "refresh_user",
   ]
   .into_iter()

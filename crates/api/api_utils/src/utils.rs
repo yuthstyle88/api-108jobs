@@ -366,14 +366,6 @@ pub fn check_private_instance(
   }
 }
 
-/// If private messages are disabled, dont allow them to be sent / received
-pub fn check_private_messages_enabled(local_user_view: &LocalUserView) -> Result<(), FastJobError> {
-  if !local_user_view.local_user.enable_private_messages {
-    Err(FastJobErrorType::CouldntCreatePrivateMessage)?
-  } else {
-    Ok(())
-  }
-}
 
 pub async fn build_federated_instances(
   local_site: &LocalSite,

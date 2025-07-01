@@ -9,7 +9,6 @@ use lemmy_db_schema::{
     multi_community::MultiCommunity,
     person::Person,
     post::Post,
-    private_message::PrivateMessage,
     site::Site,
   },
 };
@@ -95,7 +94,7 @@ pub enum SendActivityData {
     ban: bool,
     expires_at: Option<i64>,
   },
-  DeletePrivateMessage(Person, PrivateMessage, bool),
+  DeletePrivateMessage(Person, bool),
   DeleteUser(Person, bool),
   CreateReport {
     object_id: Url,

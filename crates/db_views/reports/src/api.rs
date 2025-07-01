@@ -1,4 +1,4 @@
-use crate::{CommentReportView, CommunityReportView, PostReportView, PrivateMessageReportView};
+use crate::{CommentReportView, CommunityReportView, PostReportView};
 use lemmy_db_schema::newtypes::{
   CommentId,
   CommentReportId,
@@ -6,8 +6,6 @@ use lemmy_db_schema::newtypes::{
   CommunityReportId,
   PostId,
   PostReportId,
-  PrivateMessageId,
-  PrivateMessageReportId,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -100,32 +98,6 @@ pub struct ResolveCommunityReport {
 pub struct ResolvePostReport {
   pub report_id: PostReportId,
   pub resolved: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Resolve a private message report.
-pub struct ResolvePrivateMessageReport {
-  pub report_id: PrivateMessageReportId,
-  pub resolved: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Create a report for a private message.
-pub struct CreatePrivateMessageReport {
-  pub private_message_id: PrivateMessageId,
-  pub reason: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A private message report response.
-pub struct PrivateMessageReportResponse {
-  pub private_message_report_view: PrivateMessageReportView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

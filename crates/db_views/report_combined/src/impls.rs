@@ -3,7 +3,6 @@ use crate::{
   CommunityReportView,
   LocalUserView,
   PostReportView,
-  PrivateMessageReportView,
   ReportCombinedView,
   ReportCombinedViewInternal,
 };
@@ -40,8 +39,6 @@ use lemmy_db_schema_file::schema::{
   post,
   post_actions,
   post_report,
-  private_message,
-  private_message_report,
   report_combined,
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -54,10 +51,7 @@ impl ReportCombinedViewInternal {
     let resolver = aliases::person2.field(person::id).nullable();
 
     let comment_join = comment::table.on(comment_report::comment_id.eq(comment::id));
-    let private_message_join =
-      private_message::table.on(private_message_report::private_message_id.eq(private_message::id));
-
-    let post_join = post::table.on(
+     let post_join = post::table.on(
       post_report::post_id
         .eq(post::id)
         .or(comment::post_id.eq(post::id)),
@@ -73,23 +67,13 @@ impl ReportCombinedViewInternal {
       post_report::creator_id
         .eq(report_creator)
         .or(comment_report::creator_id.eq(report_creator))
-        .or(private_message_report::creator_id.eq(report_creator))
         .or(community_report::creator_id.eq(report_creator)),
     );
 
     let item_creator_join = aliases::person1.on(
       post::creator_id
         .eq(item_creator)
-        .or(comment::creator_id.eq(item_creator))
-        .or(private_message::creator_id.eq(item_creator)),
-    );
-
-    let resolver_join = aliases::person2.on(
-      private_message_report::resolver_id
-        .eq(resolver)
-        .or(post_report::resolver_id.eq(resolver))
-        .or(comment_report::resolver_id.eq(resolver))
-        .or(community_report::resolver_id.eq(resolver)),
+        .or(comment::creator_id.eq(item_creator)),
     );
 
     let community_join = community::table.on(
@@ -136,14 +120,11 @@ impl ReportCombinedViewInternal {
     report_combined::table
       .left_join(post_report::table)
       .left_join(comment_report::table)
-      .left_join(private_message_report::table)
       .left_join(community_report::table)
       .inner_join(report_creator_join)
       .left_join(comment_join)
-      .left_join(private_message_join)
       .left_join(post_join)
       .left_join(item_creator_join)
-      .left_join(resolver_join)
       .left_join(community_join)
       .left_join(creator_community_actions_join)
       .left_join(local_user_join)
@@ -197,7 +178,6 @@ impl PaginationCursorBuilder for ReportCombinedView {
     let (prefix, id) = match &self {
       ReportCombinedView::Comment(v) => ('C', v.comment_report.id.0),
       ReportCombinedView::Post(v) => ('P', v.post_report.id.0),
-      ReportCombinedView::PrivateMessage(v) => ('M', v.private_message_report.id.0),
       ReportCombinedView::Community(v) => ('Y', v.community_report.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -221,7 +201,6 @@ impl PaginationCursorBuilder for ReportCombinedView {
     query = match prefix {
       'C' => query.filter(report_combined::comment_report_id.eq(id)),
       'P' => query.filter(report_combined::post_report_id.eq(id)),
-      'M' => query.filter(report_combined::private_message_report_id.eq(id)),
       'Y' => query.filter(report_combined::community_report_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -290,9 +269,6 @@ impl ReportCombinedQuery {
         ReportType::All => query,
         ReportType::Posts => query.filter(report_combined::post_report_id.is_not_null()),
         ReportType::Comments => query.filter(report_combined::comment_report_id.is_not_null()),
-        ReportType::PrivateMessages => {
-          query.filter(report_combined::private_message_report_id.is_not_null())
-        }
         ReportType::Communities => query.filter(report_combined::community_report_id.is_not_null()),
       }
     }
@@ -340,7 +316,6 @@ fn filter_mod_reports() -> _ {
     .is_not_null()
     // Reporting a community or private message must go to admins
     .and(report_combined::community_report_id.is_null())
-    .and(report_combined::private_message_report_id.is_null())
     .and(filter_violates_instance_rules().is_distinct_from(true))
 }
 
@@ -361,14 +336,12 @@ fn filter_violates_instance_rules() -> _ {
   post_report::violates_instance_rules
     .or(comment_report::violates_instance_rules)
     .or(report_combined::community_report_id.is_not_null())
-    .or(report_combined::private_message_report_id.is_not_null())
 }
 
 #[diesel::dsl::auto_type]
 fn report_is_not_resolved() -> _ {
   post_report::resolved
     .or(comment_report::resolved)
-    .or(private_message_report::resolved)
     .or(community_report::resolved)
     .is_distinct_from(true)
 }
@@ -392,7 +365,6 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
         community,
         post_creator,
         creator: v.report_creator,
-        resolver: v.resolver,
         community_actions: v.community_actions,
         post_actions: v.post_actions,
         person_actions: v.person_actions,
@@ -418,33 +390,16 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
         community,
         creator: v.report_creator,
         comment_creator,
-        resolver: v.resolver,
         community_actions: v.community_actions,
         comment_actions: v.comment_actions,
         person_actions: v.person_actions,
         creator_is_admin: v.item_creator_is_admin,
       }))
-    } else if let (
-      Some(private_message_report),
-      Some(private_message),
-      Some(private_message_creator),
-    ) = (v.private_message_report, v.private_message, v.item_creator)
-    {
-      Some(ReportCombinedView::PrivateMessage(
-        PrivateMessageReportView {
-          private_message_report,
-          private_message,
-          creator: v.report_creator,
-          private_message_creator,
-          resolver: v.resolver,
-        },
-      ))
     } else if let (Some(community), Some(community_report)) = (v.community, v.community_report) {
       Some(ReportCombinedView::Community(CommunityReportView {
         community_report,
         community,
         creator: v.report_creator,
-        resolver: v.resolver,
       }))
     } else {
       None
@@ -480,8 +435,6 @@ mod tests {
       person::{Person, PersonInsertForm},
       post::{Post, PostInsertForm},
       post_report::{PostReport, PostReportForm},
-      private_message::{PrivateMessage, PrivateMessageInsertForm},
-      private_message_report::{PrivateMessageReport, PrivateMessageReportForm},
     },
     traits::{Crud, Joinable, Reportable},
     utils::{build_db_pool_for_tests, get_conn, DbPool},
@@ -632,22 +585,6 @@ mod tests {
     };
     CommentReport::report(pool, &sara_report_comment_form).await?;
 
-    // Timmy creates a private message
-    let pm_form = PrivateMessageInsertForm::new(
-      data.timmy.id,
-      data.sara.id,
-      "something offensive crv".to_string(),
-    );
-    let inserted_pm = PrivateMessage::create(pool, &pm_form).await?;
-
-    // sara reports private message
-    let pm_report_form = PrivateMessageReportForm {
-      creator_id: data.sara.id,
-      original_pm_text: inserted_pm.content.clone(),
-      private_message_id: inserted_pm.id,
-      reason: "its offensive".to_string(),
-    };
-    PrivateMessageReport::report(pool, &pm_report_form).await?;
 
     // Do a batch read of admins reports
     let reports = ReportCombinedQuery {
@@ -678,11 +615,7 @@ mod tests {
     } else {
       panic!("wrong type");
     }
-    if let ReportCombinedView::PrivateMessage(v) = &reports[0] {
-      assert_eq!(inserted_pm.id, v.private_message.id);
-    } else {
-      panic!("wrong type");
-    }
+
 
     let report_count_mod =
       ReportCombinedViewInternal::get_report_count(pool, &data.timmy_view, None).await?;
@@ -760,69 +693,6 @@ mod tests {
     Ok(())
   }
 
-  #[tokio::test]
-  #[serial]
-  async fn private_message_reports() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-    let data = init_data(pool).await?;
-
-    // timmy sends private message to jessica
-    let pm_form = PrivateMessageInsertForm::new(
-      data.timmy.id,
-      data.jessica.id,
-      "something offensive".to_string(),
-    );
-    let pm = PrivateMessage::create(pool, &pm_form).await?;
-
-    // jessica reports private message
-    let pm_report_form = PrivateMessageReportForm {
-      creator_id: data.jessica.id,
-      original_pm_text: pm.content.clone(),
-      private_message_id: pm.id,
-      reason: "its offensive".to_string(),
-    };
-    let pm_report = PrivateMessageReport::report(pool, &pm_report_form).await?;
-
-    let reports = ReportCombinedQuery {
-      show_community_rule_violations: Some(true),
-      ..Default::default()
-    }
-    .list(pool, &data.admin_view)
-    .await?;
-    assert_length!(1, reports);
-    if let ReportCombinedView::PrivateMessage(v) = &reports[0] {
-      assert!(!v.private_message_report.resolved);
-      assert_eq!(data.timmy.name, v.private_message_creator.name);
-      assert_eq!(data.jessica.name, v.creator.name);
-      assert_eq!(pm_report.reason, v.private_message_report.reason);
-      assert_eq!(pm.content, v.private_message.content);
-    } else {
-      panic!("wrong type");
-    }
-
-    // admin resolves the report (after taking appropriate action)
-    PrivateMessageReport::resolve(pool, pm_report.id, data.admin_view.person.id).await?;
-
-    let reports = ReportCombinedQuery::default()
-      .list(pool, &data.admin_view)
-      .await?;
-    assert_length!(1, reports);
-    if let ReportCombinedView::PrivateMessage(v) = &reports[0] {
-      assert!(v.private_message_report.resolved);
-      assert!(v.resolver.is_some());
-      assert_eq!(
-        Some(&data.admin_view.person.name),
-        v.resolver.as_ref().map(|r| &r.name)
-      );
-    } else {
-      panic!("wrong type");
-    }
-
-    cleanup(data, pool).await?;
-
-    Ok(())
-  }
 
   #[tokio::test]
   #[serial]
@@ -857,22 +727,10 @@ mod tests {
 
     let inserted_jessica_report = PostReport::report(pool, &jessica_report_form).await?;
 
-    let read_jessica_report_view =
-      PostReportView::read(pool, inserted_jessica_report.id, data.timmy.id).await?;
 
     // Make sure the triggers are reading the aggregates correctly.
     let agg_1 = Post::read(pool, data.post.id).await?;
     let agg_2 = Post::read(pool, data.post_2.id).await?;
-
-    assert_eq!(
-      read_jessica_report_view.post_report,
-      inserted_jessica_report
-    );
-    assert_eq!(read_jessica_report_view.post.id, data.post_2.id);
-    assert_eq!(read_jessica_report_view.community.id, data.community.id);
-    assert_eq!(read_jessica_report_view.creator.id, data.jessica.id);
-    assert_eq!(read_jessica_report_view.post_creator.id, data.timmy.id);
-    assert_eq!(read_jessica_report_view.resolver, None);
     assert_eq!(agg_1.report_count, 1);
     assert_eq!(agg_1.unresolved_report_count, 1);
     assert_eq!(agg_2.report_count, 1);
@@ -904,21 +762,6 @@ mod tests {
     PostReport::resolve_all_for_object(pool, inserted_jessica_report.post_id, data.timmy.id)
       .await?;
 
-    let read_jessica_report_view_after_resolve =
-      PostReportView::read(pool, inserted_jessica_report.id, data.timmy.id).await?;
-    assert!(read_jessica_report_view_after_resolve.post_report.resolved);
-    assert_eq!(
-      read_jessica_report_view_after_resolve
-        .post_report
-        .resolver_id,
-      Some(data.timmy.id)
-    );
-    assert_eq!(
-      read_jessica_report_view_after_resolve
-        .resolver
-        .map(|r| r.id),
-      Some(data.timmy.id)
-    );
 
     // Make sure the unresolved_post report got decremented in the trigger
     let agg_2 = Post::read(pool, data.post_2.id).await?;
@@ -988,10 +831,6 @@ mod tests {
     let comment = Comment::read(pool, data.comment.id).await?;
     assert_eq!(comment.report_count, 2);
 
-    let read_jessica_report_view =
-      CommentReportView::read(pool, inserted_jessica_report.id, data.timmy.id).await?;
-    assert_eq!(read_jessica_report_view.comment.unresolved_report_count, 2);
-
     // Do a batch read of timmys reports
     let reports = ReportCombinedQuery::default()
       .list(pool, &data.timmy_view)
@@ -1015,27 +854,6 @@ mod tests {
 
     // Resolve the report
     CommentReport::resolve(pool, inserted_jessica_report.id, data.timmy.id).await?;
-    let read_jessica_report_view_after_resolve =
-      CommentReportView::read(pool, inserted_jessica_report.id, data.timmy.id).await?;
-
-    assert!(
-      read_jessica_report_view_after_resolve
-        .comment_report
-        .resolved
-    );
-    assert_eq!(
-      read_jessica_report_view_after_resolve
-        .comment_report
-        .resolver_id,
-      Some(data.timmy.id)
-    );
-    assert_eq!(
-      read_jessica_report_view_after_resolve
-        .resolver
-        .map(|r| r.id),
-      Some(data.timmy.id)
-    );
-
     // Do a batch read of timmys reports
     // It should only show saras, which is unresolved
     let reports_after_resolve = ReportCombinedQuery {
@@ -1106,9 +924,6 @@ mod tests {
       assert_eq!(community_report.reason, v.community_report.reason);
       assert_eq!(data.community.name, v.community.name);
       assert_eq!(data.community.title, v.community.title);
-      let read_report =
-        CommunityReportView::read(pool, community_report.id, data.admin_view.person.id).await?;
-      assert_eq!(&read_report, v);
     } else {
       panic!("wrong type");
     }

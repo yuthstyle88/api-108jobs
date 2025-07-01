@@ -53,7 +53,6 @@ use lemmy_db_schema_file::schema::{
   person_comment_mention,
   person_post_mention,
   post,
-  private_message,
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -71,15 +70,13 @@ impl InboxCombinedViewInternal {
             .is_not_null()
             .and(post::creator_id.eq(item_creator)),
         )
-        .or(private_message::creator_id.eq(item_creator)),
     );
 
     let recipient_join = aliases::person1.on(
       comment_reply::recipient_id
         .eq(recipient_person)
         .or(person_comment_mention::recipient_id.eq(recipient_person))
-        .or(person_post_mention::recipient_id.eq(recipient_person))
-        .or(private_message::recipient_id.eq(recipient_person)),
+        .or(person_post_mention::recipient_id.eq(recipient_person)),
     );
 
     let comment_join = comment::table.on(
@@ -100,13 +97,6 @@ impl InboxCombinedViewInternal {
         .and(not(post::removed)),
     );
 
-    // This could be a simple join, but you need to check for deleted here
-    let private_message_join = private_message::table.on(
-      inbox_combined::private_message_id
-        .eq(private_message::id.nullable())
-        .and(not(private_message::deleted))
-        .and(not(private_message::removed)),
-    );
 
     let my_community_actions_join: my_community_actions_join =
       my_community_actions_join(Some(my_person_id));
@@ -125,7 +115,6 @@ impl InboxCombinedViewInternal {
       .left_join(comment_reply::table)
       .left_join(person_comment_mention::table)
       .left_join(person_post_mention::table)
-      .left_join(private_message_join)
       .left_join(comment_join)
       .left_join(post_join)
       .left_join(community_join())
@@ -159,13 +148,7 @@ impl InboxCombinedViewInternal {
     let unread_filter = comment_reply::read
       .eq(false)
       .or(person_comment_mention::read.eq(false))
-      .or(person_post_mention::read.eq(false))
-      // If its unread, I only want the messages to me
-      .or(
-        private_message::read
-          .eq(false)
-          .and(private_message::recipient_id.eq(my_person_id)),
-      );
+      .or(person_post_mention::read.eq(false));
 
     let mut query = Self::joins(my_person_id, local_instance_id)
       // Filter for your user
@@ -221,7 +204,6 @@ impl PaginationCursorBuilder for InboxCombinedView {
       'R' => query.filter(inbox_combined::comment_reply_id.eq(id)),
       'C' => query.filter(inbox_combined::person_comment_mention_id.eq(id)),
       'P' => query.filter(inbox_combined::person_post_mention_id.eq(id)),
-      'M' => query.filter(inbox_combined::private_message_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
@@ -271,9 +253,7 @@ impl InboxCombinedQuery {
           comment_reply::read
             .eq(false)
             .or(person_comment_mention::read.eq(false))
-            .or(person_post_mention::read.eq(false))
-            // If its unread, I only want the messages to me
-            .or(private_message::read.eq(false)),
+            .or(person_post_mention::read.eq(false)),
         );
     } else {
       // A special case for private messages: show messages FROM you also.
@@ -291,13 +271,6 @@ impl InboxCombinedQuery {
             inbox_combined::person_post_mention_id
               .is_not_null()
               .and(recipient_person.eq(my_person_id)),
-          )
-          .or(
-            inbox_combined::private_message_id.is_not_null().and(
-              recipient_person
-                .eq(my_person_id)
-                .or(item_creator.eq(my_person_id)),
-            ),
           ),
       );
     }
@@ -320,9 +293,6 @@ impl InboxCombinedQuery {
         }
         InboxDataType::PostMention => {
           query.filter(inbox_combined::person_post_mention_id.is_not_null())
-        }
-        InboxDataType::PrivateMessage => {
-          query.filter(inbox_combined::private_message_id.is_not_null())
         }
       }
     }
@@ -451,13 +421,11 @@ mod tests {
       person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
       person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
       post::{Post, PostInsertForm},
-      private_message::{PrivateMessage, PrivateMessageInsertForm},
     },
     traits::{Blockable, Crud},
     utils::{build_db_pool_for_tests, DbPool},
     InboxDataType,
   };
-  use lemmy_db_views_private_message::PrivateMessageView;
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
@@ -496,15 +464,15 @@ mod tests {
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
     let jessica_post_form =
-      PostInsertForm::new("jessica post prv".into(), jessica.id, community.id);
+     PostInsertForm::new("jessica post prv".into(), jessica.id, community.id);
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
+     CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
     let timmy_comment = Comment::create(pool, &timmy_comment_form, None).await?;
 
     let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
+     CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
     let sara_comment = Comment::create(pool, &sara_comment_form, Some(&timmy_comment.path)).await?;
 
     Ok(Data {
@@ -519,25 +487,6 @@ mod tests {
     })
   }
 
-  async fn setup_private_messages(data: &Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    let sara_timmy_message_form =
-      PrivateMessageInsertForm::new(data.sara.id, data.timmy.id, "sara to timmy".into());
-    PrivateMessage::create(pool, &sara_timmy_message_form).await?;
-
-    let sara_jessica_message_form =
-      PrivateMessageInsertForm::new(data.sara.id, data.jessica.id, "sara to jessica".into());
-    PrivateMessage::create(pool, &sara_jessica_message_form).await?;
-
-    let timmy_sara_message_form =
-      PrivateMessageInsertForm::new(data.timmy.id, data.sara.id, "timmy to sara".into());
-    PrivateMessage::create(pool, &timmy_sara_message_form).await?;
-
-    let jessica_timmy_message_form =
-      PrivateMessageInsertForm::new(data.jessica.id, data.timmy.id, "jessica to timmy".into());
-    PrivateMessage::create(pool, &jessica_timmy_message_form).await?;
-
-    Ok(())
-  }
 
   async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
@@ -561,13 +510,13 @@ mod tests {
     let reply = CommentReply::create(pool, &form).await?;
 
     let timmy_unread_replies =
-      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
+      .await?;
     assert_eq!(1, timmy_unread_replies);
 
     let timmy_inbox = InboxCombinedQuery::default()
-      .list(pool, data.timmy.id, data.instance.id)
-      .await?;
+     .list(pool, data.timmy.id, data.instance.id)
+     .await?;
     assert_length!(1, timmy_inbox);
 
     if let InboxCombinedView::CommentReply(v) = &timmy_inbox[0] {
@@ -585,16 +534,16 @@ mod tests {
     CommentReply::update(pool, reply.id, &form).await?;
 
     let timmy_unread_replies =
-      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
+      .await?;
     assert_eq!(0, timmy_unread_replies);
 
     let timmy_inbox_unread = InboxCombinedQuery {
       unread_only: Some(true),
       ..Default::default()
     }
-    .list(pool, data.timmy.id, data.instance.id)
-    .await?;
+     .list(pool, data.timmy.id, data.instance.id)
+     .await?;
     assert_length!(0, timmy_inbox_unread);
 
     cleanup(data, pool).await?;
@@ -627,13 +576,13 @@ mod tests {
 
     // Test to make sure counts and blocks work correctly
     let sara_unread_mentions =
-      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
+      .await?;
     assert_eq!(2, sara_unread_mentions);
 
     let sara_inbox = InboxCombinedQuery::default()
-      .list(pool, data.sara.id, data.instance.id)
-      .await?;
+     .list(pool, data.sara.id, data.instance.id)
+     .await?;
     assert_length!(2, sara_inbox);
 
     if let InboxCombinedView::PostMention(v) = &sara_inbox[0] {
@@ -660,13 +609,13 @@ mod tests {
     PersonActions::block(pool, &sara_blocks_timmy_form).await?;
 
     let sara_unread_mentions_after_block =
-      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
+      .await?;
     assert_eq!(1, sara_unread_mentions_after_block);
 
     let sara_inbox_after_block = InboxCombinedQuery::default()
-      .list(pool, data.sara.id, data.instance.id)
-      .await?;
+     .list(pool, data.sara.id, data.instance.id)
+     .await?;
     assert_length!(1, sara_inbox_after_block);
 
     // Make sure the comment mention which timmy made is the hidden one
@@ -683,8 +632,8 @@ mod tests {
       type_: Some(InboxDataType::PostMention),
       ..Default::default()
     }
-    .list(pool, data.sara.id, data.instance.id)
-    .await?;
+     .list(pool, data.sara.id, data.instance.id)
+     .await?;
     assert_length!(1, sara_inbox_post_mentions_only);
 
     assert!(matches!(
@@ -701,13 +650,13 @@ mod tests {
 
     // Make sure sara hides bots
     let sara_unread_mentions_after_hide_bots =
-      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
+      .await?;
     assert_eq!(1, sara_unread_mentions_after_hide_bots);
 
     let sara_inbox_after_hide_bots = InboxCombinedQuery::default()
-      .list(pool, data.sara.id, data.instance.id)
-      .await?;
+     .list(pool, data.sara.id, data.instance.id)
+     .await?;
     assert_length!(1, sara_inbox_after_hide_bots);
 
     // Make sure the post mention which jessica made is the hidden one
@@ -722,168 +671,17 @@ mod tests {
 
     // Make sure none come back
     let sara_unread_mentions =
-      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
-        .await?;
+     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
+      .await?;
     assert_eq!(0, sara_unread_mentions);
 
     let sara_inbox_unread = InboxCombinedQuery {
       unread_only: Some(true),
       ..Default::default()
     }
-    .list(pool, data.sara.id, data.instance.id)
-    .await?;
+     .list(pool, data.sara.id, data.instance.id)
+     .await?;
     assert_length!(0, sara_inbox_unread);
-
-    cleanup(data, pool).await?;
-
-    Ok(())
-  }
-
-  /// A helper function to coerce to a private message type for tests
-  fn map_to_pm(inbox: &[InboxCombinedView]) -> Vec<PrivateMessageView> {
-    inbox
-      .iter()
-      // Filter map to collect private messages
-      .filter_map(|f| {
-        if let InboxCombinedView::PrivateMessage(v) = f {
-          Some(v)
-        } else {
-          None
-        }
-      })
-      .cloned()
-      .collect::<Vec<PrivateMessageView>>()
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn read_private_messages() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-    let data = init_data(pool).await?;
-    setup_private_messages(&data, pool).await?;
-
-    let timmy_messages = map_to_pm(
-      &InboxCombinedQuery::default()
-        .list(pool, data.timmy.id, data.instance.id)
-        .await?,
-    );
-
-    // The read even shows timmy's sent messages
-    assert_length!(3, &timmy_messages);
-    assert_eq!(timmy_messages[0].creator.id, data.jessica.id);
-    assert_eq!(timmy_messages[0].recipient.id, data.timmy.id);
-    assert_eq!(timmy_messages[1].creator.id, data.timmy.id);
-    assert_eq!(timmy_messages[1].recipient.id, data.sara.id);
-    assert_eq!(timmy_messages[2].creator.id, data.sara.id);
-    assert_eq!(timmy_messages[2].recipient.id, data.timmy.id);
-
-    let timmy_unread =
-      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, false)
-        .await?;
-    assert_eq!(2, timmy_unread);
-
-    let timmy_unread_messages = map_to_pm(
-      &InboxCombinedQuery {
-        unread_only: Some(true),
-        ..Default::default()
-      }
-      .list(pool, data.timmy.id, data.instance.id)
-      .await?,
-    );
-
-    // The unread hides timmy's sent messages
-    assert_length!(2, &timmy_unread_messages);
-    assert_eq!(timmy_unread_messages[0].creator.id, data.jessica.id);
-    assert_eq!(timmy_unread_messages[0].recipient.id, data.timmy.id);
-    assert_eq!(timmy_unread_messages[1].creator.id, data.sara.id);
-    assert_eq!(timmy_unread_messages[1].recipient.id, data.timmy.id);
-
-    cleanup(data, pool).await?;
-
-    Ok(())
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn ensure_private_message_person_block() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-    let data = init_data(pool).await?;
-    setup_private_messages(&data, pool).await?;
-
-    // Make sure blocks are working
-    let timmy_blocks_sara_form = PersonBlockForm::new(data.timmy.id, data.sara.id);
-
-    let inserted_block = PersonActions::block(pool, &timmy_blocks_sara_form).await?;
-
-    assert_eq!(
-      (data.timmy.id, data.sara.id, true),
-      (
-        inserted_block.person_id,
-        inserted_block.target_id,
-        inserted_block.blocked_at.is_some()
-      )
-    );
-
-    let timmy_messages = map_to_pm(
-      &InboxCombinedQuery {
-        unread_only: Some(true),
-        ..Default::default()
-      }
-      .list(pool, data.timmy.id, data.instance.id)
-      .await?,
-    );
-
-    assert_length!(1, &timmy_messages);
-
-    let timmy_unread =
-      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, false)
-        .await?;
-    assert_eq!(1, timmy_unread);
-
-    cleanup(data, pool).await?;
-
-    Ok(())
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn ensure_private_message_instance_block() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-    let data = init_data(pool).await?;
-    setup_private_messages(&data, pool).await?;
-
-    // Make sure instance_blocks are working
-    let timmy_blocks_instance_form = InstanceBlockForm::new(data.timmy.id, data.sara.instance_id);
-
-    let inserted_instance_block = InstanceActions::block(pool, &timmy_blocks_instance_form).await?;
-
-    assert_eq!(
-      (data.timmy.id, data.sara.instance_id, true),
-      (
-        inserted_instance_block.person_id,
-        inserted_instance_block.instance_id,
-        inserted_instance_block.blocked_at.is_some()
-      )
-    );
-
-    let timmy_messages = map_to_pm(
-      &InboxCombinedQuery {
-        unread_only: Some(true),
-        ..Default::default()
-      }
-      .list(pool, data.timmy.id, data.instance.id)
-      .await?,
-    );
-
-    assert_length!(0, &timmy_messages);
-
-    let timmy_unread =
-      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, false)
-        .await?;
-    assert_eq!(0, timmy_unread);
 
     cleanup(data, pool).await?;
 

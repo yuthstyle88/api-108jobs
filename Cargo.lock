@@ -3739,6 +3739,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "i-love-jesus",
+ "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_utils",

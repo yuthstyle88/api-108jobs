@@ -79,24 +79,14 @@ pub async fn register(
   if local_site.registration_mode == RegistrationMode::Closed {
     Err(FastJobErrorType::RegistrationClosed)?
   }
-
-  password_length_check(&data.password)?;
+  
   honeypot_check(&data.honeypot)?;
-
-  if local_site.require_email_verification && data.email.is_none() {
-    Err(FastJobErrorType::EmailRequired)?
-  }
-
+  
   // make sure the registration answer is provided when the registration application is required
   if local_site.site_setup {
     validate_registration_answer(require_registration_application, &data.answer)?;
   }
-
-  // Make sure passwords match
-  if data.password != data.password_verify {
-    Err(FastJobErrorType::PasswordsDoNotMatch)?
-  }
-
+  
   if local_site.site_setup && local_site.captcha_enabled {
     let uuid = uuid::Uuid::parse_str(&data.captcha_uuid.clone().unwrap_or_default())?;
     CaptchaAnswer::check_captcha(

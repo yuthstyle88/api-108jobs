@@ -76,7 +76,7 @@ pub struct Register {
 #[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct RegisterForm {
+pub struct RegisterRequest {
   pub username: String,
   pub password: SensitiveString,
   pub password_verify: SensitiveString,

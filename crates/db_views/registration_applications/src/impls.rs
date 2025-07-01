@@ -1,4 +1,4 @@
-use crate::api::{Register, RegisterForm};
+use crate::api::{Register, RegisterRequest};
 use crate::RegistrationApplicationView;
 use diesel::{
   dsl::count,
@@ -138,10 +138,10 @@ impl RegistrationApplicationQuery {
 }
 
 
-impl TryFrom<RegisterForm> for Register {
+impl TryFrom<RegisterRequest> for Register {
   type Error = FastJobError;
 
-  fn try_from(form: RegisterForm) -> Result<Self, Self::Error> {
+  fn try_from(form: RegisterRequest) -> Result<Self, Self::Error> {
     if form.username.trim().is_empty() {
       Err(FastJobErrorType::InvalidName)?
     }

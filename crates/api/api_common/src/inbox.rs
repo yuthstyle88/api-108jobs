@@ -13,7 +13,6 @@ pub use lemmy_db_views_inbox_combined::{
     MarkCommentReplyAsRead,
     MarkPersonCommentMentionAsRead,
     MarkPersonPostMentionAsRead,
-    MarkPrivateMessageAsRead,
   },
   CommentReplyView,
   InboxCombinedView,

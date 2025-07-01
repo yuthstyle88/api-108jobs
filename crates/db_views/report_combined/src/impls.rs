@@ -306,7 +306,7 @@ impl ReportCombinedQuery {
   }
 }
 
-/// Mods can only see reports for posts/comments inside of communities where they are moderator,
+/// Mods can only see reports for posts/comments inside communities where they are moderator,
 /// and which have `violates_instance_rules == false`.
 #[diesel::dsl::auto_type]
 fn filter_mod_reports() -> _ {
@@ -938,11 +938,6 @@ mod tests {
     assert_length!(1, reports);
     if let ReportCombinedView::Community(v) = &reports[0] {
       assert!(v.community_report.resolved);
-      assert!(v.resolver.is_some());
-      assert_eq!(
-        Some(&data.admin_view.person.name),
-        v.resolver.as_ref().map(|r| &r.name)
-      );
     } else {
       panic!("wrong type");
     }

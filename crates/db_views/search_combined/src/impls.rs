@@ -1291,7 +1291,6 @@ mod tests {
       data.timmy_view.person.id,
       data.instance.id,
       "multi".to_string(),
-      String::new(),
     );
     let multi = MultiCommunity::create(pool, &form).await?;
 

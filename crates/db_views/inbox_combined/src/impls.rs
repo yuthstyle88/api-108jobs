@@ -273,7 +273,7 @@ impl InboxCombinedQuery {
       );
     }
 
-    if !(self.show_bot_accounts.unwrap_or_default()) {
+    if !self.show_bot_accounts.unwrap_or_default() {
       query = query.filter(not(person::bot_account));
     };
 
@@ -499,7 +499,7 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Sara replied to timmys comment, but lets create the row now
+    // Sara replied to timmys comment, but let create the row now
     let form = CommentReplyInsertForm {
       recipient_id: data.timmy.id,
       comment_id: data.sara_comment.id,
@@ -602,7 +602,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    // Sara blocks timmy, and make sure these counts are now empty
+    // Sara blocks timmy, and makes sure these counts are now empty
     let sara_blocks_timmy_form = PersonBlockForm::new(data.sara.id, data.timmy.id);
     PersonActions::block(pool, &sara_blocks_timmy_form).await?;
 

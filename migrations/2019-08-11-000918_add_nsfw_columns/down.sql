@@ -9,7 +9,7 @@ ALTER TABLE post
     DROP COLUMN nsfw;
 
 ALTER TABLE user_
-    DROP COLUMN show_nsfw;
+    DROP COLUMN no_self_promotion;
 
 -- the views
 CREATE VIEW community_view AS

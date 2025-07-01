@@ -65,7 +65,7 @@ pub async fn import_settings(
     .ok();
 
   let local_user_form = LocalUserUpdateForm {
-    show_nsfw: data.settings.as_ref().map(|s| s.show_nsfw),
+    no_self_promotion: data.settings.as_ref().map(|s| s.no_self_promotion),
     theme: data.settings.clone().map(|s| s.theme.clone()),
     default_post_sort_type: data.settings.as_ref().map(|s| s.default_post_sort_type),
     default_comment_sort_type: data.settings.as_ref().map(|s| s.default_comment_sort_type),

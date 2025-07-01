@@ -141,7 +141,7 @@ pub async fn save_user_settings(
     show_avatars: data.show_avatars,
     show_read_posts: data.show_read_posts,
     send_notifications_to_email: data.send_notifications_to_email,
-    show_nsfw: data.show_nsfw,
+    no_self_promotion: data.no_self_promotion,
     blur_nsfw: data.blur_nsfw,
     show_bot_accounts: data.show_bot_accounts,
     default_post_sort_type,

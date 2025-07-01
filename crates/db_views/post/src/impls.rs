@@ -237,7 +237,7 @@ pub struct PostQuery<'a> {
   pub local_user: Option<&'a LocalUser>,
   pub show_hidden: Option<bool>,
   pub show_read: Option<bool>,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   pub hide_media: Option<bool>,
   pub no_comments_only: Option<bool>,
   pub keyword_blocks: Option<Vec<String>>,
@@ -373,7 +373,7 @@ impl PostQuery<'_> {
       ListingType::Suggested => query = query.filter(suggested_communities()),
     }
 
-    if !o.show_nsfw.unwrap_or(o.local_user.show_nsfw(site)) {
+    if !o.no_self_promotion.unwrap_or(o.local_user.no_self_promotion(site)) {
       query = query
         .filter(post::nsfw.eq(false))
         .filter(community::nsfw.eq(false));
@@ -1819,10 +1819,10 @@ mod tests {
     let post_listings_hide_nsfw = data.default_post_query().list(&data.site, pool).await?;
     assert_eq!(vec![POST_BY_BOT, POST], names(&post_listings_hide_nsfw));
 
-    // Make sure it does come back with the show_nsfw option
-    let post_listings_show_nsfw = PostQuery {
+    // Make sure it does come back with the no_self_promotion option
+    let post_listings_no_self_promotion = PostQuery {
       sort: Some(PostSortType::New),
-      show_nsfw: Some(true),
+      no_self_promotion: Some(true),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -1830,12 +1830,12 @@ mod tests {
     .await?;
     assert_eq!(
       vec![POST_WITH_TAGS, POST_BY_BOT, POST],
-      names(&post_listings_show_nsfw)
+      names(&post_listings_no_self_promotion)
     );
 
     // Make sure that nsfw field is true.
     assert!(
-      &post_listings_show_nsfw
+      &post_listings_no_self_promotion
         .first()
         .ok_or(FastJobErrorType::NotFound)?
         .post

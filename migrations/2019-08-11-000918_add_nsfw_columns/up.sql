@@ -5,7 +5,7 @@ ALTER TABLE post
     ADD COLUMN nsfw boolean DEFAULT FALSE NOT NULL;
 
 ALTER TABLE user_
-    ADD COLUMN show_nsfw boolean DEFAULT FALSE NOT NULL;
+    ADD COLUMN no_self_promotion boolean DEFAULT FALSE NOT NULL;
 
 -- The views
 DROP VIEW community_view;

@@ -235,7 +235,7 @@ impl CommentQuery<'_> {
       query = query.filter(filter_blocked());
     };
 
-    if !o.local_user.show_nsfw(site) {
+    if !o.local_user.no_self_promotion(site) {
       query = query
         .filter(post::nsfw.eq(false))
         .filter(community::nsfw.eq(false));

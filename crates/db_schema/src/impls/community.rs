@@ -198,7 +198,7 @@ impl Community {
   pub async fn get_random_community_id(
     pool: &mut DbPool<'_>,
     type_: &Option<ListingType>,
-    show_nsfw: Option<bool>,
+    no_self_promotion: Option<bool>,
   ) -> FastJobResult<CommunityId> {
     let conn = &mut get_conn(pool).await?;
 
@@ -229,7 +229,7 @@ impl Community {
         query = query.filter(community::local);
       }
 
-      if !show_nsfw.unwrap_or(false) {
+      if !no_self_promotion.unwrap_or(false) {
         query = query.filter(not(community::nsfw));
       }
 

@@ -113,8 +113,8 @@ pub async fn register(
   let accepted_application = Some(!require_registration_application);
 
   // Show nsfw content if param is true, or if content_warning exists
-  let show_nsfw = data
-    .show_nsfw
+  let no_self_promotion = data
+    .no_self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
 
   let language_tags = get_language_tags(&req);
@@ -133,7 +133,7 @@ pub async fn register(
         // Create the local user
         let local_user_form = LocalUserInsertForm {
           email: tx_data.email.as_deref().map(str::to_lowercase),
-          show_nsfw: Some(show_nsfw),
+          no_self_promotion: Some(no_self_promotion),
           accepted_application,
           ..LocalUserInsertForm::new(person.id, Some(tx_data.password.to_string()))
         };
@@ -208,8 +208,8 @@ pub async fn authenticate_with_oauth(
   let local_site = site_view.local_site.clone();
 
   // Show nsfw content if param is true, or if content_warning exists
-  let show_nsfw = data
-    .show_nsfw
+  let no_self_promotion = data
+    .no_self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
 
   let language_tags = get_language_tags(&req);
@@ -360,7 +360,7 @@ pub async fn authenticate_with_oauth(
             // Create the local user
             let local_user_form = LocalUserInsertForm {
               email: Some(str::to_lowercase(&email)),
-              show_nsfw: Some(show_nsfw),
+              no_self_promotion: Some(no_self_promotion),
               accepted_application: Some(!require_registration_application),
               email_verified: Some(oauth_provider.auto_verify_email),
               ..LocalUserInsertForm::new(person.id, None)

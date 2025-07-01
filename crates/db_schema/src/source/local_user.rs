@@ -32,7 +32,7 @@ pub struct LocalUser {
   pub password_encrypted: Option<SensitiveString>,
   pub email: Option<SensitiveString>,
   /// Whether to show NSFW content.
-  pub show_nsfw: bool,
+  pub no_self_promotion: bool,
   pub theme: String,
   pub default_post_sort_type: PostSortType,
   pub default_listing_type: ListingType,
@@ -95,7 +95,7 @@ pub struct LocalUserInsertForm {
   #[new(default)]
   pub email: Option<String>,
   #[new(default)]
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   #[new(default)]
   pub theme: Option<String>,
   #[new(default)]
@@ -166,7 +166,7 @@ pub struct LocalUserInsertForm {
 pub struct LocalUserUpdateForm {
   pub password_encrypted: Option<Option<String>>,
   pub email: Option<Option<String>>,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   pub theme: Option<String>,
   pub default_post_sort_type: Option<PostSortType>,
   pub default_listing_type: Option<ListingType>,

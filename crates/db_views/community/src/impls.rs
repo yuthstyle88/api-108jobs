@@ -107,7 +107,7 @@ pub struct CommunityQuery<'a> {
   pub sort: Option<CommunitySortType>,
   pub time_range_seconds: Option<i32>,
   pub local_user: Option<&'a LocalUser>,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   pub multi_community_id: Option<MultiCommunityId>,
   pub cursor_data: Option<Community>,
   pub page_back: Option<bool>,
@@ -152,7 +152,7 @@ impl CommunityQuery<'_> {
     // also hidden (based on profile setting)
     query = query.filter(instance_actions::blocked_at.is_null());
     query = query.filter(community_actions::blocked_at.is_null());
-    if !(o.local_user.show_nsfw(site) || o.show_nsfw.unwrap_or_default()) {
+    if !(o.local_user.no_self_promotion(site) || o.no_self_promotion.unwrap_or_default()) {
       query = query.filter(community::nsfw.eq(false));
     }
 

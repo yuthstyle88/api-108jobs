@@ -47,7 +47,7 @@ pub async fn list_posts(
   let show_hidden = data.show_hidden;
   let show_read = data.show_read;
   // Show nsfw content if param is true, or if content_warning exists
-  let show_nsfw = data.show_nsfw;
+  let no_self_promotion = data.no_self_promotion;
   let hide_media = data.hide_media;
   let no_comments_only = data.no_comments_only;
 
@@ -92,7 +92,7 @@ pub async fn list_posts(
     limit,
     show_hidden,
     show_read,
-    show_nsfw,
+    no_self_promotion,
     hide_media,
     no_comments_only,
     keyword_blocks,

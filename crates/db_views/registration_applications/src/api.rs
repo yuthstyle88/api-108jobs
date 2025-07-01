@@ -59,7 +59,7 @@ pub struct Register {
   pub username: String,
   pub password: SensitiveString,
   pub password_verify: SensitiveString,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   /// email is mandatory if email verification is enabled on the server
   pub email: Option<SensitiveString>,
   /// The UUID of the captcha item.

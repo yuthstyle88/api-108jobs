@@ -77,7 +77,7 @@ pub struct AuthenticateWithOauth {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   /// Username is mandatory at registration time
   pub username: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
@@ -478,7 +478,7 @@ pub struct ResendVerificationEmail {
 /// Saves settings for your user.
 pub struct SaveUserSettings {
   /// Show nsfw posts.
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   /// Blur nsfw posts.
   pub blur_nsfw: Option<bool>,
   /// Your user's theme.

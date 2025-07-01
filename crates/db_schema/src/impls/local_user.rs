@@ -306,7 +306,7 @@ pub trait LocalUserOptionHelper {
   fn show_bot_accounts(&self) -> bool;
   fn show_read_posts(&self) -> bool;
   fn is_admin(&self) -> bool;
-  fn show_nsfw(&self, site: &Site) -> bool;
+  fn no_self_promotion(&self, site: &Site) -> bool;
   fn hide_media(&self) -> bool;
   fn visible_communities_only<Q>(&self, query: Q) -> Q
   where
@@ -337,9 +337,9 @@ impl LocalUserOptionHelper for Option<&LocalUser> {
     self.map(|l| l.admin).unwrap_or(false)
   }
 
-  fn show_nsfw(&self, site: &Site) -> bool {
+  fn no_self_promotion(&self, site: &Site) -> bool {
     self
-      .map(|l| l.show_nsfw)
+      .map(|l| l.no_self_promotion)
       .unwrap_or(site.content_warning.is_some())
   }
 

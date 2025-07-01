@@ -504,7 +504,7 @@ diesel::table! {
         person_id -> Int4,
         password_encrypted -> Nullable<Text>,
         email -> Nullable<Text>,
-        show_nsfw -> Bool,
+        no_self_promotion -> Bool,
         theme -> Text,
         default_post_sort_type -> PostSortTypeEnum,
         default_listing_type -> ListingTypeEnum,

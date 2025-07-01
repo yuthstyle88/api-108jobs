@@ -209,7 +209,7 @@ pub struct GetCommunityResponse {
 /// Fetches a random community
 pub struct GetRandomCommunity {
   pub type_: Option<ListingType>,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -234,7 +234,7 @@ pub struct ListCommunities {
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
   pub time_range_seconds: Option<i32>,
-  pub show_nsfw: Option<bool>,
+  pub no_self_promotion: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

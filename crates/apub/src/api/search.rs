@@ -58,7 +58,7 @@ pub async fn search(
     post_url_only: data.post_url_only,
     liked_only: data.liked_only,
     disliked_only: data.disliked_only,
-    show_nsfw: data.show_nsfw,
+    no_self_promotion: data.no_self_promotion,
     cursor_data,
     page_back: data.page_back,
     limit: data.limit,

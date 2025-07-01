@@ -1,6 +1,5 @@
 use crate::{
   newtypes::{DbUrl, InstanceId, MultiCommunityId, PersonId},
-  sensitive::SensitiveString,
   source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};

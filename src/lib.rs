@@ -13,13 +13,11 @@ use lemmy_api::sitemap::get_sitemap;
 use lemmy_api_utils::{
   context::FastJobContext,
   request::client_builder,
-  send_activity::{ActivityChannel, MATCH_OUTGOING_ACTIVITIES},
   utils::local_site_rate_limit_to_rate_limit_config,
 };
 
 use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
 use lemmy_db_schema_file::schema_setup;
-use lemmy_db_views_site::SiteView;
 use lemmy_routes::{
   feeds,
   middleware::{
@@ -29,14 +27,12 @@ use lemmy_routes::{
   nodeinfo,
   utils::{
     cors_config,
-    prometheus_metrics::{new_prometheus_metrics, serve_prometheus},
-    scheduled_tasks,
+    prometheus_metrics::{new_prometheus_metrics, serve_prometheus}, 
     setup_local_site::setup_local_site,
-  },
-  webfinger,
+  }
 };
 use lemmy_utils::{
-  error::{FastJobErrorType, FastJobResult},
+  error::FastJobResult,
   rate_limit::RateLimit,
   response::jsonify_plain_text_errors,
   settings::{structs::Settings, SETTINGS},
@@ -46,7 +42,7 @@ use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use std::{ops::Deref, time::Duration};
+use std::time::Duration;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 
@@ -58,8 +54,6 @@ static GLOBAL: MiMalloc = MiMalloc;
 /// processing of incoming activities. This timeout should be slightly longer than the time we
 /// expect a remote server to wait before aborting processing on its own to account for delays from
 /// establishing the HTTP connection and sending the request itself.
-const ACTIVITY_SENDING_TIMEOUT: Duration = Duration::from_secs(125);
-
 #[derive(Parser, Debug)]
 #[command(
   version,
@@ -260,7 +254,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
 }
 
 fn create_http_server(
-  config: FastJobContext,
+  context: FastJobContext,
   settings: Settings,
 ) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
@@ -270,8 +264,7 @@ fn create_http_server(
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
-    let context: FastJobContext = config.clone();
-    let rate_limit = config.rate_limit_cell().clone();
+    let rate_limit = context.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);
     let app = App::new()

@@ -1,6 +1,5 @@
 use crate::{
   newtypes::{CommunityId, DbUrl, InstanceId, PersonId},
-  sensitive::SensitiveString,
   source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};
@@ -12,8 +11,6 @@ use {
   i_love_jesus::CursorKeysModule,
   lemmy_db_schema_file::schema::{community, community_actions},
 };
-use lemmy_db_schema_file::schema::community::self_promotion;
-
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[cfg_attr(

@@ -21,7 +21,7 @@ use lemmy_api_utils::{
 use lemmy_db_schema::{
   source::{
     community::Community,
-    instance::{Instance, InstanceForm},
+    instance::InstanceForm,
     local_user::LocalUser,
     post::{Post, PostUpdateForm},
   },
@@ -34,7 +34,6 @@ use lemmy_db_schema_file::schema::{
   community,
   community_actions,
   federation_blocklist,
-  instance,
   instance_actions,
   person,
   post,
@@ -263,11 +262,6 @@ async fn clear_old_activities(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   Ok(())
 }
 
-async fn delete_old_denied_users(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  LocalUser::delete_old_denied_local_users(pool).await?;
-  info!("Done.");
-  Ok(())
-}
 
 /// overwrite posts and comments 30d after deletion
 async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> FastJobResult<()> {
@@ -417,30 +411,6 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
     ActivityChannel::submit_activity(send_activity, context)?;
     send_webmention(post, &community);
   }
-  Ok(())
-}
-
-/// Updates the instance software and version.
-///
-/// Does so using the /.well-known/nodeinfo protocol described here:
-/// https://github.com/jhass/nodeinfo/blob/main/PROTOCOL.md
-///
-/// TODO: if instance has been dead for a long time, it should be checked less frequently
-async fn update_instance_software(
-  pool: &mut DbPool<'_>,
-  client: &ClientWithMiddleware,
-) -> FastJobResult<()> {
-  info!("Updating instances software and versions...");
-  let mut conn = get_conn(pool).await?;
-
-  let instances = instance::table.get_results::<Instance>(&mut conn).await?;
-
-  for instance in instances {
-    if let Some(form) = build_update_instance_form(&instance.domain, client).await {
-      Instance::update(pool, instance.id, form).await?;
-    }
-  }
-  info!("Finished updating instances software and versions...");
   Ok(())
 }
 

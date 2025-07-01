@@ -386,7 +386,7 @@ pub async fn build_federated_instances(
     let mut blocked = Vec::new();
 
     let all = Instance::read_all_with_fed_state(pool).await?;
-    for (instance, federation_state, is_blocked, is_allowed) in all {
+    for (instance, _federation_state, is_blocked, is_allowed) in all {
       let i = InstanceWithFederationState {
         instance
       };

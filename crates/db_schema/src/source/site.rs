@@ -1,6 +1,5 @@
 use crate::{
   newtypes::{DbUrl, InstanceId, SiteId},
-  sensitive::SensitiveString,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]

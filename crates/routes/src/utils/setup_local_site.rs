@@ -6,7 +6,6 @@ use diesel::{
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use lemmy_api_utils::utils::generate_inbox_url;
 use lemmy_db_schema::{
-  sensitive::SensitiveString,
   source::{
     instance::Instance,
     local_site::{LocalSite, LocalSiteInsertForm},

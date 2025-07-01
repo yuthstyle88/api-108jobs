@@ -8,7 +8,7 @@ ALTER TABLE site
     DROP COLUMN open_registration;
 
 ALTER TABLE site
-    DROP COLUMN enable_nsfw;
+    DROP COLUMN enable_self_promotion;
 
 -- Rebuild the views
 CREATE VIEW site_view AS

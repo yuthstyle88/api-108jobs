@@ -1,3 +1,3 @@
 ALTER TABLE local_site
-    DROP COLUMN disallow_nsfw_content;
+    DROP COLUMN disallow_self_promotion_content;
 

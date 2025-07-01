@@ -1,8 +1,8 @@
--- if site has enable_nsfw, set a default content warning
+-- if site has enable_self_promotion, set a default content warning
 UPDATE
     site
 SET
-    content_warning = CASE WHEN local_site.enable_nsfw THEN
+    content_warning = CASE WHEN local_site.enable_self_promotion THEN
         'NSFW'
     ELSE
         NULL
@@ -16,5 +16,5 @@ WHERE
     AND content_warning IS NOT NULL;
 
 ALTER TABLE local_site
-    DROP enable_nsfw;
+    DROP enable_self_promotion;
 

@@ -6,7 +6,7 @@ ALTER TABLE site
     ADD COLUMN open_registration boolean DEFAULT TRUE NOT NULL;
 
 ALTER TABLE site
-    ADD COLUMN enable_nsfw boolean DEFAULT TRUE NOT NULL;
+    ADD COLUMN enable_self_promotion boolean DEFAULT TRUE NOT NULL;
 
 -- Reload the view
 DROP VIEW site_view;

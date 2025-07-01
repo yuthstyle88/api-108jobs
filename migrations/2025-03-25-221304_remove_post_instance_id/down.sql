@@ -9,7 +9,7 @@ ALTER TABLE post
     ADD COLUMN published_new timestamp with time zone DEFAULT now() NOT NULL,
     ADD COLUMN updated_new timestamp with time zone,
     ADD COLUMN deleted_new boolean DEFAULT FALSE NOT NULL,
-    ADD COLUMN nsfw_new boolean DEFAULT FALSE NOT NULL,
+    ADD COLUMN self_promotion_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN embed_title_new text,
     ADD COLUMN embed_description_new text,
     ADD COLUMN thumbnail_url_new text,
@@ -52,7 +52,7 @@ SET
         published_new,
         updated_new,
         deleted_new,
-        nsfw_new,
+        self_promotion_new,
         embed_title_new,
         embed_description_new,
         thumbnail_url_new,
@@ -88,7 +88,7 @@ SET
         published,
         updated,
         deleted,
-        nsfw,
+        self_promotion,
         embed_title,
         embed_description,
         thumbnail_url,
@@ -126,7 +126,7 @@ ALTER TABLE post
     DROP COLUMN published,
     DROP COLUMN updated,
     DROP COLUMN deleted,
-    DROP COLUMN nsfw,
+    DROP COLUMN self_promotion,
     DROP COLUMN embed_title,
     DROP COLUMN embed_description,
     DROP COLUMN thumbnail_url,
@@ -173,7 +173,7 @@ ALTER TABLE post RENAME COLUMN updated_new TO updated;
 
 ALTER TABLE post RENAME COLUMN deleted_new TO deleted;
 
-ALTER TABLE post RENAME COLUMN nsfw_new TO nsfw;
+ALTER TABLE post RENAME COLUMN self_promotion_new TO self_promotion;
 
 ALTER TABLE post RENAME COLUMN embed_title_new TO embed_title;
 

@@ -1,8 +1,8 @@
 ALTER TABLE community
-    ADD COLUMN nsfw boolean DEFAULT FALSE NOT NULL;
+    ADD COLUMN self_promotion boolean DEFAULT FALSE NOT NULL;
 
 ALTER TABLE post
-    ADD COLUMN nsfw boolean DEFAULT FALSE NOT NULL;
+    ADD COLUMN self_promotion boolean DEFAULT FALSE NOT NULL;
 
 ALTER TABLE user_
     ADD COLUMN self_promotion boolean DEFAULT FALSE NOT NULL;
@@ -119,11 +119,11 @@ with all_post AS (
                 p.community_id = c.id) AS community_deleted,
         (
             SELECT
-                nsfw
+                self_promotion
             FROM
                 community c
             WHERE
-                p.community_id = c.id) AS community_nsfw,
+                p.community_id = c.id) AS community_self_promotion,
         (
             SELECT
                 count(*)

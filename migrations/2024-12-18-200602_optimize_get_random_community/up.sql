@@ -14,7 +14,7 @@ CREATE FUNCTION random_smallint ()
 ALTER TABLE community
     ADD COLUMN random_number smallint NOT NULL DEFAULT random_smallint ();
 
-CREATE INDEX idx_community_random_number ON community (random_number) INCLUDE (local, nsfw)
+CREATE INDEX idx_community_random_number ON community (random_number) INCLUDE (local, self_promotion)
 WHERE
     NOT (deleted OR removed OR visibility = 'Private');
 

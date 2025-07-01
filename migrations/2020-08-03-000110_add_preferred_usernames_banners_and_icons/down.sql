@@ -165,7 +165,7 @@ SELECT
     c."name" AS community_name,
     c.removed AS community_removed,
     c.deleted AS community_deleted,
-    c.nsfw AS community_nsfw,
+    c.self_promotion AS community_self_promotion,
     -- post score data/comment count
     coalesce(ct.comments, 0) AS number_of_comments,
     coalesce(pl.score, 0) AS score,
@@ -313,7 +313,7 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.nsfw,
+    c.self_promotion,
     c.actor_id,
     c.local,
     c.last_refreshed_at,

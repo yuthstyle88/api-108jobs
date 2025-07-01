@@ -159,7 +159,7 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.nsfw,
+    c.self_promotion,
     c.actor_id,
     c.local,
     c.last_refreshed_at,
@@ -385,11 +385,11 @@ SELECT
             p.community_id = c.id) AS community_deleted,
     (
         SELECT
-            nsfw
+            self_promotion
         FROM
             community c
         WHERE
-            p.community_id = c.id) AS community_nsfw,
+            p.community_id = c.id) AS community_self_promotion,
     (
         SELECT
             count(*)

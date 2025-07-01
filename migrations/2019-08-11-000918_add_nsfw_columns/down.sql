@@ -3,10 +3,10 @@ DROP VIEW community_view;
 DROP VIEW post_view;
 
 ALTER TABLE community
-    DROP COLUMN nsfw;
+    DROP COLUMN self_promotion;
 
 ALTER TABLE post
-    DROP COLUMN nsfw;
+    DROP COLUMN self_promotion;
 
 ALTER TABLE user_
     DROP COLUMN self_promotion;

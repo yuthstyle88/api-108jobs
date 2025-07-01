@@ -1,6 +1,6 @@
--- Add the blur_nsfw to the local user table as a setting
+-- Add the blur_self_promotion to the local user table as a setting
 ALTER TABLE local_user
-    ADD COLUMN blur_nsfw boolean NOT NULL DEFAULT TRUE;
+    ADD COLUMN blur_self_promotion boolean NOT NULL DEFAULT TRUE;
 
 -- Add the auto_expand to the local user table as a setting
 ALTER TABLE local_user

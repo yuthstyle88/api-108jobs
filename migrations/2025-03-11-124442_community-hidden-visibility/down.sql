@@ -161,7 +161,7 @@ ALTER TABLE community
 ALTER TABLE community
     ALTER COLUMN visibility SET DEFAULT 'Public';
 
-CREATE INDEX idx_community_random_number ON community (random_number) INCLUDE (local, nsfw)
+CREATE INDEX idx_community_random_number ON community (random_number) INCLUDE (local, self_promotion)
 WHERE
     NOT (deleted OR removed OR visibility = 'Private');
 

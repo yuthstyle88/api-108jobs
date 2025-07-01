@@ -102,7 +102,7 @@ CREATE TABLE local_site (
     site_setup boolean DEFAULT FALSE NOT NULL,
     enable_downvotes boolean DEFAULT TRUE NOT NULL,
     open_registration boolean DEFAULT TRUE NOT NULL,
-    enable_nsfw boolean DEFAULT TRUE NOT NULL,
+    enable_self_promotion boolean DEFAULT TRUE NOT NULL,
     community_creation_admin_only boolean DEFAULT FALSE NOT NULL,
     require_email_verification boolean DEFAULT FALSE NOT NULL,
     require_application boolean DEFAULT TRUE NOT NULL,
@@ -149,13 +149,13 @@ CREATE TABLE local_site_rate_limit (
 );
 
 -- Insert the data into local_site
-INSERT INTO local_site (site_id, site_setup, enable_downvotes, open_registration, enable_nsfw, community_creation_admin_only, require_email_verification, require_application, application_question, private_instance, default_theme, default_post_listing_type, legal_information, hide_modlog_mod_names, application_email_admins, published, updated)
+INSERT INTO local_site (site_id, site_setup, enable_downvotes, open_registration, enable_self_promotion, community_creation_admin_only, require_email_verification, require_application, application_question, private_instance, default_theme, default_post_listing_type, legal_information, hide_modlog_mod_names, application_email_admins, published, updated)
 SELECT
     id,
     TRUE, -- Assume site if setup if there's already a site row
     enable_downvotes,
     open_registration,
-    enable_nsfw,
+    enable_self_promotion,
     community_creation_admin_only,
     require_email_verification,
     require_application,
@@ -188,7 +188,7 @@ LIMIT 1;
 ALTER TABLE site
     DROP COLUMN enable_downvotes,
     DROP COLUMN open_registration,
-    DROP COLUMN enable_nsfw,
+    DROP COLUMN enable_self_promotion,
     DROP COLUMN community_creation_admin_only,
     DROP COLUMN require_email_verification,
     DROP COLUMN require_application,

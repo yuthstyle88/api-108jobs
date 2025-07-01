@@ -26,7 +26,7 @@ ALTER TABLE local_site
     ADD COLUMN comment_upvotes_new public.federation_mode_enum DEFAULT 'All'::public.federation_mode_enum NOT NULL,
     ADD COLUMN comment_downvotes_new public.federation_mode_enum DEFAULT 'All'::public.federation_mode_enum NOT NULL,
     ADD COLUMN default_post_time_range_seconds_new integer,
-    ADD COLUMN disallow_nsfw_content_new boolean DEFAULT FALSE NOT NULL,
+    ADD COLUMN disallow_self_promotion_content_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN users_new bigint DEFAULT 1 NOT NULL,
     ADD COLUMN posts_new bigint DEFAULT 0 NOT NULL,
     ADD COLUMN comments_new bigint DEFAULT 0 NOT NULL,
@@ -61,7 +61,7 @@ SET
         comment_upvotes_new,
         comment_downvotes_new,
         default_post_time_range_seconds_new,
-        disallow_nsfw_content_new,
+        disallow_self_promotion_content_new,
         users_new,
         posts_new,
         comments_new,
@@ -90,7 +90,7 @@ SET
         comment_upvotes,
         comment_downvotes,
         default_post_time_range_seconds,
-        disallow_nsfw_content,
+        disallow_self_promotion_content,
         users,
         posts,
         comments,
@@ -123,7 +123,7 @@ ALTER TABLE local_site
     DROP COLUMN comment_upvotes,
     DROP COLUMN comment_downvotes,
     DROP COLUMN default_post_time_range_seconds,
-    DROP COLUMN disallow_nsfw_content,
+    DROP COLUMN disallow_self_promotion_content,
     DROP COLUMN users,
     DROP COLUMN posts,
     DROP COLUMN comments,
@@ -175,7 +175,7 @@ ALTER TABLE local_site RENAME COLUMN comment_downvotes_new TO comment_downvotes;
 
 ALTER TABLE local_site RENAME COLUMN default_post_time_range_seconds_new TO default_post_time_range_seconds;
 
-ALTER TABLE local_site RENAME COLUMN disallow_nsfw_content_new TO disallow_nsfw_content;
+ALTER TABLE local_site RENAME COLUMN disallow_self_promotion_content_new TO disallow_self_promotion_content;
 
 ALTER TABLE local_site RENAME COLUMN users_new TO users;
 

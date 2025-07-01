@@ -21,7 +21,7 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.nsfw,
+    c.self_promotion,
     c.actor_id,
     c.local,
     c.last_refreshed_at,

@@ -1,10 +1,10 @@
 ALTER TABLE local_site
-    ADD COLUMN enable_nsfw boolean NOT NULL DEFAULT TRUE;
+    ADD COLUMN enable_self_promotion boolean NOT NULL DEFAULT TRUE;
 
 UPDATE
     local_site
 SET
-    enable_nsfw = CASE WHEN site.content_warning IS NULL THEN
+    enable_self_promotion = CASE WHEN site.content_warning IS NULL THEN
         FALSE
     ELSE
         TRUE

@@ -2,7 +2,7 @@
 ALTER TABLE site
     ADD COLUMN enable_downvotes boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN open_registration boolean DEFAULT TRUE NOT NULL,
-    ADD COLUMN enable_nsfw boolean DEFAULT TRUE NOT NULL,
+    ADD COLUMN enable_self_promotion boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN community_creation_admin_only boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN require_email_verification boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN require_application boolean DEFAULT TRUE NOT NULL,
@@ -20,7 +20,7 @@ UPDATE
 SET
     enable_downvotes = ls.enable_downvotes,
     open_registration = ls.open_registration,
-    enable_nsfw = ls.enable_nsfw,
+    enable_self_promotion = ls.enable_self_promotion,
     community_creation_admin_only = ls.community_creation_admin_only,
     require_email_verification = ls.require_email_verification,
     require_application = ls.require_application,
@@ -38,7 +38,7 @@ FROM (
         site_id,
         enable_downvotes,
         open_registration,
-        enable_nsfw,
+        enable_self_promotion,
         community_creation_admin_only,
         require_email_verification,
         require_application,

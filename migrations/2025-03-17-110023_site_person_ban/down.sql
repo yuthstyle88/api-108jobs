@@ -8,8 +8,6 @@ ALTER TABLE person
     ADD COLUMN ap_id_new varchar(255) DEFAULT generate_unique_changeme () NOT NULL,
     ADD COLUMN bio_new text,
     ADD COLUMN local_new boolean NOT NULL DEFAULT TRUE,
-    ADD COLUMN private_key_new text,
-    ADD COLUMN public_key_new text,
     ADD COLUMN last_refreshed_at_new timestamptz DEFAULT now() NOT NULL,
     ADD COLUMN banner_new text,
     ADD COLUMN deleted_new boolean NOT NULL DEFAULT FALSE,
@@ -31,8 +29,6 @@ SET
         ap_id_new,
         bio_new,
         local_new,
-        private_key_new,
-        public_key_new,
         last_refreshed_at_new,
         banner_new,
         deleted_new,
@@ -48,8 +44,6 @@ SET
         ap_id,
         bio,
         local,
-        private_key,
-        public_key,
         last_refreshed_at,
         banner,
         deleted,
@@ -68,8 +62,6 @@ ALTER TABLE person
     DROP COLUMN ap_id,
     DROP COLUMN bio,
     DROP COLUMN local,
-    DROP COLUMN private_key,
-    DROP COLUMN public_key,
     DROP COLUMN last_refreshed_at,
     DROP COLUMN banner,
     DROP COLUMN deleted,
@@ -91,10 +83,6 @@ ALTER TABLE person RENAME COLUMN ap_id_new TO ap_id;
 ALTER TABLE person RENAME COLUMN bio_new TO bio;
 
 ALTER TABLE person RENAME COLUMN local_new TO local;
-
-ALTER TABLE person RENAME COLUMN private_key_new TO private_key;
-
-ALTER TABLE person RENAME COLUMN public_key_new TO public_key;
 
 ALTER TABLE person RENAME COLUMN last_refreshed_at_new TO last_refreshed_at;
 
@@ -119,7 +107,6 @@ ALTER TABLE person RENAME COLUMN comment_count_new TO comment_count;
 ALTER TABLE person RENAME COLUMN comment_score_new TO comment_score;
 
 ALTER TABLE person
-    ALTER public_key SET NOT NULL,
     ALTER instance_id SET NOT NULL,
     ADD CONSTRAINT idx_person_actor_id UNIQUE (ap_id);
 

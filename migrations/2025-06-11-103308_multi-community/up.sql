@@ -8,8 +8,6 @@ CREATE TABLE multi_community (
     local bool NOT NULL DEFAULT TRUE,
     deleted bool NOT NULL DEFAULT FALSE,
     ap_id text UNIQUE NOT NULL DEFAULT generate_unique_changeme (),
-    public_key text NOT NULL,
-    private_key text,
     inbox_url text NOT NULL DEFAULT generate_unique_changeme (),
     last_refreshed_at timestamptz NOT NULL DEFAULT now(),
     following_url text NOT NULL DEFAULT generate_unique_changeme (),
@@ -37,11 +35,9 @@ ALTER TABLE local_site
 -- generate new account with randomized name (max 20 chars) and set it
 -- as local_site.multi_comm_follower
 WITH x AS (
-INSERT INTO person (name, public_key, private_key, instance_id, inbox_url, bot_account)
+INSERT INTO person (name, instance_id, inbox_url, bot_account)
     SELECT
         'multicomm' || substr(gen_random_uuid ()::text, 0, 11),
-        public_key,
-        private_key,
         instance_id,
         inbox_url,
         TRUE

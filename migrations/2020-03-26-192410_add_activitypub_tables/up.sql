@@ -18,8 +18,6 @@ ALTER TABLE user_
     ADD COLUMN actor_id character varying(255) NOT NULL DEFAULT 'http://fake.com', -- This needs to be checked and updated in code, building from the site url if local
     ADD COLUMN bio text, -- not on community, already has description
     ADD COLUMN local boolean NOT NULL DEFAULT TRUE,
-    ADD COLUMN private_key text, -- These need to be generated from code
-    ADD COLUMN public_key text,
     ADD COLUMN last_refreshed_at timestamp NOT NULL DEFAULT now() -- Used to re-fetch federated actor periodically
 ;
 
@@ -27,8 +25,6 @@ ALTER TABLE user_
 ALTER TABLE community
     ADD COLUMN actor_id character varying(255) NOT NULL DEFAULT 'http://fake.com', -- This needs to be checked and updated in code, building from the site url if local
     ADD COLUMN local boolean NOT NULL DEFAULT TRUE,
-    ADD COLUMN private_key text, -- These need to be generated from code
-    ADD COLUMN public_key text,
     ADD COLUMN last_refreshed_at timestamp NOT NULL DEFAULT now() -- Used to re-fetch federated actor periodically
 ;
 

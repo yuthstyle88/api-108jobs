@@ -56,7 +56,6 @@ pub async fn export_data(
     InboxCombinedView::CommentReply(cr) => Comment(cr.comment),
     InboxCombinedView::CommentMention(cm) => Comment(cm.comment),
     InboxCombinedView::PostMention(pm) => Post(pm.post),
-    InboxCombinedView::PrivateMessage(pm) => PrivateMessage(pm.private_message),
   })
   .collect();
 

@@ -3006,7 +3006,6 @@ dependencies = [
  "lemmy_db_views_person_liked_combined",
  "lemmy_db_views_person_saved_combined",
  "lemmy_db_views_post",
- "lemmy_db_views_private_message",
  "lemmy_db_views_registration_applications",
  "lemmy_db_views_report_combined",
  "lemmy_db_views_reports",
@@ -3039,7 +3038,6 @@ dependencies = [
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",
- "lemmy_db_views_private_message",
  "lemmy_db_views_registration_applications",
  "lemmy_db_views_search_combined",
  "lemmy_db_views_site",
@@ -3080,7 +3078,6 @@ dependencies = [
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",
- "lemmy_db_views_private_message",
  "lemmy_db_views_site",
  "lemmy_email",
  "lemmy_utils",
@@ -3268,7 +3265,6 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_private_message",
  "lemmy_utils",
  "pretty_assertions",
  "serde",
@@ -3437,19 +3433,6 @@ dependencies = [
  "tracing",
  "ts-rs",
  "url",
-]
-
-[[package]]
-name = "lemmy_db_views_private_message"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "ts-rs",
 ]
 
 [[package]]
@@ -3640,7 +3623,6 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_site",
  "lemmy_routes",
  "lemmy_utils",
  "mimalloc",

@@ -423,16 +423,6 @@ fn create_reply_and_mention_items(
           context.settings(),
         )
       }
-      InboxCombinedView::PrivateMessage(v) => {
-        let inbox_url = format!("{}/inbox", context.settings().get_protocol_and_hostname());
-        build_item(
-          &v.creator,
-          &v.private_message.published_at,
-          &inbox_url,
-          &v.private_message.content,
-          context.settings(),
-        )
-      }
     })
     .collect::<FastJobResult<Vec<Item>>>()?;
 

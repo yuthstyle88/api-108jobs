@@ -69,12 +69,9 @@ use lemmy_api::{
     save::save_post,
     update_notifications::update_post_notifications,
   },
-  private_message::mark_read::mark_pm_as_read,
   reports::{
     comment_report::{create::create_comment_report, resolve::resolve_comment_report},
     community_report::{create::create_community_report, resolve::resolve_community_report},
-    post_report::{create::create_post_report, resolve::resolve_post_report},
-    private_message_report::{create::create_pm_report, resolve::resolve_pm_report},
     report_combined::list::list_reports,
   },
   site::{
@@ -139,11 +136,6 @@ use lemmy_api_crud::{
     read::get_post,
     remove::remove_post,
     update::update_post,
-  },
-  private_message::{
-    create::create_private_message,
-    delete::delete_private_message,
-    update::update_private_message,
   },
   site::{create::create_site, read::get_site, update::update_site},
   tagline::{
@@ -280,8 +272,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/like", post().to(like_post))
           .route("/like/list", get().to(list_post_likes))
           .route("/save", put().to(save_post))
-          .route("/report", post().to(create_post_report))
-          .route("/report/resolve", put().to(resolve_post_report))
           .route(
             "/disable_notifications",
             post().to(update_post_notifications),
@@ -308,16 +298,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/save", put().to(save_comment))
           .route("/report", post().to(create_comment_report))
           .route("/report/resolve", put().to(resolve_comment_report)),
-      )
-      // Private Message
-      .service(
-        scope("/private_message")
-          .route("", post().to(create_private_message))
-          .route("", put().to(update_private_message))
-          .route("/delete", post().to(delete_private_message))
-          .route("/mark_as_read", post().to(mark_pm_as_read))
-          .route("/report", post().to(create_pm_report))
-          .route("/report/resolve", put().to(resolve_pm_report)),
       )
       // Reports
       .service(

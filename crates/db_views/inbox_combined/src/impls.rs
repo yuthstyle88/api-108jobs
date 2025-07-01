@@ -55,7 +55,6 @@ use lemmy_db_schema_file::schema::{
   post,
   private_message,
 };
-use lemmy_db_views_private_message::PrivateMessageView;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl InboxCombinedViewInternal {
@@ -199,7 +198,6 @@ impl PaginationCursorBuilder for InboxCombinedView {
       InboxCombinedView::CommentReply(v) => ('R', v.comment_reply.id.0),
       InboxCombinedView::CommentMention(v) => ('C', v.person_comment_mention.id.0),
       InboxCombinedView::PostMention(v) => ('P', v.person_post_mention.id.0),
-      InboxCombinedView::PrivateMessage(v) => ('M', v.private_message.id.0),
     };
     PaginationCursor::new_single(prefix, id)
   }
@@ -431,12 +429,6 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
         creator_banned: v.creator_banned,
         creator_banned_from_community: v.creator_banned_from_community,
         creator_is_moderator: v.creator_is_moderator,
-      }))
-    } else if let Some(private_message) = v.private_message {
-      Some(InboxCombinedView::PrivateMessage(PrivateMessageView {
-        private_message,
-        creator: v.item_creator,
-        recipient: v.item_recipient,
       }))
     } else {
       None

@@ -16,7 +16,6 @@ use lemmy_db_schema::{
   },
   InboxDataType,
 };
-use lemmy_db_views_private_message::PrivateMessageView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -128,7 +127,6 @@ pub enum InboxCombinedView {
   CommentReply(CommentReplyView),
   CommentMention(PersonCommentMentionView),
   PostMention(PersonPostMentionView),
-  PrivateMessage(PrivateMessageView),
 }
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

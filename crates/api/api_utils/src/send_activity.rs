@@ -15,7 +15,6 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_community::api::BanFromCommunity;
 use lemmy_db_views_post::api::DeletePost;
-use lemmy_db_views_private_message::PrivateMessageView;
 use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
 use actix_web::web::Data;
@@ -96,8 +95,6 @@ pub enum SendActivityData {
     ban: bool,
     expires_at: Option<i64>,
   },
-  CreatePrivateMessage(PrivateMessageView),
-  UpdatePrivateMessage(PrivateMessageView),
   DeletePrivateMessage(Person, PrivateMessage, bool),
   DeleteUser(Person, bool),
   CreateReport {

@@ -7,7 +7,6 @@ pub mod custom_emoji;
 pub mod multi_community;
 pub mod oauth_provider;
 pub mod post;
-pub mod private_message;
 pub mod site;
 pub mod tagline;
 pub mod user;

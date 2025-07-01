@@ -579,8 +579,6 @@ mod tests {
 
   // These helped with testing
   #[tokio::test]
-  
-  #[test]
   fn test_resolve_image_url() -> FastJobResult<()> {
     // url that lists the opengraph fields
     let url = Url::parse("https://example.com/one/two.html")?;

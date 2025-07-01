@@ -36,6 +36,8 @@ codegen-units = 1 # Reduce parallel code generation.
 # out temporarily, but make sure to leave this in the main branch.
 [profile.dev]
 debug = 2
+lto = false
+incremental = true
 
 [features]
 default = []

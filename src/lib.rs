@@ -42,7 +42,6 @@ use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use std::time::Duration;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 

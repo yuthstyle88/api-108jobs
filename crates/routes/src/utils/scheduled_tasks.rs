@@ -1,4 +1,3 @@
-use crate::nodeinfo::{NodeInfo, NodeInfoWellKnown};
 use chrono::{DateTime, TimeZone, Utc};
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};
 use diesel::{
@@ -21,28 +20,19 @@ use lemmy_api_utils::{
 use lemmy_db_schema::{
   source::{
     community::Community,
-    instance::InstanceForm,
-    local_user::LocalUser,
     post::{Post, PostUpdateForm},
   },
   traits::Crud,
-  utils::{functions::coalesce, get_conn, now, uplete, DbPool, DELETED_REPLACEMENT_TEXT},
+  utils::{functions::coalesce, get_conn, now, uplete, DbPool},
 };
 use lemmy_db_schema_file::schema::{
   captcha_answer,
-  comment,
   community,
   community_actions,
-  federation_blocklist,
-  instance_actions,
   person,
   post,
-  received_activity,
-  sent_activity,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use reqwest_middleware::ClientWithMiddleware;
 use std::time::Duration;
 use actix_web::web::Data;
 use tracing::{info, warn};
@@ -86,10 +76,6 @@ pub async fn setup(context: Data<FastJobContext>) -> FastJobResult<()> {
       update_banned_when_expired(&mut context.pool())
         .await
         .inspect_err(|e| warn!("Failed to update expired bans: {e}"))
-        .ok();
-      delete_instance_block_when_expired(&mut context.pool())
-        .await
-        .inspect_err(|e| warn!("Failed to delete expired instance bans: {e}"))
         .ok();
     }
   });
@@ -241,60 +227,6 @@ async fn delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> FastJobResult<
   Ok(())
 }
 
-/// Clear old activities (this table gets very large)
-async fn clear_old_activities(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  info!("Clearing old activities...");
-  let mut conn = get_conn(pool).await?;
-
-  diesel::delete(
-    sent_activity::table.filter(sent_activity::published_at.lt(now() - IntervalDsl::days(7))),
-  )
-  .execute(&mut conn)
-  .await?;
-
-  diesel::delete(
-    received_activity::table
-      .filter(received_activity::published_at.lt(now() - IntervalDsl::days(7))),
-  )
-  .execute(&mut conn)
-  .await?;
-  info!("Done.");
-  Ok(())
-}
-
-
-/// overwrite posts and comments 30d after deletion
-async fn overwrite_deleted_posts_and_comments(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  info!("Overwriting deleted posts...");
-  let mut conn = get_conn(pool).await?;
-
-  diesel::update(
-    post::table
-      .filter(post::deleted.eq(true))
-      .filter(post::updated_at.lt(now().nullable() - 1.months()))
-      .filter(post::body.ne(DELETED_REPLACEMENT_TEXT)),
-  )
-  .set((
-    post::body.eq(DELETED_REPLACEMENT_TEXT),
-    post::name.eq(DELETED_REPLACEMENT_TEXT),
-  ))
-  .execute(&mut conn)
-  .await?;
-
-  info!("Overwriting deleted comments...");
-  diesel::update(
-    comment::table
-      .filter(comment::deleted.eq(true))
-      .filter(comment::updated_at.lt(now().nullable() - 1.months()))
-      .filter(comment::content.ne(DELETED_REPLACEMENT_TEXT)),
-  )
-  .set(comment::content.eq(DELETED_REPLACEMENT_TEXT))
-  .execute(&mut conn)
-  .await?;
-  info!("Done.");
-  Ok(())
-}
-
 /// Re-calculate the site and community active counts every 12 hours
 async fn active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   info!("Updating active site and community aggregates ...");
@@ -341,44 +273,20 @@ async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> FastJobResult<()> 
   .as_query()
   .execute(&mut conn)
   .await?;
-
-  uplete::new(
-    instance_actions::table.filter(instance_actions::ban_expires_at.lt(now().nullable())),
-  )
-  .set_null(instance_actions::received_ban_at)
-  .set_null(instance_actions::ban_expires_at)
-  .as_query()
-  .execute(&mut conn)
-  .await?;
+  
   Ok(())
 }
 
 /// Set banned to false after ban expires
-async fn delete_instance_block_when_expired(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  info!("Delete instance blocks when expired ...");
-  let mut conn = get_conn(pool).await?;
-
-  diesel::delete(
-    federation_blocklist::table.filter(federation_blocklist::expires_at.lt(now().nullable())),
-  )
-  .execute(&mut conn)
-  .await?;
-  Ok(())
-}
-
 /// Find all unpublished posts with scheduled date in the future, and publish them.
 async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResult<()> {
   let pool = &mut context.pool();
-  let local_instance_id = SiteView::read_local(pool).await?.instance.id;
   let mut conn = get_conn(pool).await?;
 
   let not_community_banned_action = community_actions::table
     .find((person::id, community::id))
     .filter(community_actions::received_ban_at.is_not_null());
-
-  let not_local_banned_action = instance_actions::table
-    .find((person::id, local_instance_id))
-    .filter(instance_actions::received_ban_at.is_not_null());
+  
 
   let scheduled_posts: Vec<_> = post::table
     .inner_join(community::table)
@@ -393,7 +301,6 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
     // ensure that user isnt banned from community
     .filter(not(exists(not_community_banned_action)))
     // ensure that user isnt banned from local
-    .filter(not(exists(not_local_banned_action)))
     .select((post::all_columns, community::all_columns))
     .get_results::<(Post, Community)>(&mut conn)
     .await?;
@@ -412,105 +319,4 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
     send_webmention(post, &community);
   }
   Ok(())
-}
-
-/// This builds an instance update form, for a given domain.
-/// If the instance sends a response, but doesn't have a well-known or nodeinfo,
-/// Then return a default form with only the updated field.
-async fn build_update_instance_form(
-  domain: &str,
-  client: &ClientWithMiddleware,
-) -> Option<InstanceForm> {
-  // The `updated` column is used to check if instances are alive. If it is more than three
-  // days in the past, no outgoing activities will be sent to that instance. However
-  // not every Fediverse instance has a valid Nodeinfo endpoint (its not required for
-  // Activitypub). That's why we always need to mark instances as updated if they are
-  // alive.
-  let mut instance_form = InstanceForm {
-    updated_at: Some(Utc::now()),
-    ..InstanceForm::new(domain.to_string())
-  };
-
-  // First, fetch their /.well-known/nodeinfo, then extract the correct nodeinfo link from it
-  let well_known_url = format!("https://{}/.well-known/nodeinfo", domain);
-
-  let Ok(res) = client.get(&well_known_url).send().await else {
-    // This is the only kind of error that means the instance is dead
-    return None;
-  };
-  let status = res.status();
-  if status.is_client_error() || status.is_server_error() {
-    return None;
-  }
-
-  // In this block, returning `None` is ignored, and only means not writing nodeinfo to db
-  async {
-    let node_info_url = res
-      .json::<NodeInfoWellKnown>()
-      .await
-      .ok()?
-      .links
-      .into_iter()
-      .find(|links| {
-        links
-          .rel
-          .as_str()
-          .starts_with("http://nodeinfo.diaspora.software/ns/schema/2.")
-      })?
-      .href;
-
-    let software = client
-      .get(node_info_url)
-      .send()
-      .await
-      .ok()?
-      .json::<NodeInfo>()
-      .await
-      .ok()?
-      .software?;
-
-    instance_form.software = software.name;
-    instance_form.version = software.version;
-
-    Some(())
-  }
-  .await;
-
-  Some(instance_form)
-}
-
-#[cfg(test)]
-mod tests {
-
-  use super::*;
-  use lemmy_api_utils::request::client_builder;
-  use lemmy_db_schema::test_data::TestData;
-  use lemmy_utils::{
-    error::{FastJobErrorType, FastJobResult},
-    settings::structs::Settings,
-  };
-  use pretty_assertions::assert_eq;
-  use reqwest_middleware::ClientBuilder;
-  use serial_test::serial;
-
-  #[tokio::test]
-  async fn test_nodeinfo_lemmy_ml() -> FastJobResult<()> {
-    let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
-    let form = build_update_instance_form("lemmy.ml", &client)
-      .await
-      .ok_or(FastJobErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(FastJobErrorType::NotFound)?, "lemmy");
-    Ok(())
-  }
-
-  #[tokio::test]
-  async fn test_nodeinfo_mastodon_social() -> FastJobResult<()> {
-    let client = ClientBuilder::new(client_builder(&Settings::default()).build()?).build();
-    let form = build_update_instance_form("mastodon.social", &client)
-      .await
-      .ok_or(FastJobErrorType::NotFound)?;
-    assert_eq!(form.software.ok_or(FastJobErrorType::NotFound)?, "mastodon");
-    Ok(())
-  }
-  
 }

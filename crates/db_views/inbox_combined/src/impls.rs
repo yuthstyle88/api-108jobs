@@ -10,7 +10,6 @@ use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
   JoinOnDsl,
-  NullableExpressionMethods,
   QueryDsl,
   SelectableHelper,
 };
@@ -232,7 +231,6 @@ impl InboxCombinedQuery {
   ) -> FastJobResult<Vec<InboxCombinedView>> {
     let conn = &mut get_conn(pool).await?;
 
-    let item_creator = person::id;
     let recipient_person = aliases::person1.field(person::id);
 
     let mut query = InboxCombinedViewInternal::joins(my_person_id, local_instance_id)

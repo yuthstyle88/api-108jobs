@@ -11,7 +11,6 @@ use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
   JoinOnDsl,
-  NullableExpressionMethods,
   PgExpressionMethods,
   QueryDsl,
   SelectableHelper,
@@ -48,7 +47,6 @@ impl ReportCombinedViewInternal {
   fn joins(my_person_id: PersonId) -> _ {
     let report_creator = person::id;
     let item_creator = aliases::person1.field(person::id);
-    let resolver = aliases::person2.field(person::id).nullable();
 
     let comment_join = comment::table.on(comment_report::comment_id.eq(comment::id));
      let post_join = post::table.on(

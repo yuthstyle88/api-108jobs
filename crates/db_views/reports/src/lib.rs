@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
+  diesel::{Queryable, Selectable},
   lemmy_db_schema::{
     utils::queries::{
       comment_creator_is_admin,

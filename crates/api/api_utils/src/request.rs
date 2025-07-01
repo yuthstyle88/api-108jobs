@@ -569,12 +569,10 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Fast
 mod tests {
 
   use crate::{
-    context::FastJobContext,
     request::{extract_opengraph_data, fetch_link_metadata},
   };
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
-  use serial_test::serial;
   use url::Url;
 
   // These helped with testing

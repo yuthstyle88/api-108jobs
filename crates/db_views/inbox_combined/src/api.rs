@@ -2,7 +2,6 @@ use lemmy_db_schema::newtypes::{
   CommentReplyId,
   PersonCommentMentionId,
   PersonPostMentionId,
-  PrivateMessageId,
 };
 use serde::{Deserialize, Serialize};
 

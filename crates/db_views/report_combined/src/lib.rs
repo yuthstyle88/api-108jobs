@@ -20,7 +20,6 @@ use {
   lemmy_db_schema::{
     utils::queries::{local_user_is_admin, person1_select, },
     Person1AliasAllColumnsTuple,
-    Person2AliasAllColumnsTuple,
   },
   lemmy_db_views_local_user::LocalUserView,
 };

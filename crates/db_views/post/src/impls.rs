@@ -46,6 +46,7 @@ use lemmy_db_schema_file::{
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::utils::validation::is_valid_post_title;
 use tracing::debug;
+#[cfg(feature = "full")]
 use url::Url;
 
 impl PaginationCursorBuilder for PostView {
@@ -534,19 +535,16 @@ impl PostQuery<'_> {
 
 impl TryFrom<CreatePostRequest> for CreatePost {
   type Error = FastJobError;
+
   fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
     is_valid_post_title(&data.name)?;
 
     if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| {
-        Err(FastJobErrorType::InvalidUrl)?
-      })?;
+      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
 
     if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| {
-        Err(FastJobErrorType::InvalidUrl)?
-      })?;
+      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
 
     Ok(CreatePost {
@@ -564,6 +562,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
     })
   }
 }
+
 
 #[allow(clippy::indexing_slicing)]
 #[expect(clippy::expect_used)]

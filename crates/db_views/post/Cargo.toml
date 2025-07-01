@@ -25,6 +25,7 @@ full = [
   "lemmy_db_schema_file/full",
   "lemmy_db_views_community/full",
   "lemmy_db_views_vote/full",
+  "url",
 ]
 ts-rs = [
   "dep:ts-rs",
@@ -48,6 +49,7 @@ ts-rs = { workspace = true, optional = true }
 i-love-jesus = { workspace = true, optional = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
+url = { workspace = true, optional = true }
 
 [dev-dependencies]
 lemmy_db_views_local_user = { workspace = true }

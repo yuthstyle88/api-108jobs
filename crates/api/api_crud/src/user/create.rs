@@ -10,7 +10,6 @@ use lemmy_api_utils::{
     check_registration_application,
     generate_inbox_url,
     honeypot_check,
-    password_length_check,
     slur_regex,
   },
 };

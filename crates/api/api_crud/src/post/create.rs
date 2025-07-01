@@ -10,13 +10,8 @@ use lemmy_api_utils::{
   send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{
-    check_community_user_action,
-    check_nsfw_allowed,
-    get_url_blocklist,
-    honeypot_check,
-    process_markdown_opt,
-    send_webmention,
-    slur_regex,
+    check_community_user_action, check_nsfw_allowed, get_url_blocklist, honeypot_check,
+    process_markdown_opt, send_webmention, slur_regex,
   },
 };
 use lemmy_db_schema::{
@@ -28,27 +23,22 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{CreatePost, PostResponse};
+use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::FastJobResult,
   utils::{
     slurs::check_slurs,
-    validation::{
-      is_url_blocked,
-      is_valid_alt_text_field,
-      is_valid_body_field,
-      is_valid_post_title,
-      is_valid_url,
-    },
+    validation::{is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_url},
   },
 };
 
 pub async fn create_post(
-  data: Json<CreatePost>,
+  data: Json<CreatePostRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
+  let data: CreatePost = data.into_inner().try_into()?;
   honeypot_check(&data.honeypot)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
@@ -60,8 +50,6 @@ pub async fn create_post(
   let url = diesel_url_create(data.url.as_deref())?;
   let custom_thumbnail = diesel_url_create(data.custom_thumbnail.as_deref())?;
   check_nsfw_allowed(data.nsfw, Some(&local_site))?;
-
-  is_valid_post_title(&data.name)?;
 
   if let Some(url) = &url {
     is_url_blocked(url, &url_blocklist)?;

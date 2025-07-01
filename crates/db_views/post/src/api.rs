@@ -42,6 +42,28 @@ pub struct CreatePost {
   pub scheduled_publish_time_at: Option<i64>,
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Create a post.
+pub struct CreatePostRequest {
+  pub name: String,
+  pub community_id: CommunityId,
+  /// Portfolio url
+  pub url: Option<String>,
+  /// An optional body for the post in markdown.
+  pub body: Option<String>,
+  /// An optional alt_text, usable for image posts.
+  pub alt_text: Option<String>,
+  /// A honeypot to catch bots. Should be None.
+  pub honeypot: Option<String>,
+  pub nsfw: Option<bool>,
+  pub language_id: Option<LanguageId>,
+  /// Instead of fetching a thumbnail, use a custom one.
+  pub custom_thumbnail: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

@@ -1,17 +1,12 @@
+use crate::api::{CreatePost, CreatePostRequest};
 use crate::PostView;
 use diesel::{
-  self,
-  debug_query,
+  self, debug_query,
   dsl::{exists, not},
   pg::Pg,
   query_builder::AsQuery,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  PgTextExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-  TextExpressionMethods,
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, PgTextExpressionMethods,
+  QueryDsl, SelectableHelper, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
@@ -27,51 +22,30 @@ use lemmy_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join,
-      creator_community_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      filter_blocked,
-      filter_is_subscribed,
-      filter_not_unlisted_or_is_subscribed,
-      image_details_join,
-      my_community_actions_join,
-      my_instance_actions_community_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
-      suggested_communities,
+      creator_community_actions_join, creator_community_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join, filter_blocked,
+      filter_is_subscribed, filter_not_unlisted_or_is_subscribed, image_details_join,
+      my_community_actions_join, my_instance_actions_community_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join, suggested_communities,
     },
-    seconds_to_pg_interval,
-    Commented,
-    DbPool,
+    seconds_to_pg_interval, Commented, DbPool,
   },
 };
 use lemmy_db_schema_file::{
   enums::{
-    CommunityFollowerState,
-    CommunityVisibility,
-    ListingType,
+    CommunityFollowerState, CommunityVisibility, ListingType,
     PostSortType::{self, *},
   },
   schema::{
-    community,
-    community_actions,
-    local_user_language,
-    multi_community_entry,
-    person,
-    post,
+    community, community_actions, local_user_language, multi_community_entry, person, post,
     post_actions,
   },
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::utils::validation::is_valid_post_title;
 use tracing::debug;
-
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
   fn to_cursor(&self) -> PaginationCursor {
@@ -556,6 +530,27 @@ impl PostQuery<'_> {
   }
 }
 
+impl TryFrom<CreatePostRequest> for CreatePost {
+  type Error = FastJobError;
+  fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
+    is_valid_post_title(&data.name)?;
+
+    Ok(CreatePost {
+      name: data.name,
+      community_id: data.community_id,
+      url: data.url,
+      body: data.body,
+      alt_text: data.alt_text,
+      language_id: data.language_id,
+      custom_thumbnail: data.custom_thumbnail,
+      honeypot: None,
+      nsfw: None,
+      tags: None,
+      scheduled_publish_time_at: None,
+    })
+  }
+}
+
 #[allow(clippy::indexing_slicing)]
 #[expect(clippy::expect_used)]
 #[cfg(test)]
@@ -573,14 +568,8 @@ mod tests {
       actor_language::LocalUserLanguage,
       comment::{Comment, CommentInsertForm},
       community::{
-        Community,
-        CommunityActions,
-        CommunityBlockForm,
-        CommunityFollowerForm,
-        CommunityInsertForm,
-        CommunityModeratorForm,
-        CommunityPersonBanForm,
-        CommunityUpdateForm,
+        Community, CommunityActions, CommunityBlockForm, CommunityFollowerForm,
+        CommunityInsertForm, CommunityModeratorForm, CommunityPersonBanForm, CommunityUpdateForm,
       },
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
@@ -590,13 +579,7 @@ mod tests {
       multi_community::{MultiCommunity, MultiCommunityInsertForm},
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
       post::{
-        Post,
-        PostActions,
-        PostHideForm,
-        PostInsertForm,
-        PostLikeForm,
-        PostReadForm,
-        PostUpdateForm,
+        Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadForm, PostUpdateForm,
       },
       post_tag::{PostTag, PostTagForm},
       site::Site,

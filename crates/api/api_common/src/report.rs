@@ -1,5 +1,5 @@
 pub use lemmy_db_schema::{
-  newtypes::{CommentReportId, CommunityReportId, PostReportId, PrivateMessageReportId},
+  newtypes::{CommentReportId, CommunityReportId, PostReportId},
   source::{
     comment_report::CommentReport,
     community_report::CommunityReport,

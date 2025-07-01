@@ -18,44 +18,6 @@ DROP VIEW comment_fast_view;
 DROP TABLE comment_aggregates_fast;
 
 -- Re-adding all the triggers, functions, and mviews
--- private message
-CREATE MATERIALIZED VIEW private_message_mview AS
-SELECT
-    *
-FROM
-    private_message_view;
-
-CREATE UNIQUE INDEX idx_private_message_mview_id ON private_message_mview (id);
-
--- Create the triggers
-CREATE OR REPLACE FUNCTION refresh_private_message ()
-    RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY private_message_mview;
-    RETURN NULL;
-END
-$$;
-
-CREATE TRIGGER refresh_private_message
-    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON private_message
-    FOR EACH statement
-    EXECUTE PROCEDURE refresh_private_message ();
-
--- user
-CREATE OR REPLACE FUNCTION refresh_user ()
-    RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY user_mview;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY comment_aggregates_mview;
-    -- cause of bans
-    REFRESH MATERIALIZED VIEW CONCURRENTLY post_aggregates_mview;
-    RETURN NULL;
-END
-$$;
 
 DROP TRIGGER refresh_user ON user_;
 

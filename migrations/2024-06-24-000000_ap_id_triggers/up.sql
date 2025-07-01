@@ -4,6 +4,4 @@ ALTER TABLE comment
 ALTER TABLE post
     ALTER COLUMN ap_id DROP DEFAULT;
 
-ALTER TABLE private_message
-    ALTER COLUMN ap_id DROP DEFAULT;
 

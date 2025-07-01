@@ -27,8 +27,6 @@ DROP VIEW community_fast_view;
 
 DROP TABLE community_aggregates_fast;
 
-DROP VIEW private_message_view;
-
 DROP VIEW user_mention_view;
 
 DROP VIEW reply_fast_view;
@@ -453,23 +451,6 @@ SELECT
     NULL AS subscribed
 FROM
     community_aggregates_fast caf;
-
--- Private message
-CREATE VIEW private_message_view AS
-SELECT
-    pm.*,
-    u.name AS creator_name,
-    u.avatar AS creator_avatar,
-    u.actor_id AS creator_actor_id,
-    u.local AS creator_local,
-    u2.name AS recipient_name,
-    u2.avatar AS recipient_avatar,
-    u2.actor_id AS recipient_actor_id,
-    u2.local AS recipient_local
-FROM
-    private_message pm
-    INNER JOIN user_ u ON u.id = pm.creator_id
-    INNER JOIN user_ u2 ON u2.id = pm.recipient_id;
 
 -- Comments, mentions, replies
 CREATE VIEW comment_aggregates_view AS

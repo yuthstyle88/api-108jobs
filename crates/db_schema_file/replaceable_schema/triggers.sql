@@ -396,25 +396,8 @@ CREATE TRIGGER change_values
     BEFORE INSERT ON post
     FOR EACH ROW
     EXECUTE FUNCTION r.post_change_values ();
-CREATE FUNCTION r.private_message_change_values ()
-    RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    -- Set local ap_id
-    IF NEW.local THEN
-        NEW.ap_id = coalesce(NEW.ap_id, r.local_url ('/private_message/' || NEW.id::text));
-    END IF;
-    RETURN NEW;
-END
-$$;
-CREATE TRIGGER change_values
-    BEFORE INSERT ON private_message
-    FOR EACH ROW
-    EXECUTE FUNCTION r.private_message_change_values ();
 -- Combined tables triggers
 -- These insert (published_at, item_id) into X_combined tables
--- Reports (comment_report, post_report, private_message_report)
 CREATE PROCEDURE r.create_report_combined_trigger (table_name text)
 LANGUAGE plpgsql
 AS $a$
@@ -439,7 +422,6 @@ END;
 $a$;
 CALL r.create_report_combined_trigger ('post_report');
 CALL r.create_report_combined_trigger ('comment_report');
-CALL r.create_report_combined_trigger ('private_message_report');
 CALL r.create_report_combined_trigger ('community_report');
 -- person_content (comment, post)
 CREATE PROCEDURE r.create_person_content_combined_trigger (table_name text)
@@ -655,7 +637,6 @@ $a$;
 CALL r.create_inbox_combined_trigger ('comment_reply');
 CALL r.create_inbox_combined_trigger ('person_comment_mention');
 CALL r.create_inbox_combined_trigger ('person_post_mention');
-CALL r.create_inbox_combined_trigger ('private_message');
 -- Prevent using delete instead of uplete on action tables
 CREATE FUNCTION r.require_uplete ()
     RETURNS TRIGGER

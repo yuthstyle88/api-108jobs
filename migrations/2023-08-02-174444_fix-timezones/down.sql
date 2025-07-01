@@ -120,14 +120,6 @@ ALTER TABLE password_reset_request
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE private_message
-    ALTER COLUMN published TYPE timestamp
-    USING published;
-
-ALTER TABLE private_message
-    ALTER COLUMN updated TYPE timestamp
-    USING updated;
-
 ALTER TABLE sent_activity
     ALTER COLUMN published TYPE timestamp
     USING published;
@@ -255,14 +247,6 @@ ALTER TABLE comment_reply
 ALTER TABLE person_post_aggregates
     ALTER COLUMN published TYPE timestamp
     USING published;
-
-ALTER TABLE private_message_report
-    ALTER COLUMN published TYPE timestamp
-    USING published;
-
-ALTER TABLE private_message_report
-    ALTER COLUMN updated TYPE timestamp
-    USING updated;
 
 ALTER TABLE local_site
     ALTER COLUMN published TYPE timestamp

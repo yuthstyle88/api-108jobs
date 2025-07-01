@@ -107,26 +107,6 @@ FROM
 ALTER TABLE user_fast
     ADD PRIMARY KEY (id);
 
--- private message
-DROP VIEW private_message_view;
-
-CREATE VIEW private_message_view AS
-SELECT
-    pm.*,
-    u.name AS creator_name,
-    u.preferred_username AS creator_preferred_username,
-    u.avatar AS creator_avatar,
-    u.actor_id AS creator_actor_id,
-    u.local AS creator_local,
-    u2.name AS recipient_name,
-    u2.preferred_username AS recipient_preferred_username,
-    u2.avatar AS recipient_avatar,
-    u2.actor_id AS recipient_actor_id,
-    u2.local AS recipient_local
-FROM
-    private_message pm
-    INNER JOIN user_ u ON u.id = pm.creator_id
-    INNER JOIN user_ u2 ON u2.id = pm.recipient_id;
 
 -- Post fast
 DROP VIEW post_fast_view;

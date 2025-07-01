@@ -180,14 +180,6 @@ ALTER TABLE post_report RENAME COLUMN updated_at TO updated;
 
 ALTER TABLE post_tag RENAME COLUMN published_at TO published;
 
-ALTER TABLE private_message RENAME COLUMN published_at TO published;
-
-ALTER TABLE private_message RENAME COLUMN updated_at TO updated;
-
-ALTER TABLE private_message_report RENAME COLUMN published_at TO published;
-
-ALTER TABLE private_message_report RENAME COLUMN updated_at TO updated;
-
 ALTER TABLE received_activity RENAME COLUMN published_at TO published;
 
 ALTER TABLE registration_application RENAME COLUMN published_at TO published;

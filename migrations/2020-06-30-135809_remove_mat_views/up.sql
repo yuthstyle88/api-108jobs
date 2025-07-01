@@ -5,7 +5,6 @@ DROP MATERIALIZED VIEW user_mview;
 
 DROP VIEW community_mview;
 
-DROP MATERIALIZED VIEW private_message_mview;
 
 DROP VIEW user_mention_mview;
 
@@ -18,8 +17,6 @@ DROP MATERIALIZED VIEW post_aggregates_mview;
 DROP MATERIALIZED VIEW community_aggregates_mview;
 
 DROP MATERIALIZED VIEW comment_aggregates_mview;
-
-DROP TRIGGER refresh_private_message ON private_message;
 
 -- User
 DROP VIEW user_view;

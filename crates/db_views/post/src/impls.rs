@@ -539,15 +539,11 @@ impl TryFrom<CreatePostRequest> for CreatePost {
     is_valid_post_title(&data.name)?;
 
     if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| {
-        Err(FastJobErrorType::InvalidUrl)?
-      })?;
+      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
 
     if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| {
-        Err(FastJobErrorType::InvalidUrl)?
-      })?;
+      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
 
     Ok(CreatePost {

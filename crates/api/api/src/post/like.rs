@@ -4,10 +4,9 @@ use lemmy_api_utils::{
   context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_bot_account, check_community_user_action, check_local_vote_mode},
+  utils::{check_bot_account, check_community_user_action},
 };
 use lemmy_db_schema::{
-  newtypes::PostOrCommentId,
   source::{
     person::PersonActions,
     post::{PostActions, PostLikeForm, PostReadForm},
@@ -19,7 +18,6 @@ use lemmy_db_views_post::{
   api::{CreatePostLike, PostResponse},
   PostView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
 
@@ -28,19 +26,10 @@ pub async fn like_post(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let post_id = data.post_id;
   let my_person_id = local_user_view.person.id;
 
-  check_local_vote_mode(
-    data.score,
-    PostOrCommentId::Post(post_id),
-    &local_site,
-    my_person_id,
-    &mut context.pool(),
-  )
-  .await?;
   check_bot_account(&local_user_view.person)?;
 
   // Check for a community ban

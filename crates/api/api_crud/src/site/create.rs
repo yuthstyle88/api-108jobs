@@ -93,14 +93,9 @@ pub async fn create_site(
     updated_at: Some(Some(Utc::now())),
     slur_filter_regex: diesel_string_update(data.slur_filter_regex.as_deref()),
     actor_name_max_length: data.actor_name_max_length,
-    federation_enabled: data.federation_enabled,
     captcha_enabled: data.captcha_enabled,
     captcha_difficulty: data.captcha_difficulty.clone(),
     default_post_listing_mode: data.default_post_listing_mode,
-    post_upvotes: data.post_upvotes,
-    post_downvotes: data.post_downvotes,
-    comment_upvotes: data.comment_upvotes,
-    comment_downvotes: data.comment_downvotes,
     disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
     suggested_communities: data.suggested_communities,
@@ -197,7 +192,6 @@ mod tests {
         &LocalSite {
           site_setup: true,
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -213,7 +207,6 @@ mod tests {
           site_setup: false,
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -229,7 +222,6 @@ mod tests {
           site_setup: false,
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -245,7 +237,6 @@ mod tests {
         &LocalSite {
           site_setup: false,
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -261,7 +252,6 @@ mod tests {
         &LocalSite {
           site_setup: false,
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -311,7 +301,6 @@ mod tests {
         &LocalSite {
           site_setup: false,
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -325,7 +314,6 @@ mod tests {
         &LocalSite {
           site_setup: false,
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -349,7 +337,6 @@ mod tests {
           site_setup: false,
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -365,7 +352,6 @@ mod tests {
           site_setup: false,
           application_question: Some(String::from("question")),
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },

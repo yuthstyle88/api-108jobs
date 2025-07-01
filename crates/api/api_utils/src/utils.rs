@@ -8,12 +8,12 @@ use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use enum_map::{enum_map, EnumMap};
 use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId, PostOrCommentId},
+  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
   source::{
     comment::{Comment, CommentActions},
     community::{Community, CommunityActions, CommunityUpdateForm},
     images::{ImageDetails, RemoteImage},
-    instance::{Instance, InstanceActions},
+    instance::InstanceActions,
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -32,7 +32,7 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable, ReadComments},
   utils::DbPool,
 };
-use lemmy_db_schema_file::enums::{FederationMode, RegistrationMode};
+use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_community_person_ban::CommunityPersonBanView;
@@ -40,7 +40,6 @@ use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_site::{
-  api::{FederatedInstances, InstanceWithFederationState},
   SiteView,
 };
 use lemmy_utils::{
@@ -319,33 +318,6 @@ pub fn check_comment_deleted_or_removed(comment: &Comment) -> FastJobResult<()> 
   }
 }
 
-pub async fn check_local_vote_mode(
-  score: i16,
-  post_or_comment_id: PostOrCommentId,
-  local_site: &LocalSite,
-  person_id: PersonId,
-  pool: &mut DbPool<'_>,
-) -> FastJobResult<()> {
-  let (downvote_setting, upvote_setting) = match post_or_comment_id {
-    PostOrCommentId::Post(_) => (local_site.post_downvotes, local_site.post_upvotes),
-    PostOrCommentId::Comment(_) => (local_site.comment_downvotes, local_site.comment_upvotes),
-  };
-
-  let downvote_fail = score == -1 && downvote_setting == FederationMode::Disable;
-  let upvote_fail = score == 1 && upvote_setting == FederationMode::Disable;
-
-  // Undo previous vote for item if new vote fails
-  if downvote_fail || upvote_fail {
-    match post_or_comment_id {
-      PostOrCommentId::Post(post_id) => PostActions::remove_like(pool, person_id, post_id).await?,
-      PostOrCommentId::Comment(comment_id) => {
-        CommentActions::remove_like(pool, person_id, comment_id).await?
-      }
-    };
-  }
-  Ok(())
-}
-
 /// Dont allow bots to do certain actions, like voting
 pub fn check_bot_account(person: &Person) -> FastJobResult<()> {
   if person.bot_account {
@@ -363,44 +335,6 @@ pub fn check_private_instance(
     Err(FastJobErrorType::InstanceIsPrivate)?
   } else {
     Ok(())
-  }
-}
-
-
-pub async fn build_federated_instances(
-  local_site: &LocalSite,
-  pool: &mut DbPool<'_>,
-) -> FastJobResult<Option<FederatedInstances>> {
-  if local_site.federation_enabled {
-    let mut linked = Vec::new();
-    let mut allowed = Vec::new();
-    let mut blocked = Vec::new();
-
-    let all = Instance::read_all_with_fed_state(pool).await?;
-    for (instance, _federation_state, is_blocked, is_allowed) in all {
-      let i = InstanceWithFederationState {
-        instance
-      };
-      if is_blocked {
-        // blocked instances will only have an entry here if they had been federated with in the
-        // past.
-        blocked.push(i);
-      } else if is_allowed {
-        allowed.push(i.clone());
-        linked.push(i);
-      } else {
-        // not explicitly allowed but implicitly linked
-        linked.push(i);
-      }
-    }
-
-    Ok(Some(FederatedInstances {
-      linked,
-      allowed,
-      blocked,
-    }))
-  } else {
-    Ok(None)
   }
 }
 

@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::{
-    federation_allowlist::{FederationAllowList, FederationAllowListForm},
     instance::Instance,
     mod_log::admin::{AdminAllowInstance, AdminAllowInstanceForm},
   },
@@ -10,7 +9,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{AdminAllowInstanceParams, SuccessResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::FastJobResult;
 
 pub async fn admin_allow_instance(
   data: Json<AdminAllowInstanceParams>,
@@ -19,23 +18,9 @@ pub async fn admin_allow_instance(
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
 
-  let blocklist = Instance::blocklist(&mut context.pool()).await?;
-  if !blocklist.is_empty() {
-    Err(FastJobErrorType::CannotCombineFederationBlocklistAndAllowlist)?;
-  }
-
   let instance_id = Instance::read_or_create(&mut context.pool(), data.instance.clone())
     .await?
     .id;
-  let form = FederationAllowListForm {
-    instance_id,
-    updated_at: None,
-  };
-  if data.allow {
-    FederationAllowList::allow(&mut context.pool(), &form).await?;
-  } else {
-    FederationAllowList::unallow(&mut context.pool(), instance_id).await?;
-  }
 
   let mod_log_form = AdminAllowInstanceForm {
     instance_id,

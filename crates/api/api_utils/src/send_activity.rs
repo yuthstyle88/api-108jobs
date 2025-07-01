@@ -94,7 +94,6 @@ pub enum SendActivityData {
     ban: bool,
     expires_at: Option<i64>,
   },
-  DeletePrivateMessage(Person, bool),
   DeleteUser(Person, bool),
   CreateReport {
     object_id: Url,

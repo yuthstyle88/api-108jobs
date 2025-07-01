@@ -278,19 +278,6 @@ impl Community {
     }
     Ok(Url::parse(&format!("{}/tag/{}", self.ap_id, &id_slug))?.into())
   }
-
-  pub async fn update_federated_followers(
-    pool: &mut DbPool<'_>,
-    for_community_id: CommunityId,
-    new_subscribers: i64,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    diesel::update(community::table.find(for_community_id))
-      .set(community::dsl::subscribers.eq(new_subscribers))
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateCommunity)
-  }
 }
 
 impl CommunityActions {

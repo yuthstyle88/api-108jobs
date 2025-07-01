@@ -2,7 +2,6 @@ use crate::newtypes::{LocalSiteId, MultiCommunityId, PersonId, SiteId};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::{
   CommentSortType,
-  FederationMode,
   ListingType,
   PostListingMode,
   PostSortType,
@@ -46,8 +45,6 @@ pub struct LocalSite {
   pub slur_filter_regex: Option<String>,
   /// The max actor name length.
   pub actor_name_max_length: i32,
-  /// Whether federation is enabled.
-  pub federation_enabled: bool,
   /// Whether captcha is enabled.
   pub captcha_enabled: bool,
   /// The captcha difficulty.
@@ -57,9 +54,6 @@ pub struct LocalSite {
   pub registration_mode: RegistrationMode,
   /// Whether to email admins on new reports.
   pub reports_email_admins: bool,
-  /// Whether to sign outgoing Activitypub fetches with private key of local instance. Some
-  /// Fediverse instances and platforms require this.
-  pub federation_signed_fetch: bool,
   /// Default value for [LocalSite.post_listing_mode]
   pub default_post_listing_mode: PostListingMode,
   /// Default value for [LocalUser.post_sort_type]
@@ -68,14 +62,6 @@ pub struct LocalSite {
   pub default_comment_sort_type: CommentSortType,
   /// Whether or not external auth methods can auto-register users.
   pub oauth_registration: bool,
-  /// What kind of post upvotes your site allows.
-  pub post_upvotes: FederationMode,
-  /// What kind of post downvotes your site allows.
-  pub post_downvotes: FederationMode,
-  /// What kind of comment upvotes your site allows.
-  pub comment_upvotes: FederationMode,
-  /// What kind of comment downvotes your site allows.
-  pub comment_downvotes: FederationMode,
   /// A default time range limit to apply to post sorts, in seconds.
   pub default_post_time_range_seconds: Option<i32>,
   /// Block NSFW content being created
@@ -126,8 +112,6 @@ pub struct LocalSiteInsertForm {
   #[new(default)]
   pub actor_name_max_length: Option<i32>,
   #[new(default)]
-  pub federation_enabled: Option<bool>,
-  #[new(default)]
   pub captcha_enabled: Option<bool>,
   #[new(default)]
   pub captcha_difficulty: Option<String>,
@@ -136,8 +120,6 @@ pub struct LocalSiteInsertForm {
   #[new(default)]
   pub reports_email_admins: Option<bool>,
   #[new(default)]
-  pub federation_signed_fetch: Option<bool>,
-  #[new(default)]
   pub default_post_listing_mode: Option<PostListingMode>,
   #[new(default)]
   pub default_post_sort_type: Option<PostSortType>,
@@ -145,14 +127,6 @@ pub struct LocalSiteInsertForm {
   pub default_comment_sort_type: Option<CommentSortType>,
   #[new(default)]
   pub oauth_registration: Option<bool>,
-  #[new(default)]
-  pub post_upvotes: Option<FederationMode>,
-  #[new(default)]
-  pub post_downvotes: Option<FederationMode>,
-  #[new(default)]
-  pub comment_upvotes: Option<FederationMode>,
-  #[new(default)]
-  pub comment_downvotes: Option<FederationMode>,
   #[new(default)]
   pub default_post_time_range_seconds: Option<i32>,
   #[new(default)]
@@ -180,21 +154,15 @@ pub struct LocalSiteUpdateForm {
   pub application_email_admins: Option<bool>,
   pub slur_filter_regex: Option<Option<String>>,
   pub actor_name_max_length: Option<i32>,
-  pub federation_enabled: Option<bool>,
   pub captcha_enabled: Option<bool>,
   pub captcha_difficulty: Option<String>,
   pub registration_mode: Option<RegistrationMode>,
   pub reports_email_admins: Option<bool>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
-  pub federation_signed_fetch: Option<bool>,
   pub default_post_listing_mode: Option<PostListingMode>,
   pub default_post_sort_type: Option<PostSortType>,
   pub default_comment_sort_type: Option<CommentSortType>,
   pub oauth_registration: Option<bool>,
-  pub post_upvotes: Option<FederationMode>,
-  pub post_downvotes: Option<FederationMode>,
-  pub comment_upvotes: Option<FederationMode>,
-  pub comment_downvotes: Option<FederationMode>,
   pub default_post_time_range_seconds: Option<Option<i32>>,
   pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,

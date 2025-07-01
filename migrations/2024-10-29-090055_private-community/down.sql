@@ -47,6 +47,4 @@ DROP TYPE community_follower_state;
 ALTER TABLE community_follower
     DROP COLUMN approver_id;
 
-ALTER TABLE ONLY local_site
-    ALTER COLUMN federation_signed_fetch SET DEFAULT FALSE;
 

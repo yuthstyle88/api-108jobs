@@ -38,11 +38,5 @@ ALTER TABLE community_follower
     ADD COLUMN approver_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- Enable signed fetch, necessary to fetch content in private communities
-ALTER TABLE ONLY local_site
-    ALTER COLUMN federation_signed_fetch SET DEFAULT TRUE;
 
-UPDATE
-    local_site
-SET
-    federation_signed_fetch = TRUE;
 

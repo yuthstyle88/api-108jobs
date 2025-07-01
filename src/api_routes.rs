@@ -78,7 +78,6 @@ use lemmy_api::{
     admin_allow_instance::admin_allow_instance,
     admin_block_instance::admin_block_instance,
     admin_list_users::admin_list_users,
-    federated_instances::get_federated_instances,
     leave_admin::leave_admin,
     list_all_media::list_all_media,
     mod_log::get_mod_log,
@@ -244,7 +243,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/list", get().to(list_multi_communities))
           .route("/follow", post().to(follow_multi_community)),
       )
-      .route("/federated_instances", get().to(get_federated_instances))
       // Post
       .service(
         resource("/post")

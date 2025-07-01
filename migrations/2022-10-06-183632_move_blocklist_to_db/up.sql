@@ -78,20 +78,6 @@ ALTER TABLE person
 ALTER TABLE community
     ALTER COLUMN instance_id SET NOT NULL;
 
--- Create allowlist and blocklist tables
-CREATE TABLE federation_allowlist (
-    id serial PRIMARY KEY,
-    instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL UNIQUE,
-    published timestamp NOT NULL DEFAULT now(),
-    updated timestamp NULL
-);
-
-CREATE TABLE federation_blocklist (
-    id serial PRIMARY KEY,
-    instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL UNIQUE,
-    published timestamp NOT NULL DEFAULT now(),
-    updated timestamp NULL
-);
 
 -- Move all the extra site settings-type columns to a local_site table
 -- Add a lot of other fields currently in the lemmy.hjson
@@ -116,11 +102,6 @@ CREATE TABLE local_site (
     -- Fields from lemmy.hjson
     slur_filter_regex text,
     actor_name_max_length int DEFAULT 20 NOT NULL,
-    federation_enabled boolean DEFAULT TRUE NOT NULL,
-    federation_debug boolean DEFAULT FALSE NOT NULL,
-    federation_strict_allowlist boolean DEFAULT TRUE NOT NULL,
-    federation_http_fetch_retry_limit int DEFAULT 25 NOT NULL,
-    federation_worker_count int DEFAULT 64 NOT NULL,
     captcha_enabled boolean DEFAULT FALSE NOT NULL,
     captcha_difficulty varchar(255) DEFAULT 'medium' NOT NULL,
     -- Time fields

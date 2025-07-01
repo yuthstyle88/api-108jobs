@@ -36,7 +36,6 @@ ALTER TABLE post
     ADD COLUMN scaled_rank_new double precision DEFAULT 0.0001 NOT NULL,
     ADD COLUMN report_count_new smallint DEFAULT 0 NOT NULL,
     ADD COLUMN unresolved_report_count_new smallint DEFAULT 0 NOT NULL,
-    ADD COLUMN federation_pending_new boolean DEFAULT FALSE NOT NULL;
 
 UPDATE
     post
@@ -76,8 +75,7 @@ SET
         controversy_rank_new,
         scaled_rank_new,
         report_count_new,
-        unresolved_report_count_new,
-        federation_pending_new) = (0,
+        unresolved_report_count_new) = (0,
         name,
         url,
         body,
@@ -112,8 +110,7 @@ SET
         controversy_rank,
         scaled_rank,
         report_count,
-        unresolved_report_count,
-        federation_pending);
+        unresolved_report_count);
 
 ALTER TABLE post
     DROP COLUMN name,
@@ -150,8 +147,7 @@ ALTER TABLE post
     DROP COLUMN controversy_rank,
     DROP COLUMN scaled_rank,
     DROP COLUMN report_count,
-    DROP COLUMN unresolved_report_count,
-    DROP COLUMN federation_pending;
+    DROP COLUMN unresolved_report_count;
 
 ALTER TABLE post RENAME COLUMN name_new TO name;
 
@@ -222,8 +218,6 @@ ALTER TABLE post RENAME COLUMN scaled_rank_new TO scaled_rank;
 ALTER TABLE post RENAME COLUMN report_count_new TO report_count;
 
 ALTER TABLE post RENAME COLUMN unresolved_report_count_new TO unresolved_report_count;
-
-ALTER TABLE post RENAME COLUMN federation_pending_new TO federation_pending;
 
 -- Update the historical instance_id rows
 UPDATE

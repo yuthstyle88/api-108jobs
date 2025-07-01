@@ -26,7 +26,6 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::{
   CommentSortType,
-  FederationMode,
   ListingType,
   PostListingMode,
   PostSortType,
@@ -148,10 +147,6 @@ pub struct CreateSite {
   pub registration_mode: Option<RegistrationMode>,
   pub oauth_registration: Option<bool>,
   pub content_warning: Option<String>,
-  pub post_upvotes: Option<FederationMode>,
-  pub post_downvotes: Option<FederationMode>,
-  pub comment_upvotes: Option<FederationMode>,
-  pub comment_downvotes: Option<FederationMode>,
   pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
   pub suggested_communities: Option<MultiCommunityId>,
@@ -264,13 +259,6 @@ pub struct EditSite {
   /// Whether or not external auth methods can auto-register users.
   pub oauth_registration: Option<bool>,
   /// What kind of post upvotes your site allows.
-  pub post_upvotes: Option<FederationMode>,
-  /// What kind of post downvotes your site allows.
-  pub post_downvotes: Option<FederationMode>,
-  /// What kind of comment upvotes your site allows.
-  pub comment_upvotes: Option<FederationMode>,
-  /// What kind of comment downvotes your site allows.
-  pub comment_downvotes: Option<FederationMode>,
   /// Block NSFW content being created
   pub disallow_self_promotion_content: Option<bool>,
   /// Dont send email notifications to users for new replies, mentions etc

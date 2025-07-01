@@ -18,10 +18,6 @@ pub mod sql_types {
   pub struct CommunityVisibility;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "federation_mode_enum"))]
-  pub struct FederationModeEnum;
-
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "listing_type_enum"))]
   pub struct ListingTypeEnum;
 
@@ -146,7 +142,6 @@ diesel::table! {
         controversy_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
-        federation_pending -> Bool,
     }
 }
 
@@ -312,33 +307,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    federation_allowlist (instance_id) {
-        instance_id -> Int4,
-        published_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    federation_blocklist (instance_id) {
-        instance_id -> Int4,
-        published_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        expires_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    federation_queue_state (instance_id) {
-        instance_id -> Int4,
-        last_successful_id -> Nullable<Int8>,
-        fail_count -> Int4,
-        last_retry_at -> Nullable<Timestamptz>,
-        last_successful_published_time_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
     image_details (link) {
         link -> Text,
         width -> Int4,
@@ -408,7 +376,6 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::PostSortTypeEnum;
     use super::sql_types::CommentSortTypeEnum;
-    use super::sql_types::FederationModeEnum;
 
     local_site (id) {
         id -> Int4,
@@ -424,7 +391,6 @@ diesel::table! {
         application_email_admins -> Bool,
         slur_filter_regex -> Nullable<Text>,
         actor_name_max_length -> Int4,
-        federation_enabled -> Bool,
         captcha_enabled -> Bool,
         #[max_length = 255]
         captcha_difficulty -> Varchar,
@@ -432,15 +398,10 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
         registration_mode -> RegistrationModeEnum,
         reports_email_admins -> Bool,
-        federation_signed_fetch -> Bool,
         default_post_listing_mode -> PostListingModeEnum,
         default_post_sort_type -> PostSortTypeEnum,
         default_comment_sort_type -> CommentSortTypeEnum,
         oauth_registration -> Bool,
-        post_upvotes -> FederationModeEnum,
-        post_downvotes -> FederationModeEnum,
-        comment_upvotes -> FederationModeEnum,
-        comment_downvotes -> FederationModeEnum,
         default_post_time_range_seconds -> Nullable<Int4>,
         disallow_self_promotion_content -> Bool,
         users -> Int8,
@@ -925,7 +886,6 @@ diesel::table! {
         scaled_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
-        federation_pending -> Bool,
     }
 }
 
@@ -1130,9 +1090,6 @@ diesel::joinable!(community_language -> language (language_id));
 diesel::joinable!(community_report -> community (community_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
-diesel::joinable!(federation_allowlist -> instance (instance_id));
-diesel::joinable!(federation_blocklist -> instance (instance_id));
-diesel::joinable!(federation_queue_state -> instance (instance_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
@@ -1246,9 +1203,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   custom_emoji,
   custom_emoji_keyword,
   email_verification,
-  federation_allowlist,
-  federation_blocklist,
-  federation_queue_state,
   image_details,
   inbox_combined,
   instance,

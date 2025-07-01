@@ -226,17 +226,6 @@ impl Comment {
     Ok(Url::parse(&format!("{domain}/comment/{}", self.id))?)
   }
 
-  /// The comment was created locally and sent back, indicating that the community accepted it
-  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    if self.local && self.federation_pending {
-      let form = CommentUpdateForm {
-        federation_pending: Some(false),
-        ..Default::default()
-      };
-      Comment::update(pool, self.id, &form).await?;
-    }
-    Ok(())
-  }
 }
 
 impl Crud for Comment {
@@ -452,7 +441,6 @@ mod tests {
       hot_rank: RANK_DEFAULT,
       report_count: 0,
       unresolved_report_count: 0,
-      federation_pending: false,
     };
 
     let child_comment_form = CommentInsertForm::new(

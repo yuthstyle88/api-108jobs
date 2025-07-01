@@ -70,9 +70,5 @@ DROP TABLE local_site_rate_limit;
 
 DROP TABLE local_site;
 
-DROP TABLE federation_allowlist;
-
-DROP TABLE federation_blocklist;
-
 DROP TABLE instance;
 

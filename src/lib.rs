@@ -80,22 +80,6 @@ pub struct CmdArgs {
   /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for details.
   #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_ACTIVITY_SENDING")]
   disable_activity_sending: bool,
-  /// The index of this outgoing federation process.
-  ///
-  /// Defaults to 1/1. If you want to split the federation workload onto n servers, run each server
-  /// 1≤i≤n with these args: --federate-process-index i --federate-process-count n
-  ///
-  /// Make you have exactly one server with each `i` running, otherwise federation will randomly
-  /// send duplicates or nothing.
-  ///
-  /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for more detail.
-  #[arg(long, default_value_t = 1, env = "LEMMY_FEDERATE_PROCESS_INDEX")]
-  federate_process_index: i32,
-  /// How many outgoing federation processes you are starting in total.
-  ///
-  /// If set, make sure to set --federate-process-index differently for each.
-  #[arg(long, default_value_t = 1, env = "LEMMY_FEDERATE_PROCESS_COUNT")]
-  federate_process_count: i32,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
 }
@@ -163,11 +147,6 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
 
   // Make sure the local site is set up.
   let site_view = setup_local_site(&mut (&pool).into(), &SETTINGS).await?;
-  let federation_enabled = site_view.local_site.federation_enabled;
-
-  if federation_enabled {
-    println!("Federation enabled, host is {}", &SETTINGS.hostname);
-  }
 
   // Set up the rate limiter
   let rate_limit_config =

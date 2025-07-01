@@ -62,22 +62,7 @@ ALTER TABLE custom_emoji_keyword
     ADD UNIQUE (custom_emoji_id, keyword),
     DROP CONSTRAINT custom_emoji_keyword_pkey,
     ADD COLUMN id serial PRIMARY KEY;
-
-ALTER TABLE federation_allowlist
-    ADD UNIQUE (instance_id),
-    DROP CONSTRAINT federation_allowlist_pkey,
-    ADD COLUMN id serial PRIMARY KEY;
-
-ALTER TABLE federation_blocklist
-    ADD UNIQUE (instance_id),
-    DROP CONSTRAINT federation_blocklist_pkey,
-    ADD COLUMN id serial PRIMARY KEY;
-
-ALTER TABLE federation_queue_state
-    ADD UNIQUE (instance_id),
-    DROP CONSTRAINT federation_queue_state_pkey,
-    ADD COLUMN id serial PRIMARY KEY;
-
+         
 ALTER TABLE image_upload
     ADD UNIQUE (pictrs_alias),
     DROP CONSTRAINT image_upload_pkey,

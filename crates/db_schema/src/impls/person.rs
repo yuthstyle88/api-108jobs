@@ -76,7 +76,6 @@ impl Crud for Person {
 impl Person {
   /// Update or insert the person.
   ///
-  /// This is necessary for federation, because Activitypub doesn't distinguish between these
   /// actions.
   pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;

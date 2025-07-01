@@ -1,5 +1,4 @@
 use super::convert_published_time;
-use crate::community_use_pending;
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
@@ -110,7 +109,6 @@ pub async fn create_post(
     alt_text: data.alt_text.clone(),
     self_promotion,
     language_id: Some(language_id),
-    federation_pending: Some(community_use_pending(community, &context).await),
     scheduled_publish_time_at,
     ..PostInsertForm::new(
       data.name.trim().to_string(),

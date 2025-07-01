@@ -103,16 +103,11 @@ pub async fn update_site(
     updated_at: Some(Some(Utc::now())),
     slur_filter_regex: diesel_string_update(data.slur_filter_regex.as_deref()),
     actor_name_max_length: data.actor_name_max_length,
-    federation_enabled: data.federation_enabled,
     captcha_enabled: data.captcha_enabled,
     captcha_difficulty: data.captcha_difficulty.clone(),
     reports_email_admins: data.reports_email_admins,
     default_post_listing_mode: data.default_post_listing_mode,
     oauth_registration: data.oauth_registration,
-    post_upvotes: data.post_upvotes,
-    post_downvotes: data.post_downvotes,
-    comment_upvotes: data.comment_upvotes,
-    comment_downvotes: data.comment_downvotes,
     disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
     suggested_communities: data.suggested_communities,
@@ -242,7 +237,6 @@ mod tests {
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -257,7 +251,6 @@ mod tests {
         &LocalSite {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -272,7 +265,6 @@ mod tests {
         FastJobErrorType::InvalidDefaultPostListingType,
         &LocalSite {
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -287,7 +279,6 @@ mod tests {
         FastJobErrorType::ApplicationQuestionRequired,
         &LocalSite {
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -333,7 +324,6 @@ mod tests {
         "No changes between LocalSite and EditSite",
         &LocalSite {
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -343,7 +333,6 @@ mod tests {
         "EditSite allows clearing and changing values",
         &LocalSite {
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
@@ -367,7 +356,6 @@ mod tests {
           private_instance: true,
           slur_filter_regex: Some(String::from("(foo|bar)")),
           registration_mode: RegistrationMode::Open,
-          federation_enabled: false,
           ..Default::default()
         },
         &EditSite {
@@ -381,7 +369,6 @@ mod tests {
         &LocalSite {
           application_question: Some(String::from("question")),
           private_instance: true,
-          federation_enabled: false,
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },

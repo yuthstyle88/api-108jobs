@@ -25,12 +25,11 @@ use crate::{
     SITEMAP_LIMIT,
   },
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use diesel::{
   dsl::{count, insert_into, not, update},
   expression::SelectableHelper,
   BoolExpressionMethods,
-  DecoratableTarget,
   ExpressionMethods,
   JoinOnDsl,
   NullableExpressionMethods,
@@ -84,23 +83,6 @@ impl Post {
       .first(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  pub async fn insert_apub(
-    pool: &mut DbPool<'_>,
-    timestamp: DateTime<Utc>,
-    form: &PostInsertForm,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(post::table)
-      .values(form)
-      .on_conflict(post::ap_id)
-      .filter_target(coalesce(post::updated_at, post::published_at).lt(timestamp))
-      .do_update()
-      .set(form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
   pub async fn list_featured_for_community(
@@ -328,18 +310,6 @@ impl Post {
   pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/post/{}", self.id))?)
-  }
-
-  /// The comment was created locally and sent back, indicating that the community accepted it
-  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    if self.local && self.federation_pending {
-      let form = PostUpdateForm {
-        federation_pending: Some(false),
-        ..Default::default()
-      };
-      Post::update(pool, self.id, &form).await?;
-    }
-    Ok(())
   }
 }
 
@@ -697,7 +667,6 @@ mod tests {
       report_count: 0,
       scaled_rank: RANK_DEFAULT,
       unresolved_report_count: 0,
-      federation_pending: false,
     };
 
     // Post Like

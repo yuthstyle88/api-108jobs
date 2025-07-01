@@ -260,22 +260,6 @@ ALTER TABLE local_site
     ALTER COLUMN updated TYPE timestamptz
     USING updated;
 
-ALTER TABLE federation_allowlist
-    ALTER COLUMN published TYPE timestamptz
-    USING published;
-
-ALTER TABLE federation_allowlist
-    ALTER COLUMN updated TYPE timestamptz
-    USING updated;
-
-ALTER TABLE federation_blocklist
-    ALTER COLUMN published TYPE timestamptz
-    USING published;
-
-ALTER TABLE federation_blocklist
-    ALTER COLUMN updated TYPE timestamptz
-    USING updated;
-
 ALTER TABLE local_site_rate_limit
     ALTER COLUMN published TYPE timestamptz
     USING published;

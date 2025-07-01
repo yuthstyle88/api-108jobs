@@ -75,19 +75,6 @@ pub struct LocalUserId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The private message id.
-pub struct PrivateMessageId(pub i32);
-
-impl fmt::Display for PrivateMessageId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The person comment mention id.
 pub struct PersonCommentMentionId(pub i32);
 
@@ -118,13 +105,6 @@ pub struct CommunityReportId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post report id.
 pub struct PostReportId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The private message report id.
-pub struct PrivateMessageReportId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]

@@ -52,20 +52,6 @@ ALTER TABLE custom_emoji RENAME COLUMN updated_at TO updated;
 
 ALTER TABLE email_verification RENAME COLUMN published_at TO published;
 
-ALTER TABLE federation_allowlist RENAME COLUMN published_at TO published;
-
-ALTER TABLE federation_allowlist RENAME COLUMN updated_at TO updated;
-
-ALTER TABLE federation_blocklist RENAME COLUMN published_at TO published;
-
-ALTER TABLE federation_blocklist RENAME COLUMN updated_at TO updated;
-
-ALTER TABLE federation_blocklist RENAME COLUMN expires_at TO expires;
-
-ALTER TABLE federation_queue_state RENAME COLUMN last_retry_at TO last_retry;
-
-ALTER TABLE federation_queue_state RENAME COLUMN last_successful_published_time_at TO last_successful_published_time;
-
 ALTER TABLE inbox_combined RENAME COLUMN published_at TO published;
 
 ALTER TABLE instance RENAME COLUMN published_at TO published;

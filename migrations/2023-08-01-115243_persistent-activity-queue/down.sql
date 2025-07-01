@@ -7,7 +7,6 @@ ALTER TABLE sent_activity
 
 DROP TYPE actor_type_enum;
 
-DROP TABLE federation_queue_state;
 
 DROP INDEX idx_community_follower_published;
 

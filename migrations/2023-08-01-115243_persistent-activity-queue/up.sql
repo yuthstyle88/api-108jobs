@@ -19,13 +19,6 @@ ALTER TABLE sent_activity
     ALTER COLUMN actor_type DROP DEFAULT,
     ALTER COLUMN actor_apub_id DROP DEFAULT;
 
-CREATE TABLE federation_queue_state (
-    id serial PRIMARY KEY,
-    instance_id integer NOT NULL UNIQUE REFERENCES instance (id),
-    last_successful_id bigint NOT NULL,
-    fail_count integer NOT NULL,
-    last_retry timestamptz NOT NULL
-);
 
 -- for incremental fetches of followers
 CREATE INDEX idx_community_follower_published ON community_follower (published);

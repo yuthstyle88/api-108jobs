@@ -1,6 +1,3 @@
-ALTER TABLE federation_blocklist
-    ADD COLUMN expires timestamptz;
-
 CREATE TABLE admin_block_instance (
     id serial PRIMARY KEY,
     instance_id int NOT NULL REFERENCES instance (id) ON UPDATE CASCADE ON DELETE CASCADE,

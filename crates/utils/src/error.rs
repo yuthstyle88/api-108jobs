@@ -153,10 +153,6 @@ pub enum FastJobErrorType {
   PostScheduleTimeMustBeInFuture,
   TooManyScheduledPosts,
   CannotCombineFederationBlocklistAndAllowlist,
-  FederationError {
-    #[cfg_attr(feature = "ts-rs", ts(optional))]
-    error: Option<FederationError>,
-  },
   CouldntParsePaginationToken,
   PluginError(String),
   InvalidFetchLimit,
@@ -195,37 +191,6 @@ pub enum FastJobErrorType {
   MultiCommunityUpdateWrongUser,
   CannotCombineCommunityIdAndMultiCommunityId,
   MultiCommunityEntryLimitReached,
-}
-
-/// Federation related errors, these dont need to be translated.
-#[derive(Display, Debug, Serialize, Deserialize, Clone, PartialEq, Eq, EnumIter, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[non_exhaustive]
-pub enum FederationError {
-  InvalidCommunity,
-  CannotCreatePostOrCommentInDeletedOrRemovedCommunity,
-  CannotReceivePage,
-  OnlyLocalAdminCanRemoveCommunity,
-  OnlyLocalAdminCanRestoreCommunity,
-  PostIsLocked,
-  PersonIsBannedFromSite(String),
-  InvalidVoteValue,
-  PageDoesNotSpecifyCreator,
-  CouldntGetComments,
-  CouldntGetPosts,
-  FederationDisabled,
-  DomainBlocked(String),
-  DomainNotInAllowList(String),
-  FederationDisabledByStrictAllowList,
-  ContradictingFilters,
-  UrlWithoutDomain,
-  InboxTimeout,
-  CantDeleteSite,
-  ObjectIsNotPublic,
-  ObjectIsNotPrivate,
-  PlatformLackingPrivateCommunitySupport,
-  Unreachable,
 }
 
 cfg_if! {
@@ -304,22 +269,6 @@ cfg_if! {
       }
     }
 
-    impl From<FederationError> for FastJobError {
-      fn from(error_type: FederationError) -> Self {
-        let inner = anyhow::anyhow!("{}", error_type);
-        FastJobError {
-          error_type: FastJobErrorType::FederationError { error: Some(error_type) },
-          inner,
-          context: Backtrace::capture(),
-        }
-      }
-    }
-
-    impl From<FederationError> for FastJobErrorType {
-      fn from(error: FederationError) -> Self {
-        FastJobErrorType::FederationError { error: Some(error) }
-      }
-    }
 
     pub trait FastJobErrorExt<T, E: Into<anyhow::Error>> {
       fn with_fastjob_type(self, error_type: FastJobErrorType) -> FastJobResult<T>;

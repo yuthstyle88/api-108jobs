@@ -8,9 +8,9 @@ import {
   randomString,
   createPost,
 } from "./shared";
-import { CreateCommunityTag } from "lemmy-js-client/dist/types/CreateCommunityTag";
-import { UpdateCommunityTag } from "lemmy-js-client/dist/types/UpdateCommunityTag";
-import { DeleteCommunityTag } from "lemmy-js-client/dist/types/DeleteCommunityTag";
+import { CreateCommunityTag } from "../lemmy-js-client/dist/types/CreateCommunityTag";
+import { UpdateCommunityTag } from "../lemmy-js-client/dist/types/UpdateCommunityTag";
+import { DeleteCommunityTag } from "../lemmy-js-client/dist/types/DeleteCommunityTag";
 import { EditPost } from "lemmy-js-client";
 
 beforeAll(setupLogins);

@@ -181,7 +181,6 @@ pub enum FastJobErrorType {
   CouldntInsertActivity,
   CouldntCreateRateLimit,
   CouldntCreateCaptchaAnswer,
-  CouldntUpdateFederationQueueState,
   CouldntCreateOauthAccount,
   CouldntCreatePasswordResetRequest,
   CouldntCreateLoginToken,

@@ -98,7 +98,6 @@ pub async fn create_site(
     default_post_listing_mode: data.default_post_listing_mode,
     disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
-    suggested_communities: data.suggested_communities,
     ..Default::default()
   };
 
@@ -326,7 +325,6 @@ mod tests {
           default_post_listing_type: Some(ListingType::All),
           default_post_sort_type: Some(PostSortType::Active),
           slur_filter_regex: Some(String::new()),
-          federation_enabled: Some(true),
           registration_mode: Some(RegistrationMode::Open),
           ..Default::default()
         },

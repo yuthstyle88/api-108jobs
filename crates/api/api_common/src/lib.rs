@@ -3,7 +3,6 @@ pub mod comment;
 pub mod community;
 pub mod custom_emoji;
 pub mod error;
-pub mod federation;
 pub mod inbox;
 pub mod language;
 pub mod media;

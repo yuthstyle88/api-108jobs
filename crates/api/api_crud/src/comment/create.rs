@@ -5,10 +5,11 @@ use lemmy_api_utils::{
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
-    check_community_user_action, check_post_deleted_or_removed, get_url_blocklist, is_mod_or_admin,
+    check_community_user_action, check_post_deleted_or_removed, is_mod_or_admin,
     process_markdown, slur_regex, update_read_comments,
   },
 };
+use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::{

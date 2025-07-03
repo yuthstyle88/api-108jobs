@@ -40,7 +40,6 @@ pub struct Settings {
   /// set this option
   #[doku(skip)]
   pub opentelemetry_url: Option<Url>,
-  pub federation: FederationWorkerConfig,
   // Prometheus configuration.
   #[doku(example = "Some(Default::default())")]
   pub prometheus: Option<PrometheusConfig>,
@@ -200,15 +199,4 @@ pub struct PrometheusConfig {
   #[default(10002)]
   #[doku(example = "10002")]
   pub port: u16,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
-#[serde(default, deny_unknown_fields)]
-// named federation"worker"config to disambiguate from the activitypub library configuration
-pub struct FederationWorkerConfig {
-  /// Limit to the number of concurrent outgoing federation requests per target instance.
-  /// Set this to a higher value than 1 (e.g. 6) only if you have a huge instance (>10 activities
-  /// per second) and if a receiving instance is not keeping up.
-  #[default(1)]
-  pub concurrent_sends_per_instance: i8,
 }

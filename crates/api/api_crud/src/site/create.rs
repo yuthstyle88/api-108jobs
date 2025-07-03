@@ -326,7 +326,6 @@ mod tests {
           default_post_listing_type: Some(ListingType::All),
           default_post_sort_type: Some(PostSortType::Active),
           slur_filter_regex: Some(String::new()),
-          federation_enabled: Some(true),
           registration_mode: Some(RegistrationMode::Open),
           ..Default::default()
         },

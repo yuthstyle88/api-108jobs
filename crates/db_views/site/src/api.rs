@@ -141,7 +141,6 @@ pub struct CreateSite {
   pub rate_limit_search_interval_seconds: Option<i32>,
   pub rate_limit_import_user_settings_max_requests: Option<i32>,
   pub rate_limit_import_user_settings_interval_seconds: Option<i32>,
-  pub federation_enabled: Option<bool>,
   pub captcha_enabled: Option<bool>,
   pub captcha_difficulty: Option<String>,
   pub registration_mode: Option<RegistrationMode>,
@@ -242,8 +241,6 @@ pub struct EditSite {
   /// The number of settings imports or exports allowed in a given time frame.
   pub rate_limit_import_user_settings_max_requests: Option<i32>,
   pub rate_limit_import_user_settings_interval_seconds: Option<i32>,
-  /// Whether to enable federation.
-  pub federation_enabled: Option<bool>,
   /// Whether to enable captchas for signups.
   pub captcha_enabled: Option<bool>,
   /// The captcha difficulty. Can be easy, medium, or hard
@@ -267,26 +264,6 @@ pub struct EditSite {
   pub suggested_communities: Option<MultiCommunityId>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A list of federated instances.
-pub struct FederatedInstances {
-  pub linked: Vec<InstanceWithFederationState>,
-  pub allowed: Vec<InstanceWithFederationState>,
-  pub blocked: Vec<InstanceWithFederationState>,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A response of federated instances.
-pub struct GetFederatedInstancesResponse {
-  /// Optional, because federation may be disabled.
-  pub federated_instances: Option<FederatedInstances>,
-}
-
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -308,14 +285,6 @@ pub struct GetSiteResponse {
   // banners can be set.
   pub image_upload_disabled: bool,
   pub active_plugins: Vec<PluginMetadata>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct InstanceWithFederationState {
-  #[serde(flatten)]
-  pub instance: Instance,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -346,7 +346,6 @@ mod tests {
           default_post_sort_type: Some(PostSortType::Active),
           slur_filter_regex: Some(String::new()),
           registration_mode: Some(RegistrationMode::Open),
-          federation_enabled: Some(true),
           ..Default::default()
         },
       ),

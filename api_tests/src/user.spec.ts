@@ -1,6 +1,6 @@
 jest.setTimeout(120000);
 
-import { PersonView } from "lemmy-js-client/dist/types/PersonView";
+import { PersonView } from "../lemmy-js-client/dist/types/PersonView";
 import {
   alpha,
   beta,
@@ -32,7 +32,7 @@ import {
   SaveUserSettings,
   UploadImage,
 } from "lemmy-js-client";
-import { GetPosts } from "lemmy-js-client/dist/types/GetPosts";
+import { GetPosts } from "../lemmy-js-client/dist/types/GetPosts";
 
 beforeAll(setupLogins);
 afterAll(unfollows);

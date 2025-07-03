@@ -1,7 +1,7 @@
 jest.setTimeout(120000);
 
-import { AddModToCommunity } from "lemmy-js-client/dist/types/AddModToCommunity";
-import { CommunityView } from "lemmy-js-client/dist/types/CommunityView";
+import { AddModToCommunity } from "../lemmy-js-client/dist/types/AddModToCommunity";
+import { CommunityView } from "../lemmy-js-client/dist/types/CommunityView";
 import {
   alpha,
   beta,
@@ -37,7 +37,7 @@ import {
   randomString,
   listReports,
 } from "./shared";
-import { AdminAllowInstanceParams } from "lemmy-js-client/dist/types/AdminAllowInstanceParams";
+import { AdminAllowInstanceParams } from "../lemmy-js-client/dist/types/AdminAllowInstanceParams";
 import {
   CommunityReport,
   CommunityReportView,

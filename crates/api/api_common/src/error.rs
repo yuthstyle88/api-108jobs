@@ -1,1 +1,1 @@
-pub use lemmy_utils::error::{FederationError, FastJobErrorType};
+pub use lemmy_utils::error::FastJobErrorType;

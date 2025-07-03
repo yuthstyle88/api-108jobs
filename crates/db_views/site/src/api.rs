@@ -4,7 +4,6 @@ use lemmy_db_schema::{
   newtypes::{
     InstanceId,
     LanguageId,
-    MultiCommunityId,
     OAuthProviderId,
     PaginationCursor,
     TaglineId,
@@ -148,7 +147,6 @@ pub struct CreateSite {
   pub content_warning: Option<String>,
   pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
-  pub suggested_communities: Option<MultiCommunityId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -260,8 +258,6 @@ pub struct EditSite {
   pub disallow_self_promotion_content: Option<bool>,
   /// Dont send email notifications to users for new replies, mentions etc
   pub disable_email_notifications: Option<bool>,
-  /// A multicommunity with suggested communities which is shown on the homepage
-  pub suggested_communities: Option<MultiCommunityId>,
 }
 
 #[skip_serializing_none]

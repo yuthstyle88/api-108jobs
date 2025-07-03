@@ -110,7 +110,6 @@ pub async fn update_site(
     oauth_registration: data.oauth_registration,
     disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
-    suggested_communities: data.suggested_communities,
     ..Default::default()
   };
 

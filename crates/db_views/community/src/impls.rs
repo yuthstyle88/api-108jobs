@@ -1,10 +1,10 @@
-use crate::{CommunityView, MultiCommunityView};
+use crate::CommunityView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CommunityId, MultiCommunityId, PaginationCursor, PersonId},
+  newtypes::{CommunityId, PaginationCursor, PersonId},
   source::{
     community::{community_keys as key, Community},
     local_user::LocalUser,
@@ -22,7 +22,6 @@ use lemmy_db_schema::{
       my_community_actions_join,
       my_instance_actions_community_join,
       my_local_user_admin_join,
-      suggested_communities,
     },
     seconds_to_pg_interval,
     DbPool,
@@ -36,10 +35,6 @@ use lemmy_db_schema_file::{
     community,
     community_actions,
     instance_actions,
-    multi_community,
-    multi_community_entry,
-    multi_community_follow,
-    person,
   },
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -108,7 +103,6 @@ pub struct CommunityQuery<'a> {
   pub time_range_seconds: Option<i32>,
   pub local_user: Option<&'a LocalUser>,
   pub self_promotion: Option<bool>,
-  pub multi_community_id: Option<MultiCommunityId>,
   pub cursor_data: Option<Community>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -144,7 +138,6 @@ impl CommunityQuery<'_> {
         ListingType::ModeratorView => {
           query.filter(community_actions::became_moderator_at.is_not_null())
         }
-        ListingType::Suggested => query.filter(suggested_communities()),
       };
     }
 
@@ -157,13 +150,6 @@ impl CommunityQuery<'_> {
     }
 
     query = o.local_user.visible_communities_only(query);
-
-    if let Some(multi_community_id) = o.multi_community_id {
-      let communities = multi_community_entry::table
-        .filter(multi_community_entry::multi_community_id.eq(multi_community_id))
-        .select(multi_community_entry::community_id);
-      query = query.filter(community::id.eq_any(communities))
-    }
 
     // Filter by the time range
     if let Some(time_range_seconds) = o.time_range_seconds {
@@ -202,48 +188,12 @@ impl CommunityQuery<'_> {
   }
 }
 
-impl MultiCommunityView {
-  pub async fn read(pool: &mut DbPool<'_>, id: MultiCommunityId) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    Ok(
-      multi_community::table
-        .find(id)
-        .inner_join(person::table)
-        .get_result(conn)
-        .await?,
-    )
-  }
-
-  pub async fn list(
-    pool: &mut DbPool<'_>,
-    owner_id: Option<PersonId>,
-    followed_by: Option<PersonId>,
-  ) -> FastJobResult<Vec<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let mut query = multi_community::table
-      .left_join(multi_community_follow::table)
-      .inner_join(person::table)
-      .select(multi_community::all_columns)
-      .into_boxed();
-    if let Some(owner_id) = owner_id {
-      query = query.filter(multi_community::creator_id.eq(owner_id));
-    }
-    if let Some(followed_by) = followed_by {
-      query = query.filter(multi_community_follow::person_id.eq(followed_by));
-    }
-    query
-      .select(MultiCommunityView::as_select())
-      .load::<MultiCommunityView>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-}
 
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
 mod tests {
 
-  use crate::{impls::CommunityQuery, CommunityView, MultiCommunityView};
+  use crate::{impls::CommunityQuery, CommunityView};
   use lemmy_db_schema::{
     source::{
       community::{
@@ -256,7 +206,6 @@ mod tests {
       },
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
-      multi_community::{MultiCommunity, MultiCommunityFollowForm, MultiCommunityInsertForm},
       person::{Person, PersonInsertForm},
       site::Site,
     },

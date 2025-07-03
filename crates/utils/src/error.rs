@@ -186,9 +186,6 @@ pub enum FastJobErrorType {
   CouldntUpdateLocalSiteUrlBlocklist,
   CouldntCreateEmailVerification,
   EmailNotificationsDisabled,
-  MultiCommunityUpdateWrongUser,
-  CannotCombineCommunityIdAndMultiCommunityId,
-  MultiCommunityEntryLimitReached,
 }
 
 cfg_if! {

@@ -3,8 +3,6 @@ use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, Selectab
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   impls::local_user::UserBackupLists,
-  source::person::Person,
-  traits::Crud,
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{instance, local_site, local_site_rate_limit, site};
@@ -38,11 +36,6 @@ impl SiteView {
       })
       .await
       .map_err(|e: Arc<FastJobError>| anyhow::anyhow!("err getting local site: {e:?}").into())
-  }
-
-  pub async fn read_multicomm_follower(pool: &mut DbPool<'_>) -> FastJobResult<Person> {
-    let site_view = SiteView::read_local(pool).await?;
-    Person::read(pool, site_view.local_site.multi_comm_follower).await
   }
 }
 

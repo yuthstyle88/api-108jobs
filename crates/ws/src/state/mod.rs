@@ -1,3 +1,4 @@
+use std::future::Future;
 use crate::proxy::PhoenixProxy;
 use crate::session::Session;
 
@@ -6,20 +7,18 @@ use actix_ws::Message;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_utils::error::FastJobResult;
 
-use async_trait::async_trait;
-
 /// WebSocket session state machine trait
-#[async_trait]
+
 pub trait WsState: Send + Sync {
     type Next: WsState;
 
-    async fn handle(
+    fn handle(
         self,
         session: Session,
         ctx: Arc<FastJobContext>,
         proxy: Arc<PhoenixProxy>,
         msg: Message,
-    ) -> FastJobResult<(Self::Next, Option<Message>)>;
+    ) ->  impl Future<Output = FastJobResult<(Self::Next, Option<Message>)>> + Send;
 
     fn name(&self) -> &'static str;
 }

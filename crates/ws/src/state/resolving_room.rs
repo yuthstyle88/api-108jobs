@@ -10,7 +10,6 @@ use lemmy_utils::error::FastJobResult;
 #[derive(Debug, Clone)]
 pub struct ResolvingRoom;
 
-#[async_trait::async_trait]
 impl WsState for ResolvingRoom {
     type Next = Connected;
 

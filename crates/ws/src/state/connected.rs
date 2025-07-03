@@ -11,7 +11,6 @@ pub struct Connected {
     pub session: Session,
 }
 
-#[async_trait::async_trait]
 impl WsState for Connected {
     type Next = Self;
 

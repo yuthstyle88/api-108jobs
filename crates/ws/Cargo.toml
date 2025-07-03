@@ -23,7 +23,6 @@ serde_json = { workspace = true }
 log = "0.4.27"
 tokio = { workspace = true }
 serde = { workspace = true }
-async-trait = "0.1.88"
 actix-rt = "2.10.0"
 futures-util = "0.3.31"
 actix = { workspace = true }

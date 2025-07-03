@@ -12,19 +12,6 @@ CREATE TYPE listing_type_enum_tmp AS ENUM (
     'ModeratorView'
 );
 
-UPDATE
-    local_user
-SET
-    default_listing_type = 'All'
-WHERE
-    default_listing_type = 'Suggested';
-
-UPDATE
-    local_site
-SET
-    default_post_listing_type = 'All'
-WHERE
-    default_post_listing_type = 'Suggested';
 
 ALTER TABLE local_user
     ALTER COLUMN default_listing_type DROP DEFAULT,

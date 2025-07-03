@@ -35,43 +35,47 @@ codegen-units = 1 # Reduce parallel code generation.
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
 [profile.dev]
-debug = 0
+debug = 2
+incremental = true
+codegen-units = 16
+lto = false
 
 [features]
 default = []
 
 [workspace]
 members = [
-  "crates/api/api",
-  "crates/api/api_crud",
-  "crates/api/api_common",
-  "crates/api/api_utils",
-  "crates/utils",
-  "crates/db_schema",
-  "crates/db_schema_file",
-  "crates/db_views/local_user",
-  "crates/db_views/local_image",
-  "crates/db_views/person",
-  "crates/db_views/post",
-  "crates/db_views/vote",
-  "crates/db_views/reports",
-  "crates/db_views/local_image",
-  "crates/db_views/comment",
-  "crates/db_views/community",
-  "crates/db_views/community_moderator",
-  "crates/db_views/community_follower",
-  "crates/db_views/community_person_ban",
-  "crates/db_views/custom_emoji",
-  "crates/db_views/inbox_combined",
-  "crates/db_views/modlog_combined",
-  "crates/db_views/person_content_combined",
-  "crates/db_views/person_saved_combined",
-  "crates/db_views/person_liked_combined",
-  "crates/db_views/report_combined",
-  "crates/db_views/search_combined",
-  "crates/db_views/site",
-  "crates/routes",
-  "crates/email",
+    "crates/api/api",
+    "crates/api/api_crud",
+    "crates/api/api_common",
+    "crates/api/api_utils",
+    "crates/utils",
+    "crates/db_schema",
+    "crates/db_schema_file",
+    "crates/db_views/local_user",
+    "crates/db_views/local_image",
+    "crates/db_views/person",
+    "crates/db_views/post",
+    "crates/db_views/vote",
+    "crates/db_views/reports",
+    "crates/db_views/local_image",
+    "crates/db_views/comment",
+    "crates/db_views/community",
+    "crates/db_views/community_moderator",
+    "crates/db_views/community_follower",
+    "crates/db_views/community_person_ban",
+    "crates/db_views/custom_emoji",
+    "crates/db_views/inbox_combined",
+    "crates/db_views/modlog_combined",
+    "crates/db_views/person_content_combined",
+    "crates/db_views/person_saved_combined",
+    "crates/db_views/person_liked_combined",
+    "crates/db_views/report_combined",
+    "crates/db_views/search_combined",
+    "crates/db_views/site",
+    "crates/routes",
+    "crates/email",
+    "crates/ws"
 ]
 
 [workspace.lints.clippy]
@@ -131,35 +135,36 @@ lemmy_db_views_reports = { version = "=1.0.0-alpha.5", path = "./crates/db_views
 lemmy_db_views_search_combined = { version = "=1.0.0-alpha.5", path = "./crates/db_views/search_combined" }
 lemmy_db_views_site = { version = "=1.0.0-alpha.5", path = "./crates/db_views/site" }
 lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vote" }
+lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 
 diesel = { version = "2.2.10", features = [
-  "chrono",
-  "postgres",
-  "serde_json",
-  "uuid",
-  "64-column-tables",
+    "chrono",
+    "postgres",
+    "serde_json",
+    "uuid",
+    "64-column-tables",
 ] }
 diesel_migrations = "2.2.0"
 diesel-async = "0.5.2"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_with = "3.12.0"
 actix-web = { version = "4.11.0", default-features = false, features = [
-  "compress-brotli",
-  "compress-gzip",
-  "compress-zstd",
-  "cookies",
-  "macros",
-  "rustls-0_23",
+    "compress-brotli",
+    "compress-gzip",
+    "compress-zstd",
+    "cookies",
+    "macros",
+    "rustls-0_23",
 ] }
 tracing = { version = "0.1.41", default-features = false }
 tracing-actix-web = { version = "0.7.18", default-features = false }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
 url = { version = "2.5.4", features = ["serde"] }
 reqwest = { version = "0.12.19", default-features = false, features = [
-  "blocking",
-  "gzip",
-  "json",
-  "rustls-tls",
+    "blocking",
+    "gzip",
+    "json",
+    "rustls-tls",
 ] }
 reqwest-middleware = "0.4.2"
 reqwest-tracing = "0.5.7"
@@ -167,8 +172,8 @@ clokwerk = "0.4.0"
 doku = { version = "0.21.1", features = ["url-2"] }
 bcrypt = "0.17.0"
 chrono = { version = "0.4.41", features = [
-  "now",
-  "serde",
+    "now",
+    "serde",
 ], default-features = false }
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
 base64 = "0.22.1"
@@ -189,9 +194,9 @@ futures-util = "0.3.31"
 http = "1.2"
 rosetta-i18n = "0.1.3"
 ts-rs = { version = "11.0.1", features = [
-  "chrono-impl",
-  "no-serde-warnings",
-  "url-impl",
+    "chrono-impl",
+    "no-serde-warnings",
+    "url-impl",
 ] }
 rustls = { version = "0.23.27", features = ["ring"] }
 tokio-postgres = "0.7.13"
@@ -208,6 +213,8 @@ either = { version = "1.15.0", features = ["serde"] }
 extism = { git = "https://github.com/extism/extism.git", branch = "main" }
 extism-convert = { git = "https://github.com/extism/extism.git", branch = "main" }
 unified-diff = "0.2.1"
+phoenix_channels_client = "0.1.2"
+actix = "0.13.5"
 
 [dependencies]
 lemmy_api = { workspace = true }
@@ -217,6 +224,7 @@ lemmy_db_schema = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_api_utils = { workspace = true }
 lemmy_routes = { workspace = true }
+lemmy_ws = { workspace = true }
 actix-web = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }
@@ -227,7 +235,12 @@ serde_json = { workspace = true }
 rustls = { workspace = true }
 tokio.workspace = true
 clap = { workspace = true }
+phoenix_channels_client = { workspace = true }
+url = { workspace = true }
+actix = { workspace = true }
 mimalloc = "0.1.46"
+rustc-hash = "2.1.1"
+
 
 # Speedup RSA key generation
 # https://github.com/RustCrypto/RSA/blob/master/README.md#example

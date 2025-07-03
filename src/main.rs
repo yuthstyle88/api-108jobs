@@ -9,7 +9,7 @@ use tracing_subscriber::EnvFilter;
 
 pub extern crate rustls;
 
-#[tokio::main]
+#[actix_web::main]
 pub async fn main() -> FastJobResult<()> {
   let filter = EnvFilter::builder()
     .with_default_directive(LevelFilter::INFO.into())

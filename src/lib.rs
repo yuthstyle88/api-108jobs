@@ -1,5 +1,5 @@
 pub mod api_routes;
-
+use actix::Actor;
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
@@ -15,7 +15,6 @@ use lemmy_api_utils::{
   request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
-
 use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
 use lemmy_db_schema_file::schema_setup;
 use lemmy_routes::{
@@ -27,9 +26,9 @@ use lemmy_routes::{
   nodeinfo,
   utils::{
     cors_config,
-    prometheus_metrics::{new_prometheus_metrics, serve_prometheus}, 
+    prometheus_metrics::{new_prometheus_metrics, serve_prometheus},
     setup_local_site::setup_local_site,
-  }
+  },
 };
 use lemmy_utils::{
   error::FastJobResult,
@@ -38,12 +37,16 @@ use lemmy_utils::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
+use lemmy_ws::{actor::phoenix_client::PhoenixActor, proxy::PhoenixProxy};
 use mimalloc::MiMalloc;
+use phoenix_channels_client::Config;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use tokio::signal::unix::SignalKind;
+use std::sync::Arc;
+use tokio::{signal::unix::SignalKind, sync::mpsc};
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use url::Url;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -176,16 +179,12 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     serve_prometheus(prometheus, context.clone())?;
   }
 
-  
   let server = if !args.disable_http_server {
     if let Some(startup_server_handle) = startup_server_handle {
       startup_server_handle.stop(true).await;
     }
 
-    Some(create_http_server(
-      context.clone(),
-      SETTINGS.clone(),
-    )?)
+    Some(create_http_server(context.clone(), SETTINGS.clone())?)
   } else {
     None
   };
@@ -231,13 +230,27 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
   Ok(startup_server_handle)
 }
 
-fn create_http_server(
-  context: FastJobContext,
-  settings: Settings,
-) -> FastJobResult<ServerHandle> {
+fn create_http_server(context: FastJobContext, settings: Settings) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
+
+  // Create mpsc channel for communication
+  let (tx, rx) = mpsc::channel::<(String, String)>(100);
+
+  // Initialize PhoenixProxy with tx
+  let proxy = Arc::new(PhoenixProxy::new(tx.clone()));
+
+  // Phoenix config
+  let config = Config {
+    url: Url::parse("ws://localhost:4000/socket/websocket")?,
+    params: Default::default(),
+    reconnect: true,
+    max_attempts: 3,
+  };
+
+  // Start PhoenixActor
+  PhoenixActor::new(config, (*proxy).clone(), rx).start();
 
   // Create Http server
   let bind = (settings.bind, settings.port);
@@ -257,6 +270,7 @@ fn create_http_server(
       .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
+      .app_data(Data::new(proxy.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

@@ -47,6 +47,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
+use lemmy_api_utils::utils::generate_unique_username;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -202,26 +203,6 @@ pub async fn authenticate_with_oauth(
   let data: AuthenticateWithOauth = data.into_inner().try_into()?;
 
   let pool = &mut context.pool();
-  if Person::check_username_taken(pool, &*data.username.clone().unwrap()).await.is_ok() {
-    data.username.clone().unwrap()
-  } else {
-    let mut chosen_username = String::new();
-    // Try username with increasing numbers 1-10 if original is taken 
-    for n in 1..=10 {
-      let try_username = format!("{}{}", data.username.clone().unwrap(), n);
-      if Person::check_username_taken(pool, &try_username).await.is_ok() {
-        chosen_username = try_username;
-        break;
-      }
-    }
-    // Return error if no variation was available
-    if chosen_username.is_empty() {
-      return Err(FastJobErrorType::UsernameAlreadyExists)?;
-    }
-    chosen_username
-  };
-
-  let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
 
@@ -353,27 +334,24 @@ pub async fn authenticate_with_oauth(
 
       let slur_regex = slur_regex(&context).await?;
 
+      let username_unique = generate_unique_username(pool, email.clone()).await?;
+
+
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
       let conn = &mut get_conn(pool).await?;
-      let tx_data = data.clone();
       let tx_context = context.clone();
       let user = conn
         .run_transaction(|conn| {
           async move {
             // make sure the username is provided
-            let username = tx_data
-              .username
-              .as_ref()
-              .ok_or(FastJobErrorType::RegistrationUsernameRequired)?;
+            let username: &str = username_unique.as_str();
 
             check_slurs(username, &slur_regex)?;
             check_slurs_opt(&data.answer, &slur_regex)?;
 
-            Person::check_username_taken(&mut conn.into(), username).await?;
-
             // We have to create a person, a local_user, and an oauth_account
-            let person = create_person(username.clone(), &site_view, &tx_context, conn).await?;
+            let person = create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
 
             // Create the local user
             let local_user_form = LocalUserInsertForm {

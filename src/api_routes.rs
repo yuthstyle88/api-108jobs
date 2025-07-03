@@ -437,7 +437,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
       .service(
         scope("/oauth")
           .wrap(rate_limit.register())
-          .route("/authenticate", post().to(authenticate_with_oauth)),
+          .route("/authenticate", post().to(authenticate_with_oauth))
       )
       .service(
         scope("/image")

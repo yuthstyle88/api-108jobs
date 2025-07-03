@@ -1,5 +1,6 @@
 use crate::SiteView;
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 use lemmy_db_schema::{
   newtypes::{
     InstanceId,
@@ -45,6 +46,7 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
+use lemmy_utils::error::FastJobError;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -80,6 +82,41 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Logging in with an OAuth 2.0 authorization
+pub struct AuthenticateWithOauthRequest {
+  pub code: String,
+  pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
+  pub self_promotion: Option<bool>,
+  /// Username is mandatory at registration time
+  pub username: Option<String>,
+  /// An answer is mandatory if require application is enabled on the server
+  pub answer: Option<String>,
+  pub pkce_code_verifier: Option<String>,
+}
+
+impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
+  type Error = FastJobError;
+  fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+
+    let user_id = &Uuid::new_v4().to_string().replace("-", "")[1..8];
+
+    Ok(AuthenticateWithOauth{
+      code: value.code,
+      oauth_provider_id: value.oauth_provider_id,
+      redirect_uri: value.redirect_uri,
+      self_promotion: Some(value.self_promotion.unwrap_or(false)),
+      username: Some(user_id.parse()?),
+      answer: None,
+      pkce_code_verifier: None,
+    })
+  }
 }
 
 #[skip_serializing_none]

@@ -3535,6 +3535,7 @@ dependencies = [
  "serde_with",
  "ts-rs",
  "url",
+ "uuid",
 ]
 
 [[package]]

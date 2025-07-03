@@ -1,15 +1,12 @@
+use actix_web::web::Data;
 use actix_web::{web::Json, HttpRequest};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{
-    check_email_verified,
-    check_local_user_valid,
-    check_registration_application,
-    generate_inbox_url,
-    honeypot_check,
-    slur_regex,
+    check_email_verified, check_local_user_valid, check_registration_application,
+    generate_inbox_url, honeypot_check, slur_regex,
   },
 };
 use lemmy_db_schema::{
@@ -31,13 +28,13 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
+use lemmy_db_views_site::api::AuthenticateWithOauthRequest;
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
 };
 use lemmy_email::{
-  account::send_verification_email_if_required,
-  admin::send_new_applicant_email_to_admins,
+  account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
 };
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
@@ -50,7 +47,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
-use actix_web::web::Data;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -78,14 +74,14 @@ pub async fn register(
   if local_site.registration_mode == RegistrationMode::Closed {
     Err(FastJobErrorType::RegistrationClosed)?
   }
-  
+
   honeypot_check(&data.honeypot)?;
-  
+
   // make sure the registration answer is provided when the registration application is required
   if local_site.site_setup {
     validate_registration_answer(require_registration_application, &data.answer)?;
   }
-  
+
   if local_site.site_setup && local_site.captcha_enabled {
     let uuid = uuid::Uuid::parse_str(&data.captcha_uuid.clone().unwrap_or_default())?;
     CaptchaAnswer::check_captcha(
@@ -199,10 +195,32 @@ pub async fn register(
 }
 
 pub async fn authenticate_with_oauth(
-  data: Json<AuthenticateWithOauth>,
+  data: Json<AuthenticateWithOauthRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
+  let data: AuthenticateWithOauth = data.into_inner().try_into()?;
+
+  let pool = &mut context.pool();
+  if Person::check_username_taken(pool, &*data.username.clone().unwrap()).await.is_ok() {
+    data.username.clone().unwrap()
+  } else {
+    let mut chosen_username = String::new();
+    // Try username with increasing numbers 1-10 if original is taken 
+    for n in 1..=10 {
+      let try_username = format!("{}{}", data.username.clone().unwrap(), n);
+      if Person::check_username_taken(pool, &try_username).await.is_ok() {
+        chosen_username = try_username;
+        break;
+      }
+    }
+    // Return error if no variation was available
+    if chosen_username.is_empty() {
+      return Err(FastJobErrorType::UsernameAlreadyExists)?;
+    }
+    chosen_username
+  };
+
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -289,9 +307,9 @@ pub async fn authenticate_with_oauth(
     }
 
     // prevent registration if registration is closed for OAUTH providers
-    if !local_site.oauth_registration {
-      return Err(FastJobErrorType::OauthRegistrationClosed)?;
-    }
+    // if !local_site.oauth_registration {
+    //   return Err(FastJobErrorType::OauthRegistrationClosed)?;
+    // }
 
     // Extract the OAUTH email claim from the returned user_info
     let email = read_user_info(&user_info, "email")?;
@@ -331,7 +349,7 @@ pub async fn authenticate_with_oauth(
       // No user was found by email => Register as new user
 
       // make sure the registration answer is provided when the registration application is required
-      validate_registration_answer(require_registration_application, &data.answer)?;
+      // validate_registration_answer(require_registration_application, &data.answer)?;
 
       let slur_regex = slur_regex(&context).await?;
 
@@ -439,10 +457,7 @@ async fn create_person(
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
-    ..PersonInsertForm::new(
-      username.clone(),
-      site_view.site.instance_id,
-    )
+    ..PersonInsertForm::new(username.clone(), site_view.site.instance_id)
   };
 
   // insert the person
@@ -535,7 +550,6 @@ async fn oauth_request_access_token(
   let response = context
     .client()
     .post(oauth_provider.token_endpoint.as_str())
-    .header("Accept", "application/json")
     .form(&form[..])
     .send()
     .await

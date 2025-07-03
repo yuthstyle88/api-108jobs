@@ -1,5 +1,4 @@
 pub mod api_routes;
-use actix::Actor;
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
@@ -37,16 +36,12 @@ use lemmy_utils::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
-use lemmy_ws::{actor::phoenix_client::PhoenixActor, proxy::PhoenixProxy};
 use mimalloc::MiMalloc;
-use phoenix_channels_client::Config;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use std::sync::Arc;
-use tokio::{signal::unix::SignalKind, sync::mpsc};
+use tokio::{signal::unix::SignalKind};
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use url::Url;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -235,23 +230,6 @@ fn create_http_server(context: FastJobContext, settings: Settings) -> FastJobRes
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
 
-  // Create mpsc channel for communication
-  let (tx, rx) = mpsc::channel::<(String, String)>(100);
-
-  // Initialize PhoenixProxy with tx
-  let proxy = Arc::new(PhoenixProxy::new(tx.clone()));
-
-  // Phoenix config
-  let config = Config {
-    url: Url::parse("ws://localhost:4000/socket/websocket")?,
-    params: Default::default(),
-    reconnect: true,
-    max_attempts: 3,
-  };
-
-  // Start PhoenixActor
-  PhoenixActor::new(config, (*proxy).clone(), rx).start();
-
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
@@ -270,7 +248,6 @@ fn create_http_server(context: FastJobContext, settings: Settings) -> FastJobRes
       .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
-      .app_data(Data::new(proxy.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

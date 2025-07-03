@@ -173,7 +173,7 @@ use lemmy_routes::images::{
   },
 };
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{websocket_handler};
+use lemmy_ws::handler::{chat_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg.service(
@@ -453,6 +453,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/list", get().to(list_all_media))
           .route("/{filename}", get().to(get_image)),
       )
-        .service(resource("/ws").to(websocket_handler)),
+        .service(resource("/ws").to(chat_ws)),
   );
 }

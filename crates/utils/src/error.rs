@@ -191,6 +191,7 @@ pub enum FastJobErrorType {
   MultiCommunityUpdateWrongUser,
   CannotCombineCommunityIdAndMultiCommunityId,
   MultiCommunityEntryLimitReached,
+  CouldntConnectDatabase
 }
 
 cfg_if! {

@@ -16,6 +16,7 @@ workspace = true
 [dependencies]
 lemmy_api_utils = { workspace = true }
 lemmy_utils = { workspace = true, features = ["full"] }
+lemmy_db_schema = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 actix-ws = "0.3.0"
 uuid = { workspace = true }
@@ -24,11 +25,11 @@ log = "0.4.27"
 tokio = { workspace = true }
 serde = { workspace = true }
 actix-rt = "2.10.0"
-futures-util = "0.3.31"
+diesel-async = { workspace = true }
 actix = { workspace = true }
 url = { workspace = true }
-awc = "3.7.0"
-rand = "0.9.1"
-actix-broker = "0.4"
-actix-web-actors = "4.1"
+awc = { workspace = true }
+rand = { workspace = true }
+actix-broker = { workspace = true }
+actix-web-actors = { workspace = true }
 phoenix_channels_client = { workspace = true }

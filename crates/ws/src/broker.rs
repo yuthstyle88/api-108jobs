@@ -1,4 +1,4 @@
-use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
+use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
 use phoenix_channels_client::url::Url;
 use phoenix_channels_client::{Channel, Event, Payload, Socket, Topic};
@@ -24,7 +24,22 @@ async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
         }
     }
 }
-
+async fn send_event_to_channel(
+    channel: &Arc<Channel>,
+    event: Event,
+    payload: Value,
+) {
+    match Payload::json_from_serialized(payload.to_string()) {
+        Ok(payload) => {
+            if let Err(e) = channel.cast(event, payload).await {
+                eprintln!("Failed to cast message: {}", e);
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to serialize payload: {}", e);
+        }
+    }
+}
 impl Handler<ConnectNow> for PhoenixManager {
     type Result = ();
 
@@ -64,20 +79,6 @@ impl PhoenixManager {
             pool,
         }
     }
-
-    pub async fn send_message(
-        &self,
-        channel: &str,
-        event: &str,
-        payload: Value,
-    ) -> FastJobResult<()> {
-        if let Some(channel) = self.channels.get(channel) {
-            let event = Event::from_string(event.to_string());
-            let payload = Payload::json_from_serialized(payload.to_string())?;
-            channel.cast(event, payload).await?;
-        }
-        Ok(())
-    }
 }
 
 impl Actor for PhoenixManager {
@@ -86,6 +87,17 @@ impl Actor for PhoenixManager {
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.notify(ConnectNow);
         self.subscribe_system_async::<BridgeMessage>(ctx);
+        ctx.run_interval(Duration::from_secs(10), |_actor, _ctx| {
+            let arbiter = Arbiter::new();
+            let succeeded = arbiter.spawn(async {
+                println!("interval task async job done!");
+            });
+            if succeeded {
+                println!("Task spawned!");
+            } else {
+                println!("Failed to spawn task.");
+            }
+        });
     }
 }
 
@@ -98,11 +110,10 @@ impl Handler<BridgeMessage> for PhoenixManager {
         let event = msg.event.clone();
         let payload = msg.payload.clone();
         let socket = self.socket.clone();
-
         let mut channels = self.channels.clone();
 
         Box::pin(async move {
-            let channel = if let Some(chan) = channels.get(&channel_name).cloned() {
+            let arc_chan = if let Some(chan) = channels.get(&channel_name).cloned() {
                 chan
             } else {
                 let channel = Topic::from_string(channel_name.clone());
@@ -119,23 +130,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 }
             };
 
-            if let Err(e) = channel.join(Duration::from_secs(5)).await {
+            if let Err(e) = arc_chan.join(Duration::from_secs(5)).await {
                 eprintln!("Failed to join channel '{}': {}", channel_name, e);
                 return;
             }
 
             // ส่ง event ตามเดิม
             let phoenix_event = Event::from_string(event);
-            match Payload::json_from_serialized(payload.to_string()) {
-                Ok(payload) => {
-                    if let Err(e) = channel.cast(phoenix_event, payload).await {
-                        eprintln!("Failed to cast message: {}", e);
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to serialize payload: {}", e);
-                }
-            }
+            send_event_to_channel(&arc_chan, phoenix_event, payload.clone()).await;
+
         })
 
 

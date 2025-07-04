@@ -108,7 +108,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
     fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
         let channel_name = msg.channel.clone();
         let event = msg.event.clone();
-        let payload = msg.payload.clone();
         let socket = self.socket.clone();
         let mut channels = self.channels.clone();
 
@@ -137,11 +136,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
             // ส่ง event ตามเดิม
             let phoenix_event = Event::from_string(event);
-            send_event_to_channel(&arc_chan, phoenix_event, payload.clone()).await;
-
+            send_event_to_channel(&arc_chan, phoenix_event, msg.payload).await;
         })
-
-
     }
 }
 

@@ -190,7 +190,8 @@ pub enum FastJobErrorType {
   MultiCommunityUpdateWrongUser,
   CannotCombineCommunityIdAndMultiCommunityId,
   MultiCommunityEntryLimitReached,
-  CouldntConnectDatabase
+  CouldntConnectDatabase,
+  CouldntStartWebSocket,
 }
 
 cfg_if! {

@@ -1,210 +1,52 @@
-use std::time::Duration;
-use actix::prelude::*;
-use actix_broker::BrokerIssue;
-use actix_web::web::Data;
+use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
+use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use phoenix_channels_client::{Client, Config};
-use serde_json::json;
-use lemmy_api_utils::context::FastJobContext;
-use crate::{
-    message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendMessage},
-    server::WsChatServer,
-};
+use serde_json::Value;
+use crate::bridge_message::{BridgeMessage, MessageSource};
+use crate::broker::PhoenixManager;
 
-pub struct WsChatSession {
-    id: u64,
-    room: String,
-    name: Option<String>,
-    context: Data<FastJobContext>,
-    phoenix_config: Config
+pub struct WsSession {
+    pub(crate) id: String,
+    pub(crate) phoenix_manager: Addr<PhoenixManager>,
 }
 
-impl WsChatSession {
-    pub fn new(context: Data<FastJobContext>) -> Self {
-        let mut config = Config::new("ws://127.0.0.1:4000/socket/websocket").unwrap();
-        config.set("shared_secret", "supersecret");
+impl Actor for WsSession {
+    type Context = ws::WebsocketContext<Self>;
 
-        Self {
-            id: 0,
-            room: "main".to_string(),
-            name: None,
-            context,
-            phoenix_config: config,
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.subscribe_system_sync::<BridgeMessage>(ctx);
+    }
+}
+
+impl Handler<BridgeMessage> for WsSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
+        // Handle messages from broker
+        if let Ok(text) = serde_json::to_string(&msg.payload) {
+            ctx.text(text);
         }
     }
-    pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
-        {
-            let config = self.phoenix_config.clone();
-            let topic = format!("room:{}", room_name);
+}
 
-            tokio::spawn(async move {
-                match Client::new(config) {
-                    Ok(mut client) => {
-                        if client.connect().await.is_ok() {
-                            if client.join(&topic, Some(Duration::from_secs(15))).await.is_err() {
-                                log::error!("Failed to join Phoenix topic: {}", topic);
-                            }
-                        } else {
-                            log::error!("Failed to connect Phoenix client");
-                        }
-                    }
-                    Err(e) => log::error!("Failed to build Phoenix client: {e}"),
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        match msg {
+            Ok(ws::Message::Text(text)) => {
+                println!("Received: {}", text);
+                if let Ok(value) = serde_json::from_str::<Value>(&text) {
+                    let bridge_msg = BridgeMessage {
+                        source: MessageSource::WebSocket,
+                        channel: "room:lobby".to_string(), // Change this based on your needs
+                        event: "new_msg".to_string(),      // Change this based on your needs
+                        payload: value,
+                    };
+                    self.issue_async::<SystemBroker, _>(bridge_msg);
                 }
-            });
-        }
-        let room_name = room_name.to_owned();
-
-        // First send a leave message for the current room
-        let leave_msg = LeaveRoom(self.room.clone(), self.id);
-
-        // issue_sync comes from having the `BrokerIssue` trait in scope.
-        self.issue_system_sync(leave_msg, ctx);
-
-        // Then send a join message for the new room
-        let join_msg = JoinRoom(
-            room_name.to_owned(),
-            self.name.clone(),
-            ctx.address().recipient(),
-        );
-
-        WsChatServer::from_registry()
-            .send(join_msg)
-            .into_actor(self)
-            .then(|id, act, _ctx| {
-                if let Ok(id) = id {
-                    act.id = id;
-                    act.room = room_name;
-                }
-
-                fut::ready(())
-            })
-            .wait(ctx);
-    }
-
-        pub fn list_rooms(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
-            WsChatServer::from_registry()
-                .send(ListRooms)
-                .into_actor(self)
-                .then(|res, _, ctx| {
-                    if let Ok(rooms) = res {
-                        for room in rooms {
-                            ctx.text(room);
-                        }
-                    }
-
-                    fut::ready(())
-                })
-                .wait(ctx);
-        }
-
-        pub fn send_msg(&self, msg: &str) {
-            {
-                let topic = format!("room:{}", self.room);
-                let config = self.phoenix_config.clone();
-                let name = self.name.clone().unwrap_or_else(|| "anon".to_owned());
-                let payload = json!({ "name": name, "message": msg });
-
-                tokio::spawn(async move {
-                    match Client::new(config) {
-                        Ok(mut client) => {
-                            if client.connect().await.is_ok() {
-                                if let Ok(channel) = client.join(&topic, Some(Duration::from_secs(15))).await {
-                                    if channel.send("send_reply", payload).await.is_err() {
-                                        log::error!("Failed to send message to Phoenix topic");
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => log::error!("Phoenix client error: {e}"),
-                    }
-                });
             }
-            let content = format!(
-                "{}: {msg}",
-                self.name.clone().unwrap_or_else(|| "anon".to_owned()),
-            );
-
-            let msg = SendMessage(self.room.clone(), self.id, content);
-
-            // issue_async comes from having the `BrokerIssue` trait in scope.
-            self.issue_system_async(msg);
+            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+            Ok(ws::Message::Close(_)) => ctx.stop(),
+            _ => {}
         }
     }
-
-    impl Actor for WsChatSession {
-        type Context = ws::WebsocketContext<Self>;
-
-        fn started(&mut self, ctx: &mut Self::Context) {
-            self.join_room("b8d9a8a5-c296-4d31-8998-e3a76b6eafa1", ctx);
-        }
-
-        fn stopped(&mut self, _ctx: &mut Self::Context) {
-            log::info!(
-            "WsChatSession closed for {}({}) in room {}",
-            self.name.clone().unwrap_or_else(|| "anon".to_owned()),
-            self.id,
-            self.room
-        );
-        }
-    }
-
-    impl Handler<ChatMessage> for WsChatSession {
-        type Result = ();
-
-        fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) {
-            ctx.text(msg.0);
-        }
-    }
-
-    impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
-        fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-            let msg = match msg {
-                Err(_) => {
-                    ctx.stop();
-                    return;
-                }
-                Ok(msg) => msg,
-            };
-
-            match msg {
-                ws::Message::Text(text) => {
-                    let msg = text.trim();
-
-                    if msg.starts_with('/') {
-                        let mut command = msg.splitn(2, ' ');
-
-                        match command.next() {
-                            Some("/list") => self.list_rooms(ctx),
-
-                            Some("/join") => {
-                                if let Some(room_name) = command.next() {
-                                    self.join_room(room_name, ctx);
-                                } else {
-                                    ctx.text("!!! room name is required(ex. /join main -- main is room name)");
-                                }
-                            }
-
-                            Some("/name") => {
-                                if let Some(name) = command.next() {
-                                    self.name = Some(name.to_owned());
-                                    ctx.text(format!("name changed to: {name}"));
-                                } else {
-                                    ctx.text("!!! name is required");
-                                }
-                            }
-
-                            _ => ctx.text(format!("!!! unknown command: {msg:?}")),
-                        }
-
-                        return;
-                    }
-                    self.send_msg(msg);
-                }
-                ws::Message::Close(reason) => {
-                    ctx.close(reason);
-                    ctx.stop();
-                }
-                _ => {}
-            }
-        }
-    }
+}

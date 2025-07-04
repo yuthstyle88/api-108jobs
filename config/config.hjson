@@ -2,7 +2,7 @@
 # https://join-lemmy.org/docs/en/administration/configuration.html
 {
   hostname: lemmy-alpha
-  port: 8533
+  port: 8532
   database: {
       # Configure the database by specifying URI pointing to a postgres instance. This parameter can
       # also be set by environment variable `LEMMY_DATABASE_URL`.

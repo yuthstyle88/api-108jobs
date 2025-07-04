@@ -18,18 +18,13 @@ lemmy_api_utils = { workspace = true }
 lemmy_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
-actix-ws = "0.3.0"
 uuid = { workspace = true }
 serde_json = { workspace = true }
-log = "0.4.27"
 tokio = { workspace = true }
 serde = { workspace = true }
-actix-rt = "2.10.0"
-diesel-async = { workspace = true }
 actix = { workspace = true }
 url = { workspace = true }
-awc = { workspace = true }
 rand = { workspace = true }
 actix-broker = { workspace = true }
 actix-web-actors = { workspace = true }
-phoenix_channels_client = { workspace = true }
+phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }

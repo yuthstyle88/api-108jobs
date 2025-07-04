@@ -1,4 +1,6 @@
 pub mod api_routes;
+
+use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
@@ -36,11 +38,12 @@ use lemmy_utils::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
+use lemmy_ws::broker::PhoenixManager;
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use tokio::{signal::unix::SignalKind};
+use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 
 #[global_allocator]
@@ -169,6 +172,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     secret.clone(),
     rate_limit_cell,
   );
+  let phoenix_manager = PhoenixManager::new("ws://localhost:4000/socket/websocket?vsn=2.0.0", pool.clone()).await.start();
 
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;
@@ -179,7 +183,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
       startup_server_handle.stop(true).await;
     }
 
-    Some(create_http_server(context.clone(), SETTINGS.clone())?)
+    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone())?)
   } else {
     None
   };
@@ -225,11 +229,10 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
   Ok(startup_server_handle)
 }
 
-fn create_http_server(context: FastJobContext, settings: Settings) -> FastJobResult<ServerHandle> {
+fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
-
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
@@ -248,6 +251,7 @@ fn create_http_server(context: FastJobContext, settings: Settings) -> FastJobRes
       .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
+      .app_data(Data::new(phoenix_manager.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

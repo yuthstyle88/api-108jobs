@@ -12,7 +12,7 @@ use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CommunityId, InstanceId, MultiCommunityId, PaginationCursor, PersonId, PostId},
+  newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
     community::CommunityActions,
     local_user::LocalUser,
@@ -28,7 +28,7 @@ use lemmy_db_schema::{
       creator_home_instance_actions_join, creator_local_instance_actions_join, filter_blocked,
       filter_is_subscribed, filter_not_unlisted_or_is_subscribed, image_details_join,
       my_community_actions_join, my_instance_actions_community_join, my_local_user_admin_join,
-      my_person_actions_join, my_post_actions_join, suggested_communities,
+      my_person_actions_join, my_post_actions_join,
     },
     seconds_to_pg_interval, Commented, DbPool,
   },
@@ -39,7 +39,7 @@ use lemmy_db_schema_file::{
     PostSortType::{self, *},
   },
   schema::{
-    community, community_actions, local_user_language, multi_community_entry, person, post,
+    community, community_actions, local_user_language, person, post,
     post_actions,
   },
 };
@@ -236,7 +236,6 @@ pub struct PostQuery<'a> {
   pub sort: Option<PostSortType>,
   pub time_range_seconds: Option<i32>,
   pub community_id: Option<CommunityId>,
-  pub multi_community_id: Option<MultiCommunityId>,
   pub local_user: Option<&'a LocalUser>,
   pub show_hidden: Option<bool>,
   pub show_read: Option<bool>,
@@ -339,20 +338,11 @@ impl PostQuery<'_> {
         .filter(post::scheduled_publish_time_at.is_null());
     }
 
-    match (o.community_id, o.multi_community_id) {
-      (Some(id), None) => {
+    match o.community_id {
+      Some(id) => {
         query = query.filter(post::community_id.eq(id));
       }
-      (None, Some(id)) => {
-        let communities = multi_community_entry::table
-          .filter(multi_community_entry::multi_community_id.eq(id))
-          .select(multi_community_entry::community_id);
-        query = query.filter(post::community_id.eq_any(communities))
-      }
-      (Some(_), Some(_)) => {
-        return Err(FastJobErrorType::CannotCombineCommunityIdAndMultiCommunityId.into())
-      }
-      (None, None) => {
+      None => {
         if let (Some(ListingType::Subscribed), Some(id)) =
           (o.listing_type, largest_subscribed_for_prefetch)
         {
@@ -373,7 +363,6 @@ impl PostQuery<'_> {
       ListingType::ModeratorView => {
         query = query.filter(community_actions::became_moderator_at.is_not_null());
       }
-      ListingType::Suggested => query = query.filter(suggested_communities()),
     }
 
     if !o.self_promotion.unwrap_or(o.local_user.self_promotion(site)) {
@@ -582,7 +571,6 @@ mod tests {
       language::Language,
       local_site::{LocalSite, LocalSiteUpdateForm},
       local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
-      multi_community::{MultiCommunity, MultiCommunityInsertForm},
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
       post::{
         Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadForm, PostUpdateForm,
@@ -2380,16 +2368,8 @@ mod tests {
     let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, community_2.id);
     let post_2 = Post::create(pool, &form).await?;
 
-    let form = MultiCommunityInsertForm::new(
-      data.tegan.person.id,
-      data.tegan.person.instance_id,
-      "test multi".to_string(),
-    );
-    let multi = MultiCommunity::create(pool, &form).await?;
-    MultiCommunity::update_entries(pool, multi.id, &vec![community_1.id, community_2.id]).await?;
 
     let listing = PostQuery {
-      multi_community_id: Some(multi.id),
       ..Default::default()
     }
     .list(&data.site, pool)
@@ -2408,7 +2388,6 @@ mod tests {
     assert_eq!(HashSet::from([post_1.id, post_2.id]), listing_posts);
 
     let suggested = PostQuery {
-      listing_type: Some(ListingType::Suggested),
       ..Default::default()
     }
     .list(&data.site, pool)
@@ -2416,13 +2395,11 @@ mod tests {
     assert!(suggested.is_empty());
 
     let form = LocalSiteUpdateForm {
-      suggested_communities: Some(multi.id),
       ..Default::default()
     };
     LocalSite::update(pool, &form).await?;
 
     let suggested = PostQuery {
-      listing_type: Some(ListingType::Suggested),
       ..Default::default()
     }
     .list(&data.site, pool)

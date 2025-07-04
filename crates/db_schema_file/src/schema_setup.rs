@@ -41,7 +41,6 @@ fn replaceable_schema() -> String {
   [
     "CREATE SCHEMA r;",
     include_str!("../replaceable_schema/utils.sql"),
-    include_str!("../replaceable_schema/triggers.sql"),
   ]
   .join("\n")
 }

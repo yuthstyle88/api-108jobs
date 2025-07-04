@@ -110,7 +110,6 @@ pub async fn update_site(
     oauth_registration: data.oauth_registration,
     disallow_self_promotion_content: data.disallow_self_promotion_content,
     disable_email_notifications: data.disable_email_notifications,
-    suggested_communities: data.suggested_communities,
     ..Default::default()
   };
 
@@ -346,7 +345,6 @@ mod tests {
           default_post_sort_type: Some(PostSortType::Active),
           slur_filter_regex: Some(String::new()),
           registration_mode: Some(RegistrationMode::Open),
-          federation_enabled: Some(true),
           ..Default::default()
         },
       ),

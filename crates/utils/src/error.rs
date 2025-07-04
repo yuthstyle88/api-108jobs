@@ -181,7 +181,6 @@ pub enum FastJobErrorType {
   CouldntInsertActivity,
   CouldntCreateRateLimit,
   CouldntCreateCaptchaAnswer,
-  CouldntUpdateFederationQueueState,
   CouldntCreateOauthAccount,
   CouldntCreatePasswordResetRequest,
   CouldntCreateLoginToken,
@@ -191,6 +190,8 @@ pub enum FastJobErrorType {
   MultiCommunityUpdateWrongUser,
   CannotCombineCommunityIdAndMultiCommunityId,
   MultiCommunityEntryLimitReached,
+  CouldntConnectDatabase,
+  CouldntStartWebSocket,
 }
 
 cfg_if! {

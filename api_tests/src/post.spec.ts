@@ -1,6 +1,6 @@
 jest.setTimeout(120000);
 
-import { CommunityView } from "lemmy-js-client/dist/types/CommunityView";
+import { CommunityView } from "../lemmy-js-client/dist/types/CommunityView";
 import {
   alpha,
   beta,
@@ -42,8 +42,8 @@ import {
   getModlog,
   getCommunity,
 } from "./shared";
-import { PostView } from "lemmy-js-client/dist/types/PostView";
-import { AdminBlockInstanceParams } from "lemmy-js-client/dist/types/AdminBlockInstanceParams";
+import { PostView } from "../lemmy-js-client/dist/types/PostView";
+import { AdminBlockInstanceParams } from "../lemmy-js-client/dist/types/AdminBlockInstanceParams";
 import {
   AddModToCommunity,
   EditSite,

@@ -1,6 +1,6 @@
 jest.setTimeout(180000);
 
-import { PostResponse } from "lemmy-js-client/dist/types/PostResponse";
+import { PostResponse } from "../lemmy-js-client/dist/types/PostResponse";
 import {
   alpha,
   beta,

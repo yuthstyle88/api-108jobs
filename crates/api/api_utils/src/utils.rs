@@ -58,6 +58,7 @@ use lemmy_utils::{
 use moka::future::Cache;
 use regex::{escape, Regex, RegexSet};
 use std::sync::LazyLock;
+use rand::Rng;
 use tracing::Instrument;
 use url::{ParseError, Url};
 use urlencoding::encode;
@@ -922,11 +923,69 @@ pub fn send_webmention(post: Post, community: &Community) {
   };
 }
 
+
+/// Extracts the username from an email address by taking the part before the @ symbol
+pub fn extract_username(email: String) -> Option<String> {
+  email.split('@').next().map(|s| s.to_string())
+}
+
+/// Generates a unique username from an email address
+///
+/// If the extracted username is available, it will be used.
+/// If not, it will try adding random numbers (instead of sequential) until it finds
+/// an available username or reaches the maximum attempt limit.
+pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> FastJobResult<String> {
+  // Extract username from email
+  let mut base_username = extract_username(email).unwrap_or_else(|| "user".to_string());
+
+  // Ensure the base username only contains valid characters
+  let valid_chars_regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
+
+  // Clean the username to only include valid characters
+  if !valid_chars_regex.is_match(&base_username) {
+    base_username = base_username
+      .chars()
+      .filter(|c| c.is_alphanumeric() || *c == '_')
+      .collect::<String>();
+
+    // If filtering removed all characters, use "user" as fallback
+    if base_username.is_empty() {
+      base_username = "user".to_string();
+    }
+  }
+
+  // First check if the base username is available
+  if Person::check_username_taken(pool, &base_username).await.is_err() {
+    // Username is already taken, try with random numbers
+    let mut rng = rand::rng();
+    let mut attempts = 0;
+    const MAX_ATTEMPTS: usize = 15;
+
+    while attempts < MAX_ATTEMPTS {
+      // Generate a random 4-digit number
+      let random_num = rng.random_range(1000..10000);
+      let try_username = format!("{}{}", base_username, random_num);
+
+      if Person::check_username_taken(pool, &try_username).await.is_ok() {
+        return Ok(try_username);
+      }
+
+      attempts += 1;
+    }
+
+    // If all attempts failed, generate a completely random username
+    let random_num = rng.random_range(10000..100000);
+    return Ok(format!("user{}", random_num));
+  }
+
+  // Base username is available
+  Ok(base_username)
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
   use pretty_assertions::assert_eq;
-  use serial_test::serial;
 
   #[test]
   #[rustfmt::skip]

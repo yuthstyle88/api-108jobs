@@ -3086,12 +3086,12 @@ dependencies = [
  "moka",
  "once_cell",
  "pretty_assertions",
+ "rand 0.9.1",
  "regex",
  "reqwest 0.12.21",
  "reqwest-middleware",
  "serde",
  "serde_json",
- "serial_test",
  "tokio",
  "tracing",
  "url",
@@ -3535,6 +3535,7 @@ dependencies = [
  "serde_with",
  "ts-rs",
  "url",
+ "uuid",
 ]
 
 [[package]]

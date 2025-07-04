@@ -181,6 +181,41 @@ diesel::table! {
 }
 
 diesel::table! {
+    chat_room (id) {
+        id -> Int4,
+        post_id -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    chat_room_member (room_id, user_id) {
+        room_id -> Int4,
+        user_id -> Int4,
+    }
+}
+
+diesel::table! {
+    chat_message (id) {
+        id -> Int4,
+        room_id -> Int4,
+        sender_id -> Int4,
+        content -> Text,
+        file_url -> Nullable<Text>,
+        file_type -> Nullable<Varchar>,
+        file_name -> Nullable<Text>,
+        status -> Int2,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::CommunityVisibility;
 

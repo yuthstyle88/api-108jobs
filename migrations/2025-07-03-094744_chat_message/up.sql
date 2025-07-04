@@ -8,8 +8,8 @@ CREATE TABLE chat_message
     file_type  varchar(50),
     file_name  text,
     status     smallint                                                      NOT NULL DEFAULT 1,
-    created_at timestamp                                                     NOT NULL DEFAULT now(),
-    updated_at timestamp                                                     NOT NULL
+    created_at timestamptz                                                     NOT NULL DEFAULT now(),
+    updated_at timestamptz                                                     NOT NULL
 );
 
 CREATE INDEX idx_chat_message_id ON chat_message (id);

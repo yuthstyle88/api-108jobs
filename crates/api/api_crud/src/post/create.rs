@@ -18,6 +18,7 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
+use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
@@ -110,6 +111,7 @@ pub async fn create_post(
     self_promotion,
     language_id: Some(language_id),
     scheduled_publish_time_at,
+    ap_id: Some("https://example.com/random".parse::<DbUrl>()?),
     ..PostInsertForm::new(
       data.name.trim().to_string(),
       local_user_view.person.id,

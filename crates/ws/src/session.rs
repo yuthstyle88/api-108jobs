@@ -1,16 +1,11 @@
-use std::collections::HashSet;
-use std::sync::Arc;
 use std::time::Duration;
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
 use actix_web::web::Data;
 use actix_web_actors::ws;
-use diesel_async::AsyncPgConnection;
 use phoenix_channels_client::{Client, Config};
 use serde_json::json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::utils::{get_conn, ActualDbPool, DbConn, DbPool};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use crate::{
     message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendMessage},
     server::WsChatServer,
@@ -21,29 +16,40 @@ pub struct WsChatSession {
     room: String,
     name: Option<String>,
     context: Data<FastJobContext>,
+    phoenix_config: Config
 }
 
 impl WsChatSession {
     pub fn new(context: Data<FastJobContext>) -> Self {
+        let mut config = Config::new("ws://127.0.0.1:4000/socket/websocket").unwrap();
+        config.set("shared_secret", "supersecret");
+
         Self {
             id: 0,
             room: "main".to_string(),
             name: None,
             context,
+            phoenix_config: config,
         }
     }
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
         {
-            let mut config = Config::new("ws://127.0.0.1:4000/socket/websocket").unwrap();
-            config.set("shared_secret", "supersecret");
-
-            // Create a client
-            let mut client = Client::new(config).unwrap();
+            let config = self.phoenix_config.clone();
             let topic = format!("room:{}", room_name);
-            // Connect the client
+
             tokio::spawn(async move {
-                client.connect().await.unwrap();
-                let channel = client.join(&topic, Some(Duration::from_secs(15))).await.unwrap();
+                match Client::new(config) {
+                    Ok(mut client) => {
+                        if client.connect().await.is_ok() {
+                            if client.join(&topic, Some(Duration::from_secs(15))).await.is_err() {
+                                log::error!("Failed to join Phoenix topic: {}", topic);
+                            }
+                        } else {
+                            log::error!("Failed to connect Phoenix client");
+                        }
+                    }
+                    Err(e) => log::error!("Failed to build Phoenix client: {e}"),
+                }
             });
         }
         let room_name = room_name.to_owned();
@@ -93,17 +99,24 @@ impl WsChatSession {
 
         pub fn send_msg(&self, msg: &str) {
             {
-                let mut config = Config::new("ws://127.0.0.1:4000/socket/websocket").unwrap();
-                config.set("shared_secret", "supersecret");
+                let topic = format!("room:{}", self.room);
+                let config = self.phoenix_config.clone();
+                let name = self.name.clone().unwrap_or_else(|| "anon".to_owned());
+                let payload = json!({ "name": name, "message": msg });
 
-                // Create a client
-                let mut client = Client::new(config).unwrap();
-                let topic = format!("room:{}", "b8d9a8a5-c296-4d31-8998-e3a76b6eafa1");
-                // Connect the client
                 tokio::spawn(async move {
-                    client.connect().await.unwrap();
-                    let channel = client.join(&topic, Some(Duration::from_secs(15))).await.unwrap();
-                    let result = channel.send("send_reply", json!({ "name": "foo", "message": "hi"})).await.unwrap();
+                    match Client::new(config) {
+                        Ok(mut client) => {
+                            if client.connect().await.is_ok() {
+                                if let Ok(channel) = client.join(&topic, Some(Duration::from_secs(15))).await {
+                                    if channel.send("send_reply", payload).await.is_err() {
+                                        log::error!("Failed to send message to Phoenix topic");
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => log::error!("Phoenix client error: {e}"),
+                    }
                 });
             }
             let content = format!(
@@ -167,7 +180,7 @@ impl WsChatSession {
                                 if let Some(room_name) = command.next() {
                                     self.join_room(room_name, ctx);
                                 } else {
-                                    ctx.text("!!! room name is required");
+                                    ctx.text("!!! room name is required(ex. /join main -- main is room name)");
                                 }
                             }
 

@@ -10,6 +10,7 @@ use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, Event, Payload, Socket, Topic};
 use serde_json::Value;
 use std::{collections::HashMap, sync::Arc, time::Duration};
+use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use lemmy_db_schema::utils::DbPool;
@@ -64,7 +65,7 @@ pub struct PhoenixManager {
   socket: Arc<Socket>,
   channels: HashMap<String, Arc<Channel>>,
   endpoint: String,
-  chat_store: Arc<RwLock<HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>>>,
+  chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
 }
 
@@ -78,7 +79,7 @@ impl PhoenixManager {
       socket: sock,
       channels: HashMap::new(),
       endpoint: endpoint.into(),
-      chat_store: Arc::new(RwLock::new(HashMap::new())),
+      chat_store: HashMap::new(),
       pool,
     }
   }
@@ -92,13 +93,13 @@ impl Actor for PhoenixManager {
     self.subscribe_system_async::<BridgeMessage>(ctx);
     ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
       let arbiter = Arbiter::new();
-      let store = Arc::clone(&actor.chat_store);
+      let mut store = actor.chat_store.clone();
       let pool = actor.pool.clone();
 
       let succeeded = arbiter.spawn(async move {
-        let mut map = store.write().await;
+        // let mut map = store.write().await;
 
-        for (room_id, messages) in map.drain() {
+        for (room_id, messages) in store.drain() {
           if messages.is_empty() {
             continue;
           }
@@ -173,12 +174,12 @@ impl Handler<StoreChatMessage> for PhoenixManager {
     type Result = ();
 
     fn handle(&mut self, msg: StoreChatMessage, ctx: &mut Context<Self>) -> Self::Result {
-        let store = Arc::clone(&self.chat_store);
+        let mut store = self.chat_store.clone();
         let msg = msg.message;
 
         let fut = async move {
-            let mut map = store.write().await;
-            map.entry(msg.room_id).or_default().push(msg);
+
+          store.entry(msg.room_id).or_default().push(msg);
         };
 
         ctx.spawn(wrap_future(fut));

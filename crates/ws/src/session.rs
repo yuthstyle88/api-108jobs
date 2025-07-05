@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::{GetDbPool, PhoenixManager},
@@ -7,21 +8,21 @@ use actix::{fut::wrap_future, Actor, ActorContext, Addr, AsyncContext, Handler, 
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
 use chrono::Utc;
+use futures_util::FutureExt;
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId},
+  newtypes::{ChatRoomId, LocalUserId, PostId},
   source::chat_message::ChatMessageInsertForm,
   traits::Crud,
   utils::DbPool,
 };
 use lemmy_utils::error::FastJobError;
-use futures_util::FutureExt;
 use serde::Deserialize;
 use serde_json::json;
-use lemmy_db_schema::newtypes::PostId;
 
 pub struct WsSession {
   pub(crate) id: String,
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
+  pub(crate) subscribed_channels: HashSet<String>,
 }
 
 impl Actor for WsSession {
@@ -29,6 +30,10 @@ impl Actor for WsSession {
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<BridgeMessage>(ctx);
+
+    self.subscribed_channels = HashSet::new();
+
+    log::info!("WebSocket session {} started", self.id);
   }
 }
 
@@ -36,9 +41,10 @@ impl Handler<BridgeMessage> for WsSession {
   type Result = ();
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
-    // Handle messages from broker
-    if let Ok(text) = serde_json::to_string(&msg.payload) {
-      ctx.text(text);
+    if self.subscribed_channels.contains(&msg.channel) {
+      if let Ok(text) = serde_json::to_string(&msg.payload) {
+        ctx.text(text);
+      }
     }
   }
 }
@@ -49,9 +55,10 @@ pub enum WsClientCommand {
   JoinRoom {
     sender_id: LocalUserId,
     receiver_id: LocalUserId,
-    post_id: PostId
+    post_id: PostId,
   },
   SendMessage {
+    sender_id: LocalUserId,
     room_id: ChatRoomId,
     content: String,
   },
@@ -69,8 +76,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
             WsClientCommand::JoinRoom {
               sender_id,
               receiver_id,
-              post_id
+              post_id,
             } => {
+              let mut subscribed_channels = self.subscribed_channels.clone();
               let phoenix = self.phoenix_manager.clone();
 
               let fut = async move {
@@ -88,21 +96,33 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                   Ok(Some(existing)) => existing,
                   _ => {
                     let now = Utc::now();
-                    let new_room = ChatRoom::create(&mut db_pool, &ChatRoomInsertForm {
-                      post_id,
-                      created_at: now,
-                      updated_at: now,
-                    }).await?;
+
+                    // Step 1: Create a new chat room
+                    let new_room = ChatRoom::create(
+                      &mut db_pool,
+                      &ChatRoomInsertForm {
+                        post_id,
+                        created_at: now,
+                        updated_at: now,
+                      },
+                    )
+                    .await?;
                     let room_id = new_room.id;
 
-                    let form = ChatRoomMemberInsertForm {
-                      room_id,
-                      user_id: receiver_id,
-                    };
-                    let new_member = ChatRoomMember::create(&mut db_pool, &form).await?;
-                    new_member.room_id
+                    // Step 2: Create room members (sender + receiver)
+                    for user_id in [sender_id, receiver_id] {
+                      let member_form = ChatRoomMemberInsertForm { room_id, user_id };
+
+                      if let Err(e) = ChatRoomMember::create(&mut db_pool, &member_form).await {
+                        return Err(e);
+                      }
+                    }
+
+                    room_id
                   }
                 };
+
+                subscribed_channels.insert(format!("room:{}", room_id));
 
                 let msg = BridgeMessage {
                   source: MessageSource::WebSocket,
@@ -120,30 +140,56 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                 }
               })));
             }
-            WsClientCommand::SendMessage { room_id, content } => {
+            WsClientCommand::SendMessage {
+              sender_id,
+              room_id,
+              content,
+            } => {
+              let phoenix_manager = self.phoenix_manager.clone();
+              let now = Utc::now();
+
               let chat = ChatMessageInsertForm {
                 room_id,
-                sender_id: LocalUserId(0),
+                sender_id,
                 content,
                 file_url: None,
                 file_type: None,
                 file_name: None,
                 status: 1,
-                created_at: Utc::now(),
-                updated_at: Utc::now(),
+                created_at: now,
+                updated_at: now,
               };
-              self.phoenix_manager.do_send(StoreChatMessage {
-                message: chat.clone(),
-              });
 
-              let msg = BridgeMessage {
-                source: MessageSource::WebSocket,
-                channel: format!("room:{}", room_id),
-                event: "new_msg".to_string(),
-                payload: serde_json::to_value(chat).unwrap(),
+              let fut = async move {
+                match phoenix_manager
+                  .send(StoreChatMessage {
+                    message: chat.clone(),
+                  })
+                  .await
+                {
+                  Ok(()) => {
+                    if let Ok(payload) = serde_json::to_value(&chat) {
+                      let msg = BridgeMessage {
+                        source: MessageSource::WebSocket,
+                        channel: format!("room:{}", room_id),
+                        event: "new_msg".to_string(),
+                        payload,
+                      };
+                      phoenix_manager.do_send(msg);
+                    }
+                    Ok(())
+                  }
+                  Err(e) => Err(e.into()),
+                }
               };
-              self.phoenix_manager.do_send(msg);
+
+              ctx.spawn(wrap_future(fut.map(|res: Result<(), FastJobError>| {
+                if let Err(e) = res {
+                  log::error!("WebSocket send message failed: {:?}", e);
+                }
+              })));
             }
+
             WsClientCommand::LeaveRoom { room_id } => {
               let msg = BridgeMessage {
                 source: MessageSource::WebSocket,

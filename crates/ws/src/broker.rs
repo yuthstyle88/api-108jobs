@@ -12,6 +12,7 @@ use serde_json::Value;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
+use lemmy_db_schema::utils::DbPool;
 use crate::message::StoreChatMessage;
 
 #[derive(Message)]
@@ -92,6 +93,8 @@ impl Actor for PhoenixManager {
     ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
       let arbiter = Arbiter::new();
       let store = Arc::clone(&actor.chat_store);
+      let pool = actor.pool.clone();
+
       let succeeded = arbiter.spawn(async move {
         let mut map = store.write().await;
 
@@ -100,9 +103,9 @@ impl Actor for PhoenixManager {
             continue;
           }
 
-          println!("Flushing {} messages from room {}", messages.len(), "room_id");
-
-          // ChatMessage::bulk_insert(&mut db_pool, &messages).await?;
+          println!("Flushing {} messages from room {}", messages.len(), room_id);
+          let mut db_pool = DbPool::Pool(&pool);
+          let _ = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
         }
       });
       if succeeded {

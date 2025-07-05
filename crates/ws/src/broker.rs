@@ -29,8 +29,8 @@ async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
     }
   }
 }
-async fn send_event_to_channel(channel: &Arc<Channel>, event: Event, payload: Value) {
-  match Payload::json_from_serialized(payload.to_string()) {
+async fn send_event_to_channel(channel: &Arc<Channel>, event: Event, payload: String) {
+  match Payload::json_from_serialized(payload) {
     Ok(payload) => {
       if let Err(e) = channel.cast(event, payload).await {
         eprintln!("Failed to cast message: {}", e);
@@ -151,7 +151,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }
 
       let phoenix_event = Event::from_string(event);
-      send_event_to_channel(&arc_chan, phoenix_event, msg.payload).await;
+      send_event_to_channel(&arc_chan, phoenix_event, msg.messages).await;
     })
   }
 }

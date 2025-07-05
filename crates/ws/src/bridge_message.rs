@@ -11,8 +11,9 @@ pub enum MessageSource {
 #[derive(Message, Clone, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct BridgeMessage {
+    pub op: String,
     pub source: MessageSource,
     pub channel: String,
     pub event: String,
-    pub payload: Value,
+    pub messages: String,
 }

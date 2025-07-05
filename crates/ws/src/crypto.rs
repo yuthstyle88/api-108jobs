@@ -14,9 +14,10 @@ impl Crypto {
   pub fn new() -> Self {
     let mut key = [0u8; 32];
     let mut iv = [0u8; 16];
+    let mut rng = OsRng;
 
-    OsRng.fill_bytes(&mut key);
-    OsRng.fill_bytes(&mut iv);
+    rng.fill_bytes(&mut key);
+    rng.fill_bytes(&mut iv);
 
     Self { key, iv }
   }
@@ -29,7 +30,7 @@ impl Crypto {
     hex::encode(self.iv)
   }
 
-  pub fn encrypt(&self, data: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
+  pub fn encrypt(&self, data: &str) -> Result<String, Box<dyn std::error::Error>> {
     let cipher = Aes256CbcEnc::new(&self.key.into(), &self.iv.into());
     let encrypted = cipher.encrypt_padded_vec_mut::<Pkcs7>(data);
     Ok(hex::encode(encrypted))
@@ -38,7 +39,9 @@ impl Crypto {
   pub fn decrypt(&self, hex_data: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let encrypted = hex::decode(hex_data)?;
     let cipher = Aes256CbcDec::new(&self.key.into(), &self.iv.into());
-    let decrypted = cipher.decrypt_padded_vec_mut::<Pkcs7>(&encrypted)?;
+    let decrypted = cipher.decrypt_padded_vec_mut::<Pkcs7>(&encrypted).
+                              map_err(|e| format!("decrypt error: {e}"))?;
+
     Ok(decrypted)
   }
 }

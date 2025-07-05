@@ -10,6 +10,7 @@ pub async fn chat_ws(
   phoenix: Data<Addr<PhoenixManager>>,
 ) -> Result<impl Responder, Error> {
   let session = WsSession {
+    crypto: (),
     id: uuid::Uuid::new_v4().to_string(),
     phoenix_manager: phoenix.get_ref().clone(),
     subscribed_channels: HashSet::new()

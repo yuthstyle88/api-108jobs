@@ -216,7 +216,7 @@ unified-diff = "0.2.1"
 phoenix_channels_client = "0.1.2"
 actix = "0.13.5"
 awc = "3.7.0"
-rand = "0.9.1"
+rand = "0.8.5"
 actix-broker = "0.4"
 actix-web-actors = "4.1"
 

@@ -32,7 +32,7 @@ impl Crypto {
 
   pub fn encrypt(&self, data: &str) -> Result<String, Box<dyn std::error::Error>> {
     let cipher = Aes256CbcEnc::new(&self.key.into(), &self.iv.into());
-    let encrypted = cipher.encrypt_padded_vec_mut::<Pkcs7>(data);
+    let encrypted = cipher.encrypt_padded_vec_mut::<Pkcs7>(data.as_bytes());
     Ok(hex::encode(encrypted))
   }
 

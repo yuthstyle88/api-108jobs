@@ -122,7 +122,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
   fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
-    let channel_name = msg.channel.clone();
+    let channel_name = msg.channel.to_string();
     let event = msg.event.clone();
     let socket = self.socket.clone();
     let mut channels = self.channels.clone();
@@ -184,17 +184,3 @@ impl Handler<StoreChatMessage> for PhoenixManager {
         ctx.spawn(wrap_future(fut));
     }
 }
-
-
-#[derive(Message)]
-#[rtype(result = "ActualDbPool")]
-pub struct GetDbPool;
-
-impl Handler<GetDbPool> for PhoenixManager {
-  type Result = MessageResult<GetDbPool>;
-
-  fn handle(&mut self, _msg: GetDbPool, _ctx: &mut Context<Self>) -> Self::Result {
-    MessageResult(self.pool.clone())
-  }
-}
-

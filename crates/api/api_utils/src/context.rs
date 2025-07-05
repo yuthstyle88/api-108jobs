@@ -57,5 +57,5 @@ impl FastJobContext {
   pub fn rate_limit_cell(&self) -> &RateLimit {
     &self.rate_limit_cell
   }
-  
+
 }

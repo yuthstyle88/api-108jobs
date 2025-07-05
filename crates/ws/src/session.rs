@@ -2,7 +2,6 @@ use std::error::Error;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::PhoenixManager,
-  crypto::Crypto
 };
 use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
@@ -10,6 +9,7 @@ use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::PostId;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
+use lemmy_utils::crypto::Crypto;
 
 pub struct WsSession {
   pub(crate) crypto: Crypto,
@@ -53,11 +53,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
           let content = self.crypto.encrypt(&value.content);
-          if let Some(data) = content {
+          if let Ok(data) = content {
             let bridge_msg = BridgeMessage {
-              op,
+              op: value.op.to_string(),
               source: MessageSource::WebSocket,
-              channel: value.room_id.into(), // Change this based on your needs
+              channel: value.room_id, // Change this based on your needs
               event: "new_msg".to_string(),      // Change this based on your needs
               messages: data,
             };

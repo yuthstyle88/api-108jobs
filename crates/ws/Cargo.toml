@@ -15,6 +15,7 @@ workspace = true
 
 [dependencies]
 lemmy_utils = { workspace = true, features = ["full"] }
+lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 uuid = { workspace = true }
@@ -26,10 +27,8 @@ url = { workspace = true }
 chrono = { workspace = true }
 actix-broker = { workspace = true }
 actix-web-actors = { workspace = true }
-rand = { workspace = true }
 phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }
 hex = "0.4"
-aes = "0.8"
-cbc = { version = "0.1", features = ["alloc"] }
+
 futures-util = "0.3.31"
 log = "0.4.27"

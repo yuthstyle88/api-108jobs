@@ -3902,6 +3902,7 @@ dependencies = [
  "futures-util",
  "lemmy_db_schema",
  "lemmy_utils",
+ "log",
  "phoenix_channels_client 0.9.1",
  "serde",
  "serde_json",

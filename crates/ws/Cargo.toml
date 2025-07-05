@@ -28,3 +28,4 @@ actix-broker = { workspace = true }
 actix-web-actors = { workspace = true }
 phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }
 futures-util = "0.3.31"
+log = "0.4.27"

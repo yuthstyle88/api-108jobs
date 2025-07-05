@@ -14,15 +14,15 @@ pub async fn exchange_keys(
   _req: HttpRequest,
   _context: Data<FastJobContext>,
 ) -> FastJobResult<Json<ExchangeKey>> {
-  let client_public_key_pem = data.public_key.clone();
-  let sever = webcryptobox::generate_private_key().unwrap();
-  let sever_public_key = webcryptobox::get_public_key(&sever).unwrap();
-  let sever_public_key_pem = webcryptobox::export_public_key_pem(&sever_public_key).unwrap();
+  let client_public_key_pem = hex::decode(data.public_key.clone())?;
+  let sever = webcryptobox::generate_private_key()?;
+  let sever_public_key = webcryptobox::get_public_key(&sever)?;
+  let sever_public_key_pem = webcryptobox::export_public_key_pem(&sever_public_key)?;
 
-  let pem_block = pem::parse(&sever_public_key_pem).unwrap();
-  let pem_block = String::from_utf8(pem_block.contents().to_vec()).unwrap();
+  let pem_block = pem::parse(&sever_public_key_pem)?;
+  let pem_block = String::from_utf8(pem_block.contents().to_vec())?;
   let public_key_hex = hex::encode(&pem_block);
-   let client_key = webcryptobox::import_public_key_pem(&client_public_key_pem.as_bytes()).unwrap();
+   let client_key = webcryptobox::import_public_key_pem(&client_public_key_pem)?;
   //Todo save client key to DB
   let res = ExchangeKey{ public_key: public_key_hex };
  Ok(Json(res))

@@ -8,10 +8,9 @@ use lemmy_db_schema::{
 };
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, Event, Payload, Socket, Topic};
-use serde_json::Value;
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::io::AsyncWriteExt;
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
+
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use lemmy_db_schema::utils::DbPool;
 use crate::message::StoreChatMessage;
@@ -30,7 +29,7 @@ async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
     }
   }
 }
-async fn send_event_to_channel(channel: &Arc<Channel>, event: Event, payload: String) {
+async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: String) {
   match Payload::json_from_serialized(payload) {
     Ok(payload) => {
       if let Err(e) = channel.cast(event, payload).await {
@@ -41,6 +40,15 @@ async fn send_event_to_channel(channel: &Arc<Channel>, event: Event, payload: St
       eprintln!("Failed to serialize payload: {}", e);
     }
   }
+}
+async fn get_or_create_channel(channels: Arc<Mutex<HashMap<String, Arc<Channel>>>>,socket: Arc<Socket>, name: &str) -> FastJobResult<Arc<Channel>> {
+  let mut channels = channels.lock().await;
+  if !channels.contains_key(name) {
+    let topic = Topic::from_string(name.to_string());
+    let chan = socket.channel(topic, None).await?;
+    channels.insert(name.to_string(), chan.clone());
+  }
+  Ok(Arc::clone(channels.get(name).unwrap()))
 }
 impl Handler<ConnectNow> for PhoenixManager {
   type Result = ();
@@ -63,7 +71,7 @@ impl Handler<ConnectNow> for PhoenixManager {
 
 pub struct PhoenixManager {
   socket: Arc<Socket>,
-  channels: HashMap<String, Arc<Channel>>,
+  channels: Arc<Mutex<HashMap<String, Arc<Channel>>>>,
   endpoint: String,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
@@ -77,12 +85,13 @@ impl PhoenixManager {
       .expect("Failed to create socket");
     Self {
       socket: sock,
-      channels: HashMap::new(),
+      channels: Arc::new(Mutex::new(HashMap::new())),
       endpoint: endpoint.into(),
       chat_store: HashMap::new(),
       pool,
     }
   }
+
 }
 
 impl Actor for PhoenixManager {
@@ -126,33 +135,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channel_name = msg.channel.to_string();
     let event = msg.event.clone();
     let socket = self.socket.clone();
-    let mut channels = self.channels.clone();
+    let channels =  Arc::clone(&self.channels);
 
     Box::pin(async move {
-      let arc_chan = if let Some(chan) = channels.get(&channel_name).cloned() {
-        chan
-      } else {
-        let channel = Topic::from_string(channel_name.clone());
-        match socket.channel(channel, None).await {
-          Ok(new_chan) => {
-            let arc_chan = new_chan;
-            channels.insert(channel_name.clone(), arc_chan.clone());
-            arc_chan
-          }
-          Err(e) => {
-            eprintln!("Failed to create channel '{}': {}", channel_name, e);
-            return;
+      let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
+
+      if let Ok(arc_chan) =  arc_chan  {
+          if let Err(e) = arc_chan.join(Duration::from_secs(5)).await {
+            eprintln!("Failed to join channel '{}': {}", channel_name, e);
+            let phoenix_event = Event::from_string(event);
+            send_event_to_channel(arc_chan, phoenix_event, msg.messages).await;
           }
         }
-      };
-
-      if let Err(e) = arc_chan.join(Duration::from_secs(5)).await {
-        eprintln!("Failed to join channel '{}': {}", channel_name, e);
-        return;
-      }
-
-      let phoenix_event = Event::from_string(event);
-      send_event_to_channel(&arc_chan, phoenix_event, msg.messages).await;
     })
   }
 }
@@ -173,15 +167,8 @@ impl Handler<InitSocket> for PhoenixManager {
 impl Handler<StoreChatMessage> for PhoenixManager {
     type Result = ();
 
-    fn handle(&mut self, msg: StoreChatMessage, ctx: &mut Context<Self>) -> Self::Result {
-        let mut store = self.chat_store.clone();
+    fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
         let msg = msg.message;
-
-        let fut = async move {
-
-          store.entry(msg.room_id).or_default().push(msg);
-        };
-
-        ctx.spawn(wrap_future(fut));
+        self.chat_store.entry(msg.room_id).or_default().push(msg);
     }
 }

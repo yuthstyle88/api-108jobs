@@ -3774,6 +3774,7 @@ dependencies = [
  "lemmy_db_views_local_user",
  "lemmy_utils",
  "lettre",
+ "rand 0.9.1",
  "rosetta-build",
  "rosetta-i18n",
  "tracing",

@@ -9,8 +9,8 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::sync::Mutex;
-
+use tokio::sync::{Mutex, RwLock};
+use lemmy_db_schema::newtypes::{ClientKey, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use lemmy_db_schema::utils::DbPool;
 use crate::message::StoreChatMessage;
@@ -29,17 +29,11 @@ async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
     }
   }
 }
-async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: String) {
-  match Payload::json_from_serialized(payload) {
-    Ok(payload) => {
-      if let Err(e) = channel.cast(event, payload).await {
-        eprintln!("Failed to cast message: {}", e);
-      }
-    }
-    Err(e) => {
-      eprintln!("Failed to serialize payload: {}", e);
-    }
+async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: Payload) {
+  if let Err(e) = channel.cast(event, payload).await {
+    eprintln!("Failed to cast message: {}", e);
   }
+
 }
 async fn get_or_create_channel(channels: Arc<Mutex<HashMap<String, Arc<Channel>>>>,socket: Arc<Socket>, name: &str) -> FastJobResult<Arc<Channel>> {
   let mut channels = channels.lock().await;
@@ -75,6 +69,7 @@ pub struct PhoenixManager {
   endpoint: String,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
+  key_cache: KeyCache,
 }
 
 impl PhoenixManager {
@@ -89,6 +84,7 @@ impl PhoenixManager {
       endpoint: endpoint.into(),
       chat_store: HashMap::new(),
       pool,
+      key_cache: KeyCache::new(),
     }
   }
 
@@ -133,18 +129,23 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
   fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
     let channel_name = msg.channel.to_string();
+    let user_id = msg.user_id.clone();
     let event = msg.event.clone();
     let socket = self.socket.clone();
     let channels =  Arc::clone(&self.channels);
-
+    let message =  msg.messages.clone();
+    let key_cache = self.key_cache.clone();
     Box::pin(async move {
+      let client_key = key_cache.get(&user_id).await.unwrap().0.public_key_to_der().unwrap();
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 
       if let Ok(arc_chan) =  arc_chan  {
           if let Err(e) = arc_chan.join(Duration::from_secs(5)).await {
             eprintln!("Failed to join channel '{}': {}", channel_name, e);
             let phoenix_event = Event::from_string(event);
-            send_event_to_channel(arc_chan, phoenix_event, msg.messages).await;
+            let decrypt_date = webcryptobox::decrypt(&client_key, &message.as_bytes());
+            let payload: Payload = Payload::binary_from_bytes(decrypt_date.unwrap());
+            send_event_to_channel(arc_chan, phoenix_event, payload).await;
           }
         }
     })
@@ -171,4 +172,29 @@ impl Handler<StoreChatMessage> for PhoenixManager {
         let msg = msg.message;
         self.chat_store.entry(msg.room_id).or_default().push(msg);
     }
+}
+#[derive(Clone)]
+pub struct KeyCache {
+  map: Arc<RwLock<HashMap<LocalUserId, ClientKey>>>,
+}
+
+impl KeyCache {
+  pub fn new() -> Self {
+    KeyCache {
+      map: Arc::new(RwLock::new(HashMap::new())),
+    }
+  }
+
+  // ใส่ key ลง cache (เช่นหลังดึงจาก DB)
+  pub async fn insert(&self, user_id: LocalUserId, key: ClientKey) {
+    let mut w = self.map.write().await;
+    w.insert(user_id, key);
+  }
+
+
+  // ดึง key จาก cache
+  pub async fn get(&self, user_id: &LocalUserId) -> Option<ClientKey> {
+    let r = self.map.read().await;
+    r.get(user_id).cloned()
+  }
 }

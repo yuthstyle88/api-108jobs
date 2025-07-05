@@ -219,7 +219,7 @@ awc = "3.7.0"
 rand = "0.8.5"
 actix-broker = "0.4"
 actix-web-actors = "4.1"
-
+webcryptobox = "2.1.1"
 [dependencies]
 lemmy_api = { workspace = true }
 lemmy_api_crud = { workspace = true }

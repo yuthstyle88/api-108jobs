@@ -45,7 +45,6 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use lemmy_utils::crypto::Crypto;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -166,7 +165,6 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let crypto = Crypto::new();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -184,7 +182,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     if let Some(startup_server_handle) = startup_server_handle {
       startup_server_handle.stop(true).await;
     }
-    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone(), crypto)?)
+    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone())?)
   } else {
     None
   };
@@ -230,7 +228,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
   Ok(startup_server_handle)
 }
 
-fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings, crypto: Crypto) -> FastJobResult<ServerHandle> {
+fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
@@ -253,7 +251,6 @@ fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixMana
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
       .app_data(Data::new(phoenix_manager.clone()))
-      .app_data(Data::new(crypto.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

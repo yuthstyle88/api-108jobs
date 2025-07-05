@@ -19,7 +19,7 @@ use {
   diesel_ltree::Ltree,
   lemmy_utils::error::{FastJobErrorType, FastJobResult},
 };
-
+use webcryptobox::{EcKey, Public};
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -85,6 +85,14 @@ pub struct LocalUserId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat room id.
 pub struct ChatRoomId(pub i32);
+
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The chat room id.
+pub struct ClientKey(pub EcKey<Public>);
 
 
 impl Display for ChatRoomId {

@@ -1,7 +1,7 @@
 use actix::Message;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use lemmy_db_schema::newtypes::ChatRoomId;
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum MessageSource {
@@ -15,6 +15,7 @@ pub struct BridgeMessage {
     pub op: String,
     pub source: MessageSource,
     pub channel: ChatRoomId,
+    pub user_id: LocalUserId,
     pub event: String,
     pub messages: String,
 }

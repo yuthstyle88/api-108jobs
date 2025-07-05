@@ -9,10 +9,8 @@ use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::PostId;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
-use lemmy_utils::crypto::Crypto;
 
 pub struct WsSession {
-  pub(crate) crypto: Crypto,
   pub(crate) id: String,
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
 }
@@ -52,17 +50,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-          let content = self.crypto.encrypt(&value.content);
-          if let Ok(data) = content {
             let bridge_msg = BridgeMessage {
               op: value.op.to_string(),
               source: MessageSource::WebSocket,
               channel: value.room_id, // Change this based on your needs
+              user_id: value.sender_id,
               event: "new_msg".to_string(),      // Change this based on your needs
-              messages: data,
+              messages: value.content,
             };
             self.issue_async::<SystemBroker, _>(bridge_msg);
-            }
           }
         },
       Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),

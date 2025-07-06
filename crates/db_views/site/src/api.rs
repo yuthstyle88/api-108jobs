@@ -364,11 +364,11 @@ pub struct Login {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct ExchangeKey {
-  pub public_key: String,
+  pub public_key: SensitiveString,
 }
 
 #[skip_serializing_none]

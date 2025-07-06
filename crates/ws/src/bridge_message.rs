@@ -1,6 +1,5 @@
 use actix::Message;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 
 #[derive(Clone, Serialize, Deserialize)]

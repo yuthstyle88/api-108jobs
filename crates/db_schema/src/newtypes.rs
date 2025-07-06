@@ -19,7 +19,6 @@ use {
   diesel_ltree::Ltree,
   lemmy_utils::error::{FastJobErrorType, FastJobResult},
 };
-use webcryptobox::{EcKey, Public};
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

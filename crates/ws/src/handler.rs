@@ -1,13 +1,11 @@
 use crate::{broker::PhoenixManager, session::WsSession};
 use actix::Addr;
 use actix_web::{web::{Data, Payload}, Error, HttpRequest, Responder};
-use actix_web::web::{Json, Query};
+use actix_web::web::Query;
 use actix_web_actors::ws;
 use serde::Deserialize;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
-use lemmy_db_schema::newtypes::ClientKey;
-use lemmy_utils::error::FastJobResult;
 use crate::message::RegisterClientKeyMsg;
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {
@@ -41,7 +39,6 @@ pub async fn chat_ws(
   }
 
   let session = WsSession {
-    id: uuid::Uuid::new_v4().to_string(),
     phoenix_manager: phoenix.get_ref().clone(),
     client_key: RegisterClientKeyMsg { user_id, client_key },
   };

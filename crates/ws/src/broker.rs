@@ -5,7 +5,7 @@ use actix::{
   ResponseFuture,
 };
 use actix_broker::BrokerSubscribe;
-use lemmy_db_schema::newtypes::{ClientKey, LocalUserId};
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::chat_message::{ChatMessageContent, ChatMessageInsertForm};
 use lemmy_db_schema::utils::DbPool;
 use lemmy_db_schema::{
@@ -142,7 +142,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     let client_key = self.key_cache.get(&user_id).unwrap_or_default();
     
-    let mut decrypt_data = String::new();
+    let decrypt_data;
     if msg.security_config {
       decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap();
     }else{

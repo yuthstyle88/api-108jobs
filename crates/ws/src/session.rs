@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::PhoenixManager,
@@ -7,12 +6,10 @@ use crate::{
 use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use lemmy_db_schema::newtypes::ClientKey;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
 
 pub struct WsSession {
-  pub(crate) id: String,
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) client_key: RegisterClientKeyMsg,
 }

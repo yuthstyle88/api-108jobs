@@ -1,6 +1,6 @@
 CREATE TABLE chat_room
 (
-    id         serial PRIMARY KEY,
+    id         varchar PRIMARY KEY,
     post_id    int REFERENCES post ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     created_at timestamptz                                             NOT NULL DEFAULT now(),
     updated_at timestamptz                                             NOT NULL
@@ -8,7 +8,7 @@ CREATE TABLE chat_room
 
 CREATE TABLE chat_room_member
 (
-    room_id int REFERENCES chat_room ON UPDATE CASCADE ON DELETE CASCADE,
+    room_id varchar REFERENCES chat_room ON UPDATE CASCADE ON DELETE CASCADE,
     user_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE,
     PRIMARY KEY (room_id, user_id)
 );

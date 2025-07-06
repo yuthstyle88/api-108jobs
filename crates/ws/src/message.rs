@@ -24,5 +24,5 @@ pub struct StoreChatMessage {
 #[rtype(result = "()")]
 pub struct RegisterClientKeyMsg {
     pub user_id: Option<LocalUserId>,
-    pub client_key: Option<ClientKey>
+    pub client_key: Option<String>
 }

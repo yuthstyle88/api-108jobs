@@ -16,7 +16,7 @@ use phoenix_channels_client::{
   url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic,
 };
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -140,27 +140,22 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
 
-    let client_key = self.key_cache
-     .get(&user_id)
-     .and_then(|key| key.0.public_key_to_der().ok())
-     .unwrap_or_else(|| {
-       // สร้าง vec ขนาด 16 bytes และเติมข้อมูลให้ครบ
-       let mut key = vec![0; 16];
-       key.extend_from_slice(&[0; 17]); // เพิ่มอีก 17 bytes รวมเป็น 33 bytes
-       key
-     });
-
-
-    let decrypt_data = webcryptobox::decrypt(&client_key, &message.as_bytes());
-    let decrypted = decrypt_data.unwrap_or_default();
-    let content_enum = ChatMessageContent::Text { content: String::from_utf8(decrypted.clone()).unwrap_or_default()};
+    let client_key = self.key_cache.get(&user_id).unwrap_or_default();
+    
+    let mut decrypt_data = String::new();
+    if msg.security_config {
+      decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap();
+    }else{
+      decrypt_data = message.clone();
+    }
+    let content_enum = ChatMessageContent::Text { content: decrypt_data};
     let chatroom_id = ChatRoomId::from(channel_name.clone());
     let content =  serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
     let store_msg = ChatMessageInsertForm{
       room_id: chatroom_id.clone(),
       sender_id: Default::default(),
-      content,
+      content: content.clone(),
       status: 0,
       created_at: Default::default(),
       updated_at: Default::default(),
@@ -176,7 +171,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         match status {
           Ok(status) => {
             let phoenix_event = Event::from_string(event);
-            let payload: Payload = Payload::binary_from_bytes(decrypted);
+            let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
 
             if status == ChannelStatus::Joined {
               send_event_to_channel(arc_chan, phoenix_event, payload).await;
@@ -224,7 +219,7 @@ impl Handler<RegisterClientKeyMsg> for PhoenixManager {
 }
 #[derive(Clone)]
 pub struct KeyCache {
-  map: HashMap<LocalUserId, ClientKey>,
+  map: HashMap<LocalUserId, String>,
 }
 
 impl KeyCache {
@@ -235,12 +230,12 @@ impl KeyCache {
   }
 
   // ใส่ key ลง cache (เช่นหลังดึงจาก DB)
-  pub fn insert(&mut self, user_id: LocalUserId, key: ClientKey) {
+  pub fn insert(&mut self, user_id: LocalUserId, key: String) {
     self.map.insert(user_id, key);
   }
 
   // ดึง key จาก cache
-  pub fn get(&self, user_id: &LocalUserId) -> Option<&ClientKey> {
-    self.map.get(user_id)
+  pub fn get(&self, user_id: &LocalUserId) -> Option<String> {
+    self.map.get(user_id).cloned()
   }
 }

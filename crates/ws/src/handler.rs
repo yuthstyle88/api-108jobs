@@ -7,6 +7,7 @@ use serde::Deserialize;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
 use lemmy_db_schema::newtypes::ClientKey;
+use lemmy_utils::error::FastJobResult;
 use crate::message::RegisterClientKeyMsg;
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {
@@ -25,10 +26,17 @@ pub async fn chat_ws(
   let mut user_id = None;
 
   if let Some(jwt) = token {
-    let local_user= local_user_view_from_jwt(&jwt, &context).await?;
-    user_id = Some(local_user.local_user.id);
-    if let Some(public_key) = local_user.local_user.public_key {
-      client_key = create_client_key(&public_key);
+    let local_user= local_user_view_from_jwt(&jwt, &context).await;
+    match local_user {
+      Ok(local_user) => {
+        user_id = Some(local_user.local_user.id);
+        if let Some(public_key) = local_user.local_user.public_key {
+          client_key = create_client_key(&public_key);
+        }
+      }
+      Err(_) => {
+        eprintln!("Failed to get local user from jwt");
+      }
     }
   }
 
@@ -40,9 +48,10 @@ pub async fn chat_ws(
   ws::start(session, &req, stream)
 }
 
-fn create_client_key(value: &str) -> Option<ClientKey> {
+fn create_client_key(value: &str) -> Option<String> {
   webcryptobox::import_public_key_pem(value.as_bytes())
    .ok()
-   .map(ClientKey)
+   .and_then(|key| webcryptobox::export_public_key_pem(&key).ok())
+   .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
 }
 

@@ -62,6 +62,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
               user_id: value.sender_id,
               event: "new_msg".to_string(),      // Change this based on your needs
               messages: value.content,
+              security_config: false,
             };
             self.issue_async::<SystemBroker, _>(bridge_msg);
           }

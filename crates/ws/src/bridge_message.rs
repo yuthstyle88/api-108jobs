@@ -18,4 +18,5 @@ pub struct BridgeMessage {
     pub user_id: LocalUserId,
     pub event: String,
     pub messages: String,
+    pub security_config: bool,
 }

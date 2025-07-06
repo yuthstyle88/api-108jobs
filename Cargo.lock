@@ -3950,6 +3950,7 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "anyhow",
+ "chrono",
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_utils",

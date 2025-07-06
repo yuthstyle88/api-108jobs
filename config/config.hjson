@@ -16,4 +16,5 @@
       # it is necessary to increase shared memory size in Docker: https://stackoverflow.com/a/56754077
       pool_size: 2
     }
+  json_logging: true
 }

@@ -14,6 +14,9 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
+use actix_web::cookie::Expiration::DateTime;
+use chrono::Utc;
+use serde_json::error::Category::Data;
 use tokio::sync::RwLock;
 
 #[derive(Message)]
@@ -79,7 +82,6 @@ async fn get_or_create_channel(
    .write()
    .await
    .insert(name.to_string(), channel.clone());
-
   tracing::info!("Created new channel: {}", name);
   Ok(channel)
 }
@@ -146,9 +148,17 @@ impl Actor for PhoenixManager {
             continue;
           }
 
+          // TODO: Implement room_id validation and creation flow
+          // - Check if room_id exists in database for the given sender and receiver
+          // - If not exists:
+          //   1. Create new room entry with provided sender_id and receiver_id
+
           println!("Flushing {} messages from room {}", messages.len(), room_id);
           let mut db_pool = DbPool::Pool(&pool);
-          let _ = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
+          let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
+          if let Err(e) = res {
+            println!("Failed to flush messages: {}", e);
+          }
         }
       });
       if succeeded {
@@ -190,8 +200,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       sender_id: Default::default(),
       content: content.clone(),
       status: 0,
-      created_at: Default::default(),
-      updated_at: Default::default(),
+      created_at: Utc::now(),
+      updated_at: Utc::now(),
     };
 
     self.chat_store.entry(chatroom_id).or_default().push(store_msg);

@@ -142,13 +142,13 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     let client_key = self.key_cache.get(&user_id).unwrap_or_default();
     
-    let decrypt_data;
+    let decrypt_data: String;
     if msg.security_config {
-      decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap();
+      decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap().into();
     }else{
-      decrypt_data = message.clone();
+      decrypt_data = message.clone().into();
     }
-    let content_enum = ChatMessageContent::Text { content: decrypt_data};
+    let content_enum =  ChatMessageContent::from(decrypt_data);
     let chatroom_id = ChatRoomId::from(channel_name.clone());
     let content =  serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id

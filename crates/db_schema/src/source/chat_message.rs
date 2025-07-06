@@ -38,7 +38,20 @@ pub struct ChatMessageInsertForm {
 #[derive(Debug, Clone, Serialize)]
 pub enum ChatMessageContent {
     Text { content: String },
-    File { url: String, name: String, file_type: String },
+    File { name: String, file_type: String },
+}
+
+impl From<String> for ChatMessageContent {
+    fn from(content: String) -> Self {
+        if content.starts_with("file:") {
+            ChatMessageContent::File {
+                name: content,
+                file_type: "".to_string(),
+            }
+        } else {
+            ChatMessageContent::Text { content }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default)]

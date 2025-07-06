@@ -124,6 +124,7 @@ impl Actor for PhoenixManager {
       } else {
         println!("Failed to spawn task.");
       }
+      actor.chat_store.clear();
     });
   }
 }

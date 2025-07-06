@@ -103,13 +103,12 @@ impl Actor for PhoenixManager {
     self.subscribe_system_async::<BridgeMessage>(ctx);
     ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
       let arbiter = Arbiter::new();
-      let mut store = actor.chat_store.clone();
+      let messages = actor.chat_store.clone();
       let pool = actor.pool.clone();
 
       let succeeded = arbiter.spawn(async move {
-        // let mut map = store.write().await;
 
-        for (room_id, messages) in store.drain() {
+        for (room_id, messages) in messages.iter() {
           if messages.is_empty() {
             continue;
           }

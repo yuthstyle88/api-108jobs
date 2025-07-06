@@ -14,6 +14,7 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
+use anyhow::Error;
 use tokio::sync::RwLock;
 
 #[derive(Message)]
@@ -40,39 +41,57 @@ async fn get_or_create_channel(
   socket: Arc<Socket>,
   name: &str,
 ) -> FastJobResult<Arc<Channel>> {
-
+  // Try to get existing channel
   if let Some(channel) = channels.read().await.get(name).cloned() {
-    println!("Found existing channel: {}", name);
-    return Ok(channel);
+    let is_valid: Result<bool, _> = async {
+      let status = channel.statuses().status().await?;
+      if status == ChannelStatus::Joined {
+        // Verify with heartbeat
+        let test_event = Event::from_string("heartbeat".parse()?);
+        let test_payload = Payload::binary_from_bytes(vec![]);
+        channel.cast(test_event, test_payload).await?;
+        Ok::<bool, Error>(true)
+      } else {
+        // Try rejoin if not joined
+        channel.join(Duration::from_secs(5)).await?;
+        Ok(true)
+      }
+    }.await;
+
+    match is_valid {
+      Ok(true) => {
+        tracing::debug!("Using existing channel: {}", name);
+        return Ok(channel);
+      }
+      _ => {
+        // Remove invalid channel
+        let mut write_guard = channels.write().await;
+        write_guard.remove(name);
+        drop(write_guard); // Explicitly release lock
+      }
+    }
   }
 
+  // Create new channel
   let topic = Topic::from_string(name.to_string());
-  let channel = match socket.channel(topic, None).await {
-    Ok(ch) => {
-      println!("Channel created successfully: {}", name);
-      ch
-    }
-    Err(e) => {
-      println!("Failed to create channel {}: {:?}", name, e);
-      return Err(e.into());
-    }
-  };
+  let channel = socket
+   .channel(topic, None)
+   .await
+   .map_err(|e| anyhow::anyhow!("Failed to create channel {}: {}", name, e))?;
 
-  match channel.join(Duration::from_secs(5)).await {
-    Ok(_) => println!("Successfully joined channel: {}", name),
-    Err(e) => {
-      println!("Failed to join channel {}: {:?}", name, e);
-      return Err(e.into());
-    }
-  }
+  // Join channel
+  channel
+   .join(Duration::from_secs(5))
+   .await
+   .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
 
-  channels.write().await.insert(name.to_string(), channel.clone());
+  // Store new channel
+  channels
+   .write()
+   .await
+   .insert(name.to_string(), channel.clone());
 
-  let channels_read = channels.read().await;
-  for (channel_name, _) in channels_read.iter() {
-    println!("Channel: {}", channel_name);
-  }
-
+  tracing::debug!("Created new channel: {}", name);
   Ok(channel)
 }
 impl Handler<ConnectNow> for PhoenixManager {

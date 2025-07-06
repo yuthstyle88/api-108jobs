@@ -3949,7 +3949,7 @@ dependencies = [
  "actix-broker",
  "actix-web",
  "actix-web-actors",
- "chrono",
+ "anyhow",
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_utils",
@@ -3957,8 +3957,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "url",
- "uuid",
  "webcryptobox",
 ]
 

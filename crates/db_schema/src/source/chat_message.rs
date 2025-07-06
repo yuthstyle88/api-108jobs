@@ -16,9 +16,6 @@ pub struct ChatMessage {
     pub room_id: ChatRoomId,
     pub sender_id: LocalUserId,
     pub content: String,
-    pub file_url: Option<String>,
-    pub file_type: Option<String>,
-    pub file_name: Option<String>,
     pub status: i16,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -34,22 +31,21 @@ pub struct ChatMessageInsertForm {
     pub room_id: ChatRoomId,
     pub sender_id: LocalUserId,
     pub content: String,
-    pub file_url: Option<String>,
-    pub file_type: Option<String>,
-    pub file_name: Option<String>,
     pub status: i16,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+#[derive(Debug, Clone, Serialize)]
+pub enum ChatMessageContent {
+    Text { content: String },
+    File { url: String, name: String, file_type: String },
 }
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "full", derive(Serialize, Deserialize, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = chat_message))]
 pub struct ChatMessageUpdateForm {
-    pub content: Option<String>,
-    pub file_url: Option<String>,
-    pub file_type: Option<String>,
-    pub file_name: Option<String>,
+    pub content: String,
     pub status: Option<i16>,
     pub updated_at: Option<DateTime<Utc>>,
 }

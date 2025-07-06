@@ -79,18 +79,22 @@ pub struct CommunityId(pub i32);
 /// The local user id.
 pub struct LocalUserId(pub i32);
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat room id.
-pub struct ChatRoomId(pub i32);
+pub struct ChatRoomId(pub String);
 impl Display for ChatRoomId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     self.0.fmt(f)
   }
 }
-
+impl  From<String> for ChatRoomId {
+  fn from(value: String) -> Self {
+    ChatRoomId{ 0: value }
+  }
+}
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

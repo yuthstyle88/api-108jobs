@@ -6,7 +6,7 @@ use actix::{
 };
 use actix_broker::BrokerSubscribe;
 use lemmy_db_schema::newtypes::{ClientKey, LocalUserId};
-use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
+use lemmy_db_schema::source::chat_message::{ChatMessageContent, ChatMessageInsertForm};
 use lemmy_db_schema::utils::DbPool;
 use lemmy_db_schema::{
   newtypes::ChatRoomId, source::chat_message::ChatMessage, utils::ActualDbPool,
@@ -139,14 +139,32 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
-    let key_cache = self.key_cache.clone();
+
+    let client_key = self.key_cache
+     .get(&user_id)
+     .unwrap()
+     .0
+     .public_key_to_der()
+     .unwrap();
+
+    let decrypt_data = webcryptobox::decrypt(&client_key, &message.as_bytes());
+    let decrypted = decrypt_data.unwrap();
+    let content_enum = ChatMessageContent::Text { content: String::from_utf8(decrypted.clone()).unwrap() };
+    let chatroom_id = ChatRoomId::from(channel_name.clone());
+    let content =  serde_json::to_string(&content_enum).unwrap();
+    //TODO get sender id
+    let store_msg = ChatMessageInsertForm{
+      room_id: chatroom_id.clone(),
+      sender_id: Default::default(),
+      content,
+      status: 0,
+      created_at: Default::default(),
+      updated_at: Default::default(),
+    };
+
+    self.chat_store.entry(chatroom_id).or_default().push(store_msg);
     Box::pin(async move {
-      let client_key = key_cache
-        .get(&user_id)
-        .unwrap()
-        .0
-        .public_key_to_der()
-        .unwrap();
+
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 
       if let Ok(arc_chan) = arc_chan {
@@ -154,8 +172,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
         match status {
           Ok(status) => {
             let phoenix_event = Event::from_string(event);
-            let decrypt_date = webcryptobox::decrypt(&client_key, &message.as_bytes());
-            let payload: Payload = Payload::binary_from_bytes(decrypt_date.unwrap());
+            let decrypt_data = webcryptobox::decrypt(&client_key, &message.as_bytes());
+            let data = serde_json::to_string(&decrypt_data.unwrap());
+
+            let payload: Payload = Payload::binary_from_bytes(decrypted);
+
+
             if status == ChannelStatus::Joined {
               send_event_to_channel(arc_chan, phoenix_event, payload).await;
             } else {
@@ -188,7 +210,7 @@ impl Handler<StoreChatMessage> for PhoenixManager {
 
   fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
     let msg = msg.message;
-    self.chat_store.entry(msg.room_id).or_default().push(msg);
+    self.chat_store.entry(msg.room_id.clone()).or_default().push(msg);
   }
 }
 impl Handler<RegisterClientKeyMsg> for PhoenixManager {

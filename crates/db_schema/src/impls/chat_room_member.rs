@@ -46,7 +46,7 @@ impl ChatRoomMember {
   ) -> FastJobResult<Option<ChatRoomId>> {
     let conn = &mut get_conn(pool).await?;
 
-    let results: Vec<i32> = chat_room_member::table
+    let results: Vec<ChatRoomId> = chat_room_member::table
       .filter(chat_room_member::user_id.eq_any(vec![member1.0, member2.0]))
       .select(chat_room_member::room_id)
       .group_by(chat_room_member::room_id)
@@ -55,6 +55,6 @@ impl ChatRoomMember {
       .await
       .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-    Ok(results.into_iter().next().map(ChatRoomId))
+    Ok(results.into_iter().next())
   }
 }

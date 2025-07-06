@@ -1,4 +1,5 @@
 use actix::prelude::*;
+use lemmy_db_schema::newtypes::{ClientKey, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 
 #[derive(Message, Clone)]
@@ -17,4 +18,11 @@ pub struct SendMessage(pub String, pub u64, pub String);
 #[rtype(result = "()")]
 pub struct StoreChatMessage {
     pub message: ChatMessageInsertForm,
+}
+
+#[derive(Message, Clone)]
+#[rtype(result = "()")]
+pub struct RegisterClientKeyMsg {
+    pub user_id: Option<LocalUserId>,
+    pub client_key: Option<ClientKey>
 }

@@ -3886,17 +3886,14 @@ dependencies = [
  "lemmy_utils",
  "lemmy_ws",
  "mimalloc",
- "phoenix_channels_client 0.1.2",
  "reqwest-middleware",
  "reqwest-tracing",
- "rustc-hash 2.1.1",
  "rustls 0.23.27",
  "serde_json",
  "tokio",
  "tracing",
  "tracing-actix-web",
  "tracing-subscriber",
- "url",
 ]
 
 [[package]]
@@ -3956,7 +3953,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_utils",
- "phoenix_channels_client 0.9.1",
+ "phoenix_channels_client",
  "serde",
  "serde_json",
  "tokio",
@@ -4769,23 +4766,6 @@ dependencies = [
 
 [[package]]
 name = "phoenix_channels_client"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c735171895599b96183414c338a08155d779c69f5b6098f24adcbe7a6ecf5fa5"
-dependencies = [
- "futures",
- "fxhash",
- "log",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tokio-tungstenite 0.17.2",
- "url",
-]
-
-[[package]]
-name = "phoenix_channels_client"
 version = "0.9.1"
 source = "git+https://github.com/liveview-native/phoenix-channels-client?branch=main#c54fb29b502b43edfc8568364aef4c0676b925da"
 dependencies = [
@@ -4801,7 +4781,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.12",
  "tokio",
- "tokio-tungstenite 0.24.0",
+ "tokio-tungstenite",
  "uniffi",
  "url",
  "uuid",
@@ -5925,17 +5905,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha-1"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5058ada175748e33390e40e872bd0fe59a19f265d0158daa551c5a88a76009c"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest",
-]
-
-[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6528,7 +6497,6 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
- "tracing",
  "windows-sys 0.52.0",
 ]
 
@@ -6606,18 +6574,6 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.17.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f714dd15bead90401d77e04243611caec13726c2408afd5b31901dfcdcb3b181"
-dependencies = [
- "futures-util",
- "log",
- "tokio",
- "tungstenite 0.17.3",
-]
-
-[[package]]
-name = "tokio-tungstenite"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edc5f74e248dc973e0dbb7b74c7e0d6fcc301c694ff50049504004ef4d0cdcd9"
@@ -6625,7 +6581,7 @@ dependencies = [
  "futures-util",
  "log",
  "tokio",
- "tungstenite 0.24.0",
+ "tungstenite",
 ]
 
 [[package]]
@@ -6879,25 +6835,6 @@ dependencies = [
  "quote",
  "syn 2.0.102",
  "termcolor",
-]
-
-[[package]]
-name = "tungstenite"
-version = "0.17.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e27992fd6a8c29ee7eef28fc78349aa244134e10ad447ce3b9f0ac0ed0fa4ce0"
-dependencies = [
- "base64 0.13.1",
- "byteorder",
- "bytes",
- "http 0.2.12",
- "httparse",
- "log",
- "rand 0.8.5",
- "sha-1",
- "thiserror 1.0.69",
- "url",
- "utf-8",
 ]
 
 [[package]]

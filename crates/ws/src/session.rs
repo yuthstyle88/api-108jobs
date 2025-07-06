@@ -2,17 +2,19 @@ use std::error::Error;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::PhoenixManager,
+  message::RegisterClientKeyMsg,
 };
 use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use lemmy_db_schema::newtypes::PostId;
+use lemmy_db_schema::newtypes::ClientKey;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
 
 pub struct WsSession {
   pub(crate) id: String,
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
+  pub(crate) client_key: RegisterClientKeyMsg,
 }
 
 impl Actor for WsSession {
@@ -20,6 +22,9 @@ impl Actor for WsSession {
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<BridgeMessage>(ctx);
+    let user_id = self.client_key.user_id;
+    let client_key = self.client_key.client_key.clone();
+    self.phoenix_manager.do_send(RegisterClientKeyMsg { user_id,  client_key });
   }
 }
 

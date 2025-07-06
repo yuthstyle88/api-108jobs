@@ -239,11 +239,8 @@ serde_json = { workspace = true }
 rustls = { workspace = true }
 tokio.workspace = true
 clap = { workspace = true }
-phoenix_channels_client = { workspace = true }
-url = { workspace = true }
 actix = { workspace = true }
 mimalloc = "0.1.46"
-rustc-hash = "2.1.1"
 
 
 # Speedup RSA key generation

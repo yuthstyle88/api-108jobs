@@ -1,5 +1,5 @@
 use crate::bridge_message::BridgeMessage;
-use crate::message::StoreChatMessage;
+use crate::message::{RegisterClientKeyMsg, StoreChatMessage};
 use actix::{
   Actor, Arbiter, AsyncContext, Context, Handler, Message,
   ResponseFuture,
@@ -143,7 +143,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
     Box::pin(async move {
       let client_key = key_cache
         .get(&user_id)
-        .await
         .unwrap()
         .0
         .public_key_to_der()
@@ -192,27 +191,34 @@ impl Handler<StoreChatMessage> for PhoenixManager {
     self.chat_store.entry(msg.room_id).or_default().push(msg);
   }
 }
+impl Handler<RegisterClientKeyMsg> for PhoenixManager {
+  type Result = ();
+
+  fn handle(&mut self, msg: RegisterClientKeyMsg, _ctx: &mut Context<Self>) -> Self::Result {
+    if msg.user_id.is_some() && msg.client_key.is_some() {
+      self.key_cache.insert(msg.user_id.unwrap(), msg.client_key.unwrap());
+    }
+  }
+}
 #[derive(Clone)]
 pub struct KeyCache {
-  map: Arc<RwLock<HashMap<LocalUserId, ClientKey>>>,
+  map: HashMap<LocalUserId, ClientKey>,
 }
 
 impl KeyCache {
   pub fn new() -> Self {
     KeyCache {
-      map: Arc::new(RwLock::new(HashMap::new())),
+      map: HashMap::new(),
     }
   }
 
   // ใส่ key ลง cache (เช่นหลังดึงจาก DB)
-  pub async fn insert(&self, user_id: LocalUserId, key: ClientKey) {
-    let mut w = self.map.write().await;
-    w.insert(user_id, key);
+  pub fn insert(&mut self, user_id: LocalUserId, key: ClientKey) {
+    self.map.insert(user_id, key);
   }
 
   // ดึง key จาก cache
-  pub async fn get(&self, user_id: &LocalUserId) -> Option<ClientKey> {
-    let r = self.map.read().await;
-    r.get(user_id).cloned()
+  pub fn get(&self, user_id: &LocalUserId) -> Option<&ClientKey> {
+    self.map.get(user_id)
   }
 }

@@ -142,16 +142,20 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     let client_key = self.key_cache
      .get(&user_id)
-     .unwrap()
-     .0
-     .public_key_to_der()
-     .unwrap();
+     .and_then(|key| key.0.public_key_to_der().ok())
+     .unwrap_or_else(|| {
+       // สร้าง vec ขนาด 16 bytes และเติมข้อมูลให้ครบ
+       let mut key = vec![0; 16];
+       key.extend_from_slice(&[0; 17]); // เพิ่มอีก 17 bytes รวมเป็น 33 bytes
+       key
+     });
+
 
     let decrypt_data = webcryptobox::decrypt(&client_key, &message.as_bytes());
-    let decrypted = decrypt_data.unwrap();
-    let content_enum = ChatMessageContent::Text { content: String::from_utf8(decrypted.clone()).unwrap() };
+    let decrypted = decrypt_data.unwrap_or_default();
+    let content_enum = ChatMessageContent::Text { content: String::from_utf8(decrypted.clone()).unwrap_or_default()};
     let chatroom_id = ChatRoomId::from(channel_name.clone());
-    let content =  serde_json::to_string(&content_enum).unwrap();
+    let content =  serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
     let store_msg = ChatMessageInsertForm{
       room_id: chatroom_id.clone(),
@@ -172,11 +176,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         match status {
           Ok(status) => {
             let phoenix_event = Event::from_string(event);
-            let decrypt_data = webcryptobox::decrypt(&client_key, &message.as_bytes());
-            let data = serde_json::to_string(&decrypt_data.unwrap());
-
             let payload: Payload = Payload::binary_from_bytes(decrypted);
-
 
             if status == ChannelStatus::Joined {
               send_event_to_channel(arc_chan, phoenix_event, payload).await;

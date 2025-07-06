@@ -99,12 +99,6 @@ impl  From<String> for ChatRoomId {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct ClientKey(pub EcKey<Public>);
-impl From<String> for  ClientKey{
-  fn from(value: String) -> Self {
-    let public_key = webcryptobox::import_public_key_pem(value.as_bytes()).unwrap();
-    ClientKey { 0: public_key }
-  }
-}
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]

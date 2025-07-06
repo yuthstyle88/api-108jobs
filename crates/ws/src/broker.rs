@@ -14,7 +14,6 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use anyhow::Error;
 use tokio::sync::RwLock;
 
 #[derive(Message)]
@@ -43,33 +42,23 @@ async fn get_or_create_channel(
 ) -> FastJobResult<Arc<Channel>> {
   // Try to get existing channel
   if let Some(channel) = channels.read().await.get(name).cloned() {
-    let is_valid: Result<bool, _> = async {
-      let status = channel.statuses().status().await?;
-      if status == ChannelStatus::Joined {
-        // Verify with heartbeat
-        let test_event = Event::from_string("heartbeat".parse()?);
-        let test_payload = Payload::binary_from_bytes(vec![]);
-        channel.cast(test_event, test_payload).await?;
-        Ok::<bool, Error>(true)
-      } else {
-        // Try rejoin if not joined
-        channel.join(Duration::from_secs(5)).await?;
-        Ok(true)
+    match channel.statuses().status().await {
+      Ok(status) => {
+        if status == ChannelStatus::Joined {
+          tracing::info!("Using existing channel: {}", name);
+          return Ok(channel);
+        }
+        // ถ้าไม่ได้ joined ลอง rejoin
+        if let Ok(_) = channel.join(Duration::from_secs(5)).await {
+          tracing::info!("Successfully rejoined channel: {}", name);
+          return Ok(channel);
+        }
       }
-    }.await;
-
-    match is_valid {
-      Ok(true) => {
-        tracing::debug!("Using existing channel: {}", name);
-        return Ok(channel);
-      }
-      _ => {
-        // Remove invalid channel
-        let mut write_guard = channels.write().await;
-        write_guard.remove(name);
-        drop(write_guard); // Explicitly release lock
+      Err(e) => {
+        tracing::info!("Channel {} status check failed: {}", name, e);
       }
     }
+    channels.write().await.remove(name);
   }
 
   // Create new channel
@@ -91,7 +80,7 @@ async fn get_or_create_channel(
    .await
    .insert(name.to_string(), channel.clone());
 
-  tracing::debug!("Created new channel: {}", name);
+  tracing::info!("Created new channel: {}", name);
   Ok(channel)
 }
 impl Handler<ConnectNow> for PhoenixManager {

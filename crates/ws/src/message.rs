@@ -7,10 +7,6 @@ use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 pub struct LeaveRoom(pub String, pub u64);
 
 #[derive(Message, Clone)]
-#[rtype(result = "Vec<String>")]
-pub struct ListRooms;
-
-#[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct SendMessage(pub String, pub u64, pub String);
 

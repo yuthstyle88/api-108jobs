@@ -12,11 +12,9 @@ use lemmy_db_schema::{
   newtypes::ChatRoomId, source::chat_message::ChatMessage, utils::ActualDbPool,
 };
 use lemmy_utils::error::FastJobResult;
-use phoenix_channels_client::{
-  url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic,
-};
+use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -38,17 +36,44 @@ async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: Pay
   }
 }
 async fn get_or_create_channel(
-  channels: Arc<Mutex<HashMap<String, Arc<Channel>>>>,
+  channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
   socket: Arc<Socket>,
   name: &str,
 ) -> FastJobResult<Arc<Channel>> {
-  let mut channels = channels.lock().await;
-  if !channels.contains_key(name) {
-    let topic = Topic::from_string(name.to_string());
-    let chan = socket.channel(topic, None).await?;
-    channels.insert(name.to_string(), chan.clone());
+
+  if let Some(channel) = channels.read().await.get(name).cloned() {
+    println!("Found existing channel: {}", name);
+    return Ok(channel);
   }
-  Ok(Arc::clone(channels.get(name).unwrap()))
+
+  let topic = Topic::from_string(name.to_string());
+  let channel = match socket.channel(topic, None).await {
+    Ok(ch) => {
+      println!("Channel created successfully: {}", name);
+      ch
+    }
+    Err(e) => {
+      println!("Failed to create channel {}: {:?}", name, e);
+      return Err(e.into());
+    }
+  };
+
+  match channel.join(Duration::from_secs(5)).await {
+    Ok(_) => println!("Successfully joined channel: {}", name),
+    Err(e) => {
+      println!("Failed to join channel {}: {:?}", name, e);
+      return Err(e.into());
+    }
+  }
+
+  channels.write().await.insert(name.to_string(), channel.clone());
+
+  let channels_read = channels.read().await;
+  for (channel_name, _) in channels_read.iter() {
+    println!("Channel: {}", channel_name);
+  }
+
+  Ok(channel)
 }
 impl Handler<ConnectNow> for PhoenixManager {
   type Result = ();
@@ -71,7 +96,7 @@ impl Handler<ConnectNow> for PhoenixManager {
 
 pub struct PhoenixManager {
   socket: Arc<Socket>,
-  channels: Arc<Mutex<HashMap<String, Arc<Channel>>>>,
+  channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
   endpoint: String,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
@@ -86,7 +111,7 @@ impl PhoenixManager {
       .expect("Failed to create socket");
     Self {
       socket: sock,
-      channels: Arc::new(Mutex::new(HashMap::new())),
+      channels: Arc::new(RwLock::new(HashMap::new())),
       endpoint: endpoint.into(),
       chat_store: HashMap::new(),
       pool,
@@ -140,8 +165,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
 
-    let client_key = self.key_cache.get(&user_id).unwrap_or_default();
-    
+    let client_key = self.key_cache.get(&user_id).unwrap_or_default().to_string();
+
     let decrypt_data: String;
     if msg.security_config {
       decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap().into();

@@ -53,11 +53,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
             let bridge_msg = BridgeMessage {
-              op: value.op.to_string(),
               source: MessageSource::WebSocket,
-              channel: value.room_id, // Change this based on your needs
+              channel: format!("room:{}", value.room_id).into(),
               user_id: value.sender_id,
-              event: "new_msg".to_string(),      // Change this based on your needs
+              event: value.op.to_string(),
               messages: value.content,
               security_config: false,
             };

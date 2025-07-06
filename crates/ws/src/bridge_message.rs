@@ -11,7 +11,6 @@ pub enum MessageSource {
 #[derive(Message, Clone, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct BridgeMessage {
-    pub op: String,
     pub source: MessageSource,
     pub channel: ChatRoomId,
     pub user_id: LocalUserId,

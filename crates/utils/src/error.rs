@@ -199,6 +199,7 @@ pub enum FastJobErrorType {
   DatabaseError,
   CouldntCreateChatRoomMember,
   CouldntUpdateChatRoomMember,
+  InvalidRoomId,
 }
 
 cfg_if! {

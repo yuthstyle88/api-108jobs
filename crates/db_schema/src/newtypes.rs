@@ -89,11 +89,21 @@ impl Display for ChatRoomId {
     self.0.fmt(f)
   }
 }
+
 impl  From<String> for ChatRoomId {
   fn from(value: String) -> Self {
     ChatRoomId{ 0: value }
   }
 }
+
+impl Deref for ChatRoomId {
+  type Target = str;
+
+  fn deref(&self) -> &str {
+    &self.0
+  }
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

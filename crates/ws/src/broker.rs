@@ -20,6 +20,7 @@ use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, 
 use serde_json::error::Category::Data;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
+use crate::chat_room::ChatRoomTemp;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -134,12 +135,17 @@ impl PhoenixManager {
   pub async fn validate_or_create_room(
     db_pool: &mut DbPool<'_>,
     room_id: ChatRoomId,
-    post_id: PostId,
   ) -> FastJobResult<()> {
+    let room_id_string = room_id.to_string();
+    let room_id_str = room_id_string.as_str();
+
     if !ChatRoom::exists(db_pool, room_id).await? {
+      let (_, _, job_id) = ChatRoomTemp::parse_compact_room_id(room_id_str)
+          .ok_or(FastJobErrorType::InvalidRoomId)?;
+
       let now = Utc::now();
       let form = ChatRoomInsertForm {
-        post_id,
+        post_id: PostId(job_id),
         created_at: now,
         updated_at: now,
       };
@@ -193,7 +199,7 @@ impl Actor for PhoenixManager {
           let mut db_pool = DbPool::Pool(&pool);
           // Validate room and create if needed
           // should add logic to add post id here
-          match Self::validate_or_create_room(&mut db_pool, room_id.clone(), PostId(1)).await {
+          match Self::validate_or_create_room(&mut db_pool, room_id.clone()).await {
             Ok(_) => {
               // Room is valid, insert messages
               let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;

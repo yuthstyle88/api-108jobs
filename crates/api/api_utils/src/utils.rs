@@ -340,7 +340,7 @@ pub fn check_private_instance(
 
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> FastJobResult<()> {
-  if !(10..=60).contains(&pass.chars().count()) {
+  if !(6..=60).contains(&pass.chars().count()) {
     Err(FastJobErrorType::InvalidPassword)?
   } else {
     Ok(())

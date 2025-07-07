@@ -50,6 +50,7 @@ pub struct Settings {
   cors_origin: Vec<String>,
   /// Print logs in JSON format. You can also disable ANSI colors in logs with env var `NO_COLOR`.
   pub json_logging: bool,
+  pub google: GoogleConfig
 }
 
 impl Settings {
@@ -169,6 +170,12 @@ pub struct EmailConfig {
   /// Address to send emails from, eg "noreply@your-instance.com"
   #[doku(example = "noreply@example.com")]
   pub smtp_from_address: String,
+}
+#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[serde(default, deny_unknown_fields)]
+pub struct GoogleConfig {
+  pub client_id: String,
+  pub redirect_url: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]

@@ -140,6 +140,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::user::create::get_google_login_url;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner,
@@ -288,8 +289,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
       // User
       .service(
         scope("/account/auth")
-          .guard(guard::Post())
-          .wrap(rate_limit.register())
+          // .guard(guard::Post())
+          // .wrap(rate_limit.register())
           .route("/register", post().to(register))
           .route("/login", post().to(login))
           .route("/logout", post().to(logout))
@@ -434,6 +435,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           .route("/list", get().to(list_all_media))
           .route("/{filename}", get().to(get_image)),
       )
+        .service(resource("/google_login_url").get(get_google_login_url))
         .service(resource("/ws").to(chat_ws)),
   );
 }

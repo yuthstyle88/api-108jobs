@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .email-verification-page {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 14px;
+        }
+
+        .email-container {
+            background-color: white;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 0;
+            width: 100%;
+        }
+
+        .logo img {
+            width: 204px;
+        }
+
+        .logo svg {
+            width: 200px;
+            height: auto;
+        }
+
+        .email-content {
+            padding: 0 40px 30px;
+        }
+
+        .ref {
+            color: #808080;
+        }
+
+        .email-text {
+            color: #000;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .verification-code {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .verification-code h2 {
+            font-size: 32px;
+            letter-spacing: 4px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .signature {
+            margin-top: 25px;
+        }
+
+        .text {
+            padding-bottom: 5px;
+        }
+
+        .strong {
+            font-style: italic;
+        }
+
+        .email-footer {
+            text-align: center;
+            color: black;
+            font-size: 14px;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+
+        .email-highlight {
+            color: #0056D5;
+            text-decoration: underline;
+        }
+
+        .social-footer {
+            background-color: #0056D5;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .social-icon img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-stores {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+
+        .app-store-button {
+            border-radius: 6px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .app-store-button img {
+            width: 100px;
+        }
+
+        .app-store-icon {
+            margin-right: 8px;
+        }
+
+        .footer-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+
+        .copyright {
+            font-size: 10px;
+            opacity: 0.8;
+            padding-bottom: 25px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-verification-page">
+        <div class="email-container">
+            <div class="logo">
+                <img
+                        src="https://ci3.googleusercontent.com/meips/ADKq_NaAJ95VcGS5b19VAC10QPj_EFAaRDeTO6-ob7alBAROvgwcl51BbgMMMNgGbdQfrLp1-LmvzxgiBPi8E_gtjuqY5tN3oyDPnhABDhG1o0yNBk_WamAe84z3Q0_y7MSs-9HLfB2z8p3Fy2BH09lYWG_JzXZ5KG_ReAMnTIoJkeXxl0VYD8BeZVyZNX4=s0-d-e1-ft#https://njbqt.stripocdn.email/content/guids/CABINET_5a350d349c9bf5b2b3e3f05be81d1c28/images/67911620880953674_ymP.jpg"
+                        alt=""/>
+            </div>
+
+            <div class="email-content">
+                <p class="email-text">
+                    Please use the code below to verify your email address <span class="ref">(ref: 3RPAUR)</span>
+                </p>
+
+                <div class="verification-code">
+                    <h2>{{ verification_code }}</h2>
+                </div>
+
+                <p class="email-text">
+                    If you are having issue in verifying your email, please contact our support center.
+                </p>
+
+                <div class="signature">
+                    <p class="text">Sincerely,</p>
+                    <p class="strong"><strong>Fastwork Team</strong></p>
+                </div>
+
+                <div class="email-footer">
+                    this email was sent to <span class="email-highlight">{{ to_email }}</span>
+                </div>
+            </div>
+
+            <div class="social-footer">
+                <div class="social-icons">
+                    <a href="#" class="social-icon">
+                        <img
+                                src="https://ci6.googleusercontent.com/proxy/iZE-48sXvszGHh6MUoqCYHnlP8ohfGJI6V1fj23YRaJHEaKjOb2V7stez03tl97kcCY9ebD52HlFfqGKcTQbPlQaysAL26ZKjUSa5NGX7CU3WUodCbzb-vFMkIXxvIREY4PT879oIw=s0-d-e1-ft#https://cdn-images.mailchimp.com/icons/social-block-v2/outline-light-facebook-48.png"/>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <img
+                                src="https://ci5.googleusercontent.com/proxy/Ihh9hEwk_36d3lzL_tLmGaqmGhc-dLqZP-II9LpKgUDCh37Kvw1N4-DJsrxuyAA9V1NNx3975BQO5w7DNVWvFHpPM4gkDm8eMVCLYy_PtGWEZAxMuaULgOR-6W0K_1sgXOcwNMtgGVE=s0-d-e1-ft#https://cdn-images.mailchimp.com/icons/social-block-v2/outline-light-instagram-48.png"/>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <img
+                                src="https://ci6.googleusercontent.com/proxy/uZ0yuxmORppOSAVlAI9An9dTGgd5WLSQ0CBL7MLu_J4uk8Z1QO7RWFmdlkUYkmd_GLhwph5RoVCp9eKrXzEQnDQ91cNlGygasb_4p2fT-TnBvWoJAX8mqJXeyuG36Kto6QrY=s0-d-e1-ft#https://cdn-images.mailchimp.com/icons/social-block-v2/outline-light-link-48.png"/>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <img
+                                src="https://ci4.googleusercontent.com/proxy/GvgjS4VPlhMl8idO5upbHzEV4AqTNut4mbrm7tN9t-0Y_Os_vvAtMqPaBL6LxSdD50M0_WvdYOaRkeRE25HbR815TslhhzsjoZMzzpKYLiG8MFqu6VDbzkb2JbyH4IjCPWiYy3cT=s0-d-e1-ft#https://cdn-images.mailchimp.com/icons/social-block-v2/outline-light-twitter-48.png"/>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <img
+                                src="https://ci3.googleusercontent.com/meips/ADKq_NZY64xPfErvsUyAkzsCwnaWv-uaVV8Krg717H30pkNw84WU7uRrbKMyhzDTviJWGjYHvaK4JClWG7QtWy84I46Z7nBdPG7sBYAUvYrB2Oa4N468kjDULMU5diNBlFCRHeSwC_Vtixp5b_wAQ-jqyB7OaO28lSd8m7WPMg=s0-d-e1-ft#https://njbqt.stripocdn.email/content/guids/CABINET_8f91d149c84015141da79b13327013c2/images/5line.png"/>
+                    </a>
+                </div>
+
+                <div class="app-stores">
+                    <a href="#" class="app-store-button">
+                        <img
+                                src="https://ci3.googleusercontent.com/meips/ADKq_NbRBA484Ytu6eLyBe_KIqvESpSpY4FqM2Rtb7u-bJZuOA5s47BA3PCdVKjcw-B4kmhlUUo_IXnmJMt5EK_GPNzPZHoV8vPqmZj-rXORLMLR_bb9GF_WtjH7UddcV1d-yB2EU7BMOlLN42Sb1pYbkyqRRAio7G1b9aS1XxnS-CY=s0-d-e1-ft#https://njbqt.stripocdn.email/content/guids/CABINET_8f91d149c84015141da79b13327013c2/images/1appstore.png"/>
+                    </a>
+                    <a href="#" class="app-store-button">
+                        <img
+                                src="https://ci3.googleusercontent.com/meips/ADKq_NYDVuWWEzwt0LbU2tuoBpNKcdsVeBxkJ5j5W9gOYxbjuWV8_bGkBjlVnYucd0oy3v5BLRUqSbl8nbdrRYthzqPHgNM_azaf_VmIpWf1qqTMP69OM7qJPsV0Zm-Tn_LXnfi0j7e2A1sUHlineGBIZAVxpCGNmD9sMHT8KopAsGRq=s0-d-e1-ft#https://njbqt.stripocdn.email/content/guids/CABINET_8f91d149c84015141da79b13327013c2/images/2playstore.png"/>
+                    </a>
+                </div>
+                <div class="copyright">
+                    Copyright ©2021 Fastwork Technologies, All rights reserved.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

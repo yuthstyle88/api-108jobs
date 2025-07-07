@@ -1,0 +1,30 @@
+[package]
+name = "lemmy_ws"
+publish = false
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lemmy_api_utils = { workspace = true }
+lemmy_utils = { workspace = true, features = ["full"] }
+lemmy_db_schema = { workspace = true, features = ["full"] }
+actix-web = { workspace = true }
+uuid = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+actix = { workspace = true }
+url = { workspace = true }
+rand = { workspace = true }
+actix-broker = { workspace = true }
+actix-web-actors = { workspace = true }
+phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }

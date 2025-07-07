@@ -1,0 +1,19 @@
+{
+  "address_detail": "ที่อยู่โดยละเอียด",
+  "address_info_note": "กรุณากรอกให้ตรงกับข้อมูลในบัตรประชาชน ของคุณ",
+  "address_info_title": "ที่อยู่ตามบัตรประชาชน",
+  "back_id_image": "ภาพด้านหลังบัตรประชาชน",
+  "change_image": "เปลี่ยนภาพ",
+  "date_of_birth": "วันเกิด",
+  "district": "อำเภอ/เขต",
+  "first_name": "ชื่อ",
+  "front_id_image": "ภาพด้านหน้าบัตรประชาชน",
+  "id_info_description": "ใช้เพื่อยืนยันตัวตน",
+  "id_info_title": "ข้อมูลบัตรประชาชน",
+  "id_number": "หมายเลขบัตรประชาชน",
+  "image_hint": "ภาพชัดเจน",
+  "last_name": "นามสกุล",
+  "postal_code": "รหัสไปรษณีย์",
+  "province": "จังหวัด",
+  "sub_district": "ตำบล/แขวง"
+}

@@ -1,0 +1,22 @@
+{
+  "verify_freelancer": "ฟรีแลนซ์ที่ได้รับการยืนยัน",
+  "not_receive": "ไม่รับงาน",
+  "average_response_time": "เวลาตอบกลับเฉลี่ย",
+  "certification_title": "ใบรับรองและรางวัล",
+  "education_title": "ประวัติการศึกษา",
+  "experience_title": "ประสบการณ์การทำงาน",
+  "freelancer_review": "รีวิวจากฟรีแลนซ์",
+  "job_count": "จำนวนงานแล้ว",
+  "language_title": "ภาษา",
+  "level_expert": "ระดับเชี่ยวชาญ",
+  "level_intermediate": "ระดับกลาง",
+  "member_since": "เป็นสมาชิกตั้งแต่",
+  "minutes": "นาที",
+  "not_provided": "ยังไม่ได้ให้ข้อมูล",
+  "see_more": "ดูเพิ่มเติม",
+  "skill_title": "ทักษะ",
+  "success_rate": "อัตราการทำงานสำเร็จ",
+  "review_tab": "รีวิวจากฟรีแลนซ์",
+  "times": "ครั้ง",
+  "work_title": "ผลงานของ {{username}}"
+}

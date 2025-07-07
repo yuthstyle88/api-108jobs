@@ -152,6 +152,7 @@ pub enum FastJobErrorType {
   CommunityHasNoFollowers,
   PostScheduleTimeMustBeInFuture,
   TooManyScheduledPosts,
+  CannotCombineFederationBlocklistAndAllowlist,
   CouldntParsePaginationToken,
   PluginError(String),
   InvalidFetchLimit,
@@ -186,6 +187,11 @@ pub enum FastJobErrorType {
   CouldntUpdateLocalSiteUrlBlocklist,
   CouldntCreateEmailVerification,
   EmailNotificationsDisabled,
+  MultiCommunityUpdateWrongUser,
+  CannotCombineCommunityIdAndMultiCommunityId,
+  MultiCommunityEntryLimitReached,
+  CouldntConnectDatabase,
+  CouldntStartWebSocket,
 }
 
 cfg_if! {

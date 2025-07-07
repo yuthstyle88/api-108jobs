@@ -1,0 +1,22 @@
+{
+  "button_set_password": "Đặt mật khẩu",
+  "confirm_password_label": "Xác nhận mật khẩu",
+  "confirm_password_placeholder": "Xác nhận mật khẩu",
+  "label_birthdate": "Ngày sinh",
+  "label_display_name": "Tên hiển thị",
+  "label_username": "Tên người dùng",
+  "name_trust_note": "Đây là tên của người ghi lại để tạo độ tin cậy",
+  "new_password": "Mật khẩu mới",
+  "old_password": "Mật khẩu cũ",
+  "password": "Mật khẩu",
+  "password_description": "Quản lý mật khẩu trong hệ thống Fastwork",
+  "password_min_length_error": "Mật khẩu phải có ít nhất 6 ký tự",
+  "password_placeholder": "Nhập mật khẩu",
+  "placeholder_display_name": "Nhập tên hiển thị",
+  "placeholder_username": "Nhập tên người dùng",
+  "save": "Lưu",
+  "section_account_info": "Thông tin tài khoản",
+  "section_password": "Mật khẩu",
+  "submit_button": "Xác nhận",
+  "subtitle_account_info": "Thiết lập thông tin tài khoản cơ bản của bạn"
+}

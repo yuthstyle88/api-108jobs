@@ -30,3 +30,5 @@ bindings
 
 # database dumps
 *.sqldump
+
+.env

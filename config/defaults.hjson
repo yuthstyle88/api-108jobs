@@ -59,14 +59,14 @@
     # Resize post thumbnails to this maximum width/height.
     max_thumbnail_size: 512
     # Maximum size for user avatar, community icon and site icon. Larger images are downscaled.
-    max_avatar_size: 512
+    max_avatar_size: 5120
     # Maximum size for user, community and site banner. Larger images are downscaled.
     max_banner_size: 1024
     # Maximum size for other uploads (e.g. post images or markdown embed images). Larger
     # images are downscaled.
-    max_upload_size: 1024
+    max_upload_size: 10000
     # Whether users can upload videos as post image or markdown embed.
-    allow_video_uploads: true
+    allow_video_uploads: false
     # Prevent users from uploading images for posts or embedding in markdown. Avatars, icons and
     # banners can still be uploaded.
     image_upload_disabled: false

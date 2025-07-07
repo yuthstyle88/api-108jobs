@@ -1,5 +1,5 @@
 use actix_web::web::Data;
-use actix_web::{web::Json, HttpRequest};
+use actix_web::{web::Json, HttpRequest, HttpResponse};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
   claims::Claims,
@@ -195,6 +195,23 @@ pub async fn register(
   Ok(Json(login_response))
 }
 
+pub async fn get_google_login_url(context: Data<FastJobContext>) -> HttpResponse {
+  let client_id = context.settings().clone().google.client_id;
+  let redirect_uri = context.settings().clone().google.redirect_url;
+
+  let google_auth_url = format!(
+    "https://accounts.google.com/o/oauth2/v2/auth\
+        ?client_id={}&redirect_uri={}&response_type=code\
+        &scope=email%20profile&access_type=offline",
+    client_id, redirect_uri
+  );
+
+  HttpResponse::Found()
+      .append_header(("Location", google_auth_url))
+      .finish()
+}
+
+
 pub async fn authenticate_with_oauth(
   data: Json<AuthenticateWithOauthRequest>,
   req: HttpRequest,
@@ -218,14 +235,14 @@ pub async fn authenticate_with_oauth(
     return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
-  // validate the redirect_uri
-  let redirect_uri = &data.redirect_uri;
-  if redirect_uri.host_str().unwrap_or("").is_empty()
-    || !redirect_uri.path().eq(&String::from("/oauth/callback"))
-    || !redirect_uri.query().unwrap_or("").is_empty()
-  {
-    Err(FastJobErrorType::OauthAuthorizationInvalid)?
-  }
+  // // validate the redirect_uri
+  // let redirect_uri = &data.redirect_uri;
+  // if redirect_uri.host_str().unwrap_or("").is_empty()
+  //   || !redirect_uri.path().eq(&String::from("/oauth/callback"))
+  //   || !redirect_uri.query().unwrap_or("").is_empty()
+  // {
+  //   Err(FastJobErrorType::OauthAuthorizationInvalid)?
+  // }
 
   // validate the PKCE challenge
   if let Some(code_verifier) = &data.pkce_code_verifier {
@@ -248,7 +265,7 @@ pub async fn authenticate_with_oauth(
     &oauth_provider,
     &data.code,
     data.pkce_code_verifier.as_deref(),
-    redirect_uri.as_str(),
+    (&data.redirect_uri).as_ref(),
   )
   .await?;
 

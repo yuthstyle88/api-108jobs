@@ -1,0 +1,11 @@
+{
+  "bank_account_number_label": "Số tài khoản ngân hàng",
+  "bank_account_number_placeholder": "Nhập số tài khoản",
+  "bank_info_description": "Để nhận tiền khi có việc được thuê",
+  "bank_info_title": "Thông tin ngân hàng",
+  "bank_name_label": "Tên ngân hàng",
+  "bank_name_placeholder": "Chọn ngân hàng",
+  "bank_qr_upload_note": "Vui lòng tải lên mã QR từ ứng dụng ngân hàng trực tuyến có hiển thị tên của bạn",
+  "bank_qr_upload_title": "Ảnh mã QR ngân hàng của bạn (Tên tài khoản phải trùng với CMND/CCCD)",
+  "upload_button": "Tải ảnh lên"
+}

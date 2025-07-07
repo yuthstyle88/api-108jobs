@@ -1,0 +1,23 @@
+{
+  "button_search_company": "Search Company Information",
+  "label_tax_id": "Company Taxpayer Identification Number",
+  "note_requirements": [
+    "Employers must request an official ID card from the freelancer directly.",
+    "Employers must issue a tax withholding document (Form 50) in the freelancer's name. (See sample document)"
+  ],
+  "placeholder_tax_id": "Enter taxpayer identification number",
+  "process_description_approval": "Within 2 hours",
+  "process_description_notify": "Inform hiring under company name",
+  "process_description_register": "To allow freelancers to issue documents",
+  "process_title_approval": "Approval Process",
+  "process_title_notify_freelancer": "Notify Freelancer Immediately",
+  "process_title_register_company": "Register Company Information",
+  "section_company_hiring": "Company Hiring Information",
+  "step_company_input": "Enter company information",
+  "step_company_input_sub": "So freelancers can issue documents",
+  "step_notify_freelancer": "Notify freelancer immediately",
+  "step_notify_freelancer_sub": "Hire in the name of the company",
+  "step_wait_approval": "Wait for approval",
+  "step_wait_approval_sub": "Within 2 hours",
+  "subtitle_company_hiring": "For issuing documents related to company hiring"
+}

@@ -1,0 +1,20 @@
+{
+  "average_response_time": "Thời gian phản hồi trung bình",
+  "certification_title": "Chứng chỉ và giải thưởng",
+  "education_title": "Trình độ học vấn",
+  "experience_title": "Kinh nghiệm làm việc",
+  "freelancer_review": "Đánh giá từ freelancer",
+  "job_count": "Số lượng công việc đã làm",
+  "language_title": "Ngôn ngữ",
+  "level_expert": "Thành thạo",
+  "level_intermediate": "Trung bình",
+  "member_since": "Thành viên từ",
+  "minutes": "Phút",
+  "not_provided": "Chưa cung cấp thông tin",
+  "see_more": "Xem thêm",
+  "skill_title": "Kỹ năng",
+  "success_rate": "Tỷ lệ hoàn thành công việc",
+  "review_tab": "Đánh giá từ freelancer",
+  "times": "Lần",
+  "work_title": "Công việc của {{username}}"
+}

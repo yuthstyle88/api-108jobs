@@ -1,0 +1,19 @@
+{
+  "address_detail": "Detailed address",
+  "address_info_note": "Please enter the address exactly as it appears on your ID",
+  "address_info_title": "Address on ID",
+  "back_id_image": "Back of ID",
+  "change_image": "Change image",
+  "date_of_birth": "Date of birth",
+  "district": "District",
+  "first_name": "First name",
+  "front_id_image": "Front of ID",
+  "id_info_description": "Used to verify your identity",
+  "id_info_title": "ID Card Information",
+  "id_number": "ID number",
+  "image_hint": "Clear image",
+  "last_name": "Last name",
+  "postal_code": "Postal code",
+  "province": "Province",
+  "sub_district": "Sub-district"
+}

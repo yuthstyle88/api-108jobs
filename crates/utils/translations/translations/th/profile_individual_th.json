@@ -1,0 +1,9 @@
+{
+  "label_first_name": "ชื่อ",
+  "label_last_name": "นามสกุล",
+  "placeholder_first_name": "กรอกชื่อ",
+  "placeholder_last_name": "กรอกนามสกุล",
+  "save": "บันทึก",
+  "section_individual_hiring": "ข้อมูลเพื่อจ้างในนามบุคคล",
+  "subtitle_individual_hiring": "สำหรับออกเอกสาร การจ้างแบบบุคคลธรรมดา"
+}

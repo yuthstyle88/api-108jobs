@@ -1,0 +1,21 @@
+{
+  "analytics_cookies": "Analytics and Performance Cookies",
+  "analytics_cookies_description": "Allow Fastwork to collect usage data for analysis to improve platform performance.",
+  "cookies_management": "Cookies Management",
+  "data_management": "Data Management",
+  "data_usage_fastwork": "Data Usage for Fastwork",
+  "functional_cookies": "Necessary Cookies",
+  "functional_cookies_description": "Fastwork must use these cookies to allow you to access pages and store session details for efficient browsing. These cookies do not store identifiable user data.",
+  "mandatory_cookies": "These cookies are required for site functionality and cannot be disabled.",
+  "marketing_cookies": "Marketing and Advertisement Cookies",
+  "marketing_cookies_description": "Allow Fastwork to collect advertising data to provide relevant suggestions.",
+  "newsletter_accept": "Accept",
+  "newsletter_decline": "Decline",
+  "newsletter_promotions": "Receive news, discounts, and promotions from Fastwork",
+  "no_freelancer_favorites": "No favorited freelancers",
+  "save_data": "Save Data",
+  "terms_conditions": "Read the Terms of Service and Privacy Policy",
+  "third_party_data_sharing": "Third-party Data Sharing",
+  "toggle_analytics_cookies": "Enable or Disable Analytics Cookies",
+  "toggle_marketing_cookies": "Enable or Disable Marketing Cookies"
+}

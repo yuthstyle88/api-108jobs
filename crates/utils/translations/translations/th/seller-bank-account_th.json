@@ -1,0 +1,11 @@
+{
+  "bank_account_number_label": "หมายเลขบัญชีธนาคาร",
+  "bank_account_number_placeholder": "กรอกหมายเลขบัญชี",
+  "bank_info_description": "สำหรับรับเงินเมื่อได้รับการจ้างงาน",
+  "bank_info_title": "ข้อมูลบัญชีธนาคาร",
+  "bank_name_label": "ชื่อธนาคาร",
+  "bank_name_placeholder": "เลือกธนาคาร",
+  "bank_qr_upload_note": "โปรดอัปโหลด QR Code จากแอปธนาคารที่แสดงชื่อของคุณ",
+  "bank_qr_upload_title": "อัปโหลดรูป QR Code ธนาคารของคุณ (ชื่อบัญชีต้องตรงกับบัตรประชาชน)",
+  "upload_button": "อัปโหลดรูปภาพ"
+}

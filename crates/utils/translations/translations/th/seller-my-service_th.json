@@ -1,0 +1,20 @@
+{
+  "add_new_service": "เพิ่มบริการใหม่",
+  "approval_note": "สำหรับบริการที่อยู่ในสถานะรออนุมัติ เราจะตรวจสอบภายใน 2 วันทำการ (หลังจากบัญชีผู้ใช้งานได้รับการอนุมัติ)",
+  "column_fee_percent": "ค่าบริการ (%)",
+  "column_manage": "การจัดการ",
+  "column_service": "บริการ",
+  "column_status": "สถานะบริการ",
+  "column_visibility": "การแสดงบริการ",
+  "confirm_delete_service_message": "หลังจากยืนยันการลบบริการแล้ว คุณจะไม่สามารถกู้คืนข้อมูลได้อีก",
+  "confirm_delete_service_title": "ยืนยันการลบบริการ",
+  "my_services_title": "บริการของฉัน ({{n}}/{{max}})",
+  "no_service": "ยังไม่มีบริการ",
+  "service_fee_button": "กรอกเพื่อคำนวณ",
+  "service_fee_description": "ค่าบริการคิดเป็น 15% ของจำนวนเงินที่ฟรีแลนซ์ได้รับ",
+  "service_fee_title": "คำนวณค่าบริการ",
+  "status_approved": "อนุมัติแล้ว",
+  "status_draft": "ฉบับร่าง",
+  "status_pending": "รอการอนุมัติ",
+  "status_rejected": "ไม่อนุมัติ"
+}

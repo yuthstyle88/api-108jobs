@@ -1,0 +1,21 @@
+{
+  "analytics_cookies": "Cookie phân tích và hiệu suất",
+  "analytics_cookies_description": "Cho phép Fastwork thu thập dữ liệu sử dụng để phân tích và cải thiện hiệu suất nền tảng.",
+  "cookies_management": "Quản lý Cookie",
+  "data_management": "Quản lý dữ liệu",
+  "data_usage_fastwork": "Sử dụng dữ liệu cho Fastwork",
+  "functional_cookies": "Cookie cần thiết",
+  "functional_cookies_description": "Fastwork cần sử dụng các cookie này để cho phép bạn truy cập trang web và lưu chi tiết phiên làm việc để duyệt web hiệu quả. Những cookie này không lưu trữ dữ liệu người dùng có thể nhận dạng.",
+  "mandatory_cookies": "Những cookie này là bắt buộc để trang web hoạt động và không thể bị vô hiệu hóa.",
+  "marketing_cookies": "Cookie tiếp thị và quảng cáo",
+  "marketing_cookies_description": "Cho phép Fastwork thu thập dữ liệu quảng cáo để đề xuất phù hợp.",
+  "newsletter_accept": "Chấp nhận",
+  "newsletter_decline": "Từ chối",
+  "newsletter_promotions": "Nhận tin tức, giảm giá và khuyến mãi từ Fastwork",
+  "no_freelancer_favorites": "Không có freelancer yêu thích",
+  "save_data": "Lưu dữ liệu",
+  "terms_conditions": "Đọc Điều khoản dịch vụ và Chính sách quyền riêng tư",
+  "third_party_data_sharing": "Chia sẻ dữ liệu với bên thứ ba",
+  "toggle_analytics_cookies": "Bật hoặc tắt Cookie phân tích",
+  "toggle_marketing_cookies": "Bật hoặc tắt Cookie tiếp thị"
+}

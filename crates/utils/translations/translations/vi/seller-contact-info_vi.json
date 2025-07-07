@@ -1,0 +1,18 @@
+{
+  "address_detail": "Chi tiết địa chỉ",
+  "address_info_description": "Để chúng tôi có thể gửi hàng và tài liệu cho bạn",
+  "address_info_title": "Thông tin địa chỉ",
+  "address_placeholder": "Ghi rõ địa chỉ, số nhà, đường, ngõ",
+  "contact_info_description": "Để chúng tôi và khách hàng có thể liên hệ bạn",
+  "contact_info_title": "Thông tin liên lạc",
+  "current_address": "Địa chỉ hiện tại",
+  "district": "Quận/Huyện",
+  "email_contact": "Email liên hệ",
+  "international": "Quốc gia khác",
+  "province": "Tỉnh/Thành phố",
+  "select_country": "Chọn quốc gia",
+  "sub_district": "Phường/Xã",
+  "thailand": "Thái Lan",
+  "zipcode": "Mã bưu điện",
+  "zipcode_placeholder": "Nhập mã bưu điện"
+}

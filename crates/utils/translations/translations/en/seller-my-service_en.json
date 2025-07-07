@@ -1,0 +1,20 @@
+{
+  "add_new_service": "Add new service",
+  "approval_note": "For services under review status, we will process them within 2 business days (after the user's account is approved).",
+  "column_fee_percent": "Service Fee (%)",
+  "column_manage": "Manage",
+  "column_service": "Service",
+  "column_status": "Service Status",
+  "column_visibility": "Visibility",
+  "confirm_delete_service_message": "Once confirmed, you will not be able to recover the deleted data.",
+  "confirm_delete_service_title": "Confirm Delete Service",
+  "my_services_title": "My Services ({{n}}/{{max}})",
+  "no_service": "No services yet",
+  "service_fee_button": "Enter to calculate",
+  "service_fee_description": "The service fee is calculated as 15% of the amount the freelancer receives.",
+  "service_fee_title": "Service Fee",
+  "status_approved": "Approved",
+  "status_draft": "Draft",
+  "status_pending": "Pending approval",
+  "status_rejected": "Rejected"
+}

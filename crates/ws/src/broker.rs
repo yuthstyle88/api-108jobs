@@ -1,13 +1,13 @@
 use crate::{
   bridge_message::BridgeMessage,
-  message::{RegisterClientKeyMsg, StoreChatMessage},
+  message::{RegisterClientMsg, StoreChatMessage},
 };
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
 use actix_web::cookie::Expiration::DateTime;
 use chrono::Utc;
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId, PostId},
+  newtypes::{ChatRoomId, LocalUserId},
   source::{
     chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
@@ -133,23 +133,24 @@ impl PhoenixManager {
   }
 
   pub async fn validate_or_create_room(
-    db_pool: &mut DbPool<'_>,
+    &mut self,
     room_id: ChatRoomId,
+    room_name: String,
   ) -> FastJobResult<()> {
     let room_id_string = room_id.to_string();
     let room_id_str = room_id_string.as_str();
-
-    if !ChatRoom::exists(db_pool, room_id).await? {
+    let mut db_pool = DbPool::Pool(&self.pool);
+    if !ChatRoom::exists(&mut db_pool, &room_id).await? {
       let (_, _, job_id) = ChatRoomTemp::parse_compact_room_id(room_id_str)
           .ok_or(FastJobErrorType::InvalidRoomId)?;
 
       let now = Utc::now();
       let form = ChatRoomInsertForm {
-        post_id: PostId(job_id),
+        room_name,
         created_at: now,
         updated_at: now,
       };
-      ChatRoom::create(db_pool, &form).await?;
+      ChatRoom::create(&mut db_pool, &form).await?;
     }
 
     Ok(())
@@ -157,13 +158,11 @@ impl PhoenixManager {
   pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
     if let Some(existing_messages) = self.chat_store.get_mut(&room_id) {
       existing_messages.push(new_messages);
-    } else {
-      self.chat_store.insert(room_id, vec![new_messages]);
     }
   }
 
   // Update a message in the chat store for a specific room
-  pub fn update_chat_message(
+  fn update_chat_message(
     &mut self,
     room_id: &ChatRoomId,
     predicate: impl Fn(&ChatMessageInsertForm) -> bool,
@@ -176,7 +175,12 @@ impl PhoenixManager {
     }
   }
 
-
+  async fn ensure_room_initialized(&mut self, room_id: ChatRoomId, room_name: String) {
+    if !self.chat_store.contains_key(&room_id) {
+      let _ = self.validate_or_create_room(room_id.clone(), room_name).await;
+      self.chat_store.insert(room_id, Vec::new());
+    }
+  }
 }
 
 impl Actor for PhoenixManager {
@@ -199,17 +203,10 @@ impl Actor for PhoenixManager {
           let mut db_pool = DbPool::Pool(&pool);
           // Validate room and create if needed
           // should add logic to add post id here
-          match Self::validate_or_create_room(&mut db_pool, room_id.clone()).await {
-            Ok(_) => {
-              // Room is valid, insert messages
-              let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
-              if let Err(e) = res {
-                println!("Failed to flush messages: {}", e);
-              }
-            }
-            Err(e) => {
-              println!("Failed to validate room {}: {}", room_id, e);
-            }
+          // Room is valid, insert messages
+          let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
+          if let Err(e) = res {
+            println!("Failed to flush messages: {}", e);
           }
         }
       });
@@ -310,10 +307,11 @@ impl Handler<StoreChatMessage> for PhoenixManager {
       .push(msg);
   }
 }
-impl Handler<RegisterClientKeyMsg> for PhoenixManager {
+impl Handler<RegisterClientMsg> for PhoenixManager {
   type Result = ();
 
-  fn handle(&mut self, msg: RegisterClientKeyMsg, _ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
+    let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
     if msg.user_id.is_some() && msg.client_key.is_some() {
       self
         .key_cache

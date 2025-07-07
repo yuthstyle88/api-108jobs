@@ -52,7 +52,7 @@ impl ChatRoom {
             .with_fastjob_type(FastJobErrorType::CouldntCreateChatRoom)
     }
 
-    pub async fn exists(pool: &mut DbPool<'_>, id: ChatRoomId) -> FastJobResult<bool> {
+    pub async fn exists(pool: &mut DbPool<'_>, id: &ChatRoomId) -> FastJobResult<bool> {
         let conn = &mut get_conn(pool).await?;
 
         let exists_query = select(exists(chat_room::table.find(id)));
@@ -64,4 +64,5 @@ impl ChatRoom {
 
         Ok(found)
     }
+
 }

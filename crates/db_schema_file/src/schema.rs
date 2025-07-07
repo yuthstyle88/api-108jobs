@@ -183,18 +183,9 @@ diesel::table! {
 diesel::table! {
     chat_room (id) {
         id -> Varchar,
-        post_id -> Int4,
+        room_name -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-
-    chat_room_member (room_id, user_id) {
-        room_id -> Varchar,
-        user_id -> Int4,
     }
 }
 

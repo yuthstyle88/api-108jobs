@@ -6,10 +6,12 @@ use actix_web_actors::ws;
 use serde::Deserialize;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
-use crate::message::RegisterClientKeyMsg;
+use crate::message::RegisterClientMsg;
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {
   pub token: Option<String>,
+  pub room_id: String,
+  pub room_name: String,
 }
 
 pub async fn chat_ws(
@@ -20,6 +22,8 @@ pub async fn chat_ws(
   context: Data<FastJobContext>,
 ) ->  Result<impl Responder, Error>  {
   let token = query.token.clone();
+  let room_id = query.room_id.clone().into();
+  let room_name = query.room_name.clone().into();
   let mut client_key = None;
   let mut user_id = None;
 
@@ -40,7 +44,7 @@ pub async fn chat_ws(
 
   let session = WsSession {
     phoenix_manager: phoenix.get_ref().clone(),
-    client_key: RegisterClientKeyMsg { user_id, client_key },
+    client_msg: RegisterClientMsg { user_id, client_key, room_id, room_name },
   };
   ws::start(session, &req, stream)
 }

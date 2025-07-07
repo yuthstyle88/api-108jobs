@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::chat_room;
-use crate::newtypes::{ChatRoomId, PostId};
+use crate::newtypes::ChatRoomId;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -13,7 +13,7 @@ use crate::newtypes::{ChatRoomId, PostId};
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct ChatRoom {
     pub id: ChatRoomId,
-    pub post_id: PostId,
+    pub room_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -25,7 +25,7 @@ pub struct ChatRoom {
 )]
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 pub struct ChatRoomInsertForm {
-    pub post_id: PostId,
+    pub room_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,6 +34,6 @@ pub struct ChatRoomInsertForm {
 #[cfg_attr(feature = "full", derive(Serialize, Deserialize, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 pub struct ChatRoomUpdateForm {
-    pub post_id: Option<PostId>,
+    pub room_name: Option<String>,
     pub updated_at: Option<DateTime<Utc>>,
 }

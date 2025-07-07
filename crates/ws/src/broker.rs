@@ -1,22 +1,24 @@
-use crate::bridge_message::BridgeMessage;
-use crate::message::{RegisterClientKeyMsg, StoreChatMessage};
-use actix::{
-  Actor, Arbiter, AsyncContext, Context, Handler, Message,
-  ResponseFuture,
+use crate::{
+  bridge_message::BridgeMessage,
+  message::{RegisterClientKeyMsg, StoreChatMessage},
 };
+use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_schema::source::chat_message::{ChatMessageContent, ChatMessageInsertForm};
-use lemmy_db_schema::utils::DbPool;
-use lemmy_db_schema::{
-  newtypes::ChatRoomId, source::chat_message::ChatMessage, utils::ActualDbPool,
-};
-use lemmy_utils::error::FastJobResult;
-use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
-use std::{collections::HashMap, sync::Arc, time::Duration};
 use actix_web::cookie::Expiration::DateTime;
 use chrono::Utc;
+use lemmy_db_schema::{
+  newtypes::{ChatRoomId, LocalUserId, PostId},
+  source::{
+    chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
+    chat_room::{ChatRoom, ChatRoomInsertForm},
+  },
+  traits::Crud,
+  utils::{ActualDbPool, DbPool},
+};
+use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use serde_json::error::Category::Data;
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
 #[derive(Message)]
@@ -67,21 +69,21 @@ async fn get_or_create_channel(
   // Create new channel
   let topic = Topic::from_string(name.to_string());
   let channel = socket
-   .channel(topic, None)
-   .await
-   .map_err(|e| anyhow::anyhow!("Failed to create channel {}: {}", name, e))?;
+    .channel(topic, None)
+    .await
+    .map_err(|e| anyhow::anyhow!("Failed to create channel {}: {}", name, e))?;
 
   // Join channel
   channel
-   .join(Duration::from_secs(5))
-   .await
-   .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
+    .join(Duration::from_secs(5))
+    .await
+    .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
 
   // Store new channel
   channels
-   .write()
-   .await
-   .insert(name.to_string(), channel.clone());
+    .write()
+    .await
+    .insert(name.to_string(), channel.clone());
   tracing::info!("Created new channel: {}", name);
   Ok(channel)
 }
@@ -117,8 +119,8 @@ impl PhoenixManager {
   pub async fn new(endpoint: &str, pool: ActualDbPool) -> Self {
     let url = Url::parse(endpoint).expect("Invalid endpoint");
     let sock = Socket::spawn(url.clone(), None, None)
-      .await
-      .expect("Failed to create socket");
+        .await
+        .expect("Failed to create socket");
     Self {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
@@ -128,6 +130,26 @@ impl PhoenixManager {
       key_cache: KeyCache::new(),
     }
   }
+
+  pub async fn validate_or_create_room(
+    db_pool: &mut DbPool<'_>,
+    room_id: ChatRoomId,
+    post_id: PostId,
+  ) -> FastJobResult<()> {
+    if !ChatRoom::exists(db_pool, room_id).await? {
+      let now = Utc::now();
+      let form = ChatRoomInsertForm {
+        post_id,
+        created_at: now,
+        updated_at: now,
+      };
+      ChatRoom::create(db_pool, &form).await?;
+    }
+
+    Ok(())
+  }
+
+
 }
 
 impl Actor for PhoenixManager {
@@ -142,22 +164,25 @@ impl Actor for PhoenixManager {
       let pool = actor.pool.clone();
 
       let succeeded = arbiter.spawn(async move {
-
         for (room_id, messages) in messages.iter() {
           if messages.is_empty() {
             continue;
           }
-
-          // TODO: Implement room_id validation and creation flow
-          // - Check if room_id exists in database for the given sender and receiver
-          // - If not exists:
-          //   1. Create new room entry with provided sender_id and receiver_id
-
           println!("Flushing {} messages from room {}", messages.len(), room_id);
           let mut db_pool = DbPool::Pool(&pool);
-          let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
-          if let Err(e) = res {
-            println!("Failed to flush messages: {}", e);
+          // Validate room and create if needed
+          // should add logic to add post id here
+          match Self::validate_or_create_room(&mut db_pool, room_id.clone(), PostId(1)).await {
+            Ok(_) => {
+              // Room is valid, insert messages
+              let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
+              if let Err(e) = res {
+                println!("Failed to flush messages: {}", e);
+              }
+            }
+            Err(e) => {
+              println!("Failed to validate room {}: {}", room_id, e);
+            }
           }
         }
       });
@@ -187,15 +212,19 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     let decrypt_data: String;
     if msg.security_config {
-      decrypt_data = String::from_utf8(webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap()).unwrap().into();
-    }else{
+      decrypt_data = String::from_utf8(
+        webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap(),
+      )
+      .unwrap()
+      .into();
+    } else {
       decrypt_data = message.clone().into();
     }
-    let content_enum =  ChatMessageContent::from(decrypt_data);
+    let content_enum = ChatMessageContent::from(decrypt_data);
     let chatroom_id = ChatRoomId::from(channel_name.clone());
-    let content =  serde_json::to_string(&content_enum).unwrap_or_default();
+    let content = serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
-    let store_msg = ChatMessageInsertForm{
+    let store_msg = ChatMessageInsertForm {
       room_id: chatroom_id.clone(),
       sender_id: Default::default(),
       content: content.clone(),
@@ -204,9 +233,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
       updated_at: Utc::now(),
     };
 
-    self.chat_store.entry(chatroom_id).or_default().push(store_msg);
+    self
+      .chat_store
+      .entry(chatroom_id)
+      .or_default()
+      .push(store_msg);
     Box::pin(async move {
-
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 
       if let Ok(arc_chan) = arc_chan {
@@ -248,7 +280,11 @@ impl Handler<StoreChatMessage> for PhoenixManager {
 
   fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
     let msg = msg.message;
-    self.chat_store.entry(msg.room_id.clone()).or_default().push(msg);
+    self
+      .chat_store
+      .entry(msg.room_id.clone())
+      .or_default()
+      .push(msg);
   }
 }
 impl Handler<RegisterClientKeyMsg> for PhoenixManager {
@@ -256,7 +292,9 @@ impl Handler<RegisterClientKeyMsg> for PhoenixManager {
 
   fn handle(&mut self, msg: RegisterClientKeyMsg, _ctx: &mut Context<Self>) -> Self::Result {
     if msg.user_id.is_some() && msg.client_key.is_some() {
-      self.key_cache.insert(msg.user_id.unwrap(), msg.client_key.unwrap());
+      self
+        .key_cache
+        .insert(msg.user_id.unwrap(), msg.client_key.unwrap());
     }
   }
 }

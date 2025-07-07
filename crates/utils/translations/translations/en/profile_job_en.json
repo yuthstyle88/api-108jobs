@@ -1,4 +1,8 @@
 {
+  "no_job": "No job posts found",
+  "all_post_jobs": "All Job Posts",
+  "proposal_jobs": "Jobs you have proposed",
+  "posted_jobs": "Jobs you have posted",
   "assistant_feature1": "Recommend best freelancers",
   "assistant_feature2": "Quickly filter suitable matches",
   "assistant_feature3": "Verify freelancer credibility",

@@ -1,4 +1,10 @@
 {
+  "concent": "Đồng ý nhận tin tức và các chương trình khuyến mãi đặc biệt qua tất cả các kênh từ Fastwork.",
+  "privacy": "Chính sách quyền riêng tư",
+  "cookie_use": "Fastwork sử dụng cookie để giúp cải thiện và nâng cao trải nghiệm người dùng của bạn khi bạn truy cập trang web của chúng tôi. Bạn có thể chọn đồng ý với từng loại cookie (ngoại trừ cookie thiết yếu).",
+  "cookie_privacy": "Chính sách Cookie",
+  "always": "Luôn bật",
+  "no_privacy": "Không tìm thấy freelancer ưu tiên",
   "analytics_cookies": "Cookie phân tích và hiệu suất",
   "analytics_cookies_description": "Cho phép Fastwork thu thập dữ liệu sử dụng để phân tích và cải thiện hiệu suất nền tảng.",
   "cookies_management": "Quản lý Cookie",

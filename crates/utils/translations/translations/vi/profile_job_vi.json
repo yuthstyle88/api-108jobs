@@ -1,4 +1,8 @@
 {
+  "no_job": "Không tìm thấy bài đăng công việc nào",
+  "all_post_jobs": "Tất cả công việc đã đăng",
+  "proposal_jobs": "Các đề xuất công việc của bạn",
+  "posted_jobs": "Công việc bạn đã đăng",
   "assistant_feature1": "Đề xuất freelancer phù hợp",
   "assistant_feature2": "Lọc nhanh các lựa chọn thích hợp",
   "assistant_feature3": "Xác minh độ tin cậy của freelancer",

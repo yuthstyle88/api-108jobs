@@ -1,4 +1,8 @@
 {
+  "job_vailable": "Thông tin về tình trạng nhận việc",
+  "available_setting": "Cài đặt tình trạng sẵn sàng",
+  "toggle": "Bật/tắt cài đặt này để cho khách hàng biết bạn có đang nhận công việc mới hay không.",
+  "acpt_job": "Đang nhận việc",
   "ads_coming_title": "Quảng bá dịch vụ của bạn qua quảng cáo (Coming soon...)",
   "ads_feedback_link": "Gửi phản hồi của bạn về tính năng quảng cáo",
   "ads_section_description": "Nâng cao cơ hội được thuê bằng cách quảng cáo với Fastwork",

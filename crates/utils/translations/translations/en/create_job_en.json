@@ -1,4 +1,10 @@
 {
+  "catalog_validate": "Service catalog is required",
+  "title_validate": "Job title must be at least 5 characters",
+  "description_validate": "Job description must be at least 20 characters",
+  "example_validate": "Example URL must be a valid URL",
+  "budget_validate": "Budget is required",
+  "budget_positive": "Budget must be a positive number",
   "page_title": "Post New Job",
   "job_posting_notice": "For Job Posting: Self-promotion, contact information, or uses violating system terms are not allowed. Posts violating these terms will be removed immediately.",
   "job_title_label": "Job Title",

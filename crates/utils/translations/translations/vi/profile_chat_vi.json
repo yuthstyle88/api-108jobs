@@ -1,4 +1,10 @@
 {
+  "chat_history": "Lịch sử trò chuyện",
+  "you": "Bạn",
+  "download": "Tải xuống",
+  "cannot_down": "Không thể tải xuống",
+  "attach": "Đính kèm tệp",
+  "price": "Giá",
   "checkbox_unhired_only": "Chỉ hiển thị vị trí chưa tuyển",
   "days": "ngày",
   "details": "Chi tiết",

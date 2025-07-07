@@ -1,4 +1,8 @@
 {
+  "job_vailable": "Job availability information",
+  "available_setting": "Availability settings",
+  "toggle": "Toggle this setting to let clients know you're currently accepting new jobs or not.",
+  "acpt_job": "Accepting Jobs",
   "ads_coming_title": "Promote your services through ads (Coming soon...)",
   "ads_feedback_link": "Send your feedback on the ad feature",
   "ads_section_description": "Boost your visibility and chances of getting hired by advertising with Fastwork",

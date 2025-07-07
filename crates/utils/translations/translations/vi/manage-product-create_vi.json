@@ -1,4 +1,8 @@
 {
+  "not_save": "Bạn chưa lưu các thay đổi của mình.",
+  "pls_save": "Vui lòng lưu trước khi rời khỏi trang này để tránh mất dữ liệu.",
+  "continue": "Tiếp tục chỉnh sửa",
+  "leave": "Rời đi",
   "add_image_button": "Thêm ảnh",
   "add_package": "Thêm gói",
   "add_step": "Thêm bước",

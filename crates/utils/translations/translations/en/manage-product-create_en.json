@@ -1,4 +1,8 @@
 {
+  "not_save": "You haven't saved your changes yet.",
+  "pls_save": "Please save before leaving this page to avoid losing your data.",
+  "continue": "Continue Editing",
+  "leave": "Leave",
   "add_image_button": "Add image",
   "add_package": "Add Package",
   "add_step": "Add Step",

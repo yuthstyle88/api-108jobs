@@ -1,4 +1,10 @@
 {
+  "catalog_validate": "Danh mục dịch vụ là bắt buộc",
+  "title_validate": "Tiêu đề công việc phải có ít nhất 5 ký tự",
+  "description_validate": "Mô tả công việc phải có ít nhất 20 ký tự",
+  "example_validate": "URL ví dụ phải là một liên kết hợp lệ",
+  "budget_validate": "Ngân sách là bắt buộc",
+  "budget_positive": "Ngân sách phải là một số dương",
   "page_title": "Đăng công việc mới",
   "job_posting_notice": "Dành cho việc đăng công việc: Tự quảng bá, thông tin liên hệ hoặc sử dụng vi phạm các điều khoản hệ thống không được phép. Các bài đăng vi phạm các điều khoản này sẽ bị xóa ngay lập tức.",
   "job_title_label": "Tiêu đề công việc",

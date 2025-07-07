@@ -1,4 +1,10 @@
 {
+  "concent": "Consent to receive news and special promotions through all channels from Fastwork.",
+  "privacy": "Privacy Policy",
+  "cookie_use": "Fastwork uses cookies to help improve and enhance your user experience when you visit our website. You can choose to consent to each type of cookie (except for essential cookies).",
+  "cookie_privacy": "Cookie Policy",
+  "always": "Always Enabled",
+  "no_privacy": "No preferred freelancers found",
   "analytics_cookies": "Analytics and Performance Cookies",
   "analytics_cookies_description": "Allow Fastwork to collect usage data for analysis to improve platform performance.",
   "cookies_management": "Cookies Management",

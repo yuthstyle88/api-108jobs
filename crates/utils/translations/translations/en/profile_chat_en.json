@@ -1,4 +1,10 @@
 {
+  "chat_history": "Chat History",
+  "you": "You",
+  "download": "Download",
+  "cannot_down": "Cannot download",
+  "attach": "Attach File",
+  "price": "Price",
   "checkbox_unhired_only": "Show only open jobs",
   "days": "days",
   "details": "Details",

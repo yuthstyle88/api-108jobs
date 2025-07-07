@@ -133,6 +133,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         // Site
         .service(
           scope("/site")
+            .route("/get_captcha", get().to(get_captcha))
             .route("", get().to(get_site))
             .route("", post().to(create_site))
             .route("", put().to(update_site))
@@ -248,7 +249,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/login", post().to(login))
             .route("/logout", post().to(logout))
             .route("/password_reset", post().to(reset_password))
-            .route("/get_captcha", get().to(get_captcha))
             .route("/password_change", post().to(change_password_after_reset))
             .route("/change_password", put().to(change_password))
             .route("/totp/generate", post().to(generate_totp_secret))

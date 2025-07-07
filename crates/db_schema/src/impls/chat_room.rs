@@ -4,7 +4,6 @@ use crate::{
     utils::{get_conn, DbPool},
 };
 use diesel::{dsl::insert_into, QueryDsl};
-use diesel::dsl::{exists, select};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::chat_room;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -52,17 +51,9 @@ impl ChatRoom {
             .with_fastjob_type(FastJobErrorType::CouldntCreateChatRoom)
     }
 
-    pub async fn exists(pool: &mut DbPool<'_>, id: &ChatRoomId) -> FastJobResult<bool> {
-        let conn = &mut get_conn(pool).await?;
-
-        let exists_query = select(exists(chat_room::table.find(id)));
-
-        let found = exists_query
-            .get_result::<bool>(conn)
-            .await
-            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
-
-        Ok(found)
+    pub async fn exists(pool: &mut DbPool<'_>, id:  <ChatRoom as Crud>::IdType) -> FastJobResult<bool> {
+        let found = ChatRoom::read(pool, id).await;
+        Ok(found.is_ok())
     }
 
 }

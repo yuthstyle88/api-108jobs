@@ -4,7 +4,6 @@ use crate::{
 };
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
-use actix_web::cookie::Expiration::DateTime;
 use chrono::Utc;
 use lemmy_db_schema::{
   newtypes::{ChatRoomId, LocalUserId},
@@ -15,9 +14,8 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::{ActualDbPool, DbPool},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
-use serde_json::error::Category::Data;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use crate::chat_room::ChatRoomTemp;
@@ -137,11 +135,10 @@ impl PhoenixManager {
     room_id: ChatRoomId,
     room_name: String,
   ) -> FastJobResult<()> {
-    let room_id_string = room_id.to_string();
-    let room_id_str = room_id_string.as_str();
+    let room_id = room_id.to_string();
     let mut db_pool = DbPool::Pool(&self.pool);
-    if !ChatRoom::exists(&mut db_pool, &room_id).await? {
-      let (_, _, job_id) = ChatRoomTemp::parse_compact_room_id(room_id_str)
+    if !ChatRoom::exists(&mut db_pool, room_id.clone().into()).await? {
+      let (_, _, _job_id) = ChatRoomTemp::parse_compact_room_id(&room_id)
           .ok_or(FastJobErrorType::InvalidRoomId)?;
 
       let now = Utc::now();

@@ -148,6 +148,27 @@ impl PhoenixManager {
 
     Ok(())
   }
+  pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
+    if let Some(existing_messages) = self.chat_store.get_mut(&room_id) {
+      existing_messages.push(new_messages);
+    } else {
+      self.chat_store.insert(room_id, vec![new_messages]);
+    }
+  }
+
+  // Update a message in the chat store for a specific room
+  pub fn update_chat_message(
+    &mut self,
+    room_id: &ChatRoomId,
+    predicate: impl Fn(&ChatMessageInsertForm) -> bool,
+    update_fn: impl FnOnce(&mut ChatMessageInsertForm),
+  ) {
+    if let Some(messages) = self.chat_store.get_mut(room_id) {
+      if let Some(message) = messages.iter_mut().find(|msg| predicate(msg)) {
+        update_fn(message);
+      }
+    }
+  }
 
 
 }
@@ -233,11 +254,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       updated_at: Utc::now(),
     };
 
-    self
-      .chat_store
-      .entry(chatroom_id)
-      .or_default()
-      .push(store_msg);
+    self.add_messages_to_room(chatroom_id, store_msg);
     Box::pin(async move {
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 

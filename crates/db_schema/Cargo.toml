@@ -19,24 +19,24 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_utils/full",
-  "diesel",
-  "diesel-derive-newtype",
-  "bcrypt",
-  "lemmy_utils",
-  "regex",
-  "serde_json",
-  "diesel_ltree",
-  "diesel-async",
-  "deadpool",
-  "tokio",
-  "tokio-postgres",
-  "tokio-postgres-rustls",
-  "rustls",
-  "i-love-jesus",
-  "tuplex",
-  "moka",
-  "lemmy_db_schema_file/full",
+    "lemmy_utils/full",
+    "diesel",
+    "diesel-derive-newtype",
+    "bcrypt",
+    "lemmy_utils",
+    "regex",
+    "serde_json",
+    "diesel_ltree",
+    "diesel-async",
+    "deadpool",
+    "tokio",
+    "tokio-postgres",
+    "tokio-postgres-rustls",
+    "rustls",
+    "i-love-jesus",
+    "tuplex",
+    "moka",
+    "lemmy_db_schema_file/full",
 ]
 ts-rs = ["dep:ts-rs"]
 
@@ -53,8 +53,8 @@ bcrypt = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 diesel-derive-newtype = { workspace = true, optional = true }
 diesel-async = { workspace = true, features = [
-  "deadpool",
-  "postgres",
+    "deadpool",
+    "postgres",
 ], optional = true }
 regex = { workspace = true, optional = true }
 diesel_ltree = { workspace = true, optional = true }
@@ -71,6 +71,8 @@ i-love-jesus = { workspace = true, optional = true }
 derive-new.workspace = true
 tuplex = { workspace = true, optional = true }
 moka = { workspace = true, optional = true }
+validator = { workspace = true }
+
 [dev-dependencies]
 serial_test = { workspace = true }
 pretty_assertions = { workspace = true }

@@ -10,6 +10,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
+use validator::Validate;
 use lemmy_api_utils::utils::password_length_check;
 use lemmy_db_schema::{
   aliases,
@@ -137,44 +138,39 @@ impl RegistrationApplicationQuery {
   }
 }
 
-
 impl TryFrom<RegisterRequest> for Register {
   type Error = FastJobError;
 
-  fn try_from(form: RegisterRequest) -> Result<Self, Self::Error> {
-    if form.username.trim().is_empty() {
-      Err(FastJobErrorType::InvalidName)?
+  fn try_from(mut form: RegisterRequest) -> Result<Self, Self::Error> {
+    form.validate()
+        .map_err(|err| FastJobErrorType::ValidationError(err.to_string()))?;
+
+    if form.username.as_ref().unwrap().trim().is_empty() {
+      return Err(FastJobErrorType::InvalidName.into());
     }
-    
-    password_length_check(&form.password)?;
-    
+
+    let password = form.password.as_ref().unwrap();
+    password_length_check(password)?;
+
     if form.password != form.password_verify {
-      Err(FastJobErrorType::PasswordsDoNotMatch)?
-    }
-
-    if form.email.is_none() {
-      Err(FastJobErrorType::EmailRequired)?
-    }
-
-    if let Some(email) = &form.email {
-      if !email.contains('@') {
-        Err(FastJobErrorType::InvalidEmailAddress("Invalid email address".to_string()))?
-      }
+      return Err(FastJobErrorType::PasswordsDoNotMatch.into());
     }
 
     Ok(Register {
-        username: form.username,
-        password: form.password,
-        password_verify: Default::default(),
-        self_promotion: None,
-        email: form.email,
-        captcha_uuid: form.captcha_uuid,
-        captcha_answer: form.captcha_answer,
-        honeypot: None,
-        answer: None,
-      })
-    }
+      username: form.username.take().unwrap(),
+      password: form.password.take().unwrap(),
+      password_verify: Default::default(),
+      self_promotion: None,
+      email: form.email,
+      captcha_uuid: form.captcha_uuid,
+      captcha_answer: form.captcha_answer,
+      honeypot: None,
+      answer: None,
+    })
   }
+}
+
+
 
   #[cfg(test)]
   mod tests {
@@ -288,6 +284,7 @@ impl TryFrom<RegisterRequest> for Register {
           show_score: sara_local_user.show_score,
           show_upvote_percentage: sara_local_user.show_upvote_percentage,
           show_person_votes: sara_local_user.show_person_votes,
+          public_key: None,
         },
         creator: Person {
           id: sara_person.id,

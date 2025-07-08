@@ -81,12 +81,7 @@ pub async fn register(
   
   honeypot_check(&data.honeypot)?;
   
-  // make sure the registration answer is provided when the registration application is required
-  if local_site.site_setup {
-    validate_registration_answer(require_registration_application, &data.answer)?;
-  }
-  
-  if local_site.site_setup && local_site.captcha_enabled {
+  if local_site.captcha_enabled {
     let uuid = uuid::Uuid::parse_str(&data.captcha_uuid.clone().unwrap_or_default())?;
     CaptchaAnswer::check_captcha(
       pool,

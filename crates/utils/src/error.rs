@@ -200,6 +200,7 @@ pub enum FastJobErrorType {
   CouldntCreateChatRoomMember,
   CouldntUpdateChatRoomMember,
   InvalidRoomId,
+  ValidationError(String),
 }
 
 cfg_if! {

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, ops::Deref};
+use std::{borrow::Cow, fmt::Debug, ops::Deref};
+use validator::ValidateEmail;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -37,5 +38,11 @@ impl Deref for SensitiveString {
 impl From<String> for SensitiveString {
   fn from(t: String) -> Self {
     SensitiveString(t)
+  }
+}
+
+impl ValidateEmail for SensitiveString {
+  fn as_email_string(&self) -> Option<Cow<'_, str>> {
+    Some(Cow::Borrowed(self.0.as_str()))
   }
 }

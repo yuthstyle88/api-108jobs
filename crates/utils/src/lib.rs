@@ -13,6 +13,7 @@ cfg_if! {
 }
 
 pub mod error;
+pub mod shared_message;
 
 use std::time::Duration;
 

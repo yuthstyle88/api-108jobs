@@ -5,6 +5,7 @@ use lemmy_db_schema::{
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use validator::Validate;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -73,21 +74,31 @@ pub struct Register {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct RegisterRequest {
-  pub username: String,
-  pub password: SensitiveString,
-  pub password_verify: SensitiveString,
-  /// email is mandatory if email verification is enabled on the server
+  #[validate(required(message = "required"))]
+  pub username: Option<String>,
+
+  #[validate(required(message = "required"))]
+  pub password: Option<SensitiveString>,
+
+  #[validate(required(message = "required"))]
+  pub password_verify: Option<SensitiveString>,
+
+  #[validate(
+    required(message = "required"),
+    email(message = "Invalid email address")
+  )]
   pub email: Option<SensitiveString>,
-  /// The UUID of the captcha item.
+
+  #[validate(required(message = "required"))]
   pub captcha_uuid: Option<String>,
-  /// Your captcha answer.
+
+  #[validate(required(message = "required"))]
   pub captcha_answer: Option<String>,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

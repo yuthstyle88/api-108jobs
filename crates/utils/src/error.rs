@@ -205,6 +205,7 @@ pub enum FastJobErrorType {
   DecodeError,
   InvalidKeySize,
   GenerateKeyError,
+  ValidationError(String),
 }
 
 cfg_if! {

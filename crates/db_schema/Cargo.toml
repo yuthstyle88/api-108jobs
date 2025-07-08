@@ -71,8 +71,6 @@ i-love-jesus = { workspace = true, optional = true }
 derive-new.workspace = true
 tuplex = { workspace = true, optional = true }
 moka = { workspace = true, optional = true }
-webcryptobox = { workspace = true }
-
 [dev-dependencies]
 serial_test = { workspace = true }
 pretty_assertions = { workspace = true }

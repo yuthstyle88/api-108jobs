@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::PhoenixManager,
@@ -8,22 +9,42 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
+use lemmy_utils::crypto::{xchange_decrypt_data, Crypto, DataBuffer};
 
 pub struct WsSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) client_msg: RegisterClientMsg,
+  pub(crate) crypto: Arc<Crypto>,
+  pub(crate) session_id: String,
+  pub(crate) client_key: String,
 }
 
-impl Actor for WsSession {
+impl WsSession {
+  pub fn new(
+    phoenix_manager: Addr<PhoenixManager>,
+    client_msg: RegisterClientMsg,
+    crypto: Arc<Crypto>,
+    session_id: String,
+    client_key: String,
+  ) -> Self {
+    Self {
+      phoenix_manager,
+      client_msg,
+      crypto,
+      session_id,
+      client_key
+    }
+  }
+}
+impl Actor for WsSession{
   type Context = ws::WebsocketContext<Self>;
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<BridgeMessage>(ctx);
     let user_id = self.client_msg.user_id;
-    let client_key = self.client_msg.client_key.clone();
     let room_id = self.client_msg.room_id.clone();
     let room_name = self.client_msg.room_name.clone();
-    self.phoenix_manager.do_send(RegisterClientMsg { user_id,  client_key, room_id, room_name });
+    self.phoenix_manager.do_send(RegisterClientMsg { user_id, room_id, room_name });
   }
 }
 
@@ -69,15 +90,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-            let bridge_msg = BridgeMessage {
-              source: MessageSource::WebSocket,
-              channel: format!("room:{}", value.room_id).into(),
-              user_id: value.sender_id,
-              event: value.op.to_string(),
-              messages: value.content,
-              security_config: false,
-            };
-            self.issue_async::<SystemBroker, _>(bridge_msg);
+           let messages =  xchange_decrypt_data(value.content, self.client_key.clone(), &self.session_id);
+           if let Ok(messages) = messages {
+             let bridge_msg = BridgeMessage {
+               source: MessageSource::WebSocket,
+               channel: format!("room:{}", value.room_id).into(),
+               user_id: value.sender_id,
+               event: value.op.to_string(),
+               messages,
+               security_config: false,
+             };
+             self.issue_async::<SystemBroker, _>(bridge_msg);
+           }
           }
         },
       Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),

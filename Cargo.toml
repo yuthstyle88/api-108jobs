@@ -218,9 +218,9 @@ actix = "0.13.5"
 rand = "0.8.5"
 actix-broker = "0.4"
 actix-web-actors = "4.1"
-webcryptobox = "2.1.1"
 base62 = "2.2.1"
-
+p256 = { version = "0.9.0", features = ["ecdh"] }
+hex = "0.4.3"
 [dependencies]
 lemmy_api = { workspace = true }
 lemmy_api_crud = { workspace = true }
@@ -242,6 +242,7 @@ tokio.workspace = true
 clap = { workspace = true }
 actix = { workspace = true }
 mimalloc = "0.1.46"
+rand = { workspace = true }
 
 
 # Speedup RSA key generation

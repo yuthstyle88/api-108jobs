@@ -200,6 +200,11 @@ pub enum FastJobErrorType {
   CouldntCreateChatRoomMember,
   CouldntUpdateChatRoomMember,
   InvalidRoomId,
+  EncryptingError,
+  DecryptingError,
+  DecodeError,
+  InvalidKeySize,
+  GenerateKeyError,
 }
 
 cfg_if! {

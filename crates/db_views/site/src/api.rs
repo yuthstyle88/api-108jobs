@@ -368,6 +368,14 @@ pub struct Login {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct ExchangeKey {
+  pub token: Option<String>,
+  pub public_key: SensitiveString,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
 }
 

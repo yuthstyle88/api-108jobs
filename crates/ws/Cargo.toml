@@ -25,9 +25,9 @@ actix = { workspace = true }
 url = { workspace = true }
 actix-broker = { workspace = true }
 actix-web-actors = { workspace = true }
-webcryptobox = { workspace = true }
 phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }
 tracing =  { workspace = true }
 anyhow =  { workspace = true }
 chrono = { workspace = true }
 base62 = {workspace = true }
+hex = {workspace = true }

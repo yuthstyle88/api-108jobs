@@ -1,5 +1,4 @@
 pub mod api_routes;
-
 use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
@@ -45,6 +44,7 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_utils::crypto::{Crypto, DataBuffer};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -165,14 +165,25 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
+  let temp = secret.jwt_secret.clone().replace("-", "");
+  let session_id = temp[1..=16].as_bytes().to_vec();
+  let secret_key = temp[5..=27].as_bytes().to_vec();
+  let crypto = Crypto::new(secret_key, session_id);
+
+  let (crypto_secret, public_key) = Crypto::generate_key()?;
+  let data_buf_public_key = DataBuffer::from_vec(&public_key);
+  let public_key = Crypto::export_public_key(data_buf_public_key)?;
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
+    public_key,
+    crypto_secret
   );
-  let phoenix_manager = PhoenixManager::new("ws://localhost:4000/socket/websocket?vsn=2.0.0", pool.clone()).await.start();
+
+  let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone()).await.start();
 
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;
@@ -182,7 +193,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     if let Some(startup_server_handle) = startup_server_handle {
       startup_server_handle.stop(true).await;
     }
-    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone())?)
+    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone(), crypto)?)
   } else {
     None
   };
@@ -228,7 +239,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
   Ok(startup_server_handle)
 }
 
-fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings) -> FastJobResult<ServerHandle> {
+fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings, crypto: Crypto) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
@@ -251,6 +262,7 @@ fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixMana
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
       .app_data(Data::new(phoenix_manager.clone()))
+      .app_data(Data::new(crypto.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

@@ -61,8 +61,7 @@ sitemap-rs = "0.2.2"
 totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
 either = { workspace = true }
-webcryptobox = { workspace = true }
-pem = "3.0.5"
+p256 = { workspace = true}
 hex = "0.4.3"
 
 [dev-dependencies]

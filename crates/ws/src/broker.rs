@@ -6,7 +6,7 @@ use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFut
 use actix_broker::BrokerSubscribe;
 use chrono::Utc;
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId},
+  newtypes::ChatRoomId,
   source::{
     chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
@@ -108,25 +108,23 @@ impl Handler<ConnectNow> for PhoenixManager {
 pub struct PhoenixManager {
   socket: Arc<Socket>,
   channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
-  endpoint: String,
+  endpoint: Url,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
-  key_cache: KeyCache,
 }
 
 impl PhoenixManager {
-  pub async fn new(endpoint: &str, pool: ActualDbPool) -> Self {
-    let url = Url::parse(endpoint).expect("Invalid endpoint");
-    let sock = Socket::spawn(url.clone(), None, None)
+  pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool) -> Self {
+
+    let sock = Socket::spawn(endpoint.clone().expect("Phoenix url is require"), None, None)
         .await
         .expect("Failed to create socket");
     Self {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
-      endpoint: endpoint.into(),
+      endpoint: endpoint.clone().unwrap(),
       chat_store: HashMap::new(),
       pool,
-      key_cache: KeyCache::new(),
     }
   }
 
@@ -227,27 +225,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let event = msg.event.clone();
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
-    let message = msg.messages.clone();
+    let message = msg.messages;
 
-    let client_key = self.key_cache.get(&user_id).unwrap_or_default().to_string();
-
-    let decrypt_data: String;
-    if msg.security_config {
-      decrypt_data = String::from_utf8(
-        webcryptobox::decrypt(&client_key.as_bytes(), &message.as_bytes()).unwrap(),
-      )
-      .unwrap()
-      .into();
-    } else {
-      decrypt_data = message.clone().into();
-    }
-    let content_enum = ChatMessageContent::from(decrypt_data);
+    let content_enum = ChatMessageContent::from(message);
     let chatroom_id = ChatRoomId::from(channel_name.clone());
     let content = serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
     let store_msg = ChatMessageInsertForm {
       room_id: chatroom_id.clone(),
-      sender_id: Default::default(),
+      sender_id: user_id,
       content: content.clone(),
       status: 0,
       created_at: Utc::now(),
@@ -309,32 +295,6 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
 
   fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
     let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
-    if msg.user_id.is_some() && msg.client_key.is_some() {
-      self
-        .key_cache
-        .insert(msg.user_id.unwrap(), msg.client_key.unwrap());
-    }
   }
 }
-#[derive(Clone)]
-pub struct KeyCache {
-  map: HashMap<LocalUserId, String>,
-}
 
-impl KeyCache {
-  pub fn new() -> Self {
-    KeyCache {
-      map: HashMap::new(),
-    }
-  }
-
-  // ใส่ key ลง cache (เช่นหลังดึงจาก DB)
-  pub fn insert(&mut self, user_id: LocalUserId, key: String) {
-    self.map.insert(user_id, key);
-  }
-
-  // ดึง key จาก cache
-  pub fn get(&self, user_id: &LocalUserId) -> Option<String> {
-    self.map.get(user_id).cloned()
-  }
-}

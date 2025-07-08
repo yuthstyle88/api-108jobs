@@ -17,4 +17,9 @@
       pool_size: 2
     }
   json_logging: true
+  cors_origin: [
+      "lemmy.tld"
+      /* ... */
+    ]
+  phoenix_url: "ws://localhost:4000/socket/websocket?vsn=2.0.0"
 }

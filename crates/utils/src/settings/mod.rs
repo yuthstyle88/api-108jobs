@@ -98,12 +98,16 @@ impl Settings {
       .clone()
       .ok_or_else(|| anyhow!("images_disabled").into())
   }
+  pub fn get_phoenix_url(&self) -> &Option<Url> {
+    &self.phoenix_url
+  }
 }
 #[allow(clippy::expect_used)]
 /// Necessary to avoid URL expect failures
 fn pictrs_placeholder_url() -> Url {
   Url::parse("http://localhost:8080").expect("parse pictrs url")
 }
+
 
 #[cfg(test)]
 mod tests {

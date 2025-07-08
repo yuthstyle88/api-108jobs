@@ -215,10 +215,13 @@ extism-convert = { git = "https://github.com/extism/extism.git", branch = "main"
 unified-diff = "0.2.1"
 phoenix_channels_client = "0.1.2"
 actix = "0.13.5"
-awc = "3.7.0"
-rand = "0.9.1"
+rand = "0.8.5"
 actix-broker = "0.4"
 actix-web-actors = "4.1"
+base62 = "2.2.1"
+p256 = { version = "0.9.0", features = ["ecdh"] }
+hex = "0.4.3"
+validator = "0.20.0"
 
 [dependencies]
 lemmy_api = { workspace = true }
@@ -239,11 +242,9 @@ serde_json = { workspace = true }
 rustls = { workspace = true }
 tokio.workspace = true
 clap = { workspace = true }
-phoenix_channels_client = { workspace = true }
-url = { workspace = true }
 actix = { workspace = true }
 mimalloc = "0.1.46"
-rustc-hash = "2.1.1"
+rand = { workspace = true }
 
 
 # Speedup RSA key generation

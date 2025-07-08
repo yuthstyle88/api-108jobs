@@ -181,6 +181,29 @@ diesel::table! {
 }
 
 diesel::table! {
+    chat_room (id) {
+        id -> Varchar,
+        room_name -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    chat_message (id) {
+        id -> Int4,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        content -> Text,
+        status -> Int2,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::CommunityVisibility;
 
@@ -459,6 +482,7 @@ diesel::table! {
         id -> Int4,
         person_id -> Int4,
         password_encrypted -> Nullable<Text>,
+        public_key -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
         theme -> Text,

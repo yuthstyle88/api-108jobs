@@ -58,11 +58,12 @@ use lemmy_utils::{
 use moka::future::Cache;
 use regex::{escape, Regex, RegexSet};
 use std::sync::LazyLock;
-use rand::Rng;
+
 use tracing::Instrument;
 use url::{ParseError, Url};
 use urlencoding::encode;
 use webmention::{Webmention, WebmentionError};
+use rand::Rng;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
@@ -341,7 +342,7 @@ pub fn check_private_instance(
 
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> FastJobResult<()> {
-  if !(10..=60).contains(&pass.chars().count()) {
+  if !(6..=60).contains(&pass.chars().count()) {
     Err(FastJobErrorType::InvalidPassword)?
   } else {
     Ok(())
@@ -878,14 +879,14 @@ fn build_proxied_image_url(
 pub async fn local_user_view_from_jwt(
   jwt: &str,
   context: &FastJobContext,
-) -> FastJobResult<LocalUserView> {
-  let local_user_id = Claims::validate(jwt, context)
+) -> FastJobResult<(LocalUserView, String)> {
+  let (local_user_id, session) = Claims::validate(jwt, context)
     .await
     .with_fastjob_type(FastJobErrorType::NotLoggedIn)?;
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
   check_local_user_deleted(&local_user_view)?;
 
-  Ok(local_user_view)
+  Ok((local_user_view, session))
 }
 
 pub fn read_auth_token(req: &HttpRequest) -> FastJobResult<Option<String>> {

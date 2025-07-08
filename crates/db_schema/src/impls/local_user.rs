@@ -93,6 +93,20 @@ impl LocalUser {
       .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
+  pub async fn update_public_key(
+    pool: &mut DbPool<'_>,
+    local_user_id: LocalUserId,
+    new_public_key: &str,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    diesel::update(local_user::table.find(local_user_id))
+        .set((local_user::public_key.eq(new_public_key),))
+        .get_result::<Self>(conn)
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+  }
+
   pub async fn set_all_users_email_verified(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_user::table)

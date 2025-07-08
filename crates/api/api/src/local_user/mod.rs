@@ -25,3 +25,4 @@ pub mod update_totp;
 pub mod user_block_instance;
 pub mod validate_auth;
 pub mod verify_email;
+pub mod exchange;

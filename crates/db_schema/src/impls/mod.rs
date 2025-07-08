@@ -32,3 +32,5 @@ pub mod secret;
 pub mod site;
 pub mod tag;
 pub mod tagline;
+mod chat_message;
+mod chat_room;

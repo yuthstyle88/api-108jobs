@@ -50,6 +50,8 @@ pub struct Settings {
   cors_origin: Vec<String>,
   /// Print logs in JSON format. You can also disable ANSI colors in logs with env var `NO_COLOR`.
   pub json_logging: bool,
+  #[doku(skip)]
+  pub phoenix_url: Option<Url>,
   pub google: GoogleConfig
 }
 
@@ -171,6 +173,7 @@ pub struct EmailConfig {
   #[doku(example = "noreply@example.com")]
   pub smtp_from_address: String,
 }
+
 #[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
 #[serde(default, deny_unknown_fields)]
 pub struct GoogleConfig {

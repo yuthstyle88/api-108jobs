@@ -39,6 +39,7 @@ use lemmy_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
+
 #[cfg(feature = "full")]
 use {
   extism::FromBytes,
@@ -389,6 +390,22 @@ pub struct Login {
   pub password: SensitiveString,
   /// May be required, if totp is enabled for their account.
   pub totp_2fa_token: Option<String>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct ExchangeKey {
+  pub token: Option<String>,
+  pub public_key: SensitiveString,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct ExchangeKeyResponse {
+  pub public_key: SensitiveString,
 }
 
 #[skip_serializing_none]

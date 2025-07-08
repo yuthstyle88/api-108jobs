@@ -19,17 +19,17 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_db_schema/full",
-  "lemmy_db_views_community/full",
-  "lemmy_db_views_community_follower/full",
-  "lemmy_db_views_community_moderator/full",
-  "lemmy_db_views_community_person_ban/full",
-  "lemmy_db_views_local_image/full",
-  "lemmy_db_views_local_user/full",
-  "lemmy_db_views_person/full",
-  "lemmy_db_views_site/full",
-  "lemmy_db_views_comment/full",
-  "lemmy_db_views_post/full",
+    "lemmy_db_schema/full",
+    "lemmy_db_views_community/full",
+    "lemmy_db_views_community_follower/full",
+    "lemmy_db_views_community_moderator/full",
+    "lemmy_db_views_community_person_ban/full",
+    "lemmy_db_views_local_image/full",
+    "lemmy_db_views_local_user/full",
+    "lemmy_db_views_person/full",
+    "lemmy_db_views_site/full",
+    "lemmy_db_views_comment/full",
+    "lemmy_db_views_post/full",
 ]
 
 [dependencies]
@@ -74,7 +74,11 @@ webpage = { version = "2.0", default-features = false, features = ["serde"] }
 regex = { workspace = true }
 jsonwebtoken = { version = "9.3.1" }
 either.workspace = true
+p256 = { workspace = true }
+uuid = { workspace = true }
+pretty_assertions = "1.4.1"
 rand = "0.9.1"
 
 [dev-dependencies]
+serial_test = { workspace = true }
 pretty_assertions = { workspace = true }

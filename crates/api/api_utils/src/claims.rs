@@ -9,6 +9,7 @@ use lemmy_db_schema::{
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct Claims {
@@ -17,10 +18,11 @@ pub struct Claims {
   pub iss: String,
   /// Time when this token was issued as UNIX-timestamp in seconds
   pub iat: i64,
+  pub session: String,
 }
 
 impl Claims {
-  pub async fn validate(jwt: &str, context: &FastJobContext) -> FastJobResult<LocalUserId> {
+  pub async fn validate(jwt: &str, context: &FastJobContext) -> FastJobResult<(LocalUserId, String)> {
     let mut validation = Validation::default();
     validation.validate_exp = false;
     validation.required_spec_claims.remove("exp");
@@ -28,9 +30,10 @@ impl Claims {
     let key = DecodingKey::from_secret(jwt_secret.as_ref());
     let claims =
       decode::<Claims>(jwt, &key, &validation).with_fastjob_type(FastJobErrorType::NotLoggedIn)?;
+    let session = claims.claims.session.clone();
     let user_id = LocalUserId(claims.claims.sub.parse()?);
     LoginToken::validate(&mut context.pool(), user_id, jwt).await?;
-    Ok(user_id)
+    Ok((user_id,session))
   }
 
   pub async fn generate(
@@ -43,6 +46,7 @@ impl Claims {
       sub: user_id.0.to_string(),
       iss: hostname,
       iat: Utc::now().timestamp(),
+      session: generate_session(),
     };
 
     let secret = &context.secret().jwt_secret;
@@ -66,4 +70,7 @@ impl Claims {
     LoginToken::create(&mut context.pool(), form).await?;
     Ok(token)
   }
+}
+pub fn generate_session() -> String {
+  Uuid::new_v4().as_simple().to_string()
 }

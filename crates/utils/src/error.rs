@@ -192,6 +192,20 @@ pub enum FastJobErrorType {
   MultiCommunityEntryLimitReached,
   CouldntConnectDatabase,
   CouldntStartWebSocket,
+  CouldntCreateChatMessage,
+  CouldntUpdateChatMessage,
+  CouldntCreateChatRoom,
+  CouldntUpdateChatRoom,
+  DatabaseError,
+  CouldntCreateChatRoomMember,
+  CouldntUpdateChatRoomMember,
+  InvalidRoomId,
+  EncryptingError,
+  DecryptingError,
+  DecodeError,
+  InvalidKeySize,
+  GenerateKeyError,
+  ValidationError(String),
 }
 
 cfg_if! {

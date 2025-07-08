@@ -13,6 +13,8 @@ cfg_if! {
 }
 
 pub mod error;
+pub mod crypto;
+
 use std::time::Duration;
 
 pub type ConnectionId = usize;

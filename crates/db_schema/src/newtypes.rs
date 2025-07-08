@@ -4,6 +4,7 @@ use std::{
   fmt::{Display, Formatter},
   ops::Deref,
 };
+use std::str::FromStr;
 use url::Url;
 #[cfg(feature = "full")]
 use {
@@ -18,7 +19,6 @@ use {
   diesel_ltree::Ltree,
   lemmy_utils::error::{FastJobErrorType, FastJobResult},
 };
-
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -31,6 +31,13 @@ impl fmt::Display for PostId {
     write!(f, "{}", self.0)
   }
 }
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The post id.
+pub struct ChatMessageId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -70,6 +77,37 @@ pub struct CommunityId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The local user id.
 pub struct LocalUserId(pub i32);
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The chat room id.
+pub struct ChatRoomId(pub String);
+impl Display for ChatRoomId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    self.0.fmt(f)
+  }
+}
+
+impl  From<String> for ChatRoomId {
+  fn from(value: String) -> Self {
+    ChatRoomId{ 0: value }
+  }
+}
+
+impl Deref for ChatRoomId {
+  type Target = str;
+
+  fn deref(&self) -> &str {
+    &self.0
+  }
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct ClientKey(pub String);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -192,6 +230,22 @@ pub struct LtreeDef(pub String);
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct DbUrl(pub(crate) Box<Url>);
+
+impl TryFrom<&str> for DbUrl {
+  type Error = url::ParseError;
+
+  fn try_from(s: &str) -> Result<Self, Self::Error> {
+    Ok(DbUrl(Box::new(Url::parse(s)?)))
+  }
+}
+
+impl FromStr for DbUrl {
+  type Err = url::ParseError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Url::parse(s).map(|url| DbUrl(Box::new(url)))
+  }
+}
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]

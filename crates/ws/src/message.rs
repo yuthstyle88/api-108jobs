@@ -1,21 +1,25 @@
 use actix::prelude::*;
-
-#[derive(Message, Clone)]
-#[rtype(result = "()")]
-pub struct ChatMessage(pub String);
-
-#[derive(Message)]
-#[rtype(result = "u64")]
-pub struct JoinRoom(pub String, pub Option<String>, pub Recipient<ChatMessage>);
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct LeaveRoom(pub String, pub u64);
 
 #[derive(Message, Clone)]
-#[rtype(result = "Vec<String>")]
-pub struct ListRooms;
+#[rtype(result = "()")]
+pub struct SendMessage(pub String, pub u64, pub String);
+
+#[derive(Debug, Clone, Message)]
+#[rtype(result = "()")]
+pub struct StoreChatMessage {
+    pub message: ChatMessageInsertForm,
+}
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
-pub struct SendMessage(pub String, pub u64, pub String);
+pub struct RegisterClientMsg {
+    pub user_id: Option<LocalUserId>,
+    pub room_id: ChatRoomId,
+    pub room_name: String,
+}

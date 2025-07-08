@@ -1,144 +1,268 @@
+use crate::{
+  bridge_message::BridgeMessage,
+  message::{RegisterClientMsg, StoreChatMessage},
+};
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
-use phoenix_channels_client::url::Url;
-use phoenix_channels_client::{Channel, Event, Payload, Socket, Topic};
-use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
-use lemmy_db_schema::utils::ActualDbPool;
-use lemmy_utils::error::FastJobResult;
-use crate::bridge_message::BridgeMessage;
+use chrono::Utc;
+use lemmy_db_schema::{
+  newtypes::ChatRoomId,
+  source::{
+    chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
+    chat_room::{ChatRoom, ChatRoomInsertForm},
+  },
+  traits::Crud,
+  utils::{ActualDbPool, DbPool},
+};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
+use std::{collections::HashMap, sync::Arc, time::Duration};
+use tokio::sync::RwLock;
+use crate::chat_room::ChatRoomTemp;
 
 #[derive(Message)]
 #[rtype(result = "()")]
 struct ConnectNow;
 
 async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
-    // Try to connect
-    match socket.connect(Duration::from_secs(10)).await {
-        Ok(_) => Ok(socket),
-        Err(e) => {
-            eprintln!("Failed to connect to socket: {}", e);
-            Err(e.into())
-        }
+  // Try to connect
+  match socket.connect(Duration::from_secs(10)).await {
+    Ok(_) => Ok(socket),
+    Err(e) => {
+      eprintln!("Failed to connect to socket: {}", e);
+      Err(e.into())
     }
+  }
 }
-async fn send_event_to_channel(
-    channel: &Arc<Channel>,
-    event: Event,
-    payload: Value,
-) {
-    match Payload::json_from_serialized(payload.to_string()) {
-        Ok(payload) => {
-            if let Err(e) = channel.cast(event, payload).await {
-                eprintln!("Failed to cast message: {}", e);
-            }
+async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: Payload) {
+  if let Err(e) = channel.cast(event, payload).await {
+    eprintln!("Failed to cast message: {}", e);
+  }
+}
+async fn get_or_create_channel(
+  channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
+  socket: Arc<Socket>,
+  name: &str,
+) -> FastJobResult<Arc<Channel>> {
+  // Try to get existing channel
+  if let Some(channel) = channels.read().await.get(name).cloned() {
+    match channel.statuses().status().await {
+      Ok(status) => {
+        if status == ChannelStatus::Joined {
+          tracing::info!("Using existing channel: {}", name);
+          return Ok(channel);
         }
-        Err(e) => {
-            eprintln!("Failed to serialize payload: {}", e);
+        // ถ้าไม่ได้ joined ลอง rejoin
+        if let Ok(_) = channel.join(Duration::from_secs(5)).await {
+          tracing::info!("Successfully rejoined channel: {}", name);
+          return Ok(channel);
         }
+      }
+      Err(e) => {
+        tracing::info!("Channel {} status check failed: {}", name, e);
+      }
     }
+    channels.write().await.remove(name);
+  }
+
+  // Create new channel
+  let topic = Topic::from_string(name.to_string());
+  let channel = socket
+    .channel(topic, None)
+    .await
+    .map_err(|e| anyhow::anyhow!("Failed to create channel {}: {}", name, e))?;
+
+  // Join channel
+  channel
+    .join(Duration::from_secs(5))
+    .await
+    .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
+
+  // Store new channel
+  channels
+    .write()
+    .await
+    .insert(name.to_string(), channel.clone());
+  tracing::info!("Created new channel: {}", name);
+  Ok(channel)
 }
 impl Handler<ConnectNow> for PhoenixManager {
-    type Result = ();
+  type Result = ();
 
-    fn handle(&mut self, _msg: ConnectNow, ctx: &mut Context<Self>) {
-        let socket = self.socket.clone();
-        let endpoint = self.endpoint.clone();
-        let addr = ctx.address();
-        tokio::spawn(async move {
-            let _fut_connect = match connect(socket).await {
-                Ok(sock) => {
-                    addr.do_send(InitSocket(sock.clone()));
-                    eprintln!("connect to url: {}", endpoint);
-                }
-                Err(e) => eprintln!("connected failed: {e}"),
-            };
-        });
-    }
+  fn handle(&mut self, _msg: ConnectNow, ctx: &mut Context<Self>) {
+    let socket = self.socket.clone();
+    let endpoint = self.endpoint.clone();
+    let addr = ctx.address();
+    tokio::spawn(async move {
+      let _fut_connect = match connect(socket).await {
+        Ok(sock) => {
+          addr.do_send(InitSocket(sock.clone()));
+          eprintln!("connect to url: {}", endpoint);
+        }
+        Err(e) => eprintln!("connected failed: {e}"),
+      };
+    });
+  }
 }
 
 pub struct PhoenixManager {
-    socket: Arc<Socket>,
-    channels: HashMap<String, Arc<Channel>>,
-    endpoint: String,
-    pool: ActualDbPool,
+  socket: Arc<Socket>,
+  channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
+  endpoint: Url,
+  chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
+  pool: ActualDbPool,
 }
 
 impl PhoenixManager {
-    pub async fn new(endpoint: &str, pool: ActualDbPool) -> Self {
-        let url = Url::parse(endpoint).expect("Invalid endpoint");
-        let sock = Socket::spawn(url.clone(), None, None)
-            .await
-            .expect("Failed to create socket");
-        Self {
-            socket: sock,
-            channels: HashMap::new(),
-            endpoint: endpoint.into(),
-            pool,
-        }
+  pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool) -> Self {
+
+    let sock = Socket::spawn(endpoint.clone().expect("Phoenix url is require"), None, None)
+        .await
+        .expect("Failed to create socket");
+    Self {
+      socket: sock,
+      channels: Arc::new(RwLock::new(HashMap::new())),
+      endpoint: endpoint.clone().unwrap(),
+      chat_store: HashMap::new(),
+      pool,
     }
+  }
+
+  pub async fn validate_or_create_room(
+    &mut self,
+    room_id: ChatRoomId,
+    room_name: String,
+  ) -> FastJobResult<()> {
+    let room_id = room_id.to_string();
+    let mut db_pool = DbPool::Pool(&self.pool);
+    if !ChatRoom::exists(&mut db_pool, room_id.clone().into()).await? {
+      let (_, _, _job_id) = ChatRoomTemp::parse_compact_room_id(&room_id)
+          .ok_or(FastJobErrorType::InvalidRoomId)?;
+
+      let now = Utc::now();
+      let form = ChatRoomInsertForm {
+        room_name,
+        created_at: now,
+        updated_at: now,
+      };
+      ChatRoom::create(&mut db_pool, &form).await?;
+    }
+
+    Ok(())
+  }
+  pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
+    if let Some(existing_messages) = self.chat_store.get_mut(&room_id) {
+      existing_messages.push(new_messages);
+    }
+  }
+
+  // Update a message in the chat store for a specific room
+  fn update_chat_message(
+    &mut self,
+    room_id: &ChatRoomId,
+    predicate: impl Fn(&ChatMessageInsertForm) -> bool,
+    update_fn: impl FnOnce(&mut ChatMessageInsertForm),
+  ) {
+    if let Some(messages) = self.chat_store.get_mut(room_id) {
+      if let Some(message) = messages.iter_mut().find(|msg| predicate(msg)) {
+        update_fn(message);
+      }
+    }
+  }
+
+  async fn ensure_room_initialized(&mut self, room_id: ChatRoomId, room_name: String) {
+    if !self.chat_store.contains_key(&room_id) {
+      let _ = self.validate_or_create_room(room_id.clone(), room_name).await;
+      self.chat_store.insert(room_id, Vec::new());
+    }
+  }
 }
 
 impl Actor for PhoenixManager {
-    type Context = Context<Self>;
+  type Context = Context<Self>;
 
-    fn started(&mut self, ctx: &mut Self::Context) {
-        ctx.notify(ConnectNow);
-        self.subscribe_system_async::<BridgeMessage>(ctx);
-        ctx.run_interval(Duration::from_secs(10), |_actor, _ctx| {
-            let arbiter = Arbiter::new();
-            let succeeded = arbiter.spawn(async {
-                println!("interval task async job done!");
-            });
-            if succeeded {
-                println!("Task spawned!");
-            } else {
-                println!("Failed to spawn task.");
-            }
-        });
-    }
+  fn started(&mut self, ctx: &mut Self::Context) {
+    ctx.notify(ConnectNow);
+    self.subscribe_system_async::<BridgeMessage>(ctx);
+    ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
+      let arbiter = Arbiter::new();
+      let messages = actor.chat_store.clone();
+      let pool = actor.pool.clone();
+
+      let succeeded = arbiter.spawn(async move {
+        for (room_id, messages) in messages.iter() {
+          if messages.is_empty() {
+            continue;
+          }
+          println!("Flushing {} messages from room {}", messages.len(), room_id);
+          let mut db_pool = DbPool::Pool(&pool);
+          // Validate room and create if needed
+          // should add logic to add post id here
+          // Room is valid, insert messages
+          let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
+          if let Err(e) = res {
+            println!("Failed to flush messages: {}", e);
+          }
+        }
+      });
+      if succeeded {
+        println!("Task spawned!");
+      } else {
+        println!("Failed to spawn task.");
+      }
+      actor.chat_store.clear();
+    });
+  }
 }
 
 // Handler for BridgeMessage
 impl Handler<BridgeMessage> for PhoenixManager {
-    type Result = ResponseFuture<()>;
+  type Result = ResponseFuture<()>;
 
-    fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
-        let channel_name = msg.channel.clone();
-        let event = msg.event.clone();
-        let socket = self.socket.clone();
-        let mut channels = self.channels.clone();
+  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+    let channel_name = msg.channel.to_string();
+    let user_id = msg.user_id.clone();
+    let event = msg.event.clone();
+    let socket = self.socket.clone();
+    let channels = Arc::clone(&self.channels);
+    let message = msg.messages;
 
-        Box::pin(async move {
-            let arc_chan = if let Some(chan) = channels.get(&channel_name).cloned() {
-                chan
-            } else {
-                let channel = Topic::from_string(channel_name.clone());
-                match socket.channel(channel, None).await {
-                    Ok(new_chan) => {
-                        let arc_chan = new_chan;
-                        channels.insert(channel_name.clone(), arc_chan.clone());
-                        arc_chan
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to create channel '{}': {}", channel_name, e);
-                        return;
-                    }
-                }
-            };
+    let content_enum = ChatMessageContent::from(message);
+    let chatroom_id = ChatRoomId::from(channel_name.clone());
+    let content = serde_json::to_string(&content_enum).unwrap_or_default();
+    //TODO get sender id
+    let store_msg = ChatMessageInsertForm {
+      room_id: chatroom_id.clone(),
+      sender_id: user_id,
+      content: content.clone(),
+      status: 0,
+      created_at: Utc::now(),
+      updated_at: Utc::now(),
+    };
 
-            if let Err(e) = arc_chan.join(Duration::from_secs(5)).await {
-                eprintln!("Failed to join channel '{}': {}", channel_name, e);
-                return;
-            }
+    self.add_messages_to_room(chatroom_id, store_msg);
+    Box::pin(async move {
+      let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 
-            // ส่ง event ตามเดิม
+      if let Ok(arc_chan) = arc_chan {
+        let status = arc_chan.statuses().status().await;
+        match status {
+          Ok(status) => {
             let phoenix_event = Event::from_string(event);
-            send_event_to_channel(&arc_chan, phoenix_event, msg.payload).await;
-        })
-    }
+            let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
+
+            if status == ChannelStatus::Joined {
+              send_event_to_channel(arc_chan, phoenix_event, payload).await;
+            } else {
+              let _ = arc_chan.join(Duration::from_secs(5)).await;
+              send_event_to_channel(arc_chan, phoenix_event, payload).await;
+            }
+          }
+          Err(_) => {}
+        }
+      }
+    })
+  }
 }
 
 #[derive(Message)]
@@ -146,10 +270,31 @@ impl Handler<BridgeMessage> for PhoenixManager {
 struct InitSocket(Arc<Socket>);
 
 impl Handler<InitSocket> for PhoenixManager {
-    type Result = ();
+  type Result = ();
 
-    fn handle(&mut self, msg: InitSocket, _ctx: &mut Context<Self>) {
-        self.socket = msg.0;
-        eprintln!("Connect status : {:?}", self.socket.status());
-    }
+  fn handle(&mut self, msg: InitSocket, _ctx: &mut Context<Self>) {
+    self.socket = msg.0;
+    eprintln!("Connect status : {:?}", self.socket.status());
+  }
 }
+
+impl Handler<StoreChatMessage> for PhoenixManager {
+  type Result = ();
+
+  fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
+    let msg = msg.message;
+    self
+      .chat_store
+      .entry(msg.room_id.clone())
+      .or_default()
+      .push(msg);
+  }
+}
+impl Handler<RegisterClientMsg> for PhoenixManager {
+  type Result = ();
+
+  fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
+    let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
+  }
+}
+

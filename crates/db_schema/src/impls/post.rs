@@ -54,11 +54,12 @@ impl Crud for Post {
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
+
     insert_into(post::table)
-      .values(form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
+        .values(form)
+        .get_result::<Self>(conn)
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
   async fn update(

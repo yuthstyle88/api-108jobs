@@ -14,17 +14,20 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-lemmy_api_utils = { workspace = true }
 lemmy_utils = { workspace = true, features = ["full"] }
+lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
-uuid = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 actix = { workspace = true }
 url = { workspace = true }
-rand = { workspace = true }
 actix-broker = { workspace = true }
 actix-web-actors = { workspace = true }
 phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-channels-client", branch = "main" }
+tracing =  { workspace = true }
+anyhow =  { workspace = true }
+chrono = { workspace = true }
+base62 = {workspace = true }
+hex = {workspace = true }

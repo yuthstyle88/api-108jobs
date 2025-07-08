@@ -1,0 +1,22 @@
+{
+  "accumulated_balance": "Accumulated Balance (Baht)",
+  "add_data": "Add data",
+  "check_your_info": "Check your information",
+  "column_account": "Transfer to Account",
+  "column_amount": "Amount (Baht)",
+  "column_bank": "Bank",
+  "column_closing_date": "Closing Date",
+  "column_note": "Note",
+  "column_status": "Status",
+  "column_transfer_date": "Transfer Date",
+  "column_withdrawal_code": "Withdrawal Code",
+  "my_income": "My Income",
+  "no_transactions": "No transactions in {{month}} {{year}}",
+  "payment_steps": "Steps to receive payment",
+  "transaction_history": "Transfer History",
+  "transfer_note": "You will receive money within 1–3 business days after the transfer status changes to Transferred, depending on your bank’s processing time",
+  "verification_bank": "Bank account info: Add info",
+  "verification_id": "ID Card Info: Check your info",
+  "verification_info_title": "Information required for verification once balance is accumulated",
+  "verification_tax": "Tax declaration info: Add info"
+}

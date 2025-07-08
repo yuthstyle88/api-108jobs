@@ -1,0 +1,18 @@
+{
+  "address_detail": "Address Details",
+  "address_info_description": "So we can send packages and documents to you",
+  "address_info_title": "Address Information",
+  "address_placeholder": "Enter full address, house number, street, alley",
+  "contact_info_description": "So we and customers can reach you",
+  "contact_info_title": "Contact Information",
+  "current_address": "Current address",
+  "district": "District",
+  "email_contact": "Contact email",
+  "international": "International",
+  "province": "Province",
+  "select_country": "Select country",
+  "sub_district": "Sub-district",
+  "thailand": "Thailand",
+  "zipcode": "Zip Code",
+  "zipcode_placeholder": "Enter Zipcode"
+}

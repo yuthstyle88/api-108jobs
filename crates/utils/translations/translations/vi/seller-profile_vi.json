@@ -1,0 +1,16 @@
+{
+  "about_freelancer_label": "Về freelancer",
+  "display_name_label": "Tên hiển thị trên hệ thống",
+  "display_name_min_length_error": "Tên hiển thị phải có ít nhất 2 ký tự",
+  "display_name_note": "Nên sử dụng tên thật để tăng độ uy tín",
+  "freelancer_account_info_subtitle": "Thiết lập thông tin cơ bản của bạn",
+  "freelancer_account_info_title": "Thông tin tài khoản freelancer",
+  "freelancer_type_label": "Loại freelancer",
+  "freelancer_type_note": "Chỉ sử dụng để cải thiện hệ thống, nếu bạn còn là sinh viên, vui lòng chọn Bán thời gian",
+  "full_time": "Full-time",
+  "part_time": "Part-time",
+  "save_button": "Lưu",
+  "username_label": "Username",
+  "username_min_length_error": "Username phải có ít nhất 3 ký tự",
+  "username_note": "Username sẽ hiển thị trong URL, chỉnh sửa username có thể ảnh hưởng đến kết quả tìm kiếm trên Google"
+}

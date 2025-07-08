@@ -1,0 +1,23 @@
+{
+  "button_search_company": "Tìm kiếm thông tin công ty",
+  "label_tax_id": "Mã số thuế doanh nghiệp",
+  "note_requirements": [
+    "Người tuyển dụng phải yêu cầu bản sao CCCD từ freelancer trực tiếp.",
+    "Người tuyển dụng phải cấp chứng từ khấu trừ thuế (Mẫu 50) dưới tên của freelancer. (Xem mẫu tài liệu)"
+  ],
+  "placeholder_tax_id": "Nhập mã số thuế",
+  "process_description_approval": "Trong vòng 2 giờ",
+  "process_description_notify": "Thông báo tuyển dụng dưới danh nghĩa công ty",
+  "process_description_register": "Để freelancer có thể xuất hóa đơn",
+  "process_title_approval": "Quy trình phê duyệt",
+  "process_title_notify_freelancer": "Thông báo ngay cho Freelancer",
+  "process_title_register_company": "Đăng ký thông tin công ty",
+  "section_company_hiring": "Thông tin tuyển dụng công ty",
+  "step_company_input": "Nhập thông tin công ty",
+  "step_company_input_sub": "Để freelancer có thể xuất chứng từ",
+  "step_notify_freelancer": "Báo cho freelancer ngay",
+  "step_notify_freelancer_sub": "Thuê với danh nghĩa công ty",
+  "step_wait_approval": "Chờ hệ thống phê duyệt",
+  "step_wait_approval_sub": "Trong vòng 2 giờ",
+  "subtitle_company_hiring": "Dùng để phát hành tài liệu tuyển dụng công ty"
+}

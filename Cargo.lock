@@ -3457,6 +3457,7 @@ dependencies = [
  "once_cell",
  "p256",
  "pretty_assertions",
+ "rand 0.9.1",
  "regex",
  "reqwest 0.12.21",
  "reqwest-middleware",
@@ -3909,6 +3910,7 @@ dependencies = [
  "serde_with",
  "ts-rs",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -3939,6 +3941,7 @@ dependencies = [
  "lemmy_db_views_local_user",
  "lemmy_utils",
  "lettre",
+ "rand 0.9.1",
  "rosetta-build",
  "rosetta-i18n",
  "tracing",

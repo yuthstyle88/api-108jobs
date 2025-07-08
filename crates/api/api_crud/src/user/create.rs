@@ -51,6 +51,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
 use actix_web::web::Data;
+use actix_web::HttpResponse;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -191,6 +192,22 @@ pub async fn register(
   }
 
   Ok(Json(login_response))
+}
+
+pub async fn get_google_login_url(context: Data<FastJobContext>) -> HttpResponse {
+  let client_id = context.settings().clone().google.client_id;
+  let redirect_uri = context.settings().clone().google.redirect_url;
+
+  let google_auth_url = format!(
+    "https://accounts.google.com/o/oauth2/v2/auth\
+        ?client_id={}&redirect_uri={}&response_type=code\
+        &scope=email%20profile&access_type=offline",
+    client_id, redirect_uri
+  );
+
+  HttpResponse::Found()
+      .append_header(("Location", google_auth_url))
+      .finish()
 }
 
 pub async fn authenticate_with_oauth(

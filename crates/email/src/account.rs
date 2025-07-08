@@ -1,3 +1,5 @@
+use std::env;
+use std::path::PathBuf;
 use crate::{send_email, user_email, user_language};
 use lemmy_db_schema::{
   source::{
@@ -46,29 +48,36 @@ pub async fn send_verification_email(
   pool: &mut DbPool<'_>,
   settings: &Settings,
 ) -> FastJobResult<()> {
+  // Generate a 6-digit verification code
+  let verification_code = {
+    use rand::Rng;
+    let mut rng = rand::rng();
+    format!("{:06}", rng.random_range(0..1000000))
+  };
+
   let form = EmailVerificationForm {
     local_user_id: user.local_user.id,
     email: new_email.to_string(),
-    verification_token: uuid::Uuid::new_v4().to_string(),
+    verification_token: verification_code.clone(),
   };
-  let verify_link = format!(
-    "{}/verify_email/{}",
-    settings.get_protocol_and_hostname(),
-    &form.verification_token
-  );
   EmailVerification::create(pool, &form).await?;
+
+  // Read the HTML email template
+  // Get the current working directory
+  let cwd = env::current_dir()?;
+
+  // Join with the relative path
+  let template_path: PathBuf = cwd.join("crates/api/api_utils/src/templates/email_verification.html");
+  let template = std::fs::read_to_string(template_path)?; // Replace the placeholders in the template
+  println!("Template dir {}", template);
+  let html_body = template
+    .replace("{{ verification_code }}", &verification_code)
+    .replace("{{ to_email }}", new_email);
 
   let lang = user_language(user);
   let subject = lang.verify_email_subject(&settings.hostname);
 
-  // If an application is required, use a translation that includes that warning.
-  let body = if local_site.registration_mode == RegistrationMode::RequireApplication {
-    lang.verify_email_body_with_application(&settings.hostname, &user.person.name, verify_link)
-  } else {
-    lang.verify_email_body(&settings.hostname, &user.person.name, verify_link)
-  };
-
-  send_email(&subject, new_email, &user.person.name, &body, settings).await
+  send_email(&subject, new_email, &user.person.name, &html_body, settings).await
 }
 
 /// Returns true if email was sent.

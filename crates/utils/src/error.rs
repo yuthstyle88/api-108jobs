@@ -46,8 +46,11 @@ pub enum FastJobErrorType {
   CommunityIsBlocked,
   InstanceIsBlocked,
   InstanceIsPrivate,
-  /// Password must be between 10 and 60 characters
+  /// Password must be between 8 and 20 characters
   InvalidPassword,
+  EmptyUsername,
+  EmptyPassword,
+  InvalidPasswordLength,
   SiteDescriptionLengthOverflow,
   HoneypotFailed,
   RegistrationApplicationIsPending,
@@ -206,6 +209,7 @@ pub enum FastJobErrorType {
   InvalidKeySize,
   GenerateKeyError,
   ValidationError(String),
+  FileNotFound,
 }
 
 cfg_if! {

@@ -31,6 +31,7 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
+use lemmy_db_views_site::api::AuthenticateWithOauthRequest;
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
@@ -52,6 +53,7 @@ use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
 use actix_web::web::Data;
 use actix_web::HttpResponse;
+use lemmy_api_utils::utils::generate_unique_username;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -79,9 +81,9 @@ pub async fn register(
   if local_site.registration_mode == RegistrationMode::Closed {
     Err(FastJobErrorType::RegistrationClosed)?
   }
-  
+
   honeypot_check(&data.honeypot)?;
-  
+
   if local_site.captcha_enabled {
     let uuid = uuid::Uuid::parse_str(&data.captcha_uuid.clone().unwrap_or_default())?;
     CaptchaAnswer::check_captcha(
@@ -211,10 +213,12 @@ pub async fn get_google_login_url(context: Data<FastJobContext>) -> HttpResponse
 }
 
 pub async fn authenticate_with_oauth(
-  data: Json<AuthenticateWithOauth>,
+  data: Json<AuthenticateWithOauthRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
+  let data: AuthenticateWithOauth = data.into_inner().try_into()?;
+
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -231,14 +235,14 @@ pub async fn authenticate_with_oauth(
     return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
-  // validate the redirect_uri
-  let redirect_uri = &data.redirect_uri;
-  if redirect_uri.host_str().unwrap_or("").is_empty()
-    || !redirect_uri.path().eq(&String::from("/oauth/callback"))
-    || !redirect_uri.query().unwrap_or("").is_empty()
-  {
-    Err(FastJobErrorType::OauthAuthorizationInvalid)?
-  }
+  // // validate the redirect_uri
+  // let redirect_uri = &data.redirect_uri;
+  // if redirect_uri.host_str().unwrap_or("").is_empty()
+  //   || !redirect_uri.path().eq(&String::from("/oauth/callback"))
+  //   || !redirect_uri.query().unwrap_or("").is_empty()
+  // {
+  //   Err(FastJobErrorType::OauthAuthorizationInvalid)?
+  // }
 
   // validate the PKCE challenge
   if let Some(code_verifier) = &data.pkce_code_verifier {
@@ -261,7 +265,7 @@ pub async fn authenticate_with_oauth(
     &oauth_provider,
     &data.code,
     data.pkce_code_verifier.as_deref(),
-    redirect_uri.as_str(),
+    (&data.redirect_uri).as_ref(),
   )
   .await?;
 
@@ -301,9 +305,9 @@ pub async fn authenticate_with_oauth(
     }
 
     // prevent registration if registration is closed for OAUTH providers
-    if !local_site.oauth_registration {
-      return Err(FastJobErrorType::OauthRegistrationClosed)?;
-    }
+    // if !local_site.oauth_registration {
+    //   return Err(FastJobErrorType::OauthRegistrationClosed)?;
+    // }
 
     // Extract the OAUTH email claim from the returned user_info
     let email = read_user_info(&user_info, "email")?;
@@ -343,31 +347,28 @@ pub async fn authenticate_with_oauth(
       // No user was found by email => Register as new user
 
       // make sure the registration answer is provided when the registration application is required
-      validate_registration_answer(require_registration_application, &data.answer)?;
+      // validate_registration_answer(require_registration_application, &data.answer)?;
 
       let slur_regex = slur_regex(&context).await?;
+
+      let username_unique = generate_unique_username(pool, email.clone()).await?;
+
 
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
       let conn = &mut get_conn(pool).await?;
-      let tx_data = data.clone();
       let tx_context = context.clone();
       let user = conn
         .run_transaction(|conn| {
           async move {
             // make sure the username is provided
-            let username = tx_data
-              .username
-              .as_ref()
-              .ok_or(FastJobErrorType::RegistrationUsernameRequired)?;
+            let username: &str = username_unique.as_str();
 
             check_slurs(username, &slur_regex)?;
             check_slurs_opt(&data.answer, &slur_regex)?;
 
-            Person::check_username_taken(&mut conn.into(), username).await?;
-
             // We have to create a person, a local_user, and an oauth_account
-            let person = create_person(username.clone(), &site_view, &tx_context, conn).await?;
+            let person = create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
 
             // Create the local user
             let local_user_form = LocalUserInsertForm {
@@ -451,10 +452,7 @@ async fn create_person(
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
-    ..PersonInsertForm::new(
-      username.clone(),
-      site_view.site.instance_id,
-    )
+    ..PersonInsertForm::new(username.clone(), site_view.site.instance_id)
   };
 
   // insert the person
@@ -547,7 +545,6 @@ async fn oauth_request_access_token(
   let response = context
     .client()
     .post(oauth_provider.token_endpoint.as_str())
-    .header("Accept", "application/json")
     .form(&form[..])
     .send()
     .await

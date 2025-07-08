@@ -14,13 +14,19 @@ use lemmy_db_views_site::{
   api::{Login, LoginResponse},
   SiteView,
 };
+use lemmy_db_views_site::login::LoginRequest;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
-  data: Json<Login>,
+  data: Json<LoginRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
+
+  let login_request: Login = data
+      .0.clone()
+      .try_into()?;
+
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
   // Fetch that username / email
@@ -33,7 +39,7 @@ pub async fn login(
     .local_user
     .password_encrypted
     .as_ref()
-    .and_then(|password_encrypted| verify(&data.password, password_encrypted).ok())
+    .and_then(|password_encrypted| verify(&login_request.password, password_encrypted).ok())
     .unwrap_or(false);
   if !valid {
     Err(FastJobErrorType::IncorrectLogin)?
@@ -48,7 +54,7 @@ pub async fn login(
   if local_user_view.local_user.totp_2fa_enabled {
     check_totp_2fa_valid(
       &local_user_view,
-      &data.totp_2fa_token,
+      &login_request.totp_2fa_token,
       &context.settings().hostname,
     )?;
   }

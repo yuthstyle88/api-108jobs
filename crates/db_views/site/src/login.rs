@@ -21,7 +21,7 @@ impl TryFrom<LoginRequest> for Login {
             return Err(FastJobError::from(FastJobErrorType::EmptyPassword));
         }
 
-        if login.password.len() < 6 {
+        if login.password.len() < 6 || login.password.len() > 32 {
             return Err(FastJobError::from(FastJobErrorType::InvalidPasswordLength));
         }
 

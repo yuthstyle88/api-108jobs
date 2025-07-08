@@ -9,7 +9,6 @@ use lemmy_db_schema::{
   },
   utils::DbPool,
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
   error::FastJobResult,
@@ -42,7 +41,7 @@ pub async fn send_password_reset_email(
 
 /// Send a verification email
 pub async fn send_verification_email(
-  local_site: &LocalSite,
+  _local_site: &LocalSite,
   user: &LocalUserView,
   new_email: &str,
   pool: &mut DbPool<'_>,

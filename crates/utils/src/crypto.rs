@@ -133,7 +133,7 @@ impl Crypto {
       }
       _ => return Err(type_error("invalid length")),
     };
-    let res = hex::encode(ciphertext);
+    let res = BASE64_STANDARD.encode(ciphertext);
     Ok(res)
   }
 

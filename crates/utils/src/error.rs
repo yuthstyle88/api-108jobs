@@ -209,6 +209,7 @@ pub enum FastJobErrorType {
   InvalidKeySize,
   GenerateKeyError,
   ValidationError(String),
+  FileNotFound,
 }
 
 cfg_if! {

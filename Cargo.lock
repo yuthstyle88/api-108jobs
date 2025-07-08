@@ -3505,6 +3505,7 @@ dependencies = [
  "tuplex",
  "url",
  "uuid",
+ "validator",
 ]
 
 [[package]]

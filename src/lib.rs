@@ -168,7 +168,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let temp = secret.jwt_secret.clone().replace("-", "");
   let session_id = temp[1..=16].as_bytes().to_vec();
   let secret_key = temp[5..=27].as_bytes().to_vec();
-  let crypto = Crypto::new(secret_key, session_id);
+  let _crypto = Crypto::new(secret_key, session_id);
 
   let (crypto_secret, public_key) = Crypto::generate_key()?;
   let data_buf_public_key = DataBuffer::from_vec(&public_key);
@@ -193,7 +193,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     if let Some(startup_server_handle) = startup_server_handle {
       startup_server_handle.stop(true).await;
     }
-    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone(), crypto)?)
+    Some(create_http_server(context.clone(), phoenix_manager, SETTINGS.clone())?)
   } else {
     None
   };
@@ -239,7 +239,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
   Ok(startup_server_handle)
 }
 
-fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings, crypto: Crypto) -> FastJobResult<ServerHandle> {
+fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixManager>, settings: Settings) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
@@ -262,7 +262,6 @@ fn create_http_server(context: FastJobContext, phoenix_manager: Addr<PhoenixMana
       .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
       .app_data(Data::new(context.clone()))
       .app_data(Data::new(phoenix_manager.clone()))
-      .app_data(Data::new(crypto.clone()))
       .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
       .wrap(SessionMiddleware::new(context.clone()))
       .wrap(Condition::new(

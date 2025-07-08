@@ -258,8 +258,8 @@ impl Crypto {
 }
 
 pub fn xchange_decrypt_data(
-  encrypted_data: String,
-  hex_secret_key: String,
+  encrypted_data: &str,
+  hex_secret_key: &str,
   session: &str,
 ) -> FastJobResult<String> {
   let iv = session[5..21].to_string();
@@ -280,9 +280,9 @@ pub fn xchange_decrypt_data(
   }
 }
 pub fn xchange_encrypt_data(
-  data: String,
-  hex_secret_key: String,
-  session: String,
+  data: &str,
+  hex_secret_key: &str,
+  session: &str,
 ) -> FastJobResult<String> {
   let iv = session[5..21].to_string();
 

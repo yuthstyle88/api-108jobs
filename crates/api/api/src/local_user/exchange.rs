@@ -2,8 +2,6 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use base64::prelude::BASE64_STANDARD;
-use base64::Engine;
 use lemmy_api_utils::claims::Claims;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::sensitive::SensitiveString;
@@ -25,7 +23,7 @@ pub async fn exchange_keys(
     .as_ref()
     .ok_or(FastJobErrorType::IncorrectTotpToken)?;
   let local_user_id = Claims::validate(token, context.get_ref()).await;
-  if let Ok((user_id, session)) = local_user_id {
+  if let Ok((user_id, _session)) = local_user_id {
     server_public_key = hex::encode(context.public_key()).into();
     let client_public_key = &data.public_key;
 

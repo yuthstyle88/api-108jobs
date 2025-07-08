@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use lemmy_db_schema::newtypes::{ChatRoomId, ClientKey, LocalUserId};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 
 #[derive(Message, Clone)]

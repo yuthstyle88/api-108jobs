@@ -24,7 +24,6 @@ pub async fn chat_ws(
   stream: Payload,
   phoenix: Data<Addr<PhoenixManager>>,
   context: Data<FastJobContext>,
-  crypto: Data<Crypto>,
 ) ->  Result<impl Responder, Error>  {
   let token = query.token.clone();
   let room_id = query.room_id.clone().into();
@@ -48,12 +47,10 @@ pub async fn chat_ws(
       }
     }
   }
-  let crypto = crypto.into_inner();
 
   let session = WsSession::new(
     phoenix.get_ref().clone(),
     RegisterClientMsg { user_id, room_id, room_name },
-    crypto,
     session_id,
     client_key
   );

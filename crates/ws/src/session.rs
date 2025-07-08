@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   broker::PhoenixManager,
@@ -9,12 +8,11 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde::Deserialize;
-use lemmy_utils::crypto::{xchange_decrypt_data, Crypto, DataBuffer};
+use lemmy_utils::crypto::xchange_decrypt_data;
 
 pub struct WsSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) client_msg: RegisterClientMsg,
-  pub(crate) crypto: Arc<Crypto>,
   pub(crate) session_id: String,
   pub(crate) client_key: String,
 }
@@ -23,14 +21,12 @@ impl WsSession {
   pub fn new(
     phoenix_manager: Addr<PhoenixManager>,
     client_msg: RegisterClientMsg,
-    crypto: Arc<Crypto>,
     session_id: String,
     client_key: String,
   ) -> Self {
     Self {
       phoenix_manager,
       client_msg,
-      crypto,
       session_id,
       client_key
     }
@@ -90,7 +86,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-           let messages =  xchange_decrypt_data(value.content, self.client_key.clone(), &self.session_id);
+           let messages =  xchange_decrypt_data(&value.content, &self.client_key.clone(), &self.session_id);
            if let Ok(messages) = messages {
              let bridge_msg = BridgeMessage {
                source: MessageSource::WebSocket,

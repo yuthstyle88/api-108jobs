@@ -214,7 +214,7 @@ impl Crypto {
     let pk_bytes = EncodedPoint::from(secret.public_key());
     Ok((secret, pk_bytes.as_ref().to_vec()))
   }
-  pub fn derive_key(args: DeriveKeyArg) -> Result<Vec<u8>, AnyError> {
+  pub fn derive_key(args: DeriveKeyArg) -> FastJobResult<Vec<u8>> {
     let public_key = args
      .public_key
      .ok_or_else(|| type_error("Missing argument publicKey"))?;
@@ -229,13 +229,9 @@ impl Crypto {
         let point = p256::EncodedPoint::from_bytes(public_key.data.buf.0)
          .map_err(|_| type_error("Unexpected error decoding private key"))?;
 
-        let pk: Option<p256::PublicKey> = p256::PublicKey::from_encoded_point(&point);
+        p256::PublicKey::from_encoded_point(&point)
+         .ok_or_else(|| type_error("Unexpected error decoding private key"))?
 
-        if let Some(pk) = pk {
-          pk
-        } else {
-          return Err(type_error("Unexpected error decoding private key"));
-        }
       }
       _ => unreachable!(),
     };
@@ -250,7 +246,7 @@ impl Crypto {
   pub fn derive_secret_key(
     private_key: KeyData,
     public_key: Option<KeyData>,
-  ) -> Result<String, AnyError> {
+  ) -> FastJobResult<String> {
     let args = DeriveKeyArg {
       key: private_key,
       public_key,
@@ -268,12 +264,12 @@ pub fn xchange_decrypt_data(
 ) -> FastJobResult<String> {
   let iv = session[5..21].to_string();
 
-  let secret_key = hex::decode(hex_secret_key).expect("De-Hex Error");
+  let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::DecryptingError)?;
   let crypto = Crypto::from((secret_key, iv.as_bytes().to_vec()));
 
   let data = BASE64_STANDARD
    .decode(&encrypted_data)
-   .expect("base 64 decode error");
+   .map_err(|_| FastJobErrorType::DecodeError)?;
 
   match crypto.decrypt_aes_cbc(256, DataBuffer::from_vec(&data)) {
     Ok(decrypt_vec) => {
@@ -290,7 +286,7 @@ pub fn xchange_encrypt_data(
 ) -> FastJobResult<String> {
   let iv = session[5..21].to_string();
 
-  let secret_key = hex::decode(hex_secret_key).expect("De-Hex Error");
+  let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::EncryptingError)?;
   let crypto = Crypto::from((secret_key, iv.as_bytes().to_vec()));
 
   match crypto.encrypt_aes_cbc(256, DataBuffer::from_vec(data.as_bytes())) {

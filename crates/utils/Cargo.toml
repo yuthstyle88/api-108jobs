@@ -30,7 +30,6 @@ full = [
   "tracing",
   "actix-web",
   "serde_json",
-  "anyhow",
   "http",
   "deser-hjson",
   "regex",
@@ -59,7 +58,7 @@ serde = { workspace = true }
 serde_json = { workspace = true, optional = true }
 url = { workspace = true, optional = true }
 actix-web = { workspace = true, optional = true }
-anyhow = { workspace = true, optional = true }
+anyhow = { workspace = true }
 reqwest-middleware = { workspace = true, optional = true }
 strum = { workspace = true }
 futures = { workspace = true, optional = true }
@@ -93,6 +92,7 @@ rand_core ="0.6.3"
 spki = { version =   "0.4.1" ,  default-features = false, features = ["std"] }
 tendril = "0.4.3"
 base64 = { workspace = true }
+rand = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

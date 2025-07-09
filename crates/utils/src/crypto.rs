@@ -323,3 +323,122 @@ pub fn data_error(message: impl Into<Cow<'static, str>>) -> Error {
 pub fn type_error(message: impl Into<Cow<'static, str>>) -> Error {
   custom_error("Error", message)
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use rand::RngCore;
+
+  fn generate_key_iv() -> (Vec<u8>, Vec<u8>) {
+    let mut key = vec![0u8; 32]; // AES-256
+    let mut iv = vec![0u8; 16];  // IV is 16 bytes
+    rand::thread_rng().fill_bytes(&mut key);
+    rand::thread_rng().fill_bytes(&mut iv);
+    (key, iv)
+  }
+
+  #[test]
+  fn test_encrypt_decrypt_aes256() {
+    let (key, iv) = generate_key_iv();
+    let crypto = Crypto::new(key.clone(), iv.clone());
+
+    let plain_text = "Hello, iBrowe!";
+    let data = DataBuffer::from_str(plain_text);
+
+    let encrypted = crypto.encrypt_aes_cbc(256, data.clone()).expect("encryption failed");
+    let decoded = base64::decode(&encrypted).expect("base64 decode failed");
+    let decrypted = crypto.decrypt_aes_cbc(256, DataBuffer::from_vec(&decoded)).expect("decryption failed");
+
+    assert_eq!(decrypted, plain_text.as_bytes());
+  }
+
+  #[test]
+  fn test_generate_key() {
+    let (secret, public_key) = Crypto::generate_key().expect("generate key failed");
+    assert_eq!(public_key.len(), 65);
+    let _ = secret;
+  }
+
+  #[test]
+  fn test_export_import_public_key() {
+    let (_secret, public_key_bytes) = Crypto::generate_key().expect("keygen failed");
+
+    let exported_spki = Crypto::export_public_key(DataBuffer::from_vec(&public_key_bytes))
+        .expect("export failed");
+    assert!(exported_spki.len() > 0);
+
+    let imported_key = Crypto::import_public_key(DataBuffer::from_vec(&exported_spki))
+        .expect("import failed");
+
+    assert_eq!(imported_key, public_key_bytes);
+  }
+
+  // #[test]
+  // fn test_derive_key_ecdh() {
+  //   let (sk1, pk1_bytes) = Crypto::generate_key().expect("keygen 1 failed");
+  //   let (sk2, pk2_bytes) = Crypto::generate_key().expect("keygen 2 failed");
+  //
+  //   let sk1_der = p256::SecretKey::from(sk1).to_pkcs8_der().unwrap();
+  //   let sk2_der = p256::SecretKey::from(sk2).to_pkcs8_der().unwrap();
+  //
+  //   let private_key = KeyData {
+  //     r#type: KeyType::Private,
+  //     data: DataBuffer::from_vec(sk1_der.as_bytes()),
+  //   };
+  //
+  //   let peer_pub = KeyData {
+  //     r#type: KeyType::Public,
+  //     data: DataBuffer::from_vec(&pk2_bytes),
+  //   };
+  //
+  //   let derived1 = Crypto::derive_secret_key(private_key.clone(), Some(peer_pub.clone()))
+  //       .expect("derive failed");
+  //
+  //   // Reverse (sk2 with pk1)
+  //   let private_key2 = KeyData {
+  //     r#type: KeyType::Private,
+  //     data: DataBuffer::from_vec(sk2_der.as_bytes()),
+  //   };
+  //   let peer_pub2 = KeyData {
+  //     r#type: KeyType::Public,
+  //     data: DataBuffer::from_vec(&pk1_bytes),
+  //   };
+  //
+  //   let derived2 = Crypto::derive_secret_key(private_key2, Some(peer_pub2)).expect("derive2 failed");
+  //
+  //   assert_eq!(derived1, derived2, "Shared secrets should match");
+  // }
+
+  #[test]
+  fn test_xchange_encrypt_decrypt_data() {
+    let (key, iv) = generate_key_iv();
+    let hex_key = hex::encode(&key);
+    let session = format!("sess-{}", String::from_utf8_lossy(&iv)); // session[5..21] used as IV
+
+    let original_text = "This is secret data!";
+    let encrypted = xchange_encrypt_data(original_text, &hex_key, &session)
+        .expect("xchange encrypt failed");
+
+    let decrypted = xchange_decrypt_data(&encrypted, &hex_key, &session)
+        .expect("xchange decrypt failed");
+
+    assert_eq!(decrypted, original_text);
+  }
+
+  #[test]
+  fn test_invalid_key_length() {
+    let crypto = Crypto::new(vec![0u8; 10], vec![0u8; 16]); // invalid key length
+
+    let result = crypto.encrypt_aes_cbc(256, DataBuffer::from_str("test data"));
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_invalid_algorithm_oid() {
+    // Invalid SPKI data to trigger algorithm mismatch
+    let fake_spki = DataBuffer::from_vec(&[0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48]);
+
+    let result = Crypto::import_public_key(fake_spki);
+    assert!(result.is_err());
+  }
+}

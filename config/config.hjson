@@ -2,14 +2,14 @@
 # https://join-lemmy.org/docs/en/administration/configuration.html
 {
   hostname: lemmy-alpha
-  port: 8532
+  port: 8528
   database: {
       # Configure the database by specifying URI pointing to a postgres instance. This parameter can
       # also be set by environment variable `LEMMY_DATABASE_URL`.
       #
       # For an explanation of how to use connection URIs, see PostgreSQL's documentation:
       # https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6
-      connection: "postgres://postgres@localhost:5432/fastwork"
+      connection: "postgres://postgres:ibrowe123@localhost:5432/fastwork_db_phase1"
       # Maximum number of active sql connections
       #
       # A high value here can result in errors "could not resize shared memory segment". In this case
@@ -18,7 +18,7 @@
     }
   json_logging: true
   cors_origin: [
-      "lemmy.tld"
+      "http://localhost:3000"
       /* ... */
     ]
   phoenix_url: "ws://localhost:4000/socket/websocket?vsn=2.0.0"

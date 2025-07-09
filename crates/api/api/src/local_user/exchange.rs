@@ -40,7 +40,7 @@ pub async fn exchange_key(
     let shared_secret_hex = hex::encode(shared_secret.as_bytes());
 
     // Update user's public key
-    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &shared_secret_hex);
+    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &shared_secret_hex).await;
   }
 
   Ok(Json(ExchangeKeyResponse {

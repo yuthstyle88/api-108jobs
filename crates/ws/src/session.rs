@@ -85,24 +85,42 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
     match msg {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
-        if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-           let messages =  xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id);
-           if let Ok(messages) = messages {
-             let bridge_msg = BridgeMessage {
-               source: MessageSource::WebSocket,
-               channel: format!("room:{}", value.room_id).into(),
-               user_id: value.sender_id,
-               event: value.op.to_string(),
-               messages,
-               security_config: false,
-             };
-             self.issue_async::<SystemBroker, _>(bridge_msg);
-           }
+
+        match serde_json::from_str::<MessageRequest>(&text) {
+          Ok(value) => {
+            match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
+              Ok(messages) => {
+                let bridge_msg = BridgeMessage {
+                  source: MessageSource::WebSocket,
+                  channel: format!("room:{}", value.room_id).into(),
+                  user_id: value.sender_id,
+                  event: value.op.to_string(),
+                  messages,
+                  security_config: false,
+                };
+                self.issue_async::<SystemBroker, _>(bridge_msg);
+              }
+              Err(err) => {
+                eprintln!("Decryption error: {:?}", err);
+              }
+            }
           }
-        },
+          Err(err) => {
+            eprintln!("Failed to parse MessageRequest: {:?}", err);
+          }
+        }
+      }
+
       Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
       Ok(ws::Message::Close(_)) => ctx.stop(),
+
+      Err(err) => {
+        eprintln!("WebSocket protocol error: {:?}", err);
+        ctx.stop();
+      }
+
       _ => {}
     }
   }
 }
+

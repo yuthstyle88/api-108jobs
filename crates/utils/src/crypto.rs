@@ -1,10 +1,16 @@
+use crate::error::FastJobErrorType;
+#[cfg(feature = "full")]
+use crate::error::FastJobResult;
 use anyhow::Error;
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use block_modes::BlockMode;
 use p256::elliptic_curve;
 use p256::elliptic_curve::sec1::FromEncodedPoint;
 use p256::pkcs8::FromPrivateKey;
 use p256::{ecdh::EphemeralSecret, EncodedPoint};
 use rand_core::OsRng;
+use serde::{Deserialize, Serialize};
 use spki::der::Decodable;
 use spki::der::Encodable;
 use std::borrow::Cow;
@@ -13,12 +19,7 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use base64::Engine;
-use base64::prelude::BASE64_STANDARD;
-use serde::{Deserialize, Serialize};
 use tendril::fmt::Slice;
-use crate::error::{FastJobErrorType, FastJobResult};
-
 #[derive(Debug, Clone, Default)]
 pub struct Crypto {
   secret_key: Vec<u8>,
@@ -75,9 +76,7 @@ pub struct Buffer(Vec<u8>);
 
 impl From<Vec<u8>> for Buffer {
   fn from(vec: Vec<u8>) -> Self {
-    Self {
-      0: vec,
-    }
+    Self { 0: vec }
   }
 }
 
@@ -147,8 +146,8 @@ impl Crypto {
         let cipher = Aes128Cbc::new_from_slices(&key, &iv)?;
 
         cipher
-         .decrypt_vec(&data.buf.0)
-         .map_err(|_| data_error("invalid data"))?
+          .decrypt_vec(&data.buf.0)
+          .map_err(|_| data_error("invalid data"))?
       }
       192 => {
         // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
@@ -156,8 +155,8 @@ impl Crypto {
         let cipher = Aes192Cbc::new_from_slices(&key, &iv)?;
 
         cipher
-         .decrypt_vec(&data.buf.0)
-         .map_err(|_| data_error("invalid data"))?
+          .decrypt_vec(&data.buf.0)
+          .map_err(|_| data_error("invalid data"))?
       }
       256 => {
         // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
@@ -165,8 +164,8 @@ impl Crypto {
         let cipher = Aes256Cbc::new_from_slices(&key, &iv)?;
 
         cipher
-         .decrypt_vec(&data.buf.0)
-         .map_err(|_| data_error("invalid data"))?
+          .decrypt_vec(&data.buf.0)
+          .map_err(|_| data_error("invalid data"))?
       }
       _ => unreachable!(),
     };
@@ -178,8 +177,8 @@ impl Crypto {
 
   pub fn import_public_key(data: DataBuffer) -> Result<Vec<u8>, AnyError> {
     // 2-3.
-    let pk_info = spki::SubjectPublicKeyInfo::from_der(&data.buf.0)
-     .map_err(|e| data_error(e.to_string()))?;
+    let pk_info =
+      spki::SubjectPublicKeyInfo::from_der(&data.buf.0).map_err(|e| data_error(e.to_string()))?;
     // 4.
     let alg = pk_info.algorithm.oid;
     // id-ecPublicKey
@@ -196,42 +195,45 @@ impl Crypto {
 
     let subject_public_key = point.0.as_bytes();
     let alg_id =
-     <p256::NistP256 as p256::elliptic_curve::AlgorithmParameters>::algorithm_identifier();
+      <p256::NistP256 as p256::elliptic_curve::AlgorithmParameters>::algorithm_identifier();
 
     // the SPKI structure
     let key_info = spki::SubjectPublicKeyInfo {
       algorithm: alg_id,
       subject_public_key: &subject_public_key,
     };
-    let spki_der = key_info.to_vec().map_err(|_| data_error("Failed to encode SPKI"))?;
+    let spki_der = key_info
+      .to_vec()
+      .map_err(|_| data_error("Failed to encode SPKI"))?;
 
     Ok(spki_der.into())
   }
 
+  #[cfg(feature = "full")]
   pub fn generate_key() -> FastJobResult<(EphemeralSecret, Vec<u8>)> {
-
     let secret = EphemeralSecret::random(&mut OsRng);
     let pk_bytes = EncodedPoint::from(secret.public_key());
     Ok((secret, pk_bytes.as_ref().to_vec()))
   }
+
+  #[cfg(feature = "full")]
   pub fn derive_key(args: DeriveKeyArg) -> FastJobResult<Vec<u8>> {
     let public_key = args
-     .public_key
-     .ok_or_else(|| type_error("Missing argument publicKey"))?;
+      .public_key
+      .ok_or_else(|| type_error("Missing argument publicKey"))?;
     let secret_key = p256::SecretKey::from_pkcs8_der(args.key.data.buf.0.as_bytes())
-     .map_err(|_| data_error("Unexpected error decoding private key"))?;
+      .map_err(|_| data_error("Unexpected error decoding private key"))?;
     //info!("SSSS");
     let public_key = match public_key.r#type {
       KeyType::Private => p256::SecretKey::from_pkcs8_der(&public_key.data.buf.0)
-       .map_err(|_| type_error("Unexpected error decoding private key"))?
-       .public_key(),
+        .map_err(|_| type_error("Unexpected error decoding private key"))?
+        .public_key(),
       KeyType::Public => {
         let point = p256::EncodedPoint::from_bytes(public_key.data.buf.0)
-         .map_err(|_| type_error("Unexpected error decoding private key"))?;
+          .map_err(|_| type_error("Unexpected error decoding private key"))?;
 
         p256::PublicKey::from_encoded_point(&point)
-         .ok_or_else(|| type_error("Unexpected error decoding private key"))?
-
+          .ok_or_else(|| type_error("Unexpected error decoding private key"))?
       }
       _ => unreachable!(),
     };
@@ -243,6 +245,7 @@ impl Crypto {
     Ok(shared_secret.as_bytes().to_vec().into())
   }
 
+  #[cfg(feature = "full")]
   pub fn derive_secret_key(
     private_key: KeyData,
     public_key: Option<KeyData>,
@@ -257,6 +260,7 @@ impl Crypto {
   }
 }
 
+#[cfg(feature = "full")]
 pub fn xchange_decrypt_data(
   encrypted_data: &str,
   hex_secret_key: &str,
@@ -268,8 +272,8 @@ pub fn xchange_decrypt_data(
   let crypto = Crypto::from((secret_key, iv.as_bytes().to_vec()));
 
   let data = BASE64_STANDARD
-   .decode(&encrypted_data)
-   .map_err(|_| FastJobErrorType::DecodeError)?;
+    .decode(&encrypted_data)
+    .map_err(|_| FastJobErrorType::DecodeError)?;
 
   match crypto.decrypt_aes_cbc(256, DataBuffer::from_vec(&data)) {
     Ok(decrypt_vec) => {
@@ -279,6 +283,8 @@ pub fn xchange_decrypt_data(
     Err(_err) => Err(FastJobErrorType::DecryptingError.into()),
   }
 }
+
+#[cfg(feature = "full")]
 pub fn xchange_encrypt_data(
   data: &str,
   hex_secret_key: &str,
@@ -313,7 +319,7 @@ pub fn custom_error(_class: &'static str, message: impl Into<Cow<'static, str>>)
   CustomError {
     message: message.into(),
   }
-   .into()
+  .into()
 }
 
 pub fn data_error(message: impl Into<Cow<'static, str>>) -> Error {
@@ -322,4 +328,67 @@ pub fn data_error(message: impl Into<Cow<'static, str>>) -> Error {
 
 pub fn type_error(message: impl Into<Cow<'static, str>>) -> Error {
   custom_error("Error", message)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use hex;
+
+  fn test_key_iv() -> (Vec<u8>, Vec<u8>) {
+    // 32-byte AES key for AES-256
+    let key = vec![0x11; 32];
+    let iv = vec![0x22; 16];
+    (key, iv)
+  }
+
+  #[test]
+  fn test_encrypt_decrypt_roundtrip() {
+    let (key, iv) = test_key_iv();
+    let crypto = Crypto::new(key.clone(), iv.clone());
+
+    let plaintext = "Hello, FastJob!";
+    let data = DataBuffer::from_str(plaintext);
+
+    let encrypted = crypto.encrypt_aes_cbc(256, data.clone()).unwrap();
+    let decoded = base64::engine::general_purpose::STANDARD
+      .decode(&encrypted)
+      .unwrap();
+
+    let decrypted = crypto
+      .decrypt_aes_cbc(256, DataBuffer::from_vec(&decoded))
+      .unwrap();
+    let decrypted_str = String::from_utf8(decrypted).unwrap();
+
+    assert_eq!(plaintext, decrypted_str);
+  }
+
+  #[test]
+  #[cfg(feature = "full")]
+  fn test_export_import_public_key() {
+    // Generate ECDH key pair
+    let (secret, pub_bytes) = Crypto::generate_key().unwrap();
+    let data_buf = DataBuffer::from_vec(&pub_bytes);
+
+    let spki_encoded = Crypto::export_public_key(data_buf.clone()).unwrap();
+    let imported = Crypto::import_public_key(DataBuffer::from_vec(&spki_encoded)).unwrap();
+
+    // Expect the imported key matches original public bytes
+    assert_eq!(imported, pub_bytes);
+  }
+
+  #[test]
+  #[cfg(feature = "full")]
+  fn test_xchange_encrypt_decrypt() {
+    let session = "02258df649994da2aa35904745cd9532";
+    let data = "Hello, I am a good boy!";
+
+    let (key, iv) = test_key_iv();
+    let hex_key = hex::encode(&key);
+
+    let encrypted = xchange_encrypt_data(data, &hex_key, session).unwrap();
+    let decrypted = xchange_decrypt_data(&encrypted, &hex_key, session).unwrap();
+
+    assert_eq!(data, decrypted);
+  }
 }

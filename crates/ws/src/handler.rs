@@ -9,9 +9,6 @@ use actix_web::{
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
-use lemmy_db_schema::newtypes::SharedSecret;
-use lemmy_utils::crypto::{Crypto, DataBuffer};
-use lemmy_utils::error::FastJobResult;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

@@ -101,7 +101,7 @@ impl LocalUser {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(local_user::table.find(local_user_id))
-        .set((local_user::public_key.eq(new_public_key),))
+        .set(local_user::public_key.eq(new_public_key))
         .get_result::<Self>(conn)
         .await
         .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)

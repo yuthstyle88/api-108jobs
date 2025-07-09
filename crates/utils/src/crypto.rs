@@ -189,7 +189,7 @@ impl Crypto {
     let pk = pk_info.subject_public_key;
 
     let encoded_key = pk.to_vec();
-    Ok(encoded_key.to_vec().into())
+    Ok(encoded_key)
   }
   pub fn export_public_key(data_buf: DataBuffer) -> Result<Vec<u8>, AnyError> {
     let point = data_buf.buf;

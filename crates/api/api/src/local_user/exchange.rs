@@ -12,8 +12,6 @@ use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use p256::PublicKey;
 use lemmy_api_utils::utils::read_auth_token;
 
-use lemmy_db_schema_file::schema::captcha_answer::uuid;
-
 pub async fn exchange_key(
   data: Json<ExchangeKey>,
   req: HttpRequest,
@@ -42,7 +40,7 @@ pub async fn exchange_key(
     let shared_secret_hex = hex::encode(shared_secret.as_bytes());
 
     // Update user's public key
-    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &shared_secret_hex);
+    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &shared_secret_hex).await;
   }
 
   Ok(Json(ExchangeKeyResponse {

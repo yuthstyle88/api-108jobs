@@ -394,16 +394,19 @@ pub struct Login {
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Default)]
 pub struct ExchangeKey {
-  pub token: Option<String>,
-  pub public_key: SensitiveString,
+  pub public_key: String,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Default)]
 pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
 }

@@ -8,7 +8,6 @@ use lemmy_utils::{
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
-use p256::ecdh::EphemeralSecret;
 
 
 #[derive(Clone)]
@@ -20,8 +19,6 @@ pub struct FastJobContext {
   pictrs_client: Arc<ClientWithMiddleware>,
   secret: Arc<Secret>,
   rate_limit_cell: RateLimit,
-  public_key: Vec<u8>,
-  crypto_secret: Arc<EphemeralSecret>,
 }
 
 impl FastJobContext {
@@ -31,8 +28,6 @@ impl FastJobContext {
     pictrs_client: ClientWithMiddleware,
     secret: Secret,
     rate_limit_cell: RateLimit,
-    public_key: Vec<u8>,
-    crypto_secret: EphemeralSecret,
   ) -> FastJobContext {
     FastJobContext {
       pool,
@@ -40,8 +35,6 @@ impl FastJobContext {
       pictrs_client: Arc::new(pictrs_client),
       secret: Arc::new(secret),
       rate_limit_cell,
-      public_key,
-      crypto_secret: Arc::new(crypto_secret),
     }
   }
   pub fn pool(&self) -> DbPool<'_> {
@@ -65,12 +58,4 @@ impl FastJobContext {
   pub fn rate_limit_cell(&self) -> &RateLimit {
     &self.rate_limit_cell
   }
-  pub fn public_key(&self) -> &[u8] {
-    &self.public_key
-  }
-  pub fn crypto_secret(&self) -> &EphemeralSecret {
-    &self.crypto_secret
-  }
-
-
 }

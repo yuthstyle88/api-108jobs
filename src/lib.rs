@@ -165,22 +165,13 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let temp = secret.jwt_secret.clone().replace("-", "");
-  let session_id = temp[1..=16].as_bytes().to_vec();
-  let secret_key = temp[5..=27].as_bytes().to_vec();
-  let _crypto = Crypto::new(secret_key, session_id);
 
-  let (crypto_secret, public_key) = Crypto::generate_key()?;
-  let data_buf_public_key = DataBuffer::from_vec(&public_key);
-  let public_key = Crypto::export_public_key(data_buf_public_key)?;
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
-    public_key,
-    crypto_secret
   );
 
   let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone()).await.start();

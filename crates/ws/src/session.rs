@@ -14,7 +14,7 @@ pub struct WsSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) client_msg: RegisterClientMsg,
   pub(crate) session_id: String,
-  pub(crate) client_key: String,
+  pub(crate) shared_key: String,
 }
 
 impl WsSession {
@@ -22,13 +22,13 @@ impl WsSession {
     phoenix_manager: Addr<PhoenixManager>,
     client_msg: RegisterClientMsg,
     session_id: String,
-    client_key: String,
+    shared_key: String,
   ) -> Self {
     Self {
       phoenix_manager,
       client_msg,
       session_id,
-      client_key
+      shared_key
     }
   }
 }
@@ -86,7 +86,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-           let messages =  xchange_decrypt_data(&value.content, &self.client_key.clone(), &self.session_id);
+           let messages =  xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id);
            if let Ok(messages) = messages {
              let bridge_msg = BridgeMessage {
                source: MessageSource::WebSocket,

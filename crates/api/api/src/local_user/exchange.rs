@@ -12,8 +12,6 @@ use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use p256::PublicKey;
 use lemmy_api_utils::utils::read_auth_token;
 
-use lemmy_db_schema_file::schema::captcha_answer::uuid;
-
 pub async fn exchange_key(
   data: Json<ExchangeKey>,
   req: HttpRequest,

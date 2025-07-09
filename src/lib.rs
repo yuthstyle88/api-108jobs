@@ -44,7 +44,6 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use lemmy_utils::crypto::{Crypto, DataBuffer};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;

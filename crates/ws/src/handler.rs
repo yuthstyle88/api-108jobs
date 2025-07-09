@@ -70,10 +70,3 @@ pub async fn chat_ws(
   // Start websocket connection
   ws::start(ws_session, &req, stream)
 }
-
-fn create_client_key(value: &[u8]) -> FastJobResult<SharedSecret> {
-  let public_key = DataBuffer::from_vec(value);
-  let pem = Crypto::import_public_key(public_key)?;
-  let pem = hex::encode(&pem);
-  Ok(SharedSecret(pem))
-}

@@ -23,9 +23,9 @@ pub async fn exchange_key(
 
   // Generate server keypair
   let (server_secret, server_public_raw) = Crypto::generate_key()?;
-  let server_public_buffer = DataBuffer::from_vec(server_public_raw.as_bytes());
+  let server_public_buffer = DataBuffer::from_vec(&server_public_raw);
   let server_public_encoded = Crypto::export_public_key(server_public_buffer)?;
-  let server_public_hex: SensitiveString = hex::encode(&server_public_encoded);
+  let server_public_hex: SensitiveString = hex::encode(&server_public_encoded).into();
 
   // Validate user and process client key
   if let Ok((user_id, _session)) = Claims::validate(token, context.get_ref()).await {

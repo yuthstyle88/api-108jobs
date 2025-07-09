@@ -1,0 +1,29 @@
+{
+  "button_proceed_payment": "Proceed to payment",
+  "button_top_up": "Top up",
+  "button_top_up_10000": "Top up 10,000 baht",
+  "button_top_up_5000": "Top up 5,000 baht",
+  "label_choose_amount": "Or choose the amount you want immediately",
+  "label_specify_amount": "Specify the amount you want to top up.",
+  "label_your_coin": "Your Fastwork Coin",
+  "note_balance_update": "In some cases, it may take up to 5 minutes for the balance to be updated. Please wait a moment.",
+  "note_coin_terms": [
+    "Fastwork Coin can be used without expiration date and can be used together with other account Coupons.",
+    "Fastwork Coin cannot be redeemed for cash or transferred to other Fastwork accounts.",
+    "When you top up Fastwork Coin into the system, it will be considered as acceptance of its terms and conditions.",
+    "If you encounter any problems in topping up Fastwork Coin or making payments, please contact the Support Center."
+  ],
+  "note_min_max": "Minimum 100 baht and maximum 500,000 baht.",
+  "placeholder_specify_amount": "Specify the amount 100-500,000 baht",
+  "section_top_up_history": "Top-up history",
+  "status_waiting": "Waiting for payment",
+  "subtitle_fastwork_coin": "Top up your account online to make hiring freelancers more convenient.",
+  "table_date_transaction": "Date of transaction",
+  "table_payment_code": "Payment code",
+  "table_payment_method": "Payment method",
+  "table_special_bonus": "Special bonus (coins)",
+  "table_status": "Status",
+  "table_top_up_amount": "Top-up amount (baht)",
+  "table_total_coins": "Total coins received",
+  "title_fastwork_coin": "Fastwork Coin"
+}

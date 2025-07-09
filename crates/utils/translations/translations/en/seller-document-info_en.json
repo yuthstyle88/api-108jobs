@@ -1,0 +1,8 @@
+{
+  "firstname_label": "First and Middle Name",
+  "firstname_placeholder": "Enter first and middle name",
+  "lastname_label": "Last Name",
+  "lastname_placeholder": "Enter last name",
+  "subtitle": "For individuals",
+  "title": "Client Information (Individual)"
+}

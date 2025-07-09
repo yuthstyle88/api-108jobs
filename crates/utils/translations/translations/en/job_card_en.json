@@ -1,0 +1,8 @@
+{
+  "sold": "Sold",
+  "rating": "Rating",
+  "expert": "Expert",
+  "popular": "Frequently hired",
+  "response_time": "Responds within {{n}} minutes",
+  "starting_price": "Starting at"
+}

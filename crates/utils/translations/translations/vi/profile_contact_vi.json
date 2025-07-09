@@ -1,0 +1,23 @@
+{
+  "cancel_button": "Đóng",
+  "confirm_button": "Thay đổi email",
+  "email_change_description": "Email hiện tại của bạn đã được xác minh trong hệ thống. Nếu bạn muốn thay đổi, email mới sẽ cần được xác minh lại.",
+  "email_change_title": "Bạn có muốn thay đổi email của mình không?",
+  "email_verification_description": "Nhập mã gồm 6 chữ số đã được gửi tới email của bạn để xác minh và xác nhận quyền sở hữu tài khoản",
+  "email_verification_title": "Vui lòng xác minh email của bạn",
+  "invalid_or_expired_code": "Mã không hợp lệ hoặc đã hết hạn",
+  "label_contact_email": "Email liên hệ",
+  "label_contact_phone": "Số điện thoại liên hệ (Thái Lan)",
+  "label_current_location": "Vị trí hiện tại",
+  "note_contact_phone": "Nếu sử dụng số điện thoại nước ngoài, vui lòng liên hệ hỗ trợ qua email để xác minh.",
+  "option_foreign_country": "Nước ngoài",
+  "option_thailand": "Thái Lan",
+  "placeholder_contact_phone": "Nhập số điện thoại",
+  "placeholder_select_country": "Chọn quốc gia",
+  "resend_code": "Gửi lại",
+  "section_address_info": "Thông tin địa chỉ",
+  "section_contact_info": "Thông tin liên hệ",
+  "subtitle_address_info": "Để đảm bảo chúng tôi có thể gửi hàng và tài liệu cho bạn",
+  "subtitle_contact_info": "Để đảm bảo chúng tôi có thể liên hệ với bạn",
+  "verify_button": "Xác minh"
+}

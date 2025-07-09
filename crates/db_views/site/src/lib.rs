@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod login;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable))]

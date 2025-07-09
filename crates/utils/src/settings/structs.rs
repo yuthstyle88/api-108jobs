@@ -52,6 +52,7 @@ pub struct Settings {
   pub json_logging: bool,
   #[doku(skip)]
   pub phoenix_url: Option<Url>,
+  pub google: GoogleConfig
 }
 
 impl Settings {
@@ -171,6 +172,13 @@ pub struct EmailConfig {
   /// Address to send emails from, eg "noreply@your-instance.com"
   #[doku(example = "noreply@example.com")]
   pub smtp_from_address: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[serde(default, deny_unknown_fields)]
+pub struct GoogleConfig {
+  pub client_id: String,
+  pub redirect_url: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]

@@ -15,7 +15,8 @@ pub mod local_user;
 pub mod post;
 pub mod reports;
 pub mod site;
-pub mod sitemap;
+pub mod sitemap; 
+pub mod lang;
 
 /// Converts the captcha to a base64 encoded wav audio file
 pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> FastJobResult<String> {

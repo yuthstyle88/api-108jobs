@@ -27,7 +27,6 @@ use lemmy_api::{
     change_password::change_password,
     change_password_after_reset::change_password_after_reset,
     donation_dialog_shown::donation_dialog_shown,
-    exchange::exchange_keys,
     export_data::export_data,
     generate_totp_secret::generate_totp_secret,
     get_captcha::get_captcha,
@@ -95,6 +94,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api_crud::{
   comment::{
     create::create_comment,
@@ -287,7 +287,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/account/auth")
             .guard(guard::Post())
-            .wrap(rate_limit.register())
+            // .wrap(rate_limit.register())
             .route("/register", post().to(register))
             .route("/login", post().to(login))
             .route("/logout", post().to(logout))
@@ -297,7 +297,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/totp/generate", post().to(generate_totp_secret))
             .route("/totp/update", post().to(update_totp))
             .route("/verify_email", post().to(verify_email))
-            .route("/exchange_key", post().to(exchange_keys))
+            .route("/exchange_key", post().to(exchange_key))
             .route(
               "/resend_verification_email",
               post().to(resend_verification_email),

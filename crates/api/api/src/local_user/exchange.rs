@@ -10,41 +10,43 @@ use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use lemmy_utils::crypto::{Crypto, DataBuffer};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use p256::PublicKey;
-
-pub async fn exchange_keys(
+pub async fn exchange_key(
   data: Json<ExchangeKey>,
   _req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<ExchangeKeyResponse>> {
-  let server_public_key: SensitiveString;
-  let secret = context.crypto_secret();
+  // Validate token
   let token = data
-    .token
-    .as_ref()
-    .ok_or(FastJobErrorType::IncorrectTotpToken)?;
-  let local_user_id = Claims::validate(token, context.get_ref()).await;
-  if let Ok((user_id, _session)) = local_user_id {
-    server_public_key = hex::encode(context.public_key()).into();
-    let client_public_key = &data.public_key;
+   .token
+   .as_ref()
+   .ok_or(FastJobErrorType::IncorrectTotpToken)?;
 
-    let decoded =
-      hex::decode(client_public_key.to_owned()).map_err(|_| FastJobErrorType::DecodeError)?;
-    let client_data_buf = DataBuffer::from_vec(&decoded);
+  // Generate server keypair
+  let (server_secret, server_public_raw) = Crypto::generate_key()?;
+  let server_public_buffer = DataBuffer::from_vec(&server_public_raw);
+  let server_public_encoded = Crypto::export_public_key(server_public_buffer)?;
+  let server_public_hex: SensitiveString = hex::encode(&server_public_encoded).into();
 
-    let temp = Crypto::import_public_key(client_data_buf)?;
-    let public_key =
-      PublicKey::from_sec1_bytes(temp.as_ref()).map_err(|_| FastJobErrorType::DecodeError)?;
+  // Validate user and process client key
+  if let Ok((user_id, _session)) = Claims::validate(token, context.get_ref()).await {
+    // Process client public key
+    let client_public_raw = hex::decode(&data.public_key)
+     .map_err(|_| FastJobErrorType::DecodeError)?;
+    let client_public_buffer = DataBuffer::from_vec(&client_public_raw);
+    let client_public_encoded = Crypto::import_public_key(client_public_buffer)?;
+    let client_public_key = PublicKey::from_sec1_bytes(&client_public_encoded)
+     .map_err(|_| FastJobErrorType::DecodeError)?;
 
-    let secret_key = secret.diffie_hellman(&public_key);
-    let client_hex_secret_key = hex::encode(secret_key.as_bytes().to_vec());
-    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &client_hex_secret_key);
-  } else {
-    server_public_key = SensitiveString::from("token_error".to_string());
+    // Generate shared secret
+    let shared_secret = server_secret.diffie_hellman(&client_public_key);
+    let shared_secret_hex = hex::encode(shared_secret.as_bytes());
+
+    // Update user's public key
+    let _ = LocalUser::update_public_key(&mut context.pool(), user_id, &shared_secret_hex);
   }
 
-  let res = ExchangeKeyResponse {
-    public_key: server_public_key,
-  };
-  Ok(Json(res))
+  Ok(Json(ExchangeKeyResponse {
+    public_key: server_public_hex,
+  }))
 }
 

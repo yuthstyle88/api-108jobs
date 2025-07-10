@@ -157,6 +157,7 @@ impl PhoenixManager {
   }
 
   // Update a message in the chat store for a specific room
+  #[allow(dead_code)] // used in upcoming WebSocket message sync logic
   fn update_chat_message(
     &mut self,
     room_id: &ChatRoomId,

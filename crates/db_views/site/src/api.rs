@@ -74,7 +74,7 @@ pub struct AdminBlockInstanceParams {
 pub struct AuthenticateWithOauth {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
-  pub redirect_uri: Url,
+  pub redirect_uri: Option<Url>,
   pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
   pub username: Option<String>,
@@ -91,7 +91,6 @@ pub struct AuthenticateWithOauth {
 pub struct AuthenticateWithOauthRequest {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
-  pub redirect_uri: Url,
   pub self_promotion: Option<bool>,
 }
 
@@ -102,7 +101,7 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
     Ok(AuthenticateWithOauth{
       code: value.code,
       oauth_provider_id: value.oauth_provider_id,
-      redirect_uri: value.redirect_uri,
+      redirect_uri: None,
       self_promotion: Some(value.self_promotion.unwrap_or(false)),
       username: None,
       answer: None,
@@ -565,6 +564,11 @@ pub struct UserBlockInstanceParams {
 /// Verify your email.
 pub struct VerifyEmail {
   pub token: String,
+}
+
+#[derive(Serialize)]
+pub struct VerifyEmailSuccessResponse {
+  pub jwt: SensitiveString
 }
 
 #[skip_serializing_none]

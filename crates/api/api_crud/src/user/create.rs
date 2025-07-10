@@ -265,7 +265,6 @@ pub async fn authenticate_with_oauth(
     &oauth_provider,
     &data.code,
     data.pkce_code_verifier.as_deref(),
-    (&data.redirect_uri).as_ref(),
   )
   .await?;
 
@@ -527,8 +526,10 @@ async fn oauth_request_access_token(
   oauth_provider: &OAuthProvider,
   code: &str,
   pkce_code_verifier: Option<&str>,
-  redirect_uri: &str,
 ) -> FastJobResult<TokenResponse> {
+
+  let redirect_uri = context.settings().google.redirect_url.as_str();
+
   let mut form = vec![
     ("client_id", &*oauth_provider.client_id),
     ("client_secret", &*oauth_provider.client_secret),

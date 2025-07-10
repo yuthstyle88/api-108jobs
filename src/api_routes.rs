@@ -94,6 +94,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::lang::read::get_lang;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api_crud::{
   comment::{
@@ -426,6 +427,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
         )
-        .service(resource("/google_login_url").get(get_google_login_url)),
+        .service(resource("/google_login_url").get(get_google_login_url))
+      .service(scope("/lang").route("/{lang}/{filename}", get().to(get_lang)))
+
     );
 }

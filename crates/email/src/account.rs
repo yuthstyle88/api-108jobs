@@ -15,6 +15,7 @@ use lemmy_utils::{
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 pub async fn send_password_reset_email(
   user: &LocalUserView,
@@ -86,6 +87,11 @@ pub async fn send_verification_email_if_required(
   pool: &mut DbPool<'_>,
   settings: &Settings,
 ) -> FastJobResult<bool> {
+  
+  if user.local_user.email_verified {
+    return Err(FastJobError::from(FastJobErrorType::EmailAlreadyVerified))
+  }
+  
   if !user.local_user.admin
     && local_site.require_email_verification
     && !user.local_user.email_verified

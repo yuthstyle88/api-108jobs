@@ -6,3 +6,4 @@ pub mod post;
 pub mod site;
 pub mod tagline;
 pub mod user;
+pub mod lang;

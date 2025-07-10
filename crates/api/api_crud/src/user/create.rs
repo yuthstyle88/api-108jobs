@@ -1,4 +1,8 @@
-use actix_web::{web::Json, HttpRequest};
+use actix_web::{
+  web::{Data, Json},
+  HttpRequest,
+  HttpResponse,
+};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
   claims::Claims,
@@ -8,6 +12,7 @@ use lemmy_api_utils::{
     check_local_user_valid,
     check_registration_application,
     generate_inbox_url,
+    generate_unique_username,
     honeypot_check,
     slur_regex,
   },
@@ -31,15 +36,11 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
-use lemmy_db_views_site::api::AuthenticateWithOauthRequest;
 use lemmy_db_views_site::{
-  api::{AuthenticateWithOauth, LoginResponse},
+  api::{AuthenticateWithOauth, AuthenticateWithOauthRequest, LoginResponse},
   SiteView,
 };
-use lemmy_multilang::{
-  account::send_verification_email_if_required,
-  admin::send_new_applicant_email_to_admins,
-};
+use lemmy_multilang::account::send_verification_email_if_required;
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::{
@@ -51,9 +52,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
-use actix_web::web::Data;
-use actix_web::HttpResponse;
-use lemmy_api_utils::utils::generate_unique_username;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -161,19 +159,14 @@ pub async fn register(
     })
     .await?;
 
-  // Email the admins, only if multilang verification is not required
-  if local_site.application_email_admins && !local_site.require_email_verification {
-    send_new_applicant_email_to_admins(&data.username, pool, context.settings()).await?;
-  }
-
   let mut login_response = LoginResponse {
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
   };
 
-  // Log the user in directly if the site is not setup, or multilang verification and application aren't
-  // required
+  // Log the user in directly if the site is not setup, or multilang verification and application
+  // aren't required
   if !local_site.site_setup
     || (!require_registration_application && !local_site.require_email_verification)
   {
@@ -208,8 +201,8 @@ pub async fn get_google_login_url(context: Data<FastJobContext>) -> HttpResponse
   );
 
   HttpResponse::Found()
-      .append_header(("Location", google_auth_url))
-      .finish()
+    .append_header(("Location", google_auth_url))
+    .finish()
 }
 
 pub async fn authenticate_with_oauth(
@@ -320,8 +313,8 @@ pub async fn authenticate_with_oauth(
     if let Ok(user_view) = local_user_view {
       // user found by multilang => link and login if linking is allowed
 
-      // we only allow linking by multilang when email_verification is required otherwise emails cannot
-      // be trusted
+      // we only allow linking by multilang when email_verification is required otherwise emails
+      // cannot be trusted
       if oauth_provider.account_linking_enabled && site_view.local_site.require_email_verification {
         // WARNING:
         // If an admin switches the require_email_verification config from false to true,
@@ -352,7 +345,6 @@ pub async fn authenticate_with_oauth(
 
       let username_unique = generate_unique_username(pool, email.clone()).await?;
 
-
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
       let conn = &mut get_conn(pool).await?;
@@ -367,7 +359,8 @@ pub async fn authenticate_with_oauth(
             check_slurs_opt(&data.answer, &slur_regex)?;
 
             // We have to create a person, a local_user, and an oauth_account
-            let person = create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
+            let person =
+              create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
 
             // Create the local user
             let local_user_form = LocalUserInsertForm {
@@ -516,7 +509,6 @@ async fn oauth_request_access_token(
   code: &str,
   pkce_code_verifier: Option<&str>,
 ) -> FastJobResult<TokenResponse> {
-
   let redirect_uri = context.settings().google.redirect_url.as_str();
 
   let mut form = vec![

@@ -1,5 +1,3 @@
-use std::env;
-use std::path::PathBuf;
 use crate::{send_email, user_email, user_language};
 use lemmy_db_schema::{
   source::{
@@ -11,11 +9,10 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::{
-  error::FastJobResult,
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
-  utils::markdown::markdown_to_html,
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use std::{env, path::PathBuf};
 
 pub async fn send_password_reset_email(
   user: &LocalUserView,
@@ -67,7 +64,8 @@ pub async fn send_verification_email(
   let cwd = env::current_dir()?;
 
   // Join with the relative path
-  let template_path: PathBuf = cwd.join("crates/api/api_utils/src/templates/email_verification.html");
+  let template_path: PathBuf =
+    cwd.join("crates/api/api_utils/src/templates/email_verification.html");
   let template = std::fs::read_to_string(template_path)?;
 
   let html_body = template
@@ -87,11 +85,10 @@ pub async fn send_verification_email_if_required(
   pool: &mut DbPool<'_>,
   settings: &Settings,
 ) -> FastJobResult<bool> {
-  
   if user.local_user.email_verified {
-    return Err(FastJobError::from(FastJobErrorType::EmailAlreadyVerified))
+    return Err(FastJobError::from(FastJobErrorType::EmailAlreadyVerified));
   }
-  
+
   if !user.local_user.admin
     && local_site.require_email_verification
     && !user.local_user.email_verified
@@ -104,37 +101,6 @@ pub async fn send_verification_email_if_required(
   }
 }
 
-pub async fn send_application_approved_email(
-  user: &LocalUserView,
-  settings: &Settings,
-) -> FastJobResult<()> {
-  let lang = user_language(user);
-  let subject = lang.registration_approved_subject(&user.person.name);
-  let email = user_email(user)?;
-  let body = lang.registration_approved_body(&settings.hostname);
-  send_email(&subject, &email, &user.person.name, &body, settings).await?;
-  Ok(())
-}
-
-pub async fn send_application_denied_email(
-  user: &LocalUserView,
-  deny_reason: Option<String>,
-  settings: &Settings,
-) -> FastJobResult<()> {
-  let lang = user_language(user);
-  let subject = lang.registration_denied_subject(&user.person.name);
-  let email = user_email(user)?;
-  let body = match deny_reason {
-    Some(deny_reason) => {
-      let markdown = markdown_to_html(&deny_reason);
-      lang.registration_denied_reason_body(&settings.hostname, &markdown)
-    }
-    None => lang.registration_denied_body(&settings.hostname),
-  };
-  send_email(&subject, &email, &user.person.name, &body, settings).await?;
-  Ok(())
-}
-
 pub async fn send_email_verified_email(
   user: &LocalUserView,
   settings: &Settings,
@@ -143,6 +109,6 @@ pub async fn send_email_verified_email(
   let subject = lang.email_verified_subject(&user.person.name);
   let email = user_email(user)?;
   let body = lang.email_verified_body();
-  send_email(&subject, &email, &user.person.name, body, settings).await?;
+  send_email(&subject, &email, &user.person.name, &body, settings).await?;
   Ok(())
 }

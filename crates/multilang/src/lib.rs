@@ -1,4 +1,4 @@
-// Avoid warnings for unused 0.19 translations
+// Avoid warnings for unused 0.19 website
 #![allow(dead_code)]
 
 use lemmy_db_schema::sensitive::SensitiveString;
@@ -14,17 +14,17 @@ use lettre::{
   AsyncTransport,
   Message,
 };
-use rosetta_i18n::{Language, LanguageId};
-use std::{str::FromStr, sync::OnceLock};
-use translations::Lang;
+use std::{fs, str::FromStr, sync::OnceLock};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
+use crate::loader::Lang;
+use crate::namespace::{AllTranslations, NamespaceTranslations};
 
 pub mod account;
-pub mod admin;
 pub mod notifications;
-mod translations {
-  rosetta_i18n::include_translations!();
-}
+pub mod loader;
+pub mod namespace;
 
 type AsyncSmtpTransport = lettre::AsyncSmtpTransport<lettre::Tokio1Executor>;
 
@@ -86,10 +86,11 @@ async fn send_email(
 
 #[allow(clippy::expect_used)]
 fn user_language(local_user_view: &LocalUserView) -> Lang {
-  let lang_id = LanguageId::new(&local_user_view.local_user.interface_language);
-  Lang::from_language_id(&lang_id).unwrap_or_else(|| {
-    let en = LanguageId::new("en");
-    Lang::from_language_id(&en).expect("default language")
+  let preferred_lang = &local_user_view.local_user.interface_language;
+
+  Lang::from_str(&preferred_lang).unwrap_or_else(|| {
+    tracing::warn!("Unsupported language '{}', falling back to default", preferred_lang);
+    Lang::default()
   })
 }
 
@@ -99,4 +100,46 @@ fn user_email(local_user_view: &LocalUserView) -> FastJobResult<SensitiveString>
     .email
     .clone()
     .ok_or(FastJobErrorType::EmailRequired.into())
+}
+
+pub fn load_all_translations(dir: &Path) -> FastJobResult<AllTranslations> {
+  let mut all_translations = HashMap::new();
+
+  for &lang in Lang::all() {
+    let lang_dir = dir.join(lang.as_str());
+    let mut namespaces = HashMap::new();
+
+    if !lang_dir.exists() {
+      continue;
+    }
+
+    for entry in fs::read_dir(&lang_dir)? {
+      let entry = entry?;
+      let path = entry.path();
+
+      if is_json_file(&path) {
+        let namespace = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| anyhow::anyhow!("Invalid file name in {:?}", path))?
+            .to_string();
+
+        let content = fs::read_to_string(&path)?;
+        let parsed: HashMap<String, String> = serde_json::from_str(&content)
+            .map_err(|e| anyhow::anyhow!("Failed to parse {:?}: {}", path, e))?;
+
+        namespaces.insert(namespace, NamespaceTranslations(parsed));
+      }
+    }
+
+    all_translations.insert(lang, namespaces);
+  }
+
+  Ok(all_translations)
+}
+
+
+
+fn is_json_file(path: &PathBuf) -> bool {
+  path.extension().map_or(false, |ext| ext == "json")
 }

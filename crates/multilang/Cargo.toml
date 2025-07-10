@@ -24,7 +24,6 @@ lemmy_db_schema = { workspace = true, features = ["full"] }
 lemmy_db_views_local_user = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
-rosetta-i18n = { workspace = true }
 html2text = { workspace = true }
 lettre = { version = "0.11.17", default-features = false, features = [
     "builder",
@@ -33,8 +32,11 @@ lettre = { version = "0.11.17", default-features = false, features = [
     "pool",
 ] }
 rand = "0.9.1"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = "1.0.98"
+once_cell = "1.21.3"
+strfmt = "0.2.4"
+maplit = "1.0.2"
 
 [dev-dependencies]
-
-[build-dependencies]
-rosetta-build = { version = "0.1.3", default-features = false }

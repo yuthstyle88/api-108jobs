@@ -525,7 +525,7 @@ pub fn build_db_pool_for_tests() -> ActualDbPool {
 #[allow(clippy::expect_used)]
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$")
-    .expect("compile email regex")
+    .expect("compile multilang regex")
 });
 
 pub mod functions {

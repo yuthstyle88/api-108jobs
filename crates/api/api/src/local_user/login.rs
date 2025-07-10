@@ -29,7 +29,7 @@ pub async fn login(
 
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
-  // Fetch that username / email
+  // Fetch that username / multilang
   let username_or_email = data.username_or_email.clone();
   let local_user_view =
     LocalUserView::find_by_email_or_name(&mut context.pool(), &username_or_email).await?;

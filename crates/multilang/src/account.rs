@@ -34,13 +34,13 @@ pub async fn send_password_reset_email(
   send_email(subject, &email, &user.person.name, body, settings).await?;
 
   // Insert the row after successful send, to avoid using daily reset limit while
-  // email sending is broken.
+  // multilang sending is broken.
   let local_user_id = user.local_user.id;
   PasswordResetRequest::create(pool, local_user_id, token.clone()).await?;
   Ok(())
 }
 
-/// Send a verification email
+/// Send a verification multilang
 pub async fn send_verification_email(
   _local_site: &LocalSite,
   user: &LocalUserView,
@@ -62,14 +62,14 @@ pub async fn send_verification_email(
   };
   EmailVerification::create(pool, &form).await?;
 
-  // Read the HTML email template
+  // Read the HTML multilang template
   // Get the current working directory
   let cwd = env::current_dir()?;
 
   // Join with the relative path
   let template_path: PathBuf = cwd.join("crates/api/api_utils/src/templates/email_verification.html");
-  let template = std::fs::read_to_string(template_path)?; // Replace the placeholders in the template
-  println!("Template dir {}", template);
+  let template = std::fs::read_to_string(template_path)?;
+
   let html_body = template
     .replace("{{ verification_code }}", &verification_code)
     .replace("{{ to_email }}", new_email);
@@ -80,7 +80,7 @@ pub async fn send_verification_email(
   send_email(&subject, new_email, &user.person.name, &html_body, settings).await
 }
 
-/// Returns true if email was sent.
+/// Returns true if multilang was sent.
 pub async fn send_verification_email_if_required(
   local_site: &LocalSite,
   user: &LocalUserView,

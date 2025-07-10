@@ -14,7 +14,7 @@ use lemmy_db_views_registration_applications::{
   api::{ApproveRegistrationApplication, RegistrationApplicationResponse},
   RegistrationApplicationView,
 };
-use lemmy_email::account::{send_application_approved_email, send_application_denied_email};
+use lemmy_multilang::account::{send_application_approved_email, send_application_denied_email};
 use lemmy_utils::error::FastJobResult;
 
 pub async fn approve_registration_application(

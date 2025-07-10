@@ -1,5 +1,5 @@
-use actix_web::HttpRequest;
 use actix_web::web::{Data, Json};
+use actix_web::HttpRequest;
 use lemmy_api_utils::claims::Claims;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::{
@@ -7,12 +7,11 @@ use lemmy_db_schema::source::{
   local_user::{LocalUser, LocalUserUpdateForm},
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
-  api::{ VerifyEmail},
-  SiteView,
-};
 use lemmy_db_views_site::api::VerifyEmailSuccessResponse;
-use lemmy_email::{account::send_email_verified_email, admin::send_new_applicant_email_to_admins};
+use lemmy_db_views_site::{api::VerifyEmail, SiteView};
+use lemmy_multilang::{
+  account::send_email_verified_email, admin::send_new_applicant_email_to_admins,
+};
 use lemmy_utils::error::FastJobResult;
 
 pub async fn verify_email(
@@ -26,13 +25,13 @@ pub async fn verify_email(
   let local_user_id = verification.local_user_id;
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
 
-  // Check if their email has already been verified once, before this
+  // Check if their multilang has already been verified once, before this
   let email_already_verified = local_user_view.local_user.email_verified;
 
   let form = LocalUserUpdateForm {
     // necessary in case this is a new signup
     email_verified: Some(true),
-    // necessary in case email of an existing user was changed
+    // necessary in case multilang of an existing user was changed
     email: Some(Some(verification.email)),
     ..Default::default()
   };
@@ -56,7 +55,5 @@ pub async fn verify_email(
 
   let jwt = Claims::generate(local_user_view.local_user.id, req, &context).await?;
 
-  Ok(Json(VerifyEmailSuccessResponse{
-    jwt
-  }))
+  Ok(Json(VerifyEmailSuccessResponse { jwt }))
 }

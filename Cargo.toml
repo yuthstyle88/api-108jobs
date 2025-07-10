@@ -74,7 +74,7 @@ members = [
     "crates/db_views/search_combined",
     "crates/db_views/site",
     "crates/routes",
-    "crates/email",
+    "crates/multilang",
     "crates/ws"
 ]
 
@@ -113,7 +113,7 @@ lemmy_db_schema = { version = "=1.0.0-alpha.5", path = "./crates/db_schema" }
 lemmy_db_schema_file = { version = "=1.0.0-alpha.5", path = "./crates/db_schema_file" }
 lemmy_api_utils = { version = "=1.0.0-alpha.5", path = "./crates/api/api_utils" }
 lemmy_routes = { version = "=1.0.0-alpha.5", path = "./crates/routes" }
-lemmy_email = { version = "=1.0.0-alpha.5", path = "./crates/email" }
+lemmy_multilang = { version = "=1.0.0-alpha.5", path = "crates/multilang" }
 lemmy_db_views_comment = { version = "=1.0.0-alpha.5", path = "./crates/db_views/comment" }
 lemmy_db_views_community = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community" }
 lemmy_db_views_community_follower = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community_follower" }
@@ -244,10 +244,3 @@ tokio.workspace = true
 clap = { workspace = true }
 actix = { workspace = true }
 mimalloc = "0.1.46"
-rand = { workspace = true }
-
-
-# Speedup RSA key generation
-# https://github.com/RustCrypto/RSA/blob/master/README.md#example
-[profile.dev.package.num-bigint-dig]
-opt-level = 3

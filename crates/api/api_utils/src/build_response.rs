@@ -20,7 +20,7 @@ use lemmy_db_views_comment::{api::CommentResponse, CommentView};
 use lemmy_db_views_community::{api::CommunityResponse, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
-use lemmy_email::notifications::{send_mention_email, send_reply_email};
+use lemmy_multilang::notifications::{send_mention_email, send_reply_email};
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::mention::scrape_text_for_mentions,
@@ -89,7 +89,7 @@ pub async fn build_post_response(
   Ok(Json(PostResponse { post_view }))
 }
 
-/// Scans the post/comment content for mentions, then sends notifications via db and email
+/// Scans the post/comment content for mentions, then sends notifications via db and multilang
 /// to mentioned users and parent creator.
 pub async fn send_local_notifs(
   post: &Post,
@@ -231,7 +231,7 @@ async fn send_local_mentions(
     let (link, comment_content_or_post_body) =
       insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
 
-    // Send an email to those local users that have notifications on
+    // Send an multilang to those local users that have notifications on
     if do_send_email {
       send_mention_email(
         &user_view,

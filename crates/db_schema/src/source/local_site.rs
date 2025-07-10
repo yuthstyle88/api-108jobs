@@ -39,7 +39,7 @@ pub struct LocalSite {
   pub default_post_listing_type: ListingType,
   /// An optional legal disclaimer page.
   pub legal_information: Option<String>,
-  /// Whether new applications email admins.
+  /// Whether new applications multilang admins.
   pub application_email_admins: bool,
   /// An optional regex to filter words.
   pub slur_filter_regex: Option<String>,
@@ -52,7 +52,7 @@ pub struct LocalSite {
   pub published_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
   pub registration_mode: RegistrationMode,
-  /// Whether to email admins on new reports.
+  /// Whether to multilang admins on new reports.
   pub reports_email_admins: bool,
   /// Default value for [LocalSite.post_listing_mode]
   pub default_post_listing_mode: PostListingMode,
@@ -78,7 +78,7 @@ pub struct LocalSite {
   pub users_active_month: i64,
   /// The number of users with any activity in the last half year.
   pub users_active_half_year: i64,
-  /// Dont send email notifications to users for new replies, mentions etc
+  /// Dont send multilang notifications to users for new replies, mentions etc
   pub disable_email_notifications: bool,
 }
 

@@ -57,5 +57,7 @@
   "title_login_create_account": "เข้าสู่ระบบ / สร้างบัญชี",
   "title_verify_email": "ยืนยันอีเมล",
   "verification_forgot_message": "รหัสยืนยันได้ถูกส่งไปยังอีเมล / เบอร์โทรศัพท์ของคุณแล้ว",
-  "verification_message": "Fastwork จะทำการส่งรหัสยืนยันไปยัง อีเมล/เบอร์โทรศัพท์ของคุณ เพื่อยืนยันความเป็นเจ้าของบัญชี"
+  "verification_message": "Fastwork จะทำการส่งรหัสยืนยันไปยัง อีเมล/เบอร์โทรศัพท์ของคุณ เพื่อยืนยันความเป็นเจ้าของบัญชี",
+  "placeholder_username_or_email": "กรอกชื่อผู้ใช้หรืออีเมลของคุณ",
+  "label_username_or_email": "ชื่อผู้ใช้หรืออีเมล"
 }

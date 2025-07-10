@@ -16,8 +16,6 @@ use lemmy_db_views_reports::{
   api::{CommentReportResponse, CreateCommentReport},
   CommentReportView,
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
 /// Creates a comment report and notifies the moderators of the community
@@ -63,18 +61,6 @@ pub async fn create_comment_report(
 
   let comment_report_view =
     CommentReportView::read(&mut context.pool(), report.id, person_id).await?;
-
-  // Email the admins
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
-  if local_site.reports_email_admins {
-    send_new_report_email_to_admins(
-      &comment_report_view.creator.name,
-      &comment_report_view.comment_creator.name,
-      &mut context.pool(),
-      context.settings(),
-    )
-    .await?;
-  }
 
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {

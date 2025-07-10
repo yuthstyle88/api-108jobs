@@ -30,7 +30,7 @@ sed -i "s/version = \"$old_tag\"/version = \"$new_tag\"/g" Cargo.toml
 # Update the submodules
 git submodule update --remote
 
-# Run check to ensure translations are valid and lockfile is updated
+# Run check to ensure website are valid and lockfile is updated
 cargo check
 
 # The commit

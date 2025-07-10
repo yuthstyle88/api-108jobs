@@ -19,8 +19,6 @@ use lemmy_db_views_reports::{
   api::{CommunityReportResponse, CreateCommunityReport},
   CommunityReportView,
 };
-use lemmy_db_views_site::SiteView;
-use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn create_community_report(
@@ -53,21 +51,6 @@ pub async fn create_community_report(
 
   let community_report_view =
     CommunityReportView::read(&mut context.pool(), report.id, person_id).await?;
-
-  // Email the admins
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
-  if local_site.reports_email_admins {
-    send_new_report_email_to_admins(
-      &community_report_view.creator.name,
-      // The argument here is normally the reported content's creator, but a community doesn't have
-      // a single person to be considered the creator or the person responsible for the bad thing,
-      // so the community name is used instead
-      &community_report_view.community.name,
-      &mut context.pool(),
-      context.settings(),
-    )
-    .await?;
-  }
 
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {

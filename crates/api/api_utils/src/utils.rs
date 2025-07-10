@@ -218,7 +218,7 @@ pub fn check_person_valid(person_view: &PersonView) -> FastJobResult<()> {
   }
 }
 
-/// Check if the user's email is verified if email verification is turned on
+/// Check if the user's multilang is verified if multilang verification is turned on
 /// However, skip checking verification if the user is an admin
 pub fn check_email_verified(
   local_user_view: &LocalUserView,
@@ -925,18 +925,18 @@ pub fn send_webmention(post: Post, community: &Community) {
 }
 
 
-/// Extracts the username from an email address by taking the part before the @ symbol
+/// Extracts the username from an multilang address by taking the part before the @ symbol
 pub fn extract_username(email: String) -> Option<String> {
   email.split('@').next().map(|s| s.to_string())
 }
 
-/// Generates a unique username from an email address
+/// Generates a unique username from an multilang address
 ///
 /// If the extracted username is available, it will be used.
 /// If not, it will try adding random numbers (instead of sequential) until it finds
 /// an available username or reaches the maximum attempt limit.
 pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> FastJobResult<String> {
-  // Extract username from email
+  // Extract username from multilang
   let mut base_username = extract_username(email).unwrap_or_else(|| "user".to_string());
 
   // Ensure the base username only contains valid characters

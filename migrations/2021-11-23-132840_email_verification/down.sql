@@ -5,7 +5,7 @@ ALTER TABLE local_user
 ALTER TABLE local_user
     ALTER COLUMN default_listing_type SET DEFAULT 1;
 
--- remove tables and columns for optional email verification
+-- remove tables and columns for optional multilang verification
 ALTER TABLE site
     DROP COLUMN require_email_verification;
 

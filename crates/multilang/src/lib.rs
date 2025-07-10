@@ -45,7 +45,7 @@ async fn send_email(
   #[expect(clippy::expect_used)]
   let mailer = MAILER.get_or_init(|| {
     AsyncSmtpTransport::from_url(&email_config.connection)
-      .expect("init multilingual transport")
+      .expect("init multilang transport")
       .hello_name(ClientId::Domain(settings.hostname.clone()))
       .build()
   });

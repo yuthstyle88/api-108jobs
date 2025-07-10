@@ -45,7 +45,7 @@ lemmy_db_views_person = { workspace = true }
 lemmy_db_views_site = { workspace = true }
 lemmy_db_views_comment = { workspace = true }
 lemmy_db_views_post = { workspace = true }
-lemmy_email = { workspace = true }
+lemmy_multilang = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

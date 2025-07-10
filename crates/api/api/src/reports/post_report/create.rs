@@ -17,7 +17,7 @@ use lemmy_db_views_reports::{
   PostReportView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_email::admin::send_new_report_email_to_admins;
+use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
 /// Creates a post report and notifies the moderators of the community

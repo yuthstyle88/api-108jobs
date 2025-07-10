@@ -20,7 +20,7 @@ use lemmy_db_views_reports::{
   CommunityReportView,
 };
 use lemmy_db_views_site::SiteView;
-use lemmy_email::admin::send_new_report_email_to_admins;
+use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn create_community_report(

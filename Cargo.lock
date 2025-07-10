@@ -3343,7 +3343,7 @@ dependencies = [
  "lemmy_db_views_reports",
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
- "lemmy_email",
+ "lemmy_multilang",
  "lemmy_utils",
  "p256",
  "pretty_assertions",
@@ -3395,8 +3395,6 @@ dependencies = [
  "bcrypt",
  "chrono",
  "diesel-async",
- "futures",
- "futures-util",
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
@@ -3411,10 +3409,9 @@ dependencies = [
  "lemmy_db_views_registration_applications",
  "lemmy_db_views_search_combined",
  "lemmy_db_views_site",
- "lemmy_email",
+ "lemmy_multilang",
  "lemmy_utils",
  "regex",
- "serde",
  "serde_json",
  "serde_with",
  "url",
@@ -3449,7 +3446,7 @@ dependencies = [
  "lemmy_db_views_person",
  "lemmy_db_views_post",
  "lemmy_db_views_site",
- "lemmy_email",
+ "lemmy_multilang",
  "lemmy_utils",
  "mime",
  "mime_guess",
@@ -3932,12 +3929,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy_email"
+name = "lemmy_multilang"
 version = "1.0.0-alpha.5"
 dependencies = [
  "html2text",
  "lemmy_db_schema",
- "lemmy_db_schema_file",
  "lemmy_db_views_local_user",
  "lemmy_utils",
  "lettre",
@@ -4005,7 +4001,6 @@ dependencies = [
  "lemmy_utils",
  "lemmy_ws",
  "mimalloc",
- "rand 0.8.5",
  "reqwest-middleware",
  "reqwest-tracing",
  "rustls 0.23.27",

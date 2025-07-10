@@ -36,7 +36,7 @@ use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
 };
-use lemmy_email::{
+use lemmy_multilang::{
   account::send_verification_email_if_required,
   admin::send_new_applicant_email_to_admins,
 };
@@ -161,7 +161,7 @@ pub async fn register(
     })
     .await?;
 
-  // Email the admins, only if email verification is not required
+  // Email the admins, only if multilang verification is not required
   if local_site.application_email_admins && !local_site.require_email_verification {
     send_new_applicant_email_to_admins(&data.username, pool, context.settings()).await?;
   }
@@ -172,7 +172,7 @@ pub async fn register(
     verify_email_sent: false,
   };
 
-  // Log the user in directly if the site is not setup, or email verification and application aren't
+  // Log the user in directly if the site is not setup, or multilang verification and application aren't
   // required
   if !local_site.site_setup
     || (!require_registration_application && !local_site.require_email_verification)
@@ -309,19 +309,19 @@ pub async fn authenticate_with_oauth(
     //   return Err(FastJobErrorType::OauthRegistrationClosed)?;
     // }
 
-    // Extract the OAUTH email claim from the returned user_info
-    let email = read_user_info(&user_info, "email")?;
+    // Extract the OAUTH multilang claim from the returned user_info
+    let email = read_user_info(&user_info, "multilang")?;
 
     let require_registration_application =
       local_site.registration_mode == RegistrationMode::RequireApplication;
 
-    // Lookup user by OAUTH email and link accounts
+    // Lookup user by OAUTH multilang and link accounts
     local_user_view = LocalUserView::find_by_email(pool, &email).await;
 
     if let Ok(user_view) = local_user_view {
-      // user found by email => link and login if linking is allowed
+      // user found by multilang => link and login if linking is allowed
 
-      // we only allow linking by email when email_verification is required otherwise emails cannot
+      // we only allow linking by multilang when email_verification is required otherwise emails cannot
       // be trusted
       if oauth_provider.account_linking_enabled && site_view.local_site.require_email_verification {
         // WARNING:
@@ -344,7 +344,7 @@ pub async fn authenticate_with_oauth(
         return Err(FastJobErrorType::EmailAlreadyExists)?;
       }
     } else {
-      // No user was found by email => Register as new user
+      // No user was found by multilang => Register as new user
 
       // make sure the registration answer is provided when the registration application is required
       // validate_registration_answer(require_registration_application, &data.answer)?;
@@ -419,7 +419,7 @@ pub async fn authenticate_with_oauth(
         })
         .await?;
 
-      // Check email is verified when required
+      // Check multilang is verified when required
       login_response.verify_email_sent = send_verification_email_if_required(
         &local_site,
         &user,
@@ -509,17 +509,6 @@ async fn create_local_user(
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
   Ok(inserted_local_user)
-}
-
-fn validate_registration_answer(
-  require_registration_application: bool,
-  answer: &Option<String>,
-) -> FastJobResult<()> {
-  if require_registration_application && answer.is_none() {
-    Err(FastJobErrorType::RegistrationApplicationAnswerRequired)?
-  }
-
-  Ok(())
 }
 
 async fn oauth_request_access_token(

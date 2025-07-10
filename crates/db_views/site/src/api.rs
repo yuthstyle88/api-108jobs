@@ -220,7 +220,7 @@ pub struct EditSite {
   pub description: Option<String>,
   /// Limits community creation to admins only.
   pub community_creation_admin_only: Option<bool>,
-  /// Whether to require email verification.
+  /// Whether to require multilang verification.
   pub require_email_verification: Option<bool>,
   /// Your application question form. This is in markdown, and can be many questions.
   pub application_question: Option<String>,
@@ -240,7 +240,7 @@ pub struct EditSite {
   pub default_comment_sort_type: Option<CommentSortType>,
   /// An optional page of legal information
   pub legal_information: Option<String>,
-  /// Whether to email admins when receiving a new application.
+  /// Whether to multilang admins when receiving a new application.
   pub application_email_admins: Option<bool>,
   /// A list of allowed discussion languages.
   pub discussion_languages: Option<Vec<LanguageId>>,
@@ -276,7 +276,7 @@ pub struct EditSite {
   /// A list of blocked URLs
   pub blocked_urls: Option<Vec<String>>,
   pub registration_mode: Option<RegistrationMode>,
-  /// Whether to email admins for new reports.
+  /// Whether to multilang admins for new reports.
   pub reports_email_admins: Option<bool>,
   /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
   /// when the site is first opened by a user.
@@ -286,7 +286,7 @@ pub struct EditSite {
   /// What kind of post upvotes your site allows.
   /// Block NSFW content being created
   pub disallow_self_promotion_content: Option<bool>,
-  /// Dont send email notifications to users for new replies, mentions etc
+  /// Dont send multilang notifications to users for new replies, mentions etc
   pub disable_email_notifications: Option<bool>,
 }
 
@@ -415,12 +415,12 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for your login.
 pub struct LoginResponse {
-  /// This is None in response to `Register` if email verification is enabled, or the server
+  /// This is None in response to `Register` if multilang verification is enabled, or the server
   /// requires registration applications.
   pub jwt: Option<SensitiveString>,
   /// If registration applications are required, this will return true for a signup response.
   pub registration_created: bool,
-  /// If email verifications are required, this will return true for a signup response.
+  /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
 }
 
@@ -452,7 +452,7 @@ pub struct PasswordChangeAfterReset {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Reset your password via email.
+/// Reset your password via multilang.
 pub struct PasswordReset {
   pub email: SensitiveString,
 }
@@ -460,7 +460,7 @@ pub struct PasswordReset {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Make a request to resend your verification email.
+/// Make a request to resend your verification multilang.
 pub struct ResendVerificationEmail {
   pub email: SensitiveString,
 }
@@ -491,7 +491,7 @@ pub struct SaveUserSettings {
   pub interface_language: Option<String>,
   /// Your display name, which can contain strange characters, and does not need to be unique.
   pub display_name: Option<String>,
-  /// Your email.
+  /// Your multilang.
   pub email: Option<SensitiveString>,
   /// Your bio / info, in markdown.
   pub bio: Option<String>,
@@ -499,7 +499,7 @@ pub struct SaveUserSettings {
   pub matrix_user_id: Option<String>,
   /// Whether to show or hide avatars.
   pub show_avatars: Option<bool>,
-  /// Sends notifications to your email.
+  /// Sends notifications to your multilang.
   pub send_notifications_to_email: Option<bool>,
   /// Whether this account is a bot account. Users can hide these accounts easily if they wish.
   pub bot_account: Option<bool>,
@@ -562,7 +562,7 @@ pub struct UserBlockInstanceParams {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Verify your email.
+/// Verify your multilang.
 pub struct VerifyEmail {
   pub token: String,
 }
@@ -710,7 +710,7 @@ pub struct UserSettingsBackup {
   pub matrix_id: Option<String>,
   pub bot_account: Option<bool>,
   // TODO: might be worth making a separate struct for settings backup, to avoid breakage in case
-  //       fields are renamed, and to avoid storing unnecessary fields like person_id or email
+  //       fields are renamed, and to avoid storing unnecessary fields like person_id or multilang
   pub settings: Option<LocalUser>,
   #[serde(default)]
   pub followed_communities: Vec<Url>,

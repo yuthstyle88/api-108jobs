@@ -96,7 +96,7 @@ impl Person {
   ) -> FastJobResult<Person> {
     let conn = &mut get_conn(pool).await?;
 
-    // Set the local user email to none, only if they aren't banned locally.
+    // Set the local user multilang to none, only if they aren't banned locally.
     let instance_actions_join = instance_actions::table.on(
       instance_actions::person_id
         .eq(person_id)

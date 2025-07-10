@@ -4004,6 +4004,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_multilang",
  "lemmy_routes",
  "lemmy_utils",
  "lemmy_ws",

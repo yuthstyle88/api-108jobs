@@ -24,7 +24,7 @@ use crate::namespace::{AllTranslations, NamespaceTranslations};
 pub mod account;
 pub mod notifications;
 pub mod loader;
-mod namespace;
+pub mod namespace;
 
 type AsyncSmtpTransport = lettre::AsyncSmtpTransport<lettre::Tokio1Executor>;
 

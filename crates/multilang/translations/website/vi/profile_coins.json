@@ -7,12 +7,7 @@
   "label_specify_amount": "Chỉ định số tiền bạn muốn nạp",
   "label_your_coin": "Fastwork Coin của bạn",
   "note_balance_update": "Trong một số trường hợp, có thể mất đến 5 phút để cập nhật số dư. Vui lòng đợi trong giây lát.",
-  "note_coin_terms": [
-    "Fastwork Coin có thể được sử dụng mà không có ngày hết hạn và có thể được sử dụng cùng với các Coupon tài khoản khác.",
-    "Fastwork Coin không thể quy đổi thành tiền mặt hoặc chuyển sang tài khoản Fastwork khác.",
-    "Khi bạn nạp Fastwork Coin vào hệ thống, điều đó có nghĩa là bạn chấp nhận các điều khoản và điều kiện.",
-    "Nếu bạn gặp bất kỳ vấn đề nào khi nạp Fastwork Coin hoặc thanh toán, vui lòng liên hệ Trung tâm hỗ trợ."
-  ],
+  "note_coin_terms": "• Fastwork Coin có thể được sử dụng mà không có ngày hết hạn và có thể được sử dụng cùng với các Coupon tài khoản khác.\n• Fastwork Coin không thể quy đổi thành tiền mặt hoặc chuyển sang tài khoản Fastwork khác.\n• Khi bạn nạp Fastwork Coin vào hệ thống, điều đó có nghĩa là bạn chấp nhận các điều khoản và điều kiện.\n• Nếu bạn gặp bất kỳ vấn đề nào khi nạp Fastwork Coin hoặc thanh toán, vui lòng liên hệ Trung tâm hỗ trợ.",
   "note_min_max": "Tối thiểu 100 baht và tối đa 500.000 baht.",
   "placeholder_specify_amount": "Nhập số tiền 100-500.000 baht",
   "section_top_up_history": "Lịch sử nạp tiền",

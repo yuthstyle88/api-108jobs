@@ -1,5 +1,5 @@
 use actix_web::{guard, web::*};
-use lemmy_api::lang::read::{get_lang, get_namespace};
+use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::{
   comment::{

@@ -11,7 +11,7 @@ pub async fn get_lang(path: web::Path<(String, String)>) -> FastJobResult<HttpRe
     }
 
     // Get the absolute path
-    let base_path = std::env::current_dir()?.join("crates/utils/translations/translations/");
+    let base_path = std::env::current_dir()?.join("crates/multilang/translations/translations");
     let file_path = base_path.join(lang).join(filename);
 
     match fs::read_to_string(file_path) {

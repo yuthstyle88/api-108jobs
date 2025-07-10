@@ -210,6 +210,7 @@ pub enum FastJobErrorType {
   GenerateKeyError,
   ValidationError(String),
   FileNotFound,
+  EmailAlreadyVerified,
 }
 
 cfg_if! {

@@ -59,7 +59,7 @@ pub async fn login(
     )?;
   }
 
-  let jwt = Claims::generate(local_user_view.local_user.id, req, &context).await?;
+  let jwt = Claims::generate(local_user_view.local_user.id,local_user_view.local_user.email.into(),local_user_view.local_user.roles, req, &context).await?;
 
   Ok(Json(LoginResponse {
     jwt: Some(jwt.clone()),

@@ -1742,9 +1742,9 @@ dependencies = [
 
 [[package]]
 name = "diesel"
-version = "2.2.10"
+version = "2.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff3e1edb1f37b4953dd5176916347289ed43d7119cc2e6c7c3f7849ff44ea506"
+checksum = "a917a9209950404d5be011c81d081a2692a822f73c3d6af586f0cab5ff50f614"
 dependencies = [
  "bitflags 2.9.1",
  "byteorder",
@@ -1758,13 +1758,13 @@ dependencies = [
 
 [[package]]
 name = "diesel-async"
-version = "0.5.2"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51a307ac00f7c23f526a04a77761a0519b9f0eb2838ebf5b905a58580095bdcb"
+checksum = "7fcc26599f590c7e5b182a05061cfb445f216bb069df72eb31f38cffde8ca598"
 dependencies = [
- "async-trait",
  "deadpool",
  "diesel",
+ "futures-core",
  "futures-util",
  "scoped-futures",
  "tokio",

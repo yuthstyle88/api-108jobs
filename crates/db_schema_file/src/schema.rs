@@ -501,6 +501,7 @@ diesel::table! {
         blur_self_promotion -> Bool,
         infinite_scroll_enabled -> Bool,
         admin -> Bool,
+        roles -> Varchar,
         post_listing_mode -> PostListingModeEnum,
         totp_2fa_enabled -> Bool,
         enable_keyboard_navigation -> Bool,

@@ -58,8 +58,8 @@ pub async fn login(
       &context.settings().hostname,
     )?;
   }
-
-  let jwt = Claims::generate(local_user_view.local_user.id, local_user_view.local_user.email, local_user_view.local_user.roles, req, &context).await?;
+  let roles: Vec<String> = serde_json::from_str(&local_user_view.local_user.roles)?;
+  let jwt = Claims::generate(local_user_view.local_user.id, local_user_view.local_user.email, roles, req, &context).await?;
 
   Ok(Json(LoginResponse {
     jwt: Some(jwt.clone()),

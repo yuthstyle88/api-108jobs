@@ -70,5 +70,7 @@
   "reload_captcha": "Tải lại",
   "captcha_incorrect": "Câu trả lời captcha không chính xác",
   "error_loading_captcha": "Không thể tải captcha, vui lòng tải lại trang",
-  "required": "Bạn không được để trống trường này"
+  "required": "Bạn không được để trống trường này",
+  "username_already_exists": "Tên người dùng đã tồn tại",
+  "email_already_exists": "Email đã tồn tại"
 }

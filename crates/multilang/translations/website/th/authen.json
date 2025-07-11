@@ -59,5 +59,16 @@
   "verification_forgot_message": "รหัสยืนยันได้ถูกส่งไปยังอีเมล / เบอร์โทรศัพท์ของคุณแล้ว",
   "verification_message": "Fastwork จะทำการส่งรหัสยืนยันไปยัง อีเมล/เบอร์โทรศัพท์ของคุณ เพื่อยืนยันความเป็นเจ้าของบัญชี",
   "placeholder_username_or_email": "กรอกชื่อผู้ใช้หรืออีเมลของคุณ",
-  "label_username_or_email": "ชื่อผู้ใช้หรืออีเมล"
+  "label_username_or_email": "ชื่อผู้ใช้หรืออีเมล",
+  "not_found": "ไม่พบชื่อผู้ใช้หรืออีเมล",
+  "incorrect_login": "รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง!",
+  "please_enter_email_or_username_min_6": "กรุณากรอกอีเมลหรือชื่อผู้ใช้อย่างน้อย 6 ตัวอักษร",
+  "username_max_32": "ชื่อผู้ใช้ต้องไม่เกิน 32 ตัวอักษร",
+  "password_min_6": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+  "placeholder_captcha_answer": "กรอกคำตอบของแคปช่า",
+  "username_min_6": "ชื่อผู้ใช้ต้องมีอย่างน้อย 6 ตัวอักษร",
+  "invalid_email": "กรุณากรอกอีเมลที่ถูกต้อง",
+  "not_match_password": "รหัสผ่านไม่ตรงกัน",
+  "reload_captcha": "โหลดใหม่",
+  "captcha_incorrect": "คำตอบของแคปช่าไม่ถูกต้อง"
 }

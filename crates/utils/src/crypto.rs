@@ -303,20 +303,20 @@ pub fn xchange_encrypt_data(
 pub type AnyError = anyhow::Error;
 
 #[derive(Debug)]
-struct CustomError {
+struct FastJobError {
   message: Cow<'static, str>,
 }
 
-impl Display for CustomError {
+impl Display for FastJobError {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     f.write_str(&self.message)
   }
 }
 
-impl std::error::Error for CustomError {}
+impl std::error::Error for FastJobError {}
 
 pub fn custom_error(_class: &'static str, message: impl Into<Cow<'static, str>>) -> Error {
-  CustomError {
+  FastJobError {
     message: message.into(),
   }
   .into()

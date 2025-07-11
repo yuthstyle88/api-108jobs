@@ -32,3 +32,5 @@ bindings
 *.sqldump
 
 .env
+
+.DS_Store

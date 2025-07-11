@@ -1,4 +1,4 @@
--- Add case insensitive username and email uniqueness
+-- Add case insensitive username and multilang uniqueness
 -- An example of showing the dupes:
 -- select
 --   max(id) as id,

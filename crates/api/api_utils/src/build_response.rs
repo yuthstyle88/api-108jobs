@@ -20,7 +20,6 @@ use lemmy_db_views_comment::{api::CommentResponse, CommentView};
 use lemmy_db_views_community::{api::CommunityResponse, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
-use lemmy_email::notifications::{send_mention_email, send_reply_email};
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::mention::scrape_text_for_mentions,
@@ -89,7 +88,7 @@ pub async fn build_post_response(
   Ok(Json(PostResponse { post_view }))
 }
 
-/// Scans the post/comment content for mentions, then sends notifications via db and email
+/// Scans the post/comment content for mentions, then sends notifications via db and multilang
 /// to mentioned users and parent creator.
 pub async fn send_local_notifs(
   post: &Post,
@@ -108,7 +107,6 @@ pub async fn send_local_notifs(
     person,
     parent_creator,
     community,
-    do_send_email,
     context,
   )
   .await?;
@@ -121,7 +119,7 @@ async fn notify_parent_creator(
   post: &Post,
   comment_opt: Option<&Comment>,
   community: &Community,
-  do_send_email: bool,
+  _do_send_email: bool,
   context: &FastJobContext,
 ) -> FastJobResult<Option<PersonId>> {
   let Some(comment) = comment_opt else {
@@ -129,7 +127,7 @@ async fn notify_parent_creator(
   };
 
   // Get the parent data
-  let (parent_creator_id, parent_comment) =
+  let (parent_creator_id, _parent_comment) =
     if let Some(parent_comment_id) = comment.parent_comment_id() {
       let parent_comment = Comment::read(&mut context.pool(), parent_comment_id).await?;
       (parent_comment.creator_id, Some(parent_comment))
@@ -172,17 +170,6 @@ async fn notify_parent_creator(
     .await
     .ok();
 
-  if do_send_email {
-    send_reply_email(
-      &user_view,
-      comment,
-      person,
-      &parent_comment,
-      post,
-      context.settings(),
-    )
-    .await?;
-  }
   Ok(Some(user_view.person.id))
 }
 
@@ -192,7 +179,6 @@ async fn send_local_mentions(
   person: &Person,
   parent_creator_id: Option<PersonId>,
   community: &Community,
-  do_send_email: bool,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
   let content = if let Some(comment) = comment_opt {
@@ -228,20 +214,7 @@ async fn send_local_mentions(
       continue;
     };
 
-    let (link, comment_content_or_post_body) =
-      insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
-
-    // Send an email to those local users that have notifications on
-    if do_send_email {
-      send_mention_email(
-        &user_view,
-        &comment_content_or_post_body,
-        person,
-        link.into(),
-        context.settings(),
-      )
-      .await;
-    }
+    let _ = insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
   }
   Ok(())
 }

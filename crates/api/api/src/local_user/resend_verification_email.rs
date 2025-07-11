@@ -5,7 +5,7 @@ use lemmy_db_views_site::{
   api::{ResendVerificationEmail, SuccessResponse},
   SiteView,
 };
-use lemmy_email::account::send_verification_email_if_required;
+use lemmy_multilang::account::send_verification_email_if_required;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn resend_verification_email(
@@ -15,7 +15,7 @@ pub async fn resend_verification_email(
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let email = data.email.to_string();
 
-  // Fetch that email
+  // Fetch that multilang
   let local_user_view = LocalUserView::find_by_email(&mut context.pool(), &email).await?;
 
   send_verification_email_if_required(

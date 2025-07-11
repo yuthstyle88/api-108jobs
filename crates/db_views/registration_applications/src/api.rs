@@ -61,7 +61,7 @@ pub struct Register {
   pub password: SensitiveString,
   pub password_verify: SensitiveString,
   pub self_promotion: Option<bool>,
-  /// email is mandatory if email verification is enabled on the server
+  /// multilang is mandatory if multilang verification is enabled on the server
   pub email: Option<SensitiveString>,
   /// The UUID of the captcha item.
   pub captcha_uuid: Option<String>,
@@ -89,7 +89,7 @@ pub struct RegisterRequest {
 
   #[validate(
     required(message = "required"),
-    email(message = "Invalid email address")
+    email(message = "Invalid multilang address")
   )]
   pub email: Option<SensitiveString>,
 

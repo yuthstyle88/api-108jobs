@@ -1,9 +1,9 @@
 use actix_web::{guard, web::*};
+use lemmy_api::lang::read::get_namespace;
+use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::{
   comment::{
-    distinguish::distinguish_comment,
-    like::like_comment,
-    list_comment_likes::list_comment_likes,
+    distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
     save::save_comment,
   },
   community::{
@@ -12,8 +12,7 @@ use lemmy_api::{
     block::user_block_community,
     follow::follow_community,
     pending_follows::{
-      approve::post_pending_follows_approve,
-      count::get_pending_follows_count,
+      approve::post_pending_follows_approve, count::get_pending_follows_count,
       list::get_pending_follows_list,
     },
     random::get_random_community,
@@ -40,11 +39,9 @@ use lemmy_api::{
     logout::logout,
     note_person::user_note_person,
     notifications::{
-      list_inbox::list_inbox,
-      mark_all_read::mark_all_notifications_read,
+      list_inbox::list_inbox, mark_all_read::mark_all_notifications_read,
       mark_comment_mention_read::mark_comment_mention_as_read,
-      mark_post_mention_read::mark_post_mention_as_read,
-      mark_reply_read::mark_reply_as_read,
+      mark_post_mention_read::mark_post_mention_as_read, mark_reply_read::mark_reply_as_read,
       unread_count::unread_count,
     },
     report_count::report_count,
@@ -57,16 +54,9 @@ use lemmy_api::{
     verify_email::verify_email,
   },
   post::{
-    feature::feature_post,
-    get_link_metadata::get_link_metadata,
-    hide::hide_post,
-    like::like_post,
-    list_post_likes::list_post_likes,
-    lock::lock_post,
-    mark_many_read::mark_posts_as_read,
-    mark_read::mark_post_as_read,
-    save::save_post,
-    update_notifications::update_post_notifications,
+    feature::feature_post, get_link_metadata::get_link_metadata, hide::hide_post, like::like_post,
+    list_post_likes::list_post_likes, lock::lock_post, mark_many_read::mark_posts_as_read,
+    mark_read::mark_post_as_read, save::save_post, update_notifications::update_post_notifications,
   },
   reports::{
     comment_report::{create::create_comment_report, resolve::resolve_comment_report},
@@ -81,59 +71,38 @@ use lemmy_api::{
     list_all_media::list_all_media,
     mod_log::get_mod_log,
     purge::{
-      comment::purge_comment,
-      community::purge_community,
-      person::purge_person,
-      post::purge_post,
+      comment::purge_comment, community::purge_community, person::purge_person, post::purge_post,
     },
     registration_applications::{
-      approve::approve_registration_application,
-      get::get_registration_application,
+      approve::approve_registration_application, get::get_registration_application,
       list::list_registration_applications,
       unread_count::get_unread_registration_application_count,
     },
   },
 };
-use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api_crud::{
   comment::{
-    create::create_comment,
-    delete::delete_comment,
-    read::get_comment,
-    remove::remove_comment,
+    create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
   community::{
-    create::create_community,
-    delete::delete_community,
-    list::list_communities,
-    remove::remove_community,
-    update::update_community,
+    create::create_community, delete::delete_community, list::list_communities,
+    remove::remove_community, update::update_community,
   },
   custom_emoji::{
-    create::create_custom_emoji,
-    delete::delete_custom_emoji,
-    list::list_custom_emojis,
+    create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
   },
   oauth_provider::{
-    create::create_oauth_provider,
-    delete::delete_oauth_provider,
-    update::update_oauth_provider,
+    create::create_oauth_provider, delete::delete_oauth_provider, update::update_oauth_provider,
   },
   post::{
-    create::create_post,
-    delete::delete_post,
-    read::get_post,
-    remove::remove_post,
+    create::create_post, delete::delete_post, read::get_post, remove::remove_post,
     update::update_post,
   },
   site::{create::create_site, read::get_site, update::update_site},
   tagline::{
-    create::create_tagline,
-    delete::delete_tagline,
-    list::list_taglines,
-    update::update_tagline,
+    create::create_tagline, delete::delete_tagline, list::list_taglines, update::update_tagline,
   },
   user::{
     create::{authenticate_with_oauth, get_google_login_url, register},
@@ -143,25 +112,14 @@ use lemmy_api_crud::{
 };
 use lemmy_routes::images::{
   delete::{
-    delete_community_banner,
-    delete_community_icon,
-    delete_image,
-    delete_image_admin,
-    delete_site_banner,
-    delete_site_icon,
-    delete_user_avatar,
-    delete_user_banner,
+    delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
+    delete_site_banner, delete_site_icon, delete_user_avatar, delete_user_banner,
   },
   download::{get_image, image_proxy},
   pictrs_health,
   upload::{
-    upload_community_banner,
-    upload_community_icon,
-    upload_image,
-    upload_site_banner,
-    upload_site_icon,
-    upload_user_avatar,
-    upload_user_banner,
+    upload_community_banner, upload_community_icon, upload_image, upload_site_banner,
+    upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
 use lemmy_utils::rate_limit::RateLimit;
@@ -426,6 +384,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
         )
-        .service(resource("/google_login_url").get(get_google_login_url)),
+        // Login with google
+        .service(resource("/google_login_url").get(get_google_login_url))
+        // i18n Multi-languages
+        .service(scope("/i18n").route("/{lang}/{ns}", get().to(get_namespace))),
     );
 }

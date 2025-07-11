@@ -5,7 +5,7 @@ ALTER TABLE local_user
 ALTER TABLE local_user
     ALTER COLUMN default_listing_type SET DEFAULT 2;
 
--- add tables and columns for optional email verification
+-- add tables and columns for optional multilang verification
 ALTER TABLE site
     ADD COLUMN require_email_verification boolean NOT NULL DEFAULT FALSE;
 

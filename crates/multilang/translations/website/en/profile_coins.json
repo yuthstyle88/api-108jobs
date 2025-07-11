@@ -7,12 +7,7 @@
   "label_specify_amount": "Specify the amount you want to top up.",
   "label_your_coin": "Your Fastwork Coin",
   "note_balance_update": "In some cases, it may take up to 5 minutes for the balance to be updated. Please wait a moment.",
-  "note_coin_terms": [
-    "Fastwork Coin can be used without expiration date and can be used together with other account Coupons.",
-    "Fastwork Coin cannot be redeemed for cash or transferred to other Fastwork accounts.",
-    "When you top up Fastwork Coin into the system, it will be considered as acceptance of its terms and conditions.",
-    "If you encounter any problems in topping up Fastwork Coin or making payments, please contact the Support Center."
-  ],
+  "note_coin_terms": "- Fastwork Coin can be used without expiration date and can be used together with other account Coupons.\n- Fastwork Coin cannot be redeemed for cash or transferred to other Fastwork accounts.\n- When you top up Fastwork Coin into the system, it will be considered as acceptance of its terms and conditions.\n- If you encounter any problems in topping up Fastwork Coin or making payments, please contact the Support Center.",
   "note_min_max": "Minimum 100 baht and maximum 500,000 baht.",
   "placeholder_specify_amount": "Specify the amount 100-500,000 baht",
   "section_top_up_history": "Top-up history",

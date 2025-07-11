@@ -24,7 +24,6 @@ variables:
             # typescript tests
             "api_tests/**",
             # config files and scripts used by ci
-            ".woodpecker.yml",
             ".rustfmt.toml",
             "scripts/update_config_defaults.sh",
             "diesel.toml",
@@ -44,7 +43,7 @@ steps:
   prettier_check:
     image: tmknom/prettier:3.4.2
     commands:
-      - prettier -c . '!**/volumes' '!**/dist' '!target' '!**/translations' '!api_tests/pnpm-lock.yaml'
+      - prettier -c . '!**/volumes' '!**/dist' '!target' '!**/website' '!api_tests/pnpm-lock.yaml'
     when:
       - event: pull_request
 

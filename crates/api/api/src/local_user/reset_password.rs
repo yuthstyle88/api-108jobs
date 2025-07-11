@@ -5,7 +5,7 @@ use lemmy_db_views_site::{
   api::{PasswordReset, SuccessResponse},
   SiteView,
 };
-use lemmy_email::account::send_password_reset_email;
+use lemmy_multilang::account::send_password_reset_email;
 use lemmy_utils::error::FastJobResult;
 use tracing::error;
 
@@ -28,7 +28,7 @@ async fn try_reset_password(email: &str, context: &FastJobContext) -> FastJobRes
   if let Err(e) =
     send_password_reset_email(&local_user_view, &mut context.pool(), context.settings()).await
   {
-    error!("Failed to send password reset email: {}", e);
+    error!("Failed to send password reset multilang: {}", e);
   }
 
   Ok(())

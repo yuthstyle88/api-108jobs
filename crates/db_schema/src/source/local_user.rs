@@ -46,7 +46,7 @@ pub struct LocalUser {
   pub show_bot_accounts: bool,
   /// Whether to show read posts.
   pub show_read_posts: bool,
-  /// Whether their email has been verified.
+  /// Whether their multilang has been verified.
   pub email_verified: bool,
   /// Whether their registration application has been accepted.
   pub accepted_application: bool,

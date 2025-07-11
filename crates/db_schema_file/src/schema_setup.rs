@@ -426,7 +426,7 @@ mod tests {
   fn insert_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
     // Users
     conn.batch_execute(&format!(
-      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
+      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, multilang, public_key) \
           VALUES ({}, '{}', '{}', '{}', '{}', '{}', '{}')",
       TEST_USER_ID_1,
       USER1_NAME,
@@ -438,7 +438,7 @@ mod tests {
     ))?;
 
     conn.batch_execute(&format!(
-      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
+      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, multilang, public_key) \
           VALUES ({}, '{}', '{}', '{}', '{}', '{}', '{}')",
       TEST_USER_ID_2,
       USER2_NAME,

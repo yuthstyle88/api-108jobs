@@ -18,7 +18,7 @@ use lemmy_db_views_site::{
   api::{SaveUserSettings, SuccessResponse},
   SiteView,
 };
-use lemmy_email::account::send_verification_email;
+use lemmy_multilang::account::send_verification_email;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::{
@@ -52,7 +52,7 @@ pub async fn save_user_settings(
 
   if let Some(Some(email)) = &email {
     let previous_email = local_user_view.local_user.email.clone().unwrap_or_default();
-    // if email was changed, check that it is not taken and send verification mail
+    // if multilang was changed, check that it is not taken and send verification mail
     if previous_email.deref() != email {
       LocalUser::check_is_email_taken(&mut context.pool(), email).await?;
       send_verification_email(
@@ -66,7 +66,7 @@ pub async fn save_user_settings(
     }
   }
 
-  // When the site requires email, make sure email is not Some(None). IE, an overwrite to a None
+  // When the site requires multilang, make sure multilang is not Some(None). IE, an overwrite to a None
   // value
   if let Some(email) = &email {
     if email.is_none() && site_view.local_site.require_email_verification {

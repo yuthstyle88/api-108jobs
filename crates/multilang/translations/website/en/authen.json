@@ -33,6 +33,7 @@
   "label_professional_license": "Have a professional license",
   "label_refund_policy": "If the conditions are violated, we will refund your money.",
   "label_username": "Username",
+  "label_username_or_email": "Username or email",
   "link_create_account": "Create an account",
   "link_forgot_password": "Forgot your password?",
   "message_enter_code": "Please enter the code to activate your account. (If you don’t see it, check your Spam and Junk folders)",
@@ -46,6 +47,7 @@
   "placeholder_password": "Enter password",
   "placeholder_phone": "Enter phone number",
   "placeholder_username": "Enter username",
+  "placeholder_username_or_email": "Enter your username or email",
   "resend_attempts": "Resend attempts",
   "resend_code": "Resend Code",
   "reset_password_title": "Reset Password",
@@ -57,5 +59,16 @@
   "title_login_create_account": "Login / Create Account",
   "title_verify_email": "Verify Email",
   "verification_forgot_message": "The verification code has been sent to your email/phone number.",
-  "verification_message": "Fastwork will send a verification code to your email/phone number to confirm account ownership."
+  "verification_message": "Fastwork will send a verification code to your email/phone number to confirm account ownership.",
+  "not_found": "Username or email does not exist",
+  "incorrect_login": "Wrong password. Please try again!",
+  "please_enter_email_or_username_min_6": "Please enter an email or username with at least 6 characters",
+  "username_max_32": "Username must not exceed 32 characters",
+  "password_min_6": "Password must be at least 6 characters",
+  "placeholder_captcha_answer": "Enter captcha answer",
+  "username_min_6": "Username must be at least 6 characters",
+  "invalid_email": "Please enter a valid email address",
+  "not_match_password": "Passwords do not match",
+  "reload_captcha": "Reload",
+  "captcha_incorrect": "Captcha answer is incorrect"
 }

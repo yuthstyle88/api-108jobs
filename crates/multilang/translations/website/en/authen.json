@@ -70,5 +70,7 @@
   "invalid_email": "Please enter a valid email address",
   "not_match_password": "Passwords do not match",
   "reload_captcha": "Reload",
-  "captcha_incorrect": "Captcha answer is incorrect"
+  "captcha_incorrect": "Captcha answer is incorrect",
+  "error_loading_captcha": "Cannot load captcha, please try to reload page",
+  "required": "This field is required"
 }

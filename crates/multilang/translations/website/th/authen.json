@@ -70,5 +70,7 @@
   "invalid_email": "กรุณากรอกอีเมลที่ถูกต้อง",
   "not_match_password": "รหัสผ่านไม่ตรงกัน",
   "reload_captcha": "โหลดใหม่",
-  "captcha_incorrect": "คำตอบของแคปช่าไม่ถูกต้อง"
+  "captcha_incorrect": "คำตอบของแคปช่าไม่ถูกต้อง",
+  "error_loading_captcha": "ไม่สามารถโหลด captcha ได้ กรุณาลองโหลดหน้าใหม่อีกครั้ง",
+  "required": "ช่องนี้จำเป็นต้องกรอก"
 }

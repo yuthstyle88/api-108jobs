@@ -19,8 +19,8 @@ pub struct Claims {
   /// Time when this token was issued as UNIX-timestamp in seconds
   pub iat: i64,
   pub session: String,
-  pub roles: Vec<String>,
-  pub email: Option<String>,
+  pub roles: String,
+  pub email: Option<SensitiveString>,
 }
 
 impl Claims {
@@ -40,8 +40,8 @@ impl Claims {
 
   pub async fn generate(
     user_id: LocalUserId,
-    email: Option<String>,
-    roles: Vec<String>,
+    email: Option<SensitiveString>,
+    roles: String,
     req: HttpRequest,
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {

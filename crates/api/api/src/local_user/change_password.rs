@@ -43,7 +43,7 @@ pub async fn change_password(
 
   // Return the jwt
   Ok(Json(LoginResponse {
-    jwt: Some(Claims::generate(updated_local_user.id, req, &context).await?),
+    jwt: Some(Claims::generate(updated_local_user.id, updated_local_user.email, updated_local_user.roles, req, &context).await?),
     verify_email_sent: false,
     registration_created: false,
   }))

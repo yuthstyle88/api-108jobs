@@ -177,7 +177,7 @@ pub async fn register(
   if !local_site.site_setup
     || (!require_registration_application && !local_site.require_email_verification)
   {
-    let jwt = Claims::generate(user.local_user.id, req, &context).await?;
+    let jwt = Claims::generate(user.local_user.id, user.local_user.email, user.local_user.roles, req, &context).await?;
     login_response.jwt = Some(jwt);
   } else {
     login_response.verify_email_sent = send_verification_email_if_required(
@@ -432,7 +432,7 @@ pub async fn authenticate_with_oauth(
   };
 
   if !login_response.registration_created && !login_response.verify_email_sent {
-    let jwt = Claims::generate(local_user.id, req, &context).await?;
+    let jwt = Claims::generate(local_user.id, local_user.email, local_user.roles, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

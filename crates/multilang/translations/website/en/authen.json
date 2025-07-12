@@ -72,7 +72,8 @@
   "reload_captcha": "Reload",
   "captcha_incorrect": "Captcha answer is incorrect",
   "error_loading_captcha": "Cannot load captcha, please try to reload page",
-  "required": "This field is required",
+  "require_captcha": "Please enter the captcha",
   "username_already_exists": "Username already exist",
-  "email_already_exists": "Email already exist"
+  "email_already_exists": "Email already exist",
+  "invalid_name": "Username is not valid"
 }

@@ -48,6 +48,7 @@ use lemmy_utils::{
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::HashSet;
+use lemmy_db_views_site::api::RegisterWithOauthRequest;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -186,11 +187,11 @@ pub async fn register(
   Ok(Json(login_response))
 }
 pub async fn register_with_oauth(
-  data: Json<AuthenticateWithOauthRequest>,
+  data: Json<RegisterWithOauthRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
-  let data: AuthenticateWithOauth =  data.into_inner().try_into()?;
+  let data = data.into_inner();
 
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
@@ -214,7 +215,7 @@ pub async fn register_with_oauth(
     return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
-  let oauth_user_id = data.oauth_user_id;
+  let provider_account_id = data.provider_account_id;
 
   let mut login_response = LoginResponse {
     jwt: None,
@@ -222,9 +223,9 @@ pub async fn register_with_oauth(
     verify_email_sent: false,
   };
 
-  // Lookup user by oauth_user_id
+  // Lookup user by provider_account_id
   let local_user_view =
-   LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &oauth_user_id).await;
+   LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &provider_account_id).await;
 
   if local_user_view.is_err() {
     // user has never previously registered using oauth
@@ -240,7 +241,7 @@ pub async fn register_with_oauth(
     }
 
     // Extract the OAUTH multilang claim from the returned user_info
-    let email = data.username;
+    let email = data.email;
 
     let require_registration_application =
      local_site.registration_mode == RegistrationMode::RequireApplication;
@@ -279,7 +280,7 @@ pub async fn register_with_oauth(
 
          // Create the oauth account
          let oauth_account_form =
-          OAuthAccountInsertForm::new(local_user.id, oauth_provider.id, oauth_user_id);
+          OAuthAccountInsertForm::new(local_user.id, oauth_provider.id, provider_account_id);
 
          OAuthAccount::create(&mut conn.into(), &oauth_account_form).await?;
 
@@ -345,7 +346,7 @@ pub async fn authenticate_with_oauth(
     return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
-  let oauth_user_id = data.oauth_user_id;
+  let provider_account_id = data.provider_account_id;
 
   let mut login_response = LoginResponse {
     jwt: None,
@@ -353,12 +354,12 @@ pub async fn authenticate_with_oauth(
     verify_email_sent: false,
   };
 
-  // Lookup user by oauth_user_id
+  // Lookup user by provider_account_id
   let local_user_view =
-    LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &oauth_user_id).await;
+    LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &provider_account_id).await;
 
  if let Ok(user_view) = local_user_view {
-    // user found by oauth_user_id => Login user
+    // user found by provider_account_id => Login user
     let local_user = user_view.clone().local_user;
 
     check_local_user_valid(&user_view)?;

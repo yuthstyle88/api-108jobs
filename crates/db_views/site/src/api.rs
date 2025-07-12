@@ -61,7 +61,7 @@ pub struct AdminBlockInstanceParams {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Logging in with an OAuth 2.0 authorization
 pub struct AuthenticateWithOauth {
-  pub oauth_user_id: String,
+  pub provider_account_id: String,
   pub oauth_provider: String,
   pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
@@ -78,9 +78,23 @@ pub struct AuthenticateWithOauth {
 #[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
   pub oauth_provider: String,
-  pub oauth_user_id: String,
+  pub provider_account_id: String,
   pub name: Option<String>,
   pub email: String,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct RegisterWithOauthRequest {
+  pub oauth_provider: String,
+  pub provider_account_id: String,
+  pub name: Option<String>,
+  pub email: String,
+  pub roles: String,
+  pub self_promotion: Option<bool>,
+  pub answer: Option<String>,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
@@ -88,7 +102,7 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
 
     Ok(AuthenticateWithOauth{
-      oauth_user_id: value.oauth_user_id,
+      provider_account_id: value.provider_account_id,
       oauth_provider: value.oauth_provider,
       self_promotion: Some(false),
       username: value.email,

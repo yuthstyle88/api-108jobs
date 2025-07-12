@@ -107,6 +107,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::user::create::register_with_oauth;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -359,7 +360,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .service(
           scope("/oauth")
-            .wrap(rate_limit.register())
+            // .wrap(rate_limit.register())
+            .route("/register_with_oauth", post().to(register_with_oauth))
             .route("/authenticate", post().to(authenticate_with_oauth)),
         )
         .service(

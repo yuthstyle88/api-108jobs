@@ -26,10 +26,10 @@ CREATE TABLE oauth_account
 (
     local_user_id     int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE      NOT NULL,
     oauth_provider_id int REFERENCES oauth_provider ON UPDATE CASCADE ON DELETE RESTRICT NOT NULL,
-    oauth_user_id     text                                                               NOT NULL,
+    provider_account_id     text                                                         NOT NULL,
     published         timestamp with time zone DEFAULT now()                             NOT NULL,
     updated           timestamp with time zone,
-    UNIQUE (oauth_provider_id, oauth_user_id),
+    UNIQUE (oauth_provider_id, provider_account_id),
     PRIMARY KEY (oauth_provider_id, local_user_id)
 );
 

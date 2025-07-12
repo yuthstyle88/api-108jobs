@@ -80,7 +80,6 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api::local_user::login::login_with_oauth_user;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -246,7 +245,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             // .wrap(rate_limit.register())
             .route("/register", post().to(register))
             .route("/login", post().to(login))
-            .route("/login_with_oauth_user", post().to(login_with_oauth_user))
             .route("/logout", post().to(logout))
             .route("/password_reset", post().to(reset_password))
             .route("/password_change", post().to(change_password_after_reset))

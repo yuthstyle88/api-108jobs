@@ -14,7 +14,7 @@ use lemmy_db_views_site::{
   api::{Login, LoginResponse},
   SiteView,
 };
-use lemmy_db_views_site::login::{LoginRequest, OAuthUserLoginRequest};
+use lemmy_db_views_site::login::LoginRequest;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
@@ -63,41 +63,6 @@ pub async fn login(
 
   Ok(Json(LoginResponse {
     jwt: Some(jwt.clone()),
-    verify_email_sent: false,
-    registration_created: false,
-  }))
-}
-
-pub async fn login_with_oauth_user(
-  data: Json<OAuthUserLoginRequest>,
-  req: HttpRequest,
-  context: Data<FastJobContext>,
-) -> FastJobResult<Json<LoginResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
-  // ตรวจสอบว่าเป็นสมาชิก OAuth หรือไม่
-  let local_user_view = LocalUserView::find_by_oauth_id(
-    &mut context.pool(),
-    data.provider_id,
-    &data.user_id,
-  ).await?;
-
-  // Common validations
-  check_local_user_deleted(&local_user_view)?;
-  check_email_verified(&local_user_view, &site_view)?;
-  check_registration_application(&local_user_view, &site_view.local_site, &mut context.pool()).await?;
-
-  // Generate JWT
-  let roles: Vec<String> = serde_json::from_str(&local_user_view.local_user.roles)?;
-  let jwt = Claims::generate(
-    local_user_view.local_user.id,
-    local_user_view.local_user.email,
-    roles,
-    req,
-    &context,
-  ).await?;
-
-  Ok(Json(LoginResponse {
-    jwt: Some(jwt),
     verify_email_sent: false,
     registration_created: false,
   }))

@@ -70,7 +70,6 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
-  pub access_token: String,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -82,7 +81,6 @@ pub struct AuthenticateWithOauthRequest {
   pub oauth_user_id: String,
   pub name: Option<String>,
   pub email: String,
-  pub access_token: String,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
@@ -97,7 +95,6 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
       name: value.name,
       answer: None,
       pkce_code_verifier: None,
-      access_token: value.access_token,
     })
   }
 }

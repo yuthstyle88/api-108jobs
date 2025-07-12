@@ -211,6 +211,7 @@ pub enum FastJobErrorType {
   ValidationError(String),
   FileNotFound,
   EmailAlreadyVerified,
+  OauthProviderDisabled
 }
 
 cfg_if! {

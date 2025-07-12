@@ -100,6 +100,18 @@ pub struct RegisterRequest {
   pub captcha_answer: Option<String>,
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+pub struct OAuthUserRegisterRequest {
+  #[validate(
+    required(message = "required"),
+    email(message = "Invalid multilang address")
+  )]
+  pub email: Option<SensitiveString>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

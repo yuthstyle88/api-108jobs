@@ -80,6 +80,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::local_user::login::login_with_oauth_user;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -93,9 +94,6 @@ use lemmy_api_crud::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
   },
-  oauth_provider::{
-    create::create_oauth_provider, delete::delete_oauth_provider, update::update_oauth_provider,
-  },
   post::{
     create::create_post, delete::delete_post, read::get_post, remove::remove_post,
     update::update_post,
@@ -105,7 +103,7 @@ use lemmy_api_crud::{
     create::create_tagline, delete::delete_tagline, list::list_taglines, update::update_tagline,
   },
   user::{
-    create::{authenticate_with_oauth, get_google_login_url, register},
+    create::{authenticate_with_oauth, register},
     delete::delete_account,
     my_user::get_my_user,
   },
@@ -248,6 +246,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             // .wrap(rate_limit.register())
             .route("/register", post().to(register))
             .route("/login", post().to(login))
+            .route("/login_with_oauth_user", post().to(login_with_oauth_user))
             .route("/logout", post().to(logout))
             .route("/password_reset", post().to(reset_password))
             .route("/password_change", post().to(change_password_after_reset))
@@ -361,12 +360,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list", get().to(list_custom_emojis)),
         )
         .service(
-          scope("/oauth_provider")
-            .route("", post().to(create_oauth_provider))
-            .route("", put().to(update_oauth_provider))
-            .route("/delete", post().to(delete_oauth_provider)),
-        )
-        .service(
           scope("/oauth")
             .wrap(rate_limit.register())
             .route("/authenticate", post().to(authenticate_with_oauth)),
@@ -385,7 +378,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/{filename}", get().to(get_image)),
         )
         // Login with google
-        .service(resource("/google_login_url").get(get_google_login_url))
         // i18n Multi-languages
         .service(scope("/i18n").route("/{lang}/{ns}", get().to(get_namespace))),
     );

@@ -1,7 +1,6 @@
 use actix_web::{
   web::{Data, Json},
   HttpRequest,
-  HttpResponse,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
@@ -12,13 +11,11 @@ use lemmy_api_utils::{
     check_local_user_valid,
     check_registration_application,
     generate_inbox_url,
-    generate_unique_username,
     honeypot_check,
     slur_regex,
   },
 };
 use lemmy_db_schema::{
-  newtypes::OAuthProviderId,
   source::{
     actor_language::SiteLanguage,
     captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer},
@@ -42,16 +39,15 @@ use lemmy_db_views_site::{
 };
 use lemmy_multilang::account::send_verification_email_if_required;
 use lemmy_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   utils::{
     slurs::{check_slurs, check_slurs_opt},
     validation::is_valid_actor_name,
   },
 };
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::{collections::HashSet, sync::LazyLock};
+use std::collections::HashSet;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -190,22 +186,6 @@ pub async fn register(
   Ok(Json(login_response))
 }
 
-pub async fn get_google_login_url(context: Data<FastJobContext>) -> HttpResponse {
-  let client_id = context.settings().clone().google.client_id;
-  let redirect_uri = context.settings().clone().google.redirect_url;
-
-  let google_auth_url = format!(
-    "https://accounts.google.com/o/oauth2/v2/auth\
-        ?client_id={}&redirect_uri={}&response_type=code\
-        &scope=email%20profile&access_type=offline",
-    client_id, redirect_uri
-  );
-
-  HttpResponse::Found()
-    .append_header(("Location", google_auth_url))
-    .finish()
-}
-
 pub async fn authenticate_with_oauth(
   data: Json<AuthenticateWithOauthRequest>,
   req: HttpRequest,
@@ -224,25 +204,6 @@ pub async fn authenticate_with_oauth(
 
   let language_tags = get_language_tags(&req);
 
-  // validate inputs
-  if data.oauth_provider_id == OAuthProviderId(0) || data.code.is_empty() || data.code.len() > 300 {
-    return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
-  }
-
-  // // validate the redirect_uri
-  // let redirect_uri = &data.redirect_uri;
-  // if redirect_uri.host_str().unwrap_or("").is_empty()
-  //   || !redirect_uri.path().eq(&String::from("/oauth/callback"))
-  //   || !redirect_uri.query().unwrap_or("").is_empty()
-  // {
-  //   Err(FastJobErrorType::OauthAuthorizationInvalid)?
-  // }
-
-  // validate the PKCE challenge
-  if let Some(code_verifier) = &data.pkce_code_verifier {
-    check_code_verifier(code_verifier)?;
-  }
-
   // Fetch the OAUTH provider and make sure it's enabled
   let oauth_provider_id = data.oauth_provider_id;
   let oauth_provider = OAuthProvider::read(pool, oauth_provider_id)
@@ -254,22 +215,7 @@ pub async fn authenticate_with_oauth(
     return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
   }
 
-  let token_response = oauth_request_access_token(
-    &context,
-    &oauth_provider,
-    &data.code,
-    data.pkce_code_verifier.as_deref(),
-  )
-  .await?;
-
-  let user_info = oidc_get_user_info(
-    &context,
-    &oauth_provider,
-    token_response.access_token.as_str(),
-  )
-  .await?;
-
-  let oauth_user_id = read_user_info(&user_info, oauth_provider.id_claim.as_str())?;
+  let oauth_user_id = data.oauth_user_id;
 
   let mut login_response = LoginResponse {
     jwt: None,
@@ -303,7 +249,7 @@ pub async fn authenticate_with_oauth(
     // }
 
     // Extract the OAUTH multilang claim from the returned user_info
-    let email = read_user_info(&user_info, "multilang")?;
+    let email = data.username;
 
     let require_registration_application =
       local_site.registration_mode == RegistrationMode::RequireApplication;
@@ -344,7 +290,6 @@ pub async fn authenticate_with_oauth(
 
       let slur_regex = slur_regex(&context).await?;
 
-      let username_unique = generate_unique_username(pool, email.clone()).await?;
 
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
@@ -354,7 +299,7 @@ pub async fn authenticate_with_oauth(
         .run_transaction(|conn| {
           async move {
             // make sure the username is provided
-            let username: &str = username_unique.as_str();
+            let username: &str = email.as_str();
 
             check_slurs(username, &slur_regex)?;
             check_slurs_opt(&data.answer, &slur_regex)?;
@@ -411,15 +356,6 @@ pub async fn authenticate_with_oauth(
           .scope_boxed()
         })
         .await?;
-
-      // Check multilang is verified when required
-      login_response.verify_email_sent = send_verification_email_if_required(
-        &local_site,
-        &user,
-        &mut context.pool(),
-        context.settings(),
-      )
-      .await?;
       user.local_user
     }
   };
@@ -503,93 +439,4 @@ async fn create_local_user(
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
   Ok(inserted_local_user)
-}
-
-async fn oauth_request_access_token(
-  context: &Data<FastJobContext>,
-  oauth_provider: &OAuthProvider,
-  code: &str,
-  pkce_code_verifier: Option<&str>,
-) -> FastJobResult<TokenResponse> {
-  let redirect_uri = context.settings().google.redirect_url.as_str();
-
-  let mut form = vec![
-    ("client_id", &*oauth_provider.client_id),
-    ("client_secret", &*oauth_provider.client_secret),
-    ("code", code),
-    ("grant_type", "authorization_code"),
-    ("redirect_uri", redirect_uri),
-  ];
-
-  if let Some(code_verifier) = pkce_code_verifier {
-    form.push(("code_verifier", code_verifier));
-  }
-
-  // Request an Access Token from the OAUTH provider
-  let response = context
-    .client()
-    .post(oauth_provider.token_endpoint.as_str())
-    .form(&form[..])
-    .send()
-    .await
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?
-    .error_for_status()
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
-
-  // Extract the access token
-  let token_response = response
-    .json::<TokenResponse>()
-    .await
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
-
-  Ok(token_response)
-}
-
-async fn oidc_get_user_info(
-  context: &Data<FastJobContext>,
-  oauth_provider: &OAuthProvider,
-  access_token: &str,
-) -> FastJobResult<serde_json::Value> {
-  // Request the user info from the OAUTH provider
-  let response = context
-    .client()
-    .get(oauth_provider.userinfo_endpoint.as_str())
-    .header("Accept", "application/json")
-    .bearer_auth(access_token)
-    .send()
-    .await
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?
-    .error_for_status()
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
-
-  // Extract the OAUTH user_id claim from the returned user_info
-  let user_info = response
-    .json::<serde_json::Value>()
-    .await
-    .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
-
-  Ok(user_info)
-}
-
-fn read_user_info(user_info: &serde_json::Value, key: &str) -> FastJobResult<String> {
-  if let Some(value) = user_info.get(key) {
-    let result = serde_json::from_value::<String>(value.clone())
-      .with_fastjob_type(FastJobErrorType::OauthLoginFailed)?;
-    return Ok(result);
-  }
-  Err(FastJobErrorType::OauthLoginFailed)?
-}
-
-#[allow(clippy::expect_used)]
-fn check_code_verifier(code_verifier: &str) -> FastJobResult<()> {
-  static VALID_CODE_VERIFIER_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-._~]{43,128}$").expect("compile regex"));
-
-  let check = VALID_CODE_VERIFIER_REGEX.is_match(code_verifier);
-
-  if check {
-    Ok(())
-  } else {
-    Err(FastJobErrorType::InvalidCodeVerifier.into())
-  }
 }

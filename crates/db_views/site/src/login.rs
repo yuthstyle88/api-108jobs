@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use lemmy_db_schema::newtypes::OAuthProviderId;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use crate::api::Login;
@@ -7,6 +8,15 @@ use crate::api::Login;
 pub struct LoginRequest {
     pub username_or_email: String,
     pub password: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OAuthUserLoginRequest {
+    pub user_id: String,
+    pub name: String,
+    pub email: String,
+    pub access_token: String,
+    pub provider_id: OAuthProviderId,
 }
 
 impl TryFrom<LoginRequest> for Login {

@@ -1,4 +1,3 @@
-ALTER TABLE admin_allow_instance RENAME COLUMN published TO published_at;
 
 ALTER TABLE admin_block_instance RENAME COLUMN expires TO expires_at;
 
@@ -115,9 +114,6 @@ ALTER TABLE oauth_account RENAME COLUMN published TO published_at;
 
 ALTER TABLE oauth_account RENAME COLUMN updated TO updated_at;
 
-ALTER TABLE oauth_provider RENAME COLUMN published TO published_at;
-
-ALTER TABLE oauth_provider RENAME COLUMN updated TO updated_at;
 
 ALTER TABLE password_reset_request RENAME COLUMN published TO published_at;
 

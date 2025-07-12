@@ -191,7 +191,7 @@ pub async fn authenticate_with_oauth(
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
-  let data: AuthenticateWithOauth = data.into_inner().try_into()?;
+  let data: AuthenticateWithOauth =  data.into_inner().try_into()?;
 
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
@@ -205,8 +205,8 @@ pub async fn authenticate_with_oauth(
   let language_tags = get_language_tags(&req);
 
   // Fetch the OAUTH provider and make sure it's enabled
-  let oauth_provider_id = data.oauth_provider_id;
-  let oauth_provider = OAuthProvider::read(pool, oauth_provider_id)
+  let oauth_provider = data.oauth_provider;
+  let oauth_provider = OAuthProvider::get_by_name(pool, &oauth_provider)
     .await
     .ok()
     .ok_or(FastJobErrorType::OauthAuthorizationInvalid)?;
@@ -244,9 +244,9 @@ pub async fn authenticate_with_oauth(
     }
 
     // prevent registration if registration is closed for OAUTH providers
-    // if !local_site.oauth_registration {
-    //   return Err(FastJobErrorType::OauthRegistrationClosed)?;
-    // }
+    if !local_site.oauth_registration {
+      return Err(FastJobErrorType::OauthRegistrationClosed)?;
+    }
 
     // Extract the OAUTH multilang claim from the returned user_info
     let email = data.username;

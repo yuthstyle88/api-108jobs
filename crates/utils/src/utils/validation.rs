@@ -42,7 +42,8 @@ pub fn is_valid_actor_name(name: &str, actor_name_max_length: i32) -> FastJobRes
   // other users. Checks for additional alphabets can be added in the same way.
   #[allow(clippy::expect_used)]
   static VALID_ACTOR_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^(?:[a-zA-Z0-9_]+|[0-9_\p{Arabic}]+|[0-9_\p{Cyrillic}]+)$").expect("compile regex")
+    Regex::new(r"^(?:[a-zA-Z0-9_]+|[0-9_\p{Arabic}]+|[0-9_\p{Cyrillic}]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$")
+     .expect("compile regex")
   });
 
   let actor_name_max_length: usize = actor_name_max_length.try_into()?;

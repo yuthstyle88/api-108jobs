@@ -1,13 +1,7 @@
 use crate::SiteView;
 use chrono::{DateTime, Utc};
 use lemmy_db_schema::{
-  newtypes::{
-    InstanceId,
-    LanguageId,
-    OAuthProviderId,
-    PaginationCursor,
-    TaglineId,
-  },
+  newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
     comment::Comment,
@@ -24,12 +18,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::enums::{
-  CommentSortType,
-  ListingType,
-  PostListingMode,
-  PostSortType,
-  RegistrationMode,
-  VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
@@ -73,25 +62,26 @@ pub struct AdminBlockInstanceParams {
 /// Logging in with an OAuth 2.0 authorization
 pub struct AuthenticateWithOauth {
   pub oauth_user_id: String,
-  pub oauth_provider_id: OAuthProviderId,
+  pub oauth_provider: String,
   pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
   pub username: String,
+  pub name: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
-  pub access_token: String
+  pub access_token: String,
 }
-
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Logging in with an OAuth 2.0 authorization
+#[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
-  pub email: String,
-  pub oauth_provider_id: OAuthProviderId,
+  pub oauth_provider: String,
   pub oauth_user_id: String,
+  pub name: Option<String>,
+  pub email: String,
   pub access_token: String,
 }
 
@@ -101,9 +91,10 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
 
     Ok(AuthenticateWithOauth{
       oauth_user_id: value.oauth_user_id,
-      oauth_provider_id: value.oauth_provider_id,
+      oauth_provider: value.oauth_provider,
       self_promotion: Some(false),
       username: value.email,
+      name: value.name,
       answer: None,
       pkce_code_verifier: None,
       access_token: value.access_token,
@@ -118,14 +109,6 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
 /// Create an external auth method.
 pub struct CreateOAuthProvider {
   pub display_name: String,
-  pub issuer: String,
-  pub authorization_endpoint: String,
-  pub token_endpoint: String,
-  pub userinfo_endpoint: String,
-  pub id_claim: String,
-  pub client_id: String,
-  pub client_secret: String,
-  pub scopes: String,
   pub auto_verify_email: Option<bool>,
   pub account_linking_enabled: Option<bool>,
   pub use_pkce: Option<bool>,
@@ -195,12 +178,6 @@ pub struct DeleteOAuthProvider {
 pub struct EditOAuthProvider {
   pub id: OAuthProviderId,
   pub display_name: Option<String>,
-  pub authorization_endpoint: Option<String>,
-  pub token_endpoint: Option<String>,
-  pub userinfo_endpoint: Option<String>,
-  pub id_claim: Option<String>,
-  pub client_secret: Option<String>,
-  pub scopes: Option<String>,
   pub auto_verify_email: Option<bool>,
   pub account_linking_enabled: Option<bool>,
   pub use_pkce: Option<bool>,
@@ -569,7 +546,7 @@ pub struct VerifyEmail {
 
 #[derive(Serialize)]
 pub struct VerifyEmailSuccessResponse {
-  pub jwt: SensitiveString
+  pub jwt: SensitiveString,
 }
 
 #[skip_serializing_none]

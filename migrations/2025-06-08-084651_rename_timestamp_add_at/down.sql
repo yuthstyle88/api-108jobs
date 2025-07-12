@@ -114,9 +114,6 @@ ALTER TABLE oauth_account RENAME COLUMN published_at TO published;
 
 ALTER TABLE oauth_account RENAME COLUMN updated_at TO updated;
 
-ALTER TABLE oauth_provider RENAME COLUMN published_at TO published;
-
-ALTER TABLE oauth_provider RENAME COLUMN updated_at TO updated;
 
 ALTER TABLE password_reset_request RENAME COLUMN published_at TO published;
 

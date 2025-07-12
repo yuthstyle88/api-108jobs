@@ -91,7 +91,7 @@ pub struct LocalSiteInsertForm {
   pub site_setup: Option<bool>,
   #[new(default)]
   pub community_creation_admin_only: Option<bool>,
-  #[new(default)]
+  #[new(value = "Some(true)")]
   pub require_email_verification: Option<bool>,
   #[new(default)]
   pub application_question: Option<String>,
@@ -111,7 +111,7 @@ pub struct LocalSiteInsertForm {
   pub actor_name_max_length: Option<i32>,
   #[new(default)]
   pub captcha_enabled: Option<bool>,
-  #[new(default)]
+  #[new(value = "Some(String::from(\"easy\"))")]
   pub captcha_difficulty: Option<String>,
   #[new(default)]
   pub registration_mode: Option<RegistrationMode>,
@@ -123,7 +123,7 @@ pub struct LocalSiteInsertForm {
   pub default_post_sort_type: Option<PostSortType>,
   #[new(default)]
   pub default_comment_sort_type: Option<CommentSortType>,
-  #[new(default)]
+  #[new(value = "Some(true)")]
   pub oauth_registration: Option<bool>,
   #[new(default)]
   pub default_post_time_range_seconds: Option<i32>,

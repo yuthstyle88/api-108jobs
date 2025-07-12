@@ -109,7 +109,7 @@ pub struct LocalSiteInsertForm {
   pub slur_filter_regex: Option<String>,
   #[new(default)]
   pub actor_name_max_length: Option<i32>,
-  #[new(default)]
+  #[new(value = "Some(true)")]
   pub captcha_enabled: Option<bool>,
   #[new(value = "Some(String::from(\"easy\"))")]
   pub captcha_difficulty: Option<String>,

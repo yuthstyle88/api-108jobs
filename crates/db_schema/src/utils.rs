@@ -32,7 +32,6 @@ use diesel_async::{
 };
 use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
-use lemmy_db_schema_file::schema_setup;
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::{structs::Settings, SETTINGS},
@@ -94,15 +93,15 @@ pub async fn get_conn<'a, 'b: 'a>(pool: &'a mut DbPool<'b>) -> Result<DbConn<'a>
 impl DbConn<'_> {
   pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> FastJobResult<R>
   where
-    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, FastJobResult<R>>
-      + Send
-      + 'a,
-    R: Send + 'a,
+   F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, FastJobResult<R>>
+   + Send
+   + 'a,
+   R: Send + 'a,
   {
     self
-      .deref_mut()
-      .transaction::<_, FastJobError, _>(callback)
-      .await
+     .deref_mut()
+     .transaction::<_, FastJobError, _>(callback)
+     .await
   }
 }
 
@@ -189,7 +188,7 @@ pub struct LowerKey<K>(pub K);
 
 impl<K, C> CursorKey<C> for LowerKey<K>
 where
-  K: CursorKey<C, SqlType = sql_types::Text>,
+ K: CursorKey<C, SqlType = sql_types::Text>,
 {
   type SqlType = sql_types::Text;
   type CursorValue = functions::lower<K::CursorValue>;
@@ -209,7 +208,7 @@ pub struct Subpath<K>(pub K);
 
 impl<K, C> CursorKey<C> for Subpath<K>
 where
-  K: CursorKey<C, SqlType = diesel_ltree::sql_types::Ltree>,
+ K: CursorKey<C, SqlType = diesel_ltree::sql_types::Ltree>,
 {
   type SqlType = diesel_ltree::sql_types::Ltree;
   type CursorValue = diesel_ltree::subpath<K::CursorValue, i32, i32>;
@@ -287,10 +286,10 @@ impl<T: LimitDsl> LimitDsl for Commented<T> {
 
 pub fn fuzzy_search(q: &str) -> String {
   let replaced = q
-    .replace('\\', "\\\\")
-    .replace('%', "\\%")
-    .replace('_', "\\_")
-    .replace(' ', "%");
+   .replace('\\', "\\\\")
+   .replace('%', "\\%")
+   .replace('_', "\\_")
+   .replace(' ', "%");
   format!("%{replaced}%")
 }
 
@@ -384,16 +383,16 @@ fn build_config_options_uri_segment(config: &str) -> FastJobResult<String> {
 
   // Set `lemmy.protocol_and_hostname` so triggers can use it
   let lemmy_protocol_and_hostname_option =
-    "lemmy.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
+   "lemmy.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
   let mut options = CONNECTION_OPTIONS.to_vec();
   options.push(&lemmy_protocol_and_hostname_option);
 
   // Create the connection uri portion
   let options_segments = options
-    .iter()
-    .map(|o| "-c ".to_owned() + o)
-    .collect::<Vec<String>>()
-    .join(" ");
+   .iter()
+   .map(|o| "-c ".to_owned() + o)
+   .collect::<Vec<String>>()
+   .join(" ");
 
   url.set_query(Some(&format!("options={options_segments}")));
   Ok(url.into())
@@ -406,8 +405,8 @@ fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<AsyncPgC
 
     let config = POSTGRES_CONFIG_WITH_OPTIONS.get_or_init(|| {
       build_config_options_uri_segment(config)
-        .inspect_err(|e| error!("Couldn't parse postgres connection URI: {e}"))
-        .unwrap_or_default()
+       .inspect_err(|e| error!("Couldn't parse postgres connection URI: {e}"))
+       .unwrap_or_default()
     });
 
     // We only support TLS with sslmode=require currently
@@ -415,13 +414,13 @@ fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<AsyncPgC
       let rustls_config = DangerousClientConfigBuilder {
         cfg: ClientConfig::builder(),
       }
-      .with_custom_certificate_verifier(Arc::new(NoCertVerifier {}))
-      .with_no_client_auth();
+       .with_custom_certificate_verifier(Arc::new(NoCertVerifier {}))
+       .with_no_client_auth();
 
       let tls = tokio_postgres_rustls::MakeRustlsConnect::new(rustls_config);
       let (client, conn) = tokio_postgres::connect(config, tls)
-        .await
-        .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
+       .await
+       .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
       tokio::spawn(async move {
         if let Err(e) = conn.await {
           error!("Database connection failed: {e}");
@@ -483,8 +482,8 @@ impl ServerCertVerifier for NoCertVerifier {
 
   fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
     crypto::ring::default_provider()
-      .signature_verification_algorithms
-      .supported_schemes()
+     .signature_verification_algorithms
+     .supported_schemes()
   }
 }
 
@@ -494,25 +493,25 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
   // provide a setup function which handles creating the connection
   let mut config = ManagerConfig::default();
   config.custom_setup = Box::new(establish_connection);
-  let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(db_url, config);
+  let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(&db_url, config);
   let pool = Pool::builder(manager)
-    .max_size(SETTINGS.database.pool_size)
-    .runtime(Runtime::Tokio1)
-    // Limit connection age to prevent use of prepared statements that have query plans based on
-    // very old statistics
-    .pre_recycle(Hook::sync_fn(|_conn, metrics| {
-      // Preventing the first recycle can cause an infinite loop when trying to get a new connection
-      // from the pool
-      let conn_was_used = metrics.recycled.is_some();
-      if metrics.age() > Duration::from_secs(3 * 24 * 60 * 60) && conn_was_used {
-        Err(HookError::Message("Connection is too old".into()))
-      } else {
-        Ok(())
-      }
-    }))
-    .build()?;
+   .max_size(SETTINGS.database.pool_size)
+   .runtime(Runtime::Tokio1)
+   // Limit connection age to prevent use of prepared statements that have query plans based on
+   // very old statistics
+   .pre_recycle(Hook::sync_fn(|_conn, metrics| {
+     // Preventing the first recycle can cause an infinite loop when trying to get a new connection
+     // from the pool
+     let conn_was_used = metrics.recycled.is_some();
+     if metrics.age() > Duration::from_secs(3 * 24 * 60 * 60) && conn_was_used {
+       Err(HookError::Message("Connection is too old".into()))
+     } else {
+       Ok(())
+     }
+   }))
+   .build()?;
 
-  schema_setup::run(schema_setup::Options::default().run())?;
+  lemmy_db_schema_setup::run(lemmy_db_schema_setup::Options::default().run(), &db_url)?;
 
   Ok(pool)
 }
@@ -525,7 +524,7 @@ pub fn build_db_pool_for_tests() -> ActualDbPool {
 #[allow(clippy::expect_used)]
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$")
-    .expect("compile multilang regex")
+   .expect("compile email regex")
 });
 
 pub mod functions {
@@ -579,12 +578,12 @@ pub fn seconds_to_pg_interval(seconds: i32) -> PgInterval {
 /// Trait alias for a type that can be converted to an SQL tuple using `IntoSql::into_sql`
 pub trait AsRecord: Expression + AsExpression<sql_types::Record<Self::SqlType>>
 where
-  Self::SqlType: 'static,
+ Self::SqlType: 'static,
 {
 }
 
 impl<T: Expression + AsExpression<sql_types::Record<T::SqlType>>> AsRecord for T where
-  T::SqlType: 'static
+ T::SqlType: 'static
 {
 }
 
@@ -612,13 +611,13 @@ pub fn paginate<Q, C>(
 
   if page_back.unwrap_or_default() {
     query = query
-      .before(page_after)
-      .after_or_equal(page_before_or_equal)
-      .limit_and_offset_from_end();
+     .before(page_after)
+     .after_or_equal(page_before_or_equal)
+     .limit_and_offset_from_end();
   } else {
     query = query
-      .after(page_after)
-      .before_or_equal(page_before_or_equal);
+     .after(page_after)
+     .before_or_equal(page_before_or_equal);
   }
 
   query

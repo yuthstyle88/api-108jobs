@@ -708,11 +708,20 @@ diesel::table! {
     oauth_provider (id) {
         id -> Int4,
         display_name -> Text,
+        issuer -> Text,
+        authorization_endpoint -> Text,
+        token_endpoint -> Text,
+        userinfo_endpoint -> Text,
+        id_claim -> Text,
+        client_id -> Text,
+        client_secret -> Text,
+        scopes -> Text,
         auto_verify_email -> Bool,
         account_linking_enabled -> Bool,
         enabled -> Bool,
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        use_pkce -> Bool,
     }
 }
 

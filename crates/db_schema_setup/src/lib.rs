@@ -1,6 +1,4 @@
-#[cfg(test)]
-use crate::diff_check;
-use crate::schema::previously_run_sql;
+mod diff_check;
 use anyhow::{anyhow, Context};
 use chrono::TimeDelta;
 use diesel::{
@@ -18,13 +16,19 @@ use diesel::{
   RunQueryDsl,
 };
 use diesel_migrations::MigrationHarness;
-use lemmy_utils::{error::FastJobResult, settings::SETTINGS};
 use std::time::Instant;
 use tracing::debug;
 
 diesel::table! {
   pg_namespace (nspname) {
     nspname -> Text,
+  }
+}
+
+diesel::table! {
+  previously_run_sql (id) {
+    id -> Bool,
+    content -> Text,
   }
 }
 
@@ -41,11 +45,12 @@ fn replaceable_schema() -> String {
   [
     "CREATE SCHEMA r;",
     include_str!("../replaceable_schema/utils.sql"),
+    include_str!("../replaceable_schema/triggers.sql"),
   ]
   .join("\n")
 }
 
-const REPLACEABLE_SCHEMA_PATH: &str = "crates/db_schema/replaceable_schema";
+const REPLACEABLE_SCHEMA_PATH: &str = "crates/db_schema_setup/replaceable_schema";
 
 struct MigrationHarnessWrapper<'a> {
   conn: &'a mut PgConnection,
@@ -177,11 +182,9 @@ pub enum Branch {
   ReplaceableSchemaNotRebuilt,
 }
 
-pub fn run(options: Options) -> FastJobResult<Branch> {
-  let db_url = SETTINGS.get_database_url();
-
+pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
   // Migrations don't support async connection, and this function doesn't need to be async
-  let mut conn = PgConnection::establish(&db_url)?;
+  let mut conn = PgConnection::establish(db_url)?;
 
   // If possible, skip getting a lock and recreating the "r" schema, so
   // lemmy_server processes in a horizontally scaled setup can start without causing locks
@@ -232,7 +235,7 @@ pub fn run(options: Options) -> FastJobResult<Branch> {
 
       let after = diff_check::get_dump();
 
-      diff_check::check_dump_diff([&before, &after], "The code in crates/db_schema/replaceable_schema incorrectly created or modified things outside of the `r` schema, causing these changes to be left behind after dropping the schema:");
+      diff_check::check_dump_diff([&before, &after], "The code in crates/db_schema_setup/replaceable_schema incorrectly created or modified things outside of the `r` schema, causing these changes to be left behind after dropping the schema:");
 
       diff_check::deferr_constraint_check(&after);
     }
@@ -249,7 +252,7 @@ pub fn run(options: Options) -> FastJobResult<Branch> {
   Ok(output)
 }
 
-fn run_replaceable_schema(conn: &mut PgConnection) -> FastJobResult<()> {
+fn run_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
   conn.transaction(|conn| {
     conn
       .batch_execute(&replaceable_schema())
@@ -265,7 +268,7 @@ fn run_replaceable_schema(conn: &mut PgConnection) -> FastJobResult<()> {
   })
 }
 
-fn revert_replaceable_schema(conn: &mut PgConnection) -> FastJobResult<()> {
+fn revert_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
   conn
     .batch_execute("DROP SCHEMA IF EXISTS r CASCADE;")
     .with_context(|| format!("Failed to revert SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
@@ -383,7 +386,7 @@ mod tests {
 
     // Run initial migrations to prepare basic tables
     assert_eq!(
-      run(o.run().limit(INITIAL_MIGRATIONS_COUNT))?,
+      run(o.run().limit(INITIAL_MIGRATIONS_COUNT), &db_url)?,
       ReplaceableSchemaNotRebuilt
     );
 
@@ -391,16 +394,22 @@ mod tests {
     insert_test_data(&mut conn)?;
 
     // Run all migrations, and make sure that changes can be correctly reverted
-    assert_eq!(run(o.run().enable_diff_check())?, ReplaceableSchemaRebuilt);
+    assert_eq!(
+      run(o.run().enable_diff_check(), &db_url)?,
+      ReplaceableSchemaRebuilt
+    );
 
     // Check the test data we inserted before after running migrations
     check_test_data(&mut conn)?;
 
     // Check for early return
-    assert_eq!(run(o.run())?, EarlyReturn);
+    assert_eq!(run(o.run(), &db_url)?, EarlyReturn);
 
     // Test `limit`
-    assert_eq!(run(o.revert().limit(1))?, ReplaceableSchemaNotRebuilt);
+    assert_eq!(
+      run(o.revert().limit(1), &db_url)?,
+      ReplaceableSchemaNotRebuilt
+    );
     assert_eq!(
       conn
         .pending_migrations(migrations())
@@ -408,7 +417,7 @@ mod tests {
         .len(),
       1
     );
-    assert_eq!(run(o.run().limit(1))?, ReplaceableSchemaRebuilt);
+    assert_eq!(run(o.run().limit(1), &db_url)?, ReplaceableSchemaRebuilt);
 
     // This should throw an error saying to use lemmy_server instead of diesel CLI
     conn.batch_execute("DROP OWNED BY CURRENT_USER;")?;
@@ -418,7 +427,7 @@ mod tests {
     ));
 
     // Diesel CLI's way of running migrations shouldn't break the custom migration runner
-    assert_eq!(run(o.run())?, ReplaceableSchemaRebuilt);
+    assert_eq!(run(o.run(), &db_url)?, ReplaceableSchemaRebuilt);
 
     Ok(())
   }
@@ -426,7 +435,7 @@ mod tests {
   fn insert_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
     // Users
     conn.batch_execute(&format!(
-      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, multilang, public_key) \
+      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
           VALUES ({}, '{}', '{}', '{}', '{}', '{}', '{}')",
       TEST_USER_ID_1,
       USER1_NAME,
@@ -438,7 +447,7 @@ mod tests {
     ))?;
 
     conn.batch_execute(&format!(
-      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, multilang, public_key) \
+      "INSERT INTO user_ (id, name, actor_id, preferred_username, password_encrypted, email, public_key) \
           VALUES ({}, '{}', '{}', '{}', '{}', '{}', '{}')",
       TEST_USER_ID_2,
       USER2_NAME,
@@ -510,15 +519,16 @@ mod tests {
   }
 
   fn check_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
-    use crate::schema::{comment, comment_reply, community, person, post};
+    use lemmy_db_schema_file::schema::{comment, comment_reply, community, person, post};
 
     // Check users
-    let users: Vec<(i32, String, Option<String>, String)> = person::table
+    let users: Vec<(i32, String, Option<String>, String, String)> = person::table
       .select((
         person::id,
         person::name,
         person::display_name,
         person::ap_id,
+        person::public_key,
       ))
       .order_by(person::id)
       .load(conn)
@@ -529,18 +539,21 @@ mod tests {
     assert_eq!(users[0].1, USER1_NAME);
     assert_eq!(users[0].2.clone().unwrap(), USER1_PREFERRED_NAME);
     assert_eq!(users[0].3, USER1_ACTOR_ID);
+    assert_eq!(users[0].4, USER1_PUBLIC_KEY);
 
     assert_eq!(users[1].0, TEST_USER_ID_2);
     assert_eq!(users[1].1, USER2_NAME);
     assert_eq!(users[1].2.clone().unwrap(), USER2_PREFERRED_NAME);
     assert_eq!(users[1].3, USER2_ACTOR_ID);
+    assert_eq!(users[1].4, USER2_PUBLIC_KEY);
 
     // Check communities
-    let communities: Vec<(i32, String, String)> = community::table
+    let communities: Vec<(i32, String, String, String)> = community::table
       .select((
         community::id,
         community::name,
         community::ap_id,
+        community::public_key,
       ))
       .load(conn)
       .map_err(|e| anyhow!("Failed to read communities: {}", e))?;
@@ -549,6 +562,7 @@ mod tests {
     assert_eq!(communities[0].0, TEST_COMMUNITY_ID_1);
     assert_eq!(communities[0].1, COMMUNITY_NAME);
     assert_eq!(communities[0].2, COMMUNITY_ACTOR_ID);
+    assert_eq!(communities[0].3, COMMUNITY_PUBLIC_KEY);
 
     let posts: Vec<(i32, String, String, Option<String>, i32, i32)> = post::table
       .select((

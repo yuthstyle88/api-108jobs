@@ -47,7 +47,7 @@ pub enum FastJobErrorType {
   CommunityIsBlocked,
   InstanceIsBlocked,
   InstanceIsPrivate,
-  /// Password must be between 8 and 20 characters
+  /// Password must be between 10 and 60 characters
   InvalidPassword,
   EmptyUsername,
   EmptyPassword,
@@ -367,26 +367,26 @@ cfg_if! {
         assert_eq!(400, other_error.status_code());
       }
 
-      // Check if errors match website. Disabled because many are not translated at all.
-      // #[test]
-      // #[ignore]
-      // fn test_translations_match() -> FastJobResult<()> {
-      //   #[derive(Deserialize)]
-      //   struct Err {
-      //     error: String,
-      //   }
-      //
-      //   let website = read_to_string("website/website/en.json")?;
-      //
-      //   for e in FastJobErrorType::iter() {
-      //     let msg = serde_json::to_string(&e)?;
-      //     let msg: Err = serde_json::from_str(&msg)?;
-      //     let msg = msg.error;
-      //     assert!(website.contains(&format!("\"{msg}\"")), "{msg}");
-      //   }
-      //
-      //   Ok(())
-      // }
+      /// Check if errors match translations. Disabled because many are not translated at all.
+      #[test]
+      #[ignore]
+      fn test_translations_match() -> FastJobResult<()> {
+        #[derive(Deserialize)]
+        struct Err {
+          error: String,
+        }
+
+        let translations = read_to_string("translations/translations/en.json")?;
+
+        for e in FastJobErrorType::iter() {
+          let msg = serde_json::to_string(&e)?;
+          let msg: Err = serde_json::from_str(&msg)?;
+          let msg = msg.error;
+          assert!(translations.contains(&format!("\"{msg}\"")), "{msg}");
+        }
+
+        Ok(())
+      }
     }
   }
 }

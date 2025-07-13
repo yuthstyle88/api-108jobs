@@ -108,7 +108,6 @@ fn pictrs_placeholder_url() -> Url {
   Url::parse("http://localhost:8080").expect("parse pictrs url")
 }
 
-
 #[cfg(test)]
 mod tests {
 

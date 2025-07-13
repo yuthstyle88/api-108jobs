@@ -87,8 +87,8 @@ mod tests {
       // Links with added nofollow attribute
       (
         "links",
-        "[FastJob](https://join-lemmy.org/ \"Join FastJob!\")",
-        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join FastJob!\">FastJob</a></p>\n"
+        "[Lemmy](https://join-lemmy.org/ \"Join Lemmy!\")",
+        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join Lemmy!\">Lemmy</a></p>\n"
       ),
       // Remote images with proxy
       (

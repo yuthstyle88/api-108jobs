@@ -129,6 +129,14 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
 /// Create an external auth method.
 pub struct CreateOAuthProvider {
   pub display_name: String,
+  pub issuer: String,
+  pub authorization_endpoint: String,
+  pub token_endpoint: String,
+  pub userinfo_endpoint: String,
+  pub id_claim: String,
+  pub client_id: String,
+  pub client_secret: String,
+  pub scopes: String,
   pub auto_verify_email: Option<bool>,
   pub account_linking_enabled: Option<bool>,
   pub use_pkce: Option<bool>,
@@ -198,11 +206,18 @@ pub struct DeleteOAuthProvider {
 pub struct EditOAuthProvider {
   pub id: OAuthProviderId,
   pub display_name: Option<String>,
+  pub authorization_endpoint: Option<String>,
+  pub token_endpoint: Option<String>,
+  pub userinfo_endpoint: Option<String>,
+  pub id_claim: Option<String>,
+  pub client_secret: Option<String>,
+  pub scopes: Option<String>,
   pub auto_verify_email: Option<bool>,
   pub account_linking_enabled: Option<bool>,
   pub use_pkce: Option<bool>,
   pub enabled: Option<bool>,
 }
+
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

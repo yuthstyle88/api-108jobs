@@ -72,7 +72,8 @@
   "reload_captcha": "โหลดใหม่",
   "captcha_incorrect": "คำตอบของแคปช่าไม่ถูกต้อง",
   "error_loading_captcha": "ไม่สามารถโหลด captcha ได้ กรุณาลองโหลดหน้าใหม่อีกครั้ง",
-  "required": "ช่องนี้จำเป็นต้องกรอก",
+  "require_captcha": "กรุณากรอก captcha",
   "username_already_exists": "ชื่อผู้ใช้นี้มีอยู่แล้ว",
-  "email_already_exists": "อีเมลนี้มีอยู่แล้ว"
+  "email_already_exists": "อีเมลนี้มีอยู่แล้ว",
+  "invalid_name": "ชื่อผู้ใช้ไม่ถูกต้อง"
 }

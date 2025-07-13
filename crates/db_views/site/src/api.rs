@@ -61,11 +61,12 @@ pub struct AdminBlockInstanceParams {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Logging in with an OAuth 2.0 authorization
 pub struct AuthenticateWithOauth {
-  pub provider_account_id: String,
-  pub oauth_provider: String,
+  pub code: String,
+  pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
   pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
-  pub username: String,
+  pub username: Option<String>,
   pub name: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
@@ -78,7 +79,8 @@ pub struct AuthenticateWithOauth {
 #[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
   pub oauth_provider: String,
-  pub provider_account_id: String,
+  pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
   pub roles: String,
@@ -89,13 +91,15 @@ pub struct AuthenticateWithOauthRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterWithOauthRequest {
-  pub oauth_provider: String,
-  pub provider_account_id: String,
+  pub code: String,
+  pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
   pub roles: String,
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
+  pub pkce_code_verifier: Option<String>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -111,10 +115,11 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
 
     Ok(AuthenticateWithOauth{
-      provider_account_id: value.provider_account_id,
-      oauth_provider: value.oauth_provider,
+      code: "".to_string(),
+      oauth_provider_id: value.oauth_provider_id,
+      redirect_uri: value.redirect_uri,
       self_promotion: Some(false),
-      username: value.email,
+      username: Some(value.email),
       name: value.name,
       answer: None,
       pkce_code_verifier: None,

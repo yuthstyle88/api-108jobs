@@ -81,6 +81,7 @@ pub struct AuthenticateWithOauthRequest {
   pub provider_account_id: String,
   pub name: Option<String>,
   pub email: String,
+  pub roles: String,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -95,6 +96,14 @@ pub struct RegisterWithOauthRequest {
   pub roles: String,
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct EmailExitsRequest {
+  pub email: String,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
@@ -395,6 +404,14 @@ pub struct ExchangeKey {
 #[derive(Default)]
 pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Default)]
+pub struct EmailExitsResponse {
+  pub exists: bool,
 }
 
 #[skip_serializing_none]

@@ -16,6 +16,7 @@ pub enum FastJobErrorType {
   ReportReasonRequired,
   ReportTooLong,
   NotAModerator,
+  EmailNotFound,
   NotAnAdmin,
   CantBlockYourself,
   CantNoteYourself,

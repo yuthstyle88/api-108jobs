@@ -38,17 +38,14 @@ use lemmy_db_views_site::{
   SiteView,
 };
 use lemmy_multilang::account::send_verification_email_if_required;
-use lemmy_utils::{
-  error::{FastJobError, FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::{check_slurs, check_slurs_opt},
-    validation::is_valid_actor_name,
-  },
-};
+use lemmy_utils::{error::{FastJobError, FastJobErrorType, FastJobResult}, utils::{
+  slurs::{check_slurs, check_slurs_opt},
+  validation::is_valid_actor_name,
+}};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::HashSet;
-use lemmy_db_views_site::api::RegisterWithOauthRequest;
+use lemmy_db_views_site::api::{EmailExitsRequest, EmailExitsResponse, RegisterWithOauthRequest};
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -373,7 +370,12 @@ pub async fn authenticate_with_oauth(
 
     Ok(Json(login_response))
   }else{
-    Err(FastJobErrorType::OauthLoginNotfound)?
+   let login_response = LoginResponse {
+     jwt: None,
+     registration_created: true,
+     verify_email_sent: false,
+   };
+   Ok(Json(login_response))
   }
 }
 
@@ -447,4 +449,14 @@ async fn create_local_user(
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
   Ok(inserted_local_user)
+}
+
+pub async fn email_exists(
+  data: Json<EmailExitsRequest>,
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<EmailExitsResponse>> {
+  let data = data.into_inner();
+  let pool = &mut context.pool();
+  let result = LocalUser::check_is_email_taken(pool, &data.email).await;
+  Ok(Json(EmailExitsResponse {exists: result.is_err()}))
 }

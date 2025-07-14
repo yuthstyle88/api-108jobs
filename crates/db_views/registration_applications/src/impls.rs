@@ -285,6 +285,7 @@ impl TryFrom<RegisterRequest> for Register {
           show_upvote_percentage: sara_local_user.show_upvote_percentage,
           show_person_votes: sara_local_user.show_person_votes,
           public_key: None,
+          roles: "".to_string(),
         },
         creator: Person {
           id: sara_person.id,

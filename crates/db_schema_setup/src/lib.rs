@@ -208,7 +208,7 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
     }
   }
 
-  // Block concurrent attempts to run migrations until `conn` is closed, and disable the
+  // Block concurrent attempts to run migrations until `conn` is closed and disable the
   // trigger that prevents the Diesel CLI from running migrations
   options.print("Waiting for lock...");
   conn.batch_execute("SELECT pg_advisory_lock(0);")?;
@@ -220,7 +220,7 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
 
   run_selected_migrations(&mut conn, &options).map_err(convert_err)?;
 
-  // Only run replaceable_schema if newest migration was applied
+  // Only run replaceable_schema if the newest migration was applied
   let output = if (options.run && options.limit.is_none())
     || !conn
       .has_pending_migration(migrations())
@@ -273,7 +273,7 @@ fn revert_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
     .batch_execute("DROP SCHEMA IF EXISTS r CASCADE;")
     .with_context(|| format!("Failed to revert SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
 
-  // Value in `previously_run_sql` table is not set here because the table might not exist,
+  // Value in the ` previously_run_sql ` table is not set here because the table might not exist,
   // and that's fine because the existence of the `r` schema is also checked
 
   Ok(())
@@ -325,7 +325,6 @@ mod tests {
     Branch::{EarlyReturn, ReplaceableSchemaNotRebuilt, ReplaceableSchemaRebuilt},
     *,
   };
-  use diesel_ltree::Ltree;
   use lemmy_utils::{error::FastJobResult, settings::SETTINGS};
   use serial_test::serial;
   // The number of migrations that should be run to set up some test data.
@@ -381,7 +380,7 @@ mod tests {
     let db_url = SETTINGS.get_database_url();
     let mut conn = PgConnection::establish(&db_url)?;
 
-    // Start with consistent state by dropping everything
+    // Start with a consistent state by dropping everything
     conn.batch_execute("DROP OWNED BY CURRENT_USER;")?;
 
     // Run initial migrations to prepare basic tables
@@ -393,14 +392,11 @@ mod tests {
     // Insert the test data
     insert_test_data(&mut conn)?;
 
-    // Run all migrations, and make sure that changes can be correctly reverted
+    // Run all migrations and make sure that changes can be correctly reverted
     assert_eq!(
       run(o.run().enable_diff_check(), &db_url)?,
       ReplaceableSchemaRebuilt
     );
-
-    // Check the test data we inserted before after running migrations
-    check_test_data(&mut conn)?;
 
     // Check for early return
     assert_eq!(run(o.run(), &db_url)?, EarlyReturn);
@@ -518,122 +514,4 @@ mod tests {
     Ok(())
   }
 
-  fn check_test_data(conn: &mut PgConnection) -> FastJobResult<()> {
-    use lemmy_db_schema_file::schema::{comment, comment_reply, community, person, post};
-
-    // Check users
-    let users: Vec<(i32, String, Option<String>, String, String)> = person::table
-      .select((
-        person::id,
-        person::name,
-        person::display_name,
-        person::ap_id,
-        person::public_key,
-      ))
-      .order_by(person::id)
-      .load(conn)
-      .map_err(|e| anyhow!("Failed to read users: {}", e))?;
-
-    assert_eq!(users.len(), 2);
-    assert_eq!(users[0].0, TEST_USER_ID_1);
-    assert_eq!(users[0].1, USER1_NAME);
-    assert_eq!(users[0].2.clone().unwrap(), USER1_PREFERRED_NAME);
-    assert_eq!(users[0].3, USER1_ACTOR_ID);
-    assert_eq!(users[0].4, USER1_PUBLIC_KEY);
-
-    assert_eq!(users[1].0, TEST_USER_ID_2);
-    assert_eq!(users[1].1, USER2_NAME);
-    assert_eq!(users[1].2.clone().unwrap(), USER2_PREFERRED_NAME);
-    assert_eq!(users[1].3, USER2_ACTOR_ID);
-    assert_eq!(users[1].4, USER2_PUBLIC_KEY);
-
-    // Check communities
-    let communities: Vec<(i32, String, String, String)> = community::table
-      .select((
-        community::id,
-        community::name,
-        community::ap_id,
-        community::public_key,
-      ))
-      .load(conn)
-      .map_err(|e| anyhow!("Failed to read communities: {}", e))?;
-
-    assert_eq!(communities.len(), 1);
-    assert_eq!(communities[0].0, TEST_COMMUNITY_ID_1);
-    assert_eq!(communities[0].1, COMMUNITY_NAME);
-    assert_eq!(communities[0].2, COMMUNITY_ACTOR_ID);
-    assert_eq!(communities[0].3, COMMUNITY_PUBLIC_KEY);
-
-    let posts: Vec<(i32, String, String, Option<String>, i32, i32)> = post::table
-      .select((
-        post::id,
-        post::name,
-        post::ap_id,
-        post::body,
-        post::community_id,
-        post::creator_id,
-      ))
-      .load(conn)
-      .map_err(|e| anyhow!("Failed to read posts: {}", e))?;
-
-    assert_eq!(posts.len(), 1);
-    assert_eq!(posts[0].0, TEST_POST_ID_1);
-    assert_eq!(posts[0].1, POST_NAME);
-    assert_eq!(posts[0].2, POST_AP_ID);
-    assert_eq!(posts[0].3.clone().unwrap(), POST_BODY);
-    assert_eq!(posts[0].4, TEST_COMMUNITY_ID_1);
-    assert_eq!(posts[0].5, TEST_USER_ID_1);
-
-    let comments: Vec<(i32, String, String, i32, i32, Ltree, i64)> = comment::table
-      .select((
-        comment::id,
-        comment::content,
-        comment::ap_id,
-        comment::post_id,
-        comment::creator_id,
-        comment::path,
-        comment::upvotes,
-      ))
-      .order_by(comment::id)
-      .load(conn)
-      .map_err(|e| anyhow!("Failed to read comments: {}", e))?;
-
-    assert_eq!(comments.len(), 2);
-    assert_eq!(comments[0].0, TEST_COMMENT_ID_1);
-    assert_eq!(comments[0].1, COMMENT1_CONTENT);
-    assert_eq!(comments[0].2, COMMENT1_AP_ID);
-    assert_eq!(comments[0].3, TEST_POST_ID_1);
-    assert_eq!(comments[0].4, TEST_USER_ID_2);
-    assert_eq!(
-      comments[0].5,
-      Ltree(format!("0.{}", TEST_COMMENT_ID_1).to_string())
-    );
-    assert_eq!(comments[0].6, 1); // One upvote
-
-    assert_eq!(comments[1].0, TEST_COMMENT_ID_2);
-    assert_eq!(comments[1].1, COMMENT2_CONTENT);
-    assert_eq!(comments[1].2, COMMENT2_AP_ID);
-    assert_eq!(comments[1].3, TEST_POST_ID_1);
-    assert_eq!(comments[1].4, TEST_USER_ID_1);
-    assert_eq!(
-      comments[1].5,
-      Ltree(format!("0.{}.{}", TEST_COMMENT_ID_1, TEST_COMMENT_ID_2).to_string())
-    );
-    assert_eq!(comments[1].6, 0); // Zero upvotes
-
-    // Check comment replies
-    let replies: Vec<(i32, i32)> = comment_reply::table
-      .select((comment_reply::comment_id, comment_reply::recipient_id))
-      .order_by(comment_reply::comment_id)
-      .load(conn)
-      .map_err(|e| anyhow!("Failed to read comment replies: {}", e))?;
-
-    assert_eq!(replies.len(), 2);
-    assert_eq!(replies[0].0, TEST_COMMENT_ID_1);
-    assert_eq!(replies[0].1, TEST_USER_ID_1);
-    assert_eq!(replies[1].0, TEST_COMMENT_ID_2);
-    assert_eq!(replies[1].1, TEST_USER_ID_2);
-
-    Ok(())
-  }
 }

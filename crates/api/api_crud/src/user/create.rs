@@ -401,7 +401,7 @@ pub async fn authenticate_with_oauth(
   // validate the redirect_uri
   let redirect_uri = &data.redirect_uri;
   if redirect_uri.host_str().unwrap_or("").is_empty()
-   || !redirect_uri.path().eq(&String::from("/oauth/callback"))
+   || !redirect_uri.path().contains(&String::from("callback"))
    || !redirect_uri.query().unwrap_or("").is_empty()
   {
     Err(FastJobErrorType::OauthAuthorizationInvalid)?
@@ -517,16 +517,13 @@ pub async fn authenticate_with_oauth(
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
       let conn = &mut get_conn(pool).await?;
-      let tx_data = data.clone();
+      // let tx_data = data.clone();
       let tx_context = context.clone();
       let user = conn
        .run_transaction(|conn| {
          async move {
            // make sure the username is provided
-           let username = tx_data
-            .username
-            .as_ref()
-            .ok_or(FastJobErrorType::RegistrationUsernameRequired)?;
+           let username = &email;
 
            check_slurs(username, &slur_regex)?;
            check_slurs_opt(&data.answer, &slur_regex)?;

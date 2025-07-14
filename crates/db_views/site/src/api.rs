@@ -78,12 +78,14 @@ pub struct AuthenticateWithOauth {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
+  pub code: String,
   pub oauth_provider: String,
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
   pub name: Option<String>,
-  pub email: String,
-  pub roles: String,
+  pub email: Option<String>,
+  pub roles: Option<String>,
+  pub answer: Option<String>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -115,13 +117,13 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
 
     Ok(AuthenticateWithOauth{
-      code: "".to_string(),
+      code: value.code,
       oauth_provider_id: value.oauth_provider_id,
       redirect_uri: value.redirect_uri,
       self_promotion: Some(false),
-      username: Some(value.email),
+      username: value.email,
       name: value.name,
-      answer: None,
+      answer: value.answer,
       pkce_code_verifier: None,
     })
   }

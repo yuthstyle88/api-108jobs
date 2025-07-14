@@ -18,7 +18,9 @@
     }
   json_logging: true
   cors_origin: [
-      "lemmy.tld"
+      "http://localhost:3000"
+      "http://localhost:8532"
+      "lemmy-alpha"
       /* ... */
     ]
   phoenix_url: "ws://localhost:4000/socket/websocket?vsn=2.0.0"

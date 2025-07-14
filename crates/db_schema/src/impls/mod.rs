@@ -34,3 +34,4 @@ pub mod tag;
 pub mod tagline;
 mod chat_message;
 mod chat_room;
+mod category;

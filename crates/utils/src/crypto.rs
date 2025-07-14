@@ -367,7 +367,7 @@ mod tests {
   #[cfg(feature = "full")]
   fn test_export_import_public_key() {
     // Generate ECDH key pair
-    let (secret, pub_bytes) = Crypto::generate_key().unwrap();
+    let (_secret, pub_bytes) = Crypto::generate_key().unwrap();
     let data_buf = DataBuffer::from_vec(&pub_bytes);
 
     let spki_encoded = Crypto::export_public_key(data_buf.clone()).unwrap();
@@ -383,7 +383,7 @@ mod tests {
     let session = "02258df649994da2aa35904745cd9532";
     let data = "Hello, I am a good boy!";
 
-    let (key, iv) = test_key_iv();
+    let (key, _iv) = test_key_iv();
     let hex_key = hex::encode(&key);
 
     let encrypted = xchange_encrypt_data(data, &hex_key, session).unwrap();

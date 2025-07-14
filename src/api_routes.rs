@@ -375,7 +375,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
         )
-        // Login with google
         // i18n Multi-languages
         .service(scope("/i18n").route("/{lang}/{ns}", get().to(get_namespace))),
     );

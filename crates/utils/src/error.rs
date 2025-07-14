@@ -214,7 +214,9 @@ pub enum FastJobErrorType {
   ValidationError(String),
   FileNotFound,
   EmailAlreadyVerified,
-  OauthProviderDisabled
+  OauthProviderDisabled,
+    CouldntCreateCategory,
+  CouldntUpdateCategory,
 }
 
 cfg_if! {

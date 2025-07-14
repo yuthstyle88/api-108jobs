@@ -829,6 +829,24 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use diesel_ltree::sql_types::Ltree;
+
+    category (id) {
+        id -> Int4,
+        path -> Ltree,
+        title -> Text,
+        slug -> Text,
+        image -> Nullable<Text>,
+        active -> Bool,
+        is_new -> Nullable<Bool>,
+        sort_order -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     post (id) {
         id -> Int4,
         #[max_length = 200]

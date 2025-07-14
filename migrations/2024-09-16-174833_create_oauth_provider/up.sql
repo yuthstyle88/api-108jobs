@@ -22,9 +22,6 @@ CREATE TABLE oauth_provider (
 
 CREATE UNIQUE INDEX oauth_provider_display_name_idx ON oauth_provider(display_name);
 
-INSERT INTO oauth_provider (id, display_name, auto_verify_email,
-                                   account_linking_enabled, enabled, published_at, updated_at)
-
 ALTER TABLE local_site
     ADD COLUMN oauth_registration boolean DEFAULT FALSE NOT NULL;
 

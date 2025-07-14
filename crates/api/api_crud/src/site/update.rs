@@ -167,7 +167,7 @@ pub async fn update_site(
   let new_require_email_verification = update_local_site
     .as_ref()
     .map(|ols| ols.require_email_verification)
-    .unwrap_or(false);
+    .unwrap_or(true);
   if !local_site.require_email_verification && new_require_email_verification {
     LocalUser::set_all_users_email_verified(&mut context.pool()).await?;
   }

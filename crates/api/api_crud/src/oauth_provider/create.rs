@@ -8,7 +8,6 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::CreateOAuthProvider;
 use lemmy_utils::error::FastJobError;
 use url::Url;
-
 pub async fn create_oauth_provider(
   data: Json<CreateOAuthProvider>,
   context: Data<FastJobContext>,
@@ -16,6 +15,7 @@ pub async fn create_oauth_provider(
 ) -> Result<Json<OAuthProvider>, FastJobError> {
   // Make sure user is an admin
   is_admin(&local_user_view)?;
+
 
   let cloned_data = data.clone();
   let oauth_provider_form = OAuthProviderInsertForm {

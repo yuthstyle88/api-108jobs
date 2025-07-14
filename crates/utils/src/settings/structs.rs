@@ -158,7 +158,7 @@ pub struct DatabaseConfig {
   ///
   /// A high value here can result in errors "could not resize shared memory segment". In this case
   /// it is necessary to increase shared memory size in Docker: https://stackoverflow.com/a/56754077
-  #[default(5)]
+  #[default(3)]
   pub pool_size: usize,
 }
 

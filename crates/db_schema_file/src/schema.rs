@@ -501,6 +501,7 @@ diesel::table! {
         blur_self_promotion -> Bool,
         infinite_scroll_enabled -> Bool,
         admin -> Bool,
+        roles -> Varchar,
         post_listing_mode -> PostListingModeEnum,
         totp_2fa_enabled -> Bool,
         enable_keyboard_navigation -> Bool,
@@ -697,7 +698,7 @@ diesel::table! {
     oauth_account (oauth_provider_id, local_user_id) {
         local_user_id -> Int4,
         oauth_provider_id -> Int4,
-        oauth_user_id -> Text,
+        provider_account_id -> Text,
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }

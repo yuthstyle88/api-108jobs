@@ -16,7 +16,7 @@ use serde_with::skip_serializing_none;
 pub struct OAuthAccount {
   pub local_user_id: LocalUserId,
   pub oauth_provider_id: OAuthProviderId,
-  pub oauth_user_id: String,
+  pub provider_account_id: String,
   pub published_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -27,5 +27,5 @@ pub struct OAuthAccount {
 pub struct OAuthAccountInsertForm {
   pub local_user_id: LocalUserId,
   pub oauth_provider_id: OAuthProviderId,
-  pub oauth_user_id: String,
+  pub provider_account_id: String,
 }

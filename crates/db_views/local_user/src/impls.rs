@@ -1,11 +1,7 @@
 use crate::LocalUserView;
 use actix_web::{dev::Payload, FromRequest, HttpMessage, HttpRequest};
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -20,9 +16,7 @@ use lemmy_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{
     functions::{coalesce, lower},
-    get_conn,
-    now,
-    paginate,
+    get_conn, now, paginate,
     queries::creator_home_instance_actions_join,
     DbPool,
   },
@@ -99,13 +93,13 @@ impl LocalUserView {
   pub async fn find_by_oauth_id(
     pool: &mut DbPool<'_>,
     oauth_provider_id: OAuthProviderId,
-    oauth_user_id: &str,
+    provider_account_id: &str,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     Self::joins()
       .inner_join(oauth_account::table)
       .filter(oauth_account::oauth_provider_id.eq(oauth_provider_id))
-      .filter(oauth_account::oauth_user_id.eq(oauth_user_id))
+      .filter(oauth_account::provider_account_id.eq(provider_account_id))
       .select(Self::as_select())
       .first(conn)
       .await

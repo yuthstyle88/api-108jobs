@@ -59,6 +59,8 @@ pub struct LocalUser {
   pub infinite_scroll_enabled: bool,
   /// Whether the person is an admin.
   pub admin: bool,
+  /// Whether the roles have two roles.
+  pub roles: String,
   /// A post-view mode that changes how multiple post listings look.
   pub post_listing_mode: PostListingMode,
   pub totp_2fa_enabled: bool,

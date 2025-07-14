@@ -1,13 +1,7 @@
 use crate::SiteView;
 use chrono::{DateTime, Utc};
 use lemmy_db_schema::{
-  newtypes::{
-    InstanceId,
-    LanguageId,
-    OAuthProviderId,
-    PaginationCursor,
-    TaglineId,
-  },
+  newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
     comment::Comment,
@@ -24,12 +18,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::enums::{
-  CommentSortType,
-  ListingType,
-  PostListingMode,
-  PostSortType,
-  RegistrationMode,
-  VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
@@ -74,24 +63,51 @@ pub struct AdminBlockInstanceParams {
 pub struct AuthenticateWithOauth {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
-  pub redirect_uri: Option<Url>,
+  pub redirect_uri: Url,
   pub self_promotion: Option<bool>,
   /// Username is mandatory at registration time
   pub username: Option<String>,
+  pub name: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
 }
-
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Logging in with an OAuth 2.0 authorization
+#[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
+  pub oauth_provider: String,
+  pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
+  pub name: Option<String>,
+  pub email: String,
+  pub roles: String,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct RegisterWithOauthRequest {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
+  pub redirect_uri: Url,
+  pub name: Option<String>,
+  pub email: String,
+  pub roles: String,
   pub self_promotion: Option<bool>,
+  pub answer: Option<String>,
+  pub pkce_code_verifier: Option<String>,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct EmailExitsRequest {
+  pub email: String,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
@@ -99,11 +115,12 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
 
     Ok(AuthenticateWithOauth{
-      code: value.code,
+      code: "".to_string(),
       oauth_provider_id: value.oauth_provider_id,
-      redirect_uri: None,
-      self_promotion: Some(value.self_promotion.unwrap_or(false)),
-      username: None,
+      redirect_uri: value.redirect_uri,
+      self_promotion: Some(false),
+      username: Some(value.email),
+      name: value.name,
       answer: None,
       pkce_code_verifier: None,
     })
@@ -205,6 +222,7 @@ pub struct EditOAuthProvider {
   pub use_pkce: Option<bool>,
   pub enabled: Option<bool>,
 }
+
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -407,6 +425,14 @@ pub struct ExchangeKey {
 pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
 }
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Default)]
+pub struct EmailExitsResponse {
+  pub exists: bool,
+}
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -568,7 +594,7 @@ pub struct VerifyEmail {
 
 #[derive(Serialize)]
 pub struct VerifyEmailSuccessResponse {
-  pub jwt: SensitiveString
+  pub jwt: SensitiveString,
 }
 
 #[skip_serializing_none]

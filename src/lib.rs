@@ -14,7 +14,6 @@ use lemmy_api_utils::{
   utils::local_site_rate_limit_to_rate_limit_config,
 };
 use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
-use lemmy_db_schema_file::schema_setup;
 use lemmy_multilang::load_all_translations;
 use lemmy_routes::{
   feeds,
@@ -116,8 +115,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   }) = args.subcommand
   {
     let mut options = match subcommand {
-      MigrationSubcommand::Run => schema_setup::Options::default().run(),
-      MigrationSubcommand::Revert => schema_setup::Options::default().revert(),
+      MigrationSubcommand::Run => lemmy_db_schema_setup::Options::default().run(),
+      MigrationSubcommand::Revert => lemmy_db_schema_setup::Options::default().revert(),
     }
     .print_output();
 
@@ -125,7 +124,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
       options = options.limit(number);
     }
 
-    schema_setup::run(options)?;
+    lemmy_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
 
     return Ok(());
   }

@@ -52,7 +52,7 @@ pub struct OAuthProvider {
   /// Lists the scopes requested from users. Users will have to grant access to the requested scope
   /// at sign up.
   pub scopes: String,
-  /// Automatically sets multilang as verified on registration
+  /// Automatically sets email as verified on registration
   pub auto_verify_email: bool,
   /// Allows linking an OAUTH account to an existing user account by matching emails
   pub account_linking_enabled: bool,
@@ -75,7 +75,7 @@ pub struct PublicOAuthProvider(pub OAuthProvider);
 impl Serialize for PublicOAuthProvider {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
-    S: Serializer,
+   S: Serializer,
   {
     let mut state = serializer.serialize_struct("PublicOAuthProvider", 5)?;
     state.serialize_field("id", &self.0.id)?;

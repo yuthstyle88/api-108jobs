@@ -4,8 +4,9 @@ use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::oauth_provider::{OAuthProvider, OAuthProviderUpdateForm},
   traits::Crud,
-  utils::{diesel_required_string_update, diesel_required_url_update},
+  utils::diesel_required_string_update,
 };
+use lemmy_db_schema::utils::diesel_required_url_update;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::EditOAuthProvider;
 use lemmy_utils::error::FastJobError;
@@ -35,7 +36,6 @@ pub async fn update_oauth_provider(
     use_pkce: data.use_pkce,
     updated_at: Some(Some(Utc::now())),
   };
-
   let update_result =
     OAuthProvider::update(&mut context.pool(), data.id, &oauth_provider_form).await?;
   let oauth_provider = OAuthProvider::read(&mut context.pool(), update_result.id).await?;

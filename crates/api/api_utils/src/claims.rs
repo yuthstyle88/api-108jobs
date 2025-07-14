@@ -19,6 +19,8 @@ pub struct Claims {
   /// Time when this token was issued as UNIX-timestamp in seconds
   pub iat: i64,
   pub session: String,
+  pub roles: Vec<String>,
+  pub email: Option<SensitiveString>,
 }
 
 impl Claims {
@@ -38,6 +40,8 @@ impl Claims {
 
   pub async fn generate(
     user_id: LocalUserId,
+    email: Option<SensitiveString>,
+    roles: Vec<String>,
     req: HttpRequest,
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {
@@ -47,6 +51,8 @@ impl Claims {
       iss: hostname,
       iat: Utc::now().timestamp(),
       session: generate_session(),
+      roles,
+      email,
     };
 
     let secret = &context.secret().jwt_secret;

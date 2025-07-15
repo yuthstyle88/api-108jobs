@@ -1,16 +1,16 @@
 use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lemmy_db_schema::{
   newtypes::LocalUserId,
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
+use lemmy_db_schema_file::enums::Role;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use lemmy_db_schema_file::enums::Role;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct Claims {
@@ -19,13 +19,17 @@ pub struct Claims {
   pub iss: String,
   /// Time when this token was issued as UNIX-timestamp in seconds
   pub iat: i64,
+  pub exp: i64,
   pub session: String,
   pub role: Role,
   pub email: Option<SensitiveString>,
 }
 
 impl Claims {
-  pub async fn validate(jwt: &str, context: &FastJobContext) -> FastJobResult<(LocalUserId, String)> {
+  pub async fn validate(
+    jwt: &str,
+    context: &FastJobContext,
+  ) -> FastJobResult<(LocalUserId, String)> {
     let mut validation = Validation::default();
     validation.validate_exp = false;
     validation.required_spec_claims.remove("exp");
@@ -36,7 +40,7 @@ impl Claims {
     let session = claims.claims.session.clone();
     let user_id = LocalUserId(claims.claims.sub.parse()?);
     LoginToken::validate(&mut context.pool(), user_id, jwt).await?;
-    Ok((user_id,session))
+    Ok((user_id, session))
   }
 
   pub async fn generate(
@@ -51,6 +55,7 @@ impl Claims {
       sub: user_id.0.to_string(),
       iss: hostname,
       iat: Utc::now().timestamp(),
+      exp: (Utc::now() + Duration::hours(12)).timestamp(),
       session: generate_session(),
       role,
       email,

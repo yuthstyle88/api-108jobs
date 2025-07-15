@@ -10,6 +10,7 @@ use lemmy_db_schema::{
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use lemmy_db_schema_file::enums::Role;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct Claims {
@@ -19,7 +20,7 @@ pub struct Claims {
   /// Time when this token was issued as UNIX-timestamp in seconds
   pub iat: i64,
   pub session: String,
-  pub role: String,
+  pub role: Role,
   pub email: Option<SensitiveString>,
 }
 
@@ -41,7 +42,7 @@ impl Claims {
   pub async fn generate(
     user_id: LocalUserId,
     email: Option<SensitiveString>,
-    role: String,
+    role: Role,
     req: HttpRequest,
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {

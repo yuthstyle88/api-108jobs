@@ -71,9 +71,6 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
-  pub role: Option<Role>,
-  pub accepted_application: Option<bool>,
-  pub password: SensitiveString,
 }
 #[skip_serializing_none]
 #[derive(Debug, Validate, Serialize, Deserialize, Clone)]
@@ -88,13 +85,7 @@ pub struct AuthenticateWithOauthRequest {
   pub name: Option<String>,
   pub email: Option<String>,
   pub role: Option<Role>,
-  pub accepted_application: Option<bool>,
-
-  #[validate(required(message = "required"))]
-  pub password: Option<SensitiveString>,
-
-  #[validate(required(message = "required"))]
-  pub password_verify: Option<SensitiveString>,
+  pub answer: Option<String>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -111,7 +102,6 @@ pub struct RegisterWithOauthRequest {
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
-  pub accepted_application: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -125,19 +115,6 @@ pub struct EmailExistsRequest {
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
   fn try_from(mut value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
-    value
-      .validate()
-      .map_err(|err| FastJobErrorType::ValidationError(err.to_string()))?;
-
-    if value.password != value.password_verify {
-      return Err(FastJobErrorType::PasswordsDoNotMatch.into());
-    }
-
-    if !matches!(value.role, Some(Role::Employer | Role::Freelancer)) {
-      return Err(
-        FastJobErrorType::ValidationError("require 'Employer' or 'Freelancer' role".into()).into(),
-      );
-    }
 
     Ok(AuthenticateWithOauth {
       code: value.code,
@@ -146,11 +123,8 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
       self_promotion: Some(false),
       username: Option::from(value.email),
       name: value.name,
-      answer: None,
+      answer: value.answer,
       pkce_code_verifier: None,
-      role: value.role,
-      accepted_application: value.accepted_application,
-      password: value.password.take().unwrap(),
     })
   }
 }
@@ -474,6 +448,7 @@ pub struct LoginResponse {
   pub registration_created: bool,
   /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
+  pub application_pending: bool
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

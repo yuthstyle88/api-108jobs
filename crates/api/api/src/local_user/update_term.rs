@@ -58,6 +58,7 @@ pub async fn update_term(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
+    application_pending: false,
   };
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
@@ -79,7 +80,7 @@ pub async fn update_term(
     )
     .await?;
 
-    let jwt = Claims::generate(user.id, user.email, user.role.to_string(), req, &context).await?;
+    let jwt = Claims::generate(user.id, user.email, user.role, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

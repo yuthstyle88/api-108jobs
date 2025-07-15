@@ -31,7 +31,7 @@ use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
 use lemmy_db_views_site::api::{
-  AuthenticateWithOauthRequest, EmailExitsRequest, EmailExitsResponse, RegisterWithOauthRequest,
+  AuthenticateWithOauthRequest, EmailExistsRequest, EmailExistsResponse, RegisterWithOauthRequest,
 };
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
@@ -93,7 +93,7 @@ pub async fn register(
         answer: data.captcha_answer.clone().unwrap_or_default(),
       },
     )
-    .await?;
+     .await?;
   }
 
   let slur_regex = slur_regex(&context).await?;
@@ -396,18 +396,18 @@ pub async fn authenticate_with_oauth(
   let language_tags = get_language_tags(&req);
 
   // validate inputs
-  // if data.oauth_provider_id == OAuthProviderId(0) || data.code.is_empty() || data.code.len() > 300 {
-  //   return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
-  // }
+  if data.oauth_provider_id == OAuthProviderId(0) || data.code.is_empty() || data.code.len() > 300 {
+    return Err(FastJobErrorType::OauthAuthorizationInvalid)?;
+  }
 
   // validate the redirect_uri
   let redirect_uri = &data.redirect_uri;
-  // if redirect_uri.host_str().unwrap_or("").is_empty()
-  //   || !redirect_uri.path().eq(&String::from("/oauth/callback"))
-  //   || !redirect_uri.query().unwrap_or("").is_empty()
-  // {
-  //   Err(FastJobErrorType::OauthAuthorizationInvalid)?
-  // }
+  if redirect_uri.host_str().unwrap_or("").is_empty()
+   || !redirect_uri.path().contains(&String::from("callback"))
+   || !redirect_uri.query().unwrap_or("").is_empty()
+  {
+    Err(FastJobErrorType::OauthAuthorizationInvalid)?
+  }
 
   // validate the PKCE challenge
   if let Some(code_verifier) = &data.pkce_code_verifier {
@@ -544,7 +544,7 @@ pub async fn authenticate_with_oauth(
               self_promotion: Some(self_promotion),
               accepted_application,
               email_verified: Some(oauth_provider.auto_verify_email),
-              ..LocalUserInsertForm::new(person.id, None)
+              ..LocalUserInsertForm::new(person.id, Some(tx_data.password.to_string()))
             };
 
             let local_user =
@@ -614,13 +614,13 @@ pub async fn authenticate_with_oauth(
 }
 
 pub async fn email_exists(
-  data: Json<EmailExitsRequest>,
+  data: Json<EmailExistsRequest>,
   context: Data<FastJobContext>,
-) -> FastJobResult<Json<EmailExitsResponse>> {
+) -> FastJobResult<Json<EmailExistsResponse>> {
   let data = data.into_inner();
   let pool = &mut context.pool();
   let result = LocalUser::check_is_email_taken(pool, &data.email).await;
-  Ok(Json(EmailExitsResponse {
+  Ok(Json(EmailExistsResponse {
     exists: result.is_err(),
   }))
 }

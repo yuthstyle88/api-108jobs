@@ -29,12 +29,12 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
 
-use lemmy_utils::error::FastJobError;
 #[cfg(feature = "full")]
 use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -71,8 +71,9 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
-  pub role: Role,
+  pub role: Option<Role>,
   pub accepted_application: Option<bool>,
+  pub password: SensitiveString,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -80,13 +81,16 @@ pub struct AuthenticateWithOauth {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
+  pub code: String,
   pub oauth_provider: String,
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
-  pub role: Role,
+  pub role: Option<Role>,
   pub accepted_application: Option<bool>,
+  pub password: Option<SensitiveString>,
+  pub password_verify: Option<SensitiveString>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -110,25 +114,35 @@ pub struct RegisterWithOauthRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-pub struct EmailExitsRequest {
+pub struct EmailExistsRequest {
   pub email: String,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
-  fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+  fn try_from(mut value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+    if value.password != value.password_verify {
+      return Err(FastJobErrorType::PasswordsDoNotMatch.into());
+    }
+
+    if !matches!(value.role, Some(Role::Employer | Role::Freelancer)) {
+      return Err(
+        FastJobErrorType::ValidationError("require 'Employer' or 'Freelancer' role".into()).into(),
+      );
+    }
 
     Ok(AuthenticateWithOauth {
-      code: "".to_string(),
+      code: value.code,
       oauth_provider_id: value.oauth_provider_id,
       redirect_uri: value.redirect_uri,
       self_promotion: Some(false),
-      username: Some(value.email),
+      username: Option::from(value.email),
       name: value.name,
       answer: None,
       pkce_code_verifier: None,
       role: value.role,
       accepted_application: value.accepted_application,
+      password: value.password.take().unwrap(),
     })
   }
 }
@@ -435,7 +449,7 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Default)]
-pub struct EmailExitsResponse {
+pub struct EmailExistsResponse {
   pub exists: bool,
 }
 

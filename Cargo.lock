@@ -3944,6 +3944,7 @@ dependencies = [
  "ts-rs",
  "url",
  "uuid",
+ "validator",
 ]
 
 [[package]]

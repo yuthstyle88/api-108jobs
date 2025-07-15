@@ -3343,6 +3343,7 @@ dependencies = [
  "lemmy_db_views_reports",
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
+ "lemmy_email",
  "lemmy_multilang",
  "lemmy_utils",
  "p256",

@@ -17,21 +17,9 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-/// Response from OAuth token endpoint
-struct TokenResponse {
-  pub access_token: String,
-  pub token_type: String,
-  pub expires_in: Option<i64>,
-  pub refresh_token: Option<String>,
-  pub scope: Option<String>,
-}
 
-pub async fn update_user(
+pub async fn update_term(
   data: Json<OAuthUserUpdateRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,

@@ -80,6 +80,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::local_user::update_term::update_term;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -253,6 +254,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/totp/update", post().to(update_totp))
             .route("/verify_email", post().to(verify_email))
             .route("/exchange_key", post().to(exchange_key))
+            .route("/update_term", post().to(update_term))
             .route(
               "/resend_verification_email",
               post().to(resend_verification_email),

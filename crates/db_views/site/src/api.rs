@@ -25,16 +25,16 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
-
+use validator::Validate;
 #[cfg(feature = "full")]
 use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -76,7 +76,7 @@ pub struct AuthenticateWithOauth {
   pub password: SensitiveString,
 }
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Validate, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
@@ -86,10 +86,14 @@ pub struct AuthenticateWithOauthRequest {
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
   pub name: Option<String>,
-  pub email: String,
+  pub email: Option<String>,
   pub role: Option<Role>,
   pub accepted_application: Option<bool>,
+
+  #[validate(required(message = "required"))]
   pub password: Option<SensitiveString>,
+
+  #[validate(required(message = "required"))]
   pub password_verify: Option<SensitiveString>,
 }
 #[skip_serializing_none]
@@ -121,6 +125,10 @@ pub struct EmailExistsRequest {
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
   fn try_from(mut value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+    value
+      .validate()
+      .map_err(|err| FastJobErrorType::ValidationError(err.to_string()))?;
+
     if value.password != value.password_verify {
       return Err(FastJobErrorType::PasswordsDoNotMatch.into());
     }

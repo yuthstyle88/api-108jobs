@@ -108,11 +108,7 @@ pub async fn register(
 
   // Automatically set their application as accepted, if they created this with open registration.
   // Also fixes a bug which allows users to log in when registrations are changed to closed.
-  let accepted_application = if data.accepted_application == Some(true) {
-    Some(true)
-  } else {
-    Some(false)
-  };
+  let accepted_application = Some(data.accepted_application == Some(true));
 
   // Show nsfw content if param is true, or if content_warning exists
   let self_promotion = data
@@ -287,11 +283,7 @@ pub async fn register_with_oauth(
     // Extract the OAUTH multilang claim from the returned user_info
     let email = data.email;
 
-    let accepted_application = if data.accepted_application == Some(true) {
-      Some(true)
-    } else {
-      Some(false)
-    };
+    let accepted_application = Some(data.accepted_application == Some(true));
 
     let slur_regex = slur_regex(&context).await?;
 
@@ -477,11 +469,7 @@ pub async fn authenticate_with_oauth(
     // Extract the OAUTH email claim from the returned user_info
     let email = read_user_info(&user_info, "email")?;
 
-    let accepted_application = if data.accepted_application == Some(true) {
-      Some(true)
-    } else {
-      Some(false)
-    };
+    let accepted_application = Some(data.accepted_application == Some(true));
 
     // Lookup user by OAUTH email and link accounts
     local_user_view = LocalUserView::find_by_email(pool, &email).await;

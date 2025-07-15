@@ -73,7 +73,9 @@ pub async fn update_user(
   };
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
-  if !local_site.site_setup || (!local_site.require_email_verification) {
+  if !local_site.site_setup
+    || (local_user_view.local_user.email_verified && !local_user_view.local_user.accepted_application)
+  {
     if data.password != data.password_verify {
       Err(FastJobErrorType::PasswordsDoNotMatch)?
     }

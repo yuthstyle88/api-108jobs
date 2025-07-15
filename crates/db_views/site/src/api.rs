@@ -18,7 +18,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, Role, VoteShow,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
@@ -34,7 +34,7 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use lemmy_utils::error::FastJobError;
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -71,6 +71,9 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
+  pub role: Option<Role>,
+  pub accepted_application: Option<bool>,
+  pub password: SensitiveString,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -83,9 +86,11 @@ pub struct AuthenticateWithOauthRequest {
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
   pub name: Option<String>,
-  pub email: Option<String>,
-  pub roles: Option<String>,
-  pub answer: Option<String>,
+  pub email: String,
+  pub role: Option<Role>,
+  pub accepted_application: Option<bool>,
+  pub password: Option<SensitiveString>,
+  pub password_verify: Option<SensitiveString>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -98,33 +103,46 @@ pub struct RegisterWithOauthRequest {
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
-  pub roles: String,
+  pub role: Option<Role>,
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
+  pub accepted_application: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-pub struct EmailExitsRequest {
+pub struct EmailExistsRequest {
   pub email: String,
 }
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
-  fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+  fn try_from(mut value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
+    if value.password != value.password_verify {
+      return Err(FastJobErrorType::PasswordsDoNotMatch.into());
+    }
 
-    Ok(AuthenticateWithOauth{
+    if !matches!(value.role, Some(Role::Employer | Role::Freelancer)) {
+      return Err(
+        FastJobErrorType::ValidationError("require 'Employer' or 'Freelancer' role".into()).into(),
+      );
+    }
+
+    Ok(AuthenticateWithOauth {
       code: value.code,
       oauth_provider_id: value.oauth_provider_id,
       redirect_uri: value.redirect_uri,
       self_promotion: Some(false),
-      username: value.email,
+      username: Option::from(value.email),
       name: value.name,
-      answer: value.answer,
+      answer: None,
       pkce_code_verifier: None,
+      role: value.role,
+      accepted_application: value.accepted_application,
+      password: value.password.take().unwrap(),
     })
   }
 }
@@ -224,7 +242,6 @@ pub struct EditOAuthProvider {
   pub use_pkce: Option<bool>,
   pub enabled: Option<bool>,
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -432,7 +449,7 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Default)]
-pub struct EmailExitsResponse {
+pub struct EmailExistsResponse {
   pub exists: bool,
 }
 

@@ -40,10 +40,18 @@ pub async fn change_password(
     LocalUser::update_password(&mut context.pool(), local_user_id, &new_password).await?;
 
   LoginToken::invalidate_all(&mut context.pool(), local_user_view.local_user.id).await?;
-  let roles: Vec<String> = serde_json::from_str(&local_user_view.local_user.roles)?;
   // Return the jwt
   Ok(Json(LoginResponse {
-    jwt: Some(Claims::generate(updated_local_user.id, updated_local_user.email, roles, req, &context).await?),
+    jwt: Some(
+      Claims::generate(
+        updated_local_user.id,
+        updated_local_user.email,
+        local_user_view.local_user.role.to_string(),
+        req,
+        &context,
+      )
+      .await?,
+    ),
     verify_email_sent: false,
     registration_created: false,
   }))

@@ -1,4 +1,4 @@
-use crate::newtypes::CategoryId;
+use crate::newtypes::{CategoryGroupId, CategoryId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -15,10 +15,12 @@ use {crate::newtypes::LtreeDef, diesel_ltree::Ltree, lemmy_db_schema_file::schem
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct Category {
   pub id: CategoryId,
+  pub group_id: CategoryGroupId,
   #[cfg(feature = "full")]
   #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
   pub path: Ltree,
   pub title: String,
+  pub subtitle: Option<String>,
   pub slug: String,
   pub image: Option<String>,
   pub active: bool,
@@ -35,7 +37,9 @@ pub struct Category {
 )]
 #[cfg_attr(feature = "full", diesel(table_name = category))]
 pub struct CategoryInsertForm {
+  pub group_id: CategoryGroupId,
   pub title: String,
+  pub subtitle: Option<String>,
   pub slug: String,
   pub image: Option<String>,
   pub active: Option<bool>,

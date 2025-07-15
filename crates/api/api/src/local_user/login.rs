@@ -10,11 +10,11 @@ use lemmy_api_utils::{
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_site::login::LoginRequest;
 use lemmy_db_views_site::{
   api::{Login, LoginResponse},
   SiteView,
 };
-use lemmy_db_views_site::login::LoginRequest;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
@@ -22,10 +22,7 @@ pub async fn login(
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
-
-  let login_request: Login = data
-      .0.clone()
-      .try_into()?;
+  let login_request: Login = data.0.clone().try_into()?;
 
   let site_view = SiteView::read_local(&mut context.pool()).await?;
 
@@ -58,8 +55,14 @@ pub async fn login(
       &context.settings().hostname,
     )?;
   }
-  let roles: Vec<String> = serde_json::from_str(&local_user_view.local_user.roles)?;
-  let jwt = Claims::generate(local_user_view.local_user.id, local_user_view.local_user.email, roles, req, &context).await?;
+  let jwt = Claims::generate(
+    local_user_view.local_user.id,
+    local_user_view.local_user.email,
+    local_user_view.local_user.role.to_string(),
+    req,
+    &context,
+  )
+  .await?;
 
   Ok(Json(LoginResponse {
     jwt: Some(jwt.clone()),

@@ -1,49 +1,53 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "actor_type_enum"))]
-    pub struct ActorTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "actor_type_enum"))]
+  pub struct ActorTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "comment_sort_type_enum"))]
-    pub struct CommentSortTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "comment_sort_type_enum"))]
+  pub struct CommentSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_follower_state"))]
-    pub struct CommunityFollowerState;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_follower_state"))]
+  pub struct CommunityFollowerState;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_visibility"))]
-    pub struct CommunityVisibility;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_visibility"))]
+  pub struct CommunityVisibility;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "listing_type_enum"))]
-    pub struct ListingTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "listing_type_enum"))]
+  pub struct ListingTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "ltree"))]
-    pub struct Ltree;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "ltree"))]
+  pub struct Ltree;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_listing_mode_enum"))]
-    pub struct PostListingModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_listing_mode_enum"))]
+  pub struct PostListingModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
-    pub struct PostNotificationsModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
+  pub struct PostNotificationsModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_sort_type_enum"))]
-    pub struct PostSortTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_sort_type_enum"))]
+  pub struct PostSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "registration_mode_enum"))]
-    pub struct RegistrationModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "registration_mode_enum"))]
+  pub struct RegistrationModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "vote_show_enum"))]
-    pub struct VoteShowEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "vote_show_enum"))]
+  pub struct VoteShowEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "role"))]
+  pub struct Role;
 }
 
 diesel::table! {
@@ -200,8 +204,6 @@ diesel::table! {
         updated_at -> Timestamptz,
     }
 }
-
-
 
 diesel::table! {
     use diesel::sql_types::*;
@@ -477,6 +479,7 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::CommentSortTypeEnum;
     use super::sql_types::VoteShowEnum;
+    use super::sql_types::Role;
 
     local_user (id) {
         id -> Int4,
@@ -501,7 +504,6 @@ diesel::table! {
         blur_self_promotion -> Bool,
         infinite_scroll_enabled -> Bool,
         admin -> Bool,
-        roles -> Varchar,
         post_listing_mode -> PostListingModeEnum,
         totp_2fa_enabled -> Bool,
         enable_keyboard_navigation -> Bool,
@@ -517,6 +519,7 @@ diesel::table! {
         show_downvotes -> VoteShowEnum,
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
+        role -> Role,
     }
 }
 
@@ -829,13 +832,25 @@ diesel::table! {
 }
 
 diesel::table! {
+    category_group (id) {
+        id -> Int4,
+        title -> Text,
+        sort_order -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use diesel_ltree::sql_types::Ltree;
 
     category (id) {
         id -> Int4,
+        group_id -> Int4,
         path -> Ltree,
         title -> Text,
+        subtitle -> Nullable<Text>,
         slug -> Text,
         image -> Nullable<Text>,
         active -> Bool,
@@ -940,8 +955,6 @@ diesel::table! {
         content -> Text,
     }
 }
-
-
 
 diesel::table! {
     received_activity (ap_id) {
@@ -1174,6 +1187,7 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
+diesel::joinable!(category -> category_group (group_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1245,4 +1259,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
+  category_group,
+  category,
 );

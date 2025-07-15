@@ -6,6 +6,7 @@ use lemmy_db_schema::{
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use validator::Validate;
+use lemmy_db_schema_file::enums::Role;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -71,6 +72,8 @@ pub struct Register {
   pub honeypot: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
+  pub role: Option<Role>,
+  pub accepted_application: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -98,6 +101,10 @@ pub struct RegisterRequest {
 
   #[validate(required(message = "required"))]
   pub captcha_answer: Option<String>,
+
+  pub role: Option<Role>,
+
+  pub accepted_application: Option<bool>,
 }
 
 #[skip_serializing_none]

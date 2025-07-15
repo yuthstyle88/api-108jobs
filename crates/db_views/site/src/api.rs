@@ -18,7 +18,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, Role, VoteShow,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
@@ -29,12 +29,12 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
 
+use lemmy_utils::error::FastJobError;
 #[cfg(feature = "full")]
 use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use lemmy_utils::error::FastJobError;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -71,6 +71,8 @@ pub struct AuthenticateWithOauth {
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
+  pub role: Role,
+  pub accepted_application: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -83,7 +85,8 @@ pub struct AuthenticateWithOauthRequest {
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
-  pub roles: String,
+  pub role: Role,
+  pub accepted_application: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -96,10 +99,11 @@ pub struct RegisterWithOauthRequest {
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
-  pub roles: String,
+  pub role: Option<Role>,
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,
+  pub accepted_application: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -114,7 +118,7 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
   fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
 
-    Ok(AuthenticateWithOauth{
+    Ok(AuthenticateWithOauth {
       code: "".to_string(),
       oauth_provider_id: value.oauth_provider_id,
       redirect_uri: value.redirect_uri,
@@ -123,6 +127,8 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
       name: value.name,
       answer: None,
       pkce_code_verifier: None,
+      role: value.role,
+      accepted_application: value.accepted_application,
     })
   }
 }
@@ -222,7 +228,6 @@ pub struct EditOAuthProvider {
   pub use_pkce: Option<bool>,
   pub enabled: Option<bool>,
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

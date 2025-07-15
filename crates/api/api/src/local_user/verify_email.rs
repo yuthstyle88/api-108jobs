@@ -37,10 +37,16 @@ pub async fn verify_email(
   LocalUser::update(&mut context.pool(), local_user_id, &form).await?;
 
   EmailVerification::delete_old_tokens_for_local_user(&mut context.pool(), local_user_id).await?;
-  
+
   send_email_verified_email(&local_user_view, context.settings()).await?;
-  let roles: Vec<String> = serde_json::from_str(&local_user_view.local_user.roles)?;
-  let jwt = Claims::generate(local_user_view.local_user.id, local_user_view.local_user.email, roles, req, &context).await?;
+  let jwt = Claims::generate(
+    local_user_view.local_user.id,
+    local_user_view.local_user.email,
+    local_user_view.local_user.role.to_string(),
+    req,
+    &context,
+  )
+  .await?;
 
   Ok(Json(VerifyEmailSuccessResponse { jwt }))
 }

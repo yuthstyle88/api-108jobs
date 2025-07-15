@@ -4,11 +4,7 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::{
-  CommentSortType,
-  ListingType,
-  PostListingMode,
-  PostSortType,
-  VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, Role, VoteShow,
 };
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::local_user;
@@ -59,8 +55,6 @@ pub struct LocalUser {
   pub infinite_scroll_enabled: bool,
   /// Whether the person is an admin.
   pub admin: bool,
-  /// Whether the roles have two roles.
-  pub roles: String,
   /// A post-view mode that changes how multiple post listings look.
   pub post_listing_mode: PostListingMode,
   pub totp_2fa_enabled: bool,
@@ -86,6 +80,7 @@ pub struct LocalUser {
   pub show_downvotes: VoteShow,
   pub show_upvote_percentage: bool,
   pub show_person_votes: bool,
+  pub role: Role,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -160,6 +155,8 @@ pub struct LocalUserInsertForm {
   pub show_upvote_percentage: Option<bool>,
   #[new(default)]
   pub show_person_votes: Option<bool>,
+  #[new(default)]
+  pub role: Option<Role>,
 }
 
 #[derive(Clone, Default)]

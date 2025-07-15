@@ -439,7 +439,7 @@ pub struct EmailExistsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A response for your login.
+#[serde(rename_all = "camelCase")]
 pub struct LoginResponse {
   /// This is None in response to `Register` if multilang verification is enabled, or the server
   /// requires registration applications.

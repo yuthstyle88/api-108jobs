@@ -111,6 +111,7 @@ pub struct RegisterRequest {
 #[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct OAuthUserUpdateRequest {
   #[validate(required(message = "required"))]
   pub password: Option<SensitiveString>,
@@ -122,7 +123,7 @@ pub struct OAuthUserUpdateRequest {
     email(message = "Invalid multilang address")
   )]
   pub email: Option<String>,
-  pub accepted_application: Option<bool>,
+  pub terms_accepted: Option<bool>,
   pub role: Option<Role>,
 }
 

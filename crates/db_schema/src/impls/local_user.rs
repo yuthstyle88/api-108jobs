@@ -110,7 +110,7 @@ impl LocalUser {
   pub async fn update_term(
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
-    accepted_application: bool,
+    terms_accepted: bool,
     password: &str,
     role_: Role
   ) -> FastJobResult<Self> {
@@ -123,7 +123,7 @@ impl LocalUser {
     }
     let password_hash = hash(password, DEFAULT_COST)?;
     let form = UpdateForm {
-      accepted_application,
+      accepted_application: terms_accepted,
       password_encrypted: String::from(password_hash),
         role: role_,
     };

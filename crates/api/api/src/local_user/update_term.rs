@@ -74,7 +74,7 @@ pub async fn update_term(
     let user = LocalUser::update_term(
       &mut context.pool(),
       local_user_view.local_user.id,
-      data.accepted_application.unwrap(),
+      data.terms_accepted.unwrap(),
       &password.unwrap(),
       data.role.unwrap(),
     )

@@ -457,7 +457,12 @@ pub async fn authenticate_with_oauth(
 
     check_local_user_valid(&user_view)?;
     check_email_verified(&user_view, &site_view)?;
-    check_registration_application(&user_view, &site_view.local_site, pool).await?;
+
+    if !user_view.local_user.accepted_application {
+      login_response.registration_created = true;
+    }else {
+      check_registration_application(&user_view, &site_view.local_site, pool).await?;
+    }
     local_user
   } else {
     // user has never previously registered using oauth

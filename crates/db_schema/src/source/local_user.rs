@@ -116,7 +116,7 @@ pub struct LocalUserInsertForm {
   #[new(default)]
   pub accepted_application: Option<bool>,
   #[new(default)]
-  pub totp_2fa_secret: Option<Option<String>>,
+  pub totp_2fa_secret: Option<String>,
   #[new(default)]
   pub open_links_in_new_tab: Option<bool>,
   #[new(default)]
@@ -163,8 +163,8 @@ pub struct LocalUserInsertForm {
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = local_user))]
 pub struct LocalUserUpdateForm {
-  pub password_encrypted: Option<Option<String>>,
-  pub email: Option<Option<String>>,
+  pub password_encrypted: Option<String>,
+  pub email: Option<String>,
   pub self_promotion: Option<bool>,
   pub theme: Option<String>,
   pub default_post_sort_type: Option<PostSortType>,
@@ -176,7 +176,7 @@ pub struct LocalUserUpdateForm {
   pub show_read_posts: Option<bool>,
   pub email_verified: Option<bool>,
   pub accepted_application: Option<bool>,
-  pub totp_2fa_secret: Option<Option<String>>,
+  pub totp_2fa_secret: Option<String>,
   pub open_links_in_new_tab: Option<bool>,
   pub blur_self_promotion: Option<bool>,
   pub infinite_scroll_enabled: Option<bool>,

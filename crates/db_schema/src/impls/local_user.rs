@@ -26,6 +26,7 @@ use lemmy_db_schema_file::{
   enums::CommunityVisibility,
   schema::{community, community_actions, local_user, person, registration_application},
 };
+use lemmy_db_schema_file::enums::Role;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUser {
@@ -105,6 +106,33 @@ impl LocalUser {
         .get_result::<Self>(conn)
         .await
         .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+  }
+  pub async fn update_term(
+    pool: &mut DbPool<'_>,
+    local_user_id: LocalUserId,
+    accepted_application: bool,
+    password: &str,
+    role_: Role
+  ) -> FastJobResult<Self> {
+    #[derive(AsChangeset)]
+    #[diesel(table_name = local_user)]
+    struct UpdateForm {
+      accepted_application: bool,
+      password_encrypted: String,
+      role: Role,
+    }
+    let password_hash = hash(password, DEFAULT_COST)?;
+    let form = UpdateForm {
+      accepted_application,
+      password_encrypted: String::from(password_hash),
+        role: role_,
+    };
+    let conn = &mut get_conn(pool).await?;
+     diesel::update(local_user::table.find(local_user_id))
+     .set(form)
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
   pub async fn set_all_users_email_verified(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {

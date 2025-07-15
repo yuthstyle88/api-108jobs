@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use validator::Validate;
 use lemmy_db_schema_file::enums::Role;
-
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -107,16 +106,24 @@ pub struct RegisterRequest {
   pub accepted_application: Option<bool>,
 }
 
+
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct OAuthUserRegisterRequest {
+pub struct OAuthUserUpdateRequest {
+  #[validate(required(message = "required"))]
+  pub password: Option<SensitiveString>,
+
+  #[validate(required(message = "required"))]
+  pub password_verify: Option<SensitiveString>,
   #[validate(
     required(message = "required"),
     email(message = "Invalid multilang address")
   )]
-  pub email: Option<SensitiveString>,
+  pub email: Option<String>,
+  pub accepted_application: Option<bool>,
+  pub role: Option<Role>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

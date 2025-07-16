@@ -153,6 +153,7 @@ pub struct Search {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The search response, containing lists of the return type possibilities
+#[serde(rename_all = "camelCase")]
 pub struct SearchResponse {
   pub results: Vec<SearchCombinedView>,
   /// the pagination cursor to use to fetch the next page

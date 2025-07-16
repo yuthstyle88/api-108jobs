@@ -44,6 +44,7 @@ pub struct ListMedia {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct ListMediaResponse {
   pub images: Vec<LocalImageView>,
   /// the pagination cursor to use to fetch the next page
@@ -55,6 +56,7 @@ pub struct ListMediaResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct UploadImageResponse {
   pub image_url: Url,
   pub filename: String,

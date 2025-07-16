@@ -125,6 +125,7 @@ pub struct ListPersonLiked {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Your liked posts response.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonLikedResponse {
   pub liked: Vec<PersonLikedCombinedView>,
   /// the pagination cursor to use to fetch the next page

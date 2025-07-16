@@ -123,6 +123,7 @@ pub struct ListPersonSaved {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A person's saved content response.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonSavedResponse {
   pub saved: Vec<PersonSavedCombinedView>,
   /// the pagination cursor to use to fetch the next page

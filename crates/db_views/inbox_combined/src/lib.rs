@@ -220,6 +220,7 @@ pub struct ListInbox {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Get your inbox (replies, comment mentions, post mentions, and messages)
+#[serde(rename_all = "camelCase")]
 pub struct ListInboxResponse {
   pub inbox: Vec<InboxCombinedView>,
   /// the pagination cursor to use to fetch the next page

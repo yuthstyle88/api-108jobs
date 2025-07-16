@@ -10,6 +10,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment response.
+#[serde(rename_all = "camelCase")]
 pub struct CommentResponse {
   pub comment_view: CommentView,
 }
@@ -101,6 +102,7 @@ pub struct GetComments {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The comment list response.
+#[serde(rename_all = "camelCase")]
 pub struct GetCommentsResponse {
   pub comments: Vec<CommentView>,
   pub next_page: Option<PaginationCursor>,
@@ -111,6 +113,7 @@ pub struct GetCommentsResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A slimmer comment list response, without the post or community.
+#[serde(rename_all = "camelCase")]
 pub struct GetCommentsSlimResponse {
   pub comments: Vec<CommentSlimView>,
   pub next_page: Option<PaginationCursor>,
@@ -133,6 +136,7 @@ pub struct ListCommentLikes {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The comment likes response
+#[serde(rename_all = "camelCase")]
 pub struct ListCommentLikesResponse {
   pub comment_likes: Vec<VoteView>,
   /// the pagination cursor to use to fetch the next page

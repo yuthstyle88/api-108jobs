@@ -24,6 +24,7 @@ pub struct AddModToCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response of adding a moderator to a community.
+#[serde(rename_all = "camelCase")]
 pub struct AddModToCommunityResponse {
   pub moderators: Vec<CommunityModeratorView>,
 }
@@ -60,6 +61,7 @@ pub struct BanFromCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response for banning a user from a community.
+#[serde(rename_all = "camelCase")]
 pub struct BanFromCommunityResponse {
   pub person_view: PersonView,
   pub banned: bool,
@@ -79,6 +81,7 @@ pub struct BlockCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The block community response.
+#[serde(rename_all = "camelCase")]
 pub struct BlockCommunityResponse {
   pub community_view: CommunityView,
   pub blocked: bool,
@@ -97,6 +100,7 @@ pub struct CommunityIdQuery {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A simple community response.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityResponse {
   pub community_view: CommunityView,
   pub discussion_languages: Vec<LanguageId>,
@@ -195,6 +199,7 @@ pub struct GetCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The community response.
+#[serde(rename_all = "camelCase")]
 pub struct GetCommunityResponse {
   pub community_view: CommunityView,
   pub site: Option<Site>,
@@ -244,6 +249,7 @@ pub struct ListCommunities {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response for listing communities.
+#[serde(rename_all = "camelCase")]
 pub struct ListCommunitiesResponse {
   pub communities: Vec<CommunityView>,
   /// the pagination cursor to use to fetch the next page

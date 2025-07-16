@@ -311,6 +311,7 @@ pub struct EditSite {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// An expanded response for a site.
+#[serde(rename_all = "camelCase")]
 pub struct GetSiteResponse {
   pub site_view: SiteView,
   pub admins: Vec<PersonView>,
@@ -333,6 +334,7 @@ pub struct GetSiteResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response for a site.
+#[serde(rename_all = "camelCase")]
 pub struct SiteResponse {
   pub site_view: SiteView,
 }
@@ -341,6 +343,7 @@ pub struct SiteResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A captcha response.
+#[serde(rename_all = "camelCase")]
 pub struct CaptchaResponse {
   /// A Base64 encoded png
   pub png: String,
@@ -374,6 +377,7 @@ pub struct DeleteAccount {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A wrapper for the captcha response.
+#[serde(rename_all = "camelCase")]
 pub struct GetCaptchaResponse {
   /// Will be None if captchas are disabled.
   pub ok: Option<CaptchaResponse>,
@@ -382,6 +386,7 @@ pub struct GetCaptchaResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct GenerateTotpSecretResponse {
   pub totp_secret_url: SensitiveString,
 }
@@ -389,6 +394,7 @@ pub struct GenerateTotpSecretResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct ListLoginsResponse {
   pub logins: Vec<LoginToken>,
 }
@@ -421,6 +427,7 @@ pub struct ExchangeKey {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
 }
@@ -429,6 +436,7 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Default)]
+#[serde(rename_all = "camelCase")]
 pub struct EmailExistsResponse {
   pub exists: bool,
 }
@@ -571,6 +579,7 @@ pub struct UpdateTotp {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateTotpResponse {
   pub enabled: bool,
 }
@@ -593,6 +602,7 @@ pub struct VerifyEmail {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VerifyEmailSuccessResponse {
   pub jwt: SensitiveString,
 }
@@ -613,6 +623,7 @@ pub struct ListPersonHidden {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// You hidden posts response.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonHiddenResponse {
   pub hidden: Vec<PostView>,
   /// the pagination cursor to use to fetch the next page
@@ -636,6 +647,7 @@ pub struct ListPersonRead {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// You read posts response.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonReadResponse {
   pub read: Vec<PostView>,
   /// the pagination cursor to use to fetch the next page
@@ -674,6 +686,7 @@ pub struct ListTaglines {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for taglines.
+#[serde(rename_all = "camelCase")]
 pub struct ListTaglinesResponse {
   pub taglines: Vec<Tagline>,
   /// the pagination cursor to use to fetch the next page
@@ -684,6 +697,7 @@ pub struct ListTaglinesResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct TaglineResponse {
   pub tagline: Tagline,
 }
@@ -761,6 +775,7 @@ pub struct UserSettingsBackup {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Your exported data.
+#[serde(rename_all = "camelCase")]
 pub struct ExportDataResponse {
   pub inbox: Vec<PostOrCommentOrPrivateMessage>,
   pub content: Vec<PostOrCommentOrPrivateMessage>,
@@ -774,6 +789,7 @@ pub struct ExportDataResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response that completes successfully.
+#[serde(rename_all = "camelCase")]
 pub struct SuccessResponse {
   pub success: bool,
 }

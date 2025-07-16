@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response containing a count of unread notifications.
+#[serde(rename_all = "camelCase")]
 pub struct GetUnreadCountResponse {
   pub count: i64,
 }
@@ -17,6 +18,7 @@ pub struct GetUnreadCountResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The count of unread registration applications.
+#[serde(rename_all = "camelCase")]
 pub struct GetUnreadRegistrationApplicationCountResponse {
   pub registration_applications: i64,
 }

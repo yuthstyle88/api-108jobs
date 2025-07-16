@@ -13,6 +13,7 @@ pub struct GetCommunityPendingFollowsCount {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct GetCommunityPendingFollowsCountResponse {
   pub count: i64,
 }
@@ -34,6 +35,7 @@ pub struct ListCommunityPendingFollows {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct ListCommunityPendingFollowsResponse {
   pub items: Vec<PendingFollow>,
   /// the pagination cursor to use to fetch the next page

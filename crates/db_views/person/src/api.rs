@@ -17,6 +17,7 @@ pub struct AddAdmin {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response of current admins.
+#[serde(rename_all = "camelCase")]
 pub struct AddAdminResponse {
   pub admins: Vec<PersonView>,
 }
@@ -43,6 +44,7 @@ pub struct BanPerson {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for a banned person.
+#[serde(rename_all = "camelCase")]
 pub struct BanPersonResponse {
   pub person_view: PersonView,
   pub banned: bool,
@@ -61,6 +63,7 @@ pub struct BlockPerson {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response for a person block.
+#[serde(rename_all = "camelCase")]
 pub struct BlockPersonResponse {
   pub person_view: PersonView,
   pub blocked: bool,
@@ -84,6 +87,7 @@ pub struct GetPersonDetails {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A person's details response.
+#[serde(rename_all = "camelCase")]
 pub struct GetPersonDetailsResponse {
   pub person_view: PersonView,
   pub site: Option<Site>,

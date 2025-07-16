@@ -37,6 +37,7 @@ pub struct GetModlog {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The modlog fetch response.
+#[serde(rename_all = "camelCase")]
 pub struct GetModlogResponse {
   pub modlog: Vec<ModlogCombinedView>,
   /// the pagination cursor to use to fetch the next page

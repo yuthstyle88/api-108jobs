@@ -44,6 +44,7 @@ pub struct ListRegistrationApplications {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The list of registration applications.
+#[serde(rename_all = "camelCase")]
 pub struct ListRegistrationApplicationsResponse {
   pub registration_applications: Vec<RegistrationApplicationView>,
   /// the pagination cursor to use to fetch the next page
@@ -131,6 +132,7 @@ pub struct OAuthUserUpdateRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The response of an action done to a registration application.
+#[serde(rename_all = "camelCase")]
 pub struct RegistrationApplicationResponse {
   pub registration_application: RegistrationApplicationView,
 }

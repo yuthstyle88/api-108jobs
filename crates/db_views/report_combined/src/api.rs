@@ -33,6 +33,7 @@ pub struct ListReports {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post reports response.
+#[serde(rename_all = "camelCase")]
 pub struct ListReportsResponse {
   pub reports: Vec<ReportCombinedView>,
   /// the pagination cursor to use to fetch the next page

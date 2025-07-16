@@ -139,6 +139,7 @@ pub struct GetPost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post response.
+#[serde(rename_all = "camelCase")]
 pub struct GetPostResponse {
   pub post_view: PostView,
   pub community_view: CommunityView,
@@ -181,6 +182,7 @@ pub struct GetPosts {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post list response.
+#[serde(rename_all = "camelCase")]
 pub struct GetPostsResponse {
   pub posts: Vec<PostView>,
   /// the pagination cursor to use to fetch the next page
@@ -200,6 +202,7 @@ pub struct GetSiteMetadata {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The site metadata response.
+#[serde(rename_all = "camelCase")]
 pub struct GetSiteMetadataResponse {
   pub metadata: LinkMetadata,
 }
@@ -241,6 +244,7 @@ pub struct ListPostLikes {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post likes response
+#[serde(rename_all = "camelCase")]
 pub struct ListPostLikesResponse {
   pub post_likes: Vec<VoteView>,
   /// the pagination cursor to use to fetch the next page
@@ -283,6 +287,7 @@ pub struct OpenGraphData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct PostResponse {
   pub post_view: PostView,
 }

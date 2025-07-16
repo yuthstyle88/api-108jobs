@@ -21,6 +21,7 @@ pub struct CreateCustomEmoji {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for a custom emoji.
+#[serde(rename_all = "camelCase")]
 pub struct CustomEmojiResponse {
   pub custom_emoji: CustomEmojiView,
 }
@@ -59,6 +60,7 @@ pub struct ListCustomEmojis {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for custom emojis.
+#[serde(rename_all = "camelCase")]
 pub struct ListCustomEmojisResponse {
   pub custom_emojis: Vec<CustomEmojiView>,
 }

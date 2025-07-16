@@ -14,6 +14,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The comment report response.
+#[serde(rename_all = "camelCase")]
 pub struct CommentReportResponse {
   pub comment_report_view: CommentReportView,
 }
@@ -22,6 +23,7 @@ pub struct CommentReportResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community report response.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityReportResponse {
   pub community_report_view: CommunityReportView,
 }
@@ -69,6 +71,7 @@ pub struct GetReportCount {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response for the number of reports.
+#[serde(rename_all = "camelCase")]
 pub struct GetReportCountResponse {
   pub count: i64,
 }
@@ -104,6 +107,7 @@ pub struct ResolvePostReport {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post report response.
+#[serde(rename_all = "camelCase")]
 pub struct PostReportResponse {
   pub post_report_view: PostReportView,
 }

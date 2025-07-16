@@ -17,6 +17,7 @@ pub struct AdminListUsers {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct AdminListUsersResponse {
   pub users: Vec<LocalUserView>,
   /// the pagination cursor to use to fetch the next page

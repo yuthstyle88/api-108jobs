@@ -313,6 +313,7 @@ fn extract_opengraph_data(html_bytes: &[u8], url: &Url) -> FastJobResult<OpenGra
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PictrsResponse {
   #[serde(default)]
   pub files: Vec<PictrsFile>,
@@ -367,6 +368,7 @@ impl PictrsFileDetails {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct PictrsPurgeResponse {
   msg: String,
   aliases: Vec<String>,

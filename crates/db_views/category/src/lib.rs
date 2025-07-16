@@ -11,12 +11,12 @@ pub mod impls;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-// #[cfg_attr(feature = "full", derive(Queryable, Selectable))]
-// #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[cfg_attr(feature = "full", derive(Queryable, Selectable))]
+#[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 /// A category view.
 pub struct CategoryView {
+  #[cfg_attr(feature = "full", diesel(embed))]
   pub category: Category,
-  pub subcategory_groups: Vec<CategoryGroup>,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub subcategory_groups: CategoryGroup,
 }

@@ -1,6 +1,8 @@
+use crate::api::{Login, LoginRequest};
 use crate::{api::UserSettingsBackup, SiteView};
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
+use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::{
   impls::local_user::UserBackupLists,
   utils::{get_conn, DbPool},
@@ -59,5 +61,29 @@ pub fn user_backup_list_to_user_settings_backup(
     blocked_users: vec_into(lists.blocked_users),
     saved_posts: vec_into(lists.saved_posts),
     saved_comments: vec_into(lists.saved_comments),
+  }
+}
+
+impl TryFrom<LoginRequest> for Login {
+  type Error = FastJobError;
+
+  fn try_from(form: LoginRequest) -> Result<Self, Self::Error> {
+    if form.username_or_email.trim().is_empty() {
+      return Err(FastJobError::from(FastJobErrorType::EmptyUsername));
+    }
+
+    if form.password.trim().is_empty() {
+      return Err(FastJobError::from(FastJobErrorType::EmptyPassword));
+    }
+
+    if form.password.len() < 6 || form.password.len() > 32 {
+      return Err(FastJobError::from(FastJobErrorType::InvalidPasswordLength));
+    }
+
+    Ok(Self {
+      username_or_email: SensitiveString::from(form.username_or_email),
+      password: SensitiveString::from(form.password),
+      totp_2fa_token: form.totp_2fa_token,
+    })
   }
 }

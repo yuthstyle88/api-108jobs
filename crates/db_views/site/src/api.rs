@@ -25,7 +25,7 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use lemmy_utils::error::FastJobError;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -112,8 +112,7 @@ pub struct EmailExistsRequest {
 
 impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
   type Error = FastJobError;
-  fn try_from(mut value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
-
+  fn try_from(value: AuthenticateWithOauthRequest) -> Result<Self, Self::Error> {
     Ok(AuthenticateWithOauth {
       code: value.code,
       oauth_provider_id: value.oauth_provider_id,
@@ -414,6 +413,13 @@ pub struct Login {
   pub totp_2fa_token: Option<String>,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct LoginRequest {
+  pub username_or_email: String,
+  pub password: String,
+  pub totp_2fa_token: Option<String>,
+}
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -454,7 +460,7 @@ pub struct LoginResponse {
   pub registration_created: bool,
   /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
-  pub application_pending: bool
+  pub application_pending: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -79,12 +79,10 @@ pub struct AuthenticateWithOauth {
 #[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauthRequest {
   pub code: String,
-  pub oauth_provider: String,
   pub oauth_provider_id: OAuthProviderId,
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: Option<String>,
-  pub role: Option<Role>,
   pub answer: Option<String>,
 }
 #[skip_serializing_none]

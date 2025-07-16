@@ -20,6 +20,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// oauth provider with client_secret - should never be sent to the client
+#[serde(rename_all = "camelCase")]
 pub struct OAuthProvider {
   pub id: OAuthProviderId,
   /// The OAuth 2.0 provider name displayed to the user on the Login page
@@ -79,11 +80,11 @@ impl Serialize for PublicOAuthProvider {
   {
     let mut state = serializer.serialize_struct("PublicOAuthProvider", 5)?;
     state.serialize_field("id", &self.0.id)?;
-    state.serialize_field("display_name", &self.0.display_name)?;
-    state.serialize_field("authorization_endpoint", &self.0.authorization_endpoint)?;
-    state.serialize_field("client_id", &self.0.client_id)?;
+    state.serialize_field("displayName", &self.0.display_name)?;
+    state.serialize_field("authorizationEndpoint", &self.0.authorization_endpoint)?;
+    state.serialize_field("clientId", &self.0.client_id)?;
     state.serialize_field("scopes", &self.0.scopes)?;
-    state.serialize_field("use_pkce", &self.0.use_pkce)?;
+    state.serialize_field("usePkce", &self.0.use_pkce)?;
     state.end()
   }
 }

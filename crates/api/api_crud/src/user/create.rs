@@ -59,7 +59,6 @@ use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRe
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Response from OAuth token endpoint
-#[serde(rename_all = "camelCase")]
 struct TokenResponse {
   pub access_token: String,
   pub token_type: String,

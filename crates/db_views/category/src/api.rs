@@ -1,4 +1,3 @@
-use diesel::internal::derives::multiconnection::chrono::{DateTime, Utc};
 use lemmy_db_schema::newtypes::{CategoryGroupId, CategoryId};
 use serde::Deserialize;
 

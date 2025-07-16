@@ -449,7 +449,7 @@ pub async fn authenticate_with_oauth(
     verify_email_sent: false,
     application_pending: false,
   };
-  let mut application_pending = false;
+  let application_pending = false;
   // Lookup user by oauth_user_id
   let mut local_user_view =
    LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &oauth_user_id).await;

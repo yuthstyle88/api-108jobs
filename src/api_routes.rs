@@ -1,6 +1,7 @@
 use actix_web::{guard, web::*};
 use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
+use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -80,7 +81,6 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api::local_user::update_term::update_term;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -108,6 +108,9 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
+use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
+use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -358,6 +361,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_custom_emoji))
             .route("/delete", post().to(delete_custom_emoji))
             .route("/list", get().to(list_custom_emojis)),
+        )
+        .service(
+          scope("/oauth_provider")
+            .route("", post().to(create_oauth_provider))
+            .route("", put().to(update_oauth_provider))
+            .route("/delete", post().to(delete_oauth_provider)),
         )
         .service(
           scope("/oauth")

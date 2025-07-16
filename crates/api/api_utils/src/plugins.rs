@@ -40,7 +40,11 @@ where
   Ok(())
 }
 
-fn run_plugin_hook_after<T>(plugins: FastJobPlugins, name: &'static str, data: T) -> FastJobResult<()>
+fn run_plugin_hook_after<T>(
+  plugins: FastJobPlugins,
+  name: &'static str,
+  data: T,
+) -> FastJobResult<()>
 where
   T: Clone + Serialize + for<'b> Deserialize<'b>,
 {
@@ -93,7 +97,7 @@ struct FastJobPlugins(Vec<FastJobPlugin>);
 
 #[derive(Clone)]
 struct FastJobPlugin {
-  plugin_pool: Pool<()>,
+  plugin_pool: Pool,
   metadata: PluginMetadata,
 }
 
@@ -109,10 +113,9 @@ impl FastJobPlugin {
     manifest
       .config
       .insert("lemmy_version".to_string(), VERSION.to_string());
-    let plugin_pool: Pool<()> = Pool::new();
-    let builder = PluginBuilder::new(manifest).with_wasi(true);
-    let metadata: PluginMetadata = builder.clone().build()?.call("metadata", 0)?;
-    plugin_pool.add_builder((), builder);
+    let builder = move || PluginBuilder::new(manifest.clone()).with_wasi(true).build();
+    let metadata: PluginMetadata = builder()?.call("metadata", 0)?;
+    let plugin_pool: Pool = Pool::new(builder);
     Ok(FastJobPlugin {
       plugin_pool,
       metadata,
@@ -122,7 +125,7 @@ impl FastJobPlugin {
   fn get(&self, name: &'static str) -> FastJobResult<Option<PoolPlugin>> {
     let p = self
       .plugin_pool
-      .get(&(), GET_PLUGIN_TIMEOUT)?
+      .get(GET_PLUGIN_TIMEOUT)?
       .ok_or(anyhow!("plugin timeout"))?;
 
     Ok(if p.plugin().function_exists(name) {

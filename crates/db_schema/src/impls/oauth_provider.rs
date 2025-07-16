@@ -1,19 +1,12 @@
 use crate::{
   newtypes::OAuthProviderId,
   source::oauth_provider::{
-    OAuthProvider,
-    OAuthProviderInsertForm,
-    OAuthProviderUpdateForm,
-    PublicOAuthProvider,
+    OAuthProvider, OAuthProviderInsertForm, OAuthProviderUpdateForm, PublicOAuthProvider,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{
-  dsl::insert_into,
-  ExpressionMethods,
-  QueryDsl,
-};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::oauth_provider;
@@ -60,11 +53,11 @@ impl OAuthProvider {
   pub async fn get_by_name(pool: &mut DbPool<'_>, name: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     oauth_provider::table
-     .filter(oauth_provider::display_name.eq(name))
-     .select(oauth_provider::all_columns)
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .filter(oauth_provider::display_name.eq(name))
+      .select(oauth_provider::all_columns)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn convert_providers_to_public(

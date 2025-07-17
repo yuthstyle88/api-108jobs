@@ -125,8 +125,11 @@ pub fn load_all_translations(dir: &Path) -> FastJobResult<AllTranslations> {
             .to_string();
 
         let content = fs::read_to_string(&path)?;
-        let parsed: HashMap<String, String> = serde_json::from_str(&content)
-            .map_err(|e| anyhow::anyhow!("Failed to parse {:?}: {}", path, e))?;
+        let parsed: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&content)
+         .map_err(|e| anyhow::anyhow!("Failed to parse {:?}: {}", path, e))?
+         .into_iter()
+         .map(|(k, v)| (to_camel_case(&k), v))
+         .collect();
 
         namespaces.insert(namespace, NamespaceTranslations(parsed));
       }
@@ -137,8 +140,25 @@ pub fn load_all_translations(dir: &Path) -> FastJobResult<AllTranslations> {
 
   Ok(all_translations)
 }
+fn to_camel_case(input: &str) -> String {
+  let mut result = String::new();
+  let mut capitalize_next = false;
 
+  for (i, ch) in input.chars().enumerate() {
+    if ch == '_' {
+      capitalize_next = true;
+    } else if capitalize_next {
+      result.push(ch.to_ascii_uppercase());
+      capitalize_next = false;
+    } else if i == 0 {
+      result.push(ch.to_ascii_lowercase());
+    } else {
+      result.push(ch);
+    }
+  }
 
+  result
+}
 
 fn is_json_file(path: &PathBuf) -> bool {
   path.extension().map_or(false, |ext| ext == "json")

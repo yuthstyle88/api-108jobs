@@ -21,6 +21,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The local site.
+#[serde(rename_all = "camelCase")]
 pub struct LocalSite {
   pub id: LocalSiteId,
   pub site_id: SiteId,

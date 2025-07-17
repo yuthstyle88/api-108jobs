@@ -22,6 +22,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A person.
+#[serde(rename_all = "camelCase")]
 pub struct Person {
   pub id: PersonId,
   pub name: String,
@@ -121,6 +122,7 @@ pub struct PersonUpdateForm {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct PersonActions {
   #[serde(skip)]
   pub target_id: PersonId,

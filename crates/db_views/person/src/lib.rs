@@ -17,6 +17,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A person view.
+#[serde(rename_all = "camelCase")]
 pub struct PersonView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person: Person,

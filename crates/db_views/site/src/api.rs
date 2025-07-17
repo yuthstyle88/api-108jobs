@@ -414,6 +414,7 @@ pub struct Login {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
   pub username_or_email: String,
   pub password: String,
@@ -577,6 +578,7 @@ pub struct SaveUserSettings {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateTotp {
   pub totp_token: String,
   pub enabled: bool,

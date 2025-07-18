@@ -57,6 +57,7 @@ pub struct ListRegistrationApplicationsResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Register / Sign up to lemmy.
+#[serde(rename_all = "camelCase")]
 pub struct Register {
   pub username: String,
   pub password: SensitiveString,

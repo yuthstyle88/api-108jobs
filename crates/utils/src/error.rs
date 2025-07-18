@@ -217,6 +217,8 @@ pub enum FastJobErrorType {
   OauthProviderDisabled,
     CouldntCreateCategory,
   CouldntUpdateCategory,
+    CouldntCreateCategoryGroup,
+  CouldntUpdateCategoryGroup,
 }
 
 cfg_if! {

@@ -14,6 +14,30 @@ pub struct CategoryGroup {
   pub id: CategoryGroupId,
   pub title: String,
   pub sort_order: i32,
+  pub active: bool,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, derive_new::new)]
+#[cfg_attr(
+  feature = "full",
+  derive(Insertable, AsChangeset, Serialize, Deserialize)
+)]
+#[cfg_attr(feature = "full", diesel(table_name = category_group))]
+pub struct CategoryGroupInsertForm {
+  pub title: String,
+  pub sort_order: i32,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "full", derive(AsChangeset, Serialize, Deserialize))]
+#[cfg_attr(feature = "full", diesel(table_name = category_group))]
+pub struct CategoryGroupUpdateForm {
+  pub title: String,
+  pub sort_order: i32,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
 }

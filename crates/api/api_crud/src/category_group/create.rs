@@ -5,9 +5,9 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn _create_category_group(
-    _data: Json<CreateCategoryGroupRequest>,
-    _context: Data<FastJobContext>,
-    _local_user_view: LocalUserView,
+  _data: Json<CreateCategoryGroupRequest>,
+  _context: Data<FastJobContext>,
+  _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<()>> {
-    Ok(Json(()))
+  Ok(Json(()))
 }

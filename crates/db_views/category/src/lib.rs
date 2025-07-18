@@ -18,5 +18,5 @@ pub struct CategoryView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub subcategory_groups: CategoryGroup,
+  pub group: CategoryGroup,
 }

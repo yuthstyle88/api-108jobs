@@ -5,7 +5,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_api_utils::utils::password_length_check;
+use lemmy_db_schema::utils::get_required_sensitive;
 use lemmy_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
@@ -15,8 +15,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::schema::{local_user, person, registration_application};
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use validator::Validate;
-use lemmy_db_schema_file::enums::Role;
+use lemmy_utils::utils::validation::{get_required_trimmed, is_valid_email, password_length_check};
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;
@@ -141,39 +140,39 @@ impl TryFrom<RegisterRequest> for Register {
   type Error = FastJobError;
 
   fn try_from(mut form: RegisterRequest) -> Result<Self, Self::Error> {
-    form
-      .validate()
-      .map_err(|err| FastJobErrorType::ValidationError(err.to_string()))?;
+    let username = get_required_trimmed(&form.username, FastJobErrorType::EmptyUsername)?;
+    let password = get_required_sensitive(&form.password, FastJobErrorType::EmptyPassword)?;
+    let password_verify =
+      get_required_sensitive(&form.password_verify, FastJobErrorType::PasswordsDoNotMatch)?;
+    let email = get_required_sensitive(&form.email, FastJobErrorType::EmptyEmail)?;
+    let captcha_uuid =
+      get_required_trimmed(&form.captcha_uuid, FastJobErrorType::MissingCaptchaUuid)?;
+    let captcha_answer =
+      get_required_trimmed(&form.captcha_answer, FastJobErrorType::MissingCaptchaAnswer)?;
 
-    if form.username.as_ref().unwrap().trim().is_empty() {
-      return Err(FastJobErrorType::InvalidName.into());
+    // Check if email format is valid
+    if !is_valid_email(&email) {
+      return Err(FastJobErrorType::InvalidEmail.into());
     }
 
-    let password = form.password.as_ref().unwrap();
-    password_length_check(password)?;
+    // Check password length
+    password_length_check(&password)?;
 
-    if form.password != form.password_verify {
+    // Confirm both passwords match
+    if password != password_verify {
       return Err(FastJobErrorType::PasswordsDoNotMatch.into());
     }
 
-    if !matches!(form.role, Some(Role::Employer | Role::Freelancer)) {
-      return Err(
-        FastJobErrorType::ValidationError("require 'Employer' or 'Freelancer' role".into()).into(),
-      );
-    }
-
-
     Ok(Register {
-      username: form.username.take().unwrap(),
-      password: form.password.take().unwrap(),
-      password_verify: Default::default(),
-      self_promotion: None,
-      email: form.email,
-      captcha_uuid: form.captcha_uuid,
-      captcha_answer: form.captcha_answer,
-      honeypot: None,
-      answer: None,
-      role: form.role,
+      username,
+      password,
+      self_promotion: form.self_promotion.take(),
+      email: Some(email),
+      captcha_uuid: Some(captcha_uuid),
+      captcha_answer: Some(captcha_answer),
+      honeypot: form.honeypot.take(),
+      answer: form.answer.take(),
+      role: form.role.take(),
       accepted_application: form.accepted_application,
     })
   }

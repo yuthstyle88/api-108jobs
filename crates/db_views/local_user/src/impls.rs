@@ -77,7 +77,7 @@ impl LocalUserView {
       .select(Self::as_select())
       .first(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
+      .with_fastjob_type(FastJobErrorType::UserNotFound)
   }
 
   pub async fn find_by_email(pool: &mut DbPool<'_>, from_email: &str) -> FastJobResult<Self> {

@@ -75,5 +75,7 @@
   "require_captcha": "Please enter the captcha",
   "username_already_exists": "Username already exist",
   "email_already_exists": "Email already exist",
-  "invalid_name": "Username is not valid"
+  "invalid_name": "Username is not valid",
+  "title_sign_in_create_account": "Sign in FastJob",
+  "user_not_found": "Username or email does not exist"
 }

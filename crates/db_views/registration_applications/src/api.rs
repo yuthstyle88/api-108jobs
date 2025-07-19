@@ -3,10 +3,10 @@ use lemmy_db_schema::{
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
   sensitive::SensitiveString,
 };
+use lemmy_db_schema_file::enums::Role;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use validator::Validate;
-use lemmy_db_schema_file::enums::Role;
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -61,7 +61,6 @@ pub struct ListRegistrationApplicationsResponse {
 pub struct Register {
   pub username: String,
   pub password: SensitiveString,
-  pub password_verify: SensitiveString,
   pub self_promotion: Option<bool>,
   /// multilang is mandatory if multilang verification is enabled on the server
   pub email: Option<SensitiveString>,
@@ -78,52 +77,32 @@ pub struct Register {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct RegisterRequest {
-  #[validate(required(message = "required"))]
   pub username: Option<String>,
-
-  #[validate(required(message = "required"))]
   pub password: Option<SensitiveString>,
-
-  #[validate(required(message = "required"))]
   pub password_verify: Option<SensitiveString>,
-
-  #[validate(
-    required(message = "required"),
-    email(message = "Invalid multilang address")
-  )]
+  pub self_promotion: Option<bool>,
   pub email: Option<SensitiveString>,
-
-  #[validate(required(message = "required"))]
   pub captcha_uuid: Option<String>,
-
-  #[validate(required(message = "required"))]
   pub captcha_answer: Option<String>,
-
+  pub honeypot: Option<String>,
+  pub answer: Option<String>,
   pub role: Option<Role>,
-
   pub accepted_application: Option<bool>,
 }
 
-
 #[skip_serializing_none]
-#[derive(Debug, Deserialize, Validate, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct OAuthUserUpdateRequest {
-  #[validate(required(message = "required"))]
   pub password: Option<SensitiveString>,
-
-  #[validate(required(message = "required"))]
   pub password_verify: Option<SensitiveString>,
-  #[validate(
-    required(message = "required"),
-    email(message = "Invalid multilang address")
-  )]
   pub email: Option<String>,
   pub terms_accepted: Option<bool>,
   pub role: Option<Role>,

@@ -340,15 +340,6 @@ pub fn check_private_instance(
   }
 }
 
-/// Checks the password length
-pub fn password_length_check(pass: &str) -> FastJobResult<()> {
-  if !(6..=60).contains(&pass.chars().count()) {
-    Err(FastJobErrorType::InvalidPassword)?
-  } else {
-    Ok(())
-  }
-}
-
 /// Checks for a honeypot. If this field is filled, fail the rest of the function
 pub fn honeypot_check(honeypot: &Option<String>) -> FastJobResult<()> {
   if honeypot.is_some() && honeypot != &Some(String::new()) {
@@ -987,6 +978,7 @@ pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> F
 mod tests {
   use super::*;
   use pretty_assertions::assert_eq;
+  use lemmy_utils::utils::validation::password_length_check;
 
   #[test]
   #[rustfmt::skip]

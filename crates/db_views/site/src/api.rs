@@ -416,8 +416,8 @@ pub struct Login {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
-  pub username_or_email: String,
-  pub password: String,
+  pub username_or_email: Option<SensitiveString>,
+  pub password: Option<SensitiveString>,
   pub totp_2fa_token: Option<String>,
 }
 

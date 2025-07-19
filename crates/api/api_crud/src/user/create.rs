@@ -12,7 +12,6 @@ use lemmy_api_utils::{
     check_registration_application,
     generate_inbox_url,
     honeypot_check,
-    password_length_check,
     slur_regex,
   },
 };
@@ -34,7 +33,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::api::Register;
+use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
@@ -68,10 +67,11 @@ struct TokenResponse {
 }
 
 pub async fn register(
-  data: Json<Register>,
+  data: Json<RegisterRequest>,
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<LoginResponse>> {
+  let data: Register = data.into_inner().try_into()?;
   let pool = &mut context.pool();
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
@@ -82,7 +82,6 @@ pub async fn register(
     Err(FastJobErrorType::RegistrationClosed)?
   }
 
-  password_length_check(&data.password)?;
   honeypot_check(&data.honeypot)?;
 
   if local_site.require_email_verification && data.email.is_none() {
@@ -92,11 +91,6 @@ pub async fn register(
   // make sure the registration answer is provided when the registration application is required
   if local_site.site_setup {
     validate_registration_answer(require_registration_application, &data.answer)?;
-  }
-
-  // Make sure passwords match
-  if data.password != data.password_verify {
-    Err(FastJobErrorType::PasswordsDoNotMatch)?
   }
 
   if local_site.site_setup && local_site.captcha_enabled {

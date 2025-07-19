@@ -15,6 +15,8 @@ use lemmy_utils::{
   CacheLock,
 };
 use std::sync::{Arc, LazyLock};
+use lemmy_db_schema::utils::get_required_sensitive;
+use lemmy_utils::utils::validation::password_length_check;
 
 impl SiteView {
   pub async fn read_local(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
@@ -68,21 +70,15 @@ impl TryFrom<LoginRequest> for Login {
   type Error = FastJobError;
 
   fn try_from(form: LoginRequest) -> Result<Self, Self::Error> {
-    if form.username_or_email.trim().is_empty() {
-      return Err(FastJobError::from(FastJobErrorType::EmptyUsername));
-    }
+    let username_or_email = get_required_sensitive(&form.username_or_email, FastJobErrorType::EmptyUsernameOrEmail)?;
+    let password = get_required_sensitive(&form.password, FastJobErrorType::EmptyPassword)?;
 
-    if form.password.trim().is_empty() {
-      return Err(FastJobError::from(FastJobErrorType::EmptyPassword));
-    }
-
-    if form.password.len() < 6 || form.password.len() > 32 {
-      return Err(FastJobError::from(FastJobErrorType::InvalidPasswordLength));
-    }
+    // Check password length (and other password policy if needed)
+    password_length_check(&password)?;
 
     Ok(Self {
-      username_or_email: SensitiveString::from(form.username_or_email),
-      password: SensitiveString::from(form.password),
+      username_or_email: SensitiveString::from(username_or_email.to_string()),
+      password: SensitiveString::from(password.to_string()),
       totp_2fa_token: form.totp_2fa_token,
     })
   }

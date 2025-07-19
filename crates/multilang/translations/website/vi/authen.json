@@ -74,5 +74,7 @@
   "require_captcha": "Vui lòng nhập captcha",
   "username_already_exists": "Tên người dùng đã tồn tại",
   "email_already_exists": "Email đã tồn tại",
-  "invalid_name": "Tên người dùng không hợp lệ"
+  "invalid_name": "Tên người dùng không hợp lệ",
+  "title_sign_in_create_account": "Đăng nhập FastJob",
+  "user_not_found": "Tên người dùng hoặc email không tồn tại"
 }

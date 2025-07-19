@@ -81,6 +81,7 @@ pub enum FastJobErrorType {
   NoEmailSetup,
   LocalSiteNotSetup,
   InvalidEmailAddress(String),
+  InvalidEmail,
   InvalidName,
   InvalidCodeVerifier,
   InvalidDisplayName,
@@ -219,6 +220,12 @@ pub enum FastJobErrorType {
   CouldntUpdateCategory,
     CouldntCreateCategoryGroup,
   CouldntUpdateCategoryGroup,
+  EmptyEmail,
+  MissingCaptchaUuid,
+  MissingCaptchaAnswer,
+  RoleNotFound,
+  EmptyUsernameOrEmail,
+  UserNotFound,
 }
 
 cfg_if! {

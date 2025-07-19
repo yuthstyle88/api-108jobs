@@ -3833,7 +3833,6 @@ dependencies = [
  "tokio",
  "ts-rs",
  "url",
- "validator",
 ]
 
 [[package]]

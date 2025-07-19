@@ -146,7 +146,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .route("/modlog", get().to(get_mod_log))
         .service(resource("/search").wrap(rate_limit.search()))
-        .service(resource("/resolve_object").wrap(rate_limit.search()))
+        .service(resource("/resolve-object").wrap(rate_limit.search()))
         // Community
         .service(
           resource("/community")
@@ -176,7 +176,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/tag", put().to(update_community_tag))
             .route("/tag", delete().to(delete_community_tag))
             .service(
-              scope("/pending_follows")
+              scope("/pending-follows")
                 .route("/count", get().to(get_pending_follows_count))
                 .route("/list", get().to(get_pending_follows_list))
                 .route("/approve", post().to(post_pending_follows_approve)),
@@ -191,7 +191,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route(post().to(create_post)),
         )
         .service(
-          resource("/post/site_metadata")
+          resource("/post/site-metadata")
             .wrap(rate_limit.search())
             .route(get().to(get_link_metadata)),
         )
@@ -201,8 +201,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_post))
             .route("/delete", post().to(delete_post))
             .route("/remove", post().to(remove_post))
-            .route("/mark_as_read", post().to(mark_post_as_read))
-            .route("/mark_as_read/many", post().to(mark_posts_as_read))
+            .route("/mark-as-read", post().to(mark_post_as_read))
+            .route("/mark-as-read/many", post().to(mark_posts_as_read))
             .route("/hide", post().to(hide_post))
             .route("/lock", post().to(lock_post))
             .route("/feature", post().to(feature_post))
@@ -210,7 +210,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/like/list", get().to(list_post_likes))
             .route("/save", put().to(save_post))
             .route(
-              "/disable_notifications",
+              "/disable-notifications",
               post().to(update_post_notifications),
             ),
         )
@@ -228,7 +228,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_comment))
             .route("/delete", post().to(delete_comment))
             .route("/remove", post().to(remove_comment))
-            .route("/mark_as_read", post().to(mark_reply_as_read))
+            .route("/mark-as-read", post().to(mark_reply_as_read))
             .route("/distinguish", post().to(distinguish_comment))
             .route("/like", post().to(like_comment))
             .route("/like/list", get().to(list_comment_likes))
@@ -250,16 +250,16 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/register", post().to(register))
             .route("/login", post().to(login))
             .route("/logout", post().to(logout))
-            .route("/password_reset", post().to(reset_password))
-            .route("/password_change", post().to(change_password_after_reset))
-            .route("/change_password", put().to(change_password))
+            .route("/password-reset", post().to(reset_password))
+            .route("/password-change", post().to(change_password_after_reset))
+            .route("/change-password", put().to(change_password))
             .route("/totp/generate", post().to(generate_totp_secret))
             .route("/totp/update", post().to(update_totp))
-            .route("/verify_email", post().to(verify_email))
-            .route("/exchange_key", post().to(exchange_key))
-            .route("/update_term", post().to(update_term))
+            .route("/verify-email", post().to(verify_email))
+            .route("/exchange-key", post().to(exchange_key))
+            .route("/update-term", post().to(update_term))
             .route(
-              "/resend_verification_email",
+              "/resend-verification-email",
               post().to(resend_verification_email),
             ),
         )
@@ -276,17 +276,17 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/mention")
                 .route(
-                  "/comment/mark_as_read",
+                  "/comment/mark-as-read",
                   post().to(mark_comment_mention_as_read),
                 )
-                .route("/post/mark_as_read", post().to(mark_post_mention_as_read)),
+                .route("/post/mark-as-read", post().to(mark_post_mention_as_read)),
             )
-            .route("/mark_as_read/all", post().to(mark_all_notifications_read))
+            .route("/mark-as-read/all", post().to(mark_all_notifications_read))
             .route("/report_count", get().to(report_count))
-            .route("/unread_count", get().to(unread_count))
-            .route("/list_logins", get().to(list_logins))
-            .route("/validate_auth", get().to(validate_auth))
-            .route("/donation_dialog_shown", post().to(donation_dialog_shown))
+            .route("/unread-count", get().to(unread_count))
+            .route("/list-logins", get().to(list_logins))
+            .route("/validate-auth", get().to(validate_auth))
+            .route("/donation-dialog-shown", post().to(donation_dialog_shown))
             .route("/avatar", post().to(upload_user_avatar))
             .route("/avatar", delete().to(delete_user_avatar))
             .route("/banner", post().to(upload_user_banner))
@@ -317,19 +317,19 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/admin")
             .route("/add", post().to(add_admin))
             .route(
-              "/registration_application/count",
+              "/registration-application/count",
               get().to(get_unread_registration_application_count),
             )
             .route(
-              "/registration_application/list",
+              "/registration-application/list",
               get().to(list_registration_applications),
             )
             .route(
-              "/registration_application/approve",
+              "/registration-application/approve",
               put().to(approve_registration_application),
             )
             .route(
-              "/registration_application",
+              "/registration-application",
               get().to(get_registration_application),
             )
             .service(
@@ -356,14 +356,14 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             ),
         )
         .service(
-          scope("/custom_emoji")
+          scope("/custom-emoji")
             .route("", post().to(create_custom_emoji))
             .route("", put().to(update_custom_emoji))
             .route("/delete", post().to(delete_custom_emoji))
             .route("/list", get().to(list_custom_emojis)),
         )
         .service(
-          scope("/oauth_provider")
+          scope("/oauth-provider")
             .route("", post().to(create_oauth_provider))
             .route("", put().to(update_oauth_provider))
             .route("/delete", post().to(delete_oauth_provider)),

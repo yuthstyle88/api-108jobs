@@ -148,6 +148,7 @@ pub async fn register(
          email: tx_data.email.as_deref().map(str::to_lowercase),
          self_promotion: Some(self_promotion),
          accepted_application,
+         role: tx_data.role,
          ..LocalUserInsertForm::new(person.id, Some(tx_data.password.to_string()))
        };
 

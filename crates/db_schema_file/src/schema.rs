@@ -836,6 +836,7 @@ diesel::table! {
         id -> Int4,
         title -> Text,
         sort_order -> Int4,
+        active -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

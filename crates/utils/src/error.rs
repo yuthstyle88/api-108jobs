@@ -6,7 +6,7 @@ use strum::{Display, EnumIter};
 #[derive(Display, Debug, Serialize, Deserialize, Clone, PartialEq, Eq, EnumIter, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(tag = "error", content = "message", rename_all = "snake_case")]
+#[serde(tag = "error", content = "message", rename_all = "camelCase")]
 #[non_exhaustive]
 // TODO: order these based on the crate they belong to (utils, federation, db, api)
 pub enum FastJobErrorType {
@@ -217,6 +217,8 @@ pub enum FastJobErrorType {
   OauthProviderDisabled,
     CouldntCreateCategory,
   CouldntUpdateCategory,
+    CouldntCreateCategoryGroup,
+  CouldntUpdateCategoryGroup,
 }
 
 cfg_if! {

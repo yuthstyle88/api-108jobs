@@ -3534,6 +3534,7 @@ dependencies = [
  "serde_with",
  "serial_test",
  "tokio",
+ "validator",
 ]
 
 [[package]]

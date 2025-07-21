@@ -81,6 +81,9 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
+use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
+use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -108,9 +111,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
-use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
-use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -257,6 +257,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/verify-email", post().to(verify_email))
             .route("/exchange-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
+            .route("/get-captcha", get().to(get_captcha))
             .route(
               "/resend-verification-email",
               post().to(resend_verification_email),

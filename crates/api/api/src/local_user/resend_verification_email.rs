@@ -5,7 +5,7 @@ use lemmy_db_views_site::{
   api::{ResendVerificationEmail, SuccessResponse},
   SiteView,
 };
-use lemmy_multilang::account::send_verification_email_if_required;
+use lemmy_email::account::send_verification_email_if_required;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn resend_verification_email(

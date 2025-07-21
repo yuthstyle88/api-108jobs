@@ -75,5 +75,7 @@
   "require_captcha": "กรุณากรอก captcha",
   "username_already_exists": "ชื่อผู้ใช้นี้มีอยู่แล้ว",
   "email_already_exists": "อีเมลนี้มีอยู่แล้ว",
-  "invalid_name": "ชื่อผู้ใช้ไม่ถูกต้อง"
+  "invalid_name": "ชื่อผู้ใช้ไม่ถูกต้อง",
+  "title_sign_in_create_account": "เข้าสู่ระบบ FastJob",
+  "user_not_found": "ชื่อผู้ใช้หรืออีเมลไม่มีอยู่ในระบบ"
 }

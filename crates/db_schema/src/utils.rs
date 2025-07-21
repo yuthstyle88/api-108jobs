@@ -58,6 +58,7 @@ use std::{
 };
 use tracing::error;
 use url::Url;
+use crate::sensitive::SensitiveString;
 
 const FETCH_LIMIT_DEFAULT: i64 = 20;
 pub const FETCH_LIMIT_MAX: usize = 50;
@@ -649,6 +650,16 @@ pub(crate) fn validate_like(like_score: i16) -> FastJobResult<()> {
   } else {
     Err(FastJobErrorType::NotFound.into())
   }
+}
+
+pub fn get_required_sensitive(
+  field: &Option<SensitiveString>,
+  err: FastJobErrorType,
+) -> Result<SensitiveString, FastJobError> {
+  field
+      .as_ref()
+      .cloned()
+      .ok_or_else(|| err.into())
 }
 
 #[cfg(test)]

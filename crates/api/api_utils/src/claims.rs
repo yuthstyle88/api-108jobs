@@ -30,9 +30,7 @@ impl Claims {
     jwt: &str,
     context: &FastJobContext,
   ) -> FastJobResult<(LocalUserId, String)> {
-    let mut validation = Validation::default();
-    validation.validate_exp = false;
-    validation.required_spec_claims.remove("exp");
+    let validation = Validation::default();
     let jwt_secret = &context.secret().jwt_secret;
     let key = DecodingKey::from_secret(jwt_secret.as_ref());
     let claims =

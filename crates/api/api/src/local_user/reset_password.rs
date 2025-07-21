@@ -5,9 +5,10 @@ use lemmy_db_views_site::{
   api::{PasswordReset, SuccessResponse},
   SiteView,
 };
-use lemmy_multilang::account::send_password_reset_email;
+
 use lemmy_utils::error::FastJobResult;
 use tracing::error;
+use lemmy_email::account::send_password_reset_email;
 
 pub async fn reset_password(
   data: Json<PasswordReset>,

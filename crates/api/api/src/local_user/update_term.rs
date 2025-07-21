@@ -2,11 +2,7 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::{
-  claims::Claims,
-  context::FastJobContext,
-  utils::{password_length_check, slur_regex},
-};
+use lemmy_api_utils::{claims::Claims, context::FastJobContext, utils::slur_regex};
 use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
@@ -17,7 +13,7 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
-
+use lemmy_utils::utils::validation::password_length_check;
 
 pub async fn update_term(
   data: Json<OAuthUserUpdateRequest>,
@@ -63,7 +59,8 @@ pub async fn update_term(
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
   if !local_site.site_setup
-    || (local_user_view.local_user.email_verified && !local_user_view.local_user.accepted_application)
+    || (local_user_view.local_user.email_verified
+      && !local_user_view.local_user.accepted_application)
   {
     if data.password != data.password_verify {
       Err(FastJobErrorType::PasswordsDoNotMatch)?

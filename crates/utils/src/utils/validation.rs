@@ -1,4 +1,4 @@
-use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS};
+use crate::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS};
 use clearurls::UrlCleaner;
 use invisible_characters::INVISIBLE_CHARS;
 use itertools::Itertools;
@@ -361,6 +361,32 @@ pub fn check_api_elements_count(len: usize) -> FastJobResult<()> {
   }
   Ok(())
 }
+
+/// Checks the password length
+pub fn password_length_check(pass: &str) -> FastJobResult<()> {
+  if !(6..=60).contains(&pass.chars().count()) {
+    Err(FastJobErrorType::InvalidPassword)?
+  } else {
+    Ok(())
+  }
+}
+
+pub fn is_valid_email(email: &str) -> bool {
+  // This is a reasonable basic email regex
+  let email_re = Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap();
+  email_re.is_match(email)
+}
+
+pub fn get_required_trimmed(
+  field: &Option<String>,
+  err: FastJobErrorType,
+) -> Result<String, FastJobError> {
+  field
+      .as_ref()
+      .map(|s| s.trim().to_owned())
+      .filter(|s| !s.is_empty())
+      .ok_or_else(|| err.into())
+}
 #[cfg(test)]
 mod tests {
 
@@ -388,7 +414,9 @@ mod tests {
     },
   };
   use pretty_assertions::assert_eq;
+  use regex::Regex;
   use url::Url;
+  use crate::error::FastJobError;
 
   const URL_WITH_TRACKING: &str = "https://example.com/path/123?utm_content=buffercf3b2&utm_medium=social&user+name=random+user&id=123";
   const URL_TRACKING_REMOVED: &str = "https://example.com/path/123?user+name=random+user&id=123";

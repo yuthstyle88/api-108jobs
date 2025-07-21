@@ -26,7 +26,7 @@ pub async fn send_password_reset_email(
   let lang = user_language(user);
   let subject = &lang.password_reset_subject(&user.person.name);
   let protocol_and_hostname = settings.get_protocol_and_hostname();
-  let reset_link = format!("{}/password_change/{}", protocol_and_hostname, &token);
+  let reset_link = format!("{}/password-change/{}", protocol_and_hostname, &token);
   let email = user_email(user)?;
   let body = &lang.password_reset_body(reset_link, &user.person.name);
   send_email(subject, &email, &user.person.name, body, settings).await?;
@@ -52,7 +52,7 @@ pub async fn send_verification_email(
     verification_token: uuid::Uuid::new_v4().to_string(),
   };
   let verify_link = format!(
-    "{}/verify_email/{}",
+    "{}/verify-email/{}",
     settings.get_protocol_and_hostname(),
     &form.verification_token
   );

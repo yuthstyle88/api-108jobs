@@ -353,6 +353,7 @@ pub struct CaptchaResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Changes your account password.
@@ -425,6 +426,7 @@ pub struct LoginRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 #[derive(Default)]
 pub struct ExchangeKey {
   pub public_key: String,
@@ -480,6 +482,7 @@ pub struct MyUserInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Change your password after receiving a reset request.
@@ -490,6 +493,7 @@ pub struct PasswordChangeAfterReset {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Reset your password via multilang.
@@ -604,6 +608,7 @@ pub struct UserBlockInstanceParams {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Verify your multilang.
 pub struct VerifyEmail {
   pub token: String,

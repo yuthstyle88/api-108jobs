@@ -34,7 +34,6 @@ pub struct CommentReport {
 #[derive(Clone)]
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = comment_report))]
-#[serde(rename_all = "camelCase")]
 pub struct CommentReportForm {
   pub creator_id: PersonId,
   pub comment_id: CommentId,

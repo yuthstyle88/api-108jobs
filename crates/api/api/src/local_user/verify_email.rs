@@ -12,7 +12,7 @@ use lemmy_db_views_site::{
   api::{VerifyEmail, VerifyEmailSuccessResponse},
   SiteView,
 };
-use lemmy_multilang::account::send_email_verified_email;
+use lemmy_email::account::send_email_verified_email;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn verify_email(

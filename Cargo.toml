@@ -257,8 +257,3 @@ clap = { workspace = true }
 actix = { workspace = true }
 lemmy_multilang = { workspace = true }
 mimalloc = "0.1.46"
-
-# Speedup RSA key generation
-# https://github.com/RustCrypto/RSA/blob/master/README.md#example
-[profile.dev.package.num-bigint-dig]
-opt-level = 3

@@ -14,6 +14,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A vote view for checking a post or comments votes.
+#[serde(rename_all = "camelCase")]
 pub struct VoteView {
   pub creator: Person,
   pub creator_banned_from_community: bool,

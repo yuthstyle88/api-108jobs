@@ -39,6 +39,7 @@ pub mod post_report_view;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment report view.
+#[serde(rename_all = "camelCase")]
 pub struct CommentReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment_report: CommentReport,
@@ -95,6 +96,7 @@ pub struct CommunityReportView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A post report view.
+#[serde(rename_all = "camelCase")]
 pub struct PostReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post_report: PostReport,

@@ -53,6 +53,7 @@ pub struct AdminPurgePersonForm {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When an admin purges a community.
+#[serde(rename_all = "camelCase")]
 pub struct AdminPurgeCommunity {
   pub id: AdminPurgeCommunityId,
   pub admin_person_id: PersonId,
@@ -75,6 +76,7 @@ pub struct AdminPurgeCommunityForm {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When an admin purges a post.
+#[serde(rename_all = "camelCase")]
 pub struct AdminPurgePost {
   pub id: AdminPurgePostId,
   pub admin_person_id: PersonId,
@@ -99,6 +101,7 @@ pub struct AdminPurgePostForm {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When an admin purges a comment.
+#[serde(rename_all = "camelCase")]
 pub struct AdminPurgeComment {
   pub id: AdminPurgeCommentId,
   pub admin_person_id: PersonId,
@@ -129,6 +132,7 @@ pub struct AdminPurgeCommentForm {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct AdminAllowInstance {
   pub id: AdminAllowInstanceId,
   pub instance_id: InstanceId,
@@ -162,6 +166,7 @@ pub struct AdminAllowInstanceForm {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct AdminBlockInstance {
   pub id: AdminBlockInstanceId,
   pub instance_id: InstanceId,

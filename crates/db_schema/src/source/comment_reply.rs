@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment reply.
+#[serde(rename_all = "camelCase")]
 pub struct CommentReply {
   pub id: CommentReplyId,
   pub recipient_id: PersonId,

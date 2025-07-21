@@ -15,6 +15,7 @@ use std::fmt::Debug;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Basic data about a Fediverse instance which is available for every known domain. Additional
 /// data may be available in [[Site]].
+#[serde(rename_all = "camelCase")]
 pub struct Instance {
   pub id: InstanceId,
   pub domain: String,

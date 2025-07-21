@@ -35,6 +35,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment view.
+#[serde(rename_all = "camelCase")]
 pub struct CommentView {
   #[cfg_attr(feature = "full",
     diesel(
@@ -101,6 +102,7 @@ pub struct CommentView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A slimmer comment view, without the post, or community.
+#[serde(rename_all = "camelCase")]
 pub struct CommentSlimView {
   pub comment: Comment,
   pub creator: Person,

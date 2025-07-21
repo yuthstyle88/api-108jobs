@@ -13,6 +13,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A custom emoji.
+#[serde(rename_all = "camelCase")]
 pub struct CustomEmoji {
   pub id: CustomEmojiId,
   pub shortcode: String,

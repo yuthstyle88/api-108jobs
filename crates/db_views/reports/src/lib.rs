@@ -78,6 +78,7 @@ pub struct CommentReportView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community report view.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub community_report: CommunityReport,

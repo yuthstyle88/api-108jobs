@@ -21,6 +21,7 @@ use {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A post.
+#[serde(rename_all = "camelCase")]
 pub struct Post {
   pub id: PostId,
   pub name: String,

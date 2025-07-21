@@ -112,6 +112,7 @@ pub enum PersonLikedCombinedView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Gets your liked / disliked posts
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonLiked {
   pub type_: Option<PersonContentType>,
   pub like_type: Option<LikeType>,

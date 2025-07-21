@@ -22,6 +22,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community view.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub community: Community,

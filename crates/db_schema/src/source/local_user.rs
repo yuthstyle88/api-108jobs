@@ -20,6 +20,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(default)]
 /// A local user.
+#[serde(rename_all = "camelCase")]
 pub struct LocalUser {
   pub id: LocalUserId,
   /// The person_id for the local user.

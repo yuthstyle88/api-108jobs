@@ -16,6 +16,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A local user view.
+#[serde(rename_all = "camelCase")]
 pub struct LocalUserView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub local_user: LocalUser,

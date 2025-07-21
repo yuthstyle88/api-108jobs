@@ -18,6 +18,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Rate limits for your site. Given in count / length of time.
+#[serde(rename_all = "camelCase")]
 pub struct LocalSiteRateLimit {
   pub local_site_id: LocalSiteId,
   pub message_max_requests: i32,

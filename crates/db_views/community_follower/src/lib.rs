@@ -15,6 +15,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community follower.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityFollowerView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub community: Community,
@@ -28,6 +29,7 @@ pub struct CommunityFollowerView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct PendingFollow {
   pub person: Person,
   pub community: Community,

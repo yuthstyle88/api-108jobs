@@ -24,6 +24,7 @@ use {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The post id.
+#[serde(rename_all = "camelCase")]
 pub struct PostId(pub i32);
 
 impl fmt::Display for PostId {
@@ -37,6 +38,7 @@ impl fmt::Display for PostId {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat message id.
+#[serde(rename_all = "camelCase")]
 pub struct ChatMessageId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -44,6 +46,7 @@ pub struct ChatMessageId(pub i32);
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The category id.
+#[serde(rename_all = "camelCase")]
 pub struct CategoryId(pub i32);
 
 impl Display for CategoryId {
@@ -57,6 +60,7 @@ impl Display for CategoryId {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The category group id.
+#[serde(rename_all = "camelCase")]
 pub struct CategoryGroupId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -64,6 +68,7 @@ pub struct CategoryGroupId(pub i32);
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The person id.
+#[serde(rename_all = "camelCase")]
 pub struct PersonId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]

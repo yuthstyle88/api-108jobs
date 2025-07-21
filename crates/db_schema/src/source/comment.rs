@@ -23,6 +23,7 @@ use {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment.
+#[serde(rename_all = "camelCase")]
 pub struct Comment {
   pub id: CommentId,
   pub creator_id: PersonId,
@@ -68,6 +69,7 @@ pub struct Comment {
   derive(Insertable, AsChangeset, Serialize, Deserialize)
 )]
 #[cfg_attr(feature = "full", diesel(table_name = comment))]
+#[serde(rename_all = "camelCase")]
 pub struct CommentInsertForm {
   pub creator_id: PersonId,
   pub post_id: PostId,
@@ -93,6 +95,7 @@ pub struct CommentInsertForm {
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "full", derive(AsChangeset, Serialize, Deserialize))]
 #[cfg_attr(feature = "full", diesel(table_name = comment))]
+#[serde(rename_all = "camelCase")]
 pub struct CommentUpdateForm {
   pub content: Option<String>,
   pub removed: Option<bool>,

@@ -17,6 +17,7 @@ use {i_love_jesus::CursorKeysModule, lemmy_db_schema_file::schema::tagline};
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A tagline, shown at the top of your site.
+#[serde(rename_all = "camelCase")]
 pub struct Tagline {
   pub id: TaglineId,
   pub content: String,

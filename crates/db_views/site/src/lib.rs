@@ -19,6 +19,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A site view.
 #[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SiteView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub site: Site,

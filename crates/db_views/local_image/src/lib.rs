@@ -15,6 +15,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A local image view.
+#[serde(rename_all = "camelCase")]
 pub struct LocalImageView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub local_image: LocalImage,

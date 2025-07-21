@@ -111,6 +111,7 @@ pub enum PersonSavedCombinedView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Gets your saved posts and comments
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonSaved {
   pub type_: Option<PersonContentType>,
   pub page_cursor: Option<PaginationCursor>,

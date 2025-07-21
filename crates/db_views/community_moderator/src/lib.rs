@@ -12,6 +12,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community moderator.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityModeratorView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub community: Community,

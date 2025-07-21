@@ -23,6 +23,7 @@ use {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A community.
+#[serde(rename_all = "camelCase")]
 pub struct Community {
   pub id: CommunityId,
   pub name: String,
@@ -93,6 +94,7 @@ pub struct Community {
 #[derive(Debug, Clone, derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = community))]
+#[serde(rename_all = "camelCase")]
 pub struct CommunityInsertForm {
   pub instance_id: InstanceId,
   pub name: String,

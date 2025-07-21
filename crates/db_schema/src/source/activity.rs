@@ -56,6 +56,7 @@ impl ActivitySendTargets {
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "full", diesel(table_name = sent_activity))]
+#[serde(rename_all = "camelCase")]
 pub struct SentActivity {
   pub id: ActivityId,
   pub ap_id: DbUrl,

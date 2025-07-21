@@ -32,6 +32,7 @@ pub mod impls;
 #[cfg_attr(feature = "full", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 /// A combined report view
+#[serde(rename_all = "camelCase")]
 pub struct ReportCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub report_combined: ReportCombined,

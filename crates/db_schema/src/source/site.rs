@@ -16,6 +16,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Additional data for federated instances. This may be missing for other platforms which are not
 /// fully compatible. Basic data is guaranteed to be available via [[Instance]].
+#[serde(rename_all = "camelCase")]
 pub struct Site {
   pub id: SiteId,
   pub name: String,

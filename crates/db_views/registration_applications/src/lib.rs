@@ -22,6 +22,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A registration application view.
+#[serde(rename_all = "camelCase")]
 pub struct RegistrationApplicationView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub registration_application: RegistrationApplication,

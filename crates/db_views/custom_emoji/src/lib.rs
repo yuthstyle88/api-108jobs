@@ -16,6 +16,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A custom emoji view.
+#[serde(rename_all = "camelCase")]
 pub struct CustomEmojiView {
   pub custom_emoji: CustomEmoji,
   pub keywords: Vec<CustomEmojiKeyword>,

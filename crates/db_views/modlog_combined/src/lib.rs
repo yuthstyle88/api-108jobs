@@ -47,6 +47,7 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When someone is added as a community moderator.
+#[serde(rename_all = "camelCase")]
 pub struct ModAddCommunityView {
   pub mod_add_community: ModAddCommunity,
   pub moderator: Option<Person>,
@@ -61,6 +62,7 @@ pub struct ModAddCommunityView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When someone is added as a site moderator.
+#[serde(rename_all = "camelCase")]
 pub struct ModAddView {
   pub mod_add: ModAdd,
   pub moderator: Option<Person>,
@@ -74,6 +76,7 @@ pub struct ModAddView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When someone is banned from a community.
+#[serde(rename_all = "camelCase")]
 pub struct ModBanFromCommunityView {
   pub mod_ban_from_community: ModBanFromCommunity,
   pub moderator: Option<Person>,
@@ -88,6 +91,7 @@ pub struct ModBanFromCommunityView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When someone is banned from the site.
+#[serde(rename_all = "camelCase")]
 pub struct ModBanView {
   pub mod_ban: ModBan,
   pub moderator: Option<Person>,
@@ -101,6 +105,7 @@ pub struct ModBanView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When the visibility of a community is changed
+#[serde(rename_all = "camelCase")]
 pub struct ModChangeCommunityVisibilityView {
   pub mod_change_community_visibility: ModChangeCommunityVisibility,
   pub moderator: Option<Person>,
@@ -114,6 +119,7 @@ pub struct ModChangeCommunityVisibilityView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When a moderator locks a post (prevents new comments being made).
+#[serde(rename_all = "camelCase")]
 pub struct ModLockPostView {
   pub mod_lock_post: ModLockPost,
   pub moderator: Option<Person>,
@@ -129,6 +135,7 @@ pub struct ModLockPostView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When a moderator removes a comment.
+#[serde(rename_all = "camelCase")]
 pub struct ModRemoveCommentView {
   pub mod_remove_comment: ModRemoveComment,
   pub moderator: Option<Person>,
@@ -145,6 +152,7 @@ pub struct ModRemoveCommentView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// When a moderator removes a community.
+#[serde(rename_all = "camelCase")]
 pub struct ModRemoveCommunityView {
   pub mod_remove_community: ModRemoveCommunity,
   pub moderator: Option<Person>,

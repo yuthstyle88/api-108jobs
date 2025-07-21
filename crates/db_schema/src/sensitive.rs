@@ -7,6 +7,7 @@ use validator::ValidateEmail;
 #[serde(transparent)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct SensitiveString(String);
 
 impl SensitiveString {

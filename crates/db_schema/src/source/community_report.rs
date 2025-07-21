@@ -20,6 +20,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A comment report.
+#[serde(rename_all = "camelCase")]
 pub struct CommunityReport {
   pub id: CommunityReportId,
   pub creator_id: PersonId,

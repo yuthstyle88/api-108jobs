@@ -127,6 +127,7 @@ pub enum SearchCombinedView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Searches the site, given a search term, and some optional filters.
+#[serde(rename_all = "camelCase")]
 pub struct Search {
   pub q: String,
   pub community_id: Option<CommunityId>,

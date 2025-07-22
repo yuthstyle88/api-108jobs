@@ -664,6 +664,7 @@ impl ApubActor for Community {
 
 #[cfg(test)]
 mod tests {
+  use diesel_ltree::Ltree;
   use super::*;
   use crate::{
     source::{
@@ -747,6 +748,12 @@ mod tests {
       unresolved_report_count: 0,
       interactions_month: 0,
       local_removed: false,
+      group_id: 0,
+      path: Ltree("".to_string()),
+      subtitle: None,
+      slug: "".to_string(),
+      active: false,
+      is_new: None,
     };
 
     let community_follower_form = CommunityFollowerForm::new(

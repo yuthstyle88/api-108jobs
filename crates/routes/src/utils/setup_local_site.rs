@@ -86,6 +86,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           // Finally create the local_site row
           let local_site_form = LocalSiteInsertForm {
             site_setup: Some(settings.setup.is_some()),
+            community_creation_admin_only: Some(true),
             ..LocalSiteInsertForm::new(site.id)
           };
           let local_site = LocalSite::create(&mut conn.into(), &local_site_form).await?;

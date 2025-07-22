@@ -3,6 +3,7 @@ use crate::{
   source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};
+#[cfg(feature = "full")]
 use diesel_ltree::Ltree;
 use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
 use serde::{Deserialize, Serialize};
@@ -92,7 +93,6 @@ pub struct Community {
   #[serde(skip)]
   pub interactions_month: i64,
   pub local_removed: bool,
-  pub group_id: i32,
   #[cfg(feature = "full")]
   #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
   pub path: Ltree,

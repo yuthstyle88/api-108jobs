@@ -9,7 +9,6 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_person::PersonView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use lemmy_db_schema::newtypes::CategoryGroupId;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -131,6 +130,10 @@ pub struct CreateCommunity {
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
+  pub subtitle: Option<String>,
+  pub slug: String,
+  pub active: bool,
+  pub is_new: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -159,12 +162,12 @@ pub struct CreateSubcommunity {
   pub visibility: Option<CommunityVisibility>,
   /// Parent of subcommunity
   pub parent_id: Option<CommunityId>,
-  /// Group of subcommunities
-  pub group_id: CategoryGroupId,
   /// Slug of subcommunity
   pub slug: Option<String>,
   /// Whether this community is new
   pub is_new: Option<bool>,
+  /// Whether this community is active or not
+  pub active: bool,
 }
 
 #[skip_serializing_none]
@@ -339,17 +342,4 @@ pub struct UpdateCommunityTag {
 /// Delete a community tag.
 pub struct DeleteCommunityTag {
   pub tag_id: TagId,
-}
-
-#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
-/// Create a category group
-pub struct CreateCategoryGroup {
-  pub title: String,
-}
-
-#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-/// Create a category group request
-pub struct CreateCategoryGroupRequest {
-  pub title: Option<String>,
 }

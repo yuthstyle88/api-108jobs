@@ -255,7 +255,6 @@ diesel::table! {
         unresolved_report_count -> Int2,
         interactions_month -> Int8,
         local_removed -> Bool,
-        group_id -> Int4,
         path -> Ltree,
         subtitle -> Nullable<Text>,
         slug -> Text,
@@ -839,16 +838,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    category_group (id) {
-        id -> Int4,
-        title -> Text,
-        active -> Bool,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
     post (id) {
         id -> Int4,
         #[max_length = 200]
@@ -1174,7 +1163,6 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(community -> category_group (group_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1246,5 +1234,4 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
-  category_group,
 );

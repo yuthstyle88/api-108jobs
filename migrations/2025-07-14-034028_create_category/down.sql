@@ -1,5 +1,0 @@
-DROP INDEX IF EXISTS idx_category_path_gist;
-
-DROP TABLE IF EXISTS category;
-
-DROP EXTENSION IF EXISTS ltree;

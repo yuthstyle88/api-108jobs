@@ -208,6 +208,7 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::CommunityVisibility;
+    use diesel_ltree::sql_types::Ltree;
 
     community (id) {
         id -> Int4,
@@ -254,6 +255,12 @@ diesel::table! {
         unresolved_report_count -> Int2,
         interactions_month -> Int8,
         local_removed -> Bool,
+        group_id -> Int4,
+        path -> Ltree,
+        subtitle -> Nullable<Text>,
+        slug -> Text,
+        active -> Bool,
+        is_new -> Nullable<Bool>,
     }
 }
 
@@ -835,28 +842,7 @@ diesel::table! {
     category_group (id) {
         id -> Int4,
         title -> Text,
-        sort_order -> Int4,
         active -> Bool,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use diesel_ltree::sql_types::Ltree;
-
-    category (id) {
-        id -> Int4,
-        group_id -> Int4,
-        path -> Ltree,
-        title -> Text,
-        subtitle -> Nullable<Text>,
-        slug -> Text,
-        image -> Nullable<Text>,
-        active -> Bool,
-        is_new -> Nullable<Bool>,
-        sort_order -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -1188,7 +1174,7 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(category -> category_group (group_id));
+diesel::joinable!(community -> category_group (group_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1261,5 +1247,4 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   category_group,
-  category,
 );

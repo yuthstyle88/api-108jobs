@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_category::api::CreateCategoryGroupRequest;
+use lemmy_db_views_community::api::CreateCategoryGroupRequest;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 

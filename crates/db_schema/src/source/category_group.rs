@@ -13,7 +13,6 @@ use serde_with::skip_serializing_none;
 pub struct CategoryGroup {
   pub id: CategoryGroupId,
   pub title: String,
-  pub sort_order: i32,
   pub active: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
@@ -27,7 +26,6 @@ pub struct CategoryGroup {
 #[cfg_attr(feature = "full", diesel(table_name = category_group))]
 pub struct CategoryGroupInsertForm {
   pub title: String,
-  pub sort_order: i32,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
 }
@@ -37,7 +35,6 @@ pub struct CategoryGroupInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = category_group))]
 pub struct CategoryGroupUpdateForm {
   pub title: String,
-  pub sort_order: i32,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
 }

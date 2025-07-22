@@ -9,6 +9,7 @@ use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_person::PersonView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use lemmy_db_schema::newtypes::CategoryGroupId;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -130,6 +131,40 @@ pub struct CreateCommunity {
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
+}
+
+#[skip_serializing_none]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+/// Create a community.
+pub struct CreateSubcommunity {
+  /// The unique name.
+  pub name: String,
+  /// A longer title.
+  pub title: String,
+  /// A sidebar for the community in markdown.
+  pub sidebar: Option<String>,
+  /// A shorter, one line description of your community.
+  pub description: Option<String>,
+  /// An icon URL.
+  pub icon: Option<String>,
+  /// A banner URL.
+  pub banner: Option<String>,
+  /// Whether its an NSFW community.
+  pub self_promotion: Option<bool>,
+  /// Whether to restrict posting only to moderators.
+  pub posting_restricted_to_mods: Option<bool>,
+  pub discussion_languages: Option<Vec<LanguageId>>,
+  pub visibility: Option<CommunityVisibility>,
+  /// Parent of subcommunity
+  pub parent_id: Option<CommunityId>,
+  /// Group of subcommunities
+  pub group_id: CategoryGroupId,
+  /// Slug of subcommunity
+  pub slug: Option<String>,
+  /// Whether this community is new
+  pub is_new: Option<bool>,
 }
 
 #[skip_serializing_none]
@@ -304,4 +339,17 @@ pub struct UpdateCommunityTag {
 /// Delete a community tag.
 pub struct DeleteCommunityTag {
   pub tag_id: TagId,
+}
+
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+/// Create a category group
+pub struct CreateCategoryGroup {
+  pub title: String,
+}
+
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+/// Create a category group request
+pub struct CreateCategoryGroupRequest {
+  pub title: Option<String>,
 }

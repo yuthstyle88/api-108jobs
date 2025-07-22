@@ -6,5 +6,4 @@ pub mod post;
 pub mod site;
 pub mod tagline;
 pub mod user;
-pub mod category;
-mod category_group;
+pub mod category_group;

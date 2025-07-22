@@ -3,14 +3,17 @@ use crate::{
   source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};
+use diesel_ltree::Ltree;
 use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
+  crate::newtypes::LtreeDef,
   i_love_jesus::CursorKeysModule,
   lemmy_db_schema_file::schema::{community, community_actions},
 };
+
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[cfg_attr(
@@ -89,6 +92,14 @@ pub struct Community {
   #[serde(skip)]
   pub interactions_month: i64,
   pub local_removed: bool,
+  pub group_id: i32,
+  #[cfg(feature = "full")]
+  #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
+  pub path: Ltree,
+  pub subtitle: Option<String>,
+  pub slug: String,
+  pub active: bool,
+  pub is_new: Option<bool>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]

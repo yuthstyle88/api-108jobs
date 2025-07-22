@@ -78,7 +78,6 @@ members = [
     "crates/multilang",
     "crates/ws",
     "crates/email",
-    "crates/db_views/category",
 ]
 
 [workspace.lints.clippy]
@@ -120,7 +119,6 @@ lemmy_routes = { version = "=1.0.0-alpha.5", path = "./crates/routes" }
 lemmy_email = { version = "=1.0.0-alpha.5", path = "./crates/email" }
 lemmy_multilang = { version = "=1.0.0-alpha.5", path = "crates/multilang" }
 lemmy_db_views_comment = { version = "=1.0.0-alpha.5", path = "./crates/db_views/comment" }
-lemmy_db_views_category = { version = "1.0.0-alpha.5", path = "./crates/db_views/category" }
 lemmy_db_views_community = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community" }
 lemmy_db_views_community_follower = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community_follower" }
 lemmy_db_views_community_moderator = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community_moderator" }

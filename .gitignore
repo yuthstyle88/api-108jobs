@@ -34,3 +34,5 @@ bindings
 .env
 
 .DS_Store
+
+config/config.hjson

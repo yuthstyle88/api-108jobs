@@ -131,11 +131,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
     .service(resource("/ws").route(get().to(chat_ws)))
     .service(
       scope("/api/v4")
-        .wrap(rate_limit.message())
+        // .wrap(rate_limit.message())
         // Site
         .service(
           scope("/site")
-            .route("/get-captcha", get().to(get_captcha))
             .route("", get().to(get_site))
             .route("", post().to(create_site))
             .route("", put().to(update_site))

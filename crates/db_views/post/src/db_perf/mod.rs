@@ -78,11 +78,7 @@ async fn db_perf() -> FastJobResult<()> {
   println!("🌍 creating {} communities", args.communities);
   let mut community_ids = vec![];
   for i in 0..args.communities.get() {
-    let form = CommunityInsertForm::new(
-      instance.id,
-      format!("c{i}"),
-      i.to_string(),
-    );
+    let form = CommunityInsertForm::new(instance.id, format!("c{i}"), i.to_string(), None, "na-da".to_string());
     community_ids.push(Community::create(&mut conn.into(), &form).await?.id);
   }
 

@@ -398,6 +398,8 @@ mod tests {
       inserted_instance.id,
       "test community".to_string(),
       "nada".to_owned(),
+      Option::from("i am a good boy".to_string()),
+      "i-am-a-good-boy".to_string()
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -513,6 +515,8 @@ mod tests {
       inserted_instance.id,
       "TIL_comment_agg".into(),
       "nada".to_owned(),
+      None,
+      "i-am-a-good-boy".to_string()
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 

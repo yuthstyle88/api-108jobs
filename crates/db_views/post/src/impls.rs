@@ -665,6 +665,8 @@ mod tests {
         data.instance.id,
         "test_community_3".to_string(),
         "nada".to_owned(),
+        None,
+        "na-da".to_string()
       );
       let community = Community::create(pool, &new_community).await?;
 
@@ -1539,6 +1541,8 @@ mod tests {
       blocked_instance.id,
       "test_community_4".to_string(),
       "none".to_owned(),
+      None,
+      "na-da".to_string()
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1601,6 +1605,8 @@ mod tests {
       data.instance.id,
       "yes".to_string(),
       "yes".to_owned(),
+      None,
+      "na-da".to_string()
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -2352,6 +2358,8 @@ mod tests {
       data.instance.id,
       "test_community_4".to_string(),
       "nada".to_owned(),
+      None,
+      "na-da".to_string()
     );
     let community_1 = Community::create(pool, &form).await?;
 
@@ -2362,6 +2370,8 @@ mod tests {
       data.instance.id,
       "test_community_5".to_string(),
       "nada".to_owned(),
+      None,
+      "na-da".to_string()
     );
     let community_2 = Community::create(pool, &form).await?;
 

@@ -147,6 +147,12 @@ pub struct CommunityInsertForm {
   pub description: Option<String>,
   #[new(default)]
   pub local_removed: Option<bool>,
+  pub subtitle: Option<String>,
+  pub slug: String,
+  #[new(default)]
+  pub active: bool,
+  #[new(default)]
+  pub is_new: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default)]

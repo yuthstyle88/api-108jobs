@@ -134,40 +134,7 @@ pub struct CreateCommunity {
   pub slug: String,
   pub active: bool,
   pub is_new: Option<bool>,
-}
-
-#[skip_serializing_none]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-/// Create a community.
-pub struct CreateSubcommunity {
-  /// The unique name.
-  pub name: String,
-  /// A longer title.
-  pub title: String,
-  /// A sidebar for the community in markdown.
-  pub sidebar: Option<String>,
-  /// A shorter, one line description of your community.
-  pub description: Option<String>,
-  /// An icon URL.
-  pub icon: Option<String>,
-  /// A banner URL.
-  pub banner: Option<String>,
-  /// Whether its an NSFW community.
-  pub self_promotion: Option<bool>,
-  /// Whether to restrict posting only to moderators.
-  pub posting_restricted_to_mods: Option<bool>,
-  pub discussion_languages: Option<Vec<LanguageId>>,
-  pub visibility: Option<CommunityVisibility>,
-  /// Parent of subcommunity
   pub parent_id: Option<CommunityId>,
-  /// Slug of subcommunity
-  pub slug: Option<String>,
-  /// Whether this community is new
-  pub is_new: Option<bool>,
-  /// Whether this community is active or not
-  pub active: bool,
 }
 
 #[skip_serializing_none]

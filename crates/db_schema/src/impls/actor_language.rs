@@ -540,6 +540,8 @@ mod tests {
       data.instance.id,
       "test community".to_string(),
       "test community".to_string(),
+      None,
+      "test-community-slug".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
     let community_langs1 = CommunityLanguage::read(pool, community.id).await?;
@@ -587,6 +589,8 @@ mod tests {
       data.instance.id,
       "test community".to_string(),
       "test community".to_string(),
+      None,
+      "test-community-slug".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
     CommunityLanguage::update(pool, test_langs, community.id).await?;

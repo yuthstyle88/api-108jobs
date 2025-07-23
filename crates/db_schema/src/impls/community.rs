@@ -48,6 +48,7 @@ use lemmy_utils::{
 use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
+use diesel_ltree::Ltree;
 use url::Url;
 
 impl Crud for Community {
@@ -118,6 +119,23 @@ pub enum CollectionType {
 }
 
 impl Community {
+  pub async fn create_sub(
+    pool: &mut DbPool<'_>,
+    community_form: &CommunityInsertForm,
+    _parent_path: Option<&Ltree>,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    let community_ = insert_into(community::table)
+        .values(community_form)
+        .get_result::<Self>(conn)
+        .await?;
+
+    CommunityLanguage::update(pool, vec![], community_.id).await?;
+
+    Ok(community_)
+  }
+
   pub async fn insert_apub(
     pool: &mut DbPool<'_>,
     timestamp: DateTime<Utc>,
@@ -708,6 +726,8 @@ mod tests {
       inserted_instance.id,
       "TIL".into(),
       "nada".to_owned(),
+      None,
+      "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -748,7 +768,6 @@ mod tests {
       unresolved_report_count: 0,
       interactions_month: 0,
       local_removed: false,
-      group_id: 0,
       path: Ltree("".to_string()),
       subtitle: None,
       slug: "".to_string(),
@@ -874,6 +893,8 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
+      None,
+      "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -881,6 +902,8 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg_2".into(),
       "nada".to_owned(),
+      None,
+      "nada".to_string(),
     );
     let another_inserted_community = Community::create(pool, &another_community).await?;
 

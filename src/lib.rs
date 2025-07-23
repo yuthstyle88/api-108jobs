@@ -281,6 +281,7 @@ fn create_http_server(
           .route("", get().to(get_sitemap)),
       )
   })
+  .workers(32)
   .disable_signals()
   .bind(bind)?
   .run();

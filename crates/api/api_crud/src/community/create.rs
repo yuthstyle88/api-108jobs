@@ -54,6 +54,12 @@ pub async fn create_community(
     Err(FastJobErrorType::OnlyAdminsCanCreateCommunities)?
   }
 
+  let parent_opt = if let Some(parent_id) = data.parent_id {
+    Community::read(&mut context.pool(), parent_id).await.ok()
+  } else {
+    None
+  };
+
   check_self_promotion_allowed(data.self_promotion, Some(&local_site))?;
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
@@ -100,6 +106,8 @@ pub async fn create_community(
       site_view.site.instance_id,
       data.name.clone(),
       data.title.clone(),
+      data.subtitle.clone(),
+      data.slug.clone(),
     )
   };
 

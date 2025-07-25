@@ -303,7 +303,6 @@ mod tests {
       instance.id,
       "test community pcv".to_string(),
       "nada".to_owned(),
-      None,
       "na-da".to_string()
     );
     let community = Community::create(pool, &community_form).await?;

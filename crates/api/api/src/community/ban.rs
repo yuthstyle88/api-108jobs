@@ -4,11 +4,11 @@ use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
-    check_community_mod_action,
     check_expire_time,
     remove_or_restore_user_data_in_community,
   },
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::{
     community::{Community, CommunityActions, CommunityPersonBanForm},
@@ -34,8 +34,7 @@ pub async fn ban_from_community(
   let local_instance_id = local_user_view.person.instance_id;
   let community = Community::read(&mut context.pool(), data.community_id).await?;
 
-  // Verify that only mods or admins can ban
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   LocalUser::is_higher_mod_or_admin_check(
     &mut context.pool(),

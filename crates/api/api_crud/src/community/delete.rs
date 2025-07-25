@@ -3,8 +3,9 @@ use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_community_mod_action, is_top_mod},
+  utils::is_top_mod,
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::community::{Community, CommunityUpdateForm},
   traits::Crud,
@@ -24,7 +25,7 @@ pub async fn delete_community(
     CommunityModeratorView::for_community(&mut context.pool(), data.community_id).await?;
 
   let community = Community::read(&mut context.pool(), data.community_id).await?;
-  check_community_mod_action(&local_user_view, &community, true, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Make sure deleter is the top mod
   is_top_mod(&local_user_view, &community_mods)?;

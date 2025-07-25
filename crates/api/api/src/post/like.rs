@@ -86,7 +86,6 @@ pub async fn like_post(
 
   build_post_response(
     context.deref(),
-    orig_post.community.id,
     local_user_view,
     post_id,
   )

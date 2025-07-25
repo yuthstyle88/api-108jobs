@@ -60,8 +60,9 @@ pub async fn delete_community_icon(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
+  is_admin(&local_user_view)?;
+  
   let community = Community::read(&mut context.pool(), data.id).await?;
-
   delete_old_image(&community.icon, &context).await?;
 
   let form = CommunityUpdateForm {
@@ -78,8 +79,9 @@ pub async fn delete_community_banner(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
+  is_admin(&local_user_view)?;
+  
   let community = Community::read(&mut context.pool(), data.id).await?;
-
   delete_old_image(&community.icon, &context).await?;
 
   let form = CommunityUpdateForm {

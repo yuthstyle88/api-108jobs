@@ -135,7 +135,6 @@ pub async fn create_post(
     .await?;
   }
 
-  let community_id = community.id;
   let federate_post = if scheduled_publish_time_at.is_none() {
     send_webmention(inserted_post.clone(), community);
     |post| Some(SendActivityData::CreatePost(post))
@@ -171,5 +170,5 @@ pub async fn create_post(
   let read_form = PostReadForm::new(post_id, person_id);
   PostActions::mark_as_read(&mut context.pool(), &read_form).await?;
 
-  build_post_response(&context, community_id, local_user_view, post_id).await
+  build_post_response(&context, local_user_view, post_id).await
 }

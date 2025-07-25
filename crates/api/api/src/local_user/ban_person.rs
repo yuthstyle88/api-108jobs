@@ -8,9 +8,8 @@ use lemmy_db_schema::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,
-    mod_log::moderator::{ModBan, ModBanForm},
   },
-  traits::{Bannable, Crud},
+  traits::Bannable,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::{
@@ -61,16 +60,6 @@ pub async fn ban_from_site(
       &context,
     )
     .await?;
-  };
-
-  // Mod tables
-  let form = ModBanForm {
-    mod_person_id: my_person_id,
-    other_person_id: data.person_id,
-    reason: data.reason.clone(),
-    banned: Some(data.ban),
-    expires_at,
-    instance_id: local_user_view.person.instance_id,
   };
 
   let person_view = PersonView::read(

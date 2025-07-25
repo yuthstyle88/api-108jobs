@@ -808,7 +808,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -855,7 +854,7 @@ mod tests {
     .await?;
 
     let read_post_listing_single_no_person =
-      PostView::read(pool, data.post.id, None, data.instance.id, false).await?;
+      PostView::read(pool, data.post.id, None, data.instance.id).await?;
 
     // Should be 2 posts, with the bot post, and the blocked
     assert_eq!(
@@ -918,7 +917,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -982,7 +980,6 @@ mod tests {
       data.post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -998,7 +995,6 @@ mod tests {
       data.post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1053,7 +1049,6 @@ mod tests {
       data.bot_post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1129,7 +1124,6 @@ mod tests {
       data.bot_post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1839,7 +1833,7 @@ mod tests {
     assert_eq!(3, authenticated_query.len());
 
     let unauthenticated_post =
-      PostView::read(pool, data.post.id, None, data.instance.id, false).await;
+      PostView::read(pool, data.post.id, None, data.instance.id).await;
     assert!(unauthenticated_post.is_err());
 
     let authenticated_post = PostView::read(
@@ -1847,7 +1841,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await;
     assert!(authenticated_post.is_ok());
@@ -1885,7 +1878,6 @@ mod tests {
       data.post.id,
       Some(&inserted_banned_from_comm_local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1909,7 +1901,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1951,7 +1942,6 @@ mod tests {
       banned_post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -2076,7 +2066,7 @@ mod tests {
     .list(&data.site, pool)
     .await?;
     assert_eq!(0, read_post_listing.len());
-    let post_view = PostView::read(pool, data.post.id, None, data.instance.id, false).await;
+    let post_view = PostView::read(pool, data.post.id, None, data.instance.id).await;
     assert!(post_view.is_err());
 
     // No posts returned for non-follower who is not admin
@@ -2094,7 +2084,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await;
     assert!(post_view.is_err());
@@ -2114,7 +2103,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      true,
     )
     .await;
     assert!(post_view.is_ok());
@@ -2141,7 +2129,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      true,
     )
     .await;
     assert!(post_view.is_ok());
@@ -2294,7 +2281,6 @@ mod tests {
       data.post_with_tags.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 

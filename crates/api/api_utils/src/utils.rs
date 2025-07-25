@@ -230,23 +230,6 @@ pub fn check_community_deleted_removed(community: &Community) -> FastJobResult<(
   Ok(())
 }
 
-/// Check that the given user can perform a mod action in the community.
-///
-/// In particular it checks that they're an admin or mod, wasn't banned and the community isn't
-/// removed/deleted.
-pub async fn check_community_mod_action(
-  local_user_view: &LocalUserView,
-  community: &Community,
-  allow_deleted: bool,
-  pool: &mut DbPool<'_>,
-) -> FastJobResult<()> {
-  // it must be possible to restore deleted community
-  if !allow_deleted {
-    check_community_deleted_removed(community)?;
-  }
-  Ok(())
-}
-
 /// Don't allow creating reports for removed / deleted posts
 pub fn check_post_deleted_or_removed(post: &Post) -> FastJobResult<()> {
   if post.deleted || post.removed {

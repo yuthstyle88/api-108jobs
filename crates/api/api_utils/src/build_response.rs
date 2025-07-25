@@ -1,4 +1,4 @@
-use crate::{context::FastJobContext};
+use crate::context::FastJobContext;
 use actix_web::web::Json;
 use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, InstanceId, PersonId, PostId},
@@ -49,12 +49,8 @@ pub async fn build_community_response(
   community_id: CommunityId,
 ) -> FastJobResult<Json<CommunityResponse>> {
   let local_user = local_user_view.local_user;
-  let community_view = CommunityView::read(
-    &mut context.pool(),
-    community_id,
-    Some(&local_user),
-  )
-  .await?;
+  let community_view =
+    CommunityView::read(&mut context.pool(), community_id, Some(&local_user)).await?;
   let discussion_languages = CommunityLanguage::read(&mut context.pool(), community_id).await?;
 
   Ok(Json(CommunityResponse {
@@ -65,7 +61,6 @@ pub async fn build_community_response(
 
 pub async fn build_post_response(
   context: &FastJobContext,
-  community_id: CommunityId,
   local_user_view: LocalUserView,
   post_id: PostId,
 ) -> FastJobResult<Json<PostResponse>> {

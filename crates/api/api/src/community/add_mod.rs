@@ -3,7 +3,6 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_mod_action,
 };
 use lemmy_db_schema::{
   source::{
@@ -25,8 +24,6 @@ pub async fn add_mod_to_community(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AddModToCommunityResponse>> {
   let community = Community::read(&mut context.pool(), data.community_id).await?;
-  // Verify that only mods or admins can add mod
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
 
   // If it's a mod removal, also check that you're a higher mod.
   if !data.added {

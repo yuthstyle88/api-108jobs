@@ -771,7 +771,8 @@ mod tests {
       path: Ltree("".to_string()),
       slug: "".to_string(),
       active: false,
-s    };
+      is_new: false,
+    };
 
     let community_follower_form = CommunityFollowerForm::new(
       inserted_community.id,

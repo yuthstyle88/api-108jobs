@@ -106,23 +106,6 @@ pub fn is_admin(local_user_view: &LocalUserView) -> FastJobResult<()> {
   }
 }
 
-pub fn is_top_mod(
-  local_user_view: &LocalUserView,
-  community_mods: &[CommunityModeratorView],
-) -> FastJobResult<()> {
-  check_local_user_valid(local_user_view)?;
-  if local_user_view.person.id
-    != community_mods
-      .first()
-      .map(|cm| cm.moderator.id)
-      .unwrap_or(PersonId(0))
-  {
-    Err(FastJobErrorType::NotTopMod)?
-  } else {
-    Ok(())
-  }
-}
-
 /// Updates the read comment count for a post. Usually done when reading or creating a new comment.
 pub async fn update_read_comments(
   person_id: PersonId,

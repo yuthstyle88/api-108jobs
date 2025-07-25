@@ -3,7 +3,7 @@ use anyhow::Context;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_api_utils::{
   context::FastJobContext,
-  utils::{check_community_user_action, is_admin, is_top_mod},
+  utils::{check_community_user_action, is_admin},
 };
 use lemmy_db_schema::{
   source::{
@@ -38,8 +38,8 @@ pub async fn transfer_community(
 
   check_community_user_action(&local_user_view, &community, &mut context.pool()).await?;
 
-  // Make sure transferrer is either the top community mod, or an admin
-  if !(is_top_mod(&local_user_view, &community_mods).is_ok() || is_admin(&local_user_view).is_ok())
+  // Make sure transferrer is an admin
+  if is_admin(&local_user_view).is_ok()
   {
     Err(FastJobErrorType::NotAnAdmin)?
   }

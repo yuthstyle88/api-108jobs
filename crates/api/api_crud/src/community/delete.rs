@@ -1,17 +1,15 @@
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::is_top_mod,
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::community::{Community, CommunityUpdateForm},
   traits::Crud,
 };
 use lemmy_db_views_community::api::{CommunityResponse, DeleteCommunity};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -20,15 +18,10 @@ pub async fn delete_community(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
-  // Fetch the community mods
-  let community_mods =
-    CommunityModeratorView::for_community(&mut context.pool(), data.community_id).await?;
+  is_admin(&local_user_view)?;
 
   let community = Community::read(&mut context.pool(), data.community_id).await?;
   check_community_deleted_removed(&community)?;
-
-  // Make sure deleter is the top mod
-  is_top_mod(&local_user_view, &community_mods)?;
 
   // Do the delete
   let community_id = data.community_id;

@@ -8,7 +8,6 @@ use lemmy_api::{
     save::save_comment,
   },
   community::{
-    add_mod::add_mod_to_community,
     ban::ban_from_community,
     block::user_block_community,
     follow::follow_community,
@@ -166,7 +165,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/remove", post().to(remove_community))
             .route("/transfer", post().to(transfer_community))
             .route("/ban_user", post().to(ban_from_community))
-            .route("/mod", post().to(add_mod_to_community))
             .route("/icon", post().to(upload_community_icon))
             .route("/icon", delete().to(delete_community_icon))
             .route("/banner", post().to(upload_community_banner))

@@ -12,15 +12,14 @@ use lemmy_api_utils::{
     process_markdown_opt, send_webmention, slur_regex,
   },
 };
+use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
 use lemmy_db_views_site::SiteView;
@@ -82,16 +81,6 @@ pub async fn create_post(
   } else {
     data.self_promotion
   };
-
-  if community.posting_restricted_to_mods {
-    let community_id = data.community_id;
-    CommunityModeratorView::check_is_community_moderator(
-      &mut context.pool(),
-      community_id,
-      local_user_view.local_user.person_id,
-    )
-    .await?;
-  }
 
   let language_id = validate_post_language(
     &mut context.pool(),

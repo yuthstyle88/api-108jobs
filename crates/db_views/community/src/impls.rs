@@ -2,6 +2,7 @@ use crate::CommunityView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
+use slug::slugify;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, PaginationCursor, PersonId},
@@ -37,7 +38,9 @@ use lemmy_db_schema_file::{
     instance_actions,
   },
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::utils::validation::get_required_trimmed;
+use crate::api::{CreateCommunity, CreateCommunityRequest};
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -188,6 +191,34 @@ impl CommunityQuery<'_> {
   }
 }
 
+impl TryFrom<CreateCommunityRequest> for CreateCommunity {
+  type Error = FastJobError;
+
+  fn try_from(mut value: CreateCommunityRequest) -> Result<Self, Self::Error> {
+    let name = get_required_trimmed(&value.name, FastJobErrorType::EmptyTitle)?;
+    
+    let title = value.title.take().unwrap_or_default();
+
+    let slug = value.slug.take().unwrap_or_else(|| slugify(&name));
+
+    Ok(CreateCommunity {
+      name,
+      title,
+      sidebar: None,
+      description: value.description.take(),
+      icon: value.icon.take(),
+      banner: value.banner.take(),
+      self_promotion: value.self_promotion.take(),
+      posting_restricted_to_mods: None,
+      discussion_languages: None,
+      visibility: None,
+      slug,
+      is_new: value.is_new.take(),
+      parent_id: value.parent_id.take(),
+    })
+  }
+}
+
 
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
@@ -245,7 +276,6 @@ mod tests {
           instance.id,
           "test_community_1".to_string(),
           "nada1".to_owned(),
-          None,
           "na-da-1".to_string()
         ),
       )
@@ -256,7 +286,6 @@ mod tests {
           instance.id,
           "test_community_2".to_string(),
           "nada2".to_owned(),
-          None,
           "na-da-2".to_string()
         ),
       )
@@ -267,7 +296,6 @@ mod tests {
           instance.id,
           "test_community_3".to_string(),
           "nada3".to_owned(),
-          None,
           "na-da-3".to_string()
         ),
       )

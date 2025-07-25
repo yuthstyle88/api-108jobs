@@ -114,7 +114,7 @@ pub struct CommunityResponse {
 pub struct CreateCommunity {
   /// The unique name.
   pub name: String,
-  /// A longer title.
+  /// A longer title (can be seen as subname)
   pub title: String,
   /// A sidebar for the community in markdown.
   pub sidebar: Option<String>,
@@ -124,16 +124,40 @@ pub struct CreateCommunity {
   pub icon: Option<String>,
   /// A banner URL.
   pub banner: Option<String>,
-  /// Whether its an NSFW community.
+  /// Whether its self-promotion community.
   pub self_promotion: Option<bool>,
   /// Whether to restrict posting only to moderators.
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
-  pub subtitle: Option<String>,
   pub slug: String,
-  pub active: bool,
   pub is_new: Option<bool>,
+  pub parent_id: Option<CommunityId>,
+}
+
+#[skip_serializing_none]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+/// Create a community (this is the replacement of a category and subcategory of a job).
+pub struct CreateCommunityRequest {
+  /// The unique name.
+  pub name: Option<String>,
+  /// A longer title (can be seen as subname)
+  pub title: Option<String>,
+  /// A shorter, one-line description of your category or subcategory.
+  pub description: Option<String>,
+  /// An icon URL.
+  pub icon: Option<String>,
+  /// A banner URL.
+  pub banner: Option<String>,
+  /// Whether its an self promotion category.
+  pub self_promotion: Option<bool>,
+  /// A slug of category and subcategory.
+  pub slug: Option<String>,
+  /// Whether its new or not.
+  pub is_new: Option<bool>,
+  /// If parent_id is None -> Category else -> Subcategory
   pub parent_id: Option<CommunityId>,
 }
 

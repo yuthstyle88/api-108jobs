@@ -96,14 +96,10 @@ pub async fn transfer_community(
   )
   .await?;
 
-  let community_id = data.community_id;
-  let moderators = CommunityModeratorView::for_community(&mut context.pool(), community_id).await?;
-
   // Return the jwt
   Ok(Json(GetCommunityResponse {
     community_view,
     site: None,
-    moderators,
     discussion_languages: vec![],
   }))
 }

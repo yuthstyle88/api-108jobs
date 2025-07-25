@@ -232,7 +232,6 @@ pub struct GetCommunity {
 pub struct GetCommunityResponse {
   pub community_view: CommunityView,
   pub site: Option<Site>,
-  pub moderators: Vec<CommunityModeratorView>,
   pub discussion_languages: Vec<LanguageId>,
 }
 

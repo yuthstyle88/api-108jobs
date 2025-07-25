@@ -42,8 +42,9 @@ pub async fn create_community(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
+  is_admin(&local_user_view)?;
+  
   let data: CreateCommunity = data.into_inner().try_into()?;
-
   Community::check_community_slug_taken(&mut context.pool(), &data.slug).await?;
 
   let site_view = SiteView::read_local(&mut context.pool()).await?;

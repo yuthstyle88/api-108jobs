@@ -1,7 +1,7 @@
 use super::check_community_visibility_allowed;
 use actix_web::web::{Data, Json};
 use chrono::Utc;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
@@ -30,6 +30,8 @@ pub async fn update_community(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
+  is_admin(&local_user_view)?;
+  
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let slur_regex = slur_regex(&context).await?;

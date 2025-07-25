@@ -2,8 +2,8 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_community_mod_action, check_community_user_action},
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
@@ -30,26 +30,12 @@ pub async fn distinguish_comment(
   )
   .await?;
 
-  check_community_user_action(
-    &local_user_view,
-    &orig_comment.community,
-    &mut context.pool(),
-  )
-  .await?;
-
   // Verify that only the creator can distinguish
   if local_user_view.person.id != orig_comment.creator.id {
     Err(FastJobErrorType::NoCommentEditAllowed)?
   }
 
-  // Verify that only a mod or admin can distinguish a comment
-  check_community_mod_action(
-    &local_user_view,
-    &orig_comment.community,
-    false,
-    &mut context.pool(),
-  )
-  .await?;
+  check_community_deleted_removed(&orig_comment.community)?;
 
   // Update the Comment
   let form = CommentUpdateForm {

@@ -3,8 +3,8 @@ use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_user_action,
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::{
     community::Community,
@@ -30,7 +30,7 @@ pub async fn delete_post(
   }
 
   let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
-  check_community_user_action(&local_user_view, &community, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Verify that only the creator can delete
   if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {
@@ -55,7 +55,6 @@ pub async fn delete_post(
 
   build_post_response(
     &context,
-    orig_post.community_id,
     local_user_view,
     data.post_id,
   )

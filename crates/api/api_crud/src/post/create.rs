@@ -8,19 +8,19 @@ use lemmy_api_utils::{
   send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{
-    check_community_user_action, check_self_promotion_allowed, get_url_blocklist, honeypot_check,
+    check_self_promotion_allowed, get_url_blocklist, honeypot_check,
     process_markdown_opt, send_webmention, slur_regex,
   },
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
 use lemmy_db_views_site::SiteView;
@@ -71,11 +71,10 @@ pub async fn create_post(
     &mut context.pool(),
     data.community_id,
     Some(&local_user_view.local_user),
-    false,
   )
   .await?;
   let community = &community_view.community;
-  check_community_user_action(&local_user_view, community, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Ensure that all posts in NSFW communities are marked as NSFW
   let self_promotion = if community.self_promotion {
@@ -83,16 +82,6 @@ pub async fn create_post(
   } else {
     data.self_promotion
   };
-
-  if community.posting_restricted_to_mods {
-    let community_id = data.community_id;
-    CommunityModeratorView::check_is_community_moderator(
-      &mut context.pool(),
-      community_id,
-      local_user_view.local_user.person_id,
-    )
-    .await?;
-  }
 
   let language_id = validate_post_language(
     &mut context.pool(),
@@ -136,7 +125,6 @@ pub async fn create_post(
     .await?;
   }
 
-  let community_id = community.id;
   let federate_post = if scheduled_publish_time_at.is_none() {
     send_webmention(inserted_post.clone(), community);
     |post| Some(SendActivityData::CreatePost(post))
@@ -172,5 +160,5 @@ pub async fn create_post(
   let read_form = PostReadForm::new(post_id, person_id);
   PostActions::mark_as_read(&mut context.pool(), &read_form).await?;
 
-  build_post_response(&context, community_id, local_user_view, post_id).await
+  build_post_response(&context, local_user_view, post_id).await
 }

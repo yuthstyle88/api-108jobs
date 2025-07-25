@@ -1,15 +1,12 @@
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{
-    check_community_user_action, check_post_deleted_or_removed, is_mod_or_admin,
-    process_markdown, slur_regex, update_read_comments,
-  },
+  utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
-use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::{
@@ -52,21 +49,16 @@ pub async fn create_comment(
     post_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-    true,
   )
   .await?;
 
   let post = post_view.post;
   let community_id = post_view.community.id;
 
-  check_community_user_action(&local_user_view, &post_view.community, &mut context.pool()).await?;
   check_post_deleted_or_removed(&post)?;
 
   // Check if post is locked, no new comments
-  let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
-    .await
-    .is_ok();
-  if post.locked && !is_mod_or_admin {
+  if post.locked {
     Err(FastJobErrorType::Locked)?
   }
 

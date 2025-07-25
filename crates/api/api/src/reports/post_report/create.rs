@@ -4,7 +4,7 @@ use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_community_user_action, check_post_deleted_or_removed, slur_regex},
+  utils::{check_post_deleted_or_removed, slur_regex},
 };
 use lemmy_db_schema::{
   source::post_report::{PostReport, PostReportForm},
@@ -35,8 +35,6 @@ pub async fn create_post_report(
   let local_instance_id = local_user_view.person.instance_id;
   let post_view =
     PostView::read(&mut context.pool(), post_id, None, local_instance_id, false).await?;
-
-  check_community_user_action(&local_user_view, &post_view.community, &mut context.pool()).await?;
 
   check_post_deleted_or_removed(&post_view.post)?;
 

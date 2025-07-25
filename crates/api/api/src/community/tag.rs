@@ -1,6 +1,7 @@
 use actix_web::web::{Data, Json};
 use chrono::Utc;
-use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_action};
+use lemmy_api_utils::{context::FastJobContext};
+use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_db_schema::{
   source::{
     community::Community,
@@ -17,11 +18,13 @@ pub async fn create_community_tag(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {
+  is_admin(&local_user_view)?;
+
   let community = Community::read(&mut context.pool(), data.community_id).await?;
 
   tag_name_length_check(&data.display_name)?;
   // Verify that only mods can create tags
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Create the tag
   let tag_form = TagInsertForm {
@@ -40,11 +43,13 @@ pub async fn update_community_tag(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {
+  is_admin(&local_user_view)?;
+
   let tag = Tag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 
   // Verify that only mods can update tags
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   tag_name_length_check(&data.display_name)?;
   // Update the tag
@@ -64,11 +69,12 @@ pub async fn delete_community_tag(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {
+  is_admin(&local_user_view)?;
+
   let tag = Tag::read(&mut context.pool(), data.tag_id).await?;
   let community = Community::read(&mut context.pool(), tag.community_id).await?;
 
-  // Verify that only mods can delete tags
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Soft delete the tag
   let tag_form = TagUpdateForm {

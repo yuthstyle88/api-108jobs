@@ -2,6 +2,7 @@ use crate::CommunityView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
+use slug::slugify;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, PaginationCursor, PersonId},
@@ -37,7 +38,9 @@ use lemmy_db_schema_file::{
     instance_actions,
   },
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_utils::utils::validation::get_required_trimmed;
+use crate::api::{CreateCommunity, CreateCommunityRequest};
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -57,20 +60,12 @@ impl CommunityView {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     my_local_user: Option<&'_ LocalUser>,
-    is_mod_or_admin: bool,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_local_user.person_id())
       .filter(community::id.eq(community_id))
       .select(Self::as_select())
       .into_boxed();
-
-    // Hide deleted and removed for non-admins or mods
-    if !is_mod_or_admin {
-      query = query
-        .filter(Community::hide_removed_and_deleted())
-        .filter(filter_not_unlisted_or_is_subscribed());
-    }
 
     query = my_local_user.visible_communities_only(query);
 
@@ -188,6 +183,34 @@ impl CommunityQuery<'_> {
   }
 }
 
+impl TryFrom<CreateCommunityRequest> for CreateCommunity {
+  type Error = FastJobError;
+
+  fn try_from(mut value: CreateCommunityRequest) -> Result<Self, Self::Error> {
+    let name = get_required_trimmed(&value.name, FastJobErrorType::EmptyTitle)?;
+    
+    let title = value.title.take().unwrap_or_default();
+
+    let slug = value.slug.take().unwrap_or_else(|| slugify(&name));
+
+    Ok(CreateCommunity {
+      name,
+      title,
+      sidebar: None,
+      description: value.description.take(),
+      icon: value.icon.take(),
+      banner: value.banner.take(),
+      self_promotion: value.self_promotion.take(),
+      posting_restricted_to_mods: None,
+      discussion_languages: None,
+      visibility: None,
+      slug,
+      is_new: value.is_new.take(),
+      parent_id: value.parent_id.take(),
+    })
+  }
+}
+
 
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
@@ -245,7 +268,6 @@ mod tests {
           instance.id,
           "test_community_1".to_string(),
           "nada1".to_owned(),
-          None,
           "na-da-1".to_string()
         ),
       )
@@ -256,7 +278,6 @@ mod tests {
           instance.id,
           "test_community_2".to_string(),
           "nada2".to_owned(),
-          None,
           "na-da-2".to_string()
         ),
       )
@@ -267,7 +288,6 @@ mod tests {
           instance.id,
           "test_community_3".to_string(),
           "nada3".to_owned(),
-          None,
           "na-da-3".to_string()
         ),
       )
@@ -317,11 +337,11 @@ mod tests {
     let data = init_data(pool).await?;
     let community = &data.communities[0];
 
-    let unauthenticated = CommunityView::read(pool, community.id, None, false).await?;
+    let unauthenticated = CommunityView::read(pool, community.id, None).await?;
     assert!(unauthenticated.community_actions.is_none());
 
     let authenticated =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(authenticated.community_actions.is_none());
 
     let form = CommunityFollowerForm::new(
@@ -332,7 +352,7 @@ mod tests {
     CommunityActions::follow(pool, &form).await?;
 
     let with_pending_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_pending_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::Pending)));
@@ -355,7 +375,7 @@ mod tests {
     CommunityActions::follow(pool, &form).await?;
 
     let with_approval_required_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_approval_required_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::ApprovalRequired)));
@@ -367,7 +387,7 @@ mod tests {
     );
     CommunityActions::follow(pool, &form).await?;
     let with_accepted_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_accepted_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::Accepted)));
@@ -410,11 +430,11 @@ mod tests {
     assert_eq!(data.communities.len(), authenticated_query.len());
 
     let unauthenticated_community =
-      CommunityView::read(pool, data.communities[0].id, None, false).await;
+      CommunityView::read(pool, data.communities[0].id, None).await;
     assert!(unauthenticated_community.is_err());
 
     let authenticated_community =
-      CommunityView::read(pool, data.communities[0].id, Some(&data.local_user), false).await;
+      CommunityView::read(pool, data.communities[0].id, Some(&data.local_user)).await;
     assert!(authenticated_community.is_ok());
 
     cleanup(data, pool).await

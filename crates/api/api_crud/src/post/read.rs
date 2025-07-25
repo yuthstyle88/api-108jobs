@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{
   context::FastJobContext,
-  utils::{check_private_instance, is_mod_or_admin_opt, update_read_comments},
+  utils::{check_private_instance, update_read_comments},
 };
 use lemmy_db_schema::{
   source::{
@@ -51,19 +51,11 @@ pub async fn get_post(
     .await?
     .community_id;
 
-  let is_mod_or_admin = is_mod_or_admin_opt(
-    &mut context.pool(),
-    local_user_view.as_ref(),
-    Some(community_id),
-  )
-  .await
-  .is_ok();
   let post_view = PostView::read(
     &mut context.pool(),
     post_id,
     local_user.as_ref(),
     local_instance_id,
-    is_mod_or_admin,
   )
   .await?;
 
@@ -86,7 +78,6 @@ pub async fn get_post(
     &mut context.pool(),
     community_id,
     local_user.as_ref(),
-    is_mod_or_admin,
   )
   .await?;
 

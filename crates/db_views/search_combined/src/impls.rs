@@ -525,7 +525,6 @@ mod tests {
         instance.id,
         "asklemmy".to_string(),
         "Ask FastJob".to_owned(),
-        None,
         "na-da".to_string()
       )
     };
@@ -535,7 +534,6 @@ mod tests {
       instance.id,
       "startrek_ds9".to_string(),
       "Star Trek - Deep Space Nine".to_owned(),
-      None,
       "na-da".to_string()
     );
     let community_2 = Community::create(pool, &community_form_2).await?;

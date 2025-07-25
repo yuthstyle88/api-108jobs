@@ -540,7 +540,6 @@ mod tests {
       data.instance.id,
       "test community".to_string(),
       "test community".to_string(),
-      None,
       "test-community-slug".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
@@ -589,7 +588,6 @@ mod tests {
       data.instance.id,
       "test community".to_string(),
       "test community".to_string(),
-      None,
       "test-community-slug".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;

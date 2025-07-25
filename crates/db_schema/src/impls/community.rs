@@ -1,5 +1,5 @@
 use crate::{
-  diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
+  diesel::{JoinOnDsl, OptionalExtension},
   newtypes::{CommunityId, DbUrl, PersonId},
   source::{
     actor_language::CommunityLanguage,
@@ -18,13 +18,12 @@ use crate::{
   traits::{ApubActor, Bannable, Blockable, Crud, Followable, Joinable},
   utils::{
     format_actor_url,
-    functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
+    functions::{coalesce_2_nullable, lower, random_smallint},
     get_conn,
     uplete,
     DbPool,
   },
 };
-use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
@@ -35,7 +34,8 @@ use diesel::{
   NullableExpressionMethods,
   QueryDsl,
 };
-use diesel_async::RunQueryDsl;
+use diesel_async::{AsyncConnection, RunQueryDsl};
+use diesel_ltree::Ltree;
 use lemmy_db_schema_file::{
   enums::{CommunityFollowerState, CommunityVisibility, ListingType},
   schema::{comment, community, community_actions, instance, post},
@@ -48,7 +48,6 @@ use lemmy_utils::{
 use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
-use diesel_ltree::Ltree;
 use url::Url;
 
 impl Crud for Community {
@@ -76,7 +75,7 @@ impl Crud for Community {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(community::table.find(community_id))
+    update(community::table.find(community_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -122,47 +121,49 @@ impl Community {
   pub async fn create_sub(
     pool: &mut DbPool<'_>,
     community_form: &CommunityInsertForm,
-    _parent_path: Option<&Ltree>,
+    parent_opt: Option<&Community>,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    let community_ = insert_into(community::table)
-        .values(community_form)
-        .get_result::<Self>(conn)
-        .await?;
+    let community = conn.transaction::<_, FastJobError, _>(|txn| {
+      Box::pin(async move {
+        let mut community: Community = insert_into(community::table)
+            .values(community_form)
+            .get_result(txn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntCreateCommunity)?;
 
-    CommunityLanguage::update(pool, vec![], community_.id).await?;
+        let path = match parent_opt {
+          Some(parent) => Ltree(format!("{}.{}", parent.path.0, community.id.0)),
+          None => Ltree(community.id.0.to_string()),
+        };
 
-    Ok(community_)
+        update(community::table.filter(community::id.eq(community.id)))
+            .set(community::path.eq(path.clone()))
+            .execute(txn)
+            .await?;
+
+        community.path = path;
+
+        Ok(community)
+      })
+    }).await?;
+
+    CommunityLanguage::update(pool, vec![], community.id).await?;
+
+    Ok(community)
   }
 
-  pub async fn insert_apub(
-    pool: &mut DbPool<'_>,
-    timestamp: DateTime<Utc>,
-    form: &CommunityInsertForm,
-  ) -> FastJobResult<Self> {
-    let is_new_community = match &form.ap_id {
-      Some(id) => Community::read_from_apub_id(pool, id).await?.is_none(),
-      None => true,
-    };
+  pub async fn check_community_slug_taken(pool: &mut DbPool<'_>, slug: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
-
-    // Can't do separate insert/update commands because InsertForm/UpdateForm aren't convertible
-    let community_ = insert_into(community::table)
-      .values(form)
-      .on_conflict(community::ap_id)
-      .filter_target(coalesce(community::updated_at, community::published_at).lt(timestamp))
-      .do_update()
-      .set(form)
-      .get_result::<Self>(conn)
-      .await?;
-
-    // Initialize languages for new community
-    if is_new_community {
-      CommunityLanguage::update(pool, vec![], community_.id).await?;
-    }
-
-    Ok(community_)
+    select(not(exists(
+      community::table
+          .filter(lower(community::slug).eq(slug.to_lowercase())),
+    )))
+        .get_result::<bool>(conn)
+        .await?
+        .then_some(())
+        .ok_or(FastJobErrorType::SlugAlreadyExists.into())
   }
 
   /// Get the community which has a given moderators or featured url, also return the collection
@@ -682,7 +683,6 @@ impl ApubActor for Community {
 
 #[cfg(test)]
 mod tests {
-  use diesel_ltree::Ltree;
   use super::*;
   use crate::{
     source::{
@@ -704,6 +704,7 @@ mod tests {
     traits::{Bannable, Crud, Followable, Joinable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
+  use diesel_ltree::Ltree;
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
@@ -726,7 +727,6 @@ mod tests {
       inserted_instance.id,
       "TIL".into(),
       "nada".to_owned(),
-      None,
       "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
@@ -769,10 +769,9 @@ mod tests {
       interactions_month: 0,
       local_removed: false,
       path: Ltree("".to_string()),
-      subtitle: None,
       slug: "".to_string(),
       active: false,
-      is_new: None,
+      is_new: false,
     };
 
     let community_follower_form = CommunityFollowerForm::new(
@@ -893,7 +892,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
-      None,
       "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
@@ -902,7 +900,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg_2".into(),
       "nada".to_owned(),
-      None,
       "nada".to_string(),
     );
     let another_inserted_community = Community::create(pool, &another_community).await?;

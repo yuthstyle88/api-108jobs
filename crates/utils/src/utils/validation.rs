@@ -389,7 +389,6 @@ pub fn get_required_trimmed(
 }
 #[cfg(test)]
 mod tests {
-
   use crate::{
     error::{FastJobErrorType, FastJobResult},
     utils::validation::{
@@ -414,9 +413,7 @@ mod tests {
     },
   };
   use pretty_assertions::assert_eq;
-  use regex::Regex;
   use url::Url;
-  use crate::error::FastJobError;
 
   const URL_WITH_TRACKING: &str = "https://example.com/path/123?utm_content=buffercf3b2&utm_medium=social&user+name=random+user&id=123";
   const URL_TRACKING_REMOVED: &str = "https://example.com/path/123?user+name=random+user&id=123";

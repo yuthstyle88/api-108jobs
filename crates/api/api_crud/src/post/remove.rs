@@ -3,8 +3,8 @@ use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_mod_action,
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::{
     community::Community,
@@ -32,7 +32,7 @@ pub async fn remove_post(
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
   let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
 
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   LocalUser::is_higher_mod_or_admin_check(
     &mut context.pool(),
@@ -77,5 +77,5 @@ pub async fn remove_post(
     &context,
   )?;
 
-  build_post_response(&context, orig_post.community_id, local_user_view, post_id).await
+  build_post_response(&context, local_user_view, post_id).await
 }

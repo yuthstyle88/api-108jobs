@@ -710,7 +710,6 @@ mod tests {
       instance.id,
       "test community crv".to_string(),
       "nada".to_owned(),
-      None,
       "na-da".to_string()
     );
     let community = Community::create(pool, &community_form).await?;
@@ -719,7 +718,6 @@ mod tests {
       instance.id,
       "test community crv 2".to_string(),
       "nada".to_owned(),
-      None,
       "na-da".to_string()
     );
     let community_2 = Community::create(pool, &community_form_2).await?;

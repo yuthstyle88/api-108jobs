@@ -1,4 +1,4 @@
-use crate::{context::FastJobContext, utils::check_community_mod_action};
+use crate::{context::FastJobContext};
 use lemmy_db_schema::{
   newtypes::TagId,
   source::{
@@ -10,6 +10,7 @@ use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::collections::HashSet;
+use crate::utils::check_community_deleted_removed;
 
 pub async fn update_post_tags(
   context: &FastJobContext,
@@ -21,15 +22,9 @@ pub async fn update_post_tags(
   let is_author = Post::is_post_creator(local_user_view.person.id, post.creator_id);
 
   if !is_author {
-    // Check if user is either the post author or a community mod
-    check_community_mod_action(
-      local_user_view,
-      &community.community,
-      false,
-      &mut context.pool(),
-    )
-    .await?;
+    check_community_deleted_removed(&community.community)?;
   }
+
   // validate tags
   let valid_tags: HashSet<TagId> = community.post_tags.0.iter().map(|t| t.id).collect();
   if !valid_tags.is_superset(&tags.iter().copied().collect()) {

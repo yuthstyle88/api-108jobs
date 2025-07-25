@@ -76,7 +76,6 @@ mod tests {
       data.instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
-      None,
       "community-slug".to_string()
     );
 

@@ -19,23 +19,6 @@ impl CommunityModeratorView {
       .inner_join(person::table.on(person::id.eq(community_actions::person_id)))
   }
 
-  pub async fn check_is_community_moderator(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-    person_id: PersonId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    select(exists(
-      Self::joins()
-        .filter(community_actions::person_id.eq(person_id))
-        .filter(community_actions::community_id.eq(community_id)),
-    ))
-    .get_result::<bool>(conn)
-    .await?
-    .then_some(())
-    .ok_or(FastJobErrorType::NotAModerator.into())
-  }
-
   pub async fn is_community_moderator_of_any(
     pool: &mut DbPool<'_>,
     person_id: PersonId,

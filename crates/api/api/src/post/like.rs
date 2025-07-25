@@ -34,7 +34,7 @@ pub async fn like_post(
 
   // Check for a community ban
   let orig_post =
-    PostView::read(&mut context.pool(), post_id, None, local_instance_id, false).await?;
+    PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
   let previous_score = orig_post.post_actions.and_then(|p| p.like_score);
 
   check_community_user_action(&local_user_view, &orig_post.community, &mut context.pool()).await?;

@@ -73,8 +73,6 @@ pub async fn ban_from_site(
     instance_id: local_user_view.person.instance_id,
   };
 
-  ModBan::create(&mut context.pool(), &form).await?;
-
   let person_view = PersonView::read(
     &mut context.pool(),
     data.person_id,

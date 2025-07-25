@@ -35,7 +35,6 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
-use lemmy_db_views_community_person_ban::CommunityPersonBanView;
 use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
@@ -67,25 +66,6 @@ use rand::Rng;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
-pub async fn check_is_mod_or_admin(
-  pool: &mut DbPool<'_>,
-  person_id: PersonId,
-  community_id: CommunityId,
-  local_instance_id: InstanceId,
-) -> FastJobResult<()> {
-  let is_mod =
-    CommunityModeratorView::check_is_community_moderator(pool, community_id, person_id).await;
-  if is_mod.is_ok()
-    || PersonView::read(pool, person_id, None, local_instance_id, false)
-      .await
-      .is_ok_and(|t| t.is_admin)
-  {
-    Ok(())
-  } else {
-    Err(FastJobErrorType::NotAModOrAdmin)?
-  }
-}
-
 /// Checks if a person is an admin, or moderator of any community.
 pub(crate) async fn check_is_mod_of_any_or_admin(
   pool: &mut DbPool<'_>,
@@ -99,38 +79,6 @@ pub(crate) async fn check_is_mod_of_any_or_admin(
       .is_ok_and(|t| t.is_admin)
   {
     Ok(())
-  } else {
-    Err(FastJobErrorType::NotAModOrAdmin)?
-  }
-}
-
-pub async fn is_mod_or_admin(
-  pool: &mut DbPool<'_>,
-  local_user_view: &LocalUserView,
-  community_id: CommunityId,
-) -> FastJobResult<()> {
-  check_local_user_valid(local_user_view)?;
-  check_is_mod_or_admin(
-    pool,
-    local_user_view.person.id,
-    community_id,
-    local_user_view.person.instance_id,
-  )
-  .await
-}
-
-pub async fn is_mod_or_admin_opt(
-  pool: &mut DbPool<'_>,
-  local_user_view: Option<&LocalUserView>,
-  community_id: Option<CommunityId>,
-) -> FastJobResult<()> {
-  if let Some(local_user_view) = local_user_view {
-    check_local_user_valid(local_user_view)?;
-    if let Some(community_id) = community_id {
-      is_mod_or_admin(pool, local_user_view, community_id).await
-    } else {
-      is_admin(local_user_view)
-    }
   } else {
     Err(FastJobErrorType::NotAModOrAdmin)?
   }
@@ -269,7 +217,6 @@ pub async fn check_community_user_action(
 ) -> FastJobResult<()> {
   check_local_user_valid(local_user_view)?;
   check_community_deleted_removed(community)?;
-  CommunityPersonBanView::check(pool, local_user_view.person.id, community.id).await?;
   CommunityFollowerView::check_private_community_action(pool, local_user_view.person.id, community)
     .await?;
   InstanceActions::check_ban(pool, local_user_view.person.id, community.instance_id).await?;
@@ -293,9 +240,6 @@ pub async fn check_community_mod_action(
   allow_deleted: bool,
   pool: &mut DbPool<'_>,
 ) -> FastJobResult<()> {
-  is_mod_or_admin(pool, local_user_view, community.id).await?;
-  CommunityPersonBanView::check(pool, local_user_view.person.id, community.id).await?;
-
   // it must be possible to restore deleted community
   if !allow_deleted {
     check_community_deleted_removed(community)?;

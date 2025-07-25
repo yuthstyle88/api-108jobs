@@ -1,5 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::is_mod_or_admin};
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_comment::{
   api::{ListCommentLikes, ListCommentLikesResponse},
   CommentView,
@@ -21,13 +21,6 @@ pub async fn list_comment_likes(
     data.comment_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-  )
-  .await?;
-
-  is_mod_or_admin(
-    &mut context.pool(),
-    &local_user_view,
-    comment_view.community.id,
   )
   .await?;
 

@@ -101,7 +101,6 @@ impl PostView {
     post_id: PostId,
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
-    is_mod_or_admin: bool,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
@@ -110,38 +109,6 @@ impl PostView {
       .filter(post::id.eq(post_id))
       .select(Self::as_select())
       .into_boxed();
-
-    // Hide deleted and removed for non-admins or mods
-    if !is_mod_or_admin {
-      query = query
-        .filter(
-          community::removed
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        .filter(
-          post::removed
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        // users can see their own deleted posts
-        .filter(
-          community::deleted
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        .filter(
-          post::deleted
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        // private communities can only by browsed by accepted followers
-        .filter(
-          community::visibility
-            .ne(CommunityVisibility::Private)
-            .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
-        );
-    }
 
     query = my_local_user.visible_communities_only(query);
 

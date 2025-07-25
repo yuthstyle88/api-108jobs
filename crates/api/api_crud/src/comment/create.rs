@@ -5,7 +5,7 @@ use lemmy_api_utils::{
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{
-    check_community_user_action, check_post_deleted_or_removed, is_mod_or_admin,
+    check_community_user_action, check_post_deleted_or_removed,
     process_markdown, slur_regex, update_read_comments,
   },
 };
@@ -52,7 +52,6 @@ pub async fn create_comment(
     post_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-    true,
   )
   .await?;
 
@@ -63,10 +62,7 @@ pub async fn create_comment(
   check_post_deleted_or_removed(&post)?;
 
   // Check if post is locked, no new comments
-  let is_mod_or_admin = is_mod_or_admin(&mut context.pool(), &local_user_view, community_id)
-    .await
-    .is_ok();
-  if post.locked && !is_mod_or_admin {
+  if post.locked {
     Err(FastJobErrorType::Locked)?
   }
 

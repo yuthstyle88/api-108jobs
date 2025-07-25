@@ -31,7 +31,7 @@ pub async fn remove_community(
   // Do the remove
   let community_id = data.community_id;
   let removed = data.removed;
-  let community = Community::update(
+  Community::update(
     &mut context.pool(),
     community_id,
     &CommunityUpdateForm {
@@ -40,32 +40,6 @@ pub async fn remove_community(
     },
   )
   .await?;
-
-  CommunityReport::resolve_all_for_object(
-    &mut context.pool(),
-    community_id,
-    local_user_view.person.id,
-  )
-  .await?;
-
-  // Mod tables
-  let form = ModRemoveCommunityForm {
-    mod_person_id: local_user_view.person.id,
-    community_id: data.community_id,
-    removed: Some(removed),
-    reason: data.reason.clone(),
-  };
-  ModRemoveCommunity::create(&mut context.pool(), &form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::RemoveCommunity {
-      moderator: local_user_view.person.clone(),
-      community,
-      reason: data.reason.clone(),
-      removed: data.removed,
-    },
-    &context,
-  )?;
 
   build_community_response(&context, local_user_view, community_id).await
 }

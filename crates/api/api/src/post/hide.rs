@@ -34,7 +34,6 @@ pub async fn hide_post(
     post_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-    false,
   )
   .await?;
 

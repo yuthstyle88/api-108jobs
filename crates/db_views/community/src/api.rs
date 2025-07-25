@@ -300,7 +300,7 @@ pub struct PurgeCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Remove a community (only doable by moderators).
+/// Remove a community
 pub struct RemoveCommunity {
   pub community_id: CommunityId,
   pub removed: bool,

@@ -3,7 +3,7 @@ use actix_web::web::*;
 use lemmy_api_utils::{
   context::FastJobContext,
   request::{delete_image_alias, purge_image_from_pictrs},
-  utils::{is_admin, is_mod_or_admin},
+  utils::is_admin,
 };
 use lemmy_db_schema::{
   source::{
@@ -61,7 +61,6 @@ pub async fn delete_community_icon(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   let community = Community::read(&mut context.pool(), data.id).await?;
-  is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
   delete_old_image(&community.icon, &context).await?;
 
@@ -80,7 +79,6 @@ pub async fn delete_community_banner(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   let community = Community::read(&mut context.pool(), data.id).await?;
-  is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
   delete_old_image(&community.icon, &context).await?;
 

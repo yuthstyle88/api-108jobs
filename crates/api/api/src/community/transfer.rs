@@ -92,8 +92,7 @@ pub async fn transfer_community(
   let community_view = CommunityView::read(
     &mut context.pool(),
     community_id,
-    Some(&local_user_view.local_user),
-    false,
+    Some(&local_user_view.local_user)
   )
   .await?;
 

@@ -60,20 +60,12 @@ impl CommunityView {
     pool: &mut DbPool<'_>,
     community_id: CommunityId,
     my_local_user: Option<&'_ LocalUser>,
-    is_mod_or_admin: bool,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let mut query = Self::joins(my_local_user.person_id())
       .filter(community::id.eq(community_id))
       .select(Self::as_select())
       .into_boxed();
-
-    // Hide deleted and removed for non-admins or mods
-    if !is_mod_or_admin {
-      query = query
-        .filter(Community::hide_removed_and_deleted())
-        .filter(filter_not_unlisted_or_is_subscribed());
-    }
 
     query = my_local_user.visible_communities_only(query);
 
@@ -345,11 +337,11 @@ mod tests {
     let data = init_data(pool).await?;
     let community = &data.communities[0];
 
-    let unauthenticated = CommunityView::read(pool, community.id, None, false).await?;
+    let unauthenticated = CommunityView::read(pool, community.id, None).await?;
     assert!(unauthenticated.community_actions.is_none());
 
     let authenticated =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(authenticated.community_actions.is_none());
 
     let form = CommunityFollowerForm::new(
@@ -360,7 +352,7 @@ mod tests {
     CommunityActions::follow(pool, &form).await?;
 
     let with_pending_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_pending_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::Pending)));
@@ -383,7 +375,7 @@ mod tests {
     CommunityActions::follow(pool, &form).await?;
 
     let with_approval_required_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_approval_required_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::ApprovalRequired)));
@@ -395,7 +387,7 @@ mod tests {
     );
     CommunityActions::follow(pool, &form).await?;
     let with_accepted_follow =
-      CommunityView::read(pool, community.id, Some(&data.local_user), false).await?;
+      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_accepted_follow
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::Accepted)));
@@ -438,11 +430,11 @@ mod tests {
     assert_eq!(data.communities.len(), authenticated_query.len());
 
     let unauthenticated_community =
-      CommunityView::read(pool, data.communities[0].id, None, false).await;
+      CommunityView::read(pool, data.communities[0].id, None).await;
     assert!(unauthenticated_community.is_err());
 
     let authenticated_community =
-      CommunityView::read(pool, data.communities[0].id, Some(&data.local_user), false).await;
+      CommunityView::read(pool, data.communities[0].id, Some(&data.local_user)).await;
     assert!(authenticated_community.is_ok());
 
     cleanup(data, pool).await

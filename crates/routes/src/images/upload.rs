@@ -1,10 +1,6 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
-use lemmy_api_utils::{
-  context::FastJobContext,
-  request::PictrsResponse,
-  utils::{is_admin, is_mod_or_admin},
-};
+use lemmy_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
 use lemmy_db_schema::{
   source::{
     community::{Community, CommunityUpdateForm},
@@ -87,7 +83,6 @@ pub async fn upload_community_icon(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
-  is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
   let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
   delete_old_image(&community.icon, &context).await?;
@@ -109,7 +104,6 @@ pub async fn upload_community_banner(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
   let community: Community = Community::read(&mut context.pool(), query.id).await?;
-  is_mod_or_admin(&mut context.pool(), &local_user_view, community.id).await?;
 
   let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
   delete_old_image(&community.banner, &context).await?;

@@ -97,14 +97,14 @@ pub async fn update_post(
 
   let post_id = data.post_id;
   let orig_post =
-    PostView::read(&mut context.pool(), post_id, None, local_instance_id, false).await?;
+    PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
 
   check_community_user_action(&local_user_view, &orig_post.community, &mut context.pool()).await?;
 
   if let Some(tags) = &data.tags {
     // post view does not include communityview.post_tags
     let community_view =
-      CommunityView::read(&mut context.pool(), orig_post.community.id, None, false).await?;
+      CommunityView::read(&mut context.pool(), orig_post.community.id, None).await?;
     update_post_tags(
       &context,
       &orig_post.post,

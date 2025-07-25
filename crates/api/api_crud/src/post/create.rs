@@ -71,7 +71,6 @@ pub async fn create_post(
     &mut context.pool(),
     data.community_id,
     Some(&local_user_view.local_user),
-    false,
   )
   .await?;
   let community = &community_view.community;

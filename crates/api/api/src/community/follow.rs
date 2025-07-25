@@ -16,7 +16,6 @@ use lemmy_db_views_community::{
   api::{CommunityResponse, FollowCommunity},
   CommunityView,
 };
-use lemmy_db_views_community_person_ban::CommunityPersonBanView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -35,7 +34,6 @@ pub async fn follow_community(
     // actions from existing followers for private community (so following would be impossible).
     if community.local {
       check_community_deleted_removed(&community)?;
-      CommunityPersonBanView::check(&mut context.pool(), person_id, community.id).await?;
     }
 
     let follow_state = if community.visibility == CommunityVisibility::Private {
@@ -69,7 +67,6 @@ pub async fn follow_community(
     &mut context.pool(),
     community_id,
     Some(&local_user_view.local_user),
-    false,
   )
   .await?;
 

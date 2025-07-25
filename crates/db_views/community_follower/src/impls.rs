@@ -324,7 +324,6 @@ mod tests {
       local_instance.id,
       "test_community_3".to_string(),
       "nada".to_owned(),
-      None,
       "he-he".to_string()
     );
     let community = Community::create(pool, &community_form).await?;

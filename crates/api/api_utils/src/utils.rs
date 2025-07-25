@@ -13,7 +13,6 @@ use lemmy_db_schema::{
     comment::{Comment, CommentActions},
     community::{Community, CommunityActions, CommunityUpdateForm},
     images::{ImageDetails, RemoteImage},
-    instance::InstanceActions,
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -33,7 +32,6 @@ use lemmy_db_schema::{
   utils::DbPool,
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
@@ -189,26 +187,9 @@ pub async fn check_registration_application(
   Ok(())
 }
 
-/// Checks that a normal user action (eg posting or voting) is allowed in a given community.
-///
-/// In particular it checks that neither the user nor community are banned or deleted, and that
-/// the user isn't banned.
-pub async fn check_community_user_action(
-  local_user_view: &LocalUserView,
-  community: &Community,
-  pool: &mut DbPool<'_>,
-) -> FastJobResult<()> {
-  check_local_user_valid(local_user_view)?;
-  check_community_deleted_removed(community)?;
-  CommunityFollowerView::check_private_community_action(pool, local_user_view.person.id, community)
-    .await?;
-  InstanceActions::check_ban(pool, local_user_view.person.id, community.instance_id).await?;
-  Ok(())
-}
-
 pub fn check_community_deleted_removed(community: &Community) -> FastJobResult<()> {
   if community.deleted || community.removed {
-    Err(FastJobErrorType::Deleted)?
+    Err(FastJobErrorType::AlreadyDeleted)?
   }
   Ok(())
 }

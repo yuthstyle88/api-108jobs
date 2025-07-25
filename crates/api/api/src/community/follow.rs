@@ -30,8 +30,7 @@ pub async fn follow_community(
 
   if data.follow {
     // Only run these checks for local community, in case of remote community the local
-    // state may be outdated. Can't use check_community_user_action() here as it only allows
-    // actions from existing followers for private community (so following would be impossible).
+    // state may be outdated.
     if community.local {
       check_community_deleted_removed(&community)?;
     }

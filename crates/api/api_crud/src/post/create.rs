@@ -8,10 +8,11 @@ use lemmy_api_utils::{
   send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{
-    check_community_user_action, check_self_promotion_allowed, get_url_blocklist, honeypot_check,
+    check_self_promotion_allowed, get_url_blocklist, honeypot_check,
     process_markdown_opt, send_webmention, slur_regex,
   },
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
@@ -73,7 +74,7 @@ pub async fn create_post(
   )
   .await?;
   let community = &community_view.community;
-  check_community_user_action(&local_user_view, community, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   // Ensure that all posts in NSFW communities are marked as NSFW
   let self_promotion = if community.self_promotion {

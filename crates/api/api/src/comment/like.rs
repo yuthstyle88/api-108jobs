@@ -4,7 +4,6 @@ use lemmy_api_utils::{
   context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_user_action,
 };
 use lemmy_db_schema::{
   source::{
@@ -39,13 +38,6 @@ pub async fn like_comment(
   )
   .await?;
   let previous_score = orig_comment.comment_actions.and_then(|p| p.like_score);
-
-  check_community_user_action(
-    &local_user_view,
-    &orig_comment.community,
-    &mut context.pool(),
-  )
-  .await?;
 
   let mut like_form = CommentLikeForm::new(my_person_id, data.comment_id, data.score);
 

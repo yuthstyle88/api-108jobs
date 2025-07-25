@@ -5,8 +5,9 @@ use lemmy_api_utils::{
   context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_community_user_action, get_url_blocklist, process_markdown_opt, slur_regex},
+  utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},
@@ -37,12 +38,7 @@ pub async fn update_comment(
   )
   .await?;
 
-  check_community_user_action(
-    &local_user_view,
-    &orig_comment.community,
-    &mut context.pool(),
-  )
-  .await?;
+  check_community_deleted_removed(&orig_comment.community)?;
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {

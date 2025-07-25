@@ -3,8 +3,8 @@ use lemmy_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_user_action,
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
@@ -36,12 +36,7 @@ pub async fn delete_comment(
     Err(FastJobErrorType::CouldntUpdateComment)?
   }
 
-  check_community_user_action(
-    &local_user_view,
-    &orig_comment.community,
-    &mut context.pool(),
-  )
-  .await?;
+  check_community_deleted_removed(&orig_comment.community)?;
 
   // Verify that only the creator can delete
   if local_user_view.person.id != orig_comment.creator.id {

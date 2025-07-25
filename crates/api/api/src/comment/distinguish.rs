@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{ check_community_user_action},
 };
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
@@ -28,13 +27,6 @@ pub async fn distinguish_comment(
     data.comment_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-  )
-  .await?;
-
-  check_community_user_action(
-    &local_user_view,
-    &orig_comment.community,
-    &mut context.pool(),
   )
   .await?;
 

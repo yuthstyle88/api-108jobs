@@ -230,6 +230,7 @@ pub enum FastJobErrorType {
   SlugAlreadyExists,
   MaxCommunityDepthReached,
   CouldntCreateCommunity,
+  AlreadyDeleted,
 }
 
 cfg_if! {

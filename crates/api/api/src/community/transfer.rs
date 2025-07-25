@@ -1,10 +1,7 @@
 use actix_web::web::{Data, Json};
 use anyhow::Context;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_api_utils::{
-  context::FastJobContext,
-  utils::{check_community_user_action, is_admin},
-};
+use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{
   source::{
     community::{Community, CommunityActions, CommunityModeratorForm},
@@ -36,11 +33,8 @@ pub async fn transfer_community(
   let mut community_mods =
     CommunityModeratorView::for_community(&mut context.pool(), community.id).await?;
 
-  check_community_user_action(&local_user_view, &community, &mut context.pool()).await?;
-
   // Make sure transferrer is an admin
-  if is_admin(&local_user_view).is_ok()
-  {
+  if is_admin(&local_user_view).is_ok() {
     Err(FastJobErrorType::NotAnAdmin)?
   }
 
@@ -92,7 +86,7 @@ pub async fn transfer_community(
   let community_view = CommunityView::read(
     &mut context.pool(),
     community_id,
-    Some(&local_user_view.local_user)
+    Some(&local_user_view.local_user),
   )
   .await?;
 

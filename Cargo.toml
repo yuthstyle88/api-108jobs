@@ -31,14 +31,16 @@ workspace = true
 lto = "fat"
 opt-level = 3     # Optimize for speed, not size.
 codegen-units = 1 # Reduce parallel code generation.
+panic = "abort"   # Abort on panic, don't unwind (smaller binary).
+strip = true      # Strip symbols from binary (smaller binary).
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
-#[profile.dev]
-#opt-level = 0
-#debug = 2
-#lto = false
-#incremental = true
+[profile.dev]
+opt-level = 0
+debug = 2
+lto = false
+incremental = true
 
 [features]
 default = []
@@ -230,7 +232,7 @@ base62 = "2.2.1"
 p256 = { version = "0.9.0", features = ["ecdh"] }
 hex = "0.4.3"
 validator = "0.20.0"
-convert_case = "0.8.0"
+
 
 [dependencies]
 lemmy_api = { workspace = true }

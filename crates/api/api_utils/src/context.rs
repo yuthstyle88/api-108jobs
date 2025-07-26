@@ -12,13 +12,15 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct FastJobContext {
-  pool: ActualDbPool,
+  // Wrap pool in Arc to avoid expensive clones
+  pool: Arc<ActualDbPool>,
   client: Arc<ClientWithMiddleware>,
   /// Pictrs requests must bypass proxy. Unfortunately no_proxy can only be set on ClientBuilder
   /// and not on RequestBuilder, so we need a separate client here.
   pictrs_client: Arc<ClientWithMiddleware>,
   secret: Arc<Secret>,
-  rate_limit_cell: RateLimit,
+  // Wrap rate_limit_cell in Arc to avoid expensive clones
+  rate_limit_cell: Arc<RateLimit>,
 }
 
 impl FastJobContext {
@@ -30,32 +32,48 @@ impl FastJobContext {
     rate_limit_cell: RateLimit,
   ) -> FastJobContext {
     FastJobContext {
-      pool,
+      // Wrap all fields in Arc to reduce cloning overhead
+      pool: Arc::new(pool),
       client: Arc::new(client),
       pictrs_client: Arc::new(pictrs_client),
       secret: Arc::new(secret),
-      rate_limit_cell,
+      rate_limit_cell: Arc::new(rate_limit_cell),
     }
   }
+  
+  // Update accessor methods to work with Arc-wrapped fields
   pub fn pool(&self) -> DbPool<'_> {
+    // Create a DbPool that references the Arc-wrapped pool
     DbPool::Pool(&self.pool)
   }
+  
   pub fn inner_pool(&self) -> &ActualDbPool {
+    // Dereference the Arc to get the underlying pool
     &self.pool
   }
+  
   pub fn client(&self) -> &ClientWithMiddleware {
+    // Return a reference to the ClientWithMiddleware inside the Arc
     &self.client
   }
+  
   pub fn pictrs_client(&self) -> &ClientWithMiddleware {
+    // Return a reference to the pictrs_client inside the Arc
     &self.pictrs_client
   }
+  
   pub fn settings(&self) -> &'static Settings {
+    // This doesn't need to change as it's a static reference
     &SETTINGS
   }
+  
   pub fn secret(&self) -> &Secret {
+    // Return a reference to the Secret inside the Arc
     &self.secret
   }
+  
   pub fn rate_limit_cell(&self) -> &RateLimit {
+    // Return a reference to the RateLimit inside the Arc
     &self.rate_limit_cell
   }
 }

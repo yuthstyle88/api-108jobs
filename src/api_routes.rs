@@ -254,7 +254,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/totp/generate", post().to(generate_totp_secret))
             .route("/totp/update", post().to(update_totp))
             .route("/verify-email", post().to(verify_email))
-            .route("/exchange-key", post().to(exchange_key))
+            .route("/exchange-public-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
             .route("/get-captcha", get().to(get_captcha))
             .route(

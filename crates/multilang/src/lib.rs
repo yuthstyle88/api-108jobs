@@ -45,27 +45,30 @@ pub fn load_all_translations(dir: &Path) -> FastJobResult<AllTranslations> {
       continue;
     }
 
-    for entry in fs::read_dir(&lang_dir)? {
-      let entry = entry?;
-      let path = entry.path();
+    // Collect all JSON files first to avoid keeping too many files open at once
+    let json_files: Vec<_> = fs::read_dir(&lang_dir)?
+      .filter_map(Result::ok)
+      .map(|entry| entry.path())
+      .filter(|path| is_json_file(path))
+      .collect();
 
-      if is_json_file(&path) {
-        let namespace = path
-          .file_stem()
-          .and_then(|s| s.to_str())
-          .ok_or_else(|| anyhow::anyhow!("Invalid file name in {:?}", path))?
-          .to_string();
+    // Process each file sequentially
+    for path in json_files {
+      let namespace = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| anyhow::anyhow!("Invalid file name in {:?}", path))?
+        .to_string();
 
-        let content = fs::read_to_string(&path)?;
-        let parsed: HashMap<String, String> =
-          serde_json::from_str::<HashMap<String, String>>(&content)
-            .map_err(|e| anyhow::anyhow!("Failed to parse {:?}: {}", path, e))?
-            .into_iter()
-            .map(|(k, v)| (to_camel_case(&k), v))
-            .collect();
+      let content = fs::read_to_string(&path)?;
+      let parsed: HashMap<String, String> =
+        serde_json::from_str::<HashMap<String, String>>(&content)
+          .map_err(|e| anyhow::anyhow!("Failed to parse {:?}: {}", path, e))?
+          .into_iter()
+          .map(|(k, v)| (to_camel_case(&k), v))
+          .collect();
 
-        namespaces.insert(namespace, NamespaceTranslations(parsed));
-      }
+      namespaces.insert(namespace, NamespaceTranslations(parsed));
     }
 
     all_translations.insert(lang, namespaces);

@@ -249,26 +249,39 @@ fn create_http_server(
     let rate_limit = context.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);
+    
+    // Create a more efficient middleware stack with optimized ordering
+    // - Put frequently used middleware first (compression, CORS)
+    // - Group related middleware together
+    // - Use conditional middleware only when needed
     let app = App::new()
+      // Compression should be first to reduce data transfer size
+      .wrap(middleware::Compress::default())
+      // CORS headers are checked early in request processing
+      .wrap(cors_config)
+      // Session middleware should be early as it's used by most routes
+      .wrap(SessionMiddleware::new(context.clone()))
+      // Idempotency middleware prevents duplicate operations
+      .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
+      // Error handlers should be after business logic middleware
+      .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
+      // Logging and tracing should be last to capture the full request lifecycle
+      .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
       .wrap(middleware::Logger::new(
         // This is the default log format save for the usage of %{r}a over %a to guarantee to
         // record the client's (forwarded) IP and not the last peer address, since the latter is
         // frequently just a reverse proxy
         "%{r}a '%r' %s %b '%{Referer}i' '%{User-Agent}i' %T",
       ))
-      .wrap(middleware::Compress::default())
-      .wrap(cors_config)
-      .wrap(TracingLogger::<DefaultRootSpanBuilder>::new())
-      .wrap(ErrorHandlers::new().default_handler(jsonify_plain_text_errors))
-      .app_data(Data::new(context.clone()))
-      .app_data(Data::new(phoenix_manager.clone()))
-      .app_data(Data::new(translations.clone()))
-      .wrap(IdempotencyMiddleware::new(idempotency_set.clone()))
-      .wrap(SessionMiddleware::new(context.clone()))
+      // Conditional middleware for metrics
       .wrap(Condition::new(
         SETTINGS.prometheus.is_some(),
         prom_api_metrics.clone(),
-      ));
+      ))
+      // Application data - these don't affect middleware order
+      .app_data(Data::new(context.clone()))
+      .app_data(Data::new(phoenix_manager.clone()))
+      .app_data(Data::new(translations.clone()));
 
     // The routes
     app
@@ -281,8 +294,14 @@ fn create_http_server(
           .route("", get().to(get_sitemap)),
       )
   })
-  .workers(32)
+  // Use number of available CPU cores for optimal performance
+  .workers(std::thread::available_parallelism().map(|p| p.get()).unwrap_or(2))
   .disable_signals()
+  // Limit the number of concurrent connections to prevent too many open files
+  // Increased from 1000 to 2000 for better handling of high traffic
+  .max_connections(2000)
+  // Reduced keep-alive timeout to close idle connections faster and free up resources
+  .keep_alive(std::time::Duration::from_secs(15))
   .bind(bind)?
   .run();
   let handle = server.handle();

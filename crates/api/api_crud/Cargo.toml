@@ -47,6 +47,5 @@ diesel-async = { workspace = true }
 serde = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
-
 [package.metadata.cargo-shear]
 ignored = ["futures", "futures-util"]

@@ -550,7 +550,7 @@ mod tests {
     traits::{Bannable, Blockable, Crud, Followable, Hideable, Joinable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility, ListingType};
+  use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
   use lemmy_db_views_local_user::LocalUserView;
   use lemmy_utils::error::{FastJobErrorType, FastJobResult};
   use pretty_assertions::assert_eq;

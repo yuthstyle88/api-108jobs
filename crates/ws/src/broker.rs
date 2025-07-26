@@ -186,16 +186,15 @@ impl Actor for PhoenixManager {
     ctx.notify(ConnectNow);
     self.subscribe_system_async::<BridgeMessage>(ctx);
     ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
-      let arbiter = Arbiter::new();
       let messages = actor.chat_store.clone();
       let pool = actor.pool.clone();
 
-      let succeeded = arbiter.spawn(async move {
+      let succeeded = actix::spawn(async move {
         for (room_id, messages) in messages.iter() {
           if messages.is_empty() {
             continue;
           }
-          println!("Flushing {} messages from room {}", messages.len(), room_id);
+          tracing::info!("Flushing {} messages from room {}", messages.len(), room_id);
           let mut db_pool = DbPool::Pool(&pool);
           // Validate room and create if needed
           // should add logic to add post id here

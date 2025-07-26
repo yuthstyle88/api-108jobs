@@ -2,7 +2,7 @@ use crate::{
   bridge_message::BridgeMessage,
   message::{RegisterClientMsg, StoreChatMessage},
 };
-use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
+use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::BrokerSubscribe;
 use chrono::Utc;
 use lemmy_db_schema::{
@@ -186,30 +186,22 @@ impl Actor for PhoenixManager {
     ctx.notify(ConnectNow);
     self.subscribe_system_async::<BridgeMessage>(ctx);
     ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
-      let messages = actor.chat_store.clone();
+      let messages = std::mem::take(&mut actor.chat_store);
       let pool = actor.pool.clone();
 
-      let succeeded = actix::spawn(async move {
+      actix::spawn(async move {
         for (room_id, messages) in messages.iter() {
           if messages.is_empty() {
             continue;
           }
           tracing::info!("Flushing {} messages from room {}", messages.len(), room_id);
           let mut db_pool = DbPool::Pool(&pool);
-          // Validate room and create if needed
-          // should add logic to add post id here
-          // Room is valid, insert messages
-          let res = ChatMessage::bulk_insert(&mut db_pool, &messages).await;
-          if let Err(e) = res {
+          if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &messages).await {
             println!("Failed to flush messages: {}", e);
           }
         }
       });
-      if succeeded {
-        println!("Task spawned!");
-      } else {
-        println!("Failed to spawn task.");
-      }
+      println!("Task spawned!");
       actor.chat_store.clear();
     });
   }

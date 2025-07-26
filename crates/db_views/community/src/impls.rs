@@ -1,8 +1,8 @@
+use crate::api::{CreateCommunity, CreateCommunityRequest};
 use crate::CommunityView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use slug::slugify;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, PaginationCursor, PersonId},
@@ -34,13 +34,13 @@ use lemmy_db_schema_file::{
   enums::ListingType,
   schema::{
     community,
-    community_actions,
-    instance_actions,
+    community_actions
+    ,
   },
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::utils::validation::get_required_trimmed;
-use crate::api::{CreateCommunity, CreateCommunityRequest};
+use slug::slugify;
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -138,8 +138,6 @@ impl CommunityQuery<'_> {
 
     // Don't show blocked communities and communities on blocked instances. self_promotion communities are
     // also hidden (based on profile setting)
-    query = query.filter(instance_actions::blocked_at.is_null());
-    query = query.filter(community_actions::blocked_at.is_null());
     if !(o.local_user.self_promotion(site) || o.self_promotion.unwrap_or_default()) {
       query = query.filter(community::self_promotion.eq(false));
     }
@@ -215,7 +213,6 @@ impl TryFrom<CreateCommunityRequest> for CreateCommunity {
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
 mod tests {
-
   use crate::{impls::CommunityQuery, CommunityView};
   use lemmy_db_schema::{
     source::{

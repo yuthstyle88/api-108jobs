@@ -1,0 +1,5 @@
+{
+  "review_postComment_success": "Successfully left a comment",
+  "review_updateComment_success": "Successfully edited comment",
+  "review_deleteComment_success": "Successfully deleted comment"
+}

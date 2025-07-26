@@ -1,0 +1,4 @@
+{
+  "invalid_code": "รหัสไม่ถูกต้อง",
+  "invalid_totp_code": "รหัส TOTP ไม่ถูกต้อง"
+}

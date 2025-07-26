@@ -1,0 +1,4 @@
+{
+  "invalid_code": "Mã không hợp lệ",
+  "invalid_totp_code": "Mã TOTP không hợp lệ"
+}

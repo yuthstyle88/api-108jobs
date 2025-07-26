@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person_content_combined::{
@@ -28,7 +27,6 @@ pub async fn export_data(
   let local_instance_id = local_user_view.person.instance_id;
   let my_person_id = local_user_view.person.id;
   let my_person = &local_user_view.person;
-  let local_user = &local_user_view.local_user;
 
   let pool = &mut context.pool();
 
@@ -81,12 +79,6 @@ pub async fn export_data(
     .map(|pv| pv.post.ap_id.into())
     .collect();
 
-  let moderates = CommunityModeratorView::for_person(pool, my_person_id, Some(local_user))
-    .await?
-    .into_iter()
-    .map(|cv| cv.community.ap_id.into())
-    .collect();
-
   let lists = LocalUser::export_backup(pool, local_user_view.person.id).await?;
   let settings = user_backup_list_to_user_settings_backup(local_user_view, lists);
 
@@ -95,7 +87,6 @@ pub async fn export_data(
     content,
     liked,
     read_posts,
-    moderates,
     settings,
   }))
 }

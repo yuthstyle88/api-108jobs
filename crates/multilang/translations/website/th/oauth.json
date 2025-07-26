@@ -1,0 +1,8 @@
+{
+  "oauth_verification_failed": "การตรวจสอบ OAuth ไม่ถูกต้อง",
+  "verification_email_sent": "อีเมลยืนยันตัวตนถูกส่งแล้ว",
+  "registration_request_submitted": "ส่งคำขอลงทะเบียนแล้ว",
+  "registration_request_processing": "คำขอลงทะเบียนของคุณอยู่ระหว่างดำเนินการ",
+  "invalid_login_occurred": "การเข้าสู่ระบบไม่ถูกต้องเกิด",
+  "login_error": "ข้อผิดพลาดในการเข้าสู่ระบบ"
+}

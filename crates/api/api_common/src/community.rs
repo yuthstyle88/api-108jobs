@@ -18,7 +18,6 @@ pub use lemmy_db_views_community::{
   CommunityView,
 };
 pub use lemmy_db_views_community_follower::PendingFollow;
-pub use lemmy_db_views_community_moderator::CommunityModeratorView;
 
 pub mod actions {
   pub use lemmy_db_views_community::api::{
@@ -33,7 +32,6 @@ pub mod actions {
     pub use lemmy_db_schema_file::enums::CommunityFollowerState;
     pub use lemmy_db_views_community::api::{
       AddModToCommunity,
-      AddModToCommunityResponse,
       ApproveCommunityPendingFollower,
       BanFromCommunity,
       BanFromCommunityResponse,

@@ -5,7 +5,6 @@ use lemmy_db_schema::{
   CommunitySortType,
 };
 use lemmy_db_schema_file::enums::{CommunityVisibility, ListingType};
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_person::PersonView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -18,15 +17,6 @@ pub struct AddModToCommunity {
   pub community_id: CommunityId,
   pub person_id: PersonId,
   pub added: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The response of adding a moderator to a community.
-#[serde(rename_all = "camelCase")]
-pub struct AddModToCommunityResponse {
-  pub moderators: Vec<CommunityModeratorView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

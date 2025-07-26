@@ -11,7 +11,6 @@ use lemmy_db_schema::{
   traits::Blockable,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::MyUserInfo;
 use lemmy_utils::error::FastJobResult;
@@ -32,7 +31,6 @@ pub async fn get_my_user(
     community_blocks,
     instance_blocks,
     person_blocks,
-    moderates,
     keyword_blocks,
     discussion_languages,
   ) = lemmy_db_schema::try_join_with_pool!(pool => (
@@ -40,7 +38,6 @@ pub async fn get_my_user(
     |pool| CommunityActions::read_blocks_for_person(pool, person_id),
     |pool| InstanceActions::read_blocks_for_person(pool, person_id),
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
-    |pool| CommunityModeratorView::for_person(pool, person_id, Some(&local_user_view.local_user)),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),
     |pool| LocalUserLanguage::read(pool, local_user_id)
   ))?;
@@ -48,7 +45,6 @@ pub async fn get_my_user(
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),
     follows,
-    moderates,
     community_blocks,
     instance_blocks,
     person_blocks,

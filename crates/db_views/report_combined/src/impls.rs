@@ -411,10 +411,7 @@ mod tests {
 
   use crate::{
     impls::ReportCombinedQuery,
-    CommentReportView,
-    CommunityReportView,
     LocalUserView,
-    PostReportView,
     ReportCombinedView,
     ReportCombinedViewInternal,
   };

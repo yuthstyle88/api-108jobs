@@ -11,7 +11,7 @@ use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
   source::{
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions, CommunityUpdateForm},
+    community::{Community, CommunityActions},
     images::{ImageDetails, RemoteImage},
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
@@ -32,7 +32,6 @@ use lemmy_db_schema::{
   utils::DbPool,
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
@@ -351,42 +350,6 @@ pub async fn remove_or_restore_user_data(
       },
     )
     .await?;
-
-    // Communities
-    // Remove all communities where they're the top mod
-    // for now, remove the communities manually
-    let first_mod_communities = CommunityModeratorView::get_community_first_mods(pool).await?;
-
-    // Filter to only this banned users top communities
-    let banned_user_first_communities: Vec<CommunityModeratorView> = first_mod_communities
-      .into_iter()
-      .filter(|fmc| fmc.moderator.id == banned_person_id)
-      .collect();
-
-    for first_mod_community in banned_user_first_communities {
-      let community_id = first_mod_community.community.id;
-      Community::update(
-        pool,
-        community_id,
-        &CommunityUpdateForm {
-          removed: Some(removed),
-          ..Default::default()
-        },
-      )
-      .await?;
-
-      // Update the fields to None
-      Community::update(
-        pool,
-        community_id,
-        &CommunityUpdateForm {
-          icon: Some(None),
-          banner: Some(None),
-          ..Default::default()
-        },
-      )
-      .await?;
-    }
 
     // Remove post and comment votes
     PostActions::remove_all_likes(pool, banned_person_id).await?;

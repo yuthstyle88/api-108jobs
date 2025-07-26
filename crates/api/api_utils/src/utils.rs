@@ -64,37 +64,6 @@ use rand::Rng;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
-/// Checks if a person is an admin, or moderator of any community.
-pub(crate) async fn check_is_mod_of_any_or_admin(
-  pool: &mut DbPool<'_>,
-  person_id: PersonId,
-  local_instance_id: InstanceId,
-) -> FastJobResult<()> {
-  let is_mod_of_any = CommunityModeratorView::is_community_moderator_of_any(pool, person_id).await;
-  if is_mod_of_any.is_ok()
-    || PersonView::read(pool, person_id, None, local_instance_id, false)
-      .await
-      .is_ok_and(|t| t.is_admin)
-  {
-    Ok(())
-  } else {
-    Err(FastJobErrorType::NotAModOrAdmin)?
-  }
-}
-
-/// Check that a person is either a mod of any community, or an admin
-///
-/// Should only be used for read operations
-pub async fn check_community_mod_of_any_or_admin_action(
-  local_user_view: &LocalUserView,
-  pool: &mut DbPool<'_>,
-) -> FastJobResult<()> {
-  let person = &local_user_view.person;
-
-  check_local_user_valid(local_user_view)?;
-  check_is_mod_of_any_or_admin(pool, person.id, person.instance_id).await
-}
-
 pub fn is_admin(local_user_view: &LocalUserView) -> FastJobResult<()> {
   check_local_user_valid(local_user_view)?;
   if !local_user_view.local_user.admin {

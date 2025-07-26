@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json};
 use chrono::Utc;
-use lemmy_api_utils::{context::FastJobContext};
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_db_schema::{
   source::{

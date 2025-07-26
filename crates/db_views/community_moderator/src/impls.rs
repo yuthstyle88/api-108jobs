@@ -3,7 +3,7 @@ use diesel::{dsl::exists, select, ExpressionMethods, JoinOnDsl, QueryDsl, Select
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CommunityId, PersonId},
+  newtypes::PersonId,
   source::local_user::LocalUser,
   utils::{get_conn, DbPool},
 };
@@ -17,34 +17,6 @@ impl CommunityModeratorView {
       .filter(community_actions::became_moderator_at.is_not_null())
       .inner_join(community::table)
       .inner_join(person::table.on(person::id.eq(community_actions::person_id)))
-  }
-
-  pub async fn is_community_moderator_of_any(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    select(exists(
-      Self::joins().filter(community_actions::person_id.eq(person_id)),
-    ))
-    .get_result::<bool>(conn)
-    .await?
-    .then_some(())
-    .ok_or(FastJobErrorType::NotAModerator.into())
-  }
-
-  pub async fn for_community(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-  ) -> FastJobResult<Vec<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    Self::joins()
-      .filter(community_actions::community_id.eq(community_id))
-      .select(Self::as_select())
-      .order_by(community_actions::became_moderator_at)
-      .load::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn for_person(

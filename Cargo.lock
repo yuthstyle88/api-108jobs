@@ -3382,6 +3382,7 @@ dependencies = [
  "lemmy_email",
  "lemmy_multilang",
  "lemmy_utils",
+ "moka",
  "regex",
  "serde",
  "serde_json",

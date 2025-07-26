@@ -261,3 +261,30 @@ pub struct CommunityBlockForm {
   #[new(value = "Utc::now()")]
   pub blocked_at: DateTime<Utc>,
 }
+
+// Create a changeset struct with explicit fields
+// This avoids the complex nested type inference that was causing the compiler panic
+#[derive(AsChangeset)]
+#[diesel(table_name = community)]
+pub struct CommunityChangeset {
+  pub(crate) title: Option<String>,
+  pub(crate) sidebar: Option<Option<String>>,
+  pub(crate) removed: Option<bool>,
+  pub(crate) published_at: Option<DateTime<Utc>>,
+  pub(crate) updated_at: Option<Option<DateTime<Utc>>>,
+  pub(crate) deleted: Option<bool>,
+  pub(crate) self_promotion: Option<bool>,
+  pub(crate) ap_id: Option<DbUrl>,
+  pub(crate) local: Option<bool>,
+  pub(crate) last_refreshed_at: Option<DateTime<Utc>>,
+  pub(crate) icon: Option<Option<DbUrl>>,
+  pub(crate) banner: Option<Option<DbUrl>>,
+  pub(crate) followers_url: Option<DbUrl>,
+  pub(crate) inbox_url: Option<DbUrl>,
+  pub(crate) moderators_url: Option<Option<DbUrl>>,
+  pub(crate) featured_url: Option<Option<DbUrl>>,
+  pub(crate) posting_restricted_to_mods: Option<bool>,
+  pub(crate) visibility: Option<CommunityVisibility>,
+  pub(crate) description: Option<Option<String>>,
+  pub(crate) local_removed: Option<bool>,
+}

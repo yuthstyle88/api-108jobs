@@ -49,6 +49,7 @@ use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
 use url::Url;
+use crate::source::community::CommunityChangeset;
 
 impl Crud for Community {
   type InsertForm = CommunityInsertForm;
@@ -75,8 +76,36 @@ impl Crud for Community {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
+    
+
+    
+    // Create a changeset from the form
+    let changeset = CommunityChangeset {
+      title: form.title.clone(),
+      sidebar: form.sidebar.clone(),
+      removed: form.removed,
+      published_at: form.published_at,
+      updated_at: form.updated_at,
+      deleted: form.deleted,
+      self_promotion: form.self_promotion,
+      ap_id: form.ap_id.clone(),
+      local: form.local,
+      last_refreshed_at: form.last_refreshed_at,
+      icon: form.icon.clone(),
+      banner: form.banner.clone(),
+      followers_url: form.followers_url.clone(),
+      inbox_url: form.inbox_url.clone(),
+      moderators_url: form.moderators_url.clone(),
+      featured_url: form.featured_url.clone(),
+      posting_restricted_to_mods: form.posting_restricted_to_mods,
+      visibility: form.visibility,
+      description: form.description.clone(),
+      local_removed: form.local_removed,
+    };
+    
+    // Execute the update statement with the explicit changeset
     update(community::table.find(community_id))
-      .set(form)
+      .set(changeset)
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateCommunity)

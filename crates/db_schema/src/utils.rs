@@ -20,16 +20,11 @@ use diesel::{
   Expression,
   IntoSql,
 };
-use diesel_async::{
-  pg::AsyncPgConnection,
-  pooled_connection::{
-    deadpool::{Hook, HookError, Object as PooledConnection, Pool},
-    AsyncDieselConnectionManager,
-    ManagerConfig,
-  },
-  scoped_futures::ScopedBoxFuture,
-  AsyncConnection,
-};
+use diesel_async::{pg::AsyncPgConnection, pooled_connection::{
+  deadpool::{Hook, HookError, Object as PooledConnection, Pool},
+  AsyncDieselConnectionManager,
+  ManagerConfig,
+}, scoped_futures::ScopedBoxFuture, AsyncConnection, RunQueryDsl};
 use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
 use lemmy_utils::{
@@ -495,9 +490,23 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
   let mut config = ManagerConfig::default();
   config.custom_setup = Box::new(establish_connection);
   let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(&db_url, config);
+  // Calculate optimal pool size based on available CPU cores if not specified
+  let pool_size = if SETTINGS.database.pool_size > 0 {
+    SETTINGS.database.pool_size
+  } else {
+    // Default to number of CPU cores * 2 for optimal performance
+    std::thread::available_parallelism().map(|p| p.get() * 2).unwrap_or(10)
+  };
+
   let pool = Pool::builder(manager)
-   .max_size(SETTINGS.database.pool_size)
+   .max_size(pool_size)
    .runtime(Runtime::Tokio1)
+   // Set connection timeout to prevent hanging connections
+   .create_timeout(Option::from(Duration::from_secs(10)))
+   // Set idle timeout to free up unused connections
+   .recycle_timeout(Some(Duration::from_secs(60 * 5))) // 5 minutes
+   // Set connection acquisition timeout
+   .wait_timeout(Some(Duration::from_secs(15)))
    // Limit connection age to prevent use of prepared statements that have query plans based on
    // very old statistics
    .pre_recycle(Hook::sync_fn(|_conn, metrics| {
@@ -509,6 +518,16 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
      } else {
        Ok(())
      }
+   }))
+   // Add post-create hook to verify connection is healthy
+   .post_create(Hook::async_fn(|conn: &mut AsyncPgConnection, _metrics| {
+     Box::pin(async move {
+       // Simple query to verify connection is working
+       match diesel::sql_query("SELECT 1").execute(conn).await {
+         Ok(_) => Ok(()),
+         Err(_) => Err(HookError::Message("Connection failed health check".into())),
+       }
+     })
    }))
    .build()?;
 

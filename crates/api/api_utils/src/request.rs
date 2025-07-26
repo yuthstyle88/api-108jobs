@@ -32,6 +32,7 @@ use reqwest::{
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
+use std::time::Duration;
 use actix_web::web::Data;
 use tokio::net::lookup_host;
 use tracing::{info, warn};
@@ -48,6 +49,8 @@ pub fn client_builder(settings: &Settings) -> ClientBuilder {
     .connect_timeout(REQWEST_TIMEOUT)
     .redirect(Policy::none())
     .use_rustls_tls()
+    .pool_idle_timeout(Some(Duration::from_secs(90)))
+    .pool_max_idle_per_host(10)
 }
 
 /// Fetches metadata for the given link and optionally generates thumbnail.

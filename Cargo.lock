@@ -3295,7 +3295,6 @@ dependencies = [
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
@@ -3333,7 +3332,6 @@ dependencies = [
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_custom_emoji",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
@@ -3371,7 +3369,6 @@ dependencies = [
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_custom_emoji",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
@@ -3411,7 +3408,6 @@ dependencies = [
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
@@ -3539,7 +3535,6 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_person",
  "lemmy_utils",
  "serde",
@@ -3566,19 +3561,6 @@ dependencies = [
  "serde_with",
  "serial_test",
  "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community_moderator"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
  "ts-rs",
 ]
 
@@ -3677,7 +3659,6 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_community_moderator",
  "lemmy_utils",
  "pretty_assertions",
  "serde",
@@ -3868,7 +3849,6 @@ dependencies = [
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_community_follower",
- "lemmy_db_views_community_moderator",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",

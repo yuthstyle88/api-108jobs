@@ -17,7 +17,6 @@ use lemmy_api::{
     },
     random::get_random_community,
     tag::{create_community_tag, delete_community_tag, update_community_tag},
-    transfer::transfer_community,
   },
   local_user::{
     add_admin::add_admin,
@@ -71,7 +70,7 @@ use lemmy_api::{
     list_all_media::list_all_media,
     mod_log::get_mod_log,
     purge::{
-      comment::purge_comment, community::purge_community, person::purge_person, post::purge_post,
+      comment::purge_comment, person::purge_person, post::purge_post,
     },
     registration_applications::{
       approve::approve_registration_application, get::get_registration_application,
@@ -163,7 +162,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/delete", post().to(delete_community))
             // Mod Actions
             .route("/remove", post().to(remove_community))
-            .route("/transfer", post().to(transfer_community))
             .route("/ban_user", post().to(ban_from_community))
             .route("/icon", post().to(upload_community_icon))
             .route("/icon", delete().to(delete_community_icon))
@@ -332,7 +330,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/purge")
                 .route("/person", post().to(purge_person))
-                .route("/community", post().to(purge_community))
                 .route("/post", post().to(purge_post))
                 .route("/comment", post().to(purge_comment)),
             )

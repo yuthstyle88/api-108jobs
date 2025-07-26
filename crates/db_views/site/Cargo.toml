@@ -33,7 +33,6 @@ ts-rs = [
   "lemmy_db_schema/ts-rs",
   "lemmy_db_schema_file/ts-rs",
   "lemmy_db_views_community_follower/ts-rs",
-  "lemmy_db_views_community_moderator/ts-rs",
   "lemmy_db_views_local_user/ts-rs",
   "lemmy_db_views_person/ts-rs",
   "lemmy_db_views_post/ts-rs",
@@ -44,7 +43,6 @@ lemmy_db_schema = { workspace = true }
 lemmy_utils = { workspace = true, optional = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_db_views_community_follower = { workspace = true }
-lemmy_db_views_community_moderator = { workspace = true }
 lemmy_db_views_local_user = { workspace = true }
 lemmy_db_views_person = { workspace = true }
 lemmy_db_views_post = { workspace = true }

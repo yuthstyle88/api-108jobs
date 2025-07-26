@@ -1,17 +1,9 @@
 use crate::{
-  CommentReplyView,
-  InboxCombinedView,
-  InboxCombinedViewInternal,
-  PersonCommentMentionView,
+  CommentReplyView, InboxCombinedView, InboxCombinedViewInternal, PersonCommentMentionView,
   PersonPostMentionView,
 };
 use diesel::{
-  dsl::not,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  QueryDsl,
-  SelectableHelper,
+  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -21,37 +13,20 @@ use lemmy_db_schema::{
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      community_join,
-      creator_community_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_comment_actions_join,
-      my_community_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      community_join, creator_community_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_comment_actions_join, my_community_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
   InboxDataType,
 };
 use lemmy_db_schema_file::schema::{
-  comment,
-  comment_reply,
-  inbox_combined,
-  instance_actions,
-  person,
-  person_actions,
-  person_comment_mention,
-  person_post_mention,
-  post,
+  comment, comment_reply, inbox_combined, instance_actions, person, person_actions,
+  person_comment_mention, person_post_mention, post,
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -62,13 +37,11 @@ impl InboxCombinedViewInternal {
     let recipient_person = aliases::person1.field(person::id);
 
     let item_creator_join = person::table.on(
-      comment::creator_id
-        .eq(item_creator)
-        .or(
-          inbox_combined::person_post_mention_id
-            .is_not_null()
-            .and(post::creator_id.eq(item_creator)),
-        )
+      comment::creator_id.eq(item_creator).or(
+        inbox_combined::person_post_mention_id
+          .is_not_null()
+          .and(post::creator_id.eq(item_creator)),
+      ),
     );
 
     let recipient_join = aliases::person1.on(
@@ -95,7 +68,6 @@ impl InboxCombinedViewInternal {
         .and(not(post::deleted))
         .and(not(post::removed)),
     );
-
 
     let my_community_actions_join: my_community_actions_join =
       my_community_actions_join(Some(my_person_id));
@@ -414,7 +386,7 @@ mod tests {
       comment::{Comment, CommentInsertForm},
       comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
       community::{Community, CommunityInsertForm},
-      instance::{Instance, InstanceActions, InstanceBlockForm},
+      instance::Instance,
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
       person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
       person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
@@ -455,7 +427,7 @@ mod tests {
       instance.id,
       "test community pcv".to_string(),
       "nada".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
 
@@ -463,15 +435,15 @@ mod tests {
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
     let jessica_post_form =
-     PostInsertForm::new("jessica post prv".into(), jessica.id, community.id);
+      PostInsertForm::new("jessica post prv".into(), jessica.id, community.id);
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =
-     CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
+      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
     let timmy_comment = Comment::create(pool, &timmy_comment_form, None).await?;
 
     let sara_comment_form =
-     CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
+      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
     let sara_comment = Comment::create(pool, &sara_comment_form, Some(&timmy_comment.path)).await?;
 
     Ok(Data {
@@ -485,7 +457,6 @@ mod tests {
       sara_comment,
     })
   }
-
 
   async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     Instance::delete(pool, data.instance.id).await?;
@@ -509,13 +480,13 @@ mod tests {
     let reply = CommentReply::create(pool, &form).await?;
 
     let timmy_unread_replies =
-     InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
+        .await?;
     assert_eq!(1, timmy_unread_replies);
 
     let timmy_inbox = InboxCombinedQuery::default()
-     .list(pool, data.timmy.id, data.instance.id)
-     .await?;
+      .list(pool, data.timmy.id, data.instance.id)
+      .await?;
     assert_length!(1, timmy_inbox);
 
     if let InboxCombinedView::CommentReply(v) = &timmy_inbox[0] {
@@ -533,16 +504,16 @@ mod tests {
     CommentReply::update(pool, reply.id, &form).await?;
 
     let timmy_unread_replies =
-     InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
+        .await?;
     assert_eq!(0, timmy_unread_replies);
 
     let timmy_inbox_unread = InboxCombinedQuery {
       unread_only: Some(true),
       ..Default::default()
     }
-     .list(pool, data.timmy.id, data.instance.id)
-     .await?;
+    .list(pool, data.timmy.id, data.instance.id)
+    .await?;
     assert_length!(0, timmy_inbox_unread);
 
     cleanup(data, pool).await?;
@@ -575,13 +546,13 @@ mod tests {
 
     // Test to make sure counts and blocks work correctly
     let sara_unread_mentions =
-     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
+        .await?;
     assert_eq!(2, sara_unread_mentions);
 
     let sara_inbox = InboxCombinedQuery::default()
-     .list(pool, data.sara.id, data.instance.id)
-     .await?;
+      .list(pool, data.sara.id, data.instance.id)
+      .await?;
     assert_length!(2, sara_inbox);
 
     if let InboxCombinedView::PostMention(v) = &sara_inbox[0] {
@@ -608,13 +579,13 @@ mod tests {
     PersonActions::block(pool, &sara_blocks_timmy_form).await?;
 
     let sara_unread_mentions_after_block =
-     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, true)
+        .await?;
     assert_eq!(1, sara_unread_mentions_after_block);
 
     let sara_inbox_after_block = InboxCombinedQuery::default()
-     .list(pool, data.sara.id, data.instance.id)
-     .await?;
+      .list(pool, data.sara.id, data.instance.id)
+      .await?;
     assert_length!(1, sara_inbox_after_block);
 
     // Make sure the comment mention which timmy made is the hidden one
@@ -631,8 +602,8 @@ mod tests {
       type_: Some(InboxDataType::PostMention),
       ..Default::default()
     }
-     .list(pool, data.sara.id, data.instance.id)
-     .await?;
+    .list(pool, data.sara.id, data.instance.id)
+    .await?;
     assert_length!(1, sara_inbox_post_mentions_only);
 
     assert!(matches!(
@@ -649,13 +620,13 @@ mod tests {
 
     // Make sure sara hides bots
     let sara_unread_mentions_after_hide_bots =
-     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
+        .await?;
     assert_eq!(1, sara_unread_mentions_after_hide_bots);
 
     let sara_inbox_after_hide_bots = InboxCombinedQuery::default()
-     .list(pool, data.sara.id, data.instance.id)
-     .await?;
+      .list(pool, data.sara.id, data.instance.id)
+      .await?;
     assert_length!(1, sara_inbox_after_hide_bots);
 
     // Make sure the post mention which jessica made is the hidden one
@@ -670,16 +641,16 @@ mod tests {
 
     // Make sure none come back
     let sara_unread_mentions =
-     InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
-      .await?;
+      InboxCombinedViewInternal::get_unread_count(pool, data.sara.id, data.instance.id, false)
+        .await?;
     assert_eq!(0, sara_unread_mentions);
 
     let sara_inbox_unread = InboxCombinedQuery {
       unread_only: Some(true),
       ..Default::default()
     }
-     .list(pool, data.sara.id, data.instance.id)
-     .await?;
+    .list(pool, data.sara.id, data.instance.id)
+    .await?;
     assert_length!(0, sara_inbox_unread);
 
     cleanup(data, pool).await?;

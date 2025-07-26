@@ -21,7 +21,6 @@ use lemmy_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, Role, VoteShow,
 };
 use lemmy_db_views_community_follower::CommunityFollowerView;
-use lemmy_db_views_community_moderator::CommunityModeratorView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
@@ -473,7 +472,6 @@ pub struct LoginResponse {
 pub struct MyUserInfo {
   pub local_user_view: LocalUserView,
   pub follows: Vec<CommunityFollowerView>,
-  pub moderates: Vec<CommunityModeratorView>,
   pub community_blocks: Vec<Community>,
   pub instance_blocks: Vec<Instance>,
   pub person_blocks: Vec<Person>,
@@ -798,7 +796,6 @@ pub struct ExportDataResponse {
   pub content: Vec<PostOrCommentOrPrivateMessage>,
   pub read_posts: Vec<Url>,
   pub liked: Vec<Url>,
-  pub moderates: Vec<Url>,
   pub settings: UserSettingsBackup,
 }
 

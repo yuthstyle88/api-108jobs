@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_community_mod_of_any_or_admin_action};
+use lemmy_api_utils::context::FastJobContext;
+use lemmy_api_utils::utils::check_local_user_valid;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_report_combined::{
@@ -20,7 +21,7 @@ pub async fn list_reports(
 
   // Only check mod or admin status when not viewing my reports
   if !my_reports_only.unwrap_or_default() {
-    check_community_mod_of_any_or_admin_action(&local_user_view, &mut context.pool()).await?;
+    check_local_user_valid(&local_user_view)?;
   }
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {

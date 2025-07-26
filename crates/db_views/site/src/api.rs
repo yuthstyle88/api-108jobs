@@ -20,7 +20,6 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, Role, VoteShow,
 };
-use lemmy_db_views_community_follower::CommunityFollowerView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_post::PostView;
@@ -471,7 +470,6 @@ pub struct LoginResponse {
 /// Your user info.
 pub struct MyUserInfo {
   pub local_user_view: LocalUserView,
-  pub follows: Vec<CommunityFollowerView>,
   pub community_blocks: Vec<Community>,
   pub instance_blocks: Vec<Instance>,
   pub person_blocks: Vec<Person>,

@@ -11,10 +11,7 @@ use lemmy_api::{
     ban::ban_from_community,
     block::user_block_community,
     follow::follow_community,
-    pending_follows::{
-      approve::post_pending_follows_approve, count::get_pending_follows_count,
-      list::get_pending_follows_list,
-    },
+    pending_follows::{approve::post_pending_follows_approve},
     random::get_random_community,
     tag::{create_community_tag, delete_community_tag, update_community_tag},
   },
@@ -69,9 +66,7 @@ use lemmy_api::{
     leave_admin::leave_admin,
     list_all_media::list_all_media,
     mod_log::get_mod_log,
-    purge::{
-      comment::purge_comment, person::purge_person, post::purge_post,
-    },
+    purge::{comment::purge_comment, person::purge_person, post::purge_post},
     registration_applications::{
       approve::approve_registration_application, get::get_registration_application,
       list::list_registration_applications,
@@ -172,8 +167,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/tag", delete().to(delete_community_tag))
             .service(
               scope("/pending-follows")
-                .route("/count", get().to(get_pending_follows_count))
-                .route("/list", get().to(get_pending_follows_list))
                 .route("/approve", post().to(post_pending_follows_approve)),
             ),
         )

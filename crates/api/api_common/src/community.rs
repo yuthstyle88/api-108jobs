@@ -17,7 +17,6 @@ pub use lemmy_db_views_community::{
   },
   CommunityView,
 };
-pub use lemmy_db_views_community_follower::PendingFollow;
 
 pub mod actions {
   pub use lemmy_db_views_community::api::{
@@ -44,15 +43,6 @@ pub mod actions {
       RemoveCommunity,
       TransferCommunity,
       UpdateCommunityTag,
-    };
-    pub use lemmy_db_views_community_follower::{
-      api::{
-        GetCommunityPendingFollowsCount,
-        GetCommunityPendingFollowsCountResponse,
-        ListCommunityPendingFollows,
-        ListCommunityPendingFollowsResponse,
-      },
-      CommunityFollowerView,
     };
   }
 }

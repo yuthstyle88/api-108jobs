@@ -3,7 +3,6 @@ use lemmy_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_mod_action,
 };
 use lemmy_db_schema::{
   source::{
@@ -33,14 +32,6 @@ pub async fn remove_comment(
     comment_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-  )
-  .await?;
-
-  check_community_mod_action(
-    &local_user_view,
-    &orig_comment.community,
-    false,
-    &mut context.pool(),
   )
   .await?;
 

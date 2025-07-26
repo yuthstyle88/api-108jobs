@@ -569,6 +569,7 @@ mod tests {
       inserted_instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
+      "community-agg".to_string(),
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;

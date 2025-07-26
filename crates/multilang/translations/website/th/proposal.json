@@ -1,0 +1,7 @@
+{
+  "whyHireYou_label": "ทำไมเราควรจ้างคุณ?",
+  "portfolioUrl_error_url": "กรุณาใส่ URL ที่ถูกต้อง",
+  "price_error_min": "ต้องระบุราคา",
+  "timeline_error_min": "ต้องระบุระยะเวลา",
+  "service_error_min": "กรุณาเลือกบริการ"
+}

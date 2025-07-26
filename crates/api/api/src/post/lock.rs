@@ -2,8 +2,8 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_mod_action,
+  send_activity::{ActivityChannel, SendActivityData}
+  ,
 };
 use lemmy_db_schema::{
   source::{
@@ -13,10 +13,7 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
-  api::{LockPost, PostResponse},
-  PostView,
-};
+use lemmy_db_views_post::api::{LockPost, PostResponse};
 use lemmy_utils::error::FastJobResult;
 
 pub async fn lock_post(
@@ -24,20 +21,6 @@ pub async fn lock_post(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
-  let post_id = data.post_id;
-  let local_instance_id = local_user_view.person.instance_id;
-
-  let orig_post =
-    PostView::read(&mut context.pool(), post_id, None, local_instance_id, false).await?;
-
-  check_community_mod_action(
-    &local_user_view,
-    &orig_post.community,
-    false,
-    &mut context.pool(),
-  )
-  .await?;
-
   // Update the post
   let post_id = data.post_id;
   let locked = data.locked;
@@ -70,5 +53,5 @@ pub async fn lock_post(
     &context,
   )?;
 
-  build_post_response(&context, orig_post.community.id, local_user_view, post_id).await
+  build_post_response(&context, local_user_view, post_id).await
 }

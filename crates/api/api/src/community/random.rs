@@ -1,8 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{
-  context::FastJobContext,
-  utils::{check_private_instance, is_mod_or_admin_opt},
-};
+use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_db_schema::source::{actor_language::CommunityLanguage, community::Community};
 use lemmy_db_views_community::{
   api::{CommunityResponse, GetRandomCommunity},
@@ -24,23 +21,11 @@ pub async fn get_random_community(
   let local_user = local_user_view.as_ref().map(|u| &u.local_user);
 
   let random_community_id =
-    Community::get_random_community_id(&mut context.pool(), &data.type_, data.self_promotion).await?;
+    Community::get_random_community_id(&mut context.pool(), &data.type_, data.self_promotion)
+      .await?;
 
-  let is_mod_or_admin = is_mod_or_admin_opt(
-    &mut context.pool(),
-    local_user_view.as_ref(),
-    Some(random_community_id),
-  )
-  .await
-  .is_ok();
-
-  let community_view = CommunityView::read(
-    &mut context.pool(),
-    random_community_id,
-    local_user,
-    is_mod_or_admin,
-  )
-  .await?;
+  let community_view =
+    CommunityView::read(&mut context.pool(), random_community_id, local_user).await?;
 
   let discussion_languages =
     CommunityLanguage::read(&mut context.pool(), random_community_id).await?;

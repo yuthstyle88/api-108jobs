@@ -32,7 +32,6 @@ pub async fn mark_post_as_read(
     post_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-    false,
   )
   .await?;
 

@@ -1,9 +1,10 @@
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_community_mod_action, is_admin},
+  utils::is_admin,
 };
 use lemmy_db_schema::{
   source::{
@@ -27,7 +28,7 @@ pub async fn feature_post(
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
 
   let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
-  check_community_mod_action(&local_user_view, &community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&community)?;
 
   if data.feature_type == PostFeatureType::Local {
     is_admin(&local_user_view)?;
@@ -63,5 +64,5 @@ pub async fn feature_post(
     &context,
   )?;
 
-  build_post_response(&context, orig_post.community_id, local_user_view, post_id).await
+  build_post_response(&context, local_user_view, post_id).await
 }

@@ -22,7 +22,7 @@ use lemmy_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::{
-  enums::{CommunityFollowerState, CommunityVisibility},
+  enums::CommunityFollowerState,
   schema::{community, community_actions, person},
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -205,26 +205,7 @@ impl CommunityFollowerView {
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub async fn check_private_community_action(
-    pool: &mut DbPool<'_>,
-    from_person_id: PersonId,
-    community: &Community,
-  ) -> FastJobResult<()> {
-    if community.visibility != CommunityVisibility::Private {
-      return Ok(());
-    }
-    let conn = &mut get_conn(pool).await?;
-    select(exists(
-      Self::joins()
-        .filter(community_actions::community_id.eq(community.id))
-        .filter(community_actions::person_id.eq(from_person_id))
-        .filter(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
-    ))
-    .get_result::<bool>(conn)
-    .await?
-    .then_some(())
-    .ok_or(FastJobErrorType::NotFound.into())
-  }
+
   pub async fn check_has_followers_from_instance(
     community_id: CommunityId,
     instance_id: InstanceId,
@@ -324,6 +305,7 @@ mod tests {
       local_instance.id,
       "test_community_3".to_string(),
       "nada".to_owned(),
+      "he-he".to_string()
     );
     let community = Community::create(pool, &community_form).await?;
 

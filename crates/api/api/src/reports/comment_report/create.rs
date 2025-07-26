@@ -4,7 +4,7 @@ use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_comment_deleted_or_removed, check_community_user_action, slur_regex},
+  utils::{check_comment_deleted_or_removed, slur_regex},
 };
 use lemmy_db_schema::{
   source::comment_report::{CommentReport, CommentReportForm},
@@ -36,13 +36,6 @@ pub async fn create_comment_report(
     comment_id,
     Some(&local_user_view.local_user),
     local_instance_id,
-  )
-  .await?;
-
-  check_community_user_action(
-    &local_user_view,
-    &comment_view.community,
-    &mut context.pool(),
   )
   .await?;
 

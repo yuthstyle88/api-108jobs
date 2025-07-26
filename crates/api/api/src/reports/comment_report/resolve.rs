@@ -3,8 +3,8 @@ use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::check_community_mod_action,
 };
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_reports::{
@@ -24,13 +24,7 @@ pub async fn resolve_comment_report(
   let report = CommentReportView::read(&mut context.pool(), report_id, person_id).await?;
 
   let person_id = local_user_view.person.id;
-  check_community_mod_action(
-    &local_user_view,
-    &report.community,
-    true,
-    &mut context.pool(),
-  )
-  .await?;
+  check_community_deleted_removed(&report.community)?;
 
   if data.resolved {
     CommentReport::resolve(&mut context.pool(), report_id, person_id).await?;

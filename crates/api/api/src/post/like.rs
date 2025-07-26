@@ -4,7 +4,7 @@ use lemmy_api_utils::{
   context::FastJobContext,
   plugins::{plugin_hook_after, plugin_hook_before},
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_bot_account, check_community_user_action},
+  utils::check_bot_account,
 };
 use lemmy_db_schema::{
   source::{
@@ -33,11 +33,8 @@ pub async fn like_post(
   check_bot_account(&local_user_view.person)?;
 
   // Check for a community ban
-  let orig_post =
-    PostView::read(&mut context.pool(), post_id, None, local_instance_id, false).await?;
+  let orig_post = PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
   let previous_score = orig_post.post_actions.and_then(|p| p.like_score);
-
-  check_community_user_action(&local_user_view, &orig_post.community, &mut context.pool()).await?;
 
   let mut like_form = PostLikeForm::new(data.post_id, my_person_id, data.score);
 
@@ -84,11 +81,5 @@ pub async fn like_post(
     &context,
   )?;
 
-  build_post_response(
-    context.deref(),
-    orig_post.community.id,
-    local_user_view,
-    post_id,
-  )
-  .await
+  build_post_response(context.deref(), local_user_view, post_id).await
 }

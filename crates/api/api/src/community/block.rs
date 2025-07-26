@@ -52,7 +52,6 @@ pub async fn user_block_community(
     &mut context.pool(),
     community_id,
     Some(&local_user_view.local_user),
-    false,
   )
   .await?;
 

@@ -256,10 +256,9 @@ diesel::table! {
         interactions_month -> Int8,
         local_removed -> Bool,
         path -> Ltree,
-        subtitle -> Nullable<Text>,
         slug -> Text,
         active -> Bool,
-        is_new -> Nullable<Bool>,
+        is_new -> Bool,
     }
 }
 

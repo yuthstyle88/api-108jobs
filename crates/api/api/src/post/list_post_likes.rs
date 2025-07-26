@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::is_mod_or_admin};
-use lemmy_db_schema::{source::post::Post, traits::Crud};
+use lemmy_api_utils::utils::is_admin;
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{ListPostLikes, ListPostLikesResponse};
 use lemmy_db_views_vote::VoteView;
@@ -12,8 +12,7 @@ pub async fn list_post_likes(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListPostLikesResponse>> {
-  let post = Post::read(&mut context.pool(), data.post_id).await?;
-  is_mod_or_admin(&mut context.pool(), &local_user_view, post.community_id).await?;
+  is_admin(&local_user_view)?;
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(VoteView::from_post_actions_cursor(cursor, &mut context.pool()).await?)

@@ -490,6 +490,7 @@ mod tests {
       inserted_instance.id,
       "test community crv".to_string(),
       "nada".to_owned(),
+      "ta-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 

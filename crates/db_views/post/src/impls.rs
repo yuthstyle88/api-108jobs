@@ -101,7 +101,6 @@ impl PostView {
     post_id: PostId,
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
-    is_mod_or_admin: bool,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
@@ -110,38 +109,6 @@ impl PostView {
       .filter(post::id.eq(post_id))
       .select(Self::as_select())
       .into_boxed();
-
-    // Hide deleted and removed for non-admins or mods
-    if !is_mod_or_admin {
-      query = query
-        .filter(
-          community::removed
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        .filter(
-          post::removed
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        // users can see their own deleted posts
-        .filter(
-          community::deleted
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        .filter(
-          post::deleted
-            .eq(false)
-            .or(post::creator_id.nullable().eq(my_person_id)),
-        )
-        // private communities can only by browsed by accepted followers
-        .filter(
-          community::visibility
-            .ne(CommunityVisibility::Private)
-            .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
-        );
-    }
 
     query = my_local_user.visible_communities_only(query);
 
@@ -665,6 +632,7 @@ mod tests {
         data.instance.id,
         "test_community_3".to_string(),
         "nada".to_owned(),
+        "na-da".to_string()
       );
       let community = Community::create(pool, &new_community).await?;
 
@@ -840,7 +808,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -887,7 +854,7 @@ mod tests {
     .await?;
 
     let read_post_listing_single_no_person =
-      PostView::read(pool, data.post.id, None, data.instance.id, false).await?;
+      PostView::read(pool, data.post.id, None, data.instance.id).await?;
 
     // Should be 2 posts, with the bot post, and the blocked
     assert_eq!(
@@ -950,7 +917,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1014,7 +980,6 @@ mod tests {
       data.post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1030,7 +995,6 @@ mod tests {
       data.post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1085,7 +1049,6 @@ mod tests {
       data.bot_post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1161,7 +1124,6 @@ mod tests {
       data.bot_post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1539,6 +1501,7 @@ mod tests {
       blocked_instance.id,
       "test_community_4".to_string(),
       "none".to_owned(),
+      "na-da".to_string()
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1601,6 +1564,7 @@ mod tests {
       data.instance.id,
       "yes".to_string(),
       "yes".to_owned(),
+      "na-da".to_string()
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1869,7 +1833,7 @@ mod tests {
     assert_eq!(3, authenticated_query.len());
 
     let unauthenticated_post =
-      PostView::read(pool, data.post.id, None, data.instance.id, false).await;
+      PostView::read(pool, data.post.id, None, data.instance.id).await;
     assert!(unauthenticated_post.is_err());
 
     let authenticated_post = PostView::read(
@@ -1877,7 +1841,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await;
     assert!(authenticated_post.is_ok());
@@ -1915,7 +1878,6 @@ mod tests {
       data.post.id,
       Some(&inserted_banned_from_comm_local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1939,7 +1901,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -1981,7 +1942,6 @@ mod tests {
       banned_post.id,
       Some(&data.john.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -2106,7 +2066,7 @@ mod tests {
     .list(&data.site, pool)
     .await?;
     assert_eq!(0, read_post_listing.len());
-    let post_view = PostView::read(pool, data.post.id, None, data.instance.id, false).await;
+    let post_view = PostView::read(pool, data.post.id, None, data.instance.id).await;
     assert!(post_view.is_err());
 
     // No posts returned for non-follower who is not admin
@@ -2124,7 +2084,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await;
     assert!(post_view.is_err());
@@ -2144,7 +2103,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      true,
     )
     .await;
     assert!(post_view.is_ok());
@@ -2171,7 +2129,6 @@ mod tests {
       data.post.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      true,
     )
     .await;
     assert!(post_view.is_ok());
@@ -2324,7 +2281,6 @@ mod tests {
       data.post_with_tags.id,
       Some(&data.tegan.local_user),
       data.instance.id,
-      false,
     )
     .await?;
 
@@ -2352,6 +2308,7 @@ mod tests {
       data.instance.id,
       "test_community_4".to_string(),
       "nada".to_owned(),
+      "na-da".to_string()
     );
     let community_1 = Community::create(pool, &form).await?;
 
@@ -2362,6 +2319,7 @@ mod tests {
       data.instance.id,
       "test_community_5".to_string(),
       "nada".to_owned(),
+      "na-da".to_string()
     );
     let community_2 = Community::create(pool, &form).await?;
 

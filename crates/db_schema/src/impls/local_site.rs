@@ -76,6 +76,7 @@ mod tests {
       data.instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
+      "community-slug".to_string()
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;

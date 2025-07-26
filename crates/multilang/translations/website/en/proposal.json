@@ -1,0 +1,7 @@
+{
+  "whyHireYou_label": "Why should we hire you?",
+  "portfolioUrl_error_url": "Please enter a valid URL",
+  "price_error_min": "Price is required",
+  "timeline_error_min": "Timeline is required",
+  "service_error_min": "Please select a service"
+}

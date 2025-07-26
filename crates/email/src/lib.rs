@@ -18,6 +18,7 @@ use rosetta_i18n::{Language, LanguageId};
 use std::{str::FromStr, sync::OnceLock};
 use translations::Lang;
 use uuid::Uuid;
+use lemmy_utils::error::FastJobError;
 
 pub mod account;
 pub mod admin;
@@ -77,9 +78,12 @@ async fn send_email(
     .with_fastjob_type(FastJobErrorType::EmailSendFailed)?;
 
   mailer
-    .send(email)
-    .await
-    .with_fastjob_type(FastJobErrorType::EmailSendFailed)?;
+      .send(email)
+      .await
+      .map_err(|err| {
+        tracing::error!("Failed to send email: {}", err); // optional: log
+        FastJobError::from(FastJobErrorType::EmailSendFailed)
+      })?;
 
   Ok(())
 }

@@ -3,9 +3,7 @@ mod series;
 use crate::{db_perf::series::ValuesFromSeries, impls::PostQuery, PostView};
 use diesel::{
   dsl::{self, sql},
-  sql_types,
-  ExpressionMethods,
-  IntoSql,
+  sql_types, ExpressionMethods, IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use lemmy_db_schema::{
@@ -82,6 +80,7 @@ async fn db_perf() -> FastJobResult<()> {
       instance.id,
       format!("c{i}"),
       i.to_string(),
+      "na-da".to_string(),
     );
     community_ids.push(Community::create(&mut conn.into(), &form).await?.id);
   }

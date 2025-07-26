@@ -607,6 +607,7 @@ mod tests {
       inserted_instance.id,
       "test community_3".to_string(),
       "nada".to_owned(),
+      "a-b-c".to_string()
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;
@@ -748,6 +749,7 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
+      "a-b-c".to_string()
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -847,6 +849,7 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
+      "a-b-c".to_string()
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 

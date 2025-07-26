@@ -226,6 +226,11 @@ pub enum FastJobErrorType {
   RoleNotFound,
   EmptyUsernameOrEmail,
   UserNotFound,
+  EmptyTitle,
+  SlugAlreadyExists,
+  MaxCommunityDepthReached,
+  CouldntCreateCommunity,
+  AlreadyDeleted,
 }
 
 cfg_if! {

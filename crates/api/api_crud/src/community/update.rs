@@ -1,17 +1,12 @@
 use super::check_community_visibility_allowed;
 use actix_web::web::{Data, Json};
 use chrono::Utc;
+use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{
-    check_community_mod_action,
-    check_self_promotion_allowed,
-    get_url_blocklist,
-    process_markdown_opt,
-    slur_regex,
-  },
+  utils::{check_self_promotion_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
 use lemmy_db_schema::{
   source::{
@@ -35,6 +30,8 @@ pub async fn update_community(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
+  is_admin(&local_user_view)?;
+  
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let slur_regex = slur_regex(&context).await?;
@@ -57,8 +54,7 @@ pub async fn update_community(
 
   let old_community = Community::read(&mut context.pool(), data.community_id).await?;
 
-  // Verify its a mod (only mods can edit it)
-  check_community_mod_action(&local_user_view, &old_community, false, &mut context.pool()).await?;
+  check_community_deleted_removed(&old_community)?;
 
   let community_id = data.community_id;
   if let Some(languages) = data.discussion_languages.clone() {

@@ -17,36 +17,36 @@ use lemmy_db_schema::{
   source::{
     actor_language::{CommunityLanguage, LocalUserLanguage, SiteLanguage},
     community::{
-      Community,
-      CommunityActions,
-      CommunityFollowerForm,
-      CommunityInsertForm,
-      CommunityModeratorForm,
+      Community
+
+      ,
+      CommunityInsertForm
+      ,
     },
   },
-  traits::{ApubActor, Crud, Followable, Joinable},
+  traits::{ApubActor, Crud},
 };
-use lemmy_db_schema_file::enums::CommunityFollowerState;
-use lemmy_db_views_community::api::{CommunityResponse, CreateCommunity};
+use lemmy_db_views_community::api::{CommunityResponse, CreateCommunity, CreateCommunityRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::check_slurs,
-    validation::{
-      is_valid_actor_name,
-      is_valid_body_field,
-      site_or_community_description_length_check,
-    },
+use lemmy_utils::{error::{FastJobErrorType, FastJobResult}, utils::{
+  slurs::check_slurs,
+  validation::{
+    is_valid_body_field,
+    site_or_community_description_length_check,
   },
-};
+}, MAX_COMMUNITY_DEPTH_LIMIT};
 
 pub async fn create_community(
-  data: Json<CreateCommunity>,
+  data: Json<CreateCommunityRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
+  is_admin(&local_user_view)?;
+  
+  let data: CreateCommunity = data.into_inner().try_into()?;
+  Community::check_community_slug_taken(&mut context.pool(), &data.slug).await?;
+
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   let local_site = site_view.local_site;
 
@@ -71,8 +71,6 @@ pub async fn create_community(
     site_or_community_description_length_check(desc)?;
     check_slurs(desc, &slur_regex)?;
   }
-
-  is_valid_actor_name(&data.name, local_site.actor_name_max_length)?;
 
   if let Some(desc) = &data.description {
     is_valid_body_field(desc, false)?;
@@ -100,26 +98,22 @@ pub async fn create_community(
       site_view.site.instance_id,
       data.name.clone(),
       data.title.clone(),
+      data.slug.clone(),
     )
   };
 
-  let inserted_community = Community::create(&mut context.pool(), &community_form).await?;
+  let parent_opt = if let Some(parent_id) = data.parent_id {
+    Community::read(&mut context.pool(), parent_id).await.ok()
+  } else {
+    None
+  };
+
+  if let Some(parent) = parent_opt.as_ref() {
+    check_community_depth(parent)?;
+  }
+
+  let inserted_community = Community::create_sub(&mut context.pool(), &community_form, parent_opt.as_ref()).await?;
   let community_id = inserted_community.id;
-
-  // The community creator becomes a moderator
-  let community_moderator_form =
-    CommunityModeratorForm::new(community_id, local_user_view.person.id);
-
-  CommunityActions::join(&mut context.pool(), &community_moderator_form).await?;
-
-  // Follow your own community
-  let community_follower_form = CommunityFollowerForm::new(
-    community_id,
-    local_user_view.person.id,
-    CommunityFollowerState::Accepted,
-  );
-
-  CommunityActions::follow(&mut context.pool(), &community_follower_form).await?;
 
   // Update the discussion_languages if that's provided
   let site_languages = SiteLanguage::read_local_raw(&mut context.pool()).await?;
@@ -142,4 +136,14 @@ pub async fn create_community(
   CommunityLanguage::update(&mut context.pool(), languages, community_id).await?;
 
   build_community_response(&context, local_user_view, community_id).await
+}
+
+pub fn check_community_depth(community: &Community) -> FastJobResult<()> {
+  let path = &community.path.0;
+  let length = path.split('.').count();
+  if length > MAX_COMMUNITY_DEPTH_LIMIT {
+    Err(FastJobErrorType::MaxCommunityDepthReached)?
+  } else {
+    Ok(())
+  }
 }

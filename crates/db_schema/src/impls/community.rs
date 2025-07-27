@@ -443,26 +443,6 @@ impl CommunityActions {
       .ok_or(FastJobErrorType::CommunityHasNoFollowers.into())
   }
 
-  pub async fn approve_follower(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-    follower_id: PersonId,
-    approver_id: PersonId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    let find_action = community_actions::table
-      .find((follower_id, community_id))
-      .filter(community_actions::followed_at.is_not_null());
-    diesel::update(find_action)
-      .set((
-        community_actions::follow_state.eq(CommunityFollowerState::Accepted),
-        community_actions::follow_approver_id.eq(approver_id),
-      ))
-      .execute(conn)
-      .await?;
-    Ok(())
-  }
-
   pub async fn fetch_largest_subscribed_community(
     pool: &mut DbPool<'_>,
     person_id: PersonId,

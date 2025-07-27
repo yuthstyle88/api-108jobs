@@ -17,13 +17,15 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::PostNotifications;
 use lemmy_db_views_comment::{api::CommentResponse, CommentView};
-use lemmy_db_views_community::{api::CommunityResponse, CommunityView};
+use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
+use lemmy_db_views_community::{api::CommunityResponse, CommunityNodeView, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::mention::scrape_text_for_mentions,
 };
+use std::collections::{HashMap, HashSet};
 use url::Url;
 
 pub async fn build_comment_response(
@@ -73,6 +75,52 @@ pub async fn build_post_response(
   )
   .await?;
   Ok(Json(PostResponse { post_view }))
+}
+
+pub fn build_community_tree(
+  flat_list: Vec<Community>,
+) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
+  let mut node_map = HashMap::with_capacity(flat_list.len());
+  let mut all_children = HashSet::with_capacity(flat_list.len());
+
+  for community in &flat_list {
+    let path_str = community.path.0.to_string();
+    node_map.insert(
+      path_str,
+      CommunityNodeView {
+        community: community.clone(),
+        children: Vec::new(),
+      },
+    );
+  }
+
+  for community in &flat_list {
+    let path_str = &community.path.0;
+    if let Some(last_dot) = path_str.rfind('.') {
+      let parent_path = &path_str[..last_dot];
+      if let Some(parent_node) = node_map.clone().get_mut(parent_path) {
+        if let Some(current_node) = node_map.get(path_str.as_str()).cloned() {
+          parent_node.children.push(current_node);
+          all_children.insert(path_str.to_string());
+        }
+      }
+    }
+  }
+
+  let roots: Vec<_> = node_map
+      .into_iter()
+      .filter_map(|(path, node)| {
+        (!all_children.contains(&path)).then_some(node)
+      })
+      .collect();
+
+  let count = roots.len() as i32;
+
+  Ok(Json(ListCommunitiesTreeResponse {
+    communities: roots,
+    count,
+  }))
+
 }
 
 /// Scans the post/comment content for mentions, then sends notifications via db and multilang

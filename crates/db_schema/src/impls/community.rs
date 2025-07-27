@@ -195,6 +195,17 @@ impl Community {
         .ok_or(FastJobErrorType::SlugAlreadyExists.into())
   }
 
+  pub async fn list_all_communities(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Community>> {
+    let conn = &mut get_conn(pool).await?;
+
+    let communities = community::table
+        .order_by(community::path.asc())
+        .load::<Community>(conn)
+        .await?;
+
+    Ok(communities)
+  }
+
   /// Get the community which has a given moderators or featured url, also return the collection
   /// type
   pub async fn get_by_collection_url(

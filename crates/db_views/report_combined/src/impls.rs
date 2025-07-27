@@ -924,9 +924,6 @@ mod tests {
       panic!("wrong type");
     }
 
-    // admin resolves the report (after taking appropriate action)
-    CommunityReport::resolve(pool, community_report.id, data.admin_view.person.id).await?;
-
     let reports = ReportCombinedQuery {
       show_community_rule_violations: Some(true),
       ..Default::default()

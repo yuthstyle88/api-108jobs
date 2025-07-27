@@ -1,8 +1,0 @@
-{
-  "oauth_verification_failed": "OAuth verification failed",
-  "verification_email_sent": "Verification email has been sent",
-  "registration_request_submitted": "Registration request has been submitted",
-  "registration_request_processing": "Your registration request is being processed",
-  "invalid_login_occurred": "Invalid login occurred",
-  "login_error": "Login error"
-}

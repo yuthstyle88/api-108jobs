@@ -1,8 +1,0 @@
-{
-  "oauth_verification_failed": "Kiểm tra OAuth không thành công",
-  "verification_email_sent": "Email xác minh đã được gửi",
-  "registration_request_submitted": "Yêu cầu đăng ký đã được gửi",
-  "registration_request_processing": "Yêu cầu đăng ký của bạn đang được xử lý",
-  "invalid_login_occurred": "Đăng nhập không hợp lệ",
-  "login_error": "Lỗi đăng nhập"
-}

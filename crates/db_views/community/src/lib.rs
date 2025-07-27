@@ -43,3 +43,14 @@ pub struct CommunityView {
   )]
   pub post_tags: TagsView,
 }
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Community node.
+pub struct CommunityNodeView {
+  pub community: Community,
+  #[serde(skip_serializing_if = "Vec::is_empty")]
+  pub children: Vec<CommunityNodeView>,
+}

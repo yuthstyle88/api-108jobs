@@ -11,7 +11,6 @@ use lemmy_api::{
     ban::ban_from_community,
     block::user_block_community,
     follow::follow_community,
-    pending_follows::{approve::post_pending_follows_approve},
     random::get_random_community,
     tag::{create_community_tag, delete_community_tag, update_community_tag},
   },
@@ -74,6 +73,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api_crud::community::list::list_communities_ltree;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -83,7 +83,7 @@ use lemmy_api_crud::{
     update::update_comment,
   },
   community::{
-    create::create_community, delete::delete_community, list::list_communities,
+    create::create_community, delete::delete_community,
     remove::remove_community, update::update_community,
   },
   custom_emoji::{
@@ -150,7 +150,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/community")
             .route("", put().to(update_community))
             .route("/random", get().to(get_random_community))
-            .route("/list", get().to(list_communities))
+            .route("/list", get().to(list_communities_ltree))
             .route("/follow", post().to(follow_community))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))
@@ -165,10 +165,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/tag", post().to(create_community_tag))
             .route("/tag", put().to(update_community_tag))
             .route("/tag", delete().to(delete_community_tag))
-            .service(
-              scope("/pending-follows")
-                .route("/approve", post().to(post_pending_follows_approve)),
-            ),
         )
         // Post
         .service(

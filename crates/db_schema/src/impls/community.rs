@@ -195,6 +195,17 @@ impl Community {
         .ok_or(FastJobErrorType::SlugAlreadyExists.into())
   }
 
+  pub async fn list_all_communities(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Community>> {
+    let conn = &mut get_conn(pool).await?;
+
+    let communities = community::table
+        .order_by(community::path.asc())
+        .load::<Community>(conn)
+        .await?;
+
+    Ok(communities)
+  }
+
   /// Get the community which has a given moderators or featured url, also return the collection
   /// type
   pub async fn get_by_collection_url(
@@ -441,26 +452,6 @@ impl CommunityActions {
       .await?
       .then_some(())
       .ok_or(FastJobErrorType::CommunityHasNoFollowers.into())
-  }
-
-  pub async fn approve_follower(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-    follower_id: PersonId,
-    approver_id: PersonId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    let find_action = community_actions::table
-      .find((follower_id, community_id))
-      .filter(community_actions::followed_at.is_not_null());
-    diesel::update(find_action)
-      .set((
-        community_actions::follow_state.eq(CommunityFollowerState::Accepted),
-        community_actions::follow_approver_id.eq(approver_id),
-      ))
-      .execute(conn)
-      .await?;
-    Ok(())
   }
 
   pub async fn fetch_largest_subscribed_community(

@@ -1,4 +1,4 @@
-use crate::CommunityView;
+use crate::{CommunityNodeView, CommunityView};
 use lemmy_db_schema::{
   newtypes::{CommunityId, LanguageId, PaginationCursor, PersonId, TagId},
   source::site::Site,
@@ -273,6 +273,16 @@ pub struct ListCommunitiesResponse {
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The response for listing communities.
+#[serde(rename_all = "camelCase")]
+pub struct ListCommunitiesTreeResponse {
+  pub communities: Vec<CommunityNodeView>,
+  pub count: i32,
 }
 
 #[skip_serializing_none]

@@ -77,50 +77,51 @@ pub async fn build_post_response(
   Ok(Json(PostResponse { post_view }))
 }
 
-pub fn build_community_tree(
-  flat_list: Vec<Community>,
-) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
-  let mut node_map = HashMap::with_capacity(flat_list.len());
-  let mut all_children = HashSet::with_capacity(flat_list.len());
+pub fn build_community_tree(flat_list: Vec<Community>) ->  FastJobResult<Json<ListCommunitiesTreeResponse>> {
+  let mut node_map: HashMap<String, CommunityNodeView> = HashMap::new();
+  let mut all_children: HashSet<String> = HashSet::new();
 
+  // First pass: build all nodes
   for community in &flat_list {
     let path_str = community.path.0.to_string();
     node_map.insert(
-      path_str,
+      path_str.clone(),
       CommunityNodeView {
-        community: community.clone(),
+       community: community.clone(),
         children: Vec::new(),
       },
     );
   }
 
+  // Second pass: build tree
   for community in &flat_list {
-    let path_str = &community.path.0;
-    if let Some(last_dot) = path_str.rfind('.') {
-      let parent_path = &path_str[..last_dot];
-      if let Some(parent_node) = node_map.clone().get_mut(parent_path) {
-        if let Some(current_node) = node_map.get(path_str.as_str()).cloned() {
+    let path_str = community.path.0.to_string();
+    let segments: Vec<&str> = path_str.split('.').collect();
+
+    if segments.len() > 1 {
+      let parent_path = segments[..segments.len() - 1].join(".");
+      if let Some(current_node) = node_map.get(&path_str).cloned() {
+        if let Some(parent_node) = node_map.get_mut(&parent_path) {
           parent_node.children.push(current_node);
-          all_children.insert(path_str.to_string());
+          all_children.insert(path_str);
         }
       }
     }
   }
 
-  let roots: Vec<_> = node_map
+  // Collect root nodes (not children of anyone else)
+  let roots: Vec<CommunityNodeView> = node_map
       .into_iter()
       .filter_map(|(path, node)| {
-        (!all_children.contains(&path)).then_some(node)
+        if !all_children.contains(&path) {
+          Some(node)
+        } else {
+          None
+        }
       })
       .collect();
 
-  let count = roots.len() as i32;
-
-  Ok(Json(ListCommunitiesTreeResponse {
-    communities: roots,
-    count,
-  }))
-
+  Ok(Json(ListCommunitiesTreeResponse { communities: roots.clone(), count: roots.len() as i32 }))
 }
 
 /// Scans the post/comment content for mentions, then sends notifications via db and multilang

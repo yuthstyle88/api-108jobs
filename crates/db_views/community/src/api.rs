@@ -9,16 +9,6 @@ use lemmy_db_views_person::PersonView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Add a moderator to a community.
-pub struct AddModToCommunity {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  pub added: bool,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
@@ -190,15 +180,12 @@ pub struct EditCommunity {
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Follow / subscribe to a community.
-pub struct FollowCommunity {
-  pub community_id: CommunityId,
-  pub follow: bool,
+  /// A slug of category and subcategory.
+  pub slug: Option<String>,
+  /// Whether its new or not.
+  pub is_new: Option<bool>,
+  /// If parent_id is None -> Category else -> Subcategory
+  pub parent_id: Option<CommunityId>,
 }
 
 #[skip_serializing_none]

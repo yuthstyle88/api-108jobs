@@ -72,12 +72,6 @@ pub enum SendActivityData {
     reason: Option<String>,
     removed: bool,
   },
-  AddModToCommunity {
-    moderator: Person,
-    community_id: CommunityId,
-    target: PersonId,
-    added: bool,
-  },
   BanFromCommunity {
     moderator: Person,
     community_id: CommunityId,

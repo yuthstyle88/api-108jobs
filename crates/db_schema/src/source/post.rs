@@ -1,6 +1,6 @@
 use crate::newtypes::{CommunityId, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::PostNotifications;
+use lemmy_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -83,6 +83,11 @@ pub struct Post {
   pub scaled_rank: f64,
   pub report_count: i16,
   pub unresolved_report_count: i16,
+  pub intended_use: IntendedUse,
+  pub job_type: JobType,
+  pub budget: f64,
+  pub deadline: Option<DateTime<Utc>>,
+  pub is_english_required: bool,
 }
 
 // TODO: FromBytes, ToBytes are only needed to develop wasm plugin, could be behind feature flag

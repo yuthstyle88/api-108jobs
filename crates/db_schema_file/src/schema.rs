@@ -47,7 +47,16 @@ pub mod sql_types {
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "role"))]
-  pub struct Role;
+  pub struct RoleEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "intended_use_enum"))]
+  pub struct IntendedUseEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "job_type_enum"))]
+  pub struct JobTypeEnum;
+
 }
 
 diesel::table! {
@@ -484,7 +493,7 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::CommentSortTypeEnum;
     use super::sql_types::VoteShowEnum;
-    use super::sql_types::Role;
+    use super::sql_types::RoleEnum;
 
     local_user (id) {
         id -> Int4,
@@ -524,7 +533,7 @@ diesel::table! {
         show_downvotes -> VoteShowEnum,
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
-        role -> Role,
+        role -> RoleEnum,
     }
 }
 
@@ -837,6 +846,9 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::IntendedUseEnum;
+    use super::sql_types::JobTypeEnum;
     post (id) {
         id -> Int4,
         #[max_length = 200]
@@ -877,6 +889,11 @@ diesel::table! {
         scaled_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
+        intended_use -> IntendedUseEnum,
+        job_type -> JobTypeEnum,
+        budget -> Float8,
+        deadline -> Nullable<Timestamptz>,
+        is_english_required -> Bool,
     }
 }
 

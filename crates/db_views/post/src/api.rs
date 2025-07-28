@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use crate::PostView;
 use lemmy_db_schema::{
   newtypes::{
@@ -11,7 +12,7 @@ use lemmy_db_schema::{
   },
   PostFeatureType,
 };
-use lemmy_db_schema_file::enums::{ListingType, PostNotifications, PostSortType};
+use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -42,7 +43,7 @@ pub struct CreatePost {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
@@ -62,11 +63,11 @@ pub struct CreatePostRequest {
   pub language_id: Option<LanguageId>,
   /// Instead of fetching a thumbnail, use a custom one.
   pub custom_thumbnail: Option<String>,
-  pub intended_use: Option<String>,
-  pub job_type: Option<String>,
-  pub budget: Option<String>,
-  pub deadline: Option<String>,
-  pub is_english_required: Option<String>,
+  pub intended_use: IntendedUse,
+  pub job_type: JobType,
+  pub budget: f64,
+  pub deadline: Option<DateTime<Utc>>,
+  pub is_english_required: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]

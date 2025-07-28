@@ -24,17 +24,10 @@ use crate::{
   },
 };
 use chrono::Utc;
-use diesel::{
-  dsl::{count, insert_into, not, update},
-  expression::SelectableHelper,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
-};
+use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
+use tracing::log::debug;
 use lemmy_db_schema_file::{
   enums::PostNotifications,
   schema::{community, person, post, post_actions},
@@ -53,11 +46,15 @@ impl Crud for Post {
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    insert_into(post::table)
-        .values(form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
+    let query = insert_into(post::table).values(form);
+
+    let sql_preview = debug_query::<Pg, _>(&query).to_string();
+    debug!("SQL preview: {sql_preview}");
+    let res = query
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntCreatePost);
+    res
   }
 
   async fn update(

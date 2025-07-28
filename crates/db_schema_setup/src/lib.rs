@@ -363,15 +363,12 @@ mod tests {
   const POST_NAME: &str = "Post Title";
   const POST_URL: &str = "https://fedi.example/post/12345";
   const POST_BODY: &str = "Post Body.";
-  const POST_AP_ID: &str = "https://fedi.example/post/12345";
 
   const TEST_COMMENT_ID_1: i32 = 101;
   const COMMENT1_CONTENT: &str = "Comment";
-  const COMMENT1_AP_ID: &str = "https://fedi.example/comment/12345";
 
   const TEST_COMMENT_ID_2: i32 = 102;
   const COMMENT2_CONTENT: &str = "Reply";
-  const COMMENT2_AP_ID: &str = "https://fedi.example/comment/12346";
 
   #[test]
   #[serial]
@@ -476,33 +473,31 @@ mod tests {
 
     // Post
     conn.batch_execute(&format!(
-      "INSERT INTO post (id, name, url, body, creator_id, community_id, ap_id) \
-          VALUES ({}, '{}', '{}', '{}', {}, {}, '{}')",
+      "INSERT INTO post (id, name, url, body, creator_id, community_id) \
+          VALUES ({}, '{}', '{}', '{}', {}, {})",
       TEST_POST_ID_1,
       POST_NAME,
       POST_URL,
       POST_BODY,
       TEST_USER_ID_1,
       TEST_COMMUNITY_ID_1,
-      POST_AP_ID
     ))?;
 
     // Comment
     conn.batch_execute(&format!(
-      "INSERT INTO comment (id, creator_id, post_id, parent_id, content, ap_id) \
-           VALUES ({}, {}, {}, NULL, '{}', '{}')",
-      TEST_COMMENT_ID_1, TEST_USER_ID_2, TEST_POST_ID_1, COMMENT1_CONTENT, COMMENT1_AP_ID
+      "INSERT INTO comment (id, creator_id, post_id, parent_id, content) \
+           VALUES ({}, {}, {}, NULL, '{}')",
+      TEST_COMMENT_ID_1, TEST_USER_ID_2, TEST_POST_ID_1, COMMENT1_CONTENT
     ))?;
 
     conn.batch_execute(&format!(
-      "INSERT INTO comment (id, creator_id, post_id, parent_id, content, ap_id) \
-           VALUES ({}, {}, {}, {}, '{}', '{}')",
+      "INSERT INTO comment (id, creator_id, post_id, parent_id, content) \
+           VALUES ({}, {}, {}, {}, '{}')",
       TEST_COMMENT_ID_2,
       TEST_USER_ID_1,
       TEST_POST_ID_1,
       TEST_COMMENT_ID_1,
       COMMENT2_CONTENT,
-      COMMENT2_AP_ID
     ))?;
 
     conn.batch_execute(&format!(

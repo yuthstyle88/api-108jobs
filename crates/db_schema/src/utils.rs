@@ -29,7 +29,7 @@ use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::{structs::Settings, SETTINGS},
+  settings::{SETTINGS},
   utils::validation::clean_url,
 };
 use regex::Regex;
@@ -641,22 +641,6 @@ pub fn paginate<Q, C>(
   }
 
   query
-}
-
-pub(crate) fn format_actor_url(
-  name: &str,
-  domain: &str,
-  prefix: char,
-  settings: &Settings,
-) -> FastJobResult<Url> {
-  let local_protocol_and_hostname = settings.get_protocol_and_hostname();
-  let local_hostname = &settings.hostname;
-  let url = if domain != local_hostname {
-    format!("{local_protocol_and_hostname}/{prefix}/{name}@{domain}",)
-  } else {
-    format!("{local_protocol_and_hostname}/{prefix}/{name}")
-  };
-  Ok(Url::parse(&url)?)
 }
 
 /// Make sure the like score is 1, or -1

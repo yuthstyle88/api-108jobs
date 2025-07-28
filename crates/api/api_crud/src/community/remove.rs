@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext
   ,
   utils::is_admin,
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::community::{Community, CommunityUpdateForm},
   traits::Crud,

@@ -1,5 +1,5 @@
-use actix_web::{cookie::Cookie, HttpRequest, HttpResponse};
 use actix_web::web::Data;
+use actix_web::{cookie::Cookie, HttpRequest, HttpResponse};
 use lemmy_api_utils::{
   context::FastJobContext,
   utils::{read_auth_token, AUTH_COOKIE_NAME},

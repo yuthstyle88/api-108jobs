@@ -14,7 +14,7 @@ use lemmy_db_schema::{
     person::{Person, PersonInsertForm},
     site::{Site, SiteInsertForm},
   },
-  traits::{ApubActor, Crud},
+  traits::{Crud},
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::local_site;
@@ -24,7 +24,6 @@ use lemmy_utils::{
   settings::structs::Settings,
 };
 use tracing::info;
-use url::Url;
 
 pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
   let conn = &mut get_conn(pool).await?;
@@ -46,11 +45,9 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           let instance = Instance::read_or_create(&mut conn.into(), domain).await?;
 
           if let Some(setup) = &settings.setup {
-            let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
 
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
-              ap_id: Some(person_ap_id.clone()),
               inbox_url: Some(generate_inbox_url()?),
               ..PersonInsertForm::new(
                 setup.admin_username.clone(),
@@ -67,16 +64,12 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             LocalUser::create(&mut conn.into(), &local_user_form, vec![]).await?;
           };
 
-          // Add an entry for the site table
-          let site_ap_id = Url::parse(&settings.get_protocol_and_hostname())?;
-
           let name = settings
             .setup
             .clone()
             .map(|s| s.site_name)
             .unwrap_or_else(|| "New Site".to_string());
           let site_form = SiteInsertForm {
-            ap_id: Some(site_ap_id.clone().into()),
             last_refreshed_at: Some(Utc::now()),
             inbox_url: Some(generate_inbox_url()?),
              ..SiteInsertForm::new(name, instance.id)

@@ -1,19 +1,19 @@
 use actix_web::web::{Data, Json, Query};
+use lemmy_api_utils::build_response::build_community_tree;
 use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
+use lemmy_db_schema::newtypes::PaginationCursor;
+use lemmy_db_schema::source::community::Community;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
+use lemmy_db_schema::CommunitySortType;
+use lemmy_db_schema_file::enums::ListingType;
+use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
 use lemmy_db_views_community::{api::{ListCommunities, ListCommunitiesResponse}, impls::CommunityQuery, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 use moka::future::Cache;
-use std::{sync::LazyLock, time::Duration};
 use std::hash::{Hash, Hasher};
-use lemmy_api_utils::build_response::build_community_tree;
-use lemmy_db_schema::CommunitySortType;
-use lemmy_db_schema::newtypes::PaginationCursor;
-use lemmy_db_schema::source::community::Community;
-use lemmy_db_schema_file::enums::ListingType;
-use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
+use std::{sync::LazyLock, time::Duration};
 
 // Define a cache key type based on query parameters
 #[derive(Clone, Debug, Eq)]

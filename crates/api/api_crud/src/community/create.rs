@@ -4,8 +4,8 @@ use lemmy_api_utils::{
   build_response::build_community_response,
   context::FastJobContext,
   utils::{
-    check_self_promotion_allowed,
-    generate_followers_url,
+    check_self_promotion_allowed
+    ,
     generate_inbox_url,
     get_url_blocklist,
     is_admin,
@@ -24,7 +24,7 @@ use lemmy_db_schema::{
       ,
     },
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
 };
 use lemmy_db_views_community::api::{CommunityResponse, CreateCommunity, CreateCommunityRequest};
 use lemmy_db_views_local_user::LocalUserView;
@@ -79,18 +79,11 @@ pub async fn create_community(
   check_community_visibility_allowed(data.visibility, &local_user_view)?;
 
   // Double check for duplicate community actor_ids
-  let community_ap_id = Community::generate_local_actor_url(&data.name, context.settings())?;
-  let community_dupe = Community::read_from_apub_id(&mut context.pool(), &community_ap_id).await?;
-  if community_dupe.is_some() {
-    Err(FastJobErrorType::CommunityAlreadyExists)?
-  }
 
   let community_form = CommunityInsertForm {
     sidebar,
     description,
     self_promotion: data.self_promotion,
-    ap_id: Some(community_ap_id.clone()),
-    followers_url: Some(generate_followers_url(&community_ap_id)?),
     inbox_url: Some(generate_inbox_url()?),
     posting_restricted_to_mods: data.posting_restricted_to_mods,
     visibility: data.visibility,

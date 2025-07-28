@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use crate::PostView;
+use chrono::{DateTime, Utc};
 use lemmy_db_schema::{
   newtypes::{
     CommentId,

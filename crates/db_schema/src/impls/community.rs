@@ -13,7 +13,6 @@ use crate::{
   },
   traits::{ApubActor, Crud,},
   utils::{
-    format_actor_url,
     functions::{coalesce_2_nullable, lower, random_smallint},
     get_conn,
     uplete,
@@ -42,7 +41,6 @@ use lemmy_utils::{
   CACHE_DURATION_LARGEST_COMMUNITY,
 };
 use moka::future::Cache;
-use regex::Regex;
 use std::sync::{Arc, LazyLock};
 use url::Url;
 use crate::source::community::CommunityChangeset;
@@ -84,7 +82,6 @@ impl Crud for Community {
       updated_at: form.updated_at,
       deleted: form.deleted,
       self_promotion: form.self_promotion,
-      ap_id: form.ap_id.clone(),
       local: form.local,
       last_refreshed_at: form.last_refreshed_at,
       icon: form.icon.clone(),
@@ -291,20 +288,6 @@ impl Community {
       .eq(false)
       .and(community::deleted.eq(false))
   }
-
-  pub fn build_tag_ap_id(&self, tag_name: &str) -> FastJobResult<DbUrl> {
-    #[allow(clippy::expect_used)]
-    // convert a readable name to an id slug that is appended to the community URL to get a unique
-    // tag url (ap_id).
-    static VALID_ID_SLUG: LazyLock<Regex> =
-      LazyLock::new(|| Regex::new(r"[^a-z0-9_-]+").expect("compile regex"));
-    let tag_name_lower = tag_name.to_lowercase();
-    let id_slug = VALID_ID_SLUG.replace_all(&tag_name_lower, "-");
-    if id_slug.is_empty() {
-      Err(FastJobErrorType::InvalidUrl)?
-    }
-    Ok(Url::parse(&format!("{}/tag/{}", self.ap_id, &id_slug))?.into())
-  }
 }
 
 impl CommunityActions {
@@ -452,19 +435,6 @@ impl CommunityActions {
 }
 
 impl ApubActor for Community {
-  async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    community::table
-      .filter(community::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   async fn read_from_name(
     pool: &mut DbPool<'_>,
     community_name: &str,
@@ -501,19 +471,14 @@ impl ApubActor for Community {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
-    let domain = self
-      .ap_id
-      .inner()
-      .domain()
-      .ok_or(FastJobErrorType::NotFound)?;
-
-    format_actor_url(&self.name, domain, 'c', settings)
-  }
 
   fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
+  }
+
+  fn actor_url(&self, _settings: &Settings) -> FastJobResult<Url> {
+    todo!()
   }
 }
 
@@ -575,7 +540,6 @@ mod tests {
       deleted: false,
       published_at: inserted_community.published_at,
       updated_at: None,
-      ap_id: inserted_community.ap_id.clone(),
       local: true,
       last_refreshed_at: inserted_community.published_at,
       icon: None,

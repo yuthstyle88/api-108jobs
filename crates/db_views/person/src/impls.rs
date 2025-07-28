@@ -125,7 +125,6 @@ impl PersonQuery {
 #[cfg(test)]
 #[expect(clippy::indexing_slicing)]
 mod tests {
-
   use super::*;
   use lemmy_db_schema::{
     assert_length,

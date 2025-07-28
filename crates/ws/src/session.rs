@@ -7,8 +7,8 @@ use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use serde::Deserialize;
 use lemmy_utils::crypto::xchange_decrypt_data;
+use serde::Deserialize;
 
 pub struct WsSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,

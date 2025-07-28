@@ -18,7 +18,6 @@ use diesel::{
   result::Error,
   CombineDsl,
   ExpressionMethods,
-  JoinOnDsl,
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
@@ -201,57 +200,10 @@ impl LocalUser {
     person_id_: PersonId,
   ) -> FastJobResult<UserBackupLists> {
     use lemmy_db_schema_file::schema::{
-      comment,
-      comment_actions,
-      community,
-      community_actions,
       instance,
       instance_actions,
-      person_actions,
-      post,
-      post_actions,
     };
     let conn = &mut get_conn(pool).await?;
-
-    let followed_communities = community_actions::table
-      .filter(community_actions::followed_at.is_not_null())
-      .filter(community_actions::person_id.eq(person_id_))
-      .inner_join(community::table)
-      .select(community::ap_id)
-      .get_results(conn)
-      .await?;
-
-    let saved_posts = post_actions::table
-      .filter(post_actions::saved_at.is_not_null())
-      .filter(post_actions::person_id.eq(person_id_))
-      .inner_join(post::table)
-      .select(post::ap_id)
-      .get_results(conn)
-      .await?;
-
-    let saved_comments = comment_actions::table
-      .filter(comment_actions::saved_at.is_not_null())
-      .filter(comment_actions::person_id.eq(person_id_))
-      .inner_join(comment::table)
-      .select(comment::ap_id)
-      .get_results(conn)
-      .await?;
-
-    let blocked_communities = community_actions::table
-      .filter(community_actions::blocked_at.is_not_null())
-      .filter(community_actions::person_id.eq(person_id_))
-      .inner_join(community::table)
-      .select(community::ap_id)
-      .get_results(conn)
-      .await?;
-
-    let blocked_users = person_actions::table
-      .filter(person_actions::blocked_at.is_not_null())
-      .filter(person_actions::person_id.eq(person_id_))
-      .inner_join(person::table.on(person_actions::target_id.eq(person::id)))
-      .select(person::ap_id)
-      .get_results(conn)
-      .await?;
 
     let blocked_instances = instance_actions::table
       .filter(instance_actions::blocked_at.is_not_null())
@@ -264,11 +216,11 @@ impl LocalUser {
     // TODO: use join for parallel queries?
 
     Ok(UserBackupLists {
-      followed_communities,
-      saved_posts,
-      saved_comments,
-      blocked_communities,
-      blocked_users,
+      followed_communities: vec![],
+      saved_posts: vec![],
+      saved_comments: vec![],
+      blocked_communities: vec![],
+      blocked_users: vec![],
       blocked_instances,
     })
   }

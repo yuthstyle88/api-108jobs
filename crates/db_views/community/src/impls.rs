@@ -217,8 +217,8 @@ mod tests {
   use lemmy_db_schema::{
     source::{
       community::{
-        Community,
-        CommunityActions,
+        Community
+        ,
         CommunityInsertForm,
         CommunityUpdateForm,
       },
@@ -227,7 +227,7 @@ mod tests {
       person::{Person, PersonInsertForm},
       site::Site,
     },
-    traits::{Crud, Followable, Joinable},
+    traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
     CommunitySortType,
   };
@@ -299,7 +299,6 @@ mod tests {
       icon: None,
       banner: None,
       description: None,
-      ap_id: url.clone().into(),
       last_refreshed_at: Default::default(),
       inbox_url: url.into(),
       instance_id: Default::default(),

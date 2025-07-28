@@ -28,12 +28,13 @@ use lemmy_db_schema::{
     person::{Person, PersonInsertForm},
     registration_application::{RegistrationApplication, RegistrationApplicationInsertForm},
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
   utils::get_conn,
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
+use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
@@ -53,7 +54,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
-use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -130,12 +130,11 @@ pub async fn register(
   // in a transaction, so that if any fail, the rows aren't created.
   let conn = &mut get_conn(pool).await?;
   let tx_data = data.clone();
-  let tx_context = context.clone();
   let user = conn
    .run_transaction(|conn| {
      async move {
        // We have to create both a person, and local_user
-       let person = create_person(tx_data.username.clone(), &site_view, &tx_context, conn).await?;
+       let person = create_person(tx_data.username.clone(), &site_view, conn).await?;
 
        // Create the local user
        let local_user_form = LocalUserInsertForm {
@@ -297,7 +296,6 @@ pub async fn register_with_oauth(
     // Wrap the insert person, insert local user, and create registration,
     // in a transaction, so that if any fail, the rows aren't created.
     let conn = &mut get_conn(pool).await?;
-    let tx_context = context.clone();
     let user = conn
      .run_transaction(|conn| {
        async move {
@@ -309,7 +307,7 @@ pub async fn register_with_oauth(
 
          // We have to create a person, a local_user, and an oauth_account
          let person =
-          create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
+          create_person(username.parse().unwrap(), &site_view, conn).await?;
 
          // Create the local user
          let local_user_form = LocalUserInsertForm {
@@ -519,8 +517,6 @@ pub async fn authenticate_with_oauth(
       // Wrap the insert person, insert local user, and create registration,
       // in a transaction, so that if any fail, the rows aren't created.
       let conn = &mut get_conn(pool).await?;
-      // let tx_data = data.clone();
-      let tx_context = context.clone();
       let user = conn
        .run_transaction(|conn| {
          async move {
@@ -533,7 +529,7 @@ pub async fn authenticate_with_oauth(
            Person::check_username_taken(&mut conn.into(), username).await?;
 
            // We have to create a person, a local_user, and an oauth_account
-           let person = create_person(username.clone(), &site_view, &tx_context, conn).await?;
+           let person = create_person(username.clone(), &site_view, conn).await?;
 
            // Create the local user
            let local_user_form = LocalUserInsertForm {
@@ -608,15 +604,12 @@ pub async fn authenticate_with_oauth(
 async fn create_person(
   username: String,
   site_view: &SiteView,
-  context: &FastJobContext,
   conn: &mut AsyncPgConnection,
 ) -> Result<Person, FastJobError> {
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
-  let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
 
   // Register the new person
   let person_form = PersonInsertForm {
-    ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
     ..PersonInsertForm::new(
       username.clone(),

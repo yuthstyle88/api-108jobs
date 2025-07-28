@@ -2,7 +2,7 @@ use crate::context::FastJobContext;
 use either::Either;
 use futures::future::BoxFuture;
 use lemmy_db_schema::{
-  newtypes::{CommunityId, DbUrl, PersonId},
+  newtypes::{CommunityId, PersonId},
   source::{
     comment::Comment,
     community::Community,
@@ -12,10 +12,10 @@ use lemmy_db_schema::{
   },
 };
 
+use actix_web::web::Data;
 use lemmy_db_views_post::api::DeletePost;
 use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
-use actix_web::web::Data;
 use tokio::{
   sync::{
     mpsc,
@@ -24,7 +24,6 @@ use tokio::{
   },
   task::JoinHandle,
 };
-use url::Url;
 
 type MatchOutgoingActivitiesBoxed =
   Box<for<'a> fn(SendActivityData, &'a Data<FastJobContext>) -> BoxFuture<'a, FastJobResult<()>>>;
@@ -55,7 +54,6 @@ pub enum SendActivityData {
     reason: Option<String>,
   },
   LikePostOrComment {
-    object_id: DbUrl,
     actor: Person,
     community: Community,
     previous_score: Option<i16>,
@@ -83,13 +81,11 @@ pub enum SendActivityData {
   },
   DeleteUser(Person, bool),
   CreateReport {
-    object_id: Url,
     actor: Person,
     receiver: Either<Site, Community>,
     reason: String,
   },
   SendResolveReport {
-    object_id: Url,
     actor: Person,
     report_creator: Person,
     receiver: Either<Site, Community>,

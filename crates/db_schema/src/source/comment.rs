@@ -1,4 +1,4 @@
-use crate::newtypes::{CommentId, DbUrl, LanguageId, PersonId, PostId};
+use crate::newtypes::{CommentId, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -35,8 +35,6 @@ pub struct Comment {
   pub updated_at: Option<DateTime<Utc>>,
   /// Whether the comment has been deleted by its creator.
   pub deleted: bool,
-  /// The federated activity id / ap_id.
-  pub ap_id: DbUrl,
   /// Whether the comment is local.
   pub local: bool,
   #[cfg(feature = "full")]
@@ -83,8 +81,6 @@ pub struct CommentInsertForm {
   #[new(default)]
   pub deleted: Option<bool>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub local: Option<bool>,
   #[new(default)]
   pub distinguished: Option<bool>,
@@ -102,7 +98,6 @@ pub struct CommentUpdateForm {
   // Don't use a default Utc::now here, because the create function does a lot of comment updates
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
-  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub distinguished: Option<bool>,
   pub language_id: Option<LanguageId>,

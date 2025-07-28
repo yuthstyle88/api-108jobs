@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use diesel::Queryable;
 use lemmy_db_schema_file::{
   enums::ActorType,
-  schema::{received_activity, sent_activity},
+  schema::{sent_activity},
 };
 use serde_json::Value;
 use std::{collections::HashSet, fmt::Debug};
@@ -58,7 +58,6 @@ impl ActivitySendTargets {
 #[cfg_attr(feature = "full", diesel(table_name = sent_activity))]
 pub struct SentActivity {
   pub id: ActivityId,
-  pub ap_id: DbUrl,
   pub data: Value,
   pub sensitive: bool,
   pub published_at: DateTime<Utc>,
@@ -72,7 +71,6 @@ pub struct SentActivity {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = sent_activity))]
 pub struct SentActivityForm {
-  pub ap_id: DbUrl,
   pub data: Value,
   pub sensitive: bool,
   pub send_inboxes: Vec<Option<DbUrl>>,
@@ -80,14 +78,4 @@ pub struct SentActivityForm {
   pub send_all_instances: bool,
   pub actor_type: ActorType,
   pub actor_apub_id: DbUrl,
-}
-
-#[derive(PartialEq, Eq, Debug)]
-#[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
-#[cfg_attr(feature = "full", diesel(primary_key(ap_id)))]
-#[cfg_attr(feature = "full", diesel(table_name = received_activity))]
-#[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
-pub struct ReceivedActivity {
-  pub ap_id: DbUrl,
-  pub published_at: DateTime<Utc>,
 }

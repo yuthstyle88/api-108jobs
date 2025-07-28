@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json};
 use chrono::Utc;
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after},
+  plugins::plugin_hook_after,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},

@@ -68,7 +68,6 @@ function assertCommentFederation(
   commentOne?: CommentView,
   commentTwo?: CommentView,
 ) {
-  expect(commentOne?.comment.ap_id).toBe(commentTwo?.comment.ap_id);
   expect(commentOne?.comment.content).toBe(commentTwo?.comment.content);
   expect(commentOne?.creator.name).toBe(commentTwo?.creator.name);
   expect(commentOne?.community.ap_id).toBe(commentTwo?.community.ap_id);

@@ -4,11 +4,10 @@ use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
-  web::{get, scope, Data},
+  web::{scope, Data},
   App, HttpResponse, HttpServer,
 };
 use clap::{Parser, Subcommand};
-use lemmy_api::sitemap::get_sitemap;
 use lemmy_api_utils::{
   context::FastJobContext, request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
@@ -290,8 +289,7 @@ fn create_http_server(
       .configure(nodeinfo::config)
       .service(
         scope("/sitemap.xml")
-          .wrap(rate_limit.message())
-          .route("", get().to(get_sitemap)),
+          .wrap(rate_limit.message()),
       )
   })
   // Use number of available CPU cores for optimal performance

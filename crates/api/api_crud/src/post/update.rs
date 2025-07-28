@@ -4,7 +4,6 @@ use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, },
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
   tags::update_post_tags,
@@ -12,14 +11,12 @@ use lemmy_api_utils::{
     check_self_promotion_allowed,
     get_url_blocklist,
     process_markdown_opt,
-    send_webmention,
     slur_regex,
   },
 };
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::{
-    community::Community,
     post::{Post, PostUpdateForm},
   },
   traits::Crud,
@@ -154,7 +151,6 @@ pub async fn update_post(
 
   let post_id = data.post_id;
   let updated_post = Post::update(&mut context.pool(), post_id, &post_form).await?;
-  plugin_hook_after("after_update_local_post", &post_form)?;
 
   send_local_notifs(
     &updated_post,
@@ -172,8 +168,6 @@ pub async fn update_post(
   ) {
     // schedule was removed, send create activity and webmention
     (Some(_), None) => {
-      let community = Community::read(&mut context.pool(), orig_post.community.id).await?;
-      send_webmention(updated_post.clone(), &community);
       generate_post_link_metadata(
         updated_post.clone(),
         custom_thumbnail.flatten().map(Into::into),

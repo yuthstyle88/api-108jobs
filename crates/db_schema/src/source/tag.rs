@@ -1,4 +1,4 @@
-use crate::newtypes::{CommunityId, DbUrl, TagId};
+use crate::newtypes::{CommunityId, TagId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -29,7 +29,6 @@ use {
 /// table / creation of new tables.
 pub struct Tag {
   pub id: TagId,
-  pub ap_id: DbUrl,
   pub display_name: String,
   /// the community that owns this tag
   pub community_id: CommunityId,
@@ -42,7 +41,6 @@ pub struct Tag {
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = tag))]
 pub struct TagInsertForm {
-  pub ap_id: DbUrl,
   pub display_name: String,
   pub community_id: CommunityId,
 }
@@ -51,7 +49,6 @@ pub struct TagInsertForm {
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = tag))]
 pub struct TagUpdateForm {
-  pub ap_id: Option<DbUrl>,
   pub display_name: Option<String>,
   pub community_id: Option<CommunityId>,
   pub published_at: Option<DateTime<Utc>>,

@@ -220,7 +220,6 @@ fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> Fast
 
 #[cfg(test)]
 mod tests {
-
   use crate::site::update::validate_update_payload;
   use lemmy_db_schema::source::local_site::LocalSite;
   use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};

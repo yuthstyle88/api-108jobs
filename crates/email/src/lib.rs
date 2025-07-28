@@ -3,6 +3,7 @@
 
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_utils::error::FastJobError;
 use lemmy_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
@@ -18,7 +19,6 @@ use rosetta_i18n::{Language, LanguageId};
 use std::{str::FromStr, sync::OnceLock};
 use translations::Lang;
 use uuid::Uuid;
-use lemmy_utils::error::FastJobError;
 
 pub mod account;
 pub mod admin;

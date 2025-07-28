@@ -34,7 +34,6 @@ pub async fn resolve_post_report(
 
   ActivityChannel::submit_activity(
     SendActivityData::SendResolveReport {
-      object_id: post_report_view.post.ap_id.inner().clone(),
       actor: local_user_view.person,
       report_creator: report.creator,
       receiver: Either::Right(post_report_view.community.clone()),

@@ -54,7 +54,6 @@ pub async fn create_community_report(
 
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
-      object_id: community.ap_id.inner().clone(),
       actor: local_user_view.person,
       receiver: Either::Left(site),
       reason: data.reason.clone(),

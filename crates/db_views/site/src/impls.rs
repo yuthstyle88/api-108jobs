@@ -3,20 +3,20 @@ use crate::{api::UserSettingsBackup, SiteView};
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::sensitive::SensitiveString;
+use lemmy_db_schema::utils::get_required_sensitive;
 use lemmy_db_schema::{
   impls::local_user::UserBackupLists,
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{instance, local_site, local_site_rate_limit, site};
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_utils::utils::validation::password_length_check;
 use lemmy_utils::{
   build_cache,
   error::{FastJobError, FastJobErrorType, FastJobResult},
   CacheLock,
 };
 use std::sync::{Arc, LazyLock};
-use lemmy_db_schema::utils::get_required_sensitive;
-use lemmy_utils::utils::validation::password_length_check;
 
 impl SiteView {
   pub async fn read_local(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
@@ -57,9 +57,6 @@ pub fn user_backup_list_to_user_settings_backup(
     matrix_id: local_user_view.person.matrix_user_id,
     bot_account: local_user_view.person.bot_account.into(),
     settings: Some(local_user_view.local_user),
-    followed_communities: vec_into(lists.followed_communities),
-    blocked_communities: vec_into(lists.blocked_communities),
-    blocked_instances: lists.blocked_instances,
     blocked_users: vec_into(lists.blocked_users),
     saved_posts: vec_into(lists.saved_posts),
     saved_comments: vec_into(lists.saved_comments),

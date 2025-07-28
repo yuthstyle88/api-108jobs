@@ -3,6 +3,7 @@ use crate::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::proxy_image_link,
 };
+use actix_web::web::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;
@@ -33,7 +34,6 @@ use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::time::Duration;
-use actix_web::web::Data;
 use tokio::net::lookup_host;
 use tracing::{info, warn};
 use url::Url;
@@ -572,10 +572,7 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Fast
 
 #[cfg(test)]
 mod tests {
-
-  use crate::{
-    request::{extract_opengraph_data},
-  };
+  use crate::request::extract_opengraph_data;
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use url::Url;

@@ -1,6 +1,6 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::utils::is_admin;
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_api_utils::utils::is_admin;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{ListPostLikes, ListPostLikesResponse};
 use lemmy_db_views_vote::VoteView;

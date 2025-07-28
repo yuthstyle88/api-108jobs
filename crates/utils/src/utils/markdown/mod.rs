@@ -46,7 +46,6 @@ pub fn markdown_check_for_blocked_urls(text: &str, blocklist: &RegexSet) -> Fast
 
 #[cfg(test)]
 mod tests {
-
   use super::*;
   use crate::utils::validation::check_urls_are_valid;
   use pretty_assertions::assert_eq;

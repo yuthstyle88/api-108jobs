@@ -141,8 +141,6 @@ diesel::table! {
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
         path -> Ltree,
         distinguished -> Bool,
@@ -231,8 +229,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
         self_promotion -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
         last_refreshed_at -> Timestamptz,
         icon -> Nullable<Text>,
@@ -761,8 +757,6 @@ diesel::table! {
         avatar -> Nullable<Text>,
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         bio -> Nullable<Text>,
         local -> Bool,
         last_refreshed_at -> Timestamptz,
@@ -867,8 +861,6 @@ diesel::table! {
         embed_title -> Nullable<Text>,
         embed_description -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
         embed_video_url -> Nullable<Text>,
         language_id -> Int4,
@@ -1008,7 +1000,6 @@ diesel::table! {
 
     sent_activity (id) {
         id -> Int8,
-        ap_id -> Text,
         data -> Json,
         sensitive -> Bool,
         published_at -> Timestamptz,
@@ -1052,7 +1043,6 @@ diesel::table! {
 diesel::table! {
     tag (id) {
         id -> Int4,
-        ap_id -> Text,
         display_name -> Text,
         community_id -> Int4,
         published_at -> Timestamptz,
@@ -1239,7 +1229,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   post_report,
   post_tag,
   previously_run_sql,
-  received_activity,
   registration_application,
   remote_image,
   report_combined,

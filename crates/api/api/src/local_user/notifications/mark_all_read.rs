@@ -4,7 +4,6 @@ use lemmy_db_schema::source::{
   comment_reply::CommentReply,
   person_comment_mention::PersonCommentMention,
   person_post_mention::PersonPostMention,
-
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;

@@ -49,7 +49,6 @@ fn not_zero(val: Option<i32>) -> Option<i32> {
 
 #[cfg(test)]
 mod tests {
-
   use crate::site::{application_question_check, not_zero, site_default_post_listing_type_check};
   use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
 

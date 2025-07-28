@@ -11,7 +11,7 @@ use crate::{
     PersonUpdateForm,
   },
   traits::{ApubActor, Blockable, Crud, Followable},
-  utils::{format_actor_url, functions::lower, get_conn, uplete, DbPool},
+  utils::{functions::lower, get_conn, uplete, DbPool},
 };
 use chrono::Utc;
 use diesel::{
@@ -77,13 +77,10 @@ impl Person {
   /// Update or insert the person.
   ///
   /// actions.
-  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
+  pub async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
-      .on_conflict(person::ap_id)
-      .do_update()
-      .set(form)
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
@@ -155,20 +152,6 @@ impl PersonInsertForm {
 }
 
 impl ApubActor for Person {
-  async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    person::table
-      .filter(person::deleted.eq(false))
-      .filter(person::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   async fn read_from_name(
     pool: &mut DbPool<'_>,
     from_name: &str,
@@ -206,19 +189,13 @@ impl ApubActor for Person {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
-    let domain = self
-      .ap_id
-      .inner()
-      .domain()
-      .ok_or(FastJobErrorType::NotFound)?;
-
-    format_actor_url(&self.name, domain, 'u', settings)
-  }
-
   fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/u/{name}"))?.into())
+  }
+
+  fn actor_url(&self, _settings: &Settings) -> FastJobResult<Url> {
+    todo!()
   }
 }
 
@@ -488,7 +465,6 @@ mod tests {
       deleted: false,
       published_at: inserted_person.published_at,
       updated_at: None,
-      ap_id: inserted_person.ap_id.clone(),
       bio: None,
       local: true,
       bot_account: false,
@@ -505,7 +481,6 @@ mod tests {
     let read_person = Person::read(pool, inserted_person.id).await?;
 
     let update_person_form = PersonUpdateForm {
-      ap_id: Some(inserted_person.ap_id.clone()),
       ..Default::default()
     };
     let updated_person = Person::update(pool, inserted_person.id, &update_person_form).await?;

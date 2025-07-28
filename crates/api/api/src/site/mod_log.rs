@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{
   context::FastJobContext,
-  utils::{check_private_instance},
+  utils::check_private_instance,
 };
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;

@@ -55,7 +55,6 @@ pub async fn like_comment(
 
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
-      object_id: orig_comment.comment.ap_id,
       actor: local_user_view.person.clone(),
       community: orig_comment.community,
       previous_score,

@@ -35,14 +35,11 @@ use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
-use lemmy_db_views_site::{
-  SiteView,
-};
+use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
   settings::{structs::PictrsImageMode, SETTINGS},
-  spawn_try_task,
   utils::{
     markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
     slurs::remove_slurs,
@@ -55,11 +52,9 @@ use moka::future::Cache;
 use regex::{escape, Regex, RegexSet};
 use std::sync::LazyLock;
 
-use tracing::Instrument;
+use rand::Rng;
 use url::{ParseError, Url};
 use urlencoding::encode;
-use webmention::{Webmention, WebmentionError};
-use rand::Rng;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
@@ -718,25 +713,6 @@ pub fn read_auth_token(req: &HttpRequest) -> FastJobResult<Option<String>> {
   }
 }
 
-pub fn send_webmention(post: Post, community: &Community) {
-  if let Some(url) = post.url.clone() {
-    if community.visibility.can_view_without_login() {
-      spawn_try_task(async move {
-        let mut webmention = Webmention::new::<Url>(post.ap_id.clone().into(), url.clone().into())?;
-        webmention.set_checked(true);
-        match webmention
-          .send()
-          .instrument(tracing::info_span!("Sending webmention"))
-          .await
-        {
-          Err(WebmentionError::NoEndpointDiscovered(_)) => Ok(()),
-          Ok(_) => Ok(()),
-          Err(e) => Err(e).with_fastjob_type(FastJobErrorType::CouldntSendWebmention),
-        }
-      });
-    }
-  };
-}
 
 
 /// Extracts the username from an multilang address by taking the part before the @ symbol
@@ -800,8 +776,8 @@ pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> F
 #[cfg(test)]
 mod tests {
   use super::*;
-  use pretty_assertions::assert_eq;
   use lemmy_utils::utils::validation::password_length_check;
+  use pretty_assertions::assert_eq;
 
   #[test]
   #[rustfmt::skip]

@@ -1,3 +1,4 @@
+use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
 use diesel::{
   dsl::exists,
@@ -52,7 +53,6 @@ use lemmy_db_schema_file::{
   schema::{comment, community, community_actions, local_user_language, person, post},
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::api::{CreateComment, CreateCommentRequest};
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;
@@ -319,7 +319,6 @@ impl CommentQuery<'_> {
 #[cfg(test)]
 #[expect(clippy::indexing_slicing)]
 mod tests {
-
   use super::*;
   use crate::{
     impls::{CommentQuery, DbPool},
@@ -333,8 +332,8 @@ mod tests {
       actor_language::LocalUserLanguage,
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
       community::{
-        Community,
-        CommunityActions,
+        Community
+        ,
         CommunityInsertForm,
         CommunityUpdateForm,
       },
@@ -345,7 +344,7 @@ mod tests {
       post::{Post, PostInsertForm, PostUpdateForm},
       site::{Site, SiteInsertForm},
     },
-    traits::{Bannable, Blockable, Crud, Followable, Joinable, Likeable},
+    traits::{Blockable, Crud, Likeable},
     utils::build_db_pool_for_tests,
   };
   use lemmy_db_views_local_user::LocalUserView;

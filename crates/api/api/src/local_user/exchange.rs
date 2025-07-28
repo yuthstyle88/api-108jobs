@@ -4,13 +4,13 @@ use actix_web::{
 };
 use lemmy_api_utils::claims::Claims;
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_api_utils::utils::read_auth_token;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use lemmy_utils::crypto::{Crypto, DataBuffer};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use p256::PublicKey;
-use lemmy_api_utils::utils::read_auth_token;
 
 pub async fn exchange_key(
   data: Json<ExchangeKey>,

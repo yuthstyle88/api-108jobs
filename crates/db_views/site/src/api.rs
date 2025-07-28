@@ -770,17 +770,11 @@ pub struct UserSettingsBackup {
   //       fields are renamed, and to avoid storing unnecessary fields like person_id or multilang
   pub settings: Option<LocalUser>,
   #[serde(default)]
-  pub followed_communities: Vec<Url>,
-  #[serde(default)]
   pub saved_posts: Vec<Url>,
   #[serde(default)]
   pub saved_comments: Vec<Url>,
   #[serde(default)]
-  pub blocked_communities: Vec<Url>,
-  #[serde(default)]
   pub blocked_users: Vec<Url>,
-  #[serde(default)]
-  pub blocked_instances: Vec<String>,
 }
 
 #[skip_serializing_none]
@@ -792,8 +786,6 @@ pub struct UserSettingsBackup {
 pub struct ExportDataResponse {
   pub inbox: Vec<PostOrCommentOrPrivateMessage>,
   pub content: Vec<PostOrCommentOrPrivateMessage>,
-  pub read_posts: Vec<Url>,
-  pub liked: Vec<Url>,
   pub settings: UserSettingsBackup,
 }
 

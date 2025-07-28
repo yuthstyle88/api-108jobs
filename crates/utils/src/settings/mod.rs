@@ -110,7 +110,6 @@ fn pictrs_placeholder_url() -> Url {
 
 #[cfg(test)]
 mod tests {
-
   use super::*;
 
   #[test]

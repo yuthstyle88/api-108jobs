@@ -3,7 +3,6 @@ use lemmy_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use lemmy_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
-    community::CommunityActions,
     instance::InstanceActions,
     keyword_block::LocalUserKeywordBlock,
     person::PersonActions,
@@ -26,13 +25,11 @@ pub async fn get_my_user(
   let pool = &mut context.pool();
 
   let (
-    community_blocks,
     instance_blocks,
     person_blocks,
     keyword_blocks,
     discussion_languages,
   ) = lemmy_db_schema::try_join_with_pool!(pool => (
-    |pool| CommunityActions::read_blocks_for_person(pool, person_id),
     |pool| InstanceActions::read_blocks_for_person(pool, person_id),
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),
@@ -41,7 +38,7 @@ pub async fn get_my_user(
 
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),
-    community_blocks,
+    community_blocks: Vec::new(),
     instance_blocks,
     person_blocks,
     keyword_blocks,

@@ -11,7 +11,7 @@ use lemmy_db_schema::{
     site::Site,
   },
 };
-use lemmy_db_views_community::api::BanFromCommunity;
+
 use lemmy_db_views_post::api::DeletePost;
 use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
@@ -72,12 +72,7 @@ pub enum SendActivityData {
     reason: Option<String>,
     removed: bool,
   },
-  BanFromCommunity {
-    moderator: Person,
-    community_id: CommunityId,
-    target: Person,
-    data: BanFromCommunity,
-  },
+
   BanFromSite {
     moderator: Person,
     banned_user: Person,

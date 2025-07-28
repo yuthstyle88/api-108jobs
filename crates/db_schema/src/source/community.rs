@@ -221,51 +221,6 @@ pub struct CommunityActions {
   pub ban_expires_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Clone, derive_new::new)]
-#[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = community_actions))]
-pub struct CommunityModeratorForm {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  #[new(value = "Utc::now()")]
-  pub became_moderator_at: DateTime<Utc>,
-}
-
-#[derive(Clone, derive_new::new)]
-#[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = community_actions))]
-pub struct CommunityPersonBanForm {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  #[new(default)]
-  pub ban_expires_at: Option<Option<DateTime<Utc>>>,
-  #[new(value = "Utc::now()")]
-  pub received_ban_at: DateTime<Utc>,
-}
-
-#[derive(Clone, derive_new::new)]
-#[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = community_actions))]
-pub struct CommunityFollowerForm {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  pub follow_state: CommunityFollowerState,
-  #[new(default)]
-  pub follow_approver_id: Option<PersonId>,
-  #[new(value = "Utc::now()")]
-  pub followed_at: DateTime<Utc>,
-}
-
-#[derive(derive_new::new)]
-#[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = community_actions))]
-pub struct CommunityBlockForm {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  #[new(value = "Utc::now()")]
-  pub blocked_at: DateTime<Utc>,
-}
-
 // Create a changeset struct with explicit fields
 // This avoids the complex nested type inference that was causing the compiler panic
 #[derive(AsChangeset)]

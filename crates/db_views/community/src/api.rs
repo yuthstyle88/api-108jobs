@@ -1,78 +1,19 @@
 use crate::{CommunityNodeView, CommunityView};
 use lemmy_db_schema::{
-  newtypes::{CommunityId, LanguageId, PaginationCursor, PersonId, TagId},
+  newtypes::{CommunityId, LanguageId, PaginationCursor, TagId},
   source::site::Site,
   CommunitySortType,
 };
 use lemmy_db_schema_file::enums::{CommunityVisibility, ListingType};
-use lemmy_db_views_person::PersonView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ApproveCommunityPendingFollower {
-  pub community_id: CommunityId,
-  pub follower_id: PersonId,
-  pub approve: bool,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Ban a user from a community.
-pub struct BanFromCommunity {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
-  pub ban: bool,
-  /// Optionally remove or restore all their data. Useful for new troll accounts.
-  /// If ban is true, then this means remove. If ban is false, it means restore.
-  pub remove_or_restore_data: Option<bool>,
-  pub reason: Option<String>,
-  /// A time that the ban will expire, in unix epoch seconds.
-  ///
-  /// An i64 unix timestamp is used for a simpler API client implementation.
-  pub expires_at: Option<i64>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The response for banning a user from a community.
-#[serde(rename_all = "camelCase")]
-pub struct BanFromCommunityResponse {
-  pub person_view: PersonView,
-  pub banned: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Block a community.
-pub struct BlockCommunity {
-  pub community_id: CommunityId,
-  pub block: bool,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The block community response.
-#[serde(rename_all = "camelCase")]
-pub struct BlockCommunityResponse {
-  pub community_view: CommunityView,
-  pub blocked: bool,
-}
 
 /// Parameter for setting community icon or banner. Can't use POST data here as it already contains
 /// the image data.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct CommunityIdQuery {
   pub id: CommunityId,
 }
@@ -92,6 +33,7 @@ pub struct CommunityResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 /// Create a community.
+#[serde(rename_all = "camelCase")]
 pub struct CreateCommunity {
   /// The unique name.
   pub name: String,
@@ -285,6 +227,7 @@ pub struct ListCommunitiesTreeResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Purges a community from the database. This will delete all content attached to that community.
+#[serde(rename_all = "camelCase")]
 pub struct PurgeCommunity {
   pub community_id: CommunityId,
   pub reason: Option<String>,
@@ -295,19 +238,11 @@ pub struct PurgeCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Remove a community
+#[serde(rename_all = "camelCase")]
 pub struct RemoveCommunity {
   pub community_id: CommunityId,
   pub removed: bool,
   pub reason: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Transfer a community to a new owner.
-pub struct TransferCommunity {
-  pub community_id: CommunityId,
-  pub person_id: PersonId,
 }
 
 #[skip_serializing_none]

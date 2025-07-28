@@ -6,23 +6,21 @@ use lemmy_db_schema::{
     actor_language::CommunityLanguage,
     comment::Comment,
     comment_reply::{CommentReply, CommentReplyInsertForm},
-    community::{Community, CommunityActions},
-    instance::InstanceActions,
-    person::{Person, PersonActions},
+    community::Community,
+    person::Person,
     person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
     person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
-    post::{Post, PostActions},
+    post::Post,
   },
-  traits::{Blockable, Crud},
+  traits::Crud,
 };
-use lemmy_db_schema_file::enums::PostNotifications;
 use lemmy_db_views_comment::{api::CommentResponse, CommentView};
 use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
 use lemmy_db_views_community::{api::CommunityResponse, CommunityNodeView, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
 use lemmy_utils::{
-  error::{FastJobErrorType, FastJobResult},
+  error::FastJobResult,
   utils::mention::scrape_text_for_mentions,
 };
 use std::collections::{HashMap, HashSet};
@@ -130,19 +128,17 @@ pub async fn send_local_notifs(
   post: &Post,
   comment_opt: Option<&Comment>,
   person: &Person,
-  community: &Community,
   do_send_email: bool,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
   let parent_creator =
-    notify_parent_creator(person, post, comment_opt, community, do_send_email, context).await?;
+    notify_parent_creator(person, post, comment_opt, do_send_email, context).await?;
 
   send_local_mentions(
     post,
     comment_opt,
     person,
     parent_creator,
-    community,
     context,
   )
   .await?;
@@ -154,7 +150,6 @@ async fn notify_parent_creator(
   person: &Person,
   post: &Post,
   comment_opt: Option<&Comment>,
-  community: &Community,
   _do_send_email: bool,
   context: &FastJobContext,
 ) -> FastJobResult<Option<PersonId>> {
@@ -176,18 +171,6 @@ async fn notify_parent_creator(
     return Ok(None);
   }
 
-  let is_blocked = check_notifications_allowed(
-    parent_creator_id,
-    // Only block from the community's instance_id
-    community.instance_id,
-    post,
-    context,
-  )
-  .await
-  .is_err();
-  if is_blocked {
-    return Ok(None);
-  }
 
   let Ok(user_view) = LocalUserView::read_person(&mut context.pool(), parent_creator_id).await
   else {
@@ -214,7 +197,6 @@ async fn send_local_mentions(
   comment_opt: Option<&Comment>,
   person: &Person,
   parent_creator_id: Option<PersonId>,
-  community: &Community,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
   let content = if let Some(comment) = comment_opt {
@@ -237,18 +219,6 @@ async fn send_local_mentions(
       continue;
     }
 
-    let is_blocked = check_notifications_allowed(
-      user_view.person.id,
-      // Only block from the community's instance_id
-      community.instance_id,
-      post,
-      context,
-    )
-    .await
-    .is_err();
-    if is_blocked {
-      continue;
-    };
 
     let _ = insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
   }
@@ -294,27 +264,4 @@ async fn insert_post_or_comment_mention(
       post.body.clone().unwrap_or_default(),
     ))
   }
-}
-
-pub async fn check_notifications_allowed(
-  potential_blocker_id: PersonId,
-  community_instance_id: InstanceId,
-  post: &Post,
-  context: &FastJobContext,
-) -> FastJobResult<()> {
-  let pool = &mut context.pool();
-  PersonActions::read_block(pool, potential_blocker_id, post.creator_id).await?;
-  InstanceActions::read_block(pool, potential_blocker_id, community_instance_id).await?;
-  CommunityActions::read_block(pool, potential_blocker_id, post.community_id).await?;
-  let post_notifications = PostActions::read(pool, post.id, potential_blocker_id)
-    .await
-    .ok()
-    .and_then(|a| a.notifications)
-    .unwrap_or_default();
-  if post_notifications == PostNotifications::Mute {
-    // The specific error type is irrelevant
-    return Err(FastJobErrorType::NotFound.into());
-  }
-
-  Ok(())
 }

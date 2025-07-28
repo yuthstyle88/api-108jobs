@@ -8,15 +8,12 @@ use lemmy_api::{
     save::save_comment,
   },
   community::{
-    ban::ban_from_community,
-    block::user_block_community,
     random::get_random_community,
     tag::{create_community_tag, delete_community_tag, update_community_tag},
   },
   local_user::{
     add_admin::add_admin,
     ban_person::ban_from_site,
-    block::user_block_person,
     change_password::change_password,
     change_password_after_reset::change_password_after_reset,
     donation_dialog_shown::donation_dialog_shown,
@@ -43,7 +40,6 @@ use lemmy_api::{
     reset_password::reset_password,
     save_settings::save_user_settings,
     update_totp::update_totp,
-    user_block_instance::user_block_instance,
     validate_auth::validate_auth,
     verify_email::verify_email,
   },
@@ -155,7 +151,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/delete", post().to(delete_community))
             // Mod Actions
             .route("/remove", post().to(remove_community))
-            .route("/ban_user", post().to(ban_from_community))
             .route("/icon", post().to(upload_community_icon))
             .route("/icon", delete().to(delete_community_icon))
             .route("/banner", post().to(upload_community_banner))
@@ -168,8 +163,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           resource("/post")
             // Handle POST to /post separately to add the post() rate limitter
-            .guard(guard::Post())
-            .wrap(rate_limit.post())
+            // .guard(guard::Post())
+            // .wrap(rate_limit.post())
             .route(post().to(create_post)),
         )
         .service(
@@ -273,12 +268,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/avatar", delete().to(delete_user_avatar))
             .route("/banner", post().to(upload_user_banner))
             .route("/banner", delete().to(delete_user_banner))
-            .service(
-              scope("/block")
-                .route("/person", post().to(user_block_person))
-                .route("/community", post().to(user_block_community))
-                .route("/instance", post().to(user_block_instance)),
-            )
             .route("/saved", get().to(list_person_saved))
             .route("/read", get().to(list_person_read))
             .route("/hidden", get().to(list_person_hidden))

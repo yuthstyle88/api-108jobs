@@ -103,7 +103,6 @@ pub async fn create_comment(
     &post,
     Some(&inserted_comment),
     &local_user_view.person,
-    &post_view.community,
     do_send_email,
     &context,
   )

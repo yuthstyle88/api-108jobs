@@ -6,16 +6,12 @@ use crate::{
     community::{
       Community,
       CommunityActions,
-      CommunityBlockForm,
-      CommunityFollowerForm,
       CommunityInsertForm,
-      CommunityModeratorForm,
-      CommunityPersonBanForm,
       CommunityUpdateForm,
     },
     post::Post,
   },
-  traits::{ApubActor, Bannable, Blockable, Crud, Followable, Joinable},
+  traits::{ApubActor, Crud,},
   utils::{
     format_actor_url,
     functions::{coalesce_2_nullable, lower, random_smallint},
@@ -37,7 +33,7 @@ use diesel::{
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use diesel_ltree::Ltree;
 use lemmy_db_schema_file::{
-  enums::{CommunityFollowerState, CommunityVisibility, ListingType},
+  enums::{CommunityVisibility, ListingType},
   schema::{comment, community, community_actions, instance, post},
 };
 use lemmy_utils::{
@@ -109,34 +105,6 @@ impl Crud for Community {
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateCommunity)
-  }
-}
-
-impl Joinable for CommunityActions {
-  type Form = CommunityModeratorForm;
-  async fn join(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(community_actions::table)
-      .values(form)
-      .on_conflict((
-        community_actions::person_id,
-        community_actions::community_id,
-      ))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityModeratorAlreadyExists)
-  }
-
-  async fn leave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
-    let conn = &mut get_conn(pool).await?;
-    uplete::new(community_actions::table.find((form.person_id, form.community_id)))
-      .set_null(community_actions::became_moderator_at)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityModeratorAlreadyExists)
   }
 }
 
@@ -480,158 +448,6 @@ impl CommunityActions {
       })
       .await
       .map_err(|_e: Arc<FastJobError>| FastJobErrorType::NotFound.into())
-  }
-}
-
-impl Bannable for CommunityActions {
-  type Form = CommunityPersonBanForm;
-  async fn ban(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(community_actions::table)
-      .values(form)
-      .on_conflict((
-        community_actions::community_id,
-        community_actions::person_id,
-      ))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityUserAlreadyBanned)
-  }
-
-  async fn unban(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
-    let conn = &mut get_conn(pool).await?;
-    uplete::new(community_actions::table.find((form.person_id, form.community_id)))
-      .set_null(community_actions::received_ban_at)
-      .set_null(community_actions::ban_expires_at)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityUserAlreadyBanned)
-  }
-}
-
-impl Followable for CommunityActions {
-  type Form = CommunityFollowerForm;
-  type IdType = CommunityId;
-
-  async fn follow(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(community_actions::table)
-      .values(form)
-      .on_conflict((
-        community_actions::community_id,
-        community_actions::person_id,
-      ))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
-  }
-  async fn follow_accepted(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-    person_id: PersonId,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    let find_action = community_actions::table
-      .find((person_id, community_id))
-      .filter(community_actions::follow_state.is_not_null());
-    diesel::update(find_action)
-      .set(community_actions::follow_state.eq(Some(CommunityFollowerState::Accepted)))
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
-  }
-
-  async fn unfollow(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-    community_id: Self::IdType,
-  ) -> FastJobResult<uplete::Count> {
-    let conn = &mut get_conn(pool).await?;
-    uplete::new(community_actions::table.find((person_id, community_id)))
-      .set_null(community_actions::followed_at)
-      .set_null(community_actions::follow_state)
-      .set_null(community_actions::follow_approver_id)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
-  }
-}
-
-impl Blockable for CommunityActions {
-  type Form = CommunityBlockForm;
-  type ObjectIdType = CommunityId;
-  type ObjectType = Community;
-
-  async fn block(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(community_actions::table)
-      .values(form)
-      .on_conflict((
-        community_actions::person_id,
-        community_actions::community_id,
-      ))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CommunityBlockAlreadyExists)
-  }
-  async fn unblock(
-    pool: &mut DbPool<'_>,
-    community_block_form: &Self::Form,
-  ) -> FastJobResult<uplete::Count> {
-    let conn = &mut get_conn(pool).await?;
-    uplete::new(community_actions::table.find((
-      community_block_form.person_id,
-      community_block_form.community_id,
-    )))
-    .set_null(community_actions::blocked_at)
-    .get_result(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CommunityBlockAlreadyExists)
-  }
-
-  async fn read_block(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-    community_id: Self::ObjectIdType,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    let find_action = community_actions::table
-      .find((person_id, community_id))
-      .filter(community_actions::blocked_at.is_not_null());
-
-    select(not(exists(find_action)))
-      .get_result::<bool>(conn)
-      .await?
-      .then_some(())
-      .ok_or(FastJobErrorType::CommunityIsBlocked.into())
-  }
-
-  async fn read_blocks_for_person(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-  ) -> FastJobResult<Vec<Self::ObjectType>> {
-    let conn = &mut get_conn(pool).await?;
-    community_actions::table
-      .filter(community_actions::blocked_at.is_not_null())
-      .inner_join(community::table)
-      .select(community::all_columns)
-      .filter(community_actions::person_id.eq(person_id))
-      .filter(community::deleted.eq(false))
-      .filter(community::removed.eq(false))
-      .order_by(community_actions::blocked_at)
-      .load::<Community>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 

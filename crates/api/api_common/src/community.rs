@@ -23,7 +23,6 @@ pub mod actions {
     BlockCommunity,
     BlockCommunityResponse,
     CreateCommunity,
-    FollowCommunity,
     HideCommunity,
   };
 

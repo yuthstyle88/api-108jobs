@@ -168,6 +168,8 @@ pub struct DeleteCommunity {
 /// Edit a community.
 pub struct EditCommunity {
   pub community_id: CommunityId,
+  /// The unique name.
+  pub name: Option<String>,
   /// A longer title.
   pub title: Option<String>,
   /// A sidebar for the community in markdown.
@@ -184,8 +186,6 @@ pub struct EditCommunity {
   pub slug: Option<String>,
   /// Whether its new or not.
   pub is_new: Option<bool>,
-  /// If parent_id is None -> Category else -> Subcategory
-  pub parent_id: Option<CommunityId>,
 }
 
 #[skip_serializing_none]

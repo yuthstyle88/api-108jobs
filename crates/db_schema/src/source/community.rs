@@ -157,6 +157,7 @@ pub struct CommunityInsertForm {
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = community))]
 pub struct CommunityUpdateForm {
+  pub name: Option<String>,
   pub title: Option<String>,
   pub sidebar: Option<Option<String>>,
   pub removed: Option<bool>,
@@ -177,6 +178,9 @@ pub struct CommunityUpdateForm {
   pub visibility: Option<CommunityVisibility>,
   pub description: Option<Option<String>>,
   pub local_removed: Option<bool>,
+  pub slug: Option<String>,
+  pub active: Option<bool>,
+  pub is_new: Option<bool>,
 }
 
 #[skip_serializing_none]

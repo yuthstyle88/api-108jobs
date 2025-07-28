@@ -23,14 +23,12 @@ pub mod actions {
     BlockCommunity,
     BlockCommunityResponse,
     CreateCommunity,
-    FollowCommunity,
     HideCommunity,
   };
 
   pub mod moderation {
     pub use lemmy_db_schema_file::enums::CommunityFollowerState;
     pub use lemmy_db_views_community::api::{
-      AddModToCommunity,
       ApproveCommunityPendingFollower,
       BanFromCommunity,
       BanFromCommunityResponse,

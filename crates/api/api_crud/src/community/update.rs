@@ -11,8 +11,8 @@ use lemmy_api_utils::{
 use lemmy_db_schema::{
   source::{
     actor_language::{CommunityLanguage, SiteLanguage},
-    community::{Community, CommunityUpdateForm},
-    mod_log::moderator::{ModChangeCommunityVisibility, ModChangeCommunityVisibilityForm},
+    community::{Community, CommunityUpdateForm}
+    ,
   },
   traits::Crud,
   utils::diesel_string_update,
@@ -31,7 +31,10 @@ pub async fn update_community(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
   is_admin(&local_user_view)?;
-  
+
+  if let Some(ref slug) = data.slug {
+    Community::check_community_slug_taken(&mut context.pool(), slug).await?;
+  }
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let slur_regex = slur_regex(&context).await?;
@@ -69,6 +72,7 @@ pub async fn update_community(
   }
 
   let community_form = CommunityUpdateForm {
+    name: data.name.clone(),
     title: data.title.clone(),
     sidebar,
     description,
@@ -76,20 +80,13 @@ pub async fn update_community(
     posting_restricted_to_mods: data.posting_restricted_to_mods,
     visibility: data.visibility,
     updated_at: Some(Some(Utc::now())),
+    slug: data.slug.clone(),
+    is_new: data.is_new,
     ..Default::default()
   };
 
   let community_id = data.community_id;
   let community = Community::update(&mut context.pool(), community_id, &community_form).await?;
-
-  if old_community.visibility != community.visibility {
-    let form = ModChangeCommunityVisibilityForm {
-      mod_person_id: local_user_view.person.id,
-      community_id: community.id,
-      visibility: community.visibility,
-    };
-    ModChangeCommunityVisibility::create(&mut context.pool(), &form).await?;
-  }
 
   ActivityChannel::submit_activity(
     SendActivityData::UpdateCommunity(local_user_view.person.clone(), community),

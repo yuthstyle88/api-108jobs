@@ -10,7 +10,6 @@ use lemmy_api::{
   community::{
     ban::ban_from_community,
     block::user_block_community,
-    follow::follow_community,
     random::get_random_community,
     tag::{create_community_tag, delete_community_tag, update_community_tag},
   },
@@ -151,7 +150,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_community))
             .route("/random", get().to(get_random_community))
             .route("/list", get().to(list_communities_ltree))
-            .route("/follow", post().to(follow_community))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))
             .route("/delete", post().to(delete_community))

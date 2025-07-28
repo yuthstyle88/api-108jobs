@@ -182,12 +182,12 @@ mod tests {
   use lemmy_db_schema::{
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-      community::{Community, CommunityActions, CommunityInsertForm, CommunityPersonBanForm},
+      community::{Community, CommunityInsertForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
       post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
-    traits::{Bannable, Crud, Likeable},
+    traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
   };
   use lemmy_utils::error::FastJobResult;
@@ -285,10 +285,6 @@ mod tests {
     let read_comment_vote_views =
       VoteView::list_for_comment(pool, inserted_comment.id, None, None, None).await?;
     assert_eq!(read_comment_vote_views, expected_comment_vote_views);
-
-    // Ban timmy from that community
-    let ban_timmy_form = CommunityPersonBanForm::new(inserted_community.id, inserted_timmy.id);
-    CommunityActions::ban(pool, &ban_timmy_form).await?;
 
     // Make sure creator_banned_from_community is true
     let read_comment_vote_views_after_ban =

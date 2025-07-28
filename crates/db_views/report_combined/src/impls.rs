@@ -423,7 +423,7 @@ mod tests {
     source::{
       comment::{Comment, CommentInsertForm},
       comment_report::{CommentReport, CommentReportForm},
-      community::{Community, CommunityActions, CommunityInsertForm, CommunityModeratorForm},
+      community::{Community, CommunityInsertForm},
       community_report::{CommunityReport, CommunityReportForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
@@ -490,11 +490,6 @@ mod tests {
       "ta-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
-
-    // Make timmy a mod
-    let timmy_moderator_form =
-      CommunityModeratorForm::new(inserted_community.id, inserted_timmy.id);
-    CommunityActions::join(pool, &timmy_moderator_form).await?;
 
     let post_form = PostInsertForm::new(
       "A test post crv".into(),

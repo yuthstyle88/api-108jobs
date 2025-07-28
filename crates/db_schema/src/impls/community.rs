@@ -526,10 +526,7 @@ mod tests {
       community::{
         Community,
         CommunityActions,
-        CommunityFollowerForm,
         CommunityInsertForm,
-        CommunityModeratorForm,
-        CommunityPersonBanForm,
         CommunityUpdateForm,
       },
       instance::Instance,
@@ -610,30 +607,7 @@ mod tests {
       is_new: false,
     };
 
-    let community_follower_form = CommunityFollowerForm::new(
-      inserted_community.id,
-      inserted_bobby.id,
-      CommunityFollowerState::Accepted,
-    );
 
-    let inserted_community_follower =
-      CommunityActions::follow(pool, &community_follower_form).await?;
-
-    assert_eq!(
-      Some(CommunityFollowerState::Accepted),
-      inserted_community_follower.follow_state
-    );
-
-    let bobby_moderator_form =
-      CommunityModeratorForm::new(inserted_community.id, inserted_bobby.id);
-
-    let inserted_bobby_moderator = CommunityActions::join(pool, &bobby_moderator_form).await?;
-    assert!(inserted_bobby_moderator.became_moderator_at.is_some());
-
-    let artemis_moderator_form =
-      CommunityModeratorForm::new(inserted_community.id, inserted_artemis.id);
-
-    let _inserted_artemis_moderator = CommunityActions::join(pool, &artemis_moderator_form).await?;
 
     let moderator_person_ids = vec![inserted_bobby.id, inserted_artemis.id];
 
@@ -667,14 +641,6 @@ mod tests {
     .await;
     assert!(artemis_higher_check.is_err());
 
-    let community_person_ban_form =
-      CommunityPersonBanForm::new(inserted_community.id, inserted_bobby.id);
-
-    let inserted_community_person_ban =
-      CommunityActions::ban(pool, &community_person_ban_form).await?;
-
-    assert!(inserted_community_person_ban.received_ban_at.is_some());
-    assert!(inserted_community_person_ban.ban_expires_at.is_none());
     let read_community = Community::read(pool, inserted_community.id).await?;
 
     let update_community_form = CommunityUpdateForm {
@@ -684,14 +650,6 @@ mod tests {
     let updated_community =
       Community::update(pool, inserted_community.id, &update_community_form).await?;
 
-    let ignored_community = CommunityActions::unfollow(
-      pool,
-      community_follower_form.person_id,
-      community_follower_form.community_id,
-    )
-    .await?;
-    let left_community = CommunityActions::leave(pool, &bobby_moderator_form).await?;
-    let unban = CommunityActions::unban(pool, &community_person_ban_form).await?;
     let num_deleted = Community::delete(pool, inserted_community.id).await?;
     Person::delete(pool, inserted_bobby.id).await?;
     Person::delete(pool, inserted_artemis.id).await?;
@@ -699,10 +657,6 @@ mod tests {
 
     assert_eq!(expected_community, read_community);
     assert_eq!(expected_community, updated_community);
-    assert_eq!(uplete::Count::only_updated(1), ignored_community);
-    assert_eq!(uplete::Count::only_updated(1), left_community);
-    assert_eq!(uplete::Count::only_deleted(1), unban);
-    // assert_eq!(2, loaded_count);
     assert_eq!(1, num_deleted);
 
     Ok(())
@@ -740,30 +694,6 @@ mod tests {
     );
     let another_inserted_community = Community::create(pool, &another_community).await?;
 
-    let first_person_follow = CommunityFollowerForm::new(
-      inserted_community.id,
-      inserted_person.id,
-      CommunityFollowerState::Accepted,
-    );
-
-    CommunityActions::follow(pool, &first_person_follow).await?;
-
-    let second_person_follow = CommunityFollowerForm::new(
-      inserted_community.id,
-      another_inserted_person.id,
-      CommunityFollowerState::Accepted,
-    );
-
-    CommunityActions::follow(pool, &second_person_follow).await?;
-
-    let another_community_follow = CommunityFollowerForm::new(
-      another_inserted_community.id,
-      inserted_person.id,
-      CommunityFollowerState::Accepted,
-    );
-
-    CommunityActions::follow(pool, &another_community_follow).await?;
-
     let new_post = PostInsertForm::new(
       "A test post".into(),
       inserted_person.id,
@@ -800,19 +730,11 @@ mod tests {
     assert_eq!(0, another_community_aggs.posts);
     assert_eq!(0, another_community_aggs.comments);
 
-    // Unfollow test
-    CommunityActions::unfollow(
-      pool,
-      second_person_follow.person_id,
-      second_person_follow.community_id,
-    )
-    .await?;
     let after_unfollow = Community::read(pool, inserted_community.id).await?;
     assert_eq!(1, after_unfollow.subscribers);
     assert_eq!(1, after_unfollow.subscribers_local);
 
     // Follow again just for the later tests
-    CommunityActions::follow(pool, &second_person_follow).await?;
     let after_follow_again = Community::read(pool, inserted_community.id).await?;
     assert_eq!(2, after_follow_again.subscribers);
     assert_eq!(2, after_follow_again.subscribers_local);

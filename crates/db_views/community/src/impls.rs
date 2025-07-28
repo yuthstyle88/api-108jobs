@@ -219,9 +219,7 @@ mod tests {
       community::{
         Community,
         CommunityActions,
-        CommunityFollowerForm,
         CommunityInsertForm,
-        CommunityModeratorForm,
         CommunityUpdateForm,
       },
       instance::Instance,
@@ -341,13 +339,6 @@ mod tests {
       CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(authenticated.community_actions.is_none());
 
-    let form = CommunityFollowerForm::new(
-      community.id,
-      data.local_user.person_id,
-      CommunityFollowerState::Pending,
-    );
-    CommunityActions::follow(pool, &form).await?;
-
     let with_pending_follow =
       CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_pending_follow
@@ -364,12 +355,6 @@ mod tests {
       },
     )
     .await?;
-    let form = CommunityFollowerForm::new(
-      community.id,
-      data.local_user.person_id,
-      CommunityFollowerState::ApprovalRequired,
-    );
-    CommunityActions::follow(pool, &form).await?;
 
     let with_approval_required_follow =
       CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
@@ -377,12 +362,6 @@ mod tests {
       .community_actions
       .is_some_and(|x| x.follow_state == Some(CommunityFollowerState::ApprovalRequired)));
 
-    let form = CommunityFollowerForm::new(
-      community.id,
-      data.local_user.person_id,
-      CommunityFollowerState::Accepted,
-    );
-    CommunityActions::follow(pool, &form).await?;
     let with_accepted_follow =
       CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(with_accepted_follow
@@ -486,13 +465,6 @@ mod tests {
     .for_each(|c| assert!(!c.can_mod));
 
     let person_id = data.local_user.person_id;
-
-    // Now join the mod team of test community 1 and 2
-    let mod_form_1 = CommunityModeratorForm::new(data.communities[0].id, person_id);
-    CommunityActions::join(pool, &mod_form_1).await?;
-
-    let mod_form_2 = CommunityModeratorForm::new(data.communities[1].id, person_id);
-    CommunityActions::join(pool, &mod_form_2).await?;
 
     let mod_query = CommunityQuery {
       local_user: Some(&data.local_user),

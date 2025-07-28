@@ -38,10 +38,7 @@ use lemmy_db_schema_file::{
     CommunityFollowerState, CommunityVisibility, ListingType,
     PostSortType::{self, *},
   },
-  schema::{
-    community, community_actions, local_user_language, person, post,
-    post_actions,
-  },
+  schema::{community, community_actions, local_user_language, person, post, post_actions},
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::utils::validation::is_valid_post_title;
@@ -332,7 +329,10 @@ impl PostQuery<'_> {
       }
     }
 
-    if !o.self_promotion.unwrap_or(o.local_user.self_promotion(site)) {
+    if !o
+      .self_promotion
+      .unwrap_or(o.local_user.self_promotion(site))
+    {
       query = query
         .filter(post::self_promotion.eq(false))
         .filter(community::self_promotion.eq(false));
@@ -529,10 +529,7 @@ mod tests {
     source::{
       actor_language::LocalUserLanguage,
       comment::{Comment, CommentInsertForm},
-      community::{
-        Community, CommunityActions, CommunityBlockForm, CommunityFollowerForm,
-        CommunityInsertForm, CommunityModeratorForm, CommunityPersonBanForm, CommunityUpdateForm,
-      },
+      community::{Community, CommunityInsertForm, CommunityUpdateForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
       language::Language,
@@ -547,10 +544,10 @@ mod tests {
       tag::{Tag, TagInsertForm},
     },
     test_data::TestData,
-    traits::{Bannable, Blockable, Crud, Followable, Hideable, Joinable, Likeable, Readable},
+    traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use lemmy_db_schema_file::enums::{CommunityFollowerState, CommunityVisibility};
+  use lemmy_db_schema_file::enums::CommunityVisibility;
   use lemmy_db_views_local_user::LocalUserView;
   use lemmy_utils::error::{FastJobErrorType, FastJobResult};
   use pretty_assertions::assert_eq;
@@ -632,7 +629,7 @@ mod tests {
         data.instance.id,
         "test_community_3".to_string(),
         "nada".to_owned(),
-        "na-da".to_string()
+        "na-da".to_string(),
       );
       let community = Community::create(pool, &new_community).await?;
 
@@ -866,29 +863,6 @@ mod tests {
       .get(2)
       .is_some_and(|x| x.post.id == data.post.id));
     assert_eq!(false, read_post_listing_single_no_person.can_mod);
-    Ok(())
-  }
-
-  #[test_context(Data)]
-  #[tokio::test]
-  #[serial]
-  async fn post_listing_block_community(data: &mut Data) -> FastJobResult<()> {
-    let pool = &data.pool();
-    let pool = &mut pool.into();
-
-    let community_block = CommunityBlockForm::new(data.community.id, data.tegan.person.id);
-    CommunityActions::block(pool, &community_block).await?;
-
-    let read_post_listings_with_person_after_block = PostQuery {
-      community_id: Some(data.community.id),
-      ..data.default_post_query()
-    }
-    .list(&data.site, pool)
-    .await?;
-    // Should be 0 posts after the community block
-    assert_eq!(read_post_listings_with_person_after_block, vec![]);
-
-    CommunityActions::unblock(pool, &community_block).await?;
     Ok(())
   }
 
@@ -1206,13 +1180,6 @@ mod tests {
     ];
     assert_eq!(expected_post_listing, tegan_listings);
 
-    // Have john become a moderator, then the bot
-    let john_mod_form = CommunityModeratorForm::new(community_id, data.john.person.id);
-    CommunityActions::join(pool, &john_mod_form).await?;
-
-    let bot_mod_form = CommunityModeratorForm::new(community_id, data.bot.person.id);
-    CommunityActions::join(pool, &bot_mod_form).await?;
-
     let john_listings = PostQuery {
       sort: Some(PostSortType::New),
       local_user: Some(&data.john.local_user),
@@ -1253,9 +1220,6 @@ mod tests {
     ];
     assert_eq!(expected_post_listing, bot_listings);
 
-    // Make the bot leave the mod team, and make sure it can_mod is false.
-    CommunityActions::leave(pool, &bot_mod_form).await?;
-
     let bot_listings = PostQuery {
       sort: Some(PostSortType::New),
       local_user: Some(&data.bot.local_user),
@@ -1274,10 +1238,6 @@ mod tests {
       ("john".to_owned(), true, false),
     ];
     assert_eq!(expected_post_listing, bot_listings);
-
-    // Have tegan the administrator become a moderator
-    let tegan_mod_form = CommunityModeratorForm::new(community_id, data.tegan.person.id);
-    CommunityActions::join(pool, &tegan_mod_form).await?;
 
     let john_listings = PostQuery {
       sort: Some(PostSortType::New),
@@ -1446,43 +1406,6 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_hidden_community(data: &mut Data) -> FastJobResult<()> {
-    let pool = &data.pool();
-    let pool = &mut pool.into();
-
-    Community::update(
-      pool,
-      data.community.id,
-      &CommunityUpdateForm {
-        visibility: Some(CommunityVisibility::Unlisted),
-        ..Default::default()
-      },
-    )
-    .await?;
-
-    let posts = PostQuery::default().list(&data.site, pool).await?;
-    assert!(posts.is_empty());
-
-    let posts = data.default_post_query().list(&data.site, pool).await?;
-    assert!(posts.is_empty());
-
-    // Follow the community
-    let form = CommunityFollowerForm::new(
-      data.community.id,
-      data.tegan.person.id,
-      CommunityFollowerState::Accepted,
-    );
-    CommunityActions::follow(pool, &form).await?;
-
-    let posts = data.default_post_query().list(&data.site, pool).await?;
-    assert!(!posts.is_empty());
-
-    Ok(())
-  }
-
-  #[test_context(Data)]
-  #[tokio::test]
-  #[serial]
   async fn post_listing_instance_block(data: &mut Data) -> FastJobResult<()> {
     const POST_FROM_BLOCKED_INSTANCE: &str = "post on blocked instance";
     const POST_LISTING_WITH_BLOCKED: [&str; 4] = [
@@ -1501,7 +1424,7 @@ mod tests {
       blocked_instance.id,
       "test_community_4".to_string(),
       "none".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1533,17 +1456,6 @@ mod tests {
       .iter()
       .all(|p| p.post.id != post_from_blocked_instance.id));
 
-    // Follow community from the blocked instance to see posts anyway
-    let follow_form = CommunityFollowerForm::new(
-      inserted_community.id,
-      data.tegan.person.id,
-      CommunityFollowerState::Accepted,
-    );
-    CommunityActions::follow(pool, &follow_form).await?;
-    let post_listings_bypass = data.default_post_query().list(&data.site, pool).await?;
-    assert_eq!(POST_LISTING_WITH_BLOCKED, *names(&post_listings_bypass));
-    CommunityActions::unfollow(pool, data.tegan.person.id, inserted_community.id).await?;
-
     // after unblocking it should return all posts again
     InstanceActions::unblock(pool, &block_form).await?;
     let post_listings_blocked = data.default_post_query().list(&data.site, pool).await?;
@@ -1564,7 +1476,7 @@ mod tests {
       data.instance.id,
       "yes".to_string(),
       "yes".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1771,8 +1683,12 @@ mod tests {
     Post::update(pool, data.post_with_tags.id, &update_form).await?;
 
     // Make sure you don't see the self_promotion post in the regular results
-    let post_listings_hide_self_promotion = data.default_post_query().list(&data.site, pool).await?;
-    assert_eq!(vec![POST_BY_BOT, POST], names(&post_listings_hide_self_promotion));
+    let post_listings_hide_self_promotion =
+      data.default_post_query().list(&data.site, pool).await?;
+    assert_eq!(
+      vec![POST_BY_BOT, POST],
+      names(&post_listings_hide_self_promotion)
+    );
 
     // Make sure it does come back with the self_promotion option
     let post_listings_self_promotion = PostQuery {
@@ -1832,8 +1748,7 @@ mod tests {
     .await?;
     assert_eq!(3, authenticated_query.len());
 
-    let unauthenticated_post =
-      PostView::read(pool, data.post.id, None, data.instance.id).await;
+    let unauthenticated_post = PostView::read(pool, data.post.id, None, data.instance.id).await;
     assert!(unauthenticated_post.is_err());
 
     let authenticated_post = PostView::read(
@@ -1864,12 +1779,6 @@ mod tests {
       pool,
       &LocalUserInsertForm::test_form(inserted_banned_from_comm_person.id),
       vec![],
-    )
-    .await?;
-
-    CommunityActions::ban(
-      pool,
-      &CommunityPersonBanForm::new(data.community.id, inserted_banned_from_comm_person.id),
     )
     .await?;
 
@@ -2108,14 +2017,6 @@ mod tests {
     assert!(post_view.is_ok());
     data.tegan.local_user.admin = false;
 
-    // User can view after following
-    let follow_form = CommunityFollowerForm::new(
-      data.community.id,
-      data.tegan.person.id,
-      CommunityFollowerState::Accepted,
-    );
-    CommunityActions::follow(pool, &follow_form).await?;
-
     let read_post_listing = PostQuery {
       community_id: Some(data.community.id),
       local_user: Some(&data.tegan.local_user),
@@ -2308,7 +2209,7 @@ mod tests {
       data.instance.id,
       "test_community_4".to_string(),
       "nada".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let community_1 = Community::create(pool, &form).await?;
 
@@ -2319,13 +2220,12 @@ mod tests {
       data.instance.id,
       "test_community_5".to_string(),
       "nada".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let community_2 = Community::create(pool, &form).await?;
 
     let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, community_2.id);
     let post_2 = Post::create(pool, &form).await?;
-
 
     let listing = PostQuery {
       ..Default::default()

@@ -20,8 +20,6 @@ pub use lemmy_db_views_community::{
 
 pub mod actions {
   pub use lemmy_db_views_community::api::{
-    BlockCommunity,
-    BlockCommunityResponse,
     CreateCommunity,
     HideCommunity,
   };
@@ -29,9 +27,6 @@ pub mod actions {
   pub mod moderation {
     pub use lemmy_db_schema_file::enums::CommunityFollowerState;
     pub use lemmy_db_views_community::api::{
-      ApproveCommunityPendingFollower,
-      BanFromCommunity,
-      BanFromCommunityResponse,
       CommunityIdQuery,
       CreateCommunityTag,
       DeleteCommunity,
@@ -39,7 +34,6 @@ pub mod actions {
       EditCommunity,
       PurgeCommunity,
       RemoveCommunity,
-      TransferCommunity,
       UpdateCommunityTag,
     };
   }

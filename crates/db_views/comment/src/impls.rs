@@ -335,10 +335,7 @@ mod tests {
       community::{
         Community,
         CommunityActions,
-        CommunityFollowerForm,
         CommunityInsertForm,
-        CommunityModeratorForm,
-        CommunityPersonBanForm,
         CommunityUpdateForm,
       },
       instance::Instance,
@@ -705,8 +702,6 @@ mod tests {
     // Make one of the inserted persons a moderator
     let person_id = data.sara_person.id;
     let community_id = data.community.id;
-    let form = CommunityModeratorForm::new(community_id, person_id);
-    CommunityActions::join(pool, &form).await?;
 
     // Make sure that they come back as a mod in the list
     let comments = CommentQuery {
@@ -833,12 +828,6 @@ mod tests {
       pool,
       &LocalUserInsertForm::test_form(inserted_banned_from_comm_person.id),
       vec![],
-    )
-    .await?;
-
-    CommunityActions::ban(
-      pool,
-      &CommunityPersonBanForm::new(data.community.id, inserted_banned_from_comm_person.id),
     )
     .await?;
 
@@ -970,16 +959,6 @@ mod tests {
     assert!(comment_view.is_ok());
     data.timmy_local_user_view.local_user.admin = false;
 
-    // User can view after following
-    CommunityActions::follow(
-      pool,
-      &CommunityFollowerForm::new(
-        data.community.id,
-        data.timmy_local_user_view.person.id,
-        CommunityFollowerState::Accepted,
-      ),
-    )
-    .await?;
     let read_comment_listing = CommentQuery {
       community_id: Some(data.community.id),
       local_user: Some(&data.timmy_local_user_view.local_user),

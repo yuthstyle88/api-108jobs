@@ -50,6 +50,7 @@ pub struct BanFromCommunityResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Block a community.
 pub struct BlockCommunity {
   pub community_id: CommunityId,
@@ -119,6 +120,7 @@ pub struct CreateCommunity {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 /// Create a community (this is the replacement of a category and subcategory of a job).
 pub struct CreateCommunityRequest {
   /// The unique name.
@@ -145,6 +147,7 @@ pub struct CreateCommunityRequest {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Create a tag for a community.
 pub struct CreateCommunityTag {
   pub community_id: CommunityId,
@@ -155,6 +158,7 @@ pub struct CreateCommunityTag {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Delete your own community.
 pub struct DeleteCommunity {
   pub community_id: CommunityId,
@@ -165,6 +169,7 @@ pub struct DeleteCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Edit a community.
 pub struct EditCommunity {
   pub community_id: CommunityId,
@@ -192,7 +197,7 @@ pub struct EditCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-// TODO make this into a tagged enum
+#[serde(rename_all = "camelCase")]
 /// Get a community. Must provide either an id, or a name.
 pub struct GetCommunity {
   pub id: Option<CommunityId>,
@@ -216,6 +221,7 @@ pub struct GetCommunityResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Fetches a random community
 pub struct GetRandomCommunity {
   pub type_: Option<ListingType>,
@@ -226,6 +232,7 @@ pub struct GetRandomCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Hide a community from the main view.
 pub struct HideCommunity {
   pub community_id: CommunityId,
@@ -237,6 +244,7 @@ pub struct HideCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Fetches a list of communities.
 pub struct ListCommunities {
   pub type_: Option<ListingType>,

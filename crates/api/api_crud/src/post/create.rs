@@ -97,6 +97,11 @@ pub async fn create_post(
     self_promotion,
     language_id: Some(language_id),
     scheduled_publish_time_at,
+    budget: data.budget,
+    job_type: data.job_type,
+    intended_use: data.intended_use,
+    deadline: data.deadline,
+    is_english_required: data.is_english_required,
     ap_id: Some("https://example.com/random".parse::<DbUrl>()?),
     ..PostInsertForm::new(
       data.name.trim().to_string(),

@@ -141,6 +141,16 @@ pub struct PostInsertForm {
   pub alt_text: Option<String>,
   #[new(default)]
   pub scheduled_publish_time_at: Option<DateTime<Utc>>,
+  #[new(default)]
+  pub budget: f64,
+  #[new(default)]
+  pub intended_use: IntendedUse,
+  #[new(default)]
+  pub job_type: JobType,
+  #[new(default)]
+  pub deadline: Option<DateTime<Utc>>,
+  #[new(default)]
+  pub is_english_required: bool,
 }
 
 #[derive(Debug, Clone, Default)]

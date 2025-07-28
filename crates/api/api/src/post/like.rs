@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::build_post_response,
-  context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
+  context::FastJobContext
+  ,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_bot_account,
 };
 use lemmy_db_schema::{
   source::{
     person::PersonActions,
-    post::{PostActions, PostLikeForm, PostReadForm},
+    post::{PostActions, PostReadForm},
   },
   traits::{Likeable, Readable},
 };
@@ -36,8 +36,6 @@ pub async fn like_post(
   let orig_post = PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
   let previous_score = orig_post.post_actions.and_then(|p| p.like_score);
 
-  let mut like_form = PostLikeForm::new(data.post_id, my_person_id, data.score);
-
   // Remove any likes first
   PostActions::remove_like(&mut context.pool(), my_person_id, post_id).await?;
   if let Some(previous_score) = previous_score {
@@ -52,19 +50,6 @@ pub async fn like_post(
     .ok();
   }
 
-  if like_form.like_score != 0 {
-    like_form = plugin_hook_before("before_post_vote", like_form).await?;
-    let like = PostActions::like(&mut context.pool(), &like_form).await?;
-    PersonActions::like(
-      &mut context.pool(),
-      my_person_id,
-      orig_post.creator.id,
-      like_form.like_score,
-    )
-    .await?;
-
-    plugin_hook_after("after_post_vote", &like)?;
-  }
 
   // Mark Post Read
   let read_form = PostReadForm::new(post_id, my_person_id);

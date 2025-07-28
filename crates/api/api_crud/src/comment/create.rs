@@ -3,7 +3,7 @@ use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
+  plugins::plugin_hook_after,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
@@ -86,11 +86,10 @@ pub async fn create_comment(
   )
   .await?;
 
-  let mut comment_form = CommentInsertForm {
+  let comment_form = CommentInsertForm {
     language_id: Some(language_id),
     ..CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone())
   };
-  comment_form = plugin_hook_before("before_create_local_comment", comment_form).await?;
 
   // Create the comment
   let parent_path = parent_opt.clone().map(|t| t.path);

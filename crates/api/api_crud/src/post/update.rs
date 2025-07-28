@@ -4,7 +4,7 @@ use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
+  plugins::{plugin_hook_after, },
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
   tags::update_post_tags,
@@ -140,7 +140,7 @@ pub async fn update_post(
     (_, _) => None,
   };
 
-  let mut post_form = PostUpdateForm {
+  let post_form = PostUpdateForm {
     name: data.name.clone(),
     url,
     body,
@@ -151,7 +151,6 @@ pub async fn update_post(
     scheduled_publish_time_at,
     ..Default::default()
   };
-  post_form = plugin_hook_before("before_update_local_post", post_form).await?;
 
   let post_id = data.post_id;
   let updated_post = Post::update(&mut context.pool(), post_id, &post_form).await?;

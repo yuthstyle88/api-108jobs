@@ -1,18 +1,15 @@
 use super::convert_published_time;
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
-  request::generate_post_link_metadata,
-  send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{
     check_self_promotion_allowed, get_url_blocklist, honeypot_check,
-    process_markdown_opt, send_webmention, slur_regex,
+    process_markdown_opt, slur_regex,
   },
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
@@ -93,7 +90,7 @@ pub async fn create_post(
 
   let scheduled_publish_time_at =
     convert_published_time(data.scheduled_publish_time_at, &local_user_view, &context).await?;
-  let mut post_form = PostInsertForm {
+  let post_form = PostInsertForm {
     url,
     body,
     alt_text: data.alt_text.clone(),
@@ -108,11 +105,7 @@ pub async fn create_post(
     )
   };
 
-  post_form = plugin_hook_before("before_create_local_post", post_form).await?;
-
   let inserted_post = Post::create(&mut context.pool(), &post_form).await?;
-
-  plugin_hook_after("after_create_local_post", &inserted_post)?;
 
   if let Some(tags) = &data.tags {
     update_post_tags(
@@ -124,20 +117,6 @@ pub async fn create_post(
     )
     .await?;
   }
-
-  let federate_post = if scheduled_publish_time_at.is_none() {
-    send_webmention(inserted_post.clone(), community);
-    |post| Some(SendActivityData::CreatePost(post))
-  } else {
-    |_| None
-  };
-  generate_post_link_metadata(
-    inserted_post.clone(),
-    custom_thumbnail.map(Into::into),
-    federate_post,
-    context.clone(),
-  )
-  .await?;
 
   // They like their own post by default
   let person_id = local_user_view.person.id;

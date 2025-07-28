@@ -3,7 +3,7 @@ use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
 use extism_convert::Json;
 use lemmy_db_views_site::api::PluginMetadata;
 use lemmy_utils::{
-  error::{FastJobError, FastJobErrorType, FastJobResult},
+  error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
   VERSION,
 };
@@ -60,29 +60,7 @@ where
 }
 
 /// Call a plugin hook which can rewrite data
-pub async fn plugin_hook_before<T>(name: &'static str, data: T) -> FastJobResult<T>
-where
-  T: Clone + Serialize + for<'a> Deserialize<'a> + Sync + Send + 'static,
-{
-  let plugins = FastJobPlugins::init();
-  if !plugins.loaded(name) {
-    return Ok(data);
-  }
 
-  spawn_blocking(move || {
-    let mut res: Json<T> = data.into();
-    for p in plugins.0 {
-      if let Some(plugin) = p.get(name)? {
-        let r = plugin
-          .call(name, res)
-          .map_err(|e| FastJobErrorType::PluginError(e.to_string()))?;
-        res = r;
-      }
-    }
-    Ok::<_, FastJobError>(res.0)
-  })
-  .await?
-}
 
 pub fn plugin_metadata() -> Vec<PluginMetadata> {
   FastJobPlugins::init()

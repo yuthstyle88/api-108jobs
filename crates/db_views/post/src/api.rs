@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create a post.
@@ -40,14 +40,19 @@ pub struct CreatePost {
   pub tags: Option<Vec<TagId>>,
   /// Time when this post should be scheduled. Null means publish immediately.
   pub scheduled_publish_time_at: Option<i64>,
+  pub intended_use: IntendedUse,
+  pub job_type: JobType,
+  pub budget: f64,
+  pub deadline: Option<DateTime<Utc>>,
+  pub is_english_required: bool,
 }
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create a post.
+#[serde(rename_all = "camelCase")]
 pub struct CreatePostRequest {
   pub name: String,
   pub community_id: CommunityId,
@@ -74,6 +79,7 @@ pub struct CreatePostRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Like a post.
+#[serde(rename_all = "camelCase")]
 pub struct CreatePostLike {
   pub post_id: PostId,
   /// Score must be -1, 0, or 1.
@@ -84,16 +90,18 @@ pub struct CreatePostLike {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete a post.
+#[serde(rename_all = "camelCase")]
 pub struct DeletePost {
   pub post_id: PostId,
   pub deleted: bool,
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Edit a post.
+#[serde(rename_all = "camelCase")]
 pub struct EditPost {
   pub post_id: PostId,
   pub name: Option<String>,
@@ -109,12 +117,45 @@ pub struct EditPost {
   /// Time when this post should be scheduled. Null means publish immediately.
   pub scheduled_publish_time_at: Option<i64>,
   pub tags: Option<Vec<TagId>>,
+  pub intended_use: IntendedUse,
+  pub job_type: JobType,
+  pub budget: f64,
+  pub deadline: Option<DateTime<Utc>>,
+  pub is_english_required: bool,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Edit a post.
+#[serde(rename_all = "camelCase")]
+pub struct EditPostRequest {
+  pub post_id: PostId,
+  pub name: Option<String>,
+  pub url: Option<String>,
+  /// An optional body for the post in markdown.
+  pub body: Option<String>,
+  /// An optional alt_text, usable for image posts.
+  pub alt_text: Option<String>,
+  pub self_promotion: Option<bool>,
+  pub language_id: Option<LanguageId>,
+  /// Instead of fetching a thumbnail, use a custom one.
+  pub custom_thumbnail: Option<String>,
+  /// Time when this post should be scheduled. Null means publish immediately.
+  pub scheduled_publish_time_at: Option<i64>,
+  pub tags: Option<Vec<TagId>>,
+  pub intended_use: IntendedUse,
+  pub job_type: JobType,
+  pub budget: f64,
+  pub deadline: Option<DateTime<Utc>>,
+  pub is_english_required: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Feature a post (stickies / pins to the top).
+#[serde(rename_all = "camelCase")]
 pub struct FeaturePost {
   pub post_id: PostId,
   pub featured: bool,
@@ -125,6 +166,7 @@ pub struct FeaturePost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Disable reply notifications for a post and all comments inside it
+#[serde(rename_all = "camelCase")]
 pub struct UpdatePostNotifications {
   pub post_id: PostId,
   pub new_state: PostNotifications,
@@ -136,6 +178,7 @@ pub struct UpdatePostNotifications {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 // TODO this should be made into a tagged enum
 /// Get a post. Needs either the post id, or comment_id.
+#[serde(rename_all = "camelCase")]
 pub struct GetPost {
   pub id: Option<PostId>,
   pub comment_id: Option<CommentId>,
@@ -159,6 +202,7 @@ pub struct GetPostResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Get a list of posts.
+#[serde(rename_all = "camelCase")]
 pub struct GetPosts {
   pub type_: Option<ListingType>,
   pub sort: Option<PostSortType>,
@@ -219,6 +263,7 @@ pub struct GetSiteMetadataResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Site metadata, from its opengraph tags.
+#[serde(rename_all = "camelCase")]
 pub struct LinkMetadata {
   #[serde(flatten)]
   pub opengraph_data: OpenGraphData,
@@ -230,6 +275,7 @@ pub struct LinkMetadata {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Hide a post from list views
+#[serde(rename_all = "camelCase")]
 pub struct HidePost {
   pub post_id: PostId,
   pub hide: bool,
@@ -240,6 +286,7 @@ pub struct HidePost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// List post likes. Admins-only.
+#[serde(rename_all = "camelCase")]
 pub struct ListPostLikes {
   pub post_id: PostId,
   pub page_cursor: Option<PaginationCursor>,
@@ -263,6 +310,7 @@ pub struct ListPostLikesResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Lock a post (prevent new comments).
+#[serde(rename_all = "camelCase")]
 pub struct LockPost {
   pub post_id: PostId,
   pub locked: bool,
@@ -274,6 +322,7 @@ pub struct LockPost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Mark a post as read.
+#[serde(rename_all = "camelCase")]
 pub struct MarkPostAsRead {
   pub post_id: PostId,
   pub read: bool,
@@ -284,6 +333,7 @@ pub struct MarkPostAsRead {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Site metadata, from its opengraph tags.
+#[serde(rename_all = "camelCase")]
 pub struct OpenGraphData {
   pub title: Option<String>,
   pub description: Option<String>,
@@ -304,6 +354,7 @@ pub struct PostResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Purges a post from the database. This will delete all content attached to that post.
+#[serde(rename_all = "camelCase")]
 pub struct PurgePost {
   pub post_id: PostId,
   pub reason: Option<String>,
@@ -314,6 +365,7 @@ pub struct PurgePost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Remove a post (only doable by mods).
+#[serde(rename_all = "camelCase")]
 pub struct RemovePost {
   pub post_id: PostId,
   pub removed: bool,
@@ -324,6 +376,7 @@ pub struct RemovePost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Save / bookmark a post.
+#[serde(rename_all = "camelCase")]
 pub struct SavePost {
   pub post_id: PostId,
   pub save: bool,
@@ -334,6 +387,7 @@ pub struct SavePost {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Mark several posts as read.
+#[serde(rename_all = "camelCase")]
 pub struct MarkManyPostsAsRead {
   pub post_ids: Vec<PostId>,
 }

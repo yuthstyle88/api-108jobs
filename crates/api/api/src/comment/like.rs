@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::{
   build_response::build_comment_response,
-  context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
+  context::FastJobContext
+  ,
   send_activity::{ActivityChannel, SendActivityData},
 };
 use lemmy_db_schema::{
   source::{
-    comment::{CommentActions, CommentLikeForm},
+    comment::CommentActions,
     person::PersonActions,
   },
   traits::Likeable,
@@ -39,8 +39,6 @@ pub async fn like_comment(
   .await?;
   let previous_score = orig_comment.comment_actions.and_then(|p| p.like_score);
 
-  let mut like_form = CommentLikeForm::new(my_person_id, data.comment_id, data.score);
-
   // Remove any likes first
   CommentActions::remove_like(&mut context.pool(), my_person_id, comment_id).await?;
   if let Some(previous_score) = previous_score {
@@ -53,20 +51,6 @@ pub async fn like_comment(
     .await
     // Ignore errors, since a previous_like of zero throws an error
     .ok();
-  }
-
-  if like_form.like_score != 0 {
-    like_form = plugin_hook_before("before_comment_vote", like_form).await?;
-    let like = CommentActions::like(&mut context.pool(), &like_form).await?;
-    PersonActions::like(
-      &mut context.pool(),
-      my_person_id,
-      orig_comment.creator.id,
-      like_form.like_score,
-    )
-    .await?;
-
-    plugin_hook_after("after_comment_vote", &like)?;
   }
 
   ActivityChannel::submit_activity(

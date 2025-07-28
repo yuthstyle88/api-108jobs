@@ -3,7 +3,7 @@ use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, plugin_hook_before},
+  plugins::{plugin_hook_after},
   send_activity::{ActivityChannel, SendActivityData},
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
@@ -61,13 +61,12 @@ pub async fn update_comment(
   }
 
   let comment_id = data.comment_id;
-  let mut form = CommentUpdateForm {
+  let form = CommentUpdateForm {
     content,
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
     ..Default::default()
   };
-  form = plugin_hook_before("before_update_local_comment", form).await?;
   let updated_comment = Comment::update(&mut context.pool(), comment_id, &form).await?;
 
   plugin_hook_after("after_update_local_comment", &updated_comment)?;

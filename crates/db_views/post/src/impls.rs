@@ -509,6 +509,11 @@ impl TryFrom<CreatePostRequest> for CreatePost {
       self_promotion: None,
       tags: None,
       scheduled_publish_time_at: None,
+      budget: data.budget,
+      deadline: data.deadline,
+      intended_use: data.intended_use,
+      job_type: data.job_type,
+      is_english_required: data.is_english_required,
     })
   }
 }

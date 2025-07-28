@@ -62,6 +62,11 @@ pub struct CreatePostRequest {
   pub language_id: Option<LanguageId>,
   /// Instead of fetching a thumbnail, use a custom one.
   pub custom_thumbnail: Option<String>,
+  pub intended_use: Option<String>,
+  pub job_type: Option<String>,
+  pub budget: Option<String>,
+  pub deadline: Option<String>,
+  pub is_english_required: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]

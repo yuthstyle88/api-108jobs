@@ -16,9 +16,7 @@ use lemmy_api_utils::{
 };
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
-  source::{
-    post::{Post, PostUpdateForm},
-  },
+  source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
@@ -146,6 +144,11 @@ pub async fn update_post(
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
     scheduled_publish_time_at,
+    intended_use: data.intended_use,
+    job_type: data.job_type,
+    budget: data.budget,
+    deadline: Some(data.deadline),
+    is_english_required: data.is_english_required,
     ..Default::default()
   };
 

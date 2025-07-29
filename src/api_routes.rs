@@ -163,7 +163,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           resource("/post")
             // Handle POST to /post separately to add the post() rate limitter
-            // .guard(guard::Post())
+            .guard(guard::Post())
             // .wrap(rate_limit.post())
             .route(post().to(create_post)),
         )

@@ -173,6 +173,11 @@ pub struct PostUpdateForm {
   pub url_content_type: Option<Option<String>>,
   pub alt_text: Option<Option<String>>,
   pub scheduled_publish_time_at: Option<Option<DateTime<Utc>>>,
+  pub budget: Option<f64>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub deadline: Option<Option<DateTime<Utc>>>,
+  pub is_english_required: Option<bool>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

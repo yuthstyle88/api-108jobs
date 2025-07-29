@@ -299,6 +299,7 @@ mod tests {
       icon: None,
       banner: None,
       description: None,
+      ap_id: Url::parse("http://example1.com")?.into(),
       last_refreshed_at: Default::default(),
       inbox_url: url.into(),
       instance_id: Default::default(),

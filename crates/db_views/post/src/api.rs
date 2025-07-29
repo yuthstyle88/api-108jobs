@@ -144,11 +144,11 @@ pub struct EditPostRequest {
   /// Time when this post should be scheduled. Null means publish immediately.
   pub scheduled_publish_time_at: Option<i64>,
   pub tags: Option<Vec<TagId>>,
-  pub intended_use: IntendedUse,
-  pub job_type: JobType,
-  pub budget: f64,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub budget: Option<f64>,
   pub deadline: Option<DateTime<Utc>>,
-  pub is_english_required: bool,
+  pub is_english_required: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]

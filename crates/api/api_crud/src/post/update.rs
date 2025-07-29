@@ -41,12 +41,14 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
+use lemmy_db_views_post::api::EditPostRequest;
 
 pub async fn update_post(
-  data: Json<EditPost>,
+  data: Json<EditPostRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
+  let data: EditPost = data.into_inner().try_into()?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let url = diesel_url_update(data.url.as_deref())?;

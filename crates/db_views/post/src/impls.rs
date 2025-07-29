@@ -1,4 +1,5 @@
-use crate::api::{CreatePost, CreatePostRequest};
+use crate::api::EditPost;
+use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
 use crate::PostView;
 use diesel::{
   self, debug_query,
@@ -517,6 +518,40 @@ impl TryFrom<CreatePostRequest> for CreatePost {
     })
   }
 }
+
+
+impl TryFrom<EditPostRequest> for EditPost {
+  type Error = FastJobError;
+  fn try_from(data: EditPostRequest) -> Result<Self, Self::Error> {
+
+    if let Some(ref url_str) = data.url {
+      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
+    }
+
+    if let Some(ref thumb_url) = data.custom_thumbnail {
+      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
+    }
+
+    Ok(EditPost {
+      post_id: data.post_id,
+      name: data.name,
+      url: data.url,
+      body: data.body,
+      alt_text: data.alt_text,
+      language_id: data.language_id,
+      custom_thumbnail: data.custom_thumbnail,
+      self_promotion: None,
+      tags: None,
+      scheduled_publish_time_at: None,
+      budget: data.budget,
+      deadline: data.deadline,
+      intended_use: data.intended_use,
+      job_type: data.job_type,
+      is_english_required: data.is_english_required,
+    })
+  }
+}
+
 
 #[allow(clippy::indexing_slicing)]
 #[expect(clippy::expect_used)]

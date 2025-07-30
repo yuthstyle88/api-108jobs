@@ -372,9 +372,9 @@ diesel::table! {
         budget -> Float8,
         working_days -> Int4,
         brief_url -> Nullable<Text>,
-        service_id -> Int4,
         user_id -> Int4,
-        job_post_id -> Int4,
+        post_id -> Int4,
+        community_id -> Int4,
         deleted_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
@@ -400,7 +400,7 @@ diesel::table! {
     use super::sql_types::WorkingFromEnum;
     use super::sql_types::IntendedUseEnum;
 
-    job_posts (id) {
+    posts (id) {
         id -> Int4,
         job_title -> Varchar,
         description -> Varchar,
@@ -410,7 +410,7 @@ diesel::table! {
         deadline -> Nullable<Date>,
         is_anonymous_post -> Bool,
         creator_id -> Int4,
-        service_catalog_id -> Int4,
+        community_id -> Int4,
         working_from -> WorkingFromEnum,
         intended_use -> IntendedUseEnum,
         created_at -> Nullable<Timestamptz>,
@@ -1101,9 +1101,9 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
     }
 }
-diesel::joinable!(proposals -> community (service_id));
+diesel::joinable!(proposals -> community (community_id));
 diesel::joinable!(proposals -> local_user (user_id));
-diesel::joinable!(proposals -> post (job_post_id));
+diesel::joinable!(proposals -> post (post_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1284,5 +1284,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   proposals,
-  job_posts
+  posts
 );

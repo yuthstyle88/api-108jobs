@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use lemmy_db_schema_file::schema::proposals;
-use crate::newtypes::{CommunityId, JobPostId, LocalUserId, PostId, ProposalId};
+use crate::newtypes::{CommunityId, LocalUserId, PostId, ProposalId};
 
 #[derive(Queryable, Insertable, AsChangeset, Identifiable, Selectable, Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[diesel(table_name = proposals)]
@@ -11,9 +11,9 @@ pub struct Proposal {
     pub budget: f64,
     pub working_days: i32,
     pub brief_url: Option<String>,
-    pub service_id: i32,
-    pub user_id: i32,
-    pub job_post_id: JobPostId,
+    pub user_id: LocalUserId,
+    pub post_id: PostId,
+    pub community_id: CommunityId,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -26,8 +26,8 @@ pub struct ProposalInsertForm {
     pub budget: f64,
     pub working_days: i32,
     pub brief_url: Option<String>,
-    pub service_id: CommunityId,
-    pub job_post_id: PostId,
+    pub post_id: PostId,
+    pub community_id: CommunityId,
     pub user_id: LocalUserId,
 }
 

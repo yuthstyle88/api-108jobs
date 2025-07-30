@@ -5,7 +5,7 @@ use serde_with::skip_serializing_none;
 use {
   diesel::{Queryable, Selectable},
 };
-use lemmy_db_schema::newtypes::{JobPostId, LocalUserId, PostId, ProposalId};
+use lemmy_db_schema::newtypes::{CommunityId, LocalUserId, PostId, ProposalId};
 use lemmy_db_schema::source::proposal::Proposal;
 
 #[cfg(feature = "full")]
@@ -21,8 +21,8 @@ pub struct CreateProposalRequest {
   pub budget: f64,
   pub working_days: i32,
   pub brief_url: Option<String>,
-  pub service_id: PostId,
-  pub job_post_id: JobPostId,
+  pub post_id: PostId,
+  pub community_id: CommunityId
 }
 
 #[skip_serializing_none]
@@ -37,9 +37,9 @@ pub struct CreateProposalResponse {
   pub budget: f64,
   pub working_days: i32,
   pub brief_url: Option<String>,
-  pub service_id: PostId,
   pub user_id: LocalUserId,
-  pub job_post_id: JobPostId,
+  pub post_id: PostId,
+  pub community_id: CommunityId,
   pub created_at: chrono::DateTime<chrono::Utc>,
   pub updated_at: chrono::DateTime<chrono::Utc>,
 }

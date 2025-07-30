@@ -99,6 +99,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::proposals::create::create_proposal;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,

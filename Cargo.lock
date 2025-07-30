@@ -3347,6 +3347,7 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
  "lemmy_utils",
+ "serde",
 ]
 
 [[package]]
@@ -3358,6 +3359,7 @@ dependencies = [
  "anyhow",
  "bcrypt",
  "chrono",
+ "diesel",
  "diesel-async",
  "futures",
  "futures-util",
@@ -3370,12 +3372,14 @@ dependencies = [
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",
+ "lemmy_db_views_proposal",
  "lemmy_db_views_registration_applications",
  "lemmy_db_views_search_combined",
  "lemmy_db_views_site",
  "lemmy_email",
  "lemmy_multilang",
  "lemmy_utils",
+ "log",
  "moka",
  "regex",
  "serde",
@@ -3734,6 +3738,27 @@ dependencies = [
  "tracing",
  "ts-rs",
  "url",
+]
+
+[[package]]
+name = "lemmy_db_views_proposal"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_comment",
+ "lemmy_db_views_local_user",
+ "lemmy_db_views_post",
+ "lemmy_utils",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
 ]
 
 [[package]]

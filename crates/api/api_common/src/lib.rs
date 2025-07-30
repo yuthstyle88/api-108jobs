@@ -15,6 +15,7 @@ pub mod report;
 pub mod search;
 pub mod site;
 pub mod tagline;
+pub mod proposal;
 
 pub use lemmy_db_schema::{newtypes::DbUrl, sensitive::SensitiveString};
 pub use lemmy_db_schema_file::enums::VoteShow;

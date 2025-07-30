@@ -332,6 +332,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/delete", post().to(delete_custom_emoji))
             .route("/list", get().to(list_custom_emojis)),
         )
+          .service(
+            scope("/proposal")
+                .route("", post().to(create_proposal))
+          )
         .service(
           scope("/oauth-provider")
             .route("", post().to(create_oauth_provider))

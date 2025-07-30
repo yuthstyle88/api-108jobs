@@ -1,0 +1,1 @@
+DROP TYPE intended_use_enum;

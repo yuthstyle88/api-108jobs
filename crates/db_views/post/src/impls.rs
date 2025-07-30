@@ -534,6 +534,7 @@ impl TryFrom<EditPostRequest> for EditPost {
 
     Ok(EditPost {
       post_id: data.post_id,
+      community_id: data.community_id,
       name: data.name,
       url: data.url,
       body: data.body,

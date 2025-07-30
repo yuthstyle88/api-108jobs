@@ -139,6 +139,7 @@ pub async fn update_post(
 
   let post_form = PostUpdateForm {
     name: data.name.clone(),
+    community_id: data.community_id.clone(),
     url,
     body,
     alt_text,

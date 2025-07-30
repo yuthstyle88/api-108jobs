@@ -178,6 +178,7 @@ pub struct PostUpdateForm {
   pub job_type: Option<JobType>,
   pub deadline: Option<Option<DateTime<Utc>>>,
   pub is_english_required: Option<bool>,
+  pub community_id: Option<CommunityId>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

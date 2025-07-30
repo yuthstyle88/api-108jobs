@@ -104,6 +104,7 @@ pub struct DeletePost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPost {
   pub post_id: PostId,
+  pub community_id: Option<CommunityId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -131,6 +132,7 @@ pub struct EditPost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPostRequest {
   pub post_id: PostId,
+  pub community_id: Option<CommunityId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.

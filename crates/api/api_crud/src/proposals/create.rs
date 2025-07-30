@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json};
 use actix_web::HttpRequest;
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::source::post::Post;
 use lemmy_db_schema::source::proposal::{Proposal, ProposalInsertForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_proposal::{CreateProposalRequest, CreateProposalResponse};
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
-use lemmy_db_schema::source::post::Post;
 
 pub async fn create_proposal(
   data: Json<CreateProposalRequest>,
@@ -16,11 +16,9 @@ pub async fn create_proposal(
 ) -> FastJobResult<Json<CreateProposalResponse>> {
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_view.local_user.id)
     .await
-    .map_err(|e| {
-      FastJobError::from(FastJobErrorType::DatabaseError)
-    })?;
+    .map_err(|e| FastJobError::from(FastJobErrorType::DatabaseError))?;
 
-  let post = Post::read_xx(&mut context.pool(), data.post_id).await?;
+  let _post = Post::read_xx(&mut context.pool(), data.post_id).await?;
 
   // if !post.is_open {
   //   return Err(FastJobError::from(FastJobErrorType::ValidationError(
@@ -64,12 +62,11 @@ pub async fn create_proposal(
     budget: data.budget,
     working_days: data.working_days,
     brief_url: data.brief_url.clone(),
-    community_id: data.community_id,
     user_id: local_user_view.local_user.id,
     post_id: data.post_id,
   };
 
-    let inserted_proposal = Proposal::create(&mut context.pool(), &proposal_form).await?;
+  let inserted_proposal = Proposal::create(&mut context.pool(), &proposal_form).await?;
 
   let response = CreateProposalResponse {
     id: inserted_proposal.id,
@@ -77,7 +74,6 @@ pub async fn create_proposal(
     budget: inserted_proposal.budget,
     working_days: inserted_proposal.working_days,
     brief_url: inserted_proposal.brief_url,
-    community_id: inserted_proposal.community_id,
     user_id: inserted_proposal.user_id,
     post_id: inserted_proposal.post_id,
     created_at: inserted_proposal.created_at,

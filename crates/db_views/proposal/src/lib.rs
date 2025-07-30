@@ -1,15 +1,15 @@
 use diesel::internal::derives::multiconnection::chrono;
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {
-  diesel::{Queryable, Selectable},
-};
+use diesel::{Queryable, Selectable};
 use lemmy_db_schema::newtypes::{CommunityId, LocalUserId, PostId, ProposalId};
 use lemmy_db_schema::source::proposal::Proposal;
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
+pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -22,7 +22,6 @@ pub struct CreateProposalRequest {
   pub working_days: i32,
   pub brief_url: Option<String>,
   pub post_id: PostId,
-  pub community_id: CommunityId
 }
 
 #[skip_serializing_none]
@@ -39,7 +38,6 @@ pub struct CreateProposalResponse {
   pub brief_url: Option<String>,
   pub user_id: LocalUserId,
   pub post_id: PostId,
-  pub community_id: CommunityId,
   pub created_at: chrono::DateTime<chrono::Utc>,
   pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -78,4 +76,3 @@ pub struct MyProposalsResponse {
   pub page_size: u64,
   pub total_pages: u64,
 }
-

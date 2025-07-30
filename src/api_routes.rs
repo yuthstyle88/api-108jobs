@@ -72,14 +72,18 @@ use lemmy_api_crud::community::list::list_communities_ltree;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
+use lemmy_api_crud::proposals::create::create_proposal;
+use lemmy_api_crud::proposals::delete::delete_proposal;
+use lemmy_api_crud::proposals::list::list_proposals;
+use lemmy_api_crud::proposals::update::update_proposal;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
   community::{
-    create::create_community, delete::delete_community,
-    remove::remove_community, update::update_community,
+    create::create_community, delete::delete_community, remove::remove_community,
+    update::update_community,
   },
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
@@ -99,7 +103,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_api_crud::proposals::create::create_proposal;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -158,7 +161,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", delete().to(delete_community_banner))
             .route("/tag", post().to(create_community_tag))
             .route("/tag", put().to(update_community_tag))
-            .route("/tag", delete().to(delete_community_tag))
+            .route("/tag", delete().to(delete_community_tag)),
         )
         // Post
         .service(
@@ -333,10 +336,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/delete", post().to(delete_custom_emoji))
             .route("/list", get().to(list_custom_emojis)),
         )
-          .service(
-            scope("/proposal")
-                .route("", post().to(create_proposal))
-          )
+        .service(
+          scope("/proposal")
+            .route("", post().to(create_proposal))
+            .route("", put().to(update_proposal))
+            .route("/delete", post().to(delete_proposal))
+            .route("/list", get().to(list_proposals)),
+        )
         .service(
           scope("/oauth-provider")
             .route("", post().to(create_oauth_provider))

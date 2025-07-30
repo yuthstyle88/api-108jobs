@@ -374,7 +374,6 @@ diesel::table! {
         brief_url -> Nullable<Text>,
         user_id -> Int4,
         post_id -> Int4,
-        community_id -> Int4,
         deleted_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
@@ -1101,7 +1100,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
     }
 }
-diesel::joinable!(proposals -> community (community_id));
 diesel::joinable!(proposals -> local_user (user_id));
 diesel::joinable!(proposals -> post (post_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));

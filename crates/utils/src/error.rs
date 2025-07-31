@@ -231,6 +231,11 @@ pub enum FastJobErrorType {
   MaxCommunityDepthReached,
   CouldntCreateCommunity,
   AlreadyDeleted,
+    CouldntCreateEntry,
+  CouldntFindProposal,
+  CouldntUpdateProposal,
+  CouldntDeleteProposal,
+  CouldntListProposals,
 }
 
 cfg_if! {

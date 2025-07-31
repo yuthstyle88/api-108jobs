@@ -57,6 +57,9 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
 
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "working_from_enum"))]
+  pub struct WorkingFromEnum;
 }
 
 diesel::table! {
@@ -363,6 +366,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    proposals (id) {
+        id -> Int4,
+        description -> Text,
+        budget -> Float8,
+        working_days -> Int4,
+        brief_url -> Nullable<Text>,
+        user_id -> Int4,
+        post_id -> Int4,
+        deleted_at -> Nullable<Timestamptz>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     instance (id) {
         id -> Int4,
         #[max_length = 255]
@@ -373,6 +391,29 @@ diesel::table! {
         software -> Nullable<Varchar>,
         #[max_length = 255]
         version -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::WorkingFromEnum;
+    use super::sql_types::IntendedUseEnum;
+
+    posts (id) {
+        id -> Int4,
+        job_title -> Varchar,
+        description -> Varchar,
+        is_english_required -> Bool,
+        example_url -> Nullable<Varchar>,
+        budget -> Float8,
+        deadline -> Nullable<Date>,
+        is_anonymous_post -> Bool,
+        creator_id -> Int4,
+        community_id -> Int4,
+        working_from -> WorkingFromEnum,
+        intended_use -> IntendedUseEnum,
+        created_at -> Nullable<Timestamptz>,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1059,7 +1100,8 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
     }
 }
-
+diesel::joinable!(proposals -> local_user (user_id));
+diesel::joinable!(proposals -> post (post_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1239,4 +1281,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
+  proposals,
+  posts
 );

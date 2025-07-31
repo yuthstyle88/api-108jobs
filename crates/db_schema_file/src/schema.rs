@@ -365,20 +365,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    proposals (id) {
-        id -> Int4,
-        description -> Text,
-        budget -> Float8,
-        working_days -> Int4,
-        brief_url -> Nullable<Text>,
-        user_id -> Int4,
-        post_id -> Int4,
-        deleted_at -> Nullable<Timestamptz>,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
 
 diesel::table! {
     instance (id) {
@@ -1100,8 +1086,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
     }
 }
-diesel::joinable!(proposals -> local_user (user_id));
-diesel::joinable!(proposals -> post (post_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1281,6 +1265,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
-  proposals,
   posts
 );

@@ -72,10 +72,6 @@ use lemmy_api_crud::community::list::list_communities_ltree;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
-use lemmy_api_crud::proposals::create::create_proposal;
-use lemmy_api_crud::proposals::delete::delete_proposal;
-use lemmy_api_crud::proposals::list::list_proposals;
-use lemmy_api_crud::proposals::update::update_proposal;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -335,13 +331,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_custom_emoji))
             .route("/delete", post().to(delete_custom_emoji))
             .route("/list", get().to(list_custom_emojis)),
-        )
-        .service(
-          scope("/proposal")
-            .route("", post().to(create_proposal))
-            .route("", put().to(update_proposal))
-            .route("/delete", post().to(delete_proposal))
-            .route("/list", get().to(list_proposals)),
         )
         .service(
           scope("/oauth-provider")

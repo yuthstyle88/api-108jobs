@@ -40,7 +40,6 @@ pub mod tag;
 pub mod tagline;
 pub mod chat_room;
 pub mod chat_message;
-pub mod proposal;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

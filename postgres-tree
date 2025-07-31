@@ -1,0 +1,25 @@
+CREATE OR REPLACE FUNCTION build_json_tree(root ltree)
+    RETURNS jsonb LANGUAGE plpgsql AS
+$$
+DECLARE
+    children jsonb := '[]'::jsonb;
+    child jsonb;
+BEGIN
+    FOR child IN
+        SELECT build_json_tree(path)
+        FROM   test
+        WHERE  subpath(path,0,nlevel(path)-1) = root
+        ORDER  BY path
+        LOOP
+            children := children || jsonb_build_array(child);
+        END LOOP;
+
+    RETURN jsonb_build_object(
+            'name', split_part(root::text,'.',nlevel(root)),
+            'children', children
+           );
+END;
+$$;
+
+-- เรียกใช้:
+SELECT jsonb_pretty(build_json_tree('Top'::ltree));

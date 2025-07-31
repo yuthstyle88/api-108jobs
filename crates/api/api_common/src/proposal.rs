@@ -7,7 +7,6 @@ pub struct CreateProposalResponse {
     pub budget: i32,
     pub working_days: i32,
     pub brief_url: Option<String>,
-    pub service_id: PostId,
     pub user_id: LocalUserId,
     pub post_id: PostId,
 }

@@ -32,7 +32,6 @@ pub struct EditProposal {
   pub budget: Option<f64>,
   pub working_days: Option<i32>,
   pub brief_url: Option<String>,
-  pub updated_at: Option<chrono::DateTime<Utc>>,
 }
 
 // List proposals with pagination

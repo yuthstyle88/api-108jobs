@@ -211,8 +211,6 @@ pub struct GetPosts {
   pub self_promotion: Option<bool>,
   /// If false, then show posts with media attached (even if your user setting is to hide them)
   pub hide_media: Option<bool>,
-  /// Whether to automatically mark fetched posts as read.
-  pub mark_as_read: Option<bool>,
   /// If true, then only show posts with no proposals
   pub no_proposals_only: Option<bool>,
   pub intended_use: Option<IntendedUse>,

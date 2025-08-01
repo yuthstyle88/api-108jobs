@@ -128,12 +128,10 @@ pub async fn create_post(
 
   PostActions::like(&mut context.pool(), &like_form).await?;
 
-  let do_send_email = !local_site.disable_email_notifications;
   send_local_notifs(
     &inserted_post,
     None,
     &local_user_view.person,
-    do_send_email,
     &context,
   )
   .await?;

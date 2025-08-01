@@ -23,7 +23,6 @@ pub struct CommentResponse {
 pub struct CreateComment {
   pub content: String,
   pub post_id: PostId,
-  pub parent_id: Option<CommentId>,
   pub language_id: Option<LanguageId>,
 }
 
@@ -34,7 +33,6 @@ pub struct CreateComment {
 pub struct CreateCommentRequest {
   pub content: String,
   pub post_id: PostId,
-  pub parent_id: CommentId,
   pub language_id: LanguageId,
 }
 

@@ -141,7 +141,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
         local -> Bool,
-        path -> Ltree,
         distinguished -> Bool,
         language_id -> Int4,
         score -> Int8,

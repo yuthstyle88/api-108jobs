@@ -649,7 +649,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -657,7 +657,7 @@ mod tests {
       "A test comment".into(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let community_aggregates_before_delete = Community::read(pool, inserted_community.id).await?;
 

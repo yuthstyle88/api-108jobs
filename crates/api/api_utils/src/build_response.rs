@@ -1,11 +1,10 @@
 use crate::context::FastJobContext;
 use actix_web::web::Json;
 use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, InstanceId, PersonId, PostId},
+  newtypes::{CommentId, CommunityId, InstanceId, PostId},
   source::{
     actor_language::CommunityLanguage,
     comment::Comment,
-    comment_reply::{CommentReply, CommentReplyInsertForm},
     community::Community,
     person::Person,
     person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
@@ -130,67 +129,17 @@ pub async fn send_local_notifs(
   post: &Post,
   comment_opt: Option<&Comment>,
   person: &Person,
-  do_send_email: bool,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
-  let parent_creator =
-    notify_parent_creator(person, post, comment_opt, do_send_email, context).await?;
-
-  send_local_mentions(post, comment_opt, person, parent_creator, context).await?;
+  send_local_mentions(post, comment_opt, person, context).await?;
 
   Ok(())
-}
-
-async fn notify_parent_creator(
-  person: &Person,
-  post: &Post,
-  comment_opt: Option<&Comment>,
-  _do_send_email: bool,
-  context: &FastJobContext,
-) -> FastJobResult<Option<PersonId>> {
-  let Some(comment) = comment_opt else {
-    return Ok(None);
-  };
-
-  // Get the parent data
-  let (parent_creator_id, _parent_comment) =
-    if let Some(parent_comment_id) = comment.parent_comment_id() {
-      let parent_comment = Comment::read(&mut context.pool(), parent_comment_id).await?;
-      (parent_comment.creator_id, Some(parent_comment))
-    } else {
-      (post.creator_id, None)
-    };
-
-  // Dont send notification to yourself
-  if parent_creator_id == person.id {
-    return Ok(None);
-  }
-
-  let Ok(user_view) = LocalUserView::read_person(&mut context.pool(), parent_creator_id).await
-  else {
-    return Ok(None);
-  };
-
-  let comment_reply_form = CommentReplyInsertForm {
-    recipient_id: user_view.person.id,
-    comment_id: comment.id,
-    read: None,
-  };
-
-  // Allow this to fail softly, since comment edits might re-update or replace it
-  // Let the uniqueness handle this fail
-  CommentReply::create(&mut context.pool(), &comment_reply_form)
-    .await
-    .ok();
-
-  Ok(Some(user_view.person.id))
 }
 
 async fn send_local_mentions(
   post: &Post,
   comment_opt: Option<&Comment>,
   person: &Person,
-  parent_creator_id: Option<PersonId>,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
   let content = if let Some(comment) = comment_opt {
@@ -207,11 +156,6 @@ async fn send_local_mentions(
     else {
       continue;
     };
-
-    // Dont send any mention notification to parent creator nor to yourself
-    if Some(user_view.person.id) == parent_creator_id || user_view.person.id == person.id {
-      continue;
-    }
 
     let _ = insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
   }

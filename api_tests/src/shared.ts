@@ -1008,18 +1008,6 @@ export async function purgeAllPosts(api: LemmyHttp) {
   );
 }
 
-export function getCommentParentId(comment: Comment): number | undefined {
-  let split = comment.path.split(".");
-  // remove the 0
-  split.shift();
-
-  if (split.length > 1) {
-    return Number(split[split.length - 2]);
-  } else {
-    console.error(`Failed to extract comment parent id from ${comment.path}`);
-    return undefined;
-  }
-}
 
 export async function waitUntil<T>(
   fetcher: () => Promise<T>,

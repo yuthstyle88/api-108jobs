@@ -564,7 +564,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let mut comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
 
@@ -576,7 +576,7 @@ mod tests {
       "A test comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let child_comment_like =
       CommentLikeForm::new(another_inserted_person.id, inserted_child_comment.id, 1);
@@ -628,9 +628,9 @@ mod tests {
     // assert_eq!(0, after_parent_comment_delete.comment_score);
 
     // Add in the two comments again, then delete the post.
-    let new_parent_comment = Comment::create(pool, &comment_form, None).await?;
+    let new_parent_comment = Comment::create(pool, &comment_form).await?;
     let _new_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&new_parent_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
     comment_like.comment_id = new_parent_comment.id;
     CommentActions::like(pool, &comment_like).await?;
     let after_comment_add = Person::read(pool, inserted_person.id).await?;

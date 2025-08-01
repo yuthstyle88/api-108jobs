@@ -1,12 +1,6 @@
-
-use lemmy_db_schema::{
-  source::{
-    community::{Community, CommunityInsertForm, CommunityUpdateForm},
-  },
-};
+use lemmy_db_schema::source::community::Community;
 
 use std::ops::Deref;
-use url::Url;
 
 
 #[derive(Clone, Debug)]

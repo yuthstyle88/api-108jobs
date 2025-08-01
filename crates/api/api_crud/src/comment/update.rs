@@ -76,7 +76,6 @@ pub async fn update_comment(
     &orig_comment.post,
     Some(&updated_comment),
     &local_user_view.person,
-    false,
     &context,
   )
   .await?;

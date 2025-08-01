@@ -1,10 +1,9 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{
   context::FastJobContext,
-  utils::{check_private_instance},
+  utils::check_private_instance,
 };
-use lemmy_apub_objects::objects::community::ApubCommunity;
-use lemmy_db_schema::source::{actor_language::CommunityLanguage, community::Community};
+use lemmy_db_schema::source::actor_language::CommunityLanguage;
 use lemmy_db_views_community::{
   api::{GetCommunity, GetCommunityResponse},
   CommunityView,

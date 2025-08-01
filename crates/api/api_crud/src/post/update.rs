@@ -162,7 +162,6 @@ pub async fn update_post(
     &updated_post,
     None,
     &local_user_view.person,
-    false,
     &context,
   )
   .await?;

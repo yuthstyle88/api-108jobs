@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  crate::newtypes::LtreeDef,
-  diesel_ltree::Ltree,
   i_love_jesus::CursorKeysModule,
   lemmy_db_schema_file::schema::{comment, comment_actions},
 };
@@ -37,14 +35,6 @@ pub struct Comment {
   pub deleted: bool,
   /// Whether the comment is local.
   pub local: bool,
-  #[cfg(feature = "full")]
-  #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
-  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-  /// The path / tree location of a comment, separated by dots, ending with the comment's id. Ex:
-  /// 0.24.27
-  pub path: Ltree,
-  #[cfg(not(feature = "full"))]
-  pub path: String,
   /// Whether the comment has been distinguished(speaking officially) by a mod.
   pub distinguished: bool,
   pub language_id: LanguageId,

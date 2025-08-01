@@ -25,8 +25,8 @@ use lemmy_db_schema::{
     oauth_account::OAuthAccount,
     person::{Person, PersonUpdateForm},
     post::{Post, PostActions, PostReadCommentsForm},
-    registration_application::RegistrationApplication,
-    site::Site,
+    registration_application::RegistrationApplication
+    ,
   },
   traits::{Crud, Likeable, ReadComments},
   utils::DbPool,

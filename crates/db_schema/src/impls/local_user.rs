@@ -336,7 +336,7 @@ impl LocalUserOptionHelper for Option<&LocalUser> {
       .map(|l| l.self_promotion)
       .unwrap_or(site.content_warning.is_some())
   }
-
+  
   fn hide_media(&self) -> bool {
     self.map(|l| l.hide_media).unwrap_or(false)
   }

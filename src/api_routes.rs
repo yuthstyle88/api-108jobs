@@ -72,6 +72,7 @@ use lemmy_api_crud::community::list::list_communities_ltree;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
+use lemmy_api_crud::post::list::list_posts;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -175,6 +176,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/post")
             .route("", get().to(get_post))
+            .route("/list", get().to(list_posts))
             .route("", put().to(update_post))
             .route("/delete", post().to(delete_post))
             .route("/remove", post().to(remove_post))

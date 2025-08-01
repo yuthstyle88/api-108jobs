@@ -2,8 +2,6 @@ use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::settings::structs::RedisConfig;
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 pub struct RedisClient {
   connection: MultiplexedConnection,

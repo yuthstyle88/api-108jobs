@@ -1,18 +1,15 @@
 use crate::PostView;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::{
-  newtypes::{
-    CommentId,
-    CommunityId,
-    DbUrl,
-    LanguageId,
-    PaginationCursor,
-    PostId,
-    TagId,
-  },
-  PostFeatureType,
-};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
+use lemmy_db_schema::{newtypes::{
+  CommentId,
+  CommunityId,
+  DbUrl,
+  LanguageId,
+  PaginationCursor,
+  PostId,
+  TagId,
+}, PostFeatureType};
+use lemmy_db_schema_file::enums::{IntendedUse, JobType, PostNotifications, PostSortType};
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -206,25 +203,25 @@ pub struct GetPostResponse {
 /// Get a list of posts.
 #[serde(rename_all = "camelCase")]
 pub struct GetPosts {
-  pub type_: Option<ListingType>,
+  pub catalog_id: Option<CommunityId>,
+  pub catalog_name: Option<String>,
   pub sort: Option<PostSortType>,
-  /// Filter to within a given time range, in seconds.
-  /// IE 60 would give results for the past minute.
-  /// Use Zero to override the local_site and local_user time_range.
-  pub time_range_seconds: Option<i32>,
-  pub community_id: Option<CommunityId>,
-  pub community_name: Option<String>,
   pub show_hidden: Option<bool>,
-  /// If true, then show the read posts (even if your user setting is to hide them)
-  pub show_read: Option<bool>,
   /// If true, then show the self_promotion posts (even if your user setting is to hide them)
   pub self_promotion: Option<bool>,
   /// If false, then show posts with media attached (even if your user setting is to hide them)
   pub hide_media: Option<bool>,
   /// Whether to automatically mark fetched posts as read.
   pub mark_as_read: Option<bool>,
-  /// If true, then only show posts with no comments
-  pub no_comments_only: Option<bool>,
+  /// If true, then only show posts with no proposals
+  pub no_proposals_only: Option<bool>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  /// Minimum budget in your preferred currency
+  pub budget_min: Option<i64>,
+  /// Maximum budget in your preferred currency
+  pub budget_max: Option<i64>,
+  pub requires_english: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

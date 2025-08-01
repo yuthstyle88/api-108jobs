@@ -6,7 +6,7 @@ use diesel::{
   dsl::{exists, not},
   pg::Pg,
   query_builder::AsQuery,
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, PgTextExpressionMethods,
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods,
   QueryDsl, SelectableHelper, TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
@@ -46,6 +46,7 @@ use lemmy_utils::utils::validation::is_valid_post_title;
 use tracing::debug;
 #[cfg(feature = "full")]
 use url::Url;
+use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
@@ -206,8 +207,12 @@ pub struct PostQuery<'a> {
   pub show_read: Option<bool>,
   pub self_promotion: Option<bool>,
   pub hide_media: Option<bool>,
-  pub no_comments_only: Option<bool>,
-  pub keyword_blocks: Option<Vec<String>>,
+  pub no_proposals_only: Option<bool>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub budget_min: Option<i64>,
+  pub budget_max: Option<i64>,
+  pub requires_english: Option<bool>,
   pub cursor_data: Option<Post>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -344,12 +349,23 @@ impl PostQuery<'_> {
     };
 
     // Filter to show only posts with no comments
-    if o.no_comments_only.unwrap_or_default() {
+    if o.no_proposals_only.unwrap_or_default() {
       query = query.filter(post::comments.eq(0));
     };
 
     if !o.show_read.unwrap_or(o.local_user.show_read_posts()) {
       query = query.filter(post_actions::read_at.is_null());
+    }
+
+    if  o.requires_english.unwrap_or_default() {
+      query = query.filter(post::is_english_required);
+    }
+
+    if let Some(min) = o.budget_min {
+      query = query.filter(post::budget.ge(min as f64));
+    }
+    if let Some(max) = o.budget_max {
+      query = query.filter(post::budget.le(max as f64));
     }
 
     // Hide the hidden posts
@@ -399,18 +415,7 @@ impl PostQuery<'_> {
 
       query = query.filter(filter_blocked());
 
-      if let Some(keyword_blocks) = o.keyword_blocks {
-        for keyword in keyword_blocks {
-          let pattern = format!("%{}%", keyword);
-          query = query.filter(post::name.not_ilike(pattern.clone()));
-          query = query.filter(post::url.is_null().or(post::url.not_ilike(pattern.clone())));
-          query = query.filter(
-            post::body
-              .is_null()
-              .or(post::body.not_ilike(pattern.clone())),
-          );
-        }
-      }
+
     }
 
     // Filter by the time range
@@ -1961,36 +1966,6 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listings_no_comments_only(data: &mut Data) -> FastJobResult<()> {
-    let pool = &data.pool();
-    let pool = &mut pool.into();
-
-    // Create a comment for a post
-    let comment_form =
-      CommentInsertForm::new(data.tegan.person.id, data.post.id, "a comment".to_owned());
-    Comment::create(pool, &comment_form, None).await?;
-
-    // Make sure it doesnt come back with the no_comments option
-    let post_listings_no_comments = PostQuery {
-      sort: Some(PostSortType::New),
-      no_comments_only: Some(true),
-      local_user: Some(&data.tegan.local_user),
-      ..Default::default()
-    }
-    .list(&data.site, pool)
-    .await?;
-
-    assert_eq!(
-      vec![POST_WITH_TAGS, POST_BY_BOT],
-      names(&post_listings_no_comments)
-    );
-
-    Ok(())
-  }
-
-  #[test_context(Data)]
-  #[tokio::test]
-  #[serial]
   async fn post_listing_private_community(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
@@ -2192,7 +2167,6 @@ mod tests {
 
     let post_listings = PostQuery {
       local_user: Some(&data.tegan.local_user),
-      keyword_blocks,
       ..Default::default()
     }
     .list(&data.site, pool)

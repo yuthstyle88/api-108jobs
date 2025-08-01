@@ -10,7 +10,7 @@ fn test_errors_used() {
   current_dir.pop();
   current_dir.pop();
   for error in FastJobErrorType::iter() {
-    let search = format!("LemmyErrorType::{error}");
+    let search = format!("FastJobErrorType::{error}");
     let mut grep_all = Command::new("grep");
     let grep_all = grep_all
       .current_dir(current_dir.clone())
@@ -33,11 +33,11 @@ fn test_errors_used() {
     let grep_apub_out = std::str::from_utf8(&output.stdout).unwrap();
 
     if grep_all_out.is_empty() {
-      println!("LemmyErrorType::{} is unused", error);
+      println!("FastJobErrorType::{} is unused", error);
       unused_error_found = true;
     }
-    if search != "LemmyErrorType::FederationError" && grep_all_out == grep_apub_out {
-      println!("LemmyErrorType::{} is only used for federation", error);
+    if search != "FastJobErrorType::FederationError" && grep_all_out == grep_apub_out {
+      println!("FastJobErrorType::{} is only used for federation", error);
       unused_error_found = true;
     }
   }

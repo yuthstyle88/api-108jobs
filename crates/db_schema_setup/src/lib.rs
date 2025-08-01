@@ -313,7 +313,7 @@ fn run_selected_migrations(
   Ok(())
 }
 
-/// Makes `diesel::migration::Result` work with `anyhow` and `LemmyError`
+/// Makes `diesel::migration::Result` work with `anyhow` and `FastJobError`
 fn convert_err(e: Box<dyn std::error::Error + Send + Sync>) -> anyhow::Error {
   anyhow!(e)
 }

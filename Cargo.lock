@@ -542,6 +542,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert-json-diff"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "async-compat"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1013,6 +1023,12 @@ dependencies = [
  "libc",
  "shlex",
 ]
+
+[[package]]
+name = "cesu8"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d43a04d8753f35258c91f8ec639f792891f748a1edbd759cf1dcea3382ad83c"
 
 [[package]]
 name = "cexpr"
@@ -2095,6 +2111,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum_delegate"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8ea75f31022cba043afe037940d73684327e915f88f62478e778c3de914cd0a"
+dependencies = [
+ "enum_delegate_lib",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "enum_delegate_lib"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e1f6c3800b304a6be0012039e2a45a322a093539c45ab818d9e6895a39c90fe"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rand 0.8.5",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2656,6 +2696,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d1ad449764d627e22bfd7cd5e8868264fc9236e07c752972b4080cd351cb476"
 dependencies = [
  "utf8-width",
+]
+
+[[package]]
+name = "html2md"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cff9891f2e0d9048927fbdfc28b11bf378f6a93c7ba70b23d0fbee9af6071b4"
+dependencies = [
+ "html5ever 0.27.0",
+ "jni",
+ "lazy_static",
+ "markup5ever_rcdom 0.3.0",
+ "percent-encoding",
+ "regex",
 ]
 
 [[package]]
@@ -3223,6 +3277,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
+name = "jni"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6df18c2e3db7e453d3c6ac5b3e9d5182664d28788126d39b91f2d1e22b017ec"
+dependencies = [
+ "cesu8",
+ "combine",
+ "jni-sys",
+ "log",
+ "thiserror 1.0.69",
+ "walkdir",
+]
+
+[[package]]
+name = "jni-sys"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8eaf4bc02d17cbdd7ff4c7438cafcdf7fb9a4613313ad11b4f8fefe7d3fa0130"
+
+[[package]]
 name = "jobserver"
 version = "0.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3450,6 +3524,79 @@ dependencies = [
  "uuid",
  "webmention",
  "webpage",
+]
+
+[[package]]
+name = "lemmy_apub"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "either",
+ "enum_delegate",
+ "futures",
+ "futures-util",
+ "itertools 0.14.0",
+ "lemmy_api_utils",
+ "lemmy_apub_objects",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_comment",
+ "lemmy_db_views_community",
+ "lemmy_db_views_local_user",
+ "lemmy_db_views_person",
+ "lemmy_db_views_person_content_combined",
+ "lemmy_db_views_post",
+ "lemmy_db_views_search_combined",
+ "lemmy_db_views_site",
+ "lemmy_utils",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "strum",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "lemmy_apub_objects"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "anyhow",
+ "assert-json-diff",
+ "async-trait",
+ "chrono",
+ "either",
+ "futures",
+ "futures-util",
+ "html2md",
+ "html2text",
+ "itertools 0.14.0",
+ "lemmy_api_utils",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_local_user",
+ "lemmy_db_views_site",
+ "lemmy_utils",
+ "moka",
+ "once_cell",
+ "pretty_assertions",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "stringreader",
+ "tokio",
+ "tracing",
+ "url",
 ]
 
 [[package]]
@@ -3964,6 +4111,8 @@ dependencies = [
  "lemmy_api",
  "lemmy_api_crud",
  "lemmy_api_utils",
+ "lemmy_apub",
+ "lemmy_apub_objects",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_schema_setup",
@@ -6325,6 +6474,12 @@ dependencies = [
  "unicode-normalization",
  "unicode-properties",
 ]
+
+[[package]]
+name = "stringreader"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "913e7b03d63752f6cdd2df77da36749d82669904798fe8944b9ec3d23f159905"
 
 [[package]]
 name = "strsim"

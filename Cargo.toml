@@ -47,6 +47,8 @@ default = []
 
 [workspace]
 members = [
+    "crates/apub",
+    "crates/apub_objects",
     "crates/api/api",
     "crates/api/api_crud",
     "crates/api/api_common",
@@ -107,6 +109,8 @@ expect_used = "deny"
 as_conversions = "deny"
 
 [workspace.dependencies]
+lemmy_apub = { version = "=1.0.0-alpha.5", path = "./crates/apub" }
+lemmy_apub_objects = { version = "=1.0.0-alpha.5", path = "./crates/apub_objects" }
 lemmy_api = { version = "=1.0.0-alpha.5", path = "./crates/api/api" }
 lemmy_api_crud = { version = "=1.0.0-alpha.5", path = "./crates/api/api_crud" }
 lemmy_utils = { version = "=1.0.0-alpha.5", path = "./crates/utils", default-features = false }
@@ -230,6 +234,8 @@ slug = "0.1.6"
 redis = { version = "0.32.4", features = ["tokio-comp"] }
 
 [dependencies]
+lemmy_apub = { workspace = true }
+lemmy_apub_objects = { workspace = true }
 lemmy_api = { workspace = true }
 lemmy_api_crud = { workspace = true }
 lemmy_utils = { workspace = true }

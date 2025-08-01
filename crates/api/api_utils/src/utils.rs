@@ -279,18 +279,6 @@ pub fn check_self_promotion_allowed(self_promotion: Option<bool>, local_site: Op
   Ok(())
 }
 
-/// Read the site for an ap_id.
-///
-/// Used for GetCommunityResponse and GetPersonDetails
-pub async fn read_site_for_actor(
-  ap_id: DbUrl,
-  context: &FastJobContext,
-) -> FastJobResult<Option<Site>> {
-  let site_id = Site::instance_ap_id_from_url(ap_id.clone().into());
-  let site = Site::read_from_apub_id(&mut context.pool(), &site_id.into()).await?;
-  Ok(site)
-}
-
 pub async fn purge_post_images(
   url: Option<DbUrl>,
   thumbnail_url: Option<DbUrl>,

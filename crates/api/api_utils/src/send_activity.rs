@@ -92,7 +92,7 @@ pub enum SendActivityData {
   }
 }
 
-// TODO: instead of static, move this into LemmyContext. make sure that stopping the process with
+// TODO: instead of static, move this into FastJobContext. make sure that stopping the process with
 //       ctrl+c still works.
 static ACTIVITY_CHANNEL: LazyLock<ActivityChannel> = LazyLock::new(|| {
   let (sender, receiver) = mpsc::unbounded_channel();

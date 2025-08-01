@@ -56,10 +56,6 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
-
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "working_from_enum"))]
-  pub struct WorkingFromEnum;
 }
 
 diesel::table! {
@@ -380,28 +376,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::WorkingFromEnum;
-    use super::sql_types::IntendedUseEnum;
-
-    posts (id) {
-        id -> Int4,
-        job_title -> Varchar,
-        description -> Varchar,
-        is_english_required -> Bool,
-        example_url -> Nullable<Varchar>,
-        budget -> Float8,
-        deadline -> Nullable<Date>,
-        is_anonymous_post -> Bool,
-        creator_id -> Int4,
-        community_id -> Int4,
-        working_from -> WorkingFromEnum,
-        intended_use -> IntendedUseEnum,
-        created_at -> Nullable<Timestamptz>,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
 
 diesel::table! {
     instance_actions (person_id, instance_id) {
@@ -1265,5 +1239,4 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
-  posts
 );

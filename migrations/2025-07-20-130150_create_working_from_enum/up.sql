@@ -1,1 +1,0 @@
-CREATE TYPE working_from_enum AS ENUM ('Freelance', 'Contract', 'Parttime', 'Fulltime');

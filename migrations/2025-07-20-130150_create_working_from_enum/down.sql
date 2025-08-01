@@ -1,1 +1,0 @@
-DROP TYPE working_from_enum;

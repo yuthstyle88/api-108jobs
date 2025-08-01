@@ -383,6 +383,13 @@ impl PostQuery<'_> {
       ));
     }
 
+    if let Some(intended_use) = o.intended_use {
+      query = query.filter(post::intended_use.eq(intended_use));
+    }
+    if let Some(job_type) = o.job_type {
+      query = query.filter(post::job_type.eq(job_type));
+    }
+
     query = o.local_user.visible_communities_only(query);
 
     if !o.local_user.is_admin() {

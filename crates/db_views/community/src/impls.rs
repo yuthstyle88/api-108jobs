@@ -2,6 +2,7 @@ use crate::api::{CreateCommunity, CreateCommunityRequest};
 use crate::CommunityView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
+use diesel_ltree::nlevel;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
@@ -13,30 +14,18 @@ use lemmy_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    get_conn, limit_fetch, now, paginate,
     queries::{
-      filter_is_subscribed,
-      filter_not_unlisted_or_is_subscribed,
-      my_community_actions_join,
-      my_instance_actions_community_join,
-      my_local_user_admin_join,
+      filter_is_subscribed, filter_not_unlisted_or_is_subscribed, my_community_actions_join,
+      my_instance_actions_community_join, my_local_user_admin_join,
     },
-    seconds_to_pg_interval,
-    DbPool,
-    LowerKey,
+    seconds_to_pg_interval, DbPool, LowerKey,
   },
   CommunitySortType,
 };
 use lemmy_db_schema_file::{
   enums::ListingType,
-  schema::{
-    community,
-    community_actions
-    ,
-  },
+  schema::{community, community_actions},
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::utils::validation::get_required_trimmed;
@@ -96,6 +85,7 @@ pub struct CommunityQuery<'a> {
   pub listing_type: Option<ListingType>,
   pub sort: Option<CommunitySortType>,
   pub time_range_seconds: Option<i32>,
+  pub max_depth: Option<i32>,
   pub local_user: Option<&'a LocalUser>,
   pub self_promotion: Option<bool>,
   pub cursor_data: Option<Community>,
@@ -142,6 +132,10 @@ impl CommunityQuery<'_> {
       query = query.filter(community::self_promotion.eq(false));
     }
 
+    if let Some(depth) = o.max_depth {
+      query = query.filter(nlevel(community::path).eq(depth));
+    }
+
     query = o.local_user.visible_communities_only(query);
 
     // Filter by the time range
@@ -186,7 +180,7 @@ impl TryFrom<CreateCommunityRequest> for CreateCommunity {
 
   fn try_from(mut value: CreateCommunityRequest) -> Result<Self, Self::Error> {
     let name = get_required_trimmed(&value.name, FastJobErrorType::EmptyTitle)?;
-    
+
     let title = value.title.take().unwrap_or_default();
 
     let slug = value.slug.take().unwrap_or_else(|| slugify(&name));
@@ -209,19 +203,13 @@ impl TryFrom<CreateCommunityRequest> for CreateCommunity {
   }
 }
 
-
 #[cfg(test)]
 #[allow(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::CommunityQuery, CommunityView};
   use lemmy_db_schema::{
     source::{
-      community::{
-        Community
-        ,
-        CommunityInsertForm,
-        CommunityUpdateForm,
-      },
+      community::{Community, CommunityInsertForm, CommunityUpdateForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
       person::{Person, PersonInsertForm},
@@ -263,7 +251,7 @@ mod tests {
           instance.id,
           "test_community_1".to_string(),
           "nada1".to_owned(),
-          "na-da-1".to_string()
+          "na-da-1".to_string(),
         ),
       )
       .await?,
@@ -273,7 +261,7 @@ mod tests {
           instance.id,
           "test_community_2".to_string(),
           "nada2".to_owned(),
-          "na-da-2".to_string()
+          "na-da-2".to_string(),
         ),
       )
       .await?,
@@ -283,7 +271,7 @@ mod tests {
           instance.id,
           "test_community_3".to_string(),
           "nada3".to_owned(),
-          "na-da-3".to_string()
+          "na-da-3".to_string(),
         ),
       )
       .await?,
@@ -335,8 +323,7 @@ mod tests {
     let unauthenticated = CommunityView::read(pool, community.id, None).await?;
     assert!(unauthenticated.community_actions.is_none());
 
-    let authenticated =
-      CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
+    let authenticated = CommunityView::read(pool, community.id, Some(&data.local_user)).await?;
     assert!(authenticated.community_actions.is_none());
 
     let with_pending_follow =
@@ -405,8 +392,7 @@ mod tests {
     .await?;
     assert_eq!(data.communities.len(), authenticated_query.len());
 
-    let unauthenticated_community =
-      CommunityView::read(pool, data.communities[0].id, None).await;
+    let unauthenticated_community = CommunityView::read(pool, data.communities[0].id, None).await;
     assert!(unauthenticated_community.is_err());
 
     let authenticated_community =

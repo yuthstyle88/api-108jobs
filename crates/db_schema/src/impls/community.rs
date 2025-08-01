@@ -1,33 +1,22 @@
+use crate::source::community::CommunityChangeset;
 use crate::{
   diesel::{JoinOnDsl, OptionalExtension},
   newtypes::{CommunityId, DbUrl, PersonId},
   source::{
     actor_language::CommunityLanguage,
-    community::{
-      Community,
-      CommunityActions,
-      CommunityInsertForm,
-      CommunityUpdateForm,
-    },
+    community::{Community, CommunityActions, CommunityInsertForm, CommunityUpdateForm},
     post::Post,
   },
-  traits::{ApubActor, Crud,},
+  traits::{ApubActor, Crud},
   utils::{
     functions::{coalesce_2_nullable, lower, random_smallint},
-    get_conn,
-    uplete,
-    DbPool,
+    get_conn, uplete, DbPool,
   },
 };
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
-  select,
-  update,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  QueryDsl,
+  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
 };
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use diesel_ltree::Ltree;
@@ -43,7 +32,6 @@ use lemmy_utils::{
 use moka::future::Cache;
 use std::sync::{Arc, LazyLock};
 use url::Url;
-use crate::source::community::CommunityChangeset;
 
 impl Crud for Community {
   type InsertForm = CommunityInsertForm;
@@ -70,9 +58,7 @@ impl Crud for Community {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    
 
-    
     // Create a changeset from the form
     let changeset = CommunityChangeset {
       title: form.title.clone(),
@@ -95,7 +81,7 @@ impl Crud for Community {
       description: form.description.clone(),
       local_removed: form.local_removed,
     };
-    
+
     // Execute the update statement with the explicit changeset
     update(community::table.find(community_id))
       .set(changeset)
@@ -119,29 +105,31 @@ impl Community {
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    let community = conn.transaction::<_, FastJobError, _>(|txn| {
-      Box::pin(async move {
-        let mut community: Community = insert_into(community::table)
+    let community = conn
+      .transaction::<_, FastJobError, _>(|txn| {
+        Box::pin(async move {
+          let mut community: Community = insert_into(community::table)
             .values(community_form)
             .get_result(txn)
             .await
             .with_fastjob_type(FastJobErrorType::CouldntCreateCommunity)?;
 
-        let path = match parent_opt {
-          Some(parent) => Ltree(format!("{}.{}", parent.path.0, community.id.0)),
-          None => Ltree(community.id.0.to_string()),
-        };
+          let path = match parent_opt {
+            Some(parent) => Ltree(format!("{}.{}", parent.path.0, community.id.0)),
+            None => Ltree(community.id.0.to_string()),
+          };
 
-        update(community::table.filter(community::id.eq(community.id)))
+          update(community::table.filter(community::id.eq(community.id)))
             .set(community::path.eq(path.clone()))
             .execute(txn)
             .await?;
 
-        community.path = path;
+          community.path = path;
 
-        Ok(community)
+          Ok(community)
+        })
       })
-    }).await?;
+      .await?;
 
     CommunityLanguage::update(pool, vec![], community.id).await?;
 
@@ -151,22 +139,21 @@ impl Community {
   pub async fn check_community_slug_taken(pool: &mut DbPool<'_>, slug: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
-      community::table
-          .filter(lower(community::slug).eq(slug.to_lowercase())),
+      community::table.filter(lower(community::slug).eq(slug.to_lowercase())),
     )))
-        .get_result::<bool>(conn)
-        .await?
-        .then_some(())
-        .ok_or(FastJobErrorType::SlugAlreadyExists.into())
+    .get_result::<bool>(conn)
+    .await?
+    .then_some(())
+    .ok_or(FastJobErrorType::SlugAlreadyExists.into())
   }
 
   pub async fn list_all_communities(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Community>> {
     let conn = &mut get_conn(pool).await?;
 
     let communities = community::table
-        .order_by(community::path.asc())
-        .load::<Community>(conn)
-        .await?;
+      .order_by(community::path.asc())
+      .load::<Community>(conn)
+      .await?;
 
     Ok(communities)
   }
@@ -471,7 +458,6 @@ impl ApubActor for Community {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-
   fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
@@ -488,12 +474,7 @@ mod tests {
   use crate::{
     source::{
       comment::{Comment, CommentInsertForm},
-      community::{
-        Community,
-        CommunityActions,
-        CommunityInsertForm,
-        CommunityUpdateForm,
-      },
+      community::{Community, CommunityActions, CommunityInsertForm, CommunityUpdateForm},
       instance::Instance,
       local_user::LocalUser,
       person::{Person, PersonInsertForm},
@@ -570,8 +551,6 @@ mod tests {
       active: false,
       is_new: false,
     };
-
-
 
     let moderator_person_ids = vec![inserted_bobby.id, inserted_artemis.id];
 

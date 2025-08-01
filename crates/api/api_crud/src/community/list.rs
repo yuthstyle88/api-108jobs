@@ -25,6 +25,7 @@ struct CommunitiesListCacheKey {
   type_: Option<ListingType>,
   sort: Option<CommunitySortType>,
   time_range_seconds: Option<i32>,
+  max_depth: Option<i32>,
   limit: Option<i64>,
   self_promotion: Option<bool>,
   page_cursor: Option<PaginationCursor>,
@@ -37,6 +38,7 @@ impl PartialEq for CommunitiesListCacheKey {
     self.type_ == other.type_
       && self.sort == other.sort
       && self.time_range_seconds == other.time_range_seconds
+      && self.max_depth == other.max_depth
       && self.limit == other.limit
       && self.self_promotion == other.self_promotion
       && self.page_cursor == other.page_cursor
@@ -50,6 +52,7 @@ impl Hash for CommunitiesListCacheKey {
     self.type_.hash(state);
     self.sort.hash(state);
     self.time_range_seconds.hash(state);
+    self.max_depth.hash(state);
     self.limit.hash(state);
     self.self_promotion.hash(state);
     self.page_cursor.hash(state);
@@ -85,6 +88,7 @@ pub async fn list_communities(
     type_: data.type_,
     sort: data.sort,
     time_range_seconds: data.time_range_seconds,
+    max_depth: data.max_depth,
     limit: data.limit,
     self_promotion: data.self_promotion,
     page_cursor: data.page_cursor.clone(),
@@ -122,6 +126,7 @@ pub async fn list_communities(
     self_promotion: Some(self_promotion),
     sort: data.sort,
     time_range_seconds: data.time_range_seconds,
+    max_depth: data.max_depth,
     local_user: local_user.as_ref(),
     cursor_data,
     page_back: data.page_back,

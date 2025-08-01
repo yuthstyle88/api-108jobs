@@ -194,6 +194,7 @@ pub struct ListCommunities {
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
   pub time_range_seconds: Option<i32>,
+  pub max_depth: Option<i32>,
   pub self_promotion: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,

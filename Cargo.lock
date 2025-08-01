@@ -3547,6 +3547,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "diesel",
  "diesel-async",
+ "diesel_ltree",
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",

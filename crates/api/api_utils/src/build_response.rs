@@ -19,10 +19,7 @@ use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
 use lemmy_db_views_community::{api::CommunityResponse, CommunityNodeView, CommunityView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
-use lemmy_utils::{
-  error::FastJobResult,
-  utils::mention::scrape_text_for_mentions,
-};
+use lemmy_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
 
@@ -75,7 +72,9 @@ pub async fn build_post_response(
   Ok(Json(PostResponse { post_view }))
 }
 
-pub fn build_community_tree(flat_list: Vec<Community>) ->  FastJobResult<Json<ListCommunitiesTreeResponse>> {
+pub fn build_community_tree(
+  flat_list: Vec<Community>,
+) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
   let mut node_map: HashMap<String, CommunityNodeView> = HashMap::new();
   let mut all_children: HashSet<String> = HashSet::new();
 
@@ -85,7 +84,7 @@ pub fn build_community_tree(flat_list: Vec<Community>) ->  FastJobResult<Json<Li
     node_map.insert(
       path_str.clone(),
       CommunityNodeView {
-       community: community.clone(),
+        community: community.clone(),
         children: Vec::new(),
       },
     );
@@ -109,17 +108,20 @@ pub fn build_community_tree(flat_list: Vec<Community>) ->  FastJobResult<Json<Li
 
   // Collect root nodes (not children of anyone else)
   let roots: Vec<CommunityNodeView> = node_map
-      .into_iter()
-      .filter_map(|(path, node)| {
-        if !all_children.contains(&path) {
-          Some(node)
-        } else {
-          None
-        }
-      })
-      .collect();
+    .into_iter()
+    .filter_map(|(path, node)| {
+      if !all_children.contains(&path) {
+        Some(node)
+      } else {
+        None
+      }
+    })
+    .collect();
 
-  Ok(Json(ListCommunitiesTreeResponse { communities: roots.clone(), count: roots.len() as i32 }))
+  Ok(Json(ListCommunitiesTreeResponse {
+    communities: roots.clone(),
+    count: roots.len() as i32,
+  }))
 }
 
 /// Scans the post/comment content for mentions, then sends notifications via db and multilang
@@ -134,14 +136,7 @@ pub async fn send_local_notifs(
   let parent_creator =
     notify_parent_creator(person, post, comment_opt, do_send_email, context).await?;
 
-  send_local_mentions(
-    post,
-    comment_opt,
-    person,
-    parent_creator,
-    context,
-  )
-  .await?;
+  send_local_mentions(post, comment_opt, person, parent_creator, context).await?;
 
   Ok(())
 }
@@ -170,7 +165,6 @@ async fn notify_parent_creator(
   if parent_creator_id == person.id {
     return Ok(None);
   }
-
 
   let Ok(user_view) = LocalUserView::read_person(&mut context.pool(), parent_creator_id).await
   else {
@@ -218,7 +212,6 @@ async fn send_local_mentions(
     if Some(user_view.person.id) == parent_creator_id || user_view.person.id == person.id {
       continue;
     }
-
 
     let _ = insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
   }

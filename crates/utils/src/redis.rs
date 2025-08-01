@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub struct RedisClient {
-  connection: Arc<Mutex<MultiplexedConnection>>,
+  connection: MultiplexedConnection,
 }
 
 impl RedisClient {
@@ -27,22 +27,21 @@ impl RedisClient {
     println!("Connected to Redis at {}", config.connection);
 
     Ok(Self {
-      connection: Arc::new(Mutex::new(conn)),
+      connection: conn,
     })
   }
 
   /// Set a JSON-serialized value with expiration (unit second)
   pub async fn set_value_with_expiry<T: serde::Serialize>(
-    &self,
+    &mut self,
     key: &str,
     value: T,
     expiry: usize,
   ) -> FastJobResult<()> {
-    let mut conn = self.connection.lock().await;
     let value_str =
       serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
 
-    let result: redis::RedisResult<()> = conn.set_ex(key, value_str, expiry as u64).await;
+    let result: redis::RedisResult<()> = self.connection.set_ex(key, value_str, expiry as u64).await;
 
     result.map_err(|_| FastJobErrorType::RedisSetFailed)?;
 
@@ -51,11 +50,10 @@ impl RedisClient {
 
   /// Get and deserialize a JSON-encoded value
   pub async fn get_value<T: serde::de::DeserializeOwned>(
-    &self,
+    &mut self,
     key: &str,
   ) -> FastJobResult<Option<T>> {
-    let mut conn = self.connection.lock().await;
-    let value: Option<String> = conn
+    let value: Option<String> = self.connection
       .get(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
@@ -65,9 +63,8 @@ impl RedisClient {
   }
 
   /// Delete a key
-  pub async fn delete_key(&self, key: &str) -> FastJobResult<()> {
-    let mut conn = self.connection.lock().await;
-    let deleted: i64 = conn
+  pub async fn delete_key(&mut self, key: &str) -> FastJobResult<()> {
+    let deleted: i64 = self.connection
       .del(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisDeleteFailed)?;

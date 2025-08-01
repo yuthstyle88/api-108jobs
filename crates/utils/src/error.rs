@@ -236,6 +236,13 @@ pub enum FastJobErrorType {
   CouldntUpdateProposal,
   CouldntDeleteProposal,
   CouldntListProposals,
+  RedisSetFailed,
+  SerializationFailed,
+  RedisGetFailed,
+  DeserializationFailed,
+  RedisDeleteFailed,
+  RedisKeyNotFound,
+  RedisConnectionFailed,
 }
 
 cfg_if! {

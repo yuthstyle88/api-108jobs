@@ -42,6 +42,7 @@ use serde_json::json;
 use std::path::Path;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_utils::redis::RedisClient;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -162,13 +163,15 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-
+  let redis_client = RedisClient::new(SETTINGS.redis.clone()).await?;
+  
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
+    redis_client
   );
 
   let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone())

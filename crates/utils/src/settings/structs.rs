@@ -52,7 +52,8 @@ pub struct Settings {
   pub json_logging: bool,
   #[doku(skip)]
   pub phoenix_url: Option<Url>,
-  pub google: GoogleConfig
+  pub google: GoogleConfig,
+  pub redis: RedisConfig,
 }
 
 impl Settings {
@@ -180,6 +181,22 @@ pub struct GoogleConfig {
   pub client_id: String,
   pub redirect_url: String,
 }
+
+/// Configuration for connecting to a Redis instance.
+#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[serde(default, deny_unknown_fields)]
+pub struct RedisConfig {
+  /// Redis connection string (e.g., `redis://localhost:6379`).
+  ///
+  /// This should follow the standard Redis URI format.
+  #[doku(example = "redis://localhost:6379")]
+  pub connection: String,
+
+  /// URL to which Redis-related redirects should point.
+  pub redirect_url: String,
+}
+
+
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
 #[serde(default, deny_unknown_fields)]

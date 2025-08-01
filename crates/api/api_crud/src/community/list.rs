@@ -7,7 +7,11 @@ use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::CommunitySortType;
 use lemmy_db_schema_file::enums::ListingType;
 use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
-use lemmy_db_views_community::{api::{ListCommunities, ListCommunitiesResponse}, impls::CommunityQuery, CommunityView};
+use lemmy_db_views_community::{
+  api::{ListCommunities, ListCommunitiesResponse},
+  impls::CommunityQuery,
+  CommunityView,
+};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
@@ -55,17 +59,17 @@ impl Hash for CommunitiesListCacheKey {
 }
 
 // Create a static cache instance with a 5-minute expiration time
-static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitiesResponse>> = 
-    LazyLock::new(|| {
-        Cache::builder()
-            // Set a reasonable maximum size to prevent memory issues
-            .max_capacity(1000)
-            // Set a 5-minute time-to-live for cache entries
-            .time_to_live(Duration::from_secs(300))
-            // Set a 10-minute time-to-idle for cache entries
-            .time_to_idle(Duration::from_secs(600))
-            .build()
-    });
+static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitiesResponse>> =
+  LazyLock::new(|| {
+    Cache::builder()
+      // Set a reasonable maximum size to prevent memory issues
+      .max_capacity(1000)
+      // Set a 5-minute time-to-live for cache entries
+      .time_to_live(Duration::from_secs(300))
+      // Set a 10-minute time-to-idle for cache entries
+      .time_to_idle(Duration::from_secs(600))
+      .build()
+  });
 
 pub async fn list_communities(
   data: Query<ListCommunities>,

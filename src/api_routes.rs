@@ -147,9 +147,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/community")
             .route("", put().to(update_community))
             .route("/random", get().to(get_random_community))
-            //Todo move to apub
-            .route("/list", get().to(list_communities))
-           // .route("/list", get().to(list_communities_ltree))
+            .route("/list", get().to(list_communities_ltree))
             .route("/list/children", get().to(list_communities))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))

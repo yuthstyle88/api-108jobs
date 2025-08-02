@@ -137,7 +137,6 @@ pub async fn create_comment(
     build_comment_response(
       &context,
       inserted_comment.id,
-      Some(local_user_view),
       local_instance_id,
     )
     .await?,

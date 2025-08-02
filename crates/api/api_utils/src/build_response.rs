@@ -25,7 +25,6 @@ use url::Url;
 pub async fn build_comment_response(
     context: &FastJobContext,
     comment_id: CommentId,
-    _local_user_view: Option<LocalUserView>,
     local_instance_id: InstanceId,
 ) -> FastJobResult<CommentResponse> {
   let comment_view = CommentView::read(

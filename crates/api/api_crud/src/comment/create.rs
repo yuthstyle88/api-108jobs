@@ -18,14 +18,11 @@ use lemmy_db_schema::{
 use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
 use url;
-use lemmy_db_schema::newtypes::{PersonId, PostId};
-use lemmy_db_schema_file::schema::local_site::dsl::local_site;
 use lemmy_utils::error::FastJobError;
 
 pub async fn create_comment(
@@ -100,7 +97,7 @@ pub async fn create_comment(
 
   // Create the comment
   let inserted_comment =
-    Comment::create(&mut context.pool(), &comment_form, None).await?;
+    Comment::create(&mut context.pool(), &comment_form).await?;
 
   tracing::info!("Successfully inserted comment: {:#?}", inserted_comment);
 

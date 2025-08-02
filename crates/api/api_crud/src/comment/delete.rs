@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
-  build_response::build_comment_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
@@ -10,7 +9,7 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_db_views_comment::{
-  api::{CommentResponse, DeleteComment},
+  api::{ DeleteComment},
   CommentView,
 };
 use lemmy_db_views_local_user::LocalUserView;
@@ -53,9 +52,7 @@ pub async fn delete_comment(
     },
   )
   .await?;
-
-  let updated_comment_id = updated_comment.id;
-
+  
   ActivityChannel::submit_activity(
     SendActivityData::DeleteComment(
       updated_comment,

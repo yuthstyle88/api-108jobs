@@ -35,11 +35,7 @@ pub async fn list_posts(
   let hide_media = data.hide_media;
 
   let local_user = local_user_view.as_ref().map(|u| &u.local_user);
-  let listing_type = Some(listing_type_with_default(
-    local_user,
-    &site_view.local_site,
-    community_id,
-  ));
+  let listing_type = Some(listing_type_with_default());
 
   let sort = Some(post_sort_type_with_default(
     data.sort,

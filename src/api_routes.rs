@@ -99,7 +99,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_routes::images::{
   delete::{

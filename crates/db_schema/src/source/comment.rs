@@ -41,14 +41,15 @@ pub struct Comment {
   pub score: i64,
   pub upvotes: i64,
   pub downvotes: i64,
-  /// The total number of children in this comment branch.
-  pub child_count: i32,
   #[serde(skip)]
   pub hot_rank: f64,
   #[serde(skip)]
   pub controversy_rank: f64,
   pub report_count: i16,
   pub unresolved_report_count: i16,
+  pub budget: Option<i32>,
+  pub working_days: Option<i32>,
+  pub brief_url: Option<String>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
@@ -57,7 +58,7 @@ pub struct Comment {
   derive(Insertable, AsChangeset, Serialize, Deserialize)
 )]
 #[cfg_attr(feature = "full", diesel(table_name = comment))]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "full", serde(rename_all = "camelCase"))]
 pub struct CommentInsertForm {
   pub creator_id: PersonId,
   pub post_id: PostId,
@@ -76,12 +77,18 @@ pub struct CommentInsertForm {
   pub distinguished: Option<bool>,
   #[new(default)]
   pub language_id: Option<LanguageId>,
+  #[new(default)]
+  pub budget: Option<i32>,
+  #[new(default)]
+  pub working_days: Option<i32>,
+  #[new(default)]
+  pub brief_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "full", derive(AsChangeset, Serialize, Deserialize))]
 #[cfg_attr(feature = "full", diesel(table_name = comment))]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "full", serde(rename_all = "camelCase"))]
 pub struct CommentUpdateForm {
   pub content: Option<String>,
   pub removed: Option<bool>,
@@ -91,6 +98,9 @@ pub struct CommentUpdateForm {
   pub local: Option<bool>,
   pub distinguished: Option<bool>,
   pub language_id: Option<LanguageId>,
+  pub budget: Option<i32>,
+  pub working_days: Option<i32>,
+  pub brief_url: Option<String>,
 }
 
 #[skip_serializing_none]

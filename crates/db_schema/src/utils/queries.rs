@@ -221,11 +221,13 @@ pub fn comment_select_remove_deletes() -> _ {
     comment::score,
     comment::upvotes,
     comment::downvotes,
-    comment::child_count,
     comment::hot_rank,
     comment::controversy_rank,
     comment::report_count,
     comment::unresolved_report_count,
+    comment::budget,
+    comment::working_days,
+    comment::brief_url,
   )
 }
 

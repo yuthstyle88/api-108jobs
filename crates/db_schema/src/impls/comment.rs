@@ -180,6 +180,7 @@ impl Comment {
     }
   }
 
+
   pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
@@ -344,8 +345,7 @@ mod tests {
     traits::{Crud, Likeable, Saveable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
-  use diesel_ltree::Ltree;
-  use lemmy_utils::error::FastJobResult;
+    use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -396,7 +396,6 @@ mod tests {
       distinguished: false,
       local: true,
       language_id: LanguageId::default(),
-      child_count: 1,
       controversy_rank: 0.0,
       downvotes: 0,
       upvotes: 1,

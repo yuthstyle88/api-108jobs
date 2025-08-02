@@ -74,7 +74,7 @@ use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_api_crud::{
   comment::{
-    create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
+    create::create_comment, delete::delete_comment, list::list_comments, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
   community::{
@@ -99,7 +99,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_routes::images::{
   delete::{
@@ -213,7 +212,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/distinguish", post().to(distinguish_comment))
             .route("/like", post().to(like_comment))
             .route("/like/list", get().to(list_comment_likes))
-           .route("/list", get().to(list_comments))
+            .route("/list", get().to(list_comments))
             .route("/save", put().to(save_comment))
             .route("/report", post().to(create_comment_report))
             .route("/report/resolve", put().to(resolve_comment_report)),

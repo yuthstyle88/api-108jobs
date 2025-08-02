@@ -23,16 +23,14 @@ use std::collections::{HashMap, HashSet};
 use url::Url;
 
 pub async fn build_comment_response(
-  context: &FastJobContext,
-  comment_id: CommentId,
-  local_user_view: Option<LocalUserView>,
-  local_instance_id: InstanceId,
+    context: &FastJobContext,
+    comment_id: CommentId,
+    _local_user_view: Option<LocalUserView>,
+    local_instance_id: InstanceId,
 ) -> FastJobResult<CommentResponse> {
-  let local_user = local_user_view.map(|l| l.local_user);
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
-    local_user.as_ref(),
     local_instance_id,
   )
   .await?;
@@ -135,7 +133,6 @@ pub async fn send_local_notifs(
 
   Ok(())
 }
-
 async fn send_local_mentions(
   post: &Post,
   comment_opt: Option<&Comment>,

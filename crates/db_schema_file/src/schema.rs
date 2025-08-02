@@ -128,9 +128,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use diesel_ltree::sql_types::Ltree;
-
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -146,11 +143,13 @@ diesel::table! {
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        child_count -> Int4,
         hot_rank -> Float8,
         controversy_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
+        budget -> Nullable<Int4>,
+        working_days -> Nullable<Int4>,
+        brief_url -> Nullable<Text>,
     }
 }
 

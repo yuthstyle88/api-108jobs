@@ -31,7 +31,6 @@ async fn list_comments_common(
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
-  let community_id = data.community_id;
   let local_user_ref = local_user_view.as_ref().map(|u| &u.local_user);
   let sort = Some(comment_sort_type_with_default(
     data.sort,
@@ -42,14 +41,9 @@ async fn list_comments_common(
   let max_depth = data.max_depth;
   let limit = data.limit;
 
-  let listing_type = Some(listing_type_with_default(
-    local_user_view.as_ref().map(|u| &u.local_user),
-    &site_view.local_site,
-    community_id,
-  ));
+  let listing_type = Some(listing_type_with_default());
 
   let post_id = data.post_id;
-  let local_user = local_user_view.as_ref().map(|l| &l.local_user);
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(CommentView::from_cursor(cursor, &mut context.pool()).await?)
@@ -63,9 +57,7 @@ async fn list_comments_common(
     sort,
     time_range_seconds,
     max_depth,
-    community_id,
     post_id,
-    local_user,
     cursor_data,
     page_back,
     limit,

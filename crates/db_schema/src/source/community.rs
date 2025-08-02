@@ -218,8 +218,8 @@ pub struct CommunityActions {
 
 // Create a changeset struct with explicit fields
 // This avoids the complex nested type inference that was causing the compiler panic
-#[derive(AsChangeset)]
-#[diesel(table_name = community)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = community))]
 pub struct CommunityChangeset {
   pub(crate) title: Option<String>,
   pub(crate) sidebar: Option<Option<String>>,

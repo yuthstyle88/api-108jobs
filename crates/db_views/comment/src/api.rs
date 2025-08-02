@@ -1,5 +1,5 @@
 use crate::{CommentSlimView, CommentView};
-use lemmy_db_schema::newtypes::{CommentId, CommunityId, LanguageId, PaginationCursor, PostId};
+use lemmy_db_schema::newtypes::{CommentId, LanguageId, PaginationCursor, PostId};
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType};
 use lemmy_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -19,21 +19,29 @@ pub struct CommentResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Create a comment.
 pub struct CreateComment {
   pub content: String,
   pub post_id: PostId,
   pub language_id: Option<LanguageId>,
+  pub budget: i32,
+  pub working_days: i32,
+  pub brief_url: String,
 }
 
 #[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Create a comment.
 pub struct CreateCommentRequest {
   pub content: String,
   pub post_id: PostId,
   pub language_id: LanguageId,
+  pub budget: i32,
+  pub working_days: i32,
+  pub brief_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -50,6 +58,7 @@ pub struct CreateCommentLike {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Delete your own comment.
 pub struct DeleteComment {
   pub comment_id: CommentId,
@@ -70,6 +79,7 @@ pub struct DistinguishComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Fetch an individual comment.
 pub struct GetComment {
   pub id: CommentId,
@@ -79,6 +89,7 @@ pub struct GetComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Get a list of comments.
 pub struct GetComments {
   pub type_: Option<ListingType>,
@@ -90,10 +101,7 @@ pub struct GetComments {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
-  pub community_id: Option<CommunityId>,
-  pub community_name: Option<String>,
   pub post_id: Option<PostId>,
-  pub parent_id: Option<CommentId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -146,6 +154,7 @@ pub struct ListCommentLikesResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Purges a comment from the database. This will delete all content attached to that comment.
 pub struct PurgeComment {
   pub comment_id: CommentId,
@@ -156,6 +165,7 @@ pub struct PurgeComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Remove a comment (only doable by mods).
 pub struct RemoveComment {
   pub comment_id: CommentId,
@@ -166,6 +176,7 @@ pub struct RemoveComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Save / bookmark a comment.
 pub struct SaveComment {
   pub comment_id: CommentId,
@@ -176,9 +187,13 @@ pub struct SaveComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Edit a comment.
 pub struct EditComment {
   pub comment_id: CommentId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,
+  pub budget: i32,
+  pub working_days: i32,
+  pub brief_url: String,
 }

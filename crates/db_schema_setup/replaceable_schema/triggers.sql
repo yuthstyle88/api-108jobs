@@ -58,19 +58,6 @@ CALL r.post_or_comment ('post');
 
 CALL r.post_or_comment ('comment');
 
--- Create triggers that update counts in parent aggregates
-CREATE FUNCTION r.parent_comment_ids (path ltree)
-    RETURNS SETOF int
-    LANGUAGE sql
-    IMMUTABLE parallel safe
-BEGIN ATOMIC
-    SELECT
-        comment_id::int
-    FROM
-        string_to_table (ltree2text (path), '.') AS comment_id
-    -- Skip first and last
-LIMIT (nlevel (path) - 2) OFFSET 1;
-END;
 CALL r.create_triggers ('comment', $$
 BEGIN
     -- Prevent infinite recursion
@@ -97,43 +84,6 @@ FROM (
 WHERE
     a.id = diff.creator_id
     AND diff.comment_count != 0;
-UPDATE
-    comment AS a
-SET
-    child_count = a.child_count + diff.child_count
-FROM (
-    SELECT
-        parent_id,
-        coalesce(sum(count_diff), 0) AS child_count
-    FROM (
-        -- For each inserted or deleted comment, this outputs 1 row for each parent comment.
-        -- For example, this:
-        --
-        --  count_diff | (comment).path
-        -- ------------+----------------
-        --  1          | 0.5.6.7
-        --  1          | 0.5.6.7.8
-        --
-        -- becomes this:
-        --
-        --  count_diff | parent_id
-        -- ------------+-----------
-        --  1          | 5
-        --  1          | 6
-        --  1          | 5
-        --  1          | 6
-        --  1          | 7
-        SELECT
-            count_diff,
-            parent_id
-        FROM
-            select_old_and_new_rows AS old_and_new_rows,
-            LATERAL r.parent_comment_ids ((comment).path) AS parent_id) AS expanded_old_and_new_rows
-    GROUP BY
-        parent_id) AS diff
-WHERE
-    a.id = diff.parent_id
-    AND diff.child_count != 0;
 UPDATE
     post AS a
 SET

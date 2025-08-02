@@ -32,7 +32,6 @@ pub async fn purge_comment(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

@@ -1,5 +1,4 @@
 use lemmy_db_schema::{
-  newtypes::CommunityId,
   source::{local_site::LocalSite, local_user::LocalUser},
 };
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
@@ -11,11 +10,7 @@ pub mod read_community;
 
 
 /// Returns default listing type, depending if the query is for frontpage or community.
-fn listing_type_with_default(
-  local_user: Option<&LocalUser>,
-  local_site: &LocalSite,
-  community_id: Option<CommunityId>,
-) -> ListingType {
+fn listing_type_with_default() -> ListingType {
   // On frontpage use listing type from param or admin configured default
     // inside of community show everything
     ListingType::All

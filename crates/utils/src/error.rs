@@ -243,6 +243,7 @@ pub enum FastJobErrorType {
   RedisDeleteFailed,
   RedisKeyNotFound,
   RedisConnectionFailed,
+  InvalidField(String)
 }
 
 cfg_if! {

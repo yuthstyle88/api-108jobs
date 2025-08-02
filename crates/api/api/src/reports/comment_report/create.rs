@@ -34,7 +34,6 @@ pub async fn create_comment_report(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

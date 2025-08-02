@@ -134,47 +134,6 @@ pub async fn send_local_notifs(
 
   Ok(())
 }
-
-async fn notify_parent_creator(
-  person: &Person,
-  post: &Post,
-  comment_opt: Option<&Comment>,
-  _do_send_email: bool,
-  context: &FastJobContext,
-) -> FastJobResult<Option<PersonId>> {
-  let Some(comment) = comment_opt else {
-    return Ok(None);
-  };
-
-  // Since comments are now flat, the parent is always the post
-  let parent_creator_id = post.creator_id;
-
-  // Dont send notification to yourself
-  if parent_creator_id == person.id {
-    return Ok(None);
-  }
-
-
-  let Ok(user_view) = LocalUserView::read_person(&mut context.pool(), parent_creator_id).await
-  else {
-    return Ok(None);
-  };
-
-  let comment_reply_form = CommentReplyInsertForm {
-    recipient_id: user_view.person.id,
-    comment_id: comment.id,
-    read: None,
-  };
-
-  // Allow this to fail softly, since comment edits might re-update or replace it
-  // Let the uniqueness handle this fail
-  CommentReply::create(&mut context.pool(), &comment_reply_form)
-    .await
-    .ok();
-
-  Ok(Some(user_view.person.id))
-}
-
 async fn send_local_mentions(
   post: &Post,
   comment_opt: Option<&Comment>,

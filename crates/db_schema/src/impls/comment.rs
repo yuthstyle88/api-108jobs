@@ -153,7 +153,6 @@ impl Comment {
   pub async fn create(
     pool: &mut DbPool<'_>,
     comment_form: &CommentInsertForm,
-    _parent_path: Option<()>,
   ) -> FastJobResult<Comment> {
     Self::insert_apub(pool, None, comment_form).await
   }

@@ -6,6 +6,7 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Adds an admin to a site.
 pub struct AddAdmin {
   pub person_id: PersonId,
@@ -25,6 +26,7 @@ pub struct AddAdminResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Ban a person from the site.
 pub struct BanPerson {
   pub person_id: PersonId,
@@ -52,6 +54,7 @@ pub struct BanPersonResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Block a person.
 pub struct BlockPerson {
   pub person_id: PersonId,
@@ -72,6 +75,7 @@ pub struct BlockPersonResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Gets a person's details.
 ///
 /// Either person_id, or username are required.
@@ -96,6 +100,7 @@ pub struct GetPersonDetailsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Purges a person from the database. This will delete all content attached to that person.
 pub struct PurgePerson {
   pub person_id: PersonId,
@@ -105,6 +110,7 @@ pub struct PurgePerson {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Make a note for a person.
 ///
 /// An empty string deletes the note.

@@ -241,6 +241,7 @@ pub struct GetPostsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Get metadata for a given site.
 pub struct GetSiteMetadata {
   pub url: String,

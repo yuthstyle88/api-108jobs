@@ -9,8 +9,8 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A comment response.
 #[serde(rename_all = "camelCase")]
+/// A comment response.
 pub struct CommentResponse {
   pub comment_view: CommentView,
 }
@@ -47,6 +47,7 @@ pub struct CreateCommentRequest {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Like a comment.
 pub struct CreateCommentLike {
   pub comment_id: CommentId,
@@ -69,6 +70,7 @@ pub struct DeleteComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Distinguish a comment (IE speak as moderator).
 pub struct DistinguishComment {
   pub comment_id: CommentId,
@@ -107,8 +109,8 @@ pub struct GetComments {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment list response.
 #[serde(rename_all = "camelCase")]
+/// The comment list response.
 pub struct GetCommentsResponse {
   pub comments: Vec<CommentView>,
   pub next_page: Option<PaginationCursor>,
@@ -118,8 +120,8 @@ pub struct GetCommentsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A slimmer comment list response, without the post or community.
 #[serde(rename_all = "camelCase")]
+/// A slimmer comment list response, without the post or community.
 pub struct GetCommentsSlimResponse {
   pub comments: Vec<CommentSlimView>,
   pub next_page: Option<PaginationCursor>,
@@ -130,6 +132,7 @@ pub struct GetCommentsSlimResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// List comment likes. Admins-only.
 pub struct ListCommentLikes {
   pub comment_id: CommentId,
@@ -141,8 +144,8 @@ pub struct ListCommentLikes {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment likes response
 #[serde(rename_all = "camelCase")]
+/// The comment likes response
 pub struct ListCommentLikesResponse {
   pub comment_likes: Vec<VoteView>,
   /// the pagination cursor to use to fetch the next page

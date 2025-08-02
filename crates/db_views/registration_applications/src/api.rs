@@ -11,6 +11,7 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Approves a registration application.
 pub struct ApproveRegistrationApplication {
   pub id: RegistrationApplicationId,
@@ -22,6 +23,7 @@ pub struct ApproveRegistrationApplication {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Gets a registration application for a person
 pub struct GetRegistrationApplication {
   pub person_id: PersonId,
@@ -31,6 +33,7 @@ pub struct GetRegistrationApplication {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Fetches a list of registration applications.
 pub struct ListRegistrationApplications {
   /// Only shows the unread applications (IE those without an admin actor)

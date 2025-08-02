@@ -250,6 +250,7 @@ pub struct RemoveCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Update a community tag.
 pub struct UpdateCommunityTag {
   pub tag_id: TagId,
@@ -260,6 +261,7 @@ pub struct UpdateCommunityTag {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Delete a community tag.
 pub struct DeleteCommunityTag {
   pub tag_id: TagId,

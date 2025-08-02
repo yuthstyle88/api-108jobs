@@ -95,7 +95,6 @@ pub async fn update_comment(
     build_comment_response(
       &context,
       updated_comment.id,
-      Some(local_user_view),
       local_instance_id,
     )
     .await?,

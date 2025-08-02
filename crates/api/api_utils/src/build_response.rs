@@ -21,8 +21,6 @@ use lemmy_db_views_post::{api::PostResponse, PostView};
 use lemmy_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
-use lemmy_db_schema::newtypes::PersonId;
-use lemmy_db_schema::source::comment_reply::{CommentReply, CommentReplyInsertForm};
 
 pub async fn build_comment_response(
     context: &FastJobContext,

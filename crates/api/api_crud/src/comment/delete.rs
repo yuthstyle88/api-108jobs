@@ -20,13 +20,12 @@ pub async fn delete_comment(
   data: Json<DeleteComment>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<DeleteComment>> {
   let comment_id = data.comment_id;
   let local_instance_id = local_user_view.person.instance_id;
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -67,12 +66,9 @@ pub async fn delete_comment(
   )?;
 
   Ok(Json(
-    build_comment_response(
-      &context,
-      updated_comment_id,
-      Some(local_user_view),
-      local_instance_id,
-    )
-    .await?,
+    DeleteComment {
+      comment_id,
+      deleted: true,
+    }
   ))
 }

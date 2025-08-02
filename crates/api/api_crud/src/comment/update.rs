@@ -22,6 +22,7 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
+use url;
 
 pub async fn update_comment(
   data: Json<EditComment>,
@@ -33,7 +34,6 @@ pub async fn update_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -60,11 +60,17 @@ pub async fn update_comment(
     is_valid_body_field(content, false)?;
   }
 
+  // Validate required proposal fields (all comments now require these)
+  validate_proposal_update_fields(&data)?;
+
   let comment_id = data.comment_id;
   let form = CommentUpdateForm {
     content,
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
+    budget: Some(data.budget),
+    working_days: Some(data.working_days),
+    brief_url: Some(data.brief_url.clone()),
     ..Default::default()
   };
   let updated_comment = Comment::update(&mut context.pool(), comment_id, &form).await?;
@@ -94,4 +100,28 @@ pub async fn update_comment(
     )
     .await?,
   ))
+}
+
+fn validate_proposal_update_fields(data: &EditComment) -> FastJobResult<()> {
+  // Validate budget (now required)
+  if data.budget <= 0 {
+    return Err(FastJobErrorType::InvalidField("budget must be greater than 0".to_string()))?;
+  }
+
+  // Validate working days (now required)
+  if data.working_days <= 0 {
+    return Err(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string()))?;
+  }
+
+  // Validate brief URL (now required)
+  if data.brief_url.trim().is_empty() {
+    return Err(FastJobErrorType::InvalidField("brief_url cannot be empty".to_string()))?;
+  }
+  
+  // Basic URL validation
+  if let Err(_) = url::Url::parse(&data.brief_url) {
+    return Err(FastJobErrorType::InvalidField("brief_url must be a valid URL".to_string()))?;
+  }
+
+  Ok(())
 }

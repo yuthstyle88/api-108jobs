@@ -1,22 +1,17 @@
 use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
 use diesel::{
-  dsl::exists,
-  BoolExpressionMethods,
   ExpressionMethods,
   JoinOnDsl,
-  NullableExpressionMethods,
   QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
-  impls::local_user::LocalUserOptionHelper,
-  newtypes::{CommentId, CommunityId, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
     comment::{comment_keys as key, Comment},
-    local_user::LocalUser,
     site::Site,
   },
   traits::{Crud, PaginationCursorBuilder},
@@ -30,7 +25,6 @@ use lemmy_db_schema::{
       creator_community_instance_actions_join,
       creator_home_instance_actions_join,
       creator_local_instance_actions_join,
-      filter_blocked,
       my_comment_actions_join,
       my_community_actions_join,
       my_instance_actions_community_join,
@@ -44,11 +38,9 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::{
   enums::{
     CommentSortType::{self, *},
-    CommunityFollowerState,
-    CommunityVisibility,
     ListingType,
   },
-  schema::{comment, community, community_actions, local_user_language, person, post},
+  schema::{comment, community, person, post},
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -100,29 +92,21 @@ impl CommentView {
   pub async fn read(
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
-    my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    let mut query = Self::joins(my_local_user.person_id(), local_instance_id)
+    let mut query = Self::joins(None, local_instance_id)
       .filter(comment::id.eq(comment_id))
       .select(Self::as_select())
       .into_boxed();
 
-    query = my_local_user.visible_communities_only(query);
+    // Filter out deleted and removed comments
+    query = query
+      .filter(comment::deleted.eq(false))
+      .filter(comment::removed.eq(false));
 
-    // Check permissions to view private community content.
-    // Specifically, if the community is private then only accepted followers may view its
-    // content, otherwise it is filtered out. Admins can view private community content
-    // without restriction.
-    if !my_local_user.is_admin() {
-      query = query.filter(
-        community::visibility
-          .ne(CommunityVisibility::Private)
-          .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
-      );
-    }
+    // Community visibility filtering removed - show comments from all communities
 
     query
       .first::<Self>(conn)
@@ -153,93 +137,45 @@ impl TryFrom<CreateCommentRequest> for CreateComment {
       content: value.content,
       post_id: value.post_id,
       language_id: Some(value.language_id),
+      budget: value.budget,
+      working_days: value.working_days,
+      brief_url: value.brief_url,
     })
   }
 }
 #[derive(Default)]
-pub struct CommentQuery<'a> {
+pub struct CommentQuery {
   pub listing_type: Option<ListingType>,
   pub sort: Option<CommentSortType>,
   pub time_range_seconds: Option<i32>,
-  pub community_id: Option<CommunityId>,
   pub post_id: Option<PostId>,
-  pub local_user: Option<&'a LocalUser>,
   pub max_depth: Option<i32>,
   pub cursor_data: Option<Comment>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
 }
 
-impl CommentQuery<'_> {
+impl CommentQuery {
   pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommentView>> {
     let conn = &mut get_conn(pool).await?;
     let o = self;
 
-    // The left join below will return None in this case
-    let my_person_id = o.local_user.person_id();
-    let local_user_id = o.local_user.local_user_id();
-
-    let mut query = CommentView::joins(my_person_id, site.instance_id)
+    // Public query - no user-based filtering, only basic joins
+    let mut query = CommentView::joins(None, site.instance_id)
       .select(CommentView::as_select())
       .into_boxed();
 
+    // Filter out deleted and removed comments
+    query = query
+      .filter(comment::deleted.eq(false))
+      .filter(comment::removed.eq(false));
+
+    // Only filter by post_id if specified - no user-based filtering
     if let Some(post_id) = o.post_id {
       query = query.filter(comment::post_id.eq(post_id));
     };
 
-    if let Some(community_id) = o.community_id {
-      query = query.filter(post::community_id.eq(community_id));
-    }
-
-    let is_subscribed = community_actions::followed_at.is_not_null();
-
-    // For posts, we only show hidden if its subscribed, but for comments,
-    // we ignore hidden.
-    query = match o.listing_type.unwrap_or_default() {
-      ListingType::Subscribed => query.filter(is_subscribed),
-      ListingType::Local => query.filter(community::local.eq(true)),
-      ListingType::All => query,
-      ListingType::ModeratorView => {
-        query.filter(community_actions::became_moderator_at.is_not_null())
-      }
-    };
-
-    if !o.local_user.show_bot_accounts() {
-      query = query.filter(person::bot_account.eq(false));
-    };
-
-    if o.local_user.is_some() && o.listing_type.unwrap_or_default() != ListingType::ModeratorView {
-      // Filter out the rows with missing languages
-      query = query.filter(exists(
-        local_user_language::table.filter(
-          comment::language_id
-            .eq(local_user_language::language_id)
-            .and(
-              local_user_language::local_user_id
-                .nullable()
-                .eq(local_user_id),
-            ),
-        ),
-      ));
-
-      query = query.filter(filter_blocked());
-    };
-
-    if !o.local_user.self_promotion(site) {
-      query = query
-        .filter(post::self_promotion.eq(false))
-        .filter(community::self_promotion.eq(false));
-    };
-
-    query = o.local_user.visible_communities_only(query);
-
-    if !o.local_user.is_admin() {
-      query = query.filter(
-        community::visibility
-          .ne(CommunityVisibility::Private)
-          .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
-      );
-    }
+    // Community visibility filtering removed - show all comments regardless of community visibility
 
     // Filter by the time range
     if let Some(time_range_seconds) = o.time_range_seconds {
@@ -247,7 +183,7 @@ impl CommentQuery<'_> {
         query.filter(comment::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)));
     }
 
-
+    // Comments are now flat, no tree structure
     let limit = limit_fetch(o.limit)?;
     query = query.limit(limit);
 
@@ -257,11 +193,9 @@ impl CommentQuery<'_> {
 
     let mut pq = paginate(query, sort_direction, o.cursor_data, None, o.page_back);
 
-    // + !post_id isn't used anyways (afaik)
-
     // Distinguished comments should go first when viewing post
     // Don't do for new / old sorts
-    if sort != New && sort != Old && (o.post_id.is_some()) {
+    if sort != New && sort != Old && o.post_id.is_some() {
       pq = pq.then_order_by(key::distinguished);
     }
 

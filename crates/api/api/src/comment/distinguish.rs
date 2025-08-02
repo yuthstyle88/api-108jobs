@@ -25,7 +25,6 @@ pub async fn distinguish_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     data.comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -49,7 +48,6 @@ pub async fn distinguish_comment(
   let comment_view = CommentView::read(
     &mut context.pool(),
     data.comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

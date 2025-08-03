@@ -1,3 +1,36 @@
+CREATE TABLE category (
+    id serial PRIMARY KEY,
+    name varchar(100) NOT NULL UNIQUE
+);
+
+INSERT INTO category (name)
+    VALUES ('Discussion'),
+    ('Humor/Memes'),
+    ('Gaming'),
+    ('Movies'),
+    ('TV'),
+    ('Music'),
+    ('Literature'),
+    ('Comics'),
+    ('Photography'),
+    ('Art'),
+    ('Learning'),
+    ('DIY'),
+    ('Lifestyle'),
+    ('News'),
+    ('Politics'),
+    ('Society'),
+    ('Gender/Identity/Sexuality'),
+    ('Race/Colonisation'),
+    ('Religion'),
+    ('Science/Technology'),
+    ('Programming/Software'),
+    ('Health/Sports/Fitness'),
+    ('Porn'),
+    ('Places'),
+    ('Meta'),
+    ('Other');
+
 CREATE TABLE community (
     id serial PRIMARY KEY,
     name varchar(20) NOT NULL UNIQUE,

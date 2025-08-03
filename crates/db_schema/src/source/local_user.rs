@@ -27,8 +27,6 @@ pub struct LocalUser {
   pub person_id: PersonId,
   #[serde(skip)]
   pub password_encrypted: Option<SensitiveString>,
-  #[serde(skip)]
-  pub public_key: Option<String>,
   pub email: Option<SensitiveString>,
   /// Whether to show NSFW content.
   pub self_promotion: bool,
@@ -90,8 +88,6 @@ pub struct LocalUser {
 pub struct LocalUserInsertForm {
   pub person_id: PersonId,
   pub password_encrypted: Option<String>,
-  #[new(default)]
-  pub public_key: Option<String>,
   #[new(default)]
   pub email: Option<String>,
   #[new(default)]

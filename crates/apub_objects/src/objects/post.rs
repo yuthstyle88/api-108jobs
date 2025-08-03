@@ -266,7 +266,7 @@ impl Object for ApubPost {
        .await?,
     );
 
-    let mut form = PostInsertForm {
+    let form = PostInsertForm {
       url: url.map(Into::into),
       body,
       alt_text,

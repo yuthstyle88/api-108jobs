@@ -500,7 +500,6 @@ diesel::table! {
         id -> Int4,
         person_id -> Int4,
         password_encrypted -> Nullable<Text>,
-        public_key -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
         theme -> Text,

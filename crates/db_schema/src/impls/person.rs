@@ -97,6 +97,20 @@ impl Person {
      .await
      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
+
+  pub async fn update_public_key(
+    pool: &mut DbPool<'_>,
+    person_id: PersonId,
+    new_public_key: &str,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    diesel::update(person::table.find(person_id))
+     .set(person::public_key.eq(new_public_key))
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+  }
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
@@ -591,7 +605,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let mut comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
 
@@ -603,7 +617,7 @@ mod tests {
       "A test comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+      Comment::create(pool, &child_comment_form, None).await?;
 
     let child_comment_like =
       CommentLikeForm::new(another_inserted_person.id, inserted_child_comment.id, 1);
@@ -657,7 +671,7 @@ mod tests {
     // Add in the two comments again, then delete the post.
     let new_parent_comment = Comment::create(pool, &comment_form).await?;
     let _new_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+      Comment::create(pool, &child_comment_form, None).await?;
     comment_like.comment_id = new_parent_comment.id;
     CommentActions::like(pool, &comment_like).await?;
     let after_comment_add = Person::read(pool, inserted_person.id).await?;

@@ -210,7 +210,7 @@ impl Object for ApubComment {
        .await?,
     );
 
-    let mut form = CommentInsertForm {
+    let form = CommentInsertForm {
       creator_id: creator.id,
       post_id: post.id,
       content,

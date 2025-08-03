@@ -42,9 +42,7 @@ pub async fn chat_ws(
         session_id = session;
         user_id = Some(local_user.local_user.id);
         // Get encryption key if user has public key
-        if let Some(public_key) = local_user.local_user.public_key {
-          shared_key = public_key;
-        }
+        shared_key = local_user.person.public_key
       }
       Err(_) => {
         eprintln!("Failed to get local user from jwt");

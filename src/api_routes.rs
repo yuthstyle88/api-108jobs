@@ -74,12 +74,12 @@ use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_api_crud::{
   comment::{
-    create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
-    update::update_comment,
+    create::create_comment, delete::delete_comment, list::list_comments, read::get_comment,
+    remove::remove_comment, update::update_comment,
   },
   community::{
-    create::create_community, delete::delete_community,
-    remove::remove_community, update::update_community,
+    create::create_community, delete::delete_community, remove::remove_community,
+    update::update_community,
   },
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,

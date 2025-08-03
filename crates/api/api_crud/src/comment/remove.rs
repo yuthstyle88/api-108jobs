@@ -30,7 +30,6 @@ pub async fn remove_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -89,7 +88,6 @@ pub async fn remove_comment(
     build_comment_response(
       &context,
       updated_comment_id,
-      Some(local_user_view),
       local_instance_id,
     )
     .await?,

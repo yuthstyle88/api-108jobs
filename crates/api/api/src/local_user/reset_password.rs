@@ -6,9 +6,9 @@ use lemmy_db_views_site::{
   SiteView,
 };
 
+use lemmy_email::account::send_password_reset_email;
 use lemmy_utils::error::FastJobResult;
 use tracing::error;
-use lemmy_email::account::send_password_reset_email;
 
 pub async fn reset_password(
   data: Json<PasswordReset>,

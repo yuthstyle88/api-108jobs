@@ -42,7 +42,6 @@ pub(crate) fn slurs_vec_to_str(slurs: &[&str]) -> String {
 
 #[cfg(test)]
 mod test {
-
   use crate::{
     error::FastJobResult,
     utils::slurs::{remove_slurs, slur_check, slurs_vec_to_str},

@@ -187,7 +187,7 @@ fn site() -> FastJobResult<Site> {
     icon: None,
     banner: None,
     description: None,
-    ap_id: Url::parse("http://example.com")?.into(),
+    ap_id: Url::parse("http://example1.com")?.into(),
     last_refreshed_at: Default::default(),
     inbox_url: Url::parse("http://example.com")?.into(),
     instance_id: Default::default(),

@@ -10,7 +10,6 @@ use lemmy_api_utils::{
     process_markdown_opt, slur_regex,
   },
 };
-use lemmy_db_schema::newtypes::DbUrl;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
@@ -102,7 +101,6 @@ pub async fn create_post(
     intended_use: data.intended_use,
     deadline: data.deadline,
     is_english_required: data.is_english_required,
-    ap_id: Some("https://example.com/random".parse::<DbUrl>()?),
     ..PostInsertForm::new(
       data.name.trim().to_string(),
       local_user_view.person.id,
@@ -130,12 +128,10 @@ pub async fn create_post(
 
   PostActions::like(&mut context.pool(), &like_form).await?;
 
-  let do_send_email = !local_site.disable_email_notifications;
   send_local_notifs(
     &inserted_post,
     None,
     &local_user_view.person,
-    do_send_email,
     &context,
   )
   .await?;

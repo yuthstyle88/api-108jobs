@@ -33,7 +33,6 @@ pub async fn like_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -55,7 +54,6 @@ pub async fn like_comment(
 
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
-      object_id: orig_comment.comment.ap_id,
       actor: local_user_view.person.clone(),
       community: orig_comment.community,
       previous_score,
@@ -68,7 +66,6 @@ pub async fn like_comment(
     build_comment_response(
       context.deref(),
       comment_id,
-      Some(local_user_view),
       local_instance_id,
     )
     .await?,

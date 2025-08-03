@@ -23,8 +23,8 @@ use lemmy_utils::{
   utils::markdown::markdown_to_html,
 };
 use rss::{
-  extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap},
-  Category,
+  extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap}
+  ,
   Channel,
   EnclosureBuilder,
   Guid,
@@ -231,7 +231,6 @@ async fn get_feed_user(
   let channel = Channel {
     namespaces: RSS_NAMESPACE.clone(),
     title: format!("{} - {}", site_view.site.name, person.name),
-    link: person.ap_id.to_string(),
     items,
     ..Default::default()
   };
@@ -269,7 +268,6 @@ async fn get_feed_community(
   let mut channel = Channel {
     namespaces: RSS_NAMESPACE.clone(),
     title: format!("{} - {}", site_view.site.name, community.name),
-    link: community.ap_id.to_string(),
     items,
     ..Default::default()
   };
@@ -746,7 +744,7 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
     let post_url = p.post.local_url(settings)?;
     let community_url = &p.community.actor_url(settings)?;
     let dublin_core_ext = Some(DublinCoreExtension {
-      creators: vec![p.creator.ap_id.to_string()],
+      creators: vec![],
       ..DublinCoreExtension::default()
     });
     let guid = Some(Guid {
@@ -807,10 +805,6 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
         BTreeMap::from([("content".to_string(), vec![thumbnail_ext.build()])]),
       );
     }
-    let category = Category {
-      name: p.community.title,
-      domain: Some(p.community.ap_id.to_string()),
-    };
 
     let i = Item {
       title: Some(p.post.name),
@@ -822,7 +816,7 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
       link: Some(post_url.to_string()),
       extensions,
       enclosure: enclosure_opt,
-      categories: vec![category],
+      categories: vec![],
       ..Default::default()
     };
 

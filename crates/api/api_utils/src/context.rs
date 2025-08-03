@@ -8,7 +8,7 @@ use lemmy_utils::{
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
-
+use lemmy_utils::redis::RedisClient;
 
 #[derive(Clone)]
 pub struct FastJobContext {
@@ -21,6 +21,7 @@ pub struct FastJobContext {
   secret: Arc<Secret>,
   // Wrap rate_limit_cell in Arc to avoid expensive clones
   rate_limit_cell: Arc<RateLimit>,
+  redis: Arc<RedisClient>,
 }
 
 impl FastJobContext {
@@ -30,6 +31,7 @@ impl FastJobContext {
     pictrs_client: ClientWithMiddleware,
     secret: Secret,
     rate_limit_cell: RateLimit,
+    redis: RedisClient,
   ) -> FastJobContext {
     FastJobContext {
       // Wrap all fields in Arc to reduce cloning overhead
@@ -38,6 +40,7 @@ impl FastJobContext {
       pictrs_client: Arc::new(pictrs_client),
       secret: Arc::new(secret),
       rate_limit_cell: Arc::new(rate_limit_cell),
+      redis: Arc::new(redis),
     }
   }
   
@@ -76,4 +79,10 @@ impl FastJobContext {
     // Return a reference to the RateLimit inside the Arc
     &self.rate_limit_cell
   }
+
+  pub fn redis(&self) -> &RedisClient {
+    // Return a reference to the RedisClient inside the Arc
+    &self.redis
+  }
+
 }

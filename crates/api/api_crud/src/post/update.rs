@@ -4,7 +4,6 @@ use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
-  plugins::{plugin_hook_after, },
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
   tags::update_post_tags,
@@ -12,16 +11,12 @@ use lemmy_api_utils::{
     check_self_promotion_allowed,
     get_url_blocklist,
     process_markdown_opt,
-    send_webmention,
     slur_regex,
   },
 };
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
-  source::{
-    community::Community,
-    post::{Post, PostUpdateForm},
-  },
+  source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
@@ -46,12 +41,14 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
+use lemmy_db_views_post::api::EditPostRequest;
 
 pub async fn update_post(
-  data: Json<EditPost>,
+  data: Json<EditPostRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
+  let data: EditPost = data.into_inner().try_into()?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let url = diesel_url_update(data.url.as_deref())?;
@@ -142,6 +139,7 @@ pub async fn update_post(
 
   let post_form = PostUpdateForm {
     name: data.name.clone(),
+    community_id: data.community_id.clone(),
     url,
     body,
     alt_text,
@@ -149,18 +147,21 @@ pub async fn update_post(
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
     scheduled_publish_time_at,
+    intended_use: data.intended_use,
+    job_type: data.job_type,
+    budget: data.budget,
+    deadline: Some(data.deadline),
+    is_english_required: data.is_english_required,
     ..Default::default()
   };
 
   let post_id = data.post_id;
   let updated_post = Post::update(&mut context.pool(), post_id, &post_form).await?;
-  plugin_hook_after("after_update_local_post", &post_form)?;
 
   send_local_notifs(
     &updated_post,
     None,
     &local_user_view.person,
-    false,
     &context,
   )
   .await?;
@@ -172,8 +173,6 @@ pub async fn update_post(
   ) {
     // schedule was removed, send create activity and webmention
     (Some(_), None) => {
-      let community = Community::read(&mut context.pool(), orig_post.community.id).await?;
-      send_webmention(updated_post.clone(), &community);
       generate_post_link_metadata(
         updated_post.clone(),
         custom_thumbnail.flatten().map(Into::into),

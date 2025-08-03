@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json};
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
@@ -25,7 +25,6 @@ pub async fn distinguish_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     data.comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -49,7 +48,6 @@ pub async fn distinguish_comment(
   let comment_view = CommentView::read(
     &mut context.pool(),
     data.comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

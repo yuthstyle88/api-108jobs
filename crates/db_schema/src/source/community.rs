@@ -43,8 +43,6 @@ pub struct Community {
   pub deleted: bool,
   /// Whether its an NSFW community.
   pub self_promotion: bool,
-  /// The federated ap_id.
-  pub ap_id: DbUrl,
   /// Whether the community is local.
   pub local: bool,
   #[serde(skip)]
@@ -121,8 +119,6 @@ pub struct CommunityInsertForm {
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub local: Option<bool>,
   #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
@@ -165,7 +161,6 @@ pub struct CommunityUpdateForm {
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
   pub self_promotion: Option<bool>,
-  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub icon: Option<Option<DbUrl>>,
@@ -223,8 +218,8 @@ pub struct CommunityActions {
 
 // Create a changeset struct with explicit fields
 // This avoids the complex nested type inference that was causing the compiler panic
-#[derive(AsChangeset)]
-#[diesel(table_name = community)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = community))]
 pub struct CommunityChangeset {
   pub(crate) title: Option<String>,
   pub(crate) sidebar: Option<Option<String>>,
@@ -233,7 +228,6 @@ pub struct CommunityChangeset {
   pub(crate) updated_at: Option<Option<DateTime<Utc>>>,
   pub(crate) deleted: Option<bool>,
   pub(crate) self_promotion: Option<bool>,
-  pub(crate) ap_id: Option<DbUrl>,
   pub(crate) local: Option<bool>,
   pub(crate) last_refreshed_at: Option<DateTime<Utc>>,
   pub(crate) icon: Option<Option<DbUrl>>,

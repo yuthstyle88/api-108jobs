@@ -109,7 +109,7 @@ mod tests {
     );
 
     // Insert two of those comments
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -117,7 +117,7 @@ mod tests {
       "A test comment".into(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let site_aggregates_before_delete = read_local_site(pool).await?;
 

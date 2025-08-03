@@ -32,8 +32,6 @@ pub struct Person {
   pub avatar: Option<DbUrl>,
   pub published_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
-  /// The federated ap_id.
-  pub ap_id: DbUrl,
   /// An optional bio, in markdown.
   pub bio: Option<String>,
   /// Whether the person is local to our site.
@@ -73,8 +71,6 @@ pub struct PersonInsertForm {
   #[new(default)]
   pub updated_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub bio: Option<String>,
   #[new(default)]
   pub local: Option<bool>,
@@ -101,7 +97,6 @@ pub struct PersonUpdateForm {
   pub display_name: Option<Option<String>>,
   pub avatar: Option<Option<DbUrl>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
-  pub ap_id: Option<DbUrl>,
   pub bio: Option<Option<String>>,
   pub local: Option<bool>,
   pub last_refreshed_at: Option<DateTime<Utc>>,

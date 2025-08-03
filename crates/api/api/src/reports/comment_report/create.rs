@@ -34,7 +34,6 @@ pub async fn create_comment_report(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
-    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -57,7 +56,6 @@ pub async fn create_comment_report(
 
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
-      object_id: comment_view.comment.ap_id.inner().clone(),
       actor: local_user_view.person,
       receiver: Either::Right(comment_view.community),
       reason: data.reason.clone(),

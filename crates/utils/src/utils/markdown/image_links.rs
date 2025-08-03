@@ -135,7 +135,6 @@ impl LinkFormatter for NoopLinkFormatter {
 
 #[cfg(test)]
 mod tests {
-
   use super::*;
   use pretty_assertions::assert_eq;
 

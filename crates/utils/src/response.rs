@@ -10,7 +10,7 @@ pub fn jsonify_plain_text_errors<BODY>(
   if maybe_error.is_none() {
     return Ok(ErrorHandlerResponse::Response(res.map_into_left_body()));
   }
-  // We're assuming that any LemmyError is already in JSON format, so we don't need to do anything
+  // We're assuming that any FastJobError is already in JSON format, so we don't need to do anything
   if let Some(maybe_error) = maybe_error {
     if maybe_error.as_error::<FastJobError>().is_some() {
       return Ok(ErrorHandlerResponse::Response(res.map_into_left_body()));

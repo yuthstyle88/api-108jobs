@@ -56,7 +56,6 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
-
 }
 
 diesel::table! {
@@ -129,9 +128,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use diesel_ltree::sql_types::Ltree;
-
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -141,20 +137,19 @@ diesel::table! {
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
-        path -> Ltree,
         distinguished -> Bool,
         language_id -> Int4,
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        child_count -> Int4,
         hot_rank -> Float8,
         controversy_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
+        budget -> Nullable<Int4>,
+        working_days -> Nullable<Int4>,
+        brief_url -> Nullable<Text>,
     }
 }
 
@@ -231,8 +226,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
         self_promotion -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
         last_refreshed_at -> Timestamptz,
         icon -> Nullable<Text>,
@@ -366,6 +359,7 @@ diesel::table! {
     }
 }
 
+
 diesel::table! {
     instance (id) {
         id -> Int4,
@@ -379,6 +373,7 @@ diesel::table! {
         version -> Nullable<Varchar>,
     }
 }
+
 
 diesel::table! {
     instance_actions (person_id, instance_id) {
@@ -761,8 +756,6 @@ diesel::table! {
         avatar -> Nullable<Text>,
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         bio -> Nullable<Text>,
         local -> Bool,
         private_key -> Nullable<Text>,
@@ -869,8 +862,6 @@ diesel::table! {
         embed_title -> Nullable<Text>,
         embed_description -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         local -> Bool,
         embed_video_url -> Nullable<Text>,
         language_id -> Int4,
@@ -1010,7 +1001,6 @@ diesel::table! {
 
     sent_activity (id) {
         id -> Int8,
-        ap_id -> Text,
         data -> Json,
         sensitive -> Bool,
         published_at -> Timestamptz,
@@ -1056,7 +1046,6 @@ diesel::table! {
 diesel::table! {
     tag (id) {
         id -> Int4,
-        ap_id -> Text,
         display_name -> Text,
         community_id -> Int4,
         published_at -> Timestamptz,
@@ -1073,7 +1062,6 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
     }
 }
-
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1243,7 +1231,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   post_report,
   post_tag,
   previously_run_sql,
-  received_activity,
   registration_application,
   remote_image,
   report_combined,

@@ -46,6 +46,7 @@ pub struct AdminAllowInstanceParams {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct AdminBlockInstanceParams {
   pub instance: String,
   pub block: bool,
@@ -58,6 +59,7 @@ pub struct AdminBlockInstanceParams {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Logging in with an OAuth 2.0 authorization
+#[serde(rename_all = "camelCase")]
 pub struct AuthenticateWithOauth {
   pub code: String,
   pub oauth_provider_id: OAuthProviderId,
@@ -103,7 +105,6 @@ pub struct RegisterWithOauthRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 pub struct EmailExistsRequest {
   pub email: String,
 }
@@ -129,6 +130,7 @@ impl TryFrom<AuthenticateWithOauthRequest> for AuthenticateWithOauth {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create an external auth method.
+#[serde(rename_all = "camelCase")]
 pub struct CreateOAuthProvider {
   pub display_name: String,
   pub issuer: String,
@@ -150,6 +152,7 @@ pub struct CreateOAuthProvider {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Creates a site. Should be done after first running lemmy.
+#[serde(rename_all = "camelCase")]
 pub struct CreateSite {
   pub name: String,
   pub sidebar: Option<String>,
@@ -205,6 +208,7 @@ pub struct DeleteOAuthProvider {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Edit an external auth method.
+#[serde(rename_all = "camelCase")]
 pub struct EditOAuthProvider {
   pub id: OAuthProviderId,
   pub display_name: Option<String>,
@@ -225,6 +229,7 @@ pub struct EditOAuthProvider {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Edits a site.
+#[serde(rename_all = "camelCase")]
 pub struct EditSite {
   pub name: Option<String>,
   /// A sidebar for the site, in markdown.
@@ -351,10 +356,10 @@ pub struct CaptchaResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Changes your account password.
+#[serde(rename_all = "camelCase")]
 pub struct ChangePassword {
   pub new_password: SensitiveString,
   pub new_password_verify: SensitiveString,
@@ -365,6 +370,7 @@ pub struct ChangePassword {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete your account.
+#[serde(rename_all = "camelCase")]
 pub struct DeleteAccount {
   pub password: SensitiveString,
   pub delete_content: bool,
@@ -375,7 +381,6 @@ pub struct DeleteAccount {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A wrapper for the captcha response.
-#[serde(rename_all = "camelCase")]
 pub struct GetCaptchaResponse {
   /// Will be None if captchas are disabled.
   pub ok: Option<CaptchaResponse>,
@@ -392,7 +397,6 @@ pub struct GenerateTotpSecretResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 pub struct ListLoginsResponse {
   pub logins: Vec<LoginToken>,
 }
@@ -405,6 +409,7 @@ pub struct ListLoginsResponse {
 ///
 /// Note: Banned users can still log in, to be able to do certain things like delete
 /// their account.
+#[serde(rename_all = "camelCase")]
 pub struct Login {
   pub username_or_email: SensitiveString,
   pub password: SensitiveString,
@@ -443,7 +448,6 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[derive(Default)]
-#[serde(rename_all = "camelCase")]
 pub struct EmailExistsResponse {
   pub exists: bool,
 }
@@ -468,6 +472,7 @@ pub struct LoginResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Your user info.
+#[serde(rename_all = "camelCase")]
 pub struct MyUserInfo {
   pub local_user_view: LocalUserView,
   pub community_blocks: Vec<Community>,
@@ -478,10 +483,10 @@ pub struct MyUserInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Change your password after receiving a reset request.
+#[serde(rename_all = "camelCase")]
 pub struct PasswordChangeAfterReset {
   pub token: SensitiveString,
   pub password: SensitiveString,
@@ -510,6 +515,7 @@ pub struct ResendVerificationEmail {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Saves settings for your user.
+#[serde(rename_all = "camelCase")]
 pub struct SaveUserSettings {
   /// Show self_promotion posts.
   pub self_promotion: Option<bool>,
@@ -587,7 +593,6 @@ pub struct UpdateTotp {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 pub struct UpdateTotpResponse {
   pub enabled: bool,
 }
@@ -596,6 +601,7 @@ pub struct UpdateTotpResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Block an instance as user
+#[serde(rename_all = "camelCase")]
 pub struct UserBlockInstanceParams {
   pub instance_id: InstanceId,
   pub block: bool,
@@ -621,6 +627,7 @@ pub struct VerifyEmailSuccessResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Gets your hidden posts.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonHidden {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
@@ -645,6 +652,7 @@ pub struct ListPersonHiddenResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Gets your read posts.
+#[serde(rename_all = "camelCase")]
 pub struct ListPersonRead {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
@@ -685,6 +693,7 @@ pub struct DeleteTagline {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Fetches a list of taglines.
+#[serde(rename_all = "camelCase")]
 pub struct ListTaglines {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
@@ -706,7 +715,6 @@ pub struct ListTaglinesResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 pub struct TaglineResponse {
   pub tagline: Tagline,
 }
@@ -759,6 +767,7 @@ pub enum PostOrCommentOrPrivateMessage {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
 pub struct UserSettingsBackup {
   pub display_name: Option<String>,
   pub bio: Option<String>,
@@ -770,17 +779,11 @@ pub struct UserSettingsBackup {
   //       fields are renamed, and to avoid storing unnecessary fields like person_id or multilang
   pub settings: Option<LocalUser>,
   #[serde(default)]
-  pub followed_communities: Vec<Url>,
-  #[serde(default)]
   pub saved_posts: Vec<Url>,
   #[serde(default)]
   pub saved_comments: Vec<Url>,
   #[serde(default)]
-  pub blocked_communities: Vec<Url>,
-  #[serde(default)]
   pub blocked_users: Vec<Url>,
-  #[serde(default)]
-  pub blocked_instances: Vec<String>,
 }
 
 #[skip_serializing_none]
@@ -788,12 +791,9 @@ pub struct UserSettingsBackup {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 /// Your exported data.
-#[serde(rename_all = "camelCase")]
 pub struct ExportDataResponse {
   pub inbox: Vec<PostOrCommentOrPrivateMessage>,
   pub content: Vec<PostOrCommentOrPrivateMessage>,
-  pub read_posts: Vec<Url>,
-  pub liked: Vec<Url>,
   pub settings: UserSettingsBackup,
 }
 
@@ -801,7 +801,6 @@ pub struct ExportDataResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A response that completes successfully.
-#[serde(rename_all = "camelCase")]
 pub struct SuccessResponse {
   pub success: bool,
 }

@@ -1,3 +1,4 @@
+use crate::chat_room::ChatRoomTemp;
 use crate::{
   bridge_message::BridgeMessage,
   message::{RegisterClientMsg, StoreChatMessage},
@@ -18,7 +19,6 @@ use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
-use crate::chat_room::ChatRoomTemp;
 
 #[derive(Message)]
 #[rtype(result = "()")]

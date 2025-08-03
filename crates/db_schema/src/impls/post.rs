@@ -1,5 +1,5 @@
 use crate::{
-  newtypes::{CommunityId, DbUrl, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId, PostId},
   source::post::{
     Post,
     PostActions,
@@ -21,22 +21,13 @@ use crate::{
     DbPool,
     DELETED_REPLACEMENT_TEXT,
     FETCH_LIMIT_MAX,
-    SITEMAP_DAYS,
-    SITEMAP_LIMIT,
   },
 };
 use chrono::Utc;
-use diesel::{
-  dsl::{count, insert_into, not, update},
-  expression::SelectableHelper,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
-};
+use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
+use tracing::log::debug;
 use lemmy_db_schema_file::{
   enums::PostNotifications,
   schema::{community, person, post, post_actions},
@@ -55,11 +46,15 @@ impl Crud for Post {
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    insert_into(post::table)
-        .values(form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
+    let query = insert_into(post::table).values(form);
+
+    let sql_preview = debug_query::<Pg, _>(&query).to_string();
+    debug!("SQL preview: {sql_preview}");
+    let res = query
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntCreatePost);
+    res
   }
 
   async fn update(
@@ -99,23 +94,6 @@ impl Post {
       .then_order_by(post::published_at.desc())
       .limit(FETCH_LIMIT_MAX.try_into()?)
       .load::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  pub async fn list_for_sitemap(
-    pool: &mut DbPool<'_>,
-  ) -> FastJobResult<Vec<(DbUrl, chrono::DateTime<Utc>)>> {
-    let conn = &mut get_conn(pool).await?;
-    post::table
-      .select((post::ap_id, coalesce(post::updated_at, post::published_at)))
-      .filter(post::local.eq(true))
-      .filter(post::deleted.eq(false))
-      .filter(post::removed.eq(false))
-      .filter(post::published_at.ge(Utc::now().naive_utc() - SITEMAP_DAYS))
-      .order(post::published_at.desc())
-      .limit(SITEMAP_LIMIT)
-      .load::<(DbUrl, chrono::DateTime<Utc>)>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
@@ -230,31 +208,14 @@ impl Post {
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
-    object_id: Url,
   ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
-    let object_id: DbUrl = object_id.into();
     post::table
-      .filter(post::ap_id.eq(object_id))
       .filter(post::scheduled_publish_time_at.is_null())
       .first(conn)
       .await
       .optional()
       .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  pub async fn delete_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: Url,
-  ) -> FastJobResult<Vec<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let object_id: DbUrl = object_id.into();
-
-    diesel::update(post::table.filter(post::ap_id.eq(object_id)))
-      .set(post::deleted.eq(true))
-      .get_results::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
   pub async fn user_scheduled_post_count(
@@ -650,7 +611,6 @@ mod tests {
       embed_description: None,
       embed_video_url: None,
       thumbnail_url: None,
-      ap_id: Url::parse(&format!("https://lemmy-alpha/post/{}", inserted_post.id))?.into(),
       local: true,
       language_id: Default::default(),
       featured_community: false,
@@ -770,7 +730,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -778,7 +738,7 @@ mod tests {
       "A test comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
 

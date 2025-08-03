@@ -9,11 +9,11 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::OAuthUserUpdateRequest;
 use lemmy_db_views_site::{api::LoginResponse, SiteView};
 use lemmy_email::admin::send_new_applicant_email_to_admins;
+use lemmy_utils::utils::validation::password_length_check;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
-use lemmy_utils::utils::validation::password_length_check;
 
 pub async fn update_term(
   data: Json<OAuthUserUpdateRequest>,
@@ -77,7 +77,7 @@ pub async fn update_term(
     )
     .await?;
 
-    let jwt = Claims::generate(user.id, user.email, user.role, req, &context).await?;
+    let jwt = Claims::generate(user.id, user.email, user.role, user.interface_language, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

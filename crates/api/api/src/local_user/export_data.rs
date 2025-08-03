@@ -7,11 +7,6 @@ use lemmy_db_views_person_content_combined::{
   impls::PersonContentCombinedQuery,
   PersonContentCombinedView,
 };
-use lemmy_db_views_person_liked_combined::{
-  impls::PersonLikedCombinedQuery,
-  PersonLikedCombinedView,
-};
-use lemmy_db_views_post::PostView;
 use lemmy_db_views_site::{
   api::{ExportDataResponse, PostOrCommentOrPrivateMessage},
   impls::user_backup_list_to_user_settings_backup,
@@ -26,7 +21,6 @@ pub async fn export_data(
 
   let local_instance_id = local_user_view.person.instance_id;
   let my_person_id = local_user_view.person.id;
-  let my_person = &local_user_view.person;
 
   let pool = &mut context.pool();
 
@@ -57,27 +51,7 @@ pub async fn export_data(
   })
   .collect();
 
-  let liked = PersonLikedCombinedQuery {
-    no_limit: Some(true),
-    ..PersonLikedCombinedQuery::default()
-  }
-  .list(pool, &local_user_view)
-  .await?
-  .into_iter()
-  .map(|u| {
-    match u {
-      PersonLikedCombinedView::Post(pv) => pv.post.ap_id,
-      PersonLikedCombinedView::Comment(cv) => cv.comment.ap_id,
-    }
-    .into()
-  })
-  .collect();
 
-  let read_posts = PostView::list_read(pool, my_person, None, None, None, Some(true))
-    .await?
-    .into_iter()
-    .map(|pv| pv.post.ap_id.into())
-    .collect();
 
   let lists = LocalUser::export_backup(pool, local_user_view.person.id).await?;
   let settings = user_backup_list_to_user_settings_backup(local_user_view, lists);
@@ -85,8 +59,6 @@ pub async fn export_data(
   Ok(Json(ExportDataResponse {
     inbox,
     content,
-    liked,
-    read_posts,
     settings,
   }))
 }

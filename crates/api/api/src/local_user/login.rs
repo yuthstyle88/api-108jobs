@@ -10,11 +10,11 @@ use lemmy_api_utils::{
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_site::api::LoginRequest;
 use lemmy_db_views_site::{
   api::{Login, LoginResponse},
   SiteView,
 };
-use lemmy_db_views_site::api::LoginRequest;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
@@ -59,6 +59,7 @@ pub async fn login(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
     local_user_view.local_user.role,
+    local_user_view.local_user.interface_language,
     req,
     &context,
   )

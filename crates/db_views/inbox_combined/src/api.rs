@@ -26,6 +26,7 @@ pub struct GetUnreadRegistrationApplicationCountResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Mark a comment reply as read.
 pub struct MarkCommentReplyAsRead {
   pub comment_reply_id: CommentReplyId,
@@ -35,6 +36,7 @@ pub struct MarkCommentReplyAsRead {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Mark a person mention as read.
 pub struct MarkPersonCommentMentionAsRead {
   pub person_comment_mention_id: PersonCommentMentionId,
@@ -44,6 +46,7 @@ pub struct MarkPersonCommentMentionAsRead {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Mark a person mention as read.
 pub struct MarkPersonPostMentionAsRead {
   pub person_post_mention_id: PersonPostMentionId,

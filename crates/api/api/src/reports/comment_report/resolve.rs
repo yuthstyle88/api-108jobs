@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json};
 use either::Either;
+use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_reports::{
@@ -38,7 +38,6 @@ pub async fn resolve_comment_report(
 
   ActivityChannel::submit_activity(
     SendActivityData::SendResolveReport {
-      object_id: comment_report_view.comment.ap_id.inner().clone(),
       actor: local_user_view.person,
       report_creator: report.creator,
       receiver: Either::Right(comment_report_view.community.clone()),

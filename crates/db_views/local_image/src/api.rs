@@ -7,6 +7,7 @@ use url::Url;
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct DeleteImageParams {
   pub filename: String,
 }
@@ -15,6 +16,7 @@ pub struct DeleteImageParams {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct ImageGetParams {
   pub file_type: Option<String>,
   pub max_size: Option<i32>,
@@ -24,6 +26,7 @@ pub struct ImageGetParams {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct ImageProxyParams {
   pub url: String,
   pub file_type: Option<String>,
@@ -34,6 +37,7 @@ pub struct ImageProxyParams {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Get your user's image / media uploads.
 pub struct ListMedia {
   pub page_cursor: Option<PaginationCursor>,

@@ -444,7 +444,7 @@ mod tests {
 
     let sara_comment_form =
       CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form, Some(&timmy_comment.path)).await?;
+    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
     Ok(Data {
       instance,

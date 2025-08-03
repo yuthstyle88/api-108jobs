@@ -44,6 +44,7 @@ pub async fn verify_email(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
     local_user_view.local_user.role,
+    local_user_view.local_user.interface_language,
     req,
     &context,
   )

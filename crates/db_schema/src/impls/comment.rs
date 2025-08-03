@@ -1,6 +1,5 @@
 use crate::{
-  diesel::{DecoratableTarget, OptionalExtension},
-  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId},
+  newtypes::{CommentId, CommunityId, InstanceId, PersonId},
   source::comment::{
     Comment,
     CommentActions,
@@ -11,7 +10,7 @@ use crate::{
   },
   traits::{Crud, Likeable, Saveable},
   utils::{
-    functions::{coalesce, hot_rank},
+    functions::{hot_rank},
     get_conn,
     uplete,
     validate_like,
@@ -29,7 +28,6 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use diesel_ltree::Ltree;
 use lemmy_db_schema_file::schema::{comment, comment_actions, community, post};
 use lemmy_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
@@ -155,27 +153,21 @@ impl Comment {
   pub async fn create(
     pool: &mut DbPool<'_>,
     comment_form: &CommentInsertForm,
-    parent_path: Option<&Ltree>,
   ) -> FastJobResult<Comment> {
-    Self::insert_apub(pool, None, comment_form, parent_path).await
+    Self::insert_apub(pool, None, comment_form).await
   }
 
   pub async fn insert_apub(
     pool: &mut DbPool<'_>,
     timestamp: Option<DateTime<Utc>>,
     comment_form: &CommentInsertForm,
-    parent_path: Option<&Ltree>,
   ) -> FastJobResult<Comment> {
     let conn = &mut get_conn(pool).await?;
-    let comment_form = (comment_form, parent_path.map(|p| comment::path.eq(p)));
+    let comment_form = comment_form;
 
-    if let Some(timestamp) = timestamp {
+    if let Some(_timestamp) = timestamp {
       insert_into(comment::table)
         .values(comment_form)
-        .on_conflict(comment::ap_id)
-        .filter_target(coalesce(comment::updated_at, comment::published_at).lt(timestamp))
-        .do_update()
-        .set(comment_form)
         .get_result::<Self>(conn)
         .await
         .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
@@ -188,30 +180,7 @@ impl Comment {
     }
   }
 
-  pub async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: Url,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let object_id: DbUrl = object_id.into();
-    comment::table
-      .filter(comment::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
 
-  pub fn parent_comment_id(&self) -> Option<CommentId> {
-    let mut ltree_split: Vec<&str> = self.path.0.split('.').collect();
-    ltree_split.remove(0); // The first is always 0
-    if ltree_split.len() > 1 {
-      let parent_comment_id = ltree_split.get(ltree_split.len() - 2);
-      parent_comment_id.and_then(|p| p.parse::<i32>().map(CommentId).ok())
-    } else {
-      None
-    }
-  }
   pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
@@ -236,7 +205,7 @@ impl Crud for Comment {
   /// Use [[Comment::create]]
   async fn create(pool: &mut DbPool<'_>, comment_form: &Self::InsertForm) -> FastJobResult<Self> {
     debug_assert!(false);
-    Comment::create(pool, comment_form, None).await
+    Comment::create(pool, comment_form).await
   }
 
   async fn update(
@@ -376,8 +345,7 @@ mod tests {
     traits::{Crud, Likeable, Saveable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
-  use diesel_ltree::Ltree;
-  use lemmy_utils::error::FastJobResult;
+    use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -414,7 +382,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let expected_comment = Comment {
       id: inserted_comment.id,
@@ -423,18 +391,11 @@ mod tests {
       post_id: inserted_post.id,
       removed: false,
       deleted: false,
-      path: Ltree(format!("0.{}", inserted_comment.id)),
       published_at: inserted_comment.published_at,
       updated_at: None,
-      ap_id: Url::parse(&format!(
-        "https://lemmy-alpha/comment/{}",
-        inserted_comment.id
-      ))?
-      .into(),
       distinguished: false,
       local: true,
       language_id: LanguageId::default(),
-      child_count: 1,
       controversy_rank: 0.0,
       downvotes: 0,
       upvotes: 1,
@@ -450,7 +411,7 @@ mod tests {
       "A child comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     // Comment Like
     let comment_like_form = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
@@ -483,10 +444,7 @@ mod tests {
 
     assert_eq!(expected_comment, read_comment);
     assert_eq!(expected_comment, updated_comment);
-    assert_eq!(
-      format!("0.{}.{}", expected_comment.id, inserted_child_comment.id),
-      inserted_child_comment.path.0,
-    );
+
     assert_eq!(uplete::Count::only_updated(1), like_removed);
     assert_eq!(uplete::Count::only_deleted(1), saved_removed);
     assert_eq!(1, num_deleted);
@@ -530,7 +488,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -538,7 +496,7 @@ mod tests {
       "A test comment".into(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
 

@@ -194,6 +194,7 @@ pub struct ListCommunities {
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
   pub time_range_seconds: Option<i32>,
+  pub max_depth: Option<i32>,
   pub self_promotion: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
@@ -249,6 +250,7 @@ pub struct RemoveCommunity {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Update a community tag.
 pub struct UpdateCommunityTag {
   pub tag_id: TagId,
@@ -259,6 +261,7 @@ pub struct UpdateCommunityTag {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Delete a community tag.
 pub struct DeleteCommunityTag {
   pub tag_id: TagId,

@@ -1,4 +1,5 @@
-use crate::{context::FastJobContext};
+use crate::utils::check_community_deleted_removed;
+use crate::context::FastJobContext;
 use lemmy_db_schema::{
   newtypes::TagId,
   source::{
@@ -10,7 +11,6 @@ use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::collections::HashSet;
-use crate::utils::check_community_deleted_removed;
 
 pub async fn update_post_tags(
   context: &FastJobContext,

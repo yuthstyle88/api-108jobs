@@ -431,7 +431,7 @@ mod tests {
       post::{Post, PostInsertForm},
       post_report::{PostReport, PostReportForm},
     },
-    traits::{Crud, Joinable, Reportable},
+    traits::{Crud, Reportable},
     utils::{build_db_pool_for_tests, get_conn, DbPool},
     ReportType,
   };

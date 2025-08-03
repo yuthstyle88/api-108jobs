@@ -1,6 +1,6 @@
 use actix::Message;
-use serde::{Deserialize, Serialize};
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum MessageSource {

@@ -1,19 +1,23 @@
 use actix_web::web::{Data, Json, Query};
+use lemmy_api_utils::build_response::build_community_tree;
 use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
+use lemmy_db_schema::newtypes::PaginationCursor;
+use lemmy_db_schema::source::community::Community;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_community::{api::{ListCommunities, ListCommunitiesResponse}, impls::CommunityQuery, CommunityView};
+use lemmy_db_schema::CommunitySortType;
+use lemmy_db_schema_file::enums::ListingType;
+use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
+use lemmy_db_views_community::{
+  api::{ListCommunities, ListCommunitiesResponse},
+  impls::CommunityQuery,
+  CommunityView,
+};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 use moka::future::Cache;
-use std::{sync::LazyLock, time::Duration};
 use std::hash::{Hash, Hasher};
-use lemmy_api_utils::build_response::build_community_tree;
-use lemmy_db_schema::CommunitySortType;
-use lemmy_db_schema::newtypes::PaginationCursor;
-use lemmy_db_schema::source::community::Community;
-use lemmy_db_schema_file::enums::ListingType;
-use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
+use std::{sync::LazyLock, time::Duration};
 
 // Define a cache key type based on query parameters
 #[derive(Clone, Debug, Eq)]
@@ -21,6 +25,7 @@ struct CommunitiesListCacheKey {
   type_: Option<ListingType>,
   sort: Option<CommunitySortType>,
   time_range_seconds: Option<i32>,
+  max_depth: Option<i32>,
   limit: Option<i64>,
   self_promotion: Option<bool>,
   page_cursor: Option<PaginationCursor>,
@@ -33,6 +38,7 @@ impl PartialEq for CommunitiesListCacheKey {
     self.type_ == other.type_
       && self.sort == other.sort
       && self.time_range_seconds == other.time_range_seconds
+      && self.max_depth == other.max_depth
       && self.limit == other.limit
       && self.self_promotion == other.self_promotion
       && self.page_cursor == other.page_cursor
@@ -46,6 +52,7 @@ impl Hash for CommunitiesListCacheKey {
     self.type_.hash(state);
     self.sort.hash(state);
     self.time_range_seconds.hash(state);
+    self.max_depth.hash(state);
     self.limit.hash(state);
     self.self_promotion.hash(state);
     self.page_cursor.hash(state);
@@ -55,17 +62,17 @@ impl Hash for CommunitiesListCacheKey {
 }
 
 // Create a static cache instance with a 5-minute expiration time
-static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitiesResponse>> = 
-    LazyLock::new(|| {
-        Cache::builder()
-            // Set a reasonable maximum size to prevent memory issues
-            .max_capacity(1000)
-            // Set a 5-minute time-to-live for cache entries
-            .time_to_live(Duration::from_secs(300))
-            // Set a 10-minute time-to-idle for cache entries
-            .time_to_idle(Duration::from_secs(600))
-            .build()
-    });
+static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitiesResponse>> =
+  LazyLock::new(|| {
+    Cache::builder()
+      // Set a reasonable maximum size to prevent memory issues
+      .max_capacity(1000)
+      // Set a 5-minute time-to-live for cache entries
+      .time_to_live(Duration::from_secs(300))
+      // Set a 10-minute time-to-idle for cache entries
+      .time_to_idle(Duration::from_secs(600))
+      .build()
+  });
 
 pub async fn list_communities(
   data: Query<ListCommunities>,
@@ -81,6 +88,7 @@ pub async fn list_communities(
     type_: data.type_,
     sort: data.sort,
     time_range_seconds: data.time_range_seconds,
+    max_depth: data.max_depth,
     limit: data.limit,
     self_promotion: data.self_promotion,
     page_cursor: data.page_cursor.clone(),
@@ -118,6 +126,7 @@ pub async fn list_communities(
     self_promotion: Some(self_promotion),
     sort: data.sort,
     time_range_seconds: data.time_range_seconds,
+    max_depth: data.max_depth,
     local_user: local_user.as_ref(),
     cursor_data,
     page_back: data.page_back,

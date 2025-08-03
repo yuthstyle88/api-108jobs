@@ -24,27 +24,27 @@ workspace = true
 
 [features]
 full = [
-  "diesel",
-  "actix-web",
-  "reqwest-middleware",
-  "tracing",
-  "actix-web",
-  "serde_json",
-  "anyhow",
-  "http",
-  "deser-hjson",
-  "regex",
-  "urlencoding",
-  "doku",
-  "url",
-  "smart-default",
-  "enum-map",
-  "futures",
-  "tokio",
-  "itertools",
-  "markdown-it",
-  "moka",
-  "actix-extensible-rate-limit",
+    "diesel",
+    "actix-web",
+    "reqwest-middleware",
+    "tracing",
+    "actix-web",
+    "serde_json",
+    "anyhow",
+    "http",
+    "deser-hjson",
+    "regex",
+    "urlencoding",
+    "doku",
+    "url",
+    "smart-default",
+    "enum-map",
+    "futures",
+    "tokio",
+    "itertools",
+    "markdown-it",
+    "moka",
+    "actix-extensible-rate-limit",
 ]
 ts-rs = ["dep:ts-rs"]
 
@@ -89,10 +89,11 @@ hex = { workspace = true }
 aes = "0.7.5"
 block-modes = "0.8.1"
 p256 = { workspace = true }
-rand_core ="0.6.3"
-spki = { version =   "0.4.1" ,  default-features = false, features = ["std"] }
+rand_core = "0.6.3"
+spki = { version = "0.4.1", default-features = false, features = ["std"] }
 tendril = "0.4.3"
 base64 = { workspace = true }
+redis = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

@@ -47,8 +47,6 @@ pub struct Post {
   pub embed_description: Option<String>,
   /// A thumbnail picture url.
   pub thumbnail_url: Option<DbUrl>,
-  /// The federated activity id / ap_id.
-  pub ap_id: DbUrl,
   /// Whether the post is local.
   pub local: bool,
   /// A video url for the link.
@@ -126,8 +124,6 @@ pub struct PostInsertForm {
   #[new(default)]
   pub thumbnail_url: Option<DbUrl>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub local: Option<bool>,
   #[new(default)]
   pub language_id: Option<LanguageId>,
@@ -170,7 +166,6 @@ pub struct PostUpdateForm {
   pub embed_description: Option<Option<String>>,
   pub embed_video_url: Option<Option<DbUrl>>,
   pub thumbnail_url: Option<Option<DbUrl>>,
-  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub language_id: Option<LanguageId>,
   pub featured_community: Option<bool>,
@@ -178,6 +173,12 @@ pub struct PostUpdateForm {
   pub url_content_type: Option<Option<String>>,
   pub alt_text: Option<Option<String>>,
   pub scheduled_publish_time_at: Option<Option<DateTime<Utc>>>,
+  pub budget: Option<f64>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub deadline: Option<Option<DateTime<Utc>>>,
+  pub is_english_required: Option<bool>,
+  pub community_id: Option<CommunityId>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

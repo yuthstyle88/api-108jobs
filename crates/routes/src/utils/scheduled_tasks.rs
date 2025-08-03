@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use chrono::{DateTime, TimeZone, Utc};
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};
 use diesel::{
@@ -15,7 +16,6 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::send_webmention,
 };
 use lemmy_db_schema::{
   source::{
@@ -34,7 +34,6 @@ use lemmy_db_schema_file::schema::{
 };
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::time::Duration;
-use actix_web::web::Data;
 use tracing::{info, warn};
 
 /// Schedules various cleanup tasks for lemmy in a background thread
@@ -305,7 +304,7 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
     .get_results::<(Post, Community)>(&mut conn)
     .await?;
 
-  for (post, community) in scheduled_posts {
+  for (post, _community) in scheduled_posts {
     // mark post as published in db
     let form = PostUpdateForm {
       scheduled_publish_time_at: Some(None),
@@ -316,7 +315,6 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
     // send out post via federation and webmention
     let send_activity = SendActivityData::CreatePost(post.clone());
     ActivityChannel::submit_activity(send_activity, context)?;
-    send_webmention(post, &community);
   }
   Ok(())
 }

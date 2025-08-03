@@ -7,6 +7,7 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 pub struct AdminListUsers {
   pub banned_only: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,

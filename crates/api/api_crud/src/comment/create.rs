@@ -1,9 +1,9 @@
+use lemmy_db_schema::newtypes::{PersonId, PostId};
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
-  plugins::plugin_hook_after,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
@@ -11,31 +11,33 @@ use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
   source::{
     comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-    comment_reply::{CommentReply, CommentReplyUpdateForm},
-    person_comment_mention::{PersonCommentMention, PersonCommentMentionUpdateForm},
   },
-  traits::{Crud, Likeable},
+  traits::Likeable,
+  utils::DbPool,
 };
 use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
-  MAX_COMMENT_DEPTH_LIMIT,
 };
+use url;
+use lemmy_utils::error::FastJobError;
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {
-  let data: CreateComment = data.into_inner().try_into()?;
+  let request_data = data.into_inner();
+  tracing::info!("Incoming comment request: {:#?}", request_data);
+
+  let data: CreateComment = request_data.try_into()?;
+  tracing::info!("Converted to CreateComment: {:#?}", data);
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
   is_valid_body_field(&content, false)?;
 
   // Check for a community ban
@@ -62,21 +64,6 @@ pub async fn create_comment(
     Err(FastJobErrorType::Locked)?
   }
 
-  // Fetch the parent, if it exists
-  let parent_opt = if let Some(parent_id) = data.parent_id {
-    Comment::read(&mut context.pool(), parent_id).await.ok()
-  } else {
-    None
-  };
-
-  // If there's a parent_id, check to make sure that comment is in that post
-  // Strange issue where sometimes the post ID of the parent comment is incorrect
-  if let Some(parent) = parent_opt.as_ref() {
-    if parent.post_id != post_id {
-      Err(FastJobErrorType::CouldntCreateComment)?
-    }
-    check_comment_depth(parent)?;
-  }
 
   let language_id = validate_post_language(
     &mut context.pool(),
@@ -86,23 +73,38 @@ pub async fn create_comment(
   )
   .await?;
 
-  let comment_form = CommentInsertForm {
-    language_id: Some(language_id),
-    ..CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone())
-  };
+  // Validate required proposal fields (all comments now require these)
+  validate_proposal_fields(&data)?;
+
+  // Check if user is trying to comment on their own post
+  if post.creator_id == local_user_view.person.id {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("cannot comment on your own post".to_string())))?;
+  }
+
+  // Check if user has already commented on this post
+  check_user_already_commented(&mut context.pool(), local_user_view.person.id, post_id).await?;
+
+  let mut comment_form = CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone());
+  comment_form.language_id = Some(language_id);
+
+  // Add required proposal fields (all comments now require these)
+  comment_form.budget = Some(data.budget);
+  comment_form.working_days = Some(data.working_days);
+  comment_form.brief_url = Some(data.brief_url.clone());
+
+  // Debug: Output the comment form structure
+  tracing::info!("Comment form to be inserted: {:#?}", comment_form);
 
   // Create the comment
-  let parent_path = parent_opt.clone().map(|t| t.path);
   let inserted_comment =
-    Comment::create(&mut context.pool(), &comment_form, parent_path.as_ref()).await?;
-  plugin_hook_after("after_create_local_comment", &inserted_comment)?;
+    Comment::create(&mut context.pool(), &comment_form).await?;
 
-  let do_send_email = !local_site.disable_email_notifications;
+  tracing::info!("Successfully inserted comment: {:#?}", inserted_comment);
+
   send_local_notifs(
     &post,
     Some(&inserted_comment),
     &local_user_view.person,
-    do_send_email,
     &context,
   )
   .await?;
@@ -130,51 +132,67 @@ pub async fn create_comment(
   // (ie we're the grandparent, or the recipient of the parent comment_reply),
   // then mark the parent as read.
   // Then we don't have to do it manually after we respond to a comment.
-  if let Some(parent) = parent_opt {
-    let person_id = local_user_view.person.id;
-    let parent_id = parent.id;
-    let comment_reply =
-      CommentReply::read_by_comment_and_person(&mut context.pool(), parent_id, person_id).await;
-    if let Ok(Some(reply)) = comment_reply {
-      CommentReply::update(
-        &mut context.pool(),
-        reply.id,
-        &CommentReplyUpdateForm { read: Some(true) },
-      )
-      .await?;
-    }
-
-    // If the parent has PersonCommentMentions mark them as read too
-    let person_comment_mention =
-      PersonCommentMention::read_by_comment_and_person(&mut context.pool(), parent_id, person_id)
-        .await;
-    if let Ok(Some(mention)) = person_comment_mention {
-      PersonCommentMention::update(
-        &mut context.pool(),
-        mention.id,
-        &PersonCommentMentionUpdateForm { read: Some(true) },
-      )
-      .await?;
-    }
-  }
 
   Ok(Json(
     build_comment_response(
       &context,
       inserted_comment.id,
-      Some(local_user_view),
       local_instance_id,
     )
     .await?,
   ))
 }
 
-pub fn check_comment_depth(comment: &Comment) -> FastJobResult<()> {
-  let path = &comment.path.0;
-  let length = path.split('.').count();
-  if length > MAX_COMMENT_DEPTH_LIMIT {
-    Err(FastJobErrorType::MaxCommentDepthReached)?
-  } else {
-    Ok(())
+
+fn validate_proposal_fields(data: &CreateComment) -> FastJobResult<()> {
+  // Validate budget (now required)
+  if data.budget <= 0 {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("budget must be greater than 0".to_string())))?;
   }
+
+  // Validate working days (now required)
+  if data.working_days <= 0 {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string())))?;
+  }
+
+  // Validate brief URL (now required)
+  if data.brief_url.trim().is_empty() {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("brief_url cannot be empty".to_string())))?;
+  }
+
+  // Basic URL validation
+  if let Err(_) = url::Url::parse(&data.brief_url) {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("brief_url must be a valid URL".to_string())))?;
+  }
+
+  Ok(())
+}
+
+async fn check_user_already_commented(
+  pool: &mut DbPool<'_>,
+  person_id: PersonId,
+  _post_id: PostId
+) -> FastJobResult<()> {
+  use lemmy_db_schema_file::schema::comment::dsl::*;
+  use lemmy_db_schema::utils::get_conn;
+  use diesel::prelude::*;
+  use diesel_async::RunQueryDsl;
+
+  let conn = &mut get_conn(pool).await?;
+
+  let existing_comment = comment
+    .filter(creator_id.eq(person_id))
+    .filter(lemmy_db_schema_file::schema::comment::post_id.eq(post_id))
+    .filter(deleted.eq(false))
+    .filter(removed.eq(false))
+    .first::<Comment>(conn)
+    .await
+    .optional()
+    .map_err(|_| FastJobError::from(FastJobErrorType::CouldntCreateComment))?;
+
+  if existing_comment.is_some() {
+    return Err(FastJobError::from(FastJobErrorType::InvalidField("You have already commented on this post".to_string())))?;
+  }
+
+  Ok(())
 }

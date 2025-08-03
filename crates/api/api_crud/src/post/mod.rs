@@ -12,8 +12,6 @@ pub mod delete;
 pub mod read;
 pub mod remove;
 pub mod update;
-pub mod list;
-
 async fn convert_published_time(
   scheduled_publish_time: Option<i64>,
   local_user_view: &LocalUserView,

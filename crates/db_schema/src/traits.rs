@@ -323,6 +323,12 @@ pub trait Reportable {
 }
 
 pub trait ApubActor {
+  fn read_from_apub_id(
+    pool: &mut DbPool<'_>,
+    object_id: &DbUrl,
+  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
+  where
+   Self: Sized;
   /// - actor_name is the name of the community or user to read.
   /// - include_deleted, if true, will return communities or users that were deleted/removed
   fn read_from_name(

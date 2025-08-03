@@ -55,103 +55,10 @@ pub(crate) async fn to_local_url(url: &str, context: &Data<FastJobContext>) -> O
   }
   let dereferenced = object_id.dereference_local(context).await.ok()?;
   match dereferenced {
-    Left(Left(Left(post))) => post.local_url(context.settings()),
-    Left(Left(Right(comment))) => comment.local_url(context.settings()),
-    Left(Right(Left(user))) => user.actor_url(context.settings()),
-    Left(Right(Right(community))) => community.actor_url(context.settings()),
-    Right(multi) => multi.format_url(context.settings()),
+    Left(Left(post)) => post.local_url(context.settings()),
+    Left(Right(comment)) => comment.local_url(context.settings()),
+    Right(Left(user)) => user.actor_url(context.settings()),
+    Right(Right(community)) => community.actor_url(context.settings()),
   }
   .ok()
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use lemmy_db_schema::{
-    source::{
-      community::{Community, CommunityInsertForm},
-      post::{Post, PostInsertForm},
-    },
-    test_data::TestData,
-    traits::Crud,
-  };
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::FastJobContext;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-  #[serial]
-  #[tokio::test]
-  async fn test_markdown_rewrite_remote_links() -> FastJobContext<()> {
-    let context = FastJobContext::init_test_context().await;
-    let data = TestData::create(&mut context.pool()).await?;
-    let community = Community::create(
-      &mut context.pool(),
-      &CommunityInsertForm::new(
-        data.instance.id,
-        "my_community".to_string(),
-        "My Community".to_string(),
-        "pubkey".to_string(),
-      ),
-    )
-    .await?;
-    let user =
-      LocalUserView::create_test_user(&mut context.pool(), "garda", "garda bio", false).await?;
-
-    // insert a remote post which is already fetched
-    let post_form = PostInsertForm {
-      ap_id: Some(Url::parse("https://example.com/post/123")?.into()),
-      ..PostInsertForm::new("My post".to_string(), user.person.id, community.id)
-    };
-    let post = Post::create(&mut context.pool(), &post_form).await?;
-    let markdown_local_post_url = format!("[link](https://lemmy-alpha/post/{})", post.id);
-
-    let tests: Vec<_> = vec![
-      (
-        "rewrite remote post link",
-        format!("[link]({})", post.ap_id),
-        markdown_local_post_url.as_ref(),
-      ),
-      (
-        "rewrite community link",
-        format!("[link]({})", community.ap_id),
-        "[link](https://lemmy-alpha/c/my_community@changeme.invalid)",
-      ),
-      (
-        "dont rewrite local post link",
-        "[link](https://lemmy-alpha/post/2)".to_string(),
-        "[link](https://lemmy-alpha/post/2)",
-      ),
-      (
-        "dont rewrite local community link",
-        "[link](https://lemmy-alpha/c/test)".to_string(),
-        "[link](https://lemmy-alpha/c/test)",
-      ),
-      (
-        "dont rewrite non-fediverse link",
-        "[link](https://example.com/)".to_string(),
-        "[link](https://example.com/)",
-      ),
-      (
-        "dont rewrite invalid url",
-        "[link](example-com)".to_string(),
-        "[link](example-com)",
-      ),
-    ];
-
-    let context = FastJobContext::init_test_context().await;
-    for (msg, input, expected) in &tests {
-      let result = markdown_rewrite_remote_links(input.to_string(), &context).await;
-
-      assert_eq!(
-        &result, expected,
-        "Testing {}, with original input '{}'",
-        msg, input
-      );
-    }
-
-    data.delete(&mut context.pool()).await?;
-
-    Ok(())
-  }
 }

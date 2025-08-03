@@ -23,8 +23,8 @@ use crate::{
     FETCH_LIMIT_MAX,
   },
 };
-use chrono::Utc;
-use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
+use chrono::{DateTime, Utc};
+use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
 use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
@@ -37,6 +37,7 @@ use lemmy_utils::{
   settings::structs::Settings,
 };
 use url::Url;
+use crate::newtypes::DbUrl;
 
 impl Crud for Post {
   type InsertForm = PostInsertForm;
@@ -80,6 +81,24 @@ impl Post {
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
+
+  pub async fn insert_apub(
+    pool: &mut DbPool<'_>,
+    timestamp: DateTime<Utc>,
+    form: &PostInsertForm,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    insert_into(post::table)
+     .values(form)
+     .on_conflict(post::ap_id)
+     .filter_target(coalesce(post::updated_at, post::published_at).lt(timestamp))
+     .do_update()
+     .set(form)
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
+  }
+
 
   pub async fn list_featured_for_community(
     pool: &mut DbPool<'_>,
@@ -208,15 +227,19 @@ impl Post {
 
   pub async fn read_from_apub_id(
     pool: &mut DbPool<'_>,
+    object_id: Url,
   ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
+    let object_id: DbUrl = object_id.into();
     post::table
-      .filter(post::scheduled_publish_time_at.is_null())
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
+     .filter(post::ap_id.eq(object_id))
+     .filter(post::scheduled_publish_time_at.is_null())
+     .first(conn)
+     .await
+     .optional()
+     .with_fastjob_type(FastJobErrorType::NotFound)
   }
+
 
   pub async fn user_scheduled_post_count(
     person_id: PersonId,
@@ -272,6 +295,16 @@ impl Post {
   pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/post/{}", self.id))?)
+  }
+  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
+    if self.local && self.pending {
+      let form = PostUpdateForm {
+        pending: Some(false),
+        ..Default::default()
+      };
+      Post::update(pool, self.id, &form).await?;
+    }
+    Ok(())
   }
 }
 
@@ -611,6 +644,7 @@ mod tests {
       embed_description: None,
       embed_video_url: None,
       thumbnail_url: None,
+      ap_id: Url::parse(&format!("https://108fasttob.com/post/{}", inserted_post.id))?.into(),
       local: true,
       language_id: Default::default(),
       featured_community: false,
@@ -634,6 +668,7 @@ mod tests {
       budget: 0.0,
       deadline: None,
       is_english_required: false,
+      pending: false,
     };
 
     // Post Like

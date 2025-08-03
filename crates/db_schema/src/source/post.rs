@@ -47,6 +47,8 @@ pub struct Post {
   pub embed_description: Option<String>,
   /// A thumbnail picture url.
   pub thumbnail_url: Option<DbUrl>,
+  /// The federated activity id / ap_id.
+  pub ap_id: DbUrl,
   /// Whether the post is local.
   pub local: bool,
   /// A video url for the link.
@@ -86,6 +88,7 @@ pub struct Post {
   pub budget: f64,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  pub pending: bool,
 }
 
 // TODO: FromBytes, ToBytes are only needed to develop wasm plugin, could be behind feature flag
@@ -128,6 +131,8 @@ pub struct PostInsertForm {
   #[new(default)]
   pub language_id: Option<LanguageId>,
   #[new(default)]
+  pub ap_id: Option<DbUrl>,
+  #[new(default)]
   pub featured_community: Option<bool>,
   #[new(default)]
   pub featured_local: Option<bool>,
@@ -147,6 +152,8 @@ pub struct PostInsertForm {
   pub deadline: Option<DateTime<Utc>>,
   #[new(default)]
   pub is_english_required: bool,
+  #[new(default)]
+  pub pending: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -166,6 +173,7 @@ pub struct PostUpdateForm {
   pub embed_description: Option<Option<String>>,
   pub embed_video_url: Option<Option<DbUrl>>,
   pub thumbnail_url: Option<Option<DbUrl>>,
+  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub language_id: Option<LanguageId>,
   pub featured_community: Option<bool>,
@@ -179,6 +187,7 @@ pub struct PostUpdateForm {
   pub deadline: Option<Option<DateTime<Utc>>>,
   pub is_english_required: Option<bool>,
   pub community_id: Option<CommunityId>,
+  pub pending: Option<bool>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

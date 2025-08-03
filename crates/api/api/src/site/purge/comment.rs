@@ -1,4 +1,5 @@
-use actix_web::web::{Data, Json};
+use activitypub_federation::config::Data;
+use actix_web::web::Json;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
@@ -32,6 +33,7 @@ pub async fn purge_comment(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
+    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

@@ -1,5 +1,6 @@
+use activitypub_federation::config::Data;
 use super::check_community_visibility_allowed;
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use chrono::Utc;
 use lemmy_api_utils::utils::{check_community_deleted_removed, is_admin};
 use lemmy_api_utils::{

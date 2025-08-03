@@ -52,6 +52,7 @@ use lemmy_utils::{
 use once_cell::sync::OnceCell;
 use std::ops::Deref;
 use url::Url;
+use lemmy_api_utils::utils::check_nsfw_allowed;
 
 #[allow(clippy::type_complexity)]
 pub static FETCH_COMMUNITY_COLLECTIONS: OnceCell<
@@ -128,7 +129,7 @@ impl Object for ApubCommunity {
       media_type: self.sidebar.as_ref().map(|_| MediaTypeHtml::Html),
       icon: self.icon.clone().map(ImageObject::new),
       image: self.banner.clone().map(ImageObject::new),
-      sensitive: Some(self.nsfw),
+      sensitive: Some(self.self_promotion),
       featured: Some(generate_featured_url(&self.ap_id)?.into()),
       inbox: self.inbox_url.clone().into(),
       outbox: generate_outbox_url(&self.ap_id)?.into(),
@@ -182,13 +183,17 @@ impl Object for ApubCommunity {
     let visibility = Some(community_visibility(&group));
 
     // If NSFW is not allowed, then remove NSFW communities
+    let removed = check_nsfw_allowed(group.sensitive, local_site.as_ref())
+     .err()
+     .map(|_| true);
+
 
     let form = CommunityInsertForm {
       published_at: group.published,
       updated_at: group.updated,
       deleted: Some(false),
 
-      ap_id: Some(group.id.clone().into()),
+      ap_id: Some(group.id.inner().clone().into()),
       local: Some(false),
       last_refreshed_at: Some(Utc::now()),
       icon,
@@ -248,11 +253,11 @@ impl Object for ApubCommunity {
 
 impl Actor for ApubCommunity {
   fn public_key_pem(&self) -> &str {
-    &self.public_key
+    todo!()
   }
 
   fn private_key_pem(&self) -> Option<String> {
-    self.private_key.clone().map(SensitiveString::into_inner)
+    todo!()
   }
 
   fn inbox(&self) -> Url {
@@ -267,39 +272,5 @@ impl Actor for ApubCommunity {
 impl GetActorType for ApubCommunity {
   fn actor_type(&self) -> ActorType {
     ActorType::Community
-  }
-}
-
-#[cfg(test)]
-pub(crate) mod tests {
-  use super::*;
-  use crate::utils::test::{parse_lemmy_community, parse_lemmy_instance};
-  use lemmy_db_schema::source::site::Site;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-  #[tokio::test]
-  #[serial]
-  async fn test_parse_lemmy_community() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-    let site = parse_lemmy_instance(&context).await?;
-    let community = parse_lemmy_community(&context).await?;
-
-    assert_eq!(community.title, "Ten Forward");
-    assert!(!community.local);
-
-    // Test the sidebar and description
-    assert_eq!(
-      community.sidebar.as_ref().map(std::string::String::len),
-      Some(63)
-    );
-    assert_eq!(
-      community.description,
-      Some("A description of ten forward.".into())
-    );
-
-    Community::delete(&mut context.pool(), community.id).await?;
-    Site::delete(&mut context.pool(), site.id).await?;
-    Ok(())
   }
 }

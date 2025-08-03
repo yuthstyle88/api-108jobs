@@ -1,4 +1,5 @@
-use actix_web::web::{Data, Json};
+use activitypub_federation::config::Data;
+use actix_web::web::{ Json};
 use chrono::Utc;
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
@@ -34,6 +35,7 @@ pub async fn update_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
+    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -68,9 +70,6 @@ pub async fn update_comment(
     content,
     language_id: Some(language_id),
     updated_at: Some(Some(Utc::now())),
-    budget: Some(data.budget),
-    working_days: Some(data.working_days),
-    brief_url: Some(data.brief_url.clone()),
     ..Default::default()
   };
   let updated_comment = Comment::update(&mut context.pool(), comment_id, &form).await?;
@@ -95,6 +94,7 @@ pub async fn update_comment(
     build_comment_response(
       &context,
       updated_comment.id,
+      Some(local_user_view),
       local_instance_id,
     )
     .await?,

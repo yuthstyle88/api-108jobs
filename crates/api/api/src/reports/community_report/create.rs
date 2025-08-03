@@ -1,5 +1,6 @@
+use activitypub_federation::config::Data;
 use crate::check_report_reason;
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,

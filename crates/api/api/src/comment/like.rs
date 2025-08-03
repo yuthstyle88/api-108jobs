@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use lemmy_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext
@@ -19,6 +19,7 @@ use lemmy_db_views_comment::{
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
+use activitypub_federation::config::Data;
 
 pub async fn like_comment(
   data: Json<CreateCommentLike>,
@@ -33,6 +34,7 @@ pub async fn like_comment(
   let orig_comment = CommentView::read(
     &mut context.pool(),
     comment_id,
+    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
@@ -66,6 +68,7 @@ pub async fn like_comment(
     build_comment_response(
       context.deref(),
       comment_id,
+      Some(local_user_view),
       local_instance_id,
     )
     .await?,

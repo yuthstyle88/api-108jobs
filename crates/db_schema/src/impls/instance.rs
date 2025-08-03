@@ -100,6 +100,7 @@ impl Instance {
      .await
      .with_fastjob_type(FastJobErrorType::NotFound)
   }
+
 }
 impl Blockable for InstanceActions {
   type Form = InstanceBlockForm;

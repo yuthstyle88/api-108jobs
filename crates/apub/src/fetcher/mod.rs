@@ -68,9 +68,8 @@ where
 
 pub(crate) fn get_instance_id(s: &SiteOrMultiOrCommunityOrUser) -> InstanceId {
   match s {
-    Left(Left(s)) => s.instance_id,
-    Left(Right(m)) => m.instance_id,
-    Right(Left(u)) => u.instance_id,
-    Right(Right(c)) => c.instance_id,
+    Left(site) => site.instance_id,
+    Right(Left(user)) => user.instance_id,
+    Right(Right(community)) => community.instance_id,
   }
 }

@@ -1,12 +1,16 @@
 use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
 use diesel::{
+  dsl::exists,
+  BoolExpressionMethods,
   ExpressionMethods,
   JoinOnDsl,
+  NullableExpressionMethods,
   QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
+use diesel_ltree::{nlevel, Ltree, LtreeExtensions};
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
   newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
@@ -35,12 +39,17 @@ use lemmy_db_schema::{
     DbPool,
   },
 };
+use lemmy_db_schema::impls::local_user::LocalUserOptionHelper;
+use lemmy_db_schema::newtypes::CommunityId;
+use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema_file::{
   enums::{
     CommentSortType::{self, *},
+    CommunityFollowerState,
+    CommunityVisibility,
     ListingType,
   },
-  schema::{comment, community, person, post},
+  schema::{comment, community, community_actions, person, post},
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -92,26 +101,34 @@ impl CommentView {
   pub async fn read(
     pool: &mut DbPool<'_>,
     comment_id: CommentId,
+    my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    let mut query = Self::joins(None, local_instance_id)
-      .filter(comment::id.eq(comment_id))
-      .select(Self::as_select())
-      .into_boxed();
+    let mut query = Self::joins(my_local_user.person_id(), local_instance_id)
+     .filter(comment::id.eq(comment_id))
+     .select(Self::as_select())
+     .into_boxed();
 
-    // Filter out deleted and removed comments
-    query = query
-      .filter(comment::deleted.eq(false))
-      .filter(comment::removed.eq(false));
+    query = my_local_user.visible_communities_only(query);
 
-    // Community visibility filtering removed - show comments from all communities
+    // Check permissions to view private community content.
+    // Specifically, if the community is private then only accepted followers may view its
+    // content, otherwise it is filtered out. Admins can view private community content
+    // without restriction.
+    if !my_local_user.is_admin() {
+      query = query.filter(
+        community::visibility
+         .ne(CommunityVisibility::Private)
+         .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
+      );
+    }
 
     query
-      .first::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
+     .first::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn map_to_slim(self) -> CommentSlimView {
@@ -136,26 +153,27 @@ impl TryFrom<CreateCommentRequest> for CreateComment {
     Ok(Self {
       content: value.content,
       post_id: value.post_id,
+      parent_id: value.parent_id,
       language_id: Some(value.language_id),
-      budget: value.budget,
-      working_days: value.working_days,
-      brief_url: value.brief_url,
     })
   }
 }
 #[derive(Default)]
-pub struct CommentQuery {
+pub struct CommentQuery<'a> {
   pub listing_type: Option<ListingType>,
   pub sort: Option<CommentSortType>,
   pub time_range_seconds: Option<i32>,
+  pub community_id: Option<CommunityId>,
   pub post_id: Option<PostId>,
+  pub parent_path: Option<Ltree>,
+  pub local_user: Option<&'a LocalUser>,
   pub max_depth: Option<i32>,
   pub cursor_data: Option<Comment>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
 }
 
-impl CommentQuery {
+impl CommentQuery<'_> {
   pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommentView>> {
     let conn = &mut get_conn(pool).await?;
     let o = self;
@@ -303,7 +321,7 @@ mod tests {
       ..CommentInsertForm::new(inserted_timmy_person.id, post.id, "Comment 0".into())
     };
 
-    let comment_0 = Comment::create(pool, &comment_form_0).await?;
+    let comment_0 = Comment::create(pool, &comment_form_0, None).await?;
 
     let comment_form_1 = CommentInsertForm {
       language_id: Some(english_id),

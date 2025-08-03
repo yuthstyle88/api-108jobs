@@ -15,12 +15,15 @@ use crate::{
 use activitypub_federation::{
   config::Data,
   fetch::object_id::ObjectId,
+  kinds::activity::CreateType,
   kinds::object::NoteType,
   protocol::{
     helpers::{deserialize_one_or_many, deserialize_skip_error},
     values::MediaTypeMarkdownOrHtml,
   },
+  traits::{Activity, Object},
 };
+
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
@@ -28,12 +31,12 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_utils::{
-  error::{LemmyErrorType, FastJobContext},
   MAX_COMMENT_DEPTH_LIMIT,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -44,8 +47,6 @@ pub struct Note {
   pub attributed_to: ObjectId<ApubPerson>,
   #[serde(deserialize_with = "deserialize_one_or_many")]
   pub(crate) to: Vec<Url>,
-  #[serde(deserialize_with = "deserialize_one_or_many", default)]
-  pub cc: Vec<Url>,
   pub(crate) content: String,
   pub(crate) in_reply_to: ObjectId<PostOrComment>,
 
@@ -54,8 +55,6 @@ pub struct Note {
   pub(crate) source: Option<Source>,
   pub(crate) published: Option<DateTime<Utc>>,
   pub(crate) updated: Option<DateTime<Utc>>,
-  #[serde(default)]
-  pub tag: Vec<MentionOrValue>,
   // lemmy extension
   pub distinguished: Option<bool>,
   pub(crate) language: Option<LanguageTag>,
@@ -67,7 +66,7 @@ impl Note {
   pub async fn get_parents(
     &self,
     context: &Data<FastJobContext>,
-  ) -> FastJobContext<(ApubPost, Option<ApubComment>)> {
+  ) -> FastJobResult<(ApubPost, Option<ApubComment>)> {
     // We use recursion here to fetch the entire comment chain up to the top-level parent. This is
     // necessary because we need to know the post and parent comment in order to insert a new
     // comment. However it can also lead to stack overflow when fetching many comments recursively.
@@ -77,7 +76,7 @@ impl Note {
     // or so.
     // A cleaner solution would be converting the recursion into a loop, but that is tricky.
     if context.request_count() > MAX_COMMENT_DEPTH_LIMIT.try_into()? {
-      Err(LemmyErrorType::MaxCommentDepthReached)?;
+      Err(FastJobErrorType::MaxCommentDepthReached)?;
     }
     let parent = self.in_reply_to.dereference(context).await?;
     match parent {
@@ -92,7 +91,7 @@ impl Note {
 }
 
 impl InCommunity for Note {
-  async fn community(&self, context: &Data<FastJobContext>) -> FastJobContext<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let (post, _) = self.get_parents(context).await?;
     let community = Community::read(&mut context.pool(), post.community_id).await?;
     Ok(community.into())

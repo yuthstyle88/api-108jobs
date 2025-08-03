@@ -1,13 +1,14 @@
-use crate::newtypes::{CommentId, LanguageId, PersonId, PostId};
+use crate::newtypes::{CommentId, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
+  crate::newtypes::LtreeDef,
+  diesel_ltree::Ltree,
   i_love_jesus::CursorKeysModule,
   lemmy_db_schema_file::schema::{comment, comment_actions},
 };
-
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(
@@ -33,23 +34,33 @@ pub struct Comment {
   pub updated_at: Option<DateTime<Utc>>,
   /// Whether the comment has been deleted by its creator.
   pub deleted: bool,
+  /// The federated activity id / ap_id.
+  pub ap_id: DbUrl,
   /// Whether the comment is local.
   pub local: bool,
+  #[cfg(feature = "full")]
+  #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  /// The path / tree location of a comment, separated by dots, ending with the comment's id. Ex:
+  /// 0.24.27
+  pub path: Ltree,
+  #[cfg(not(feature = "full"))]
+  pub path: String,
   /// Whether the comment has been distinguished(speaking officially) by a mod.
   pub distinguished: bool,
   pub language_id: LanguageId,
   pub score: i64,
   pub upvotes: i64,
   pub downvotes: i64,
+  /// The total number of children in this comment branch.
+  pub child_count: i32,
   #[serde(skip)]
   pub hot_rank: f64,
   #[serde(skip)]
   pub controversy_rank: f64,
   pub report_count: i16,
   pub unresolved_report_count: i16,
-  pub budget: Option<i32>,
-  pub working_days: Option<i32>,
-  pub brief_url: Option<String>,
+  pub pending: bool,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
@@ -72,17 +83,15 @@ pub struct CommentInsertForm {
   #[new(default)]
   pub deleted: Option<bool>,
   #[new(default)]
+  pub ap_id: Option<DbUrl>,
+  #[new(default)]
   pub local: Option<bool>,
   #[new(default)]
   pub distinguished: Option<bool>,
   #[new(default)]
   pub language_id: Option<LanguageId>,
   #[new(default)]
-  pub budget: Option<i32>,
-  #[new(default)]
-  pub working_days: Option<i32>,
-  #[new(default)]
-  pub brief_url: Option<String>,
+  pub pending: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -95,12 +104,11 @@ pub struct CommentUpdateForm {
   // Don't use a default Utc::now here, because the create function does a lot of comment updates
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
+  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub distinguished: Option<bool>,
   pub language_id: Option<LanguageId>,
-  pub budget: Option<i32>,
-  pub working_days: Option<i32>,
-  pub brief_url: Option<String>,
+  pub pending: Option<bool>,
 }
 
 #[skip_serializing_none]

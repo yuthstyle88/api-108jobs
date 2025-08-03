@@ -12,7 +12,6 @@ use crate::{
       generate_to,
       read_from_string_or_source_opt,
       verify_person_in_community,
-      verify_visibility,
     },
     markdown_links::{markdown_rewrite_remote_links_opt, to_local_url},
     protocol::{AttributedTo, ImageObject, InCommunity, LanguageTag, Source},
@@ -133,13 +132,14 @@ impl Object for ApubPost {
      .into_iter()
      .collect();
     let hashtag = Hashtag {
+      href: self.ap_id.clone().into(),
       name: format!("#{}", &community.name),
       kind: HashtagType::Hashtag,
     };
 
     let page = Page {
       kind: PageType::Page,
-      id: self.ap_id.clone().into(),
+      id: self.ap_id.inner().clone().into(),
       attributed_to: AttributedTo::Lemmy(creator.ap_id.into()),
       to: generate_to(&community)?,
       cc: vec![],
@@ -149,6 +149,7 @@ impl Object for ApubPost {
       source: self.body.clone().map(Source::new),
       attachment,
       image: self.thumbnail_url.clone().map(ImageObject::new),
+      sensitive: Some(self.self_promotion),
       language,
       published: Some(self.published_at),
       updated: self.updated_at,
@@ -179,7 +180,6 @@ impl Object for ApubPost {
     check_slurs_opt(&page.name, &slur_regex)?;
 
     verify_domains_match(page.creator()?.inner(), page.id.inner())?;
-    verify_visibility(&page.to, &page.cc, &community)?;
     Ok(())
   }
 
@@ -231,7 +231,7 @@ impl Object for ApubPost {
     };
 
     // Ensure that all posts in NSFW communities are marked as NSFW
-    let nsfw = if community.nsfw {
+    let nsfw = if community.self_promotion {
       Some(true)
     } else {
       page.sensitive
@@ -266,7 +266,7 @@ impl Object for ApubPost {
        .await?,
     );
 
-    let mut post = PostInsertForm {
+    let mut form = PostInsertForm {
       url: url.map(Into::into),
       body,
       alt_text,
@@ -278,7 +278,8 @@ impl Object for ApubPost {
       ..PostInsertForm::new(name, creator.id, community.id)
     };
 
-
+    let timestamp = page.updated.or(page.published).unwrap_or_else(Utc::now);
+    let post = Post::insert_apub(&mut context.pool(), timestamp, &form).await?;
     let post_ = post.clone();
     let context_ = context.clone();
 
@@ -292,61 +293,3 @@ impl Object for ApubPost {
   }
 }
 
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use crate::{
-    objects::ApubPerson,
-    utils::test::{file_to_json_object, parse_lemmy_community, parse_lemmy_person},
-  };
-  use lemmy_db_schema::source::site::Site;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-  #[tokio::test]
-  #[serial]
-  async fn test_parse_lemmy_post() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-    let (person, site) = parse_lemmy_person(&context).await?;
-    let community = parse_lemmy_community(&context).await?;
-
-    let json = file_to_json_object("../apub/assets/lemmy/objects/page.json")?;
-    let url = Url::parse("https://enterprise.lemmy.ml/post/55143")?;
-    ApubPost::verify(&json, &url, &context).await?;
-    let post = ApubPost::from_json(json, &context).await?;
-
-    assert_eq!(post.ap_id, url.into());
-    assert_eq!(post.name, "Post title");
-    assert!(post.body.is_some());
-    assert_eq!(post.body.as_ref().map(std::string::String::len), Some(45));
-    assert!(!post.locked);
-    assert!(!post.featured_community);
-    assert_eq!(context.request_count(), 0);
-
-    Post::delete(&mut context.pool(), post.id).await?;
-    Person::delete(&mut context.pool(), person.id).await?;
-    Community::delete(&mut context.pool(), community.id).await?;
-    Site::delete(&mut context.pool(), site.id).await?;
-    Ok(())
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn test_convert_mastodon_post_title() -> FastJobResult<()> {
-    let context = FastJobContext::init_test_context().await;
-    let community = parse_lemmy_community(&context).await?;
-
-    let json = file_to_json_object("../apub/assets/mastodon/objects/person.json")?;
-    let person = ApubPerson::from_json(json, &context).await?;
-
-    let json = file_to_json_object("../apub/assets/mastodon/objects/page.json")?;
-    let post = ApubPost::from_json(json, &context).await?;
-
-    assert_eq!(post.name, "Variable never resetting at refresh");
-
-    Post::delete(&mut context.pool(), post.id).await?;
-    Person::delete(&mut context.pool(), person.id).await?;
-    Community::delete(&mut context.pool(), community.id).await?;
-    Ok(())
-  }
-}

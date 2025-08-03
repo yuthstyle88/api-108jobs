@@ -1,4 +1,5 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::Json;
+use activitypub_federation::config::Data;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::comment::{CommentActions, CommentSavedForm},
@@ -29,6 +30,7 @@ pub async fn save_comment(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
+    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

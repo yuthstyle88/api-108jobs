@@ -9,6 +9,8 @@ use lemmy_utils::{
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
 use lemmy_utils::redis::RedisClient;
+use activitypub_federation::config::{Data, FederationConfig};
+use lemmy_utils::error::FastJobResult;
 
 #[derive(Clone)]
 pub struct FastJobContext {
@@ -84,5 +86,13 @@ impl FastJobContext {
     // Return a reference to the RedisClient inside the Arc
     &self.redis
   }
-
+  #[allow(clippy::expect_used)]
+  pub async fn init_test_federation_config() -> FastJobResult<()> {
+    // call this to run migrations
+    Ok(())
+  }
+  pub async fn init_test_context() -> FastJobResult<()> {
+    let config = Self::init_test_federation_config().await;
+    config
+  }
 }

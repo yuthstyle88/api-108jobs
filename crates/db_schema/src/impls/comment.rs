@@ -1,5 +1,6 @@
 use crate::{
-  newtypes::{CommentId, CommunityId, InstanceId, PersonId},
+  diesel::{DecoratableTarget, OptionalExtension},
+  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId},
   source::comment::{
     Comment,
     CommentActions,
@@ -10,7 +11,7 @@ use crate::{
   },
   traits::{Crud, Likeable, Saveable},
   utils::{
-    functions::{hot_rank},
+    functions::{coalesce, hot_rank},
     get_conn,
     uplete,
     validate_like,
@@ -28,6 +29,7 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
+use diesel_ltree::Ltree;
 use lemmy_db_schema_file::schema::{comment, comment_actions, community, post};
 use lemmy_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
@@ -43,14 +45,14 @@ impl Comment {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
-      .set((
-        comment::content.eq(DELETED_REPLACEMENT_TEXT),
-        comment::deleted.eq(true),
-        comment::updated_at.eq(Utc::now()),
-      ))
-      .get_results::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set((
+       comment::content.eq(DELETED_REPLACEMENT_TEXT),
+       comment::deleted.eq(true),
+       comment::updated_at.eq(Utc::now()),
+     ))
+     .get_results::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   pub async fn update_removed_for_creator(
@@ -60,13 +62,13 @@ impl Comment {
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.filter(comment::creator_id.eq(creator_id)))
-      .set((
-        comment::removed.eq(removed),
-        comment::updated_at.eq(Utc::now()),
-      ))
-      .get_results::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set((
+       comment::removed.eq(removed),
+       comment::updated_at.eq(Utc::now()),
+     ))
+     .get_results::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -78,13 +80,13 @@ impl Comment {
     let conn = &mut get_conn(pool).await?;
 
     comment::table
-      .inner_join(post::table)
-      .filter(comment::creator_id.eq(creator_id))
-      .filter(post::community_id.eq(community_id))
-      .select(comment::id)
-      .load::<CommentId>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
+     .inner_join(post::table)
+     .filter(comment::creator_id.eq(creator_id))
+     .filter(post::community_id.eq(community_id))
+     .select(comment::id)
+     .load::<CommentId>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -97,14 +99,14 @@ impl Comment {
     let community_join = community::table.on(post::community_id.eq(community::id));
 
     comment::table
-      .inner_join(post::table)
-      .inner_join(community_join)
-      .filter(comment::creator_id.eq(creator_id))
-      .filter(community::instance_id.eq(instance_id))
-      .select(comment::id)
-      .load::<CommentId>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
+     .inner_join(post::table)
+     .inner_join(community_join)
+     .filter(comment::creator_id.eq(creator_id))
+     .filter(community::instance_id.eq(instance_id))
+     .select(comment::id)
+     .load::<CommentId>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn update_removed_for_creator_and_community(
@@ -114,18 +116,18 @@ impl Comment {
     removed: bool,
   ) -> FastJobResult<Vec<CommentId>> {
     let comment_ids =
-      Self::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
+     Self::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 
     update(comment::table)
-      .filter(comment::id.eq_any(comment_ids.clone()))
-      .set((
-        comment::removed.eq(removed),
-        comment::updated_at.eq(Utc::now()),
-      ))
-      .execute(conn)
-      .await?;
+     .filter(comment::id.eq_any(comment_ids.clone()))
+     .set((
+       comment::removed.eq(removed),
+       comment::updated_at.eq(Utc::now()),
+     ))
+     .execute(conn)
+     .await?;
 
     Ok(comment_ids)
   }
@@ -140,61 +142,101 @@ impl Comment {
     let conn = &mut get_conn(pool).await?;
 
     update(comment::table)
-      .filter(comment::id.eq_any(comment_ids.clone()))
-      .set((
-        comment::removed.eq(removed),
-        comment::updated_at.eq(Utc::now()),
-      ))
-      .execute(conn)
-      .await?;
+     .filter(comment::id.eq_any(comment_ids.clone()))
+     .set((
+       comment::removed.eq(removed),
+       comment::updated_at.eq(Utc::now()),
+     ))
+     .execute(conn)
+     .await?;
     Ok(comment_ids)
   }
 
   pub async fn create(
     pool: &mut DbPool<'_>,
     comment_form: &CommentInsertForm,
+    parent_path: Option<&Ltree>,
   ) -> FastJobResult<Comment> {
-    Self::insert_apub(pool, None, comment_form).await
+    Self::insert_apub(pool, None, comment_form, parent_path).await
   }
 
   pub async fn insert_apub(
     pool: &mut DbPool<'_>,
     timestamp: Option<DateTime<Utc>>,
     comment_form: &CommentInsertForm,
+    parent_path: Option<&Ltree>,
   ) -> FastJobResult<Comment> {
     let conn = &mut get_conn(pool).await?;
-    let comment_form = comment_form;
+    let comment_form = (comment_form, parent_path.map(|p| comment::path.eq(p)));
 
-    if let Some(_timestamp) = timestamp {
+    if let Some(timestamp) = timestamp {
       insert_into(comment::table)
-        .values(comment_form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
+       .values(comment_form)
+       .on_conflict(comment::ap_id)
+       .filter_target(coalesce(comment::updated_at, comment::published_at).lt(timestamp))
+       .do_update()
+       .set(comment_form)
+       .get_result::<Self>(conn)
+       .await
+       .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
     } else {
       insert_into(comment::table)
-        .values(comment_form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
+       .values(comment_form)
+       .get_result::<Self>(conn)
+       .await
+       .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
     }
   }
 
+  pub async fn read_from_apub_id(
+    pool: &mut DbPool<'_>,
+    object_id: Url,
+  ) -> FastJobResult<Option<Self>> {
+    let conn = &mut get_conn(pool).await?;
+    let object_id: DbUrl = object_id.into();
+    comment::table
+     .filter(comment::ap_id.eq(object_id))
+     .first(conn)
+     .await
+     .optional()
+     .with_fastjob_type(FastJobErrorType::NotFound)
+  }
 
+  pub fn parent_comment_id(&self) -> Option<CommentId> {
+    let mut ltree_split: Vec<&str> = self.path.0.split('.').collect();
+    ltree_split.remove(0); // The first is always 0
+    if ltree_split.len() > 1 {
+      let parent_comment_id = ltree_split.get(ltree_split.len() - 2);
+      parent_comment_id.and_then(|p| p.parse::<i32>().map(CommentId).ok())
+    } else {
+      None
+    }
+  }
   pub async fn update_hot_rank(pool: &mut DbPool<'_>, comment_id: CommentId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(comment::table.find(comment_id))
-      .set(comment::hot_rank.eq(hot_rank(comment::score, comment::published_at)))
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set(comment::hot_rank.eq(hot_rank(comment::score, comment::published_at)))
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
   pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/comment/{}", self.id))?)
   }
 
+  /// The comment was created locally and sent back, indicating that the community accepted it
+  pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
+    if self.local && self.pending {
+      let form = CommentUpdateForm {
+        pending: Some(false),
+        ..Default::default()
+      };
+      Comment::update(pool, self.id, &form).await?;
+    }
+    Ok(())
+  }
 }
 
 impl Crud for Comment {
@@ -205,7 +247,7 @@ impl Crud for Comment {
   /// Use [[Comment::create]]
   async fn create(pool: &mut DbPool<'_>, comment_form: &Self::InsertForm) -> FastJobResult<Self> {
     debug_assert!(false);
-    Comment::create(pool, comment_form).await
+    Comment::create(pool, comment_form, None).await
   }
 
   async fn update(
@@ -215,10 +257,10 @@ impl Crud for Comment {
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(comment::table.find(comment_id))
-      .set(comment_form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set(comment_form)
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 }
 
@@ -232,14 +274,14 @@ impl Likeable for CommentActions {
     validate_like(form.like_score).with_fastjob_type(FastJobErrorType::CouldntLikeComment)?;
 
     insert_into(comment_actions::table)
-      .values(form)
-      .on_conflict((comment_actions::comment_id, comment_actions::person_id))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
+     .values(form)
+     .on_conflict((comment_actions::comment_id, comment_actions::person_id))
+     .do_update()
+     .set(form)
+     .returning(Self::as_select())
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
   }
   async fn remove_like(
     pool: &mut DbPool<'_>,
@@ -248,11 +290,11 @@ impl Likeable for CommentActions {
   ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(comment_actions::table.find((person_id, comment_id)))
-      .set_null(comment_actions::like_score)
-      .set_null(comment_actions::liked_at)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
+     .set_null(comment_actions::like_score)
+     .set_null(comment_actions::liked_at)
+     .get_result(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
   }
 
   async fn remove_all_likes(
@@ -262,11 +304,11 @@ impl Likeable for CommentActions {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(comment_actions::table.filter(comment_actions::person_id.eq(creator_id)))
-      .set_null(comment_actions::like_score)
-      .set_null(comment_actions::liked_at)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set_null(comment_actions::like_score)
+     .set_null(comment_actions::liked_at)
+     .get_result(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
   async fn remove_likes_in_community(
@@ -275,18 +317,18 @@ impl Likeable for CommentActions {
     community_id: CommunityId,
   ) -> FastJobResult<uplete::Count> {
     let comment_ids =
-      Comment::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
+     Comment::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
       comment_actions::table.filter(comment_actions::comment_id.eq_any(comment_ids.clone())),
     )
-    .set_null(comment_actions::like_score)
-    .set_null(comment_actions::liked_at)
-    .get_result(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+     .set_null(comment_actions::like_score)
+     .set_null(comment_actions::liked_at)
+     .get_result(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 }
 
@@ -295,22 +337,22 @@ impl Saveable for CommentActions {
   async fn save(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(comment_actions::table)
-      .values(form)
-      .on_conflict((comment_actions::comment_id, comment_actions::person_id))
-      .do_update()
-      .set(form)
-      .returning(Self::as_select())
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
+     .values(form)
+     .on_conflict((comment_actions::comment_id, comment_actions::person_id))
+     .do_update()
+     .set(form)
+     .returning(Self::as_select())
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
   }
   async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
     uplete::new(comment_actions::table.find((form.person_id, form.comment_id)))
-      .set_null(comment_actions::saved_at)
-      .get_result(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
+     .set_null(comment_actions::saved_at)
+     .get_result(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
   }
 }
 
@@ -322,11 +364,11 @@ impl CommentActions {
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     comment_actions::table
-      .find((person_id, comment_id))
-      .select(Self::as_select())
-      .first(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
+     .find((person_id, comment_id))
+     .select(Self::as_select())
+     .first(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
 
@@ -345,7 +387,8 @@ mod tests {
     traits::{Crud, Likeable, Saveable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
-    use lemmy_utils::error::FastJobResult;
+  use diesel_ltree::Ltree;
+  use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -366,7 +409,7 @@ mod tests {
       inserted_instance.id,
       "test community".to_string(),
       "nada".to_owned(),
-      "i-am-a-good-boy".to_string()
+      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -382,7 +425,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let expected_comment = Comment {
       id: inserted_comment.id,
@@ -391,11 +434,18 @@ mod tests {
       post_id: inserted_post.id,
       removed: false,
       deleted: false,
+      path: Ltree(format!("0.{}", inserted_comment.id)),
       published_at: inserted_comment.published_at,
       updated_at: None,
+      ap_id: Url::parse(&format!(
+        "https://108fastjob.com/comment/{}",
+        inserted_comment.id
+      ))?
+       .into(),
       distinguished: false,
       local: true,
       language_id: LanguageId::default(),
+      child_count: 1,
       controversy_rank: 0.0,
       downvotes: 0,
       upvotes: 1,
@@ -403,6 +453,7 @@ mod tests {
       hot_rank: RANK_DEFAULT,
       report_count: 0,
       unresolved_report_count: 0,
+      pending: false,
     };
 
     let child_comment_form = CommentInsertForm::new(
@@ -411,7 +462,7 @@ mod tests {
       "A child comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+     Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
 
     // Comment Like
     let comment_like_form = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
@@ -433,7 +484,7 @@ mod tests {
 
     let read_comment = Comment::read(pool, inserted_comment.id).await?;
     let like_removed =
-      CommentActions::remove_like(pool, inserted_person.id, inserted_comment.id).await?;
+     CommentActions::remove_like(pool, inserted_person.id, inserted_comment.id).await?;
     let saved_removed = CommentActions::unsave(pool, &comment_saved_form).await?;
     let num_deleted = Comment::delete(pool, inserted_comment.id).await?;
     Comment::delete(pool, inserted_child_comment.id).await?;
@@ -444,7 +495,10 @@ mod tests {
 
     assert_eq!(expected_comment, read_comment);
     assert_eq!(expected_comment, updated_comment);
-
+    assert_eq!(
+      format!("0.{}.{}", expected_comment.id, inserted_child_comment.id),
+      inserted_child_comment.path.0,
+    );
     assert_eq!(uplete::Count::only_updated(1), like_removed);
     assert_eq!(uplete::Count::only_deleted(1), saved_removed);
     assert_eq!(1, num_deleted);
@@ -472,7 +526,7 @@ mod tests {
       inserted_instance.id,
       "TIL_comment_agg".into(),
       "nada".to_owned(),
-      "i-am-a-good-boy".to_string()
+      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -488,7 +542,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -496,7 +550,7 @@ mod tests {
       "A test comment".into(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+     Comment::create(pool, &child_comment_form, Some(&inserted_comment.path)).await?;
 
     let comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
 

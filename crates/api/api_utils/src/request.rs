@@ -3,7 +3,7 @@ use crate::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::proxy_image_link,
 };
-use actix_web::web::Data;
+use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;

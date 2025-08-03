@@ -1,5 +1,5 @@
 use crate::{CommentSlimView, CommentView};
-use lemmy_db_schema::newtypes::{CommentId, LanguageId, PaginationCursor, PostId};
+use lemmy_db_schema::newtypes::{CommentId, CommunityId, LanguageId, PaginationCursor, PostId};
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType};
 use lemmy_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -24,10 +24,8 @@ pub struct CommentResponse {
 pub struct CreateComment {
   pub content: String,
   pub post_id: PostId,
+  pub parent_id: Option<CommentId>,
   pub language_id: Option<LanguageId>,
-  pub budget: i32,
-  pub working_days: i32,
-  pub brief_url: String,
 }
 
 #[derive(Debug, Deserialize, Clone, Default, PartialEq, Eq)]
@@ -38,10 +36,8 @@ pub struct CreateComment {
 pub struct CreateCommentRequest {
   pub content: String,
   pub post_id: PostId,
+  pub parent_id: Option<CommentId>,
   pub language_id: LanguageId,
-  pub budget: i32,
-  pub working_days: i32,
-  pub brief_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -103,7 +99,10 @@ pub struct GetComments {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
+  pub community_id: Option<CommunityId>,
+  pub community_name: Option<String>,
   pub post_id: Option<PostId>,
+  pub parent_id: Option<CommentId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

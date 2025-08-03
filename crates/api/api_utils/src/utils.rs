@@ -36,18 +36,11 @@ use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  rate_limit::{ActionType, BucketConfig},
-  settings::{structs::PictrsImageMode, SETTINGS},
-  utils::{
-    markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
-    slurs::remove_slurs,
-    validation::{build_and_check_regex, clean_urls_in_text},
-  },
-  CacheLock,
-  CACHE_DURATION_FEDERATION,
-};
+use lemmy_utils::{error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult}, rate_limit::{ActionType, BucketConfig}, settings::{structs::PictrsImageMode, SETTINGS}, utils::{
+  markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
+  slurs::remove_slurs,
+  validation::{build_and_check_regex, clean_urls_in_text},
+}, CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT};
 use moka::future::Cache;
 use regex::{escape, Regex, RegexSet};
 use std::sync::LazyLock;
@@ -58,6 +51,20 @@ use urlencoding::encode;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
+pub async fn check_is_mod_or_admin(
+  pool: &mut DbPool<'_>,
+  person_id: PersonId,
+  local_instance_id: InstanceId,
+) -> FastJobResult<()> {
+  if PersonView::read(pool, person_id, None, local_instance_id, false)
+   .await
+   .is_ok_and(|t| t.is_admin)
+  {
+    Ok(())
+  } else {
+    Err(FastJobErrorType::NotAModOrAdmin)?
+  }
+}
 pub fn is_admin(local_user_view: &LocalUserView) -> FastJobResult<()> {
   check_local_user_valid(local_user_view)?;
   if !local_user_view.local_user.admin {
@@ -528,6 +535,16 @@ pub fn check_expire_time(expires_unix_opt: Option<i64>) -> FastJobResult<Option<
   }
 }
 
+pub fn check_nsfw_allowed(nsfw: Option<bool>, local_site: Option<&LocalSite>) -> FastJobResult<()> {
+  let is_nsfw = nsfw.unwrap_or_default();
+  let nsfw_disallowed = local_site.is_some_and(|s| s.disallow_self_promotion_content);
+
+  if nsfw_disallowed && is_nsfw {
+    Err(FastJobErrorType::NsfwNotAllowed)?
+  }
+
+  Ok(())
+}
 fn limit_expire_time(expires: DateTime<Utc>) -> FastJobResult<Option<DateTime<Utc>>> {
   const MAX_BAN_TERM: Days = Days::new(10 * 365);
 
@@ -760,7 +777,20 @@ pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> F
   // Base username is available
   Ok(base_username)
 }
-
+/// Returns error if new comment exceeds maximum depth.
+///
+/// Top-level comments have a path like `0.123` where 123 is the comment id. At the second level
+/// it is `0.123.456`, containing the parent id and current comment id.
+pub fn check_comment_depth(comment: &Comment) -> FastJobResult<()> {
+  let path = &comment.path.0;
+  let length = path.split('.').count();
+  // Need to increment by one because the path always starts with 0
+  if length > MAX_COMMENT_DEPTH_LIMIT + 1 {
+    Err(FastJobErrorType::MaxCommentDepthReached)?
+  } else {
+    Ok(())
+  }
+}
 #[cfg(test)]
 mod tests {
   use super::*;

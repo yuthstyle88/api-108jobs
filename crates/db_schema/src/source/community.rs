@@ -43,6 +43,7 @@ pub struct Community {
   pub deleted: bool,
   /// Whether its an NSFW community.
   pub self_promotion: bool,
+  pub ap_id: DbUrl,
   /// Whether the community is local.
   pub local: bool,
   #[serde(skip)]
@@ -119,6 +120,8 @@ pub struct CommunityInsertForm {
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]
+  pub ap_id: Option<DbUrl>,
+  #[new(default)]
   pub local: Option<bool>,
   #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
@@ -161,6 +164,7 @@ pub struct CommunityUpdateForm {
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
   pub self_promotion: Option<bool>,
+  pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub icon: Option<Option<DbUrl>>,
@@ -228,6 +232,7 @@ pub struct CommunityChangeset {
   pub(crate) updated_at: Option<Option<DateTime<Utc>>>,
   pub(crate) deleted: Option<bool>,
   pub(crate) self_promotion: Option<bool>,
+  pub(crate) ap_id: Option<DbUrl>,
   pub(crate) local: Option<bool>,
   pub(crate) last_refreshed_at: Option<DateTime<Utc>>,
   pub(crate) icon: Option<Option<DbUrl>>,

@@ -1,5 +1,6 @@
+use activitypub_federation::config::Data;
 use crate::check_report_reason;
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,
@@ -34,6 +35,7 @@ pub async fn create_comment_report(
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
+    Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;

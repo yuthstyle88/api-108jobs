@@ -1,5 +1,6 @@
+use activitypub_federation::config::Data;
 use lemmy_db_schema::newtypes::{PersonId, PostId};
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
@@ -22,7 +23,7 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use url;
+use lemmy_db_schema::traits::Crud;
 use lemmy_utils::error::FastJobError;
 
 pub async fn create_comment(
@@ -64,6 +65,11 @@ pub async fn create_comment(
     Err(FastJobErrorType::Locked)?
   }
 
+  let parent_opt = if let Some(parent_id) = data.parent_id {
+    Comment::read(&mut context.pool(), parent_id).await.ok()
+  } else {
+    None
+  };
 
   let language_id = validate_post_language(
     &mut context.pool(),
@@ -74,7 +80,6 @@ pub async fn create_comment(
   .await?;
 
   // Validate required proposal fields (all comments now require these)
-  validate_proposal_fields(&data)?;
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
@@ -88,16 +93,12 @@ pub async fn create_comment(
   comment_form.language_id = Some(language_id);
 
   // Add required proposal fields (all comments now require these)
-  comment_form.budget = Some(data.budget);
-  comment_form.working_days = Some(data.working_days);
-  comment_form.brief_url = Some(data.brief_url.clone());
-
   // Debug: Output the comment form structure
   tracing::info!("Comment form to be inserted: {:#?}", comment_form);
-
+  let parent_path = parent_opt.clone().map(|t| t.path);
   // Create the comment
   let inserted_comment =
-    Comment::create(&mut context.pool(), &comment_form).await?;
+    Comment::create(&mut context.pool(), &comment_form, parent_path.as_ref()).await?;
 
   tracing::info!("Successfully inserted comment: {:#?}", inserted_comment);
 
@@ -137,36 +138,13 @@ pub async fn create_comment(
     build_comment_response(
       &context,
       inserted_comment.id,
+      Some(local_user_view),
       local_instance_id,
     )
     .await?,
   ))
 }
 
-
-fn validate_proposal_fields(data: &CreateComment) -> FastJobResult<()> {
-  // Validate budget (now required)
-  if data.budget <= 0 {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("budget must be greater than 0".to_string())))?;
-  }
-
-  // Validate working days (now required)
-  if data.working_days <= 0 {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string())))?;
-  }
-
-  // Validate brief URL (now required)
-  if data.brief_url.trim().is_empty() {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("brief_url cannot be empty".to_string())))?;
-  }
-
-  // Basic URL validation
-  if let Err(_) = url::Url::parse(&data.brief_url) {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("brief_url must be a valid URL".to_string())))?;
-  }
-
-  Ok(())
-}
 
 async fn check_user_already_commented(
   pool: &mut DbPool<'_>,

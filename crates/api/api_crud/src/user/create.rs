@@ -190,7 +190,8 @@ pub async fn register(
    || (!require_registration_application && !local_site.require_email_verification)
   {
     let role =  user.local_user.role;
-    let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, req, &context).await?;
+    let lang = user.local_user.interface_language;
+    let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, lang, req, &context).await?;
     login_response.jwt = Some(jwt);
   } else {
     login_response.verify_email_sent = send_verification_email_if_required(
@@ -362,7 +363,8 @@ pub async fn register_with_oauth(
      .await?;
     if !login_response.registration_created && !login_response.verify_email_sent {
       let role  = user.local_user.role;
-      let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, req, &context).await?;
+      let lang  = user.local_user.interface_language;
+      let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, lang, req, &context).await?;
       login_response.jwt = Some(jwt);
     }
 
@@ -599,7 +601,8 @@ pub async fn authenticate_with_oauth(
 
   if (!login_response.registration_created && !login_response.verify_email_sent) || application_pending {
     let role = local_user.role;
-    let jwt = Claims::generate(local_user.id, local_user.email, role, req, &context).await?;
+    let lang  = local_user.interface_language;
+    let jwt = Claims::generate(local_user.id, local_user.email, role, lang, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 
@@ -623,6 +626,7 @@ async fn create_person(
     private_key: Some(actor_keypair.private_key),
     ..PersonInsertForm::new(
       username.clone(),
+      actor_keypair.public_key,
       site_view.site.instance_id,
     )
   };

@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Json};
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext
@@ -20,6 +20,7 @@ use lemmy_db_views_post::{
 };
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
+use activitypub_federation::config::Data;
 
 pub async fn like_post(
   data: Json<CreatePostLike>,

@@ -37,7 +37,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::ActorType;
 use lemmy_utils::{
-  error::{FederationError, LemmyError, FastJobResult},
+  error::{FastJobError, FastJobResult},
   utils::{
     markdown::markdown_to_html,
     slurs::{check_slurs, check_slurs_opt},
@@ -68,7 +68,7 @@ impl From<Site> for ApubSite {
 impl Object for ApubSite {
   type DataType = FastJobContext;
   type Kind = Instance;
-  type Error = LemmyError;
+  type Error = FastJobError;
 
   fn id(&self) -> &Url {
     self.ap_id.inner()
@@ -87,7 +87,7 @@ impl Object for ApubSite {
   }
 
   async fn delete(self, _data: &Data<Self::DataType>) -> FastJobResult<()> {
-    Err(FederationError::CantDeleteSite.into())
+    Err(FastJobErrorType::CantDeleteSite.into())
   }
 
   async fn into_json(self, data: &Data<Self::DataType>) -> FastJobResult<Self::Kind> {
@@ -156,9 +156,11 @@ impl Object for ApubSite {
       icon,
       banner,
       description: apub.summary,
-      ap_id: Some(apub.id.clone().into()),
+      ap_id: Some(apub.id.inner().clone().into()),
       last_refreshed_at: Some(Utc::now()),
       inbox_url: Some(apub.inbox.clone().into()),
+      public_key: Some(apub.public_key.public_key_pem.clone()),
+      private_key: None,
       instance_id: instance.id,
       content_warning: apub.content_warning,
     };

@@ -6,6 +6,7 @@ use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::schema::site;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
@@ -36,6 +37,10 @@ pub struct Site {
   pub last_refreshed_at: DateTime<Utc>,
   /// The site inbox
   pub inbox_url: DbUrl,
+  #[serde(skip)]
+  pub private_key: Option<SensitiveString>,
+  // TODO: mark as `serde(skip)` in next major release as its not needed for api
+  pub public_key: String,
   pub instance_id: InstanceId,
   /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
   /// when the site is first opened by a user.

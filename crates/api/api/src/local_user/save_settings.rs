@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Json};
+use activitypub_federation::config::Data;
 use lemmy_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
@@ -30,6 +30,7 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
+use actix_web::web::Json;
 
 pub async fn save_user_settings(
   data: Json<SaveUserSettings>,

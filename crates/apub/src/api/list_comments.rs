@@ -54,7 +54,13 @@ async fn list_comments_common(
   let limit = data.limit;
   let parent_id = data.parent_id;
 
-  let listing_type = Some(listing_type_with_default());
+  let listing_type = Some(listing_type_with_default(
+    data.type_,
+    local_user_view.as_ref().map(|u| &u.local_user),
+    &site_view.local_site,
+    community_id,
+  ));
+
   // If a parent_id is given, fetch the comment to get the path
   let parent_path_ = if let Some(parent_id) = parent_id {
     Some(Comment::read(&mut context.pool(), parent_id).await?.path)
@@ -63,7 +69,6 @@ async fn list_comments_common(
   };
 
   let parent_path = parent_path_.clone();
-
   let post_id = data.post_id;
   let local_user = local_user_view.as_ref().map(|l| &l.local_user);
 

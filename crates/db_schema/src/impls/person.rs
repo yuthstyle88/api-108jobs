@@ -1,3 +1,4 @@
+use std::future::Future;
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CommunityId, DbUrl, InstanceId, LocalUserId, PersonId},
@@ -85,7 +86,17 @@ impl Person {
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
-
+  pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    insert_into(person::table)
+     .values(form)
+     .on_conflict(person::ap_id)
+     .do_update()
+     .set(form)
+     .get_result::<Self>(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+  }
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
@@ -147,11 +158,24 @@ impl Person {
 
 impl PersonInsertForm {
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
-    Self::new(name.to_owned(), instance_id)
+    Self::new(name.to_owned(), "pubkey".to_string(), instance_id)
   }
 }
 
 impl ApubActor for Person {
+  async fn read_from_apub_id(
+    pool: &mut DbPool<'_>,
+    object_id: &DbUrl,
+  ) -> FastJobResult<Option<Self>> {
+    let conn = &mut get_conn(pool).await?;
+    person::table
+     .filter(person::deleted.eq(false))
+     .filter(person::ap_id.eq(object_id))
+     .first(conn)
+     .await
+     .optional()
+     .with_fastjob_type(FastJobErrorType::NotFound)
+  }
   async fn read_from_name(
     pool: &mut DbPool<'_>,
     from_name: &str,
@@ -465,9 +489,12 @@ mod tests {
       deleted: false,
       published_at: inserted_person.published_at,
       updated_at: None,
+      ap_id: inserted_person.ap_id.clone(),
       bio: None,
       local: true,
       bot_account: false,
+      private_key: None,
+      public_key: "pubkey".to_owned(),
       last_refreshed_at: inserted_person.published_at,
       inbox_url: inserted_person.inbox_url.clone(),
       matrix_user_id: None,

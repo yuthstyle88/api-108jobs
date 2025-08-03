@@ -1,10 +1,8 @@
 pub mod group;
 pub mod instance;
-pub mod multi_community;
 pub mod note;
 pub mod page;
 pub mod person;
-pub mod private_message;
 
 #[cfg(test)]
 mod tests {
@@ -14,40 +12,38 @@ mod tests {
     note::Note,
     page::Page,
     person::Person,
-    private_message::PrivateMessage,
   };
   use crate::utils::test::{test_json, test_parse_lemmy_item};
   use activitypub_federation::protocol::tombstone::Tombstone;
-  use lemmy_utils::error::FastJobContext;
+  use lemmy_utils::error::{FastJobResult};
 
   #[test]
-  fn test_parse_objects_lemmy() -> FastJobContext<()> {
+  fn test_parse_objects_lemmy() -> FastJobResult<()> {
     test_parse_lemmy_item::<Instance>("../apub/assets/lemmy/objects/instance.json")?;
     test_parse_lemmy_item::<Group>("../apub/assets/lemmy/objects/group.json")?;
     test_parse_lemmy_item::<Person>("../apub/assets/lemmy/objects/person.json")?;
     test_parse_lemmy_item::<Page>("../apub/assets/lemmy/objects/page.json")?;
     test_parse_lemmy_item::<Note>("../apub/assets/lemmy/objects/comment.json")?;
-    test_parse_lemmy_item::<PrivateMessage>("../apub/assets/lemmy/objects/private_message.json")?;
     test_parse_lemmy_item::<Tombstone>("../apub/assets/lemmy/objects/tombstone.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_objects_pleroma() -> FastJobContext<()> {
+  fn test_parse_objects_pleroma() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/pleroma/objects/person.json")?;
     test_json::<Note>("../apub/assets/pleroma/objects/note.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_objects_smithereen() -> FastJobContext<()> {
+  fn test_parse_objects_smithereen() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/smithereen/objects/person.json")?;
     test_json::<Note>("../apub/assets/smithereen/objects/note.json")?;
     Ok(())
   }
 
   #[test]
-  fn test_parse_objects_mastodon() -> FastJobContext<()> {
+  fn test_parse_objects_mastodon() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/mastodon/objects/person.json")?;
     test_json::<Note>("../apub/assets/mastodon/objects/note_1.json")?;
     test_json::<Note>("../apub/assets/mastodon/objects/note_2.json")?;
@@ -56,7 +52,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_objects_lotide() -> FastJobContext<()> {
+  fn test_parse_objects_lotide() -> FastJobResult<()> {
     test_json::<Group>("../apub/assets/lotide/objects/group.json")?;
     test_json::<Person>("../apub/assets/lotide/objects/person.json")?;
     test_json::<Note>("../apub/assets/lotide/objects/note.json")?;
@@ -66,7 +62,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_friendica() -> FastJobContext<()> {
+  fn test_parse_object_friendica() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/friendica/objects/person_1.json")?;
     test_json::<Person>("../apub/assets/friendica/objects/person_2.json")?;
     test_json::<Page>("../apub/assets/friendica/objects/page_1.json")?;
@@ -77,7 +73,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_gnusocial() -> FastJobContext<()> {
+  fn test_parse_object_gnusocial() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/gnusocial/objects/person.json")?;
     test_json::<Group>("../apub/assets/gnusocial/objects/group.json")?;
     test_json::<Page>("../apub/assets/gnusocial/objects/page.json")?;
@@ -86,7 +82,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_peertube() -> FastJobContext<()> {
+  fn test_parse_object_peertube() -> FastJobResult<()> {
     test_json::<Person>("../apub/assets/peertube/objects/person.json")?;
     test_json::<Group>("../apub/assets/peertube/objects/group.json")?;
     test_json::<Page>("../apub/assets/peertube/objects/video.json")?;
@@ -95,7 +91,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_mobilizon() -> FastJobContext<()> {
+  fn test_parse_object_mobilizon() -> FastJobResult<()> {
     test_json::<Group>("../apub/assets/mobilizon/objects/group.json")?;
     test_json::<Page>("../apub/assets/mobilizon/objects/event.json")?;
     test_json::<Person>("../apub/assets/mobilizon/objects/person.json")?;
@@ -103,7 +99,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_discourse() -> FastJobContext<()> {
+  fn test_parse_object_discourse() -> FastJobResult<()> {
     test_json::<Group>("../apub/assets/discourse/objects/group.json")?;
     test_json::<Page>("../apub/assets/discourse/objects/page.json")?;
     test_json::<Person>("../apub/assets/discourse/objects/person.json")?;
@@ -111,7 +107,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_nodebb() -> FastJobContext<()> {
+  fn test_parse_object_nodebb() -> FastJobResult<()> {
     test_json::<Group>("../apub/assets/nodebb/objects/group.json")?;
     test_json::<Page>("../apub/assets/nodebb/objects/page.json")?;
     test_json::<Person>("../apub/assets/nodebb/objects/person.json")?;
@@ -119,7 +115,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parse_object_wordpress() -> FastJobContext<()> {
+  fn test_parse_object_wordpress() -> FastJobResult<()> {
     test_json::<Group>("../apub/assets/wordpress/objects/group.json")?;
     test_json::<Page>("../apub/assets/wordpress/objects/page.json")?;
     test_json::<Person>("../apub/assets/wordpress/objects/person.json")?;

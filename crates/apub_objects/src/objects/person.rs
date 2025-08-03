@@ -106,7 +106,7 @@ impl Object for ApubPerson {
 
     let person = Person {
       kind,
-      id: self.ap_id.clone().into(),
+      id: self.ap_id.inner().clone().into(),
       preferred_username: self.name.clone(),
       name: self.display_name.clone(),
       summary: self.bio.as_ref().map(|b| markdown_to_html(b)),
@@ -164,7 +164,7 @@ impl Object for ApubPerson {
       avatar,
       banner,
       updated_at: person.updated,
-      ap_id: Some(person.id.into()),
+      ap_id: Some(person.id.inner().clone().into()),
       bio,
       local: Some(false),
       bot_account: Some(person.kind == UserTypes::Service),

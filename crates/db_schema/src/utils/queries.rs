@@ -215,19 +215,20 @@ pub fn comment_select_remove_deletes() -> _ {
     comment::published_at,
     comment::updated_at,
     comment::deleted,
+    comment::ap_id,
     comment::local,
+    comment::path,
     comment::distinguished,
     comment::language_id,
     comment::score,
     comment::upvotes,
     comment::downvotes,
+    comment::child_count,
     comment::hot_rank,
     comment::controversy_rank,
     comment::report_count,
     comment::unresolved_report_count,
-    comment::budget,
-    comment::working_days,
-    comment::brief_url,
+    comment::pending,
   )
 }
 

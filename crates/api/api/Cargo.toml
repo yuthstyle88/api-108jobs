@@ -45,6 +45,7 @@ lemmy_api_utils = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_multilang = { workspace = true }
 lemmy_email = { workspace = true }
+activitypub_federation  = { workspace = true }
 tracing = { workspace = true }
 bcrypt = { workspace = true }
 actix-web = { workspace = true }

@@ -1,4 +1,9 @@
 use either::Either;
+use crate::objects::comment::ApubComment;
+use crate::objects::community::ApubCommunity;
+use crate::objects::instance::ApubSite;
+use crate::objects::person::ApubPerson;
+use crate::objects::post::ApubPost;
 
 pub mod comment;
 pub mod community;
@@ -12,5 +17,4 @@ pub type PostOrComment = Either<ApubPost, ApubComment>;
 
 pub type UserOrCommunity = Either<ApubPerson, ApubCommunity>;
 
-pub type SiteOrMultiOrCommunityOrUser =
-Either<ApubSite, UserOrCommunity>;
+pub type SiteOrMultiOrCommunityOrUser = Either<ApubSite, UserOrCommunity>;

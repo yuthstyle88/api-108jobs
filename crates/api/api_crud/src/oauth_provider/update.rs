@@ -1,4 +1,5 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::Json;
+use activitypub_federation::config::Data;
 use chrono::Utc;
 use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::utils::diesel_required_url_update;

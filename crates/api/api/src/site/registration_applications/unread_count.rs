@@ -1,4 +1,5 @@
-use actix_web::web::{Data, Json};
+use activitypub_federation::config::Data;
+use actix_web::web::Json;
 use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
 use lemmy_db_views_local_user::LocalUserView;

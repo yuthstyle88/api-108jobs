@@ -22,6 +22,7 @@ workspace = true
 full = []
 
 [dependencies]
+lemmy_db_views_community_person_ban = { workspace = true, features = ["full"] }
 lemmy_db_views_local_user = { workspace = true, features = ["full"] }
 lemmy_db_views_site = { workspace = true, features = ["full"] }
 lemmy_utils = { workspace = true, features = ["full"] }
@@ -29,6 +30,7 @@ lemmy_db_schema = { workspace = true, features = ["full"] }
 lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema_file = { workspace = true }
 activitypub_federation = { workspace = true }
+diesel_ltree = { workspace = true, optional = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -42,6 +44,7 @@ async-trait = "0.1.88"
 anyhow = { workspace = true }
 moka.workspace = true
 serde_with.workspace = true
+html2md = "0.2.15"
 html2text = { workspace = true }
 stringreader = "0.1.1"
 semver = "1.0.26"

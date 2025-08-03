@@ -216,9 +216,9 @@ pub enum FastJobErrorType {
   FileNotFound,
   EmailAlreadyVerified,
   OauthProviderDisabled,
-    CouldntCreateCategory,
+  CouldntCreateCategory,
   CouldntUpdateCategory,
-    CouldntCreateCategoryGroup,
+  CouldntCreateCategoryGroup,
   CouldntUpdateCategoryGroup,
   EmptyEmail,
   MissingCaptchaUuid,
@@ -232,7 +232,20 @@ pub enum FastJobErrorType {
   CouldntCreateCommunity,
   AlreadyDeleted,
   UrlWithoutDomain,
-  FederationDisabledByStrictAllowList
+  FederationDisabledByStrictAllowList,
+  RedisConnectionFailed,
+  SerializationFailed,
+  RedisSetFailed,
+  RedisDeleteFailed,
+  RedisKeyNotFound,
+  RedisGetFailed,
+  DeserializationFailed,
+  PostIsLocked,
+  CantDeleteSite,
+  PageDoesNotSpecifyCreator,
+  ObjectIsNotPublic,
+  FederationDisabled,
+  InvalidField(String)
 }
 
 cfg_if! {

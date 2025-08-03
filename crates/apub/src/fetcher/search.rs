@@ -25,9 +25,9 @@ pub(crate) async fn search_query_to_object_id(
       if query.starts_with('!') || query.starts_with('@') {
         query.remove(0);
       }
-      Left(Right(
+      Right(
         webfinger_resolve_actor::<FastJobContext, UserOrCommunity>(&query, context).await?,
-      ))
+      )
     }
   })
 }

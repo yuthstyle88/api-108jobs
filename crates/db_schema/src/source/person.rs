@@ -9,6 +9,7 @@ use i_love_jesus::CursorKeysModule;
 use lemmy_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -32,10 +33,16 @@ pub struct Person {
   pub avatar: Option<DbUrl>,
   pub published_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  /// The federated ap_id.
+  pub ap_id: DbUrl,
   /// An optional bio, in markdown.
   pub bio: Option<String>,
   /// Whether the person is local to our site.
   pub local: bool,
+  #[serde(skip)]
+  pub private_key: Option<SensitiveString>,
+  #[serde(skip)]
+  pub public_key: String,
   #[serde(skip)]
   pub last_refreshed_at: DateTime<Utc>,
   /// A URL for a banner.
@@ -63,6 +70,7 @@ pub struct Person {
 #[cfg_attr(feature = "full", diesel(table_name = person))]
 pub struct PersonInsertForm {
   pub name: String,
+  pub public_key: String,
   pub instance_id: InstanceId,
   #[new(default)]
   pub display_name: Option<String>,
@@ -70,6 +78,8 @@ pub struct PersonInsertForm {
   pub avatar: Option<DbUrl>,
   #[new(default)]
   pub updated_at: Option<DateTime<Utc>>,
+  #[new(default)]
+  pub ap_id: Option<DbUrl>,
   #[new(default)]
   pub bio: Option<String>,
   #[new(default)]
@@ -97,8 +107,11 @@ pub struct PersonUpdateForm {
   pub display_name: Option<Option<String>>,
   pub avatar: Option<Option<DbUrl>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
+  pub ap_id: Option<DbUrl>,
   pub bio: Option<Option<String>>,
   pub local: Option<bool>,
+  pub public_key: Option<String>,
+  pub private_key: Option<Option<String>>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub banner: Option<Option<DbUrl>>,
   pub deleted: Option<bool>,

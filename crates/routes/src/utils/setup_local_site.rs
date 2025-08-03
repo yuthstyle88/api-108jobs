@@ -47,6 +47,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           let instance = Instance::read_or_create(&mut conn.into(), domain).await?;
 
           if let Some(setup) = &settings.setup {
+            let person_keypair = generate_actor_keypair()?;
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
 
             // Register the user if there's a site setup
@@ -55,6 +56,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
               inbox_url: Some(generate_inbox_url()?),
               ..PersonInsertForm::new(
                 setup.admin_username.clone(),
+                person_keypair.public_key,
                 instance.id,
               )
             };

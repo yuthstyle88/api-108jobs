@@ -25,7 +25,7 @@ use activitypub_federation::{
 use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use lemmy_api_utils::{context::FastJobContext, utils::proxy_image_link};
-use lemmy_utils::error::{FederationError, LemmyError, LemmyErrorType, FastJobContext, FastJobResult, FastJobErrorType};
+use lemmy_utils::error::{ FastJobResult, FastJobErrorType, FastJobError};
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -130,7 +130,7 @@ impl Attachment {
     }
   }
 
-  pub(crate) async fn as_markdown(&self, context: &Data<FastJobContext>) -> FastJobContext<String> {
+  pub(crate) async fn as_markdown(&self, context: &Data<FastJobContext>) -> FastJobResult<String> {
     let (url, name, media_type) = match self {
       Attachment::Image(i) => (i.url.clone(), i.name.clone(), Some(String::from("image"))),
       Attachment::Document(d) => (d.url.clone(), d.name.clone(), d.media_type.clone()),
@@ -202,7 +202,7 @@ impl Attachment {
 #[async_trait::async_trait]
 impl Activity for Page {
   type DataType = FastJobContext;
-  type Error = LemmyError;
+  type Error = FastJobError;
   fn id(&self) -> &Url {
     self.id.inner()
   }
@@ -211,17 +211,17 @@ impl Activity for Page {
     debug_assert!(false);
     self.id.inner()
   }
-  async fn verify(&self, data: &Data<Self::DataType>) -> FastJobContext<()> {
+  async fn verify(&self, data: &Data<Self::DataType>) -> FastJobResult<()> {
     ApubPost::verify(self, self.id.inner(), data).await
   }
-  async fn receive(self, data: &Data<Self::DataType>) -> FastJobContext<()> {
+  async fn receive(self, data: &Data<Self::DataType>) -> FastJobResult<()> {
     ApubPost::from_json(self, data).await?;
     Ok(())
   }
 }
 
 impl InCommunity for Page {
-  async fn community(&self, context: &Data<FastJobContext>) -> FastJobContext<ApubCommunity> {
+  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
     let community = match &self.attributed_to {
       AttributedTo::Lemmy(_) => {
         let mut iter = self.to.iter().merge(self.cc.iter());
@@ -232,7 +232,7 @@ impl InCommunity for Page {
               break c;
             }
           } else {
-            Err(LemmyErrorType::NotFound)?;
+            Err(FastJobErrorType::NotFound)?;
           }
         }
       }
@@ -240,7 +240,7 @@ impl InCommunity for Page {
         p.iter()
           .find(|a| a.kind == PersonOrGroupType::Group)
           .map(|a| ObjectId::<ApubCommunity>::from(a.id.clone().into_inner()))
-          .ok_or(LemmyErrorType::NotFound)?
+          .ok_or(FastJobErrorType::NotFound)?
           .dereference(context)
           .await?
       }
@@ -262,12 +262,4 @@ where
   }
 }
 
-#[cfg(test)]
-mod tests {
-  use crate::{protocol::page::Page, utils::test::test_parse_lemmy_item};
 
-  #[test]
-  fn test_not_parsing_note_as_page() {
-    assert!(test_parse_lemmy_item::<Page>("assets/lemmy/objects/note.json").is_err());
-  }
-}

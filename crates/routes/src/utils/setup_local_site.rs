@@ -1,3 +1,4 @@
+use activitypub_federation::http_signatures::generate_actor_keypair;
 use chrono::Utc;
 use diesel::{
   dsl::{exists, not, select},
@@ -68,6 +69,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           };
 
           // Add an entry for the site table
+          let site_key_pair = generate_actor_keypair()?;
           let site_ap_id = Url::parse(&settings.get_protocol_and_hostname())?;
 
           let name = settings
@@ -79,6 +81,8 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             ap_id: Some(site_ap_id.clone().into()),
             last_refreshed_at: Some(Utc::now()),
             inbox_url: Some(generate_inbox_url()?),
+            private_key: Some(site_key_pair.private_key),
+            public_key: Some(site_key_pair.public_key),
              ..SiteInsertForm::new(name, instance.id)
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;

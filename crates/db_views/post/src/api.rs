@@ -1,17 +1,14 @@
-use chrono::{DateTime, Utc};
 use crate::PostView;
-use lemmy_db_schema::{
-  newtypes::{
-    CommentId,
-    CommunityId,
-    DbUrl,
-    LanguageId,
-    PaginationCursor,
-    PostId,
-    TagId,
-  },
-  PostFeatureType,
-};
+use chrono::{DateTime, Utc};
+use lemmy_db_schema::{newtypes::{
+  CommentId,
+  CommunityId,
+  DbUrl,
+  LanguageId,
+  PaginationCursor,
+  PostId,
+  TagId,
+}, PostFeatureType};
 use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_vote::VoteView;
@@ -104,6 +101,7 @@ pub struct DeletePost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPost {
   pub post_id: PostId,
+  pub community_id: Option<CommunityId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -117,11 +115,11 @@ pub struct EditPost {
   /// Time when this post should be scheduled. Null means publish immediately.
   pub scheduled_publish_time_at: Option<i64>,
   pub tags: Option<Vec<TagId>>,
-  pub intended_use: IntendedUse,
-  pub job_type: JobType,
-  pub budget: f64,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub budget: Option<f64>,
   pub deadline: Option<DateTime<Utc>>,
-  pub is_english_required: bool,
+  pub is_english_required: Option<bool>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
@@ -131,6 +129,7 @@ pub struct EditPost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPostRequest {
   pub post_id: PostId,
+  pub community_id: Option<CommunityId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -144,11 +143,11 @@ pub struct EditPostRequest {
   /// Time when this post should be scheduled. Null means publish immediately.
   pub scheduled_publish_time_at: Option<i64>,
   pub tags: Option<Vec<TagId>>,
-  pub intended_use: IntendedUse,
-  pub job_type: JobType,
-  pub budget: f64,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub budget: Option<f64>,
   pub deadline: Option<DateTime<Utc>>,
-  pub is_english_required: bool,
+  pub is_english_required: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -219,10 +218,15 @@ pub struct GetPosts {
   pub self_promotion: Option<bool>,
   /// If false, then show posts with media attached (even if your user setting is to hide them)
   pub hide_media: Option<bool>,
-  /// Whether to automatically mark fetched posts as read.
-  pub mark_as_read: Option<bool>,
-  /// If true, then only show posts with no comments
-  pub no_comments_only: Option<bool>,
+  /// If true, then only show posts with no proposals
+  pub no_proposals_only: Option<bool>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  /// Minimum budget in your preferred currency
+  pub budget_min: Option<i64>,
+  /// Maximum budget in your preferred currency
+  pub budget_max: Option<i64>,
+  pub requires_english: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -244,6 +248,7 @@ pub struct GetPostsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Get metadata for a given site.
 pub struct GetSiteMetadata {
   pub url: String,

@@ -765,6 +765,8 @@ diesel::table! {
         ap_id -> Varchar,
         bio -> Nullable<Text>,
         local -> Bool,
+        private_key -> Nullable<Text>,
+        public_key -> Text,
         last_refreshed_at -> Timestamptz,
         banner -> Nullable<Text>,
         deleted -> Bool,
@@ -1037,6 +1039,8 @@ diesel::table! {
         last_refreshed_at -> Timestamptz,
         #[max_length = 255]
         inbox_url -> Varchar,
+        private_key -> Nullable<Text>,
+        public_key -> Text,
         instance_id -> Int4,
         content_warning -> Nullable<Text>,
     }

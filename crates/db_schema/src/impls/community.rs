@@ -1,5 +1,5 @@
 use crate::{
-  diesel::{JoinOnDsl, OptionalExtension},
+  diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
   newtypes::{CommunityId, DbUrl, PersonId},
   source::{
     actor_language::CommunityLanguage,
@@ -11,15 +11,16 @@ use crate::{
     },
     post::Post,
   },
-  traits::{ApubActor, Crud,},
+  traits::{ApubActor, Bannable, Blockable, Crud, Followable, Joinable},
   utils::{
     format_actor_url,
-    functions::{coalesce_2_nullable, lower, random_smallint},
+    functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
     get_conn,
     uplete,
     DbPool,
   },
 };
+use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
@@ -30,14 +31,12 @@ use diesel::{
   NullableExpressionMethods,
   QueryDsl,
 };
-use diesel_async::{AsyncConnection, RunQueryDsl};
-use diesel_ltree::Ltree;
+use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::{
-  enums::{CommunityVisibility, ListingType},
+  enums::{CommunityFollowerState, CommunityVisibility, ListingType},
   schema::{comment, community, community_actions, instance, post},
 };
 use lemmy_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_COMMUNITY,
 };
@@ -45,6 +44,7 @@ use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
 use url::Url;
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::source::community::CommunityChangeset;
 
 impl Crud for Community {
@@ -115,40 +115,33 @@ pub enum CollectionType {
 }
 
 impl Community {
-  pub async fn create_sub(
+  pub async fn insert_apub(
     pool: &mut DbPool<'_>,
-    community_form: &CommunityInsertForm,
-    parent_opt: Option<&Community>,
+    timestamp: DateTime<Utc>,
+    form: &CommunityInsertForm,
   ) -> FastJobResult<Self> {
+    let is_new_community = match &form.ap_id {
+      Some(id) => Community::read_from_apub_id(pool, id).await?.is_none(),
+      None => true,
+    };
     let conn = &mut get_conn(pool).await?;
 
-    let community = conn.transaction::<_, FastJobError, _>(|txn| {
-      Box::pin(async move {
-        let mut community: Community = insert_into(community::table)
-            .values(community_form)
-            .get_result(txn)
-            .await
-            .with_fastjob_type(FastJobErrorType::CouldntCreateCommunity)?;
+    // Can't do separate insert/update commands because InsertForm/UpdateForm aren't convertible
+    let community_ = insert_into(community::table)
+     .values(form)
+     .on_conflict(community::ap_id)
+     .filter_target(coalesce(community::updated_at, community::published_at).lt(timestamp))
+     .do_update()
+     .set(form)
+     .get_result::<Self>(conn)
+     .await?;
 
-        let path = match parent_opt {
-          Some(parent) => Ltree(format!("{}.{}", parent.path.0, community.id.0)),
-          None => Ltree(community.id.0.to_string()),
-        };
+    // Initialize languages for new community
+    if is_new_community {
+      CommunityLanguage::update(pool, vec![], community_.id).await?;
+    }
 
-        update(community::table.filter(community::id.eq(community.id)))
-            .set(community::path.eq(path.clone()))
-            .execute(txn)
-            .await?;
-
-        community.path = path;
-
-        Ok(community)
-      })
-    }).await?;
-
-    CommunityLanguage::update(pool, vec![], community.id).await?;
-
-    Ok(community)
+    Ok(community_)
   }
 
   pub async fn check_community_slug_taken(pool: &mut DbPool<'_>, slug: &str) -> FastJobResult<()> {

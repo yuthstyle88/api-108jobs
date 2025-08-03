@@ -669,6 +669,11 @@ mod tests {
       report_count: 0,
       scaled_rank: RANK_DEFAULT,
       unresolved_report_count: 0,
+      intended_use: Default::default(),
+      job_type: Default::default(),
+      budget: 0.0,
+      deadline: None,
+      is_english_required: false,
     };
 
     // Post Like

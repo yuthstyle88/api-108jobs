@@ -47,6 +47,8 @@ default = []
 
 [workspace]
 members = [
+    "crates/apub",
+    "crates/apub_objects",
     "crates/api/api",
     "crates/api/api_crud",
     "crates/api/api_common",
@@ -107,6 +109,8 @@ expect_used = "deny"
 as_conversions = "deny"
 
 [workspace.dependencies]
+lemmy_apub = { version = "=1.0.0-alpha.5", path = "./crates/apub" }
+lemmy_apub_objects = { version = "=1.0.0-alpha.5", path = "./crates/apub_objects" }
 lemmy_api = { version = "=1.0.0-alpha.5", path = "./crates/api/api" }
 lemmy_api_crud = { version = "=1.0.0-alpha.5", path = "./crates/api/api_crud" }
 lemmy_utils = { version = "=1.0.0-alpha.5", path = "./crates/utils", default-features = false }
@@ -136,7 +140,9 @@ lemmy_db_views_search_combined = { version = "=1.0.0-alpha.5", path = "./crates/
 lemmy_db_views_site = { version = "=1.0.0-alpha.5", path = "./crates/db_views/site" }
 lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vote" }
 lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
-
+activitypub_federation = { version = "0.7.0-beta.5", default-features = false, features = [
+    "actix-web",
+] }
 diesel = { version = "2.2.10", features = [
     "chrono",
     "postgres",
@@ -227,8 +233,11 @@ p256 = { version = "0.9.0", features = ["ecdh"] }
 hex = "0.4.3"
 validator = "0.20.0"
 slug = "0.1.6"
+redis = { version = "0.32.4", features = ["tokio-comp"] }
 
 [dependencies]
+lemmy_apub = { workspace = true }
+lemmy_apub_objects = { workspace = true }
 lemmy_api = { workspace = true }
 lemmy_api_crud = { workspace = true }
 lemmy_utils = { workspace = true }

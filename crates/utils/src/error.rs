@@ -231,6 +231,8 @@ pub enum FastJobErrorType {
   MaxCommunityDepthReached,
   CouldntCreateCommunity,
   AlreadyDeleted,
+  UrlWithoutDomain,
+  FederationDisabledByStrictAllowList
 }
 
 cfg_if! {

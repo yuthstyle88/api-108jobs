@@ -1,3 +1,4 @@
+use activitypub_federation::http_signatures::generate_actor_keypair;
 use super::not_zero;
 use crate::site::{application_question_check, site_default_post_listing_type_check};
 use actix_web::web::{Data, Json};
@@ -56,7 +57,7 @@ pub async fn create_site(
 
   let ap_id: DbUrl = Url::parse(&context.settings().get_protocol_and_hostname())?.into();
   let inbox_url = Some(generate_inbox_url()?);
-
+  let keypair = generate_actor_keypair()?;
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let sidebar = process_markdown_opt(&data.sidebar, &slur_regex, &url_blocklist, &context).await?;
@@ -68,6 +69,8 @@ pub async fn create_site(
     ap_id: Some(ap_id),
     last_refreshed_at: Some(Utc::now()),
     inbox_url,
+    private_key: Some(Some(keypair.private_key)),
+    public_key: Some(keypair.public_key),
     content_warning: diesel_string_update(data.content_warning.as_deref()),
     ..Default::default()
   };

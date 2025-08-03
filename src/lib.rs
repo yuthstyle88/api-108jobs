@@ -4,11 +4,10 @@ use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
-  web::{get, scope, Data},
+  web::{scope, Data},
   App, HttpResponse, HttpServer,
 };
 use clap::{Parser, Subcommand};
-use lemmy_api::sitemap::get_sitemap;
 use lemmy_api_utils::{
   context::FastJobContext, request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
@@ -43,6 +42,7 @@ use serde_json::json;
 use std::path::Path;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_utils::redis::RedisClient;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -163,13 +163,15 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-
+  let redis_client = RedisClient::new(SETTINGS.redis.clone()).await?;
+  
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
+    redis_client
   );
 
   let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone())
@@ -290,8 +292,7 @@ fn create_http_server(
       .configure(nodeinfo::config)
       .service(
         scope("/sitemap.xml")
-          .wrap(rate_limit.message())
-          .route("", get().to(get_sitemap)),
+          .wrap(rate_limit.message()),
       )
   })
   // Use number of available CPU cores for optimal performance

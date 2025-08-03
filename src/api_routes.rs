@@ -68,7 +68,7 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api_crud::community::list::list_communities_ltree;
+use lemmy_api_crud::community::list::{list_communities, list_communities_ltree};
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -99,6 +99,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_apub::api::list_posts::list_posts;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -146,6 +147,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_community))
             .route("/random", get().to(get_random_community))
             .route("/list", get().to(list_communities_ltree))
+            .route("/list/children", get().to(list_communities))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))
             .route("/delete", post().to(delete_community))
@@ -157,13 +159,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", delete().to(delete_community_banner))
             .route("/tag", post().to(create_community_tag))
             .route("/tag", put().to(update_community_tag))
-            .route("/tag", delete().to(delete_community_tag))
+            .route("/tag", delete().to(delete_community_tag)),
         )
         // Post
         .service(
           resource("/post")
             // Handle POST to /post separately to add the post() rate limitter
-            // .guard(guard::Post())
+            .guard(guard::Post())
             // .wrap(rate_limit.post())
             .route(post().to(create_post)),
         )
@@ -183,6 +185,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/hide", post().to(hide_post))
             .route("/lock", post().to(lock_post))
             .route("/feature", post().to(feature_post))
+            .route("/list", get().to(list_posts))
             .route("/like", post().to(like_post))
             .route("/like/list", get().to(list_post_likes))
             .route("/save", put().to(save_post))
@@ -209,6 +212,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/distinguish", post().to(distinguish_comment))
             .route("/like", post().to(like_comment))
             .route("/like/list", get().to(list_comment_likes))
+            .route("/list", get().to(list_comments))
             .route("/save", put().to(save_comment))
             .route("/report", post().to(create_comment_report))
             .route("/report/resolve", put().to(resolve_comment_report)),

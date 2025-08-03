@@ -1,0 +1,41 @@
+[package]
+name = "lemmy_db_views_wallet"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "lemmy_db_views_wallet"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+full = [
+    "lemmy_db_schema/full",
+    "diesel",
+    "diesel-async",
+]
+ts-rs = ["dep:ts-rs"]
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+lemmy_db_schema = { workspace = true }
+lemmy_db_schema_file = { workspace = true }
+diesel = { workspace = true, optional = true }
+diesel-async = { workspace = true, optional = true }
+lemmy_utils = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serial_test = { workspace = true }

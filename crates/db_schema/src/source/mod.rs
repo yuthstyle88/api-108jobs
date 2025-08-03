@@ -38,6 +38,8 @@ pub mod secret;
 pub mod site;
 pub mod tag;
 pub mod tagline;
+pub mod wallet;
+pub mod billing;
 pub mod chat_room;
 pub mod chat_message;
 

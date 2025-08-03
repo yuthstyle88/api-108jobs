@@ -2,6 +2,8 @@ use actix_web::{guard, web::*};
 use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
+use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work};
+use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -275,6 +277,20 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/hidden", get().to(list_person_hidden))
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
+            // Wallet service scope
+            .service(
+              scope("/wallet")
+                .route("", get().to(get_wallet))
+            )
+            // Services scope for freelancer service delivery
+            .service(
+              scope("/services")
+                .route("/create-invoice", post().to(create_invoice))
+                .route("/approve-quotation", post().to(approve_quotation))
+                .route("/submit-work", post().to(submit_work))
+                .route("/request-revision", post().to(request_revision))
+                .route("/approve-work", post().to(approve_work))
+            )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))
             .service(
@@ -325,6 +341,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/instance")
                 .route("/block", post().to(admin_block_instance))
                 .route("/allow", post().to(admin_allow_instance)),
+            )
+            .service(
+              scope("/wallet")
+                .route("/top-up", post().to(admin_top_up_wallet))
+                .route("/withdraw", post().to(admin_withdraw_wallet)),
             ),
         )
         .service(

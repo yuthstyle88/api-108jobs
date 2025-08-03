@@ -18,6 +18,7 @@ doctest = false
 workspace = true
 
 [features]
+full = ["ts-rs"]
 ts-rs = [
   "lemmy_utils/ts-rs",
   "lemmy_db_schema/ts-rs",
@@ -65,3 +66,4 @@ lemmy_db_views_search_combined.workspace = true
 lemmy_db_views_site.workspace = true
 lemmy_db_views_vote.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }
+serde_with = "3.12.0"

@@ -76,6 +76,8 @@ members = [
     "crates/db_views/report_combined",
     "crates/db_views/search_combined",
     "crates/db_views/site",
+    "crates/db_views/wallet",
+    "crates/db_views/billing",
     "crates/routes",
     "crates/multilang",
     "crates/ws",
@@ -119,6 +121,7 @@ lemmy_db_schema = { version = "=1.0.0-alpha.5", path = "./crates/db_schema" }
 lemmy_db_schema_file = { version = "=1.0.0-alpha.5", path = "./crates/db_schema_file" }
 lemmy_db_schema_setup = { version = "=1.0.0-alpha.5", path = "./crates/db_schema_setup" }
 lemmy_api_utils = { version = "=1.0.0-alpha.5", path = "./crates/api/api_utils" }
+lemmy_api_common = { version = "=1.0.0-alpha.5", path = "./crates/api/api_common" }
 lemmy_routes = { version = "=1.0.0-alpha.5", path = "./crates/routes" }
 lemmy_email = { version = "=1.0.0-alpha.5", path = "./crates/email" }
 lemmy_multilang = { version = "=1.0.0-alpha.5", path = "crates/multilang" }
@@ -141,6 +144,8 @@ lemmy_db_views_reports = { version = "=1.0.0-alpha.5", path = "./crates/db_views
 lemmy_db_views_search_combined = { version = "=1.0.0-alpha.5", path = "./crates/db_views/search_combined" }
 lemmy_db_views_site = { version = "=1.0.0-alpha.5", path = "./crates/db_views/site" }
 lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vote" }
+lemmy_db_views_wallet = { version = "=1.0.0-alpha.5", path = "./crates/db_views/wallet" }
+lemmy_db_views_billing = { version = "=1.0.0-alpha.5", path = "./crates/db_views/billing" }
 lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 diesel = { version = "2.2.10", features = [
     "chrono",

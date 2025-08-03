@@ -1,0 +1,22 @@
+[package]
+name = "lemmy_db_views_billing"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+
+[dependencies]
+lemmy_db_schema = { workspace = true }
+lemmy_db_schema_file = { workspace = true }
+lemmy_db_views_wallet = { workspace = true }
+lemmy_utils = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

@@ -274,3 +274,34 @@ pub enum JobType {
   PartTime,
   FullTime
 }
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::BillingStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The billing status for escrow workflow
+pub enum BillingStatus {
+  /// Quotation created by freelancer, waiting for employer review
+  QuotationPending,
+  /// Employer approved quotation, became an order, ready for invoice payment
+  OrderApproved,
+  /// Employer paid invoice, money in escrow, waiting for work submission
+  PaidEscrow,
+  /// Freelancer submitted work, waiting for employer review
+  WorkSubmitted,
+  /// Employer requested revision, freelancer needs to update work
+  RevisionRequested,
+  /// Employer approved work, money released to freelancer
+  Completed,
+  /// Disputed work quality or requirements
+  Disputed,
+  /// Quotation/order cancelled before payment
+  Cancelled,
+}

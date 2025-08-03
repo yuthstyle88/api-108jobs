@@ -3376,10 +3376,12 @@ dependencies = [
  "elementtree",
  "hex",
  "hound",
+ "lemmy_api_common",
  "lemmy_api_crud",
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_billing",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_inbox_combined",
@@ -3396,6 +3398,7 @@ dependencies = [
  "lemmy_db_views_reports",
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
+ "lemmy_db_views_wallet",
  "lemmy_email",
  "lemmy_multilang",
  "lemmy_utils",
@@ -3436,6 +3439,7 @@ dependencies = [
  "lemmy_db_views_vote",
  "lemmy_utils",
  "serde",
+ "serde_with",
 ]
 
 [[package]]
@@ -3464,6 +3468,7 @@ dependencies = [
  "lemmy_db_views_registration_applications",
  "lemmy_db_views_search_combined",
  "lemmy_db_views_site",
+ "lemmy_db_views_wallet",
  "lemmy_email",
  "lemmy_multilang",
  "lemmy_utils",
@@ -3671,6 +3676,21 @@ dependencies = [
  "serial_test",
  "tracing",
  "unified-diff",
+]
+
+[[package]]
+name = "lemmy_db_views_billing"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_wallet",
+ "lemmy_utils",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -4038,6 +4058,23 @@ dependencies = [
  "serde_with",
  "serial_test",
  "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "lemmy_db_views_wallet"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
  "ts-rs",
 ]
 

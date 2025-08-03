@@ -15,6 +15,7 @@ use lemmy_db_schema::{
     person::Person,
     post::Post,
     tagline::Tagline,
+    wallet::Wallet,
   },
 };
 use lemmy_db_schema_file::enums::{
@@ -480,6 +481,7 @@ pub struct MyUserInfo {
   pub person_blocks: Vec<Person>,
   pub keyword_blocks: Vec<String>,
   pub discussion_languages: Vec<LanguageId>,
+  pub wallet: Option<Wallet>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

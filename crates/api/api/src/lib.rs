@@ -9,6 +9,7 @@ use regex::Regex;
 use std::io::Cursor;
 use totp_rs::{Secret, TOTP};
 
+pub mod admin;
 pub mod comment;
 pub mod community;
 pub mod local_user;

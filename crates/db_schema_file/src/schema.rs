@@ -344,6 +344,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    otp_verification (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        email -> Varchar,
+        #[max_length = 5]
+        verification_otp -> Varchar,
+        created_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     image_details (link) {
         link -> Text,
         width -> Int4,

@@ -136,7 +136,6 @@ pub async fn register(
      async move {
        // We have to create both a person, and local_user
        let person = create_person(tx_data.username.clone(), &site_view, &tx_context, conn).await?;
-
        // Create the local user
        let local_user_form = LocalUserInsertForm {
          email: tx_data.email.as_deref().map(str::to_lowercase),

@@ -13,9 +13,11 @@ use lemmy_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
+use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema_file::schema::{local_user, person, registration_application};
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::utils::validation::{get_required_trimmed, is_valid_email, password_length_check};
+use lemmy_utils::utils::helper::rand_number5;
+use lemmy_utils::utils::validation::is_valid_email;
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;
@@ -140,40 +142,25 @@ impl TryFrom<RegisterRequest> for Register {
   type Error = FastJobError;
 
   fn try_from(mut form: RegisterRequest) -> Result<Self, Self::Error> {
-    let username = get_required_trimmed(&form.username, FastJobErrorType::EmptyUsername)?;
-    let password = get_required_sensitive(&form.password, FastJobErrorType::EmptyPassword)?;
-    let password_verify =
-      get_required_sensitive(&form.password_verify, FastJobErrorType::PasswordsDoNotMatch)?;
+    let password: Option<SensitiveString> = Some(format!("{:?}{:?}",rand_number5() ,rand_number5()).into());
+    let username = get_required_sensitive(&form.email, FastJobErrorType::EmptyUsername)?.into_inner();
     let email = get_required_sensitive(&form.email, FastJobErrorType::EmptyEmail)?;
-    let captcha_uuid =
-      get_required_trimmed(&form.captcha_uuid, FastJobErrorType::MissingCaptchaUuid)?;
-    let captcha_answer =
-      get_required_trimmed(&form.captcha_answer, FastJobErrorType::MissingCaptchaAnswer)?;
-
+    let password = get_required_sensitive(&password, FastJobErrorType::EmptyPassword)?;
     // Check if email format is valid
     if !is_valid_email(&email) {
       return Err(FastJobErrorType::InvalidEmail.into());
     }
-
-    // Check password length
-    password_length_check(&password)?;
-
-    // Confirm both passwords match
-    if password != password_verify {
-      return Err(FastJobErrorType::PasswordsDoNotMatch.into());
-    }
-
     Ok(Register {
       username,
       password,
-      self_promotion: form.self_promotion.take(),
+      self_promotion: None,
       email: Some(email),
-      captcha_uuid: Some(captcha_uuid),
-      captcha_answer: Some(captcha_answer),
-      honeypot: form.honeypot.take(),
+      captcha_uuid: None,
+      captcha_answer: None,
+      honeypot: None,
       answer: form.answer.take(),
-      role: form.role.take(),
-      accepted_application: form.accepted_application,
+      role: None,
+      accepted_application: Some(false),
     })
   }
 }
@@ -197,6 +184,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
+  use url::Url;
 
   #[tokio::test]
   #[serial]
@@ -289,8 +277,8 @@ mod tests {
         show_score: sara_local_user.show_score,
         show_upvote_percentage: sara_local_user.show_upvote_percentage,
         show_person_votes: sara_local_user.show_person_votes,
-        public_key: None,
         role: Default::default(),
+        otp: None,
       },
       creator: Person {
         id: sara_person.id,
@@ -299,6 +287,7 @@ mod tests {
         published_at: sara_person.published_at,
         avatar: None,
         local: true,
+        private_key: None,
         deleted: false,
         bot_account: false,
         bio: None,
@@ -312,6 +301,8 @@ mod tests {
         post_score: 0,
         comment_count: 0,
         comment_score: 0,
+        ap_id: Url::parse(""),
+        public_key: "".to_string(),
       },
       admin: None,
     };
@@ -367,6 +358,7 @@ mod tests {
       published_at: timmy_person.published_at,
       avatar: None,
       local: true,
+      private_key: None,
       deleted: false,
       bot_account: false,
       bio: None,
@@ -380,6 +372,8 @@ mod tests {
       post_score: 0,
       comment_count: 0,
       comment_score: 0,
+      ap_id: (),
+      public_key: "".to_string(),
     });
     assert_eq!(read_sara_app_view_after_approve, expected_sara_app_view);
 

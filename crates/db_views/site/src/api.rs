@@ -611,9 +611,16 @@ pub struct UserBlockInstanceParams {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Verify your multilang.
+/// Verify your VerifyEmail.
 pub struct VerifyEmail {
   pub token: String,
+}
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Verify your VerifyOTP.
+pub struct VerifyOTP {
+  pub otp: String,
 }
 
 #[derive(Serialize)]

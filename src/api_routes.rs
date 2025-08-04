@@ -68,6 +68,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::local_user::verify_otp::verify_otp;
 use lemmy_api_crud::community::list::{list_communities, list_communities_ltree};
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
@@ -234,6 +235,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/totp/generate", post().to(generate_totp_secret))
             .route("/totp/update", post().to(update_totp))
             .route("/verify-email", post().to(verify_email))
+            .route("/verify-otp", post().to(verify_otp))
             .route("/exchange-public-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
             .route("/get-captcha", get().to(get_captcha))

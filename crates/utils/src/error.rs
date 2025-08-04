@@ -193,6 +193,7 @@ pub enum FastJobErrorType {
   CouldntCreateLoginToken,
   CouldntUpdateLocalSiteUrlBlocklist,
   CouldntCreateEmailVerification,
+  CouldntCreateOTPVerification,
   EmailNotificationsDisabled,
   MultiCommunityUpdateWrongUser,
   CannotCombineCommunityIdAndMultiCommunityId,

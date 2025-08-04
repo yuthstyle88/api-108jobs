@@ -108,9 +108,9 @@ pub struct LocalSiteInsertForm {
   pub application_email_admins: Option<bool>,
   #[new(default)]
   pub slur_filter_regex: Option<String>,
-  #[new(default)]
+  #[new(value = "Some(50)")]
   pub actor_name_max_length: Option<i32>,
-  #[new(value = "Some(true)")]
+  #[new(value = "Some(false)")]
   pub captcha_enabled: Option<bool>,
   #[new(value = "Some(String::from(\"easy\"))")]
   pub captcha_difficulty: Option<String>,

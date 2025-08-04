@@ -4165,6 +4165,7 @@ dependencies = [
  "diesel",
  "doku",
  "enum-map",
+ "fastrand",
  "futures",
  "git-version",
  "hex",

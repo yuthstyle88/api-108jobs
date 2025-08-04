@@ -34,3 +34,4 @@ pub mod tag;
 pub mod tagline;
 pub mod chat_message;
 pub mod chat_room;
+pub mod otp_verification;

@@ -95,7 +95,6 @@ pub struct Community {
   #[cfg(feature = "full")]
   #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
   pub path: Ltree,
-  pub slug: String,
   pub active: bool,
   pub is_new: bool,
 }
@@ -145,7 +144,6 @@ pub struct CommunityInsertForm {
   pub description: Option<String>,
   #[new(default)]
   pub local_removed: Option<bool>,
-  pub slug: String,
   #[new(default)]
   pub active: bool,
   #[new(default)]
@@ -177,7 +175,6 @@ pub struct CommunityUpdateForm {
   pub visibility: Option<CommunityVisibility>,
   pub description: Option<Option<String>>,
   pub local_removed: Option<bool>,
-  pub slug: Option<String>,
   pub active: Option<bool>,
   pub is_new: Option<bool>,
 }

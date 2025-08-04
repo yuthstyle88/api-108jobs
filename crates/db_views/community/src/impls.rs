@@ -29,7 +29,6 @@ use lemmy_db_schema_file::{
 };
 use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::utils::validation::get_required_trimmed;
-use slug::slugify;
 
 impl CommunityView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -183,8 +182,6 @@ impl TryFrom<CreateCommunityRequest> for CreateCommunity {
 
     let title = value.title.take().unwrap_or_default();
 
-    let slug = value.slug.take().unwrap_or_else(|| slugify(&name));
-
     Ok(CreateCommunity {
       name,
       title,
@@ -196,7 +193,6 @@ impl TryFrom<CreateCommunityRequest> for CreateCommunity {
       posting_restricted_to_mods: None,
       discussion_languages: None,
       visibility: None,
-      slug,
       is_new: value.is_new.take(),
       parent_id: value.parent_id.take(),
     })
@@ -251,7 +247,6 @@ mod tests {
           instance.id,
           "test_community_1".to_string(),
           "nada1".to_owned(),
-          "na-da-1".to_string(),
         ),
       )
       .await?,
@@ -261,7 +256,6 @@ mod tests {
           instance.id,
           "test_community_2".to_string(),
           "nada2".to_owned(),
-          "na-da-2".to_string(),
         ),
       )
       .await?,
@@ -271,7 +265,6 @@ mod tests {
           instance.id,
           "test_community_3".to_string(),
           "nada3".to_owned(),
-          "na-da-3".to_string(),
         ),
       )
       .await?,
@@ -290,6 +283,8 @@ mod tests {
       ap_id: Url::parse("http://example1.com")?.into(),
       last_refreshed_at: Default::default(),
       inbox_url: url.into(),
+      private_key: None,
+      public_key: "".to_string(),
       instance_id: Default::default(),
       content_warning: None,
     };

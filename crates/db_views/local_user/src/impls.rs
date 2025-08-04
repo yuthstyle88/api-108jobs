@@ -235,7 +235,7 @@ mod tests {
       local_user::{LocalUser, LocalUserInsertForm},
       person::{Person, PersonInsertForm},
     },
-    traits::{Bannable, Crud},
+    traits::Bannable,
     utils::build_db_pool_for_tests,
   };
   use lemmy_utils::error::FastJobResult;

@@ -1,3 +1,4 @@
+use crate::source::community::CommunityChangeset;
 use crate::{
   diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
   newtypes::{CommunityId, DbUrl, PersonId},
@@ -11,7 +12,7 @@ use crate::{
     },
     post::Post,
   },
-  traits::{ApubActor, Bannable, Blockable, Crud, Followable, Joinable},
+  traits::{ApubActor, Crud},
   utils::{
     format_actor_url,
     functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
@@ -33,9 +34,10 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::{
-  enums::{CommunityFollowerState, CommunityVisibility, ListingType},
+  enums::{CommunityVisibility, ListingType},
   schema::{comment, community, community_actions, instance, post},
 };
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use lemmy_utils::{
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_COMMUNITY,
@@ -44,8 +46,6 @@ use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
 use url::Url;
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::source::community::CommunityChangeset;
 
 impl Crud for Community {
   type InsertForm = CommunityInsertForm;
@@ -142,18 +142,6 @@ impl Community {
     }
 
     Ok(community_)
-  }
-
-  pub async fn check_community_slug_taken(pool: &mut DbPool<'_>, slug: &str) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    select(not(exists(
-      community::table
-          .filter(lower(community::slug).eq(slug.to_lowercase())),
-    )))
-        .get_result::<bool>(conn)
-        .await?
-        .then_some(())
-        .ok_or(FastJobErrorType::SlugAlreadyExists.into())
   }
 
   pub async fn list_all_communities(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Community>> {
@@ -527,8 +515,8 @@ mod tests {
       person::{Person, PersonInsertForm},
       post::{Post, PostInsertForm},
     },
-    traits::{Bannable, Crud, Followable, Joinable},
-    utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
+    traits::Crud,
+    utils::{build_db_pool_for_tests, RANK_DEFAULT},
   };
   use diesel_ltree::Ltree;
   use lemmy_utils::error::FastJobResult;

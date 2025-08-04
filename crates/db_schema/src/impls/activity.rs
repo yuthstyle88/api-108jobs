@@ -7,7 +7,6 @@ use diesel::dsl::insert_into;
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use std::fmt::Debug;
 
 impl SentActivity {
   pub async fn create(pool: &mut DbPool<'_>, form: SentActivityForm) -> FastJobResult<Self> {

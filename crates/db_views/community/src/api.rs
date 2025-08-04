@@ -53,7 +53,6 @@ pub struct CreateCommunity {
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
-  pub slug: String,
   pub is_new: Option<bool>,
   pub parent_id: Option<CommunityId>,
 }
@@ -77,8 +76,6 @@ pub struct CreateCommunityRequest {
   pub banner: Option<String>,
   /// Whether its an self promotion category.
   pub self_promotion: Option<bool>,
-  /// A slug of category and subcategory.
-  pub slug: Option<String>,
   /// Whether its new or not.
   pub is_new: Option<bool>,
   /// If parent_id is None -> Category else -> Subcategory
@@ -129,8 +126,6 @@ pub struct EditCommunity {
   pub posting_restricted_to_mods: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
   pub visibility: Option<CommunityVisibility>,
-  /// A slug of category and subcategory.
-  pub slug: Option<String>,
   /// Whether its new or not.
   pub is_new: Option<bool>,
 }

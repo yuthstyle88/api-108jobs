@@ -1,17 +1,12 @@
 use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
-use diesel::{
-  dsl::exists,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
+use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
-use diesel_ltree::{nlevel, Ltree, LtreeExtensions};
+use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
+use lemmy_db_schema::impls::local_user::LocalUserOptionHelper;
+use lemmy_db_schema::newtypes::CommunityId;
+use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema::{
   newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
@@ -20,34 +15,20 @@ use lemmy_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join,
-      creator_community_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      my_comment_actions_join,
-      my_community_actions_join,
-      my_instance_actions_community_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
+      creator_community_actions_join, creator_community_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      my_comment_actions_join, my_community_actions_join, my_instance_actions_community_join,
+      my_local_user_admin_join, my_person_actions_join,
     },
-    seconds_to_pg_interval,
-    DbPool,
+    seconds_to_pg_interval, DbPool,
   },
 };
-use lemmy_db_schema::impls::local_user::LocalUserOptionHelper;
-use lemmy_db_schema::newtypes::CommunityId;
-use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema_file::{
   enums::{
     CommentSortType::{self, *},
-    CommunityFollowerState,
-    CommunityVisibility,
-    ListingType,
+    CommunityFollowerState, CommunityVisibility, ListingType,
   },
   schema::{comment, community, community_actions, person, post},
 };
@@ -107,9 +88,9 @@ impl CommentView {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins(my_local_user.person_id(), local_instance_id)
-     .filter(comment::id.eq(comment_id))
-     .select(Self::as_select())
-     .into_boxed();
+      .filter(comment::id.eq(comment_id))
+      .select(Self::as_select())
+      .into_boxed();
 
     query = my_local_user.visible_communities_only(query);
 
@@ -120,15 +101,15 @@ impl CommentView {
     if !my_local_user.is_admin() {
       query = query.filter(
         community::visibility
-         .ne(CommunityVisibility::Private)
-         .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
+          .ne(CommunityVisibility::Private)
+          .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
       );
     }
 
     query
-     .first::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .first::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub fn map_to_slim(self) -> CommentSlimView {
@@ -245,12 +226,7 @@ mod tests {
     source::{
       actor_language::LocalUserLanguage,
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
-      community::{
-        Community
-        ,
-        CommunityInsertForm,
-        CommunityUpdateForm,
-      },
+      community::{Community, CommunityInsertForm, CommunityUpdateForm},
       instance::Instance,
       language::Language,
       local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
@@ -296,7 +272,7 @@ mod tests {
       inserted_instance.id,
       "test community 5".to_string(),
       "nada".to_owned(),
-      "na-da".to_string()
+      "na-da".to_string(),
     );
     let community = Community::create(pool, &new_community).await?;
 
@@ -334,7 +310,6 @@ mod tests {
       ..CommentInsertForm::new(inserted_timmy_person.id, post.id, "Comment 2".into())
     };
 
-
     let comment_form_3 = CommentInsertForm {
       language_id: Some(english_id),
       ..CommentInsertForm::new(inserted_timmy_person.id, post.id, "Comment 3".into())
@@ -346,11 +321,8 @@ mod tests {
       ..CommentInsertForm::new(inserted_timmy_person.id, post.id, "Comment 4".into())
     };
 
-
-
     let comment_form_5 =
       CommentInsertForm::new(inserted_timmy_person.id, post.id, "Comment 5".into());
-
 
     let timmy_blocks_sara_form = PersonBlockForm::new(inserted_timmy_person.id, sara_person.id);
     let inserted_block = PersonActions::block(pool, &timmy_blocks_sara_form).await?;
@@ -447,7 +419,6 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
-
 
     let read_comment_views_top_max_depth = CommentQuery {
       post_id: (Some(data.post.id)),

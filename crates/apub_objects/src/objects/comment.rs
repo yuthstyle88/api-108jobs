@@ -1,4 +1,3 @@
-use crate::utils::protocol::InCommunity;
 
 use crate::fake_trait::Object;
 use lemmy_api_utils::context::FastJobContext;

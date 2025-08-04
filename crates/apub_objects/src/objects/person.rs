@@ -7,10 +7,10 @@ use crate::fake_trait::{Actor, Object};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::person::Person as DbPerson,
-  traits::{ApubActor, Crud},
+  traits::{ApubActor},
 };
 use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::error::{FastJobError, FastJobResult};
+use lemmy_utils::error::{FastJobError};
 use std::ops::Deref;
 use url::Url;
 

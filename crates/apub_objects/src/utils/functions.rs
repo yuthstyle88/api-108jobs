@@ -11,7 +11,6 @@ use lemmy_db_schema::newtypes::PersonId;
 use lemmy_db_schema::source::{
   community::Community,
   instance::InstanceActions,
-  local_site::LocalSite,
 };
 use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
 use lemmy_db_views_community_person_ban::CommunityPersonBanView;
@@ -41,14 +40,9 @@ pub fn read_from_string_or_source_opt(
     .map(|content| read_from_string_or_source(content, source))
 }
 
-#[derive(Clone)]
-pub struct LocalSiteData {
-  local_site: Option<LocalSite>,
-}
 
 pub async fn check_apub_id_valid_with_strictness(
   apub_id: &Url,
-  is_strict: bool,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
   let domain = apub_id
@@ -111,10 +105,6 @@ pub async fn verify_person_in_site_or_community(
 ) -> FastJobResult<()> {
   InstanceActions::check_ban(&mut context.pool(), person_id).await?;
   Ok(())
-}
-
-pub fn verify_is_public(to: &[Url], cc: &[Url]) -> FastJobResult<()> {
-    Ok(())
 }
 
 

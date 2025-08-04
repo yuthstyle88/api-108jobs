@@ -1,7 +1,6 @@
 use crate::fake_trait::Object;
 use crate::{
   protocol::page::Page,
-  utils::protocol::InCommunity,
 };
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::post::Post;
@@ -9,7 +8,6 @@ use lemmy_utils::error::FastJobError;
 use std::ops::Deref;
 use url::Url;
 
-const MAX_TITLE_LENGTH: usize = 200;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApubPost(pub Post);

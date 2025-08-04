@@ -501,7 +501,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
   type Error = FastJobError;
   fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
     is_valid_post_title(&data.name)?;
-    validate_job_update_fields(data)?;
+    validate_job_update_fields(&data)?;
     if let Some(ref url_str) = data.url {
       Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
@@ -533,13 +533,16 @@ impl TryFrom<CreatePostRequest> for CreatePost {
 
 fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
   // Validate budget (now required)
-  if data.budget <= 0 {
+  if data.budget <= 0f64 {
     return Err(FastJobErrorType::InvalidField("budget must be greater than 0".to_string()))?;
   }
 
-  // Validate working days (now required)
-  if data.deadline <= 0 {
-    return Err(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string()))?;
+  // Validate deadline: must be in the future, if set
+  if let Some(deadline) = data.deadline {
+    use chrono::Utc;
+    if deadline <= Utc::now() {
+      return Err(FastJobErrorType::InvalidField("deadline must be in the future".to_string()))?;
+    }
   }
   Ok(())
 }
@@ -694,7 +697,6 @@ mod tests {
         data.instance.id,
         "test_community_3".to_string(),
         "nada".to_owned(),
-        "na-da".to_string(),
       );
       let community = Community::create(pool, &new_community).await?;
 
@@ -1487,7 +1489,6 @@ mod tests {
       blocked_instance.id,
       "test_community_4".to_string(),
       "none".to_owned(),
-      "na-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -1539,7 +1540,6 @@ mod tests {
       data.instance.id,
       "yes".to_string(),
       "yes".to_owned(),
-      "na-da".to_string(),
     );
     let inserted_community = Community::create(pool, &community_form).await?;
 
@@ -2241,7 +2241,6 @@ mod tests {
       data.instance.id,
       "test_community_4".to_string(),
       "nada".to_owned(),
-      "na-da".to_string(),
     );
     let community_1 = Community::create(pool, &form).await?;
 
@@ -2252,7 +2251,6 @@ mod tests {
       data.instance.id,
       "test_community_5".to_string(),
       "nada".to_owned(),
-      "na-da".to_string(),
     );
     let community_2 = Community::create(pool, &form).await?;
 

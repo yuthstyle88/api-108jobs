@@ -28,7 +28,7 @@ pub async fn exchange_key(
   let server_public_hex: SensitiveString = hex::encode(&server_public_encoded).into();
 
   // Validate user and process client key
-  if let Ok((user_id, _session)) = Claims::validate(jwt.as_ref().map(|s| s.as_str()).unwrap_or(""), context.get_ref()).await {
+  if let Ok((_user_id, _session)) = Claims::validate(jwt.as_ref().map(|s| s.as_str()).unwrap_or(""), context.get_ref()).await {
     // Process client public key
     let client_public_raw = hex::decode(&data.public_key)
      .map_err(|_| FastJobErrorType::DecodeError)?;

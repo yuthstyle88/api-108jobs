@@ -1,6 +1,5 @@
 use crate::utils::protocol::{
   AttributedTo,
-  InCommunity,
   LanguageTag
   ,
   Source,
@@ -8,7 +7,6 @@ use crate::utils::protocol::{
 use actix_web::web::Data;
 
 use chrono::{DateTime, Utc};
-use itertools::Itertools;
 use lemmy_api_utils::{context::FastJobContext, utils::proxy_image_link};
 use lemmy_utils::error::FastJobResult;
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
@@ -91,24 +89,6 @@ pub enum Attachment {
 }
 
 impl Attachment {
-  pub(crate) fn url(self) -> Url {
-    match self {
-      // url as sent by Lemmy (new)
-      Attachment::Link(l) => l.href,
-      // image sent by lotide
-      Attachment::Image(i) => i.url,
-      // sent by mobilizon
-      Attachment::Document(d) => d.url,
-    }
-  }
-
-  pub(crate) fn alt_text(self) -> Option<String> {
-    match self {
-      Attachment::Image(i) => i.name,
-      Attachment::Document(d) => d.name,
-      _ => None,
-    }
-  }
 
   pub(crate) async fn as_markdown(&self, context: &Data<FastJobContext>) -> FastJobResult<String> {
     let (url, name, media_type) = match self {
@@ -147,25 +127,6 @@ pub enum HashtagType {
 
 
 
-impl Attachment {
-  /// Creates new attachment for a given link and mime type.
-  pub(crate) fn new(url: Url, media_type: Option<String>, alt_text: Option<String>) -> Attachment {
-    let is_image = media_type.clone().unwrap_or_default().starts_with("image");
-    if is_image {
-      Attachment::Image(Image {
-        kind: Default::default(),
-        url,
-        name: alt_text,
-      })
-    } else {
-      Attachment::Link(Link {
-        href: url,
-        media_type,
-        r#type: Default::default(),
-      })
-    }
-  }
-}
 
 
 /// Only allows deserialization if the field is missing or null. If it is present, throws an error.

@@ -1,18 +1,6 @@
-use actix_web::web::Data;
-use either::Either::*;
-use lemmy_api_utils::context::FastJobContext;
 use lemmy_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 
-pub async fn markdown_rewrite_remote_links_opt(
-  src: Option<String>,
-  context: &Data<FastJobContext>,
-) -> Option<String> {
-  match src {
-    Some(t) => Some(markdown_rewrite_remote_links(t, context).await),
-    None => None,
-  }
-}
 
 /// Goes through all remote markdown links and attempts to resolve them as Activitypub objects.
 /// If successful, the link is rewritten to a local link, so it can be viewed without leaving the
@@ -22,7 +10,6 @@ pub async fn markdown_rewrite_remote_links_opt(
 /// for the API.
 pub async fn markdown_rewrite_remote_links(
   mut src: String,
-  context: &Data<FastJobContext>,
 ) -> String {
   let links_offsets = markdown_find_links(&src);
 

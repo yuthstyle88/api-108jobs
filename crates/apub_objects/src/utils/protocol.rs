@@ -1,36 +1,15 @@
-use crate::objects::community::ApubCommunity;
-use actix_web::web::Data;
-use lemmy_api_utils::context::FastJobContext;
+
 use lemmy_db_schema::{
-  impls::actor_language::UNDETERMINED_ID,
-  newtypes::{DbUrl, LanguageId},
-  source::language::Language,
-  utils::DbPool,
+  newtypes::{DbUrl},
 };
-use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
-use std::{future::Future, ops::Deref};
+use std::{ops::Deref};
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Source {
   pub(crate) content: String,
-}
-
-impl Source {
-  pub(crate) fn new(content: String) -> Self {
-    Source {
-      content,
-    }
-  }
-}
-
-pub trait InCommunity {
-  fn community(
-    &self,
-    context: &Data<FastJobContext>,
-  ) -> impl Future<Output = FastJobResult<ApubCommunity>> + Send;
 }
 
 
@@ -82,10 +61,6 @@ impl From<DbUrl> for PersonOrGroupModerators {
 }
 
 impl PersonOrGroupModerators {
-  pub(crate) fn creator(&self) -> String {
-    self.deref().clone().into()
-  }
-
   pub fn moderators(&self) -> Url {
     self.deref().clone()
   }
@@ -105,66 +80,6 @@ impl Default for LanguageTag {
       identifier: "und".to_string(),
       name: "Undetermined".to_string(),
     }
-  }
-}
-
-impl LanguageTag {
-  pub(crate) async fn new_single(
-    lang: LanguageId,
-    pool: &mut DbPool<'_>,
-  ) -> FastJobResult<LanguageTag> {
-    let lang = Language::read_from_id(pool, lang).await?;
-
-    // undetermined
-    if lang.id == UNDETERMINED_ID {
-      Ok(LanguageTag::default())
-    } else {
-      Ok(LanguageTag {
-        identifier: lang.code,
-        name: lang.name,
-      })
-    }
-  }
-
-  pub(crate) async fn new_multiple(
-    lang_ids: Vec<LanguageId>,
-    pool: &mut DbPool<'_>,
-  ) -> FastJobResult<Vec<LanguageTag>> {
-    let mut langs = Vec::<Language>::new();
-
-    for l in lang_ids {
-      langs.push(Language::read_from_id(pool, l).await?);
-    }
-
-    let langs = langs
-     .into_iter()
-     .map(|l| LanguageTag {
-       identifier: l.code,
-       name: l.name,
-     })
-     .collect();
-    Ok(langs)
-  }
-
-  pub(crate) async fn to_language_id_single(
-    lang: Self,
-    pool: &mut DbPool<'_>,
-  ) -> FastJobResult<LanguageId> {
-    Language::read_id_from_code(pool, &lang.identifier).await
-  }
-
-  pub(crate) async fn to_language_id_multiple(
-    langs: Vec<Self>,
-    pool: &mut DbPool<'_>,
-  ) -> FastJobResult<Vec<LanguageId>> {
-    let mut language_ids = Vec::new();
-
-    for l in langs {
-      let id = l.identifier;
-      language_ids.push(Language::read_id_from_code(pool, &id).await?);
-    }
-
-    Ok(language_ids.into_iter().collect())
   }
 }
 

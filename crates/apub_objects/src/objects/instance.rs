@@ -4,16 +4,14 @@ use crate::{
 };
 
 use crate::fake_trait::{Actor, Object};
-use actix_web::web::Data;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
-  newtypes::InstanceId,
   sensitive::SensitiveString,
   source::site::Site
   ,
 };
 use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::error::{FastJobError, FastJobResult};
+use lemmy_utils::error::{FastJobError};
 use std::ops::Deref;
 use url::Url;
 
@@ -61,14 +59,5 @@ impl GetActorType for ApubSite {
   fn actor_type(&self) -> ActorType {
     ActorType::Site
   }
-}
-
-/// Try to fetch the instance actor (to make things like instance rules available).
-pub(crate) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
-  object_id: &T,
-  context: &Data<FastJobContext>,
-) -> FastJobResult<InstanceId> {
-
-  todo!()
 }
 

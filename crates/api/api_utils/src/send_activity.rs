@@ -12,7 +12,7 @@ use lemmy_db_schema::{
   },
 };
 
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_db_views_post::api::DeletePost;
 use lemmy_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};

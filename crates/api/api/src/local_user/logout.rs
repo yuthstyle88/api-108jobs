@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use actix_web::{cookie::Cookie, HttpRequest, HttpResponse};
 use lemmy_api_utils::{
   context::FastJobContext,

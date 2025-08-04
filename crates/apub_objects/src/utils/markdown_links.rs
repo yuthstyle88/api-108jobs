@@ -1,5 +1,5 @@
+use actix_web::web::Data;
 use crate::objects::SearchableObjects;
-use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use either::Either::*;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::traits::ApubActor;
@@ -32,7 +32,7 @@ pub async fn markdown_rewrite_remote_links(
   for (start, end) in links_offsets.into_iter().rev() {
     let (url, extra) = markdown_handle_title(&src, start, end);
 
-    if let Some(local_url) = to_local_url(url, context).await {
+    if let Some(local_url) = to_local_url(url).await {
       let mut local_url = local_url.to_string();
       // restore title
       if let Some(extra) = extra {
@@ -46,19 +46,6 @@ pub async fn markdown_rewrite_remote_links(
   src
 }
 
-pub(crate) async fn to_local_url(url: &str, context: &Data<FastJobContext>) -> Option<Url> {
-  let local_domain = &context.settings().get_protocol_and_hostname();
-  let object_id = ObjectId::<SearchableObjects>::parse(url).ok()?;
-  let object_domain = object_id.inner().domain();
-  if object_domain == Some(local_domain) {
-    return None;
-  }
-  let dereferenced = object_id.dereference_local(context).await.ok()?;
-  match dereferenced {
-    Left(Left(post)) => post.local_url(context.settings()),
-    Left(Right(comment)) => comment.local_url(context.settings()),
-    Right(Left(user)) => user.actor_url(context.settings()),
-    Right(Right(community)) => community.actor_url(context.settings()),
-  }
-  .ok()
+pub(crate) async fn to_local_url(url: &str) -> Option<Url> {
+  Some(Url::parse(url).ok()?)
 }

@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},

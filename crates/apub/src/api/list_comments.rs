@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use super::comment_sort_type_with_default;
 
 use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};

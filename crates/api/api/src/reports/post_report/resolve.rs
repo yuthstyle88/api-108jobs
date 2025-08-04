@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,

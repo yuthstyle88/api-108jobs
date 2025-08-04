@@ -9,7 +9,6 @@ use lemmy_utils::{
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
 use lemmy_utils::redis::RedisClient;
-use activitypub_federation::config::{Data, FederationConfig};
 use lemmy_utils::error::FastJobResult;
 
 #[derive(Clone)]

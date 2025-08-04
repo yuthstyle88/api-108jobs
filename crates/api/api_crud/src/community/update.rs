@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use super::check_community_visibility_allowed;
 use actix_web::web::{Json};
 use chrono::Utc;

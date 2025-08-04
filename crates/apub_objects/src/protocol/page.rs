@@ -1,27 +1,15 @@
+use actix_web::web::Data;
 use crate::{
   objects::{community::ApubCommunity, person::ApubPerson, post::ApubPost},
   utils::protocol::{
     AttributedTo,
-    ImageObject,
     InCommunity,
     LanguageTag,
     PersonOrGroupType,
     Source,
   },
 };
-use activitypub_federation::{
-  config::Data,
-  fetch::object_id::ObjectId,
-  kinds::{
-    link::LinkType,
-    object::{DocumentType, ImageType},
-  },
-  protocol::{
-    helpers::{deserialize_one_or_many, deserialize_skip_error},
-    values::MediaTypeMarkdownOrHtml,
-  },
-  traits::{Activity, Object},
-};
+
 use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use lemmy_api_utils::{context::FastJobContext, utils::proxy_image_link};
@@ -45,31 +33,26 @@ pub enum PageType {
 pub struct Page {
   #[serde(rename = "type")]
   pub(crate) kind: PageType,
-  pub id: ObjectId<ApubPost>,
+  pub id: String,
   pub(crate) attributed_to: AttributedTo,
-  #[serde(deserialize_with = "deserialize_one_or_many", default)]
   pub(crate) to: Vec<Url>,
   // If there is inReplyTo field this is actually a comment and must not be parsed
-  #[serde(deserialize_with = "deserialize_not_present", default)]
   pub(crate) in_reply_to: Option<String>,
 
   pub(crate) name: Option<String>,
-  #[serde(deserialize_with = "deserialize_one_or_many", default)]
   pub(crate) cc: Vec<Url>,
   pub(crate) content: Option<String>,
-  pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
+  pub(crate) media_type: Option<String>,
   pub(crate) source: Option<Source>,
   /// most software uses array type for attachment field, so we do the same. nevertheless, we only
   /// use the first item
   #[serde(default)]
   pub(crate) attachment: Vec<Attachment>,
-  pub(crate) image: Option<ImageObject>,
+  pub(crate) image: Option<String>,
   pub(crate) sensitive: Option<bool>,
   pub(crate) published: Option<DateTime<Utc>>,
   pub(crate) updated: Option<DateTime<Utc>>,
   pub(crate) language: Option<LanguageTag>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
   pub(crate) tag: Vec<Hashtag>,
 }
 
@@ -78,14 +61,14 @@ pub struct Page {
 pub struct Link {
   href: Url,
   media_type: Option<String>,
-  r#type: LinkType,
+  r#type: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
   #[serde(rename = "type")]
-  kind: ImageType,
+  kind: String,
   url: Url,
   /// Used for alt_text
   name: Option<String>,
@@ -95,7 +78,7 @@ pub struct Image {
 #[serde(rename_all = "camelCase")]
 pub struct Document {
   #[serde(rename = "type")]
-  kind: DocumentType,
+  kind: String,
   url: Url,
   media_type: Option<String>,
   /// Used for alt_text
@@ -165,18 +148,7 @@ pub enum HashtagType {
   Hashtag,
 }
 
-impl Page {
-  pub fn creator(&self) -> FastJobResult<ObjectId<ApubPerson>> {
-    match &self.attributed_to {
-      AttributedTo::Lemmy(l) => Ok(l.creator()),
-      AttributedTo::Peertube(p) => p
-        .iter()
-        .find(|a| a.kind == PersonOrGroupType::Person)
-        .map(|a| ObjectId::<ApubPerson>::from(a.id.clone().into_inner()))
-        .ok_or_else(|| FastJobErrorType::PageDoesNotSpecifyCreator.into()),
-    }
-  }
-}
+
 
 impl Attachment {
   /// Creates new attachment for a given link and mime type.
@@ -198,57 +170,6 @@ impl Attachment {
   }
 }
 
-// Used for community outbox, so that it can be compatible with Pleroma/Mastodon.
-#[async_trait::async_trait]
-impl Activity for Page {
-  type DataType = FastJobContext;
-  type Error = FastJobError;
-  fn id(&self) -> &Url {
-    self.id.inner()
-  }
-
-  fn actor(&self) -> &Url {
-    debug_assert!(false);
-    self.id.inner()
-  }
-  async fn verify(&self, data: &Data<Self::DataType>) -> FastJobResult<()> {
-    ApubPost::verify(self, self.id.inner(), data).await
-  }
-  async fn receive(self, data: &Data<Self::DataType>) -> FastJobResult<()> {
-    ApubPost::from_json(self, data).await?;
-    Ok(())
-  }
-}
-
-impl InCommunity for Page {
-  async fn community(&self, context: &Data<FastJobContext>) -> FastJobResult<ApubCommunity> {
-    let community = match &self.attributed_to {
-      AttributedTo::Lemmy(_) => {
-        let mut iter = self.to.iter().merge(self.cc.iter());
-        loop {
-          if let Some(cid) = iter.next() {
-            let cid = ObjectId::from(cid.clone());
-            if let Ok(c) = cid.dereference(context).await {
-              break c;
-            }
-          } else {
-            Err(FastJobErrorType::NotFound)?;
-          }
-        }
-      }
-      AttributedTo::Peertube(p) => {
-        p.iter()
-          .find(|a| a.kind == PersonOrGroupType::Group)
-          .map(|a| ObjectId::<ApubCommunity>::from(a.id.clone().into_inner()))
-          .ok_or(FastJobErrorType::NotFound)?
-          .dereference(context)
-          .await?
-      }
-    };
-
-    Ok(community)
-  }
-}
 
 /// Only allows deserialization if the field is missing or null. If it is present, throws an error.
 pub fn deserialize_not_present<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>

@@ -1,7 +1,4 @@
-use activitypub_federation::{
-  config::Data,
-  fetch::{object_id::ObjectId, webfinger::webfinger_resolve_actor},
-};
+use actix_web::web::Data;
 use either::Either::*;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_apub_objects::objects::{SearchableObjects, UserOrCommunity};
@@ -15,21 +12,7 @@ pub(crate) async fn search_query_to_object_id(
   mut query: String,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<SearchableObjects> {
-  Ok(match Url::parse(&query) {
-    Ok(url) => {
-      // its already an url, just go with it
-      ObjectId::from(url).dereference(context).await?
-    }
-    Err(_) => {
-      // not an url, try to resolve via webfinger
-      if query.starts_with('!') || query.starts_with('@') {
-        query.remove(0);
-      }
-      Right(
-        webfinger_resolve_actor::<FastJobContext, UserOrCommunity>(&query, context).await?,
-      )
-    }
-  })
+  todo!()
 }
 
 /// Converts a search query to an object id.  The query MUST bbe a URL which will bbe treated
@@ -39,6 +22,5 @@ pub(crate) async fn search_query_to_object_id_local(
   query: &str,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<SearchableObjects> {
-  let url = Url::parse(query)?;
-  ObjectId::from(url).dereference_local(context).await
+ todo!()
 }

@@ -1,8 +1,4 @@
-use activitypub_federation::{
-  config::Data,
-  fetch::webfinger::webfinger_resolve_actor,
-  traits::{Actor, Object},
-};
+use actix_web::web::Data;
 use diesel::NotFound;
 use either::Either::*;
 use itertools::Itertools;
@@ -25,37 +21,10 @@ pub async fn resolve_ap_identifier<ActorType, DbActor>(
   include_deleted: bool,
 ) -> FastJobResult<ActorType>
 where
-  ActorType: Object<DataType = FastJobContext, Error = FastJobError>
-    + Object
-    + Actor
-    + From<DbActor>
-    + Send
-    + 'static,
-  for<'de2> <ActorType as Object>::Kind: serde::Deserialize<'de2>,
-  DbActor: ApubActor + Send + 'static,
+  DbActor: ApubActor + Send + 'static, ActorType: std::convert::From<DbActor>
 {
   // remote actor
-  if identifier.contains('@') {
-    let (name, domain) = identifier
-      .splitn(2, '@')
-      .collect_tuple()
-      .ok_or(FastJobErrorType::InvalidUrl)?;
-    let actor = DbActor::read_from_name_and_domain(&mut context.pool(), name, domain)
-      .await
-      .ok()
-      .flatten();
-    if let Some(actor) = actor {
-      Ok(actor.into())
-    } else if local_user_view.is_some() {
-      // Fetch the actor from its home instance using webfinger
-      let actor: ActorType = webfinger_resolve_actor(&identifier.to_lowercase(), context).await?;
-      Ok(actor)
-    } else {
-      Err(NotFound.into())
-    }
-  }
-  // local actor
-  else {
+
     let identifier = identifier.to_string();
     Ok(
       DbActor::read_from_name(&mut context.pool(), &identifier, include_deleted)
@@ -63,7 +32,6 @@ where
         .ok_or(NotFound)?
         .into(),
     )
-  }
 }
 
 pub(crate) fn get_instance_id(s: &SiteOrMultiOrCommunityOrUser) -> InstanceId {

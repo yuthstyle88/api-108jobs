@@ -1,24 +1,20 @@
 use crate::{
-  objects::instance::ApubSite,
-  utils::protocol::{ImageObject, LanguageTag, Source},
+  utils::protocol::{LanguageTag, Source},
 };
-use activitypub_federation::{
-  fetch::object_id::ObjectId,
-  kinds::actor::ApplicationType,
-  protocol::{helpers::deserialize_skip_error, public_key::PublicKey, values::MediaTypeHtml},
-};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
+use crate::fake_trait::PublicKey;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Instance {
   #[serde(rename = "type")]
-  pub(crate) kind: ApplicationType,
-  pub(crate) id: ObjectId<ApubSite>,
+  pub(crate) kind: String,
+  pub(crate) id: String,
   /// site name
   pub(crate) name: String,
   /// instance domain, necessary for mastodon authorized fetch
@@ -30,15 +26,14 @@ pub struct Instance {
 
   // sidebar
   pub(crate) content: Option<String>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
   pub(crate) source: Option<Source>,
-  pub(crate) media_type: Option<MediaTypeHtml>,
+  pub(crate) media_type: Option<String>,
   // short instance description
   pub(crate) summary: Option<String>,
   /// instance icon
-  pub(crate) icon: Option<ImageObject>,
+  pub(crate) icon: Option<String>,
   /// instance banner
-  pub(crate) image: Option<ImageObject>,
+  pub(crate) image: Option<String>,
   #[serde(default)]
   pub(crate) language: Vec<LanguageTag>,
   /// nonstandard field

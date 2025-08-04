@@ -1,10 +1,4 @@
 use crate::objects::{community::ApubCommunity, person::ApubPerson, UserOrCommunity};
-use activitypub_federation::{
-  config::Data,
-  fetch::object_id::ObjectId,
-  kinds::object::ImageType,
-  protocol::{tombstone::Tombstone, values::MediaTypeMarkdown},
-};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   impls::actor_language::UNDETERMINED_ID,
@@ -15,20 +9,19 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use std::{future::Future, ops::Deref};
+use actix_web::web::Data;
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Source {
   pub(crate) content: String,
-  pub(crate) media_type: MediaTypeMarkdown,
 }
 
 impl Source {
   pub(crate) fn new(content: String) -> Self {
     Source {
       content,
-      media_type: MediaTypeMarkdown::Markdown,
     }
   }
 }
@@ -40,22 +33,6 @@ pub trait InCommunity {
   ) -> impl Future<Output = FastJobResult<ApubCommunity>> + Send;
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ImageObject {
-  #[serde(rename = "type")]
-  kind: ImageType,
-  pub url: Url,
-}
-
-impl ImageObject {
-  pub(crate) fn new(url: DbUrl) -> Self {
-    ImageObject {
-      kind: ImageType::Image,
-      url: url.into(),
-    }
-  }
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
@@ -75,7 +52,7 @@ pub enum PersonOrGroupType {
 pub struct AttributedToPeertube {
   #[serde(rename = "type")]
   pub kind: PersonOrGroupType,
-  pub id: ObjectId<UserOrCommunity>,
+  pub id: String,
 }
 
 impl AttributedTo {
@@ -105,7 +82,7 @@ impl From<DbUrl> for PersonOrGroupModerators {
 }
 
 impl PersonOrGroupModerators {
-  pub(crate) fn creator(&self) -> ObjectId<ApubPerson> {
+  pub(crate) fn creator(&self) -> String {
     self.deref().clone().into()
   }
 
@@ -201,8 +178,3 @@ pub trait Id {
   fn id(&self) -> &Url;
 }
 
-impl Id for Tombstone {
-  fn id(&self) -> &Url {
-    &self.id
-  }
-}

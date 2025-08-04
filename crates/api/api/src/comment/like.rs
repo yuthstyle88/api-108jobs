@@ -19,7 +19,7 @@ use lemmy_db_views_comment::{
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 
 pub async fn like_comment(
   data: Json<CreateCommentLike>,

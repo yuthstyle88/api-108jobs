@@ -29,7 +29,7 @@ lemmy_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema_file = { workspace = true }
-activitypub_federation = { workspace = true }
+actix-web = { workspace = true }
 diesel_ltree = { workspace = true, optional = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }

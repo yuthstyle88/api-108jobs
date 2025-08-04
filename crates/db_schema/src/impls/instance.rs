@@ -166,13 +166,11 @@ impl InstanceActions {
   pub async fn check_ban(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-    instance_id: InstanceId,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let ban_exists = select(exists(
       instance_actions::table
         .filter(instance_actions::person_id.eq(person_id))
-        .filter(instance_actions::instance_id.eq(instance_id))
         .filter(instance_actions::received_ban_at.is_not_null()),
     ))
     .get_result::<bool>(conn)

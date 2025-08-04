@@ -1,25 +1,20 @@
 use crate::{
-  objects::community::ApubCommunity,
-  utils::protocol::{AttributedTo, Endpoints, ImageObject, LanguageTag, Source},
-};
-use activitypub_federation::{
-  fetch::object_id::ObjectId,
-  kinds::actor::GroupType,
-  protocol::{helpers::deserialize_skip_error, public_key::PublicKey, values::MediaTypeHtml},
+  utils::protocol::{AttributedTo, Endpoints, LanguageTag, Source},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::fmt::Debug;
 use url::Url;
+use crate::fake_trait::PublicKey;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Group {
   #[serde(rename = "type")]
-  pub(crate) kind: GroupType,
-  pub id: ObjectId<ApubCommunity>,
+  pub(crate) kind: String,
+  pub id: String,
   /// username, set at account creation and usually fixed after that
   pub preferred_username: String,
   pub inbox: Url,
@@ -30,19 +25,15 @@ pub struct Group {
   pub name: Option<String>,
   // sidebar
   pub(crate) content: Option<String>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
+
   pub source: Option<Source>,
-  pub(crate) media_type: Option<MediaTypeHtml>,
+  pub(crate) media_type: Option<String>,
   // short instance description
   pub summary: Option<String>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
-  pub icon: Option<ImageObject>,
-  /// banner
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
-  pub image: Option<ImageObject>,
+  pub icon: Option<String>,
+  pub image: Option<String>,
   // lemmy extension
   pub sensitive: Option<bool>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
   pub attributed_to: Option<AttributedTo>,
   // lemmy extension
   pub posting_restricted_to_mods: Option<bool>,

@@ -20,7 +20,7 @@ use lemmy_db_views_post::{
 };
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 
 pub async fn like_post(
   data: Json<CreatePostLike>,

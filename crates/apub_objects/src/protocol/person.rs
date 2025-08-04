@@ -1,16 +1,13 @@
 use crate::{
   objects::person::ApubPerson,
-  utils::protocol::{Endpoints, ImageObject, Source},
-};
-use activitypub_federation::{
-  fetch::object_id::ObjectId,
-  protocol::{helpers::deserialize_skip_error, public_key::PublicKey},
+  utils::protocol::{Endpoints, Source},
 };
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
+use crate::fake_trait::PublicKey;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum UserTypes {
@@ -25,7 +22,7 @@ pub enum UserTypes {
 pub struct Person {
   #[serde(rename = "type")]
   pub(crate) kind: UserTypes,
-  pub(crate) id: ObjectId<ApubPerson>,
+  pub(crate) id: String,
   /// username, set at account creation and usually fixed after that
   pub(crate) preferred_username: String,
   pub(crate) inbox: Url,
@@ -36,13 +33,11 @@ pub struct Person {
   /// displayname
   pub(crate) name: Option<String>,
   pub(crate) summary: Option<String>,
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
   pub(crate) source: Option<Source>,
   /// user avatar
-  #[serde(deserialize_with = "deserialize_skip_error", default)]
-  pub(crate) icon: Option<ImageObject>,
+  pub(crate) icon: Option<String>,
   /// user banner
-  pub(crate) image: Option<ImageObject>,
+  pub(crate) image: Option<String>,
   pub(crate) matrix_user_id: Option<String>,
   pub(crate) endpoints: Option<Endpoints>,
   pub(crate) published: Option<DateTime<Utc>>,

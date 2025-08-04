@@ -1,5 +1,5 @@
 use actix_web::web::{Json};
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   context::FastJobContext,

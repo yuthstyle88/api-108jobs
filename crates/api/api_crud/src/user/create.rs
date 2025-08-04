@@ -53,7 +53,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
-use activitypub_federation::http_signatures::generate_actor_keypair;
 use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 
 #[skip_serializing_none]
@@ -615,18 +614,17 @@ async fn create_person(
   context: &FastJobContext,
   conn: &mut AsyncPgConnection,
 ) -> Result<Person, FastJobError> {
-  let actor_keypair = generate_actor_keypair()?;
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
-
+  let public_key = "public_key".to_string();
   // Register the new person
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
-    private_key: Some(actor_keypair.private_key),
+    private_key: Some("private_key".to_string()),
     ..PersonInsertForm::new(
       username.clone(),
-      actor_keypair.public_key,
+      public_key,
       site_view.site.instance_id,
     )
   };

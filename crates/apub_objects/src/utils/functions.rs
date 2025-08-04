@@ -3,12 +3,6 @@ use crate::{
   objects::{community::ApubCommunity, instance::ApubSite, person::ApubPerson},
   protocol::{group::Group, page::Attachment},
 };
-use activitypub_federation::{
-  config::Data,
-  fetch::object_id::ObjectId,
-  kinds::public,
-  protocol::values::MediaTypeMarkdownOrHtml,
-};
 use either::Either;
 use html2md::parse_html;
 use lemmy_api_utils::context::FastJobContext;
@@ -29,21 +23,20 @@ use lemmy_utils::{
 };
 use moka::future::Cache;
 use std::sync::{Arc, LazyLock};
+use actix_web::web::Data;
 use url::Url;
+use lemmy_db_schema::newtypes::PersonId;
 use lemmy_db_views_community_person_ban::CommunityPersonBanView;
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 pub fn read_from_string_or_source(
   content: &str,
-  media_type: &Option<MediaTypeMarkdownOrHtml>,
+
   source: &Option<Source>,
 ) -> String {
   if let Some(s) = source {
     // markdown sent by lemmy in source field
     s.content.clone()
-  } else if media_type == &Some(MediaTypeMarkdownOrHtml::Markdown) {
-    // markdown sent by peertube in content field
-    content.to_string()
   } else {
     // otherwise, convert content html to markdown
     parse_html(content)
@@ -52,12 +45,11 @@ pub fn read_from_string_or_source(
 
 pub fn read_from_string_or_source_opt(
   content: &Option<String>,
-  media_type: &Option<MediaTypeMarkdownOrHtml>,
   source: &Option<Source>,
 ) -> Option<String> {
   content
     .as_ref()
-    .map(|content| read_from_string_or_source(content, media_type, source))
+    .map(|content| read_from_string_or_source(content, source))
 }
 
 #[derive(Clone)]
@@ -101,7 +93,7 @@ impl<L: GetActorType, R: GetActorType> GetActorType for either::Either<L, R> {
 pub fn generate_to(community: &Community) -> FastJobResult<Vec<Url>> {
   let ap_id = community.ap_id.clone().into();
   if community.visibility == CommunityVisibility::Public {
-    Ok(vec![ap_id, public()])
+    Ok(vec![ap_id])
   } else {
     Ok(vec![
       ap_id.clone(),
@@ -113,13 +105,11 @@ pub fn generate_to(community: &Community) -> FastJobResult<Vec<Url>> {
 /// Fetches the person and community to verify their type, then checks if person is banned from site
 /// or community.
 pub async fn verify_person_in_community(
-  person_id: &ObjectId<ApubPerson>,
+  person_id: PersonId,
   community: &ApubCommunity,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<()> {
-  let person = person_id.dereference(context).await?;
-  InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
-  let person_id = person.id;
+  InstanceActions::check_ban(&mut context.pool(), person_id).await?;
   let community_id = community.id;
   CommunityPersonBanView::check(&mut context.pool(), person_id, community_id).await
 }
@@ -127,20 +117,15 @@ pub async fn verify_person_in_community(
 /// Fetches the person and community or site to verify their type, then checks if person is banned
 /// from local site or community.
 pub async fn verify_person_in_site_or_community(
-  person_id: &ObjectId<ApubPerson>,
+  person_id: PersonId,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<()> {
-  let person = person_id.dereference(context).await?;
-  InstanceActions::check_ban(&mut context.pool(), person.id, person.instance_id).await?;
+  InstanceActions::check_ban(&mut context.pool(), person_id).await?;
   Ok(())
 }
 
 pub fn verify_is_public(to: &[Url], cc: &[Url]) -> FastJobResult<()> {
-  if ![to, cc].iter().any(|set| set.contains(&public())) {
-    Err(FastJobErrorType::ObjectIsNotPublic)?
-  } else {
     Ok(())
-  }
 }
 
 

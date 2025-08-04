@@ -41,7 +41,7 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_db_views_post::api::EditPostRequest;
 
 pub async fn update_post(

@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use crate::check_report_reason;
 use actix_web::web::{Json};
 use either::Either;

@@ -1,5 +1,5 @@
 use actix_web::web::Json;
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_schema::{source::custom_emoji::CustomEmoji, traits::Crud};
 use lemmy_db_views_custom_emoji::api::DeleteCustomEmoji;

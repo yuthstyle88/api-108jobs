@@ -28,7 +28,6 @@ lemmy_db_views_site = { workspace = true, features = ["full"] }
 lemmy_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 lemmy_api_utils = { workspace = true }
-activitypub_federation = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_email = { workspace = true }
 lemmy_multilang = { workspace = true }
@@ -50,5 +49,8 @@ moka = { workspace = true }
 log = "0.4.27"
 diesel = "2.2.11"
 tracing = "0.1.41"
+p256 = { workspace = true }
+hex = "0.4.3"
+
 [package.metadata.cargo-shear]
 ignored = ["futures", "futures-util"]

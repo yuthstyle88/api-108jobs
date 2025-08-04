@@ -1,4 +1,4 @@
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use lemmy_db_schema::newtypes::{PersonId, PostId};
 use actix_web::web::{Json};
 use lemmy_api_utils::utils::get_url_blocklist;

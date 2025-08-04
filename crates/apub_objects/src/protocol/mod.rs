@@ -1,6 +1,6 @@
 pub mod group;
 pub mod instance;
-pub mod note;
+
 pub mod page;
 pub mod person;
 
@@ -9,12 +9,10 @@ mod tests {
   use super::{
     group::Group,
     instance::Instance,
-    note::Note,
     page::Page,
     person::Person,
   };
-  use crate::utils::test::{test_json, test_parse_lemmy_item};
-  use activitypub_federation::protocol::tombstone::Tombstone;
+  use crate::utils::test::{ test_parse_lemmy_item};
   use lemmy_utils::error::{FastJobResult};
 
   #[test]
@@ -23,8 +21,6 @@ mod tests {
     test_parse_lemmy_item::<Group>("../apub/assets/lemmy/objects/group.json")?;
     test_parse_lemmy_item::<Person>("../apub/assets/lemmy/objects/person.json")?;
     test_parse_lemmy_item::<Page>("../apub/assets/lemmy/objects/page.json")?;
-    test_parse_lemmy_item::<Note>("../apub/assets/lemmy/objects/comment.json")?;
-    test_parse_lemmy_item::<Tombstone>("../apub/assets/lemmy/objects/tombstone.json")?;
     Ok(())
   }
 
@@ -57,7 +53,6 @@ mod tests {
     test_json::<Person>("../apub/assets/lotide/objects/person.json")?;
     test_json::<Note>("../apub/assets/lotide/objects/note.json")?;
     test_json::<Page>("../apub/assets/lotide/objects/page.json")?;
-    test_json::<Tombstone>("../apub/assets/lotide/objects/tombstone.json")?;
     Ok(())
   }
 

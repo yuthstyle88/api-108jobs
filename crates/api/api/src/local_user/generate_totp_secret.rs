@@ -1,5 +1,5 @@
 use crate::{build_totp_2fa, generate_totp_2fa_secret};
-use activitypub_federation::config::Data;
+use actix_web::web::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::{

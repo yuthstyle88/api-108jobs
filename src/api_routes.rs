@@ -2,7 +2,7 @@ use actix_web::{guard, web::*};
 use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
-use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work};
+use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work, update_work_after_revision};
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::{
   comment::{
@@ -289,6 +289,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/approve-quotation", post().to(approve_quotation))
                 .route("/submit-work", post().to(submit_work))
                 .route("/request-revision", post().to(request_revision))
+                .route("/update-work", post().to(update_work_after_revision))
                 .route("/approve-work", post().to(approve_work))
             )
             // Account settings import / export have a strict rate limit

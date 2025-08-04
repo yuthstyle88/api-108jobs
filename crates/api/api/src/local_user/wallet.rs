@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::wallet::{
   GetWalletResponse, DepositWallet, CreateInvoice, CreateInvoiceResponse, ApproveQuotation, 
-  SubmitWork, ApproveWork, RequestRevision, WalletOperationResponse, BillingOperationResponse
+  SubmitWork, ApproveWork, RequestRevision, UpdateWorkAfterRevision, WalletOperationResponse, BillingOperationResponse
 };
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_wallet::WalletView;
@@ -177,7 +177,7 @@ pub async fn request_revision(
 
   Ok(Json(BillingOperationResponse {
     billing_id: updated_billing.id,
-    status: "PaidEscrow".to_string(),
+    status: "RequestChange".to_string(),
     success: true,
   }))
 }
@@ -199,6 +199,29 @@ pub async fn approve_work(
   Ok(Json(BillingOperationResponse {
     billing_id: updated_billing.id,
     status: "Completed".to_string(),
+    success: true,
+  }))
+}
+
+pub async fn update_work_after_revision(
+  data: Json<UpdateWorkAfterRevision>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<BillingOperationResponse>> {
+  let freelancer_id = local_user_view.local_user.id;
+  
+  // Update work after revision request
+  let updated_billing = BillingView::update_work_after_revision(
+    &mut context.pool(),
+    data.billing_id,
+    freelancer_id,
+    data.updated_work_description.clone(),
+    data.updated_deliverable_url.clone(),
+  ).await?;
+
+  Ok(Json(BillingOperationResponse {
+    billing_id: updated_billing.id,
+    status: "Updated".to_string(),
     success: true,
   }))
 }

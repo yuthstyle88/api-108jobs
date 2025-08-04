@@ -94,6 +94,17 @@ pub struct RequestRevision {
 #[cfg_attr(feature = "full", derive(ts_rs::TS))]
 #[cfg_attr(feature = "full", ts(export))]
 #[serde(rename_all = "camelCase")]
+/// Update work after revision request (freelancer updates work).
+pub struct UpdateWorkAfterRevision {
+  pub billing_id: BillingId,
+  pub updated_work_description: String,
+  pub updated_deliverable_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "full", derive(ts_rs::TS))]
+#[cfg_attr(feature = "full", ts(export))]
+#[serde(rename_all = "camelCase")]
 /// Approve work and release payment (employer approves).
 pub struct ApproveWork {
   pub billing_id: BillingId,

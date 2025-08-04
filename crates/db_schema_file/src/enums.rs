@@ -298,6 +298,10 @@ pub enum BillingStatus {
   WorkSubmitted,
   /// Employer requested revision, freelancer needs to update work
   RevisionRequested,
+  /// Employer requested changes to the work
+  RequestChange,
+  /// Freelancer updated work after revision request
+  Updated,
   /// Employer approved work, money released to freelancer
   Completed,
   /// Disputed work quality or requirements

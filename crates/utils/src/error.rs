@@ -246,7 +246,11 @@ pub enum FastJobErrorType {
   PageDoesNotSpecifyCreator,
   ObjectIsNotPublic,
   FederationDisabled,
-  InvalidField(String)
+  InvalidField(String),
+  // Wallet related errors
+  WalletAlreadyExists,
+  WalletNotFound,
+  InsufficientBalance
 }
 
 cfg_if! {

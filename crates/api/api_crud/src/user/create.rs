@@ -2,7 +2,7 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use lemmy_api_utils::{
   claims::Claims,
   context::FastJobContext,
@@ -33,6 +33,8 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_schema::source::wallet::{Wallet, WalletInsertForm};
+use lemmy_db_schema_file::schema::{wallet, local_user};
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
 use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 use lemmy_db_views_site::{
@@ -681,9 +683,39 @@ async fn create_local_user(
   local_user_form.post_listing_mode = Some(local_site.default_post_listing_mode);
   // If its the initial site setup, they are an admin
   local_user_form.admin = Some(!local_site.site_setup);
-  local_user_form.interface_language = language_tags.first().cloned();
+  // Extract the interface language using indexing to avoid Diesel trait conflicts
+  let interface_lang = if !language_tags.is_empty() {
+    Some(language_tags[0].clone())
+  } else {
+    None
+  };
+  local_user_form.interface_language = interface_lang;
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
+  // Create a wallet for the new user
+  {
+    use diesel::{ ExpressionMethods};
+    
+    let wallet_form = WalletInsertForm {
+      balance: Some(0.0),
+      escrow_balance: Some(0.0),
+      created_at: None,
+    };
+    
+    let wallet = diesel::insert_into(wallet::table)
+      .values(&wallet_form)
+      .get_result::<Wallet>(conn)
+      .await?;
+    
+    // Update the local user with the wallet_id
+    diesel::update(local_user::table)
+      .filter(local_user::id.eq(inserted_local_user.id))
+      .set(local_user::wallet_id.eq(wallet.id))
+      .execute(conn)
+      .await?;
+  }
+
+  // Return the local user (the wallet_id will be updated in the database but not in our local object)
   Ok(inserted_local_user)
 }
 

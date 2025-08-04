@@ -27,4 +27,5 @@ pub mod validate_auth;
 pub mod verify_email;
 pub mod exchange;
 pub mod update_term;
+pub mod wallet;
 pub mod verify_otp;

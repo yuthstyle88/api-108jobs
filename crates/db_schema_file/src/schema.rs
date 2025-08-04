@@ -56,6 +56,10 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "billing_status"))]
+  pub struct BillingStatus;
 }
 
 diesel::table! {
@@ -375,7 +379,6 @@ diesel::table! {
     }
 }
 
-
 diesel::table! {
     instance (id) {
         id -> Int4,
@@ -389,7 +392,6 @@ diesel::table! {
         version -> Nullable<Varchar>,
     }
 }
-
 
 diesel::table! {
     instance_actions (person_id, instance_id) {
@@ -509,6 +511,7 @@ diesel::table! {
     local_user (id) {
         id -> Int4,
         person_id -> Int4,
+        wallet_id -> Nullable<Int4>,
         password_encrypted -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
@@ -1076,13 +1079,48 @@ diesel::table! {
 }
 
 diesel::table! {
-    tagline (id) {
+tagline (id) {
+    id -> Int4,
+    content -> Text,
+    published_at -> Timestamptz,
+    updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    wallet (id) {
         id -> Int4,
-        content -> Text,
-        published_at -> Timestamptz,
+        balance -> Nullable<Float8>,
+        escrow_balance -> Nullable<Float8>,
+        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::BillingStatus;
+
+    billing (id) {
+        id -> Int4,
+        freelancer_id -> Int4,
+        employer_id -> Int4,
+        post_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        amount -> Float8,
+        description -> Text,
+        max_revisions -> Int4,
+        revisions_used -> Int4,
+        status -> BillingStatus,
+        work_description -> Nullable<Text>,
+        deliverable_url -> Nullable<Text>,
+        revision_feedback -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        paid_at -> Nullable<Timestamptz>,
+    }
+}
+
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1093,6 +1131,9 @@ diesel::joinable!(admin_purge_community -> person (admin_person_id));
 diesel::joinable!(admin_purge_person -> person (admin_person_id));
 diesel::joinable!(admin_purge_post -> community (community_id));
 diesel::joinable!(admin_purge_post -> person (admin_person_id));
+diesel::joinable!(billing -> comment (comment_id));
+diesel::joinable!(billing -> local_user (freelancer_id));
+diesel::joinable!(billing -> post (post_id));
 diesel::joinable!(comment -> language (language_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(comment -> post (post_id));
@@ -1118,6 +1159,7 @@ diesel::joinable!(local_image -> post (thumbnail_for_post_id));
 diesel::joinable!(local_site -> site (site_id));
 diesel::joinable!(local_site_rate_limit -> local_site (local_site_id));
 diesel::joinable!(local_user -> person (person_id));
+diesel::joinable!(local_user -> wallet (wallet_id));
 diesel::joinable!(local_user_keyword_block -> local_user (local_user_id));
 diesel::joinable!(local_user_language -> language (language_id));
 diesel::joinable!(local_user_language -> local_user (local_user_id));
@@ -1200,6 +1242,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   admin_purge_community,
   admin_purge_person,
   admin_purge_post,
+  billing,
   captcha_answer,
   comment,
   comment_actions,
@@ -1262,4 +1305,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   site_language,
   tag,
   tagline,
+  wallet,
 );

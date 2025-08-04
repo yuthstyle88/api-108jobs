@@ -7,7 +7,6 @@ use crate::fake_trait::{Actor, Object};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   source::person::Person as DbPerson,
-  traits::{ApubActor},
 };
 use lemmy_db_schema_file::enums::ActorType;
 use lemmy_utils::error::{FastJobError};
@@ -62,22 +61,5 @@ impl Actor for ApubPerson {
 impl GetActorType for ApubPerson {
   fn actor_type(&self) -> ActorType {
     ActorType::Person
-  }
-}
-
-#[cfg(test)]
-pub(crate) mod tests {
-  use super::*;
-  use crate::objects::instance::ApubSite;
-  use lemmy_db_schema::source::site::Site;
-
-
-  async fn cleanup(
-    (person, site): (ApubPerson, ApubSite),
-    context: &FastJobContext,
-  ) -> FastJobResult<()> {
-    DbPerson::delete(&mut context.pool(), person.id).await?;
-    Site::delete(&mut context.pool(), site.id).await?;
-    Ok(())
   }
 }

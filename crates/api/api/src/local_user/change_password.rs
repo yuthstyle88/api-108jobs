@@ -49,6 +49,7 @@ pub async fn change_password(
         updated_local_user.email,
         local_user_view.local_user.role,
         local_user_view.local_user.interface_language,
+        local_user_view.local_user.accepted_application,
         req,
         &context,
       )

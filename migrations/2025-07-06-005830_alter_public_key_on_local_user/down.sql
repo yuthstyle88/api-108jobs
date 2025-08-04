@@ -1,7 +1,4 @@
 ALTER TABLE local_user
-DROP COLUMN IF EXISTS public_key;
-
-ALTER TABLE local_user
 DROP COLUMN IF EXISTS role;
 
 -- Drop the enum type only if it's not used elsewhere

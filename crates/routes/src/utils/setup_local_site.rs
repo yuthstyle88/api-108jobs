@@ -25,6 +25,7 @@ use lemmy_utils::{
 };
 use tracing::info;
 use url::Url;
+use lemmy_db_schema_file::enums::Role;
 
 pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
   let conn = &mut get_conn(pool).await?;
@@ -64,6 +65,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             let local_user_form = LocalUserInsertForm {
               email: setup.admin_email.clone(),
               admin: Some(true),
+              role: Some(Role::Admin),
               ..LocalUserInsertForm::new(person_inserted.id, Some(setup.admin_password.clone()))
             };
             LocalUser::create(&mut conn.into(), &local_user_form, vec![]).await?;

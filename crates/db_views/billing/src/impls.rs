@@ -207,11 +207,14 @@ impl BillingView {
     use lemmy_db_schema::source::billing::{BillingUpdateForm};
     let conn = &mut get_conn(pool).await?;
     
-    // First check if the billing exists and belongs to this employer and work is submitted
+    // First check if the billing exists and belongs to this employer and work is submitted or updated
     let billing = billing::table
       .find(billing_id)
       .filter(billing::employer_id.eq(employer_id))
-      .filter(billing::status.eq(BillingStatus::WorkSubmitted))
+      .filter(
+        billing::status.eq(BillingStatus::WorkSubmitted)
+          .or(billing::status.eq(BillingStatus::Updated))
+      )
       .first::<Billing>(conn)
       .await?;
 
@@ -220,11 +223,47 @@ impl BillingView {
       return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".to_string()))?;
     }
 
-    // Update status back to PaidEscrow and add revision feedback
+    // Update status to RequestChange and add revision feedback
     let update_form = BillingUpdateForm {
-      status: Some(BillingStatus::PaidEscrow),
+      status: Some(BillingStatus::RequestChange),
       revision_feedback: Some(Some(revision_feedback)),
       revisions_used: Some(billing.revisions_used + 1),
+      updated_at: Some(chrono::Utc::now()),
+      ..Default::default()
+    };
+
+    let updated_billing = diesel::update(billing::table)
+      .filter(billing::id.eq(billing_id))
+      .set(&update_form)
+      .get_result::<Billing>(conn)
+      .await?;
+
+    Ok(updated_billing)
+  }
+
+  pub async fn update_work_after_revision(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    freelancer_id: LocalUserId,
+    updated_work_description: String,
+    updated_deliverable_url: Option<String>,
+  ) -> FastJobResult<Billing> {
+    use lemmy_db_schema::source::billing::{BillingUpdateForm};
+    let conn = &mut get_conn(pool).await?;
+    
+    // First check if the billing exists and belongs to this freelancer and is in RequestChange status
+    let _billing = billing::table
+      .find(billing_id)
+      .filter(billing::freelancer_id.eq(freelancer_id))
+      .filter(billing::status.eq(BillingStatus::RequestChange))
+      .first::<Billing>(conn)
+      .await?;
+
+    // Update work description and set status to Updated
+    let update_form = BillingUpdateForm {
+      status: Some(BillingStatus::Updated),
+      work_description: Some(Some(updated_work_description)),
+      deliverable_url: updated_deliverable_url.map(Some),
       updated_at: Some(chrono::Utc::now()),
       ..Default::default()
     };
@@ -246,13 +285,16 @@ impl BillingView {
     use lemmy_db_schema::source::billing::{BillingUpdateForm};
     use lemmy_db_views_wallet::WalletView;
     
-    // First check if the billing exists and belongs to this employer and work is submitted
+    // First check if the billing exists and belongs to this employer and work is submitted or updated
     let billing = {
       let conn = &mut get_conn(pool).await?;
       billing::table
         .find(billing_id)
         .filter(billing::employer_id.eq(employer_id))
-        .filter(billing::status.eq(BillingStatus::WorkSubmitted))
+        .filter(
+          billing::status.eq(BillingStatus::WorkSubmitted)
+            .or(billing::status.eq(BillingStatus::Updated))
+        )
         .first::<Billing>(conn)
         .await?
     };

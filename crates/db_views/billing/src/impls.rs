@@ -207,11 +207,14 @@ impl BillingView {
     use lemmy_db_schema::source::billing::{BillingUpdateForm};
     let conn = &mut get_conn(pool).await?;
     
-    // First check if the billing exists and belongs to this employer and work is submitted
+    // First check if the billing exists and belongs to this employer and work is submitted or updated
     let billing = billing::table
       .find(billing_id)
       .filter(billing::employer_id.eq(employer_id))
-      .filter(billing::status.eq(BillingStatus::WorkSubmitted))
+      .filter(
+        billing::status.eq(BillingStatus::WorkSubmitted)
+          .or(billing::status.eq(BillingStatus::Updated))
+      )
       .first::<Billing>(conn)
       .await?;
 

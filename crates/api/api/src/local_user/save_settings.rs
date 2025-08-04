@@ -19,6 +19,7 @@ use lemmy_db_views_site::{
   SiteView,
 };
 
+use actix_web::web::Json;
 use lemmy_email::account::send_verification_email;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
@@ -30,7 +31,6 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
-use actix_web::web::Json;
 
 pub async fn save_user_settings(
   data: Json<SaveUserSettings>,

@@ -1,7 +1,7 @@
-use actix_web::web::Json;
 use super::not_zero;
 use crate::site::{application_question_check, site_default_post_listing_type_check};
 use actix_web::web::Data;
+use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
   context::FastJobContext,

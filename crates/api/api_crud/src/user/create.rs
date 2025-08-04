@@ -34,6 +34,7 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
+use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 use lemmy_db_views_site::{
   api::{AuthenticateWithOauth, LoginResponse},
   SiteView,
@@ -53,7 +54,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{collections::HashSet, sync::LazyLock};
-use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

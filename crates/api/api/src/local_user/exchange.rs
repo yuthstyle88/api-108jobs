@@ -1,4 +1,3 @@
-
 use actix_web::{
   web::{Data, Json},
   HttpRequest,
@@ -8,11 +7,11 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::read_auth_token;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::source::person::Person;
+use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use lemmy_utils::crypto::{Crypto, DataBuffer};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use p256::PublicKey;
-use lemmy_db_views_local_user::LocalUserView;
 
 pub async fn exchange_key(
   data: Json<ExchangeKey>,

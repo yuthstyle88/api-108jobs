@@ -1,12 +1,10 @@
-use crate::{
-  utils::protocol::{AttributedTo, Endpoints, LanguageTag, Source},
-};
+use crate::fake_trait::PublicKey;
+use crate::utils::protocol::{AttributedTo, Endpoints, LanguageTag, Source};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::fmt::Debug;
 use url::Url;
-use crate::fake_trait::PublicKey;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

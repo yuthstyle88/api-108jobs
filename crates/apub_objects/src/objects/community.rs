@@ -1,55 +1,17 @@
 use crate::{
-  objects::instance::fetch_instance_actor_for_object,
   protocol::group::Group,
-  utils::{
-    functions::{
-      check_apub_id_valid_with_strictness,
-      community_visibility,
-      read_from_string_or_source_opt,
-      GetActorType,
-    },
-    markdown_links::markdown_rewrite_remote_links_opt,
-    protocol::{AttributedTo, LanguageTag, Source},
-  },
+  utils::functions::GetActorType,
 };
 
-use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::FastJobContext,
-  utils::{
-    generate_featured_url,
-    generate_moderators_url,
-    generate_outbox_url,
-    get_url_blocklist,
-    process_markdown_opt,
-    proxy_image_link_opt_apub,
-    slur_regex,
-  },
-};
-use lemmy_db_schema::{
-  sensitive::SensitiveString,
-  source::{
-    actor_language::CommunityLanguage,
-    community::{Community, CommunityInsertForm, CommunityUpdateForm},
-  },
-  traits::{ApubActor, Crud},
-};
-use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  error::{FastJobError, FastJobResult},
-  utils::{
-    markdown::markdown_to_html,
-    slurs::{check_slurs, check_slurs_opt},
-    validation::truncate_description,
-  },
-};
+use crate::fake_trait::{Actor, Object};
+use actix_web::web::Data;
+use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::source::community::Community;
+use lemmy_db_schema_file::enums::ActorType;
+use lemmy_utils::error::FastJobError;
 use once_cell::sync::OnceCell;
 use std::ops::Deref;
-use actix_web::web::Data;
 use url::Url;
-use lemmy_api_utils::utils::check_nsfw_allowed;
-use crate::fake_trait::{Actor, Object};
 
 #[allow(clippy::type_complexity)]
 pub static FETCH_COMMUNITY_COLLECTIONS: OnceCell<

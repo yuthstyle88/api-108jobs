@@ -1,14 +1,10 @@
-use crate::{
-  api::{
-    listing_type_with_default,
-    post_sort_type_with_default,
-  },
+use crate::api::{
+  listing_type_with_default,
+  post_sort_type_with_default,
 };
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_db_schema::{
-  traits::{PaginationCursorBuilder},
-};
+use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{
   api::{GetPosts, GetPostsResponse},

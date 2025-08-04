@@ -1,4 +1,5 @@
-use actix_web::web::{Json};
+use actix_web::web::Data;
+use actix_web::web::Json;
 use lemmy_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext
@@ -19,7 +20,6 @@ use lemmy_db_views_comment::{
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use std::ops::Deref;
-use actix_web::web::Data;
 
 pub async fn like_comment(
   data: Json<CreateCommentLike>,

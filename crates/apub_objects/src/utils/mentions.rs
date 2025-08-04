@@ -1,12 +1,10 @@
-use crate::objects::{person::ApubPerson};
+use crate::objects::person::ApubPerson;
 use lemmy_db_schema::{
   source::{comment::Comment, person::Person, post::Post},
   traits::Crud,
   utils::DbPool,
 };
-use lemmy_utils::{
-  error::{FastJobResult},
-};
+use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;

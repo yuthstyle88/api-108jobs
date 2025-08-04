@@ -1,8 +1,6 @@
 use actix_web::web::Data;
-use crate::objects::SearchableObjects;
 use either::Either::*;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::traits::ApubActor;
 use lemmy_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 

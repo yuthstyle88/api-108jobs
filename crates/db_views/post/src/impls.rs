@@ -501,7 +501,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
   type Error = FastJobError;
   fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
     is_valid_post_title(&data.name)?;
-
+    validate_job_update_fields(data)?;
     if let Some(ref url_str) = data.url {
       Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
@@ -531,6 +531,18 @@ impl TryFrom<CreatePostRequest> for CreatePost {
   }
 }
 
+fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
+  // Validate budget (now required)
+  if data.budget <= 0 {
+    return Err(FastJobErrorType::InvalidField("budget must be greater than 0".to_string()))?;
+  }
+
+  // Validate working days (now required)
+  if data.deadline <= 0 {
+    return Err(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string()))?;
+  }
+  Ok(())
+}
 
 impl TryFrom<EditPostRequest> for EditPost {
   type Error = FastJobError;

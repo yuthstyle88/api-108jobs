@@ -1,15 +1,7 @@
-use crate::{
-  objects::{community::ApubCommunity, instance::ApubSite, person::ApubPerson},
-  protocol::{group::Group, instance::Instance},
-};
 use assert_json_diff::assert_json_include;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_utils::error::{FastJobResult};
+use lemmy_utils::error::FastJobResult;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{collections::HashMap, fs::File, io::BufReader};
-use actix_web::web::Data;
-use url::Url;
-use crate::fake_trait::Object;
 
 pub fn file_to_json_object<T: DeserializeOwned>(path: &str) -> FastJobResult<T> {
   let file = File::open(path)?;

@@ -1,5 +1,5 @@
 use actix_web::web::Data;
-use actix_web::web::{ Json};
+use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
@@ -62,8 +62,6 @@ pub async fn update_comment(
     is_valid_body_field(content, false)?;
   }
 
-  // Validate required proposal fields (all comments now require these)
-  validate_proposal_update_fields(&data)?;
 
   let comment_id = data.comment_id;
   let form = CommentUpdateForm {
@@ -101,26 +99,3 @@ pub async fn update_comment(
   ))
 }
 
-fn validate_proposal_update_fields(data: &EditComment) -> FastJobResult<()> {
-  // Validate budget (now required)
-  if data.budget <= 0 {
-    return Err(FastJobErrorType::InvalidField("budget must be greater than 0".to_string()))?;
-  }
-
-  // Validate working days (now required)
-  if data.working_days <= 0 {
-    return Err(FastJobErrorType::InvalidField("working_days must be greater than 0".to_string()))?;
-  }
-
-  // Validate brief URL (now required)
-  if data.brief_url.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("brief_url cannot be empty".to_string()))?;
-  }
-  
-  // Basic URL validation
-  if let Err(_) = url::Url::parse(&data.brief_url) {
-    return Err(FastJobErrorType::InvalidField("brief_url must be a valid URL".to_string()))?;
-  }
-
-  Ok(())
-}

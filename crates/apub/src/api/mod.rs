@@ -1,7 +1,5 @@
-use lemmy_db_schema::{
-  source::{local_site::LocalSite, local_user::LocalUser},
-};
 use lemmy_db_schema::newtypes::CommunityId;
+use lemmy_db_schema::source::{local_site::LocalSite, local_user::LocalUser};
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
 pub mod list_comments;

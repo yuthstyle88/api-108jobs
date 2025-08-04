@@ -1,5 +1,5 @@
-use actix_web::web::Json;
 use actix_web::web::Data;
+use actix_web::web::Json;
 use lemmy_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use lemmy_db_schema::{
   source::{

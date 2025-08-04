@@ -1,5 +1,5 @@
-use crate::utils::check_community_deleted_removed;
 use crate::context::FastJobContext;
+use crate::utils::check_community_deleted_removed;
 use lemmy_db_schema::{
   newtypes::TagId,
   source::{

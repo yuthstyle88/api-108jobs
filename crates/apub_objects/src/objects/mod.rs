@@ -1,9 +1,9 @@
-use either::Either;
 use crate::objects::comment::ApubComment;
 use crate::objects::community::ApubCommunity;
 use crate::objects::instance::ApubSite;
 use crate::objects::person::ApubPerson;
 use crate::objects::post::ApubPost;
+use either::Either;
 
 pub mod comment;
 pub mod community;

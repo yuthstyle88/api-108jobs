@@ -1,5 +1,5 @@
 use actix_web::web::Data;
-use actix_web::web::{Json};
+use actix_web::web::Json;
 use lemmy_api_utils::utils::check_community_deleted_removed;
 use lemmy_api_utils::{
   context::FastJobContext,
@@ -10,7 +10,7 @@ use lemmy_db_schema::{
   traits::Crud,
 };
 use lemmy_db_views_comment::{
-  api::{ DeleteComment},
+  api::DeleteComment,
   CommentView,
 };
 use lemmy_db_views_local_user::LocalUserView;

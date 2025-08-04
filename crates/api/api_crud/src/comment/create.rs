@@ -1,6 +1,5 @@
 use actix_web::web::Data;
-use lemmy_db_schema::newtypes::{PersonId, PostId};
-use actix_web::web::{Json};
+use actix_web::web::Json;
 use lemmy_api_utils::utils::get_url_blocklist;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
@@ -8,23 +7,22 @@ use lemmy_api_utils::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
+use lemmy_db_schema::newtypes::{PersonId, PostId};
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::{
   impls::actor_language::validate_post_language,
-  source::{
-    comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-  },
+  source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
   traits::Likeable,
   utils::DbPool,
 };
 use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
+use lemmy_utils::error::FastJobError;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use lemmy_db_schema::traits::Crud;
-use lemmy_utils::error::FastJobError;
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,
@@ -78,8 +76,6 @@ pub async fn create_comment(
     local_user_view.local_user.id,
   )
   .await?;
-
-  // Validate required proposal fields (all comments now require these)
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {

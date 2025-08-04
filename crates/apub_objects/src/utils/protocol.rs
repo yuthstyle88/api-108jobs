@@ -1,4 +1,5 @@
-use crate::objects::{community::ApubCommunity, person::ApubPerson, UserOrCommunity};
+use crate::objects::community::ApubCommunity;
+use actix_web::web::Data;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
   impls::actor_language::UNDETERMINED_ID,
@@ -9,7 +10,6 @@ use lemmy_db_schema::{
 use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 use std::{future::Future, ops::Deref};
-use actix_web::web::Data;
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

@@ -1,5 +1,5 @@
 use actix_web::web::Data;
-use actix_web::web::{Json};
+use actix_web::web::Json;
 use either::Either;
 use lemmy_api_utils::{
   context::FastJobContext,

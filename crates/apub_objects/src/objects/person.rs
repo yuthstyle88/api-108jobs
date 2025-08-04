@@ -1,44 +1,18 @@
 use crate::{
-  objects::instance::fetch_instance_actor_for_object,
-  protocol::person::{Person, UserTypes},
-  utils::{
-    functions::{
-      check_apub_id_valid_with_strictness,
-      read_from_string_or_source_opt,
-      GetActorType,
-    },
-    markdown_links::markdown_rewrite_remote_links_opt,
-    protocol::{Source},
-  },
+  protocol::person::Person,
+  utils::functions::GetActorType,
 };
 
-use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
-  context::FastJobContext,
-  utils::{
-    generate_outbox_url,
-    get_url_blocklist,
-    process_markdown_opt,
-    proxy_image_link_opt_apub,
-    slur_regex,
-  },
-};
+use crate::fake_trait::{Actor, Object};
+use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::{
-  source::person::{Person as DbPerson, PersonInsertForm, PersonUpdateForm},
+  source::person::Person as DbPerson,
   traits::{ApubActor, Crud},
 };
 use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::{
-  error::{FastJobError, FastJobResult},
-  utils::{
-    markdown::markdown_to_html,
-    slurs::{check_slurs, check_slurs_opt},
-  },
-};
+use lemmy_utils::error::{FastJobError, FastJobResult};
 use std::ops::Deref;
-use actix_web::web::Data;
 use url::Url;
-use crate::fake_trait::{Actor, Object};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ApubPerson(pub DbPerson);
@@ -94,9 +68,7 @@ impl GetActorType for ApubPerson {
 #[cfg(test)]
 pub(crate) mod tests {
   use super::*;
-  use crate::{
-    objects::instance::ApubSite,
-  };
+  use crate::objects::instance::ApubSite;
   use lemmy_db_schema::source::site::Site;
 
 

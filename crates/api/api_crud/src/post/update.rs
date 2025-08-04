@@ -1,5 +1,6 @@
 use super::convert_published_time;
-use actix_web::web::{Json};
+use actix_web::web::Data;
+use actix_web::web::Json;
 use chrono::Utc;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
@@ -22,6 +23,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_post::api::EditPostRequest;
 use lemmy_db_views_post::{
   api::{EditPost, PostResponse},
   PostView,
@@ -41,8 +43,6 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
-use actix_web::web::Data;
-use lemmy_db_views_post::api::EditPostRequest;
 
 pub async fn update_post(
   data: Json<EditPostRequest>,

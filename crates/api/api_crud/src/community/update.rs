@@ -32,10 +32,7 @@ pub async fn update_community(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
   is_admin(&local_user_view)?;
-
-  if let Some(ref slug) = data.slug {
-    Community::check_community_slug_taken(&mut context.pool(), slug).await?;
-  }
+  
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
 
   let slur_regex = slur_regex(&context).await?;
@@ -81,7 +78,6 @@ pub async fn update_community(
     posting_restricted_to_mods: data.posting_restricted_to_mods,
     visibility: data.visibility,
     updated_at: Some(Some(Utc::now())),
-    slug: data.slug.clone(),
     is_new: data.is_new,
     ..Default::default()
   };

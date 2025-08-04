@@ -1,6 +1,6 @@
 use super::protocol::Source;
 use crate::{
-  objects::{community::ApubCommunity, instance::ApubSite, person::ApubPerson},
+  objects::{community::ApubCommunity, person::ApubPerson},
   protocol::{group::Group, page::Attachment},
 };
 use activitypub_federation::{
@@ -12,26 +12,15 @@ use activitypub_federation::{
 use either::Either;
 use html2md::parse_html;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{
-  source::{
-    community::{Community, CommunityActions},
-    instance::{Instance, InstanceActions},
-    local_site::LocalSite,
-  },
-  traits::Joinable,
-  utils::DbPool,
+use lemmy_db_schema::source::{
+  community::Community,
+  instance::InstanceActions,
+  local_site::LocalSite,
 };
 use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  CacheLock,
-  CACHE_DURATION_FEDERATION,
-};
-use moka::future::Cache;
-use std::sync::{Arc, LazyLock};
-use url::Url;
 use lemmy_db_views_community_person_ban::CommunityPersonBanView;
-use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use url::Url;
 
 pub fn read_from_string_or_source(
   content: &str,

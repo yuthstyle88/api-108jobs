@@ -1,27 +1,19 @@
 use crate::{
   objects::{
-    comment::ApubComment,
-    community::ApubCommunity,
-    person::ApubPerson,
-    post::ApubPost,
+    comment::ApubComment, community::ApubCommunity, person::ApubPerson, post::ApubPost,
     PostOrComment,
   },
   protocol::page::Attachment,
-  utils::{
-    mentions::MentionOrValue,
-    protocol::{InCommunity, LanguageTag, Source},
-  },
+  utils::protocol::{InCommunity, LanguageTag, Source},
 };
 use activitypub_federation::{
   config::Data,
   fetch::object_id::ObjectId,
-  kinds::activity::CreateType,
   kinds::object::NoteType,
   protocol::{
     helpers::{deserialize_one_or_many, deserialize_skip_error},
     values::MediaTypeMarkdownOrHtml,
   },
-  traits::{Activity, Object},
 };
 
 use chrono::{DateTime, Utc};
@@ -30,13 +22,11 @@ use lemmy_db_schema::{
   source::{community::Community, post::Post},
   traits::Crud,
 };
-use lemmy_utils::{
-  MAX_COMMENT_DEPTH_LIMIT,
-};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::MAX_COMMENT_DEPTH_LIMIT;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]

@@ -2,15 +2,14 @@ use lemmy_db_schema::{
   source::secret::Secret,
   utils::{ActualDbPool, DbPool},
 };
+use lemmy_utils::error::FastJobResult;
+use lemmy_utils::redis::RedisClient;
 use lemmy_utils::{
   rate_limit::RateLimit,
   settings::{structs::Settings, SETTINGS},
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
-use lemmy_utils::redis::RedisClient;
-use activitypub_federation::config::{Data, FederationConfig};
-use lemmy_utils::error::FastJobResult;
 
 #[derive(Clone)]
 pub struct FastJobContext {

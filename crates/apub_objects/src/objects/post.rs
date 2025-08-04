@@ -30,7 +30,6 @@ use chrono::Utc;
 use html2text::{from_read_with_decorator, render::TrivialDecorator};
 use lemmy_api_utils::{
   context::FastJobContext,
-  plugins::{plugin_hook_after},
   request::generate_post_link_metadata,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };

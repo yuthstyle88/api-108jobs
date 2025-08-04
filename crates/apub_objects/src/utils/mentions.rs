@@ -1,7 +1,6 @@
 use crate::objects::{person::ApubPerson};
 use activitypub_federation::{
   kinds::link::MentionType,
-  traits::Object,
 };
 use lemmy_db_schema::{
   source::{comment::Comment, person::Person, post::Post},

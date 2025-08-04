@@ -32,7 +32,6 @@ use lemmy_api_utils::{
   },
 };
 use lemmy_db_schema::{
-  sensitive::SensitiveString,
   source::{
     actor_language::CommunityLanguage,
     community::{Community, CommunityInsertForm, CommunityUpdateForm},
@@ -225,7 +224,6 @@ impl Object for ApubCommunity {
          .name
          .clone()
          .unwrap_or(group.preferred_username.clone()),
-        group.public_key.public_key_pem.clone(),
       )
     };
     let languages =

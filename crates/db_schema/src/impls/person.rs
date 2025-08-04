@@ -1,4 +1,3 @@
-use std::future::Future;
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CommunityId, DbUrl, InstanceId, LocalUserId, PersonId},

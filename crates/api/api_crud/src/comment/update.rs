@@ -23,7 +23,6 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use url;
 
 pub async fn update_comment(
   data: Json<EditComment>,

@@ -18,16 +18,16 @@ impl EmailVerification {
       .with_fastjob_type(FastJobErrorType::CouldntCreateEmailVerification)
   }
 
-  pub async fn read_for_token(pool: &mut DbPool<'_>, token: &str) -> FastJobResult<Self> {
+  pub async fn read_for_code(pool: &mut DbPool<'_>, code: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     email_verification::table
-      .filter(email_verification::verification_code.eq(token))
+      .filter(email_verification::verification_code.eq(code))
       .filter(email_verification::published_at.gt(now() - 7.days()))
       .first(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub async fn delete_old_tokens_for_local_user(
+  pub async fn delete_old_codes_for_local_user(
     pool: &mut DbPool<'_>,
     local_user_id_: LocalUserId,
   ) -> FastJobResult<usize> {

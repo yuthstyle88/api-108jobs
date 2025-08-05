@@ -42,7 +42,6 @@ pub mod wallet;
 pub mod billing;
 pub mod chat_room;
 pub mod chat_message;
-pub mod otp_verification;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

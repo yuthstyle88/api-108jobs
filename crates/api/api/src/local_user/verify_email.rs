@@ -22,7 +22,7 @@ pub async fn verify_email(
 ) -> FastJobResult<Json<VerifyEmailSuccessResponse>> {
   SiteView::read_local(&mut context.pool()).await?;
   let token = data.token.clone();
-  let verification = EmailVerification::read_for_token(&mut context.pool(), &token).await?;
+  let verification = EmailVerification::read_for_code(&mut context.pool(), &token).await?;
   let local_user_id = verification.local_user_id;
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
 
@@ -37,7 +37,7 @@ pub async fn verify_email(
 
   LocalUser::update(&mut context.pool(), local_user_id, &form).await?;
 
-  EmailVerification::delete_old_tokens_for_local_user(&mut context.pool(), local_user_id).await?;
+  EmailVerification::delete_old_codes_for_local_user(&mut context.pool(), local_user_id).await?;
 
   send_email_verified_email(&local_user_view, context.settings()).await?;
   let jwt = Claims::generate(

@@ -167,6 +167,7 @@ impl TryFrom<RegisterRequest> for Register {
 
 #[cfg(test)]
 mod tests {
+  use std::str::FromStr;
   use crate::{impls::RegistrationApplicationQuery, RegistrationApplicationView};
   use lemmy_db_schema::{
     source::{
@@ -185,6 +186,7 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
+  use lemmy_db_schema::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -278,7 +280,7 @@ mod tests {
         show_upvote_percentage: sara_local_user.show_upvote_percentage,
         show_person_votes: sara_local_user.show_person_votes,
         role: Default::default(),
-        otp: None,
+        wallet_id: None,
       },
       creator: Person {
         id: sara_person.id,
@@ -301,7 +303,7 @@ mod tests {
         post_score: 0,
         comment_count: 0,
         comment_score: 0,
-        ap_id: Url::parse(""),
+        ap_id: DbUrl::from_str("")?,
         public_key: "".to_string(),
       },
       admin: None,
@@ -372,7 +374,7 @@ mod tests {
       post_score: 0,
       comment_count: 0,
       comment_score: 0,
-      ap_id: (),
+      ap_id: DbUrl::from_str("")?,
       public_key: "".to_string(),
     });
     assert_eq!(read_sara_app_view_after_approve, expected_sara_app_view);

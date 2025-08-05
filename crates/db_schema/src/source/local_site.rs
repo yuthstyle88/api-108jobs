@@ -133,8 +133,8 @@ pub struct LocalSiteInsertForm {
   pub disallow_self_promotion_content: bool,
   #[new(default)]
   pub disable_email_notifications: bool,
-  #[new(default)]
-  pub verify_with_otp: bool,
+  #[new(value = "Some(true)")]
+  pub verify_with_otp: Option<bool>,
 }
 
 #[derive(Clone, Default)]

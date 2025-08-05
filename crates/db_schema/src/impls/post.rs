@@ -25,6 +25,7 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::dsl::{exists, select};
 use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
@@ -38,6 +39,7 @@ use lemmy_utils::{
 };
 use url::Url;
 use crate::newtypes::DbUrl;
+use crate::utils::functions::lower;
 
 impl Crud for Post {
   type InsertForm = PostInsertForm;
@@ -305,6 +307,19 @@ impl Post {
       Post::update(pool, self.id, &form).await?;
     }
     Ok(())
+  }
+
+  pub async fn check_post_name_taken(pool: &mut DbPool<'_>, name: &str) -> FastJobResult<()> {
+    let conn = &mut get_conn(pool).await?;
+    select(not(exists(
+      post::table
+          .filter(lower(post::name).eq(name.to_lowercase()))
+          .filter(post::local.eq(true)),
+    )))
+        .get_result::<bool>(conn)
+        .await?
+        .then_some(())
+        .ok_or(FastJobErrorType::PostNameAlreadyExists.into())
   }
 }
 

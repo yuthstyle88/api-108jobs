@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create a post.
@@ -31,6 +31,7 @@ pub struct CreatePost {
   /// A honeypot to catch bots. Should be None.
   pub honeypot: Option<String>,
   pub self_promotion: Option<bool>,
+  pub ap_id: Option<DbUrl>,
   pub language_id: Option<LanguageId>,
   /// Instead of fetching a thumbnail, use a custom one.
   pub custom_thumbnail: Option<String>,

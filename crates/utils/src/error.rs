@@ -250,7 +250,8 @@ pub enum FastJobErrorType {
   // Wallet related errors
   WalletAlreadyExists,
   WalletNotFound,
-  InsufficientBalance
+  InsufficientBalance,
+  PostNameAlreadyExists,
 }
 
 cfg_if! {

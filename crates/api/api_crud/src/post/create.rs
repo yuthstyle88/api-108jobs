@@ -34,6 +34,8 @@ pub async fn create_post(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
+  Post::check_post_name_taken(&mut context.pool(), &data.name).await?;
+  
   let data: CreatePost = data.into_inner().try_into()?;
   honeypot_check(&data.honeypot)?;
   let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
@@ -98,6 +100,7 @@ pub async fn create_post(
     language_id: Some(language_id),
     scheduled_publish_time_at,
     budget: data.budget,
+    ap_id: data.ap_id,
     job_type: data.job_type,
     intended_use: data.intended_use,
     deadline: data.deadline,

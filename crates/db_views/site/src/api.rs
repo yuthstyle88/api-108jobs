@@ -615,7 +615,7 @@ pub struct UserBlockInstanceParams {
 #[serde(rename_all = "camelCase")]
 /// Verify your VerifyEmail.
 pub struct VerifyEmail {
-  pub token: String,
+  pub code: String,
 }
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

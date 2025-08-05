@@ -111,11 +111,11 @@ pub async fn register(
   check_slurs(&data.username, &slur_regex)?;
   check_slurs_opt(&data.answer, &slur_regex)?;
 
-  Person::check_username_taken(pool, &data.username).await?;
-
   if let Some(email) = &data.email {
     LocalUser::check_is_email_taken(pool, email).await?;
   }
+
+  Person::check_username_taken(pool, &data.username).await?;
 
   // Automatically set their application as accepted, if they created this with open registration.
   // Also fixes a bug which allows users to log in when registrations are changed to closed.

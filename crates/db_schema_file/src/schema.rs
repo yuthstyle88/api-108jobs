@@ -194,6 +194,9 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use diesel_ltree::sql_types::Ltree;
+
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -203,19 +206,21 @@ diesel::table! {
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
+        #[max_length = 255]
+        ap_id -> Varchar,
         local -> Bool,
+        path -> Ltree,
         distinguished -> Bool,
         language_id -> Int4,
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
+        child_count -> Int4,
         hot_rank -> Float8,
         controversy_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
-        budget -> Nullable<Int4>,
-        working_days -> Nullable<Int4>,
-        brief_url -> Nullable<Text>,
+        pending -> Bool,
     }
 }
 
@@ -915,6 +920,8 @@ diesel::table! {
         embed_title -> Nullable<Text>,
         embed_description -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
+        #[max_length = 255]
+        ap_id -> Varchar,
         local -> Bool,
         embed_video_url -> Nullable<Text>,
         language_id -> Int4,
@@ -1128,6 +1135,8 @@ diesel::table! {
         is_default -> Nullable<Bool>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        is_verified -> Bool,
+        verification_image_path -> Nullable<Varchar>,
     }
 }
 

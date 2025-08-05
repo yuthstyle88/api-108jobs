@@ -55,7 +55,7 @@ pub mod sql_types {
 
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "role"))]
-    pub struct Role;
+    pub struct RoleEnum;
 
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "vote_show_enum"))]
@@ -69,7 +69,7 @@ diesel::table! {
         admin_person_id -> Int4,
         allowed -> Bool,
         reason -> Nullable<Text>,
-        published -> Timestamptz,
+        published_at -> Timestamptz,
     }
 }
 
@@ -187,7 +187,7 @@ diesel::table! {
 diesel::table! {
     chat_room (id) {
         id -> Varchar,
-        room_name -> Nullable<Varchar>,
+        room_name -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -262,7 +262,7 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::CommunityVisibility;
-    use super::sql_types::Ltree;
+    use diesel_ltree::sql_types::Ltree;
 
     community (id) {
         id -> Int4,
@@ -310,7 +310,6 @@ diesel::table! {
         interactions_month -> Int8,
         local_removed -> Bool,
         path -> Ltree,
-        slug -> Text,
         active -> Bool,
         is_new -> Bool,
     }
@@ -385,7 +384,7 @@ diesel::table! {
         id -> Int4,
         local_user_id -> Int4,
         email -> Text,
-        verification_token -> Text,
+        verification_code -> Text,
         published_at -> Timestamptz,
     }
 }
@@ -461,12 +460,10 @@ diesel::table! {
     use super::sql_types::PostSortTypeEnum;
     use super::sql_types::CommentSortTypeEnum;
 
-    local_site (id) {
+local_site (id) {
         id -> Int4,
         site_id -> Int4,
         site_setup -> Bool,
-        enable_downvotes -> Bool,
-        enable_self_promotion -> Bool,
         community_creation_admin_only -> Bool,
         require_email_verification -> Bool,
         application_question -> Nullable<Text>,
@@ -499,6 +496,7 @@ diesel::table! {
         users_active_month -> Int8,
         users_active_half_year -> Int8,
         disable_email_notifications -> Bool,
+        verify_with_otp -> Bool,
     }
 }
 
@@ -540,11 +538,12 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::CommentSortTypeEnum;
     use super::sql_types::VoteShowEnum;
-    use super::sql_types::Role;
+    use super::sql_types::RoleEnum;
 
     local_user (id) {
         id -> Int4,
         person_id -> Int4,
+        wallet_id -> Nullable<Int4>,
         password_encrypted -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
@@ -579,9 +578,7 @@ diesel::table! {
         show_downvotes -> VoteShowEnum,
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
-        public_key -> Nullable<Text>,
-        role -> Role,
-        wallet_id -> Nullable<Int4>,
+        role -> RoleEnum,
         #[max_length = 100]
         country -> Varchar,
     }
@@ -815,6 +812,8 @@ diesel::table! {
         ap_id -> Varchar,
         bio -> Nullable<Text>,
         local -> Bool,
+        private_key -> Nullable<Text>,
+        public_key -> Text,
         last_refreshed_at -> Timestamptz,
         banner -> Nullable<Text>,
         deleted -> Bool,
@@ -827,8 +826,6 @@ diesel::table! {
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
-        public_key -> Nullable<Text>,
-        private_key -> Nullable<Text>,
     }
 }
 
@@ -942,11 +939,12 @@ diesel::table! {
         scaled_rank -> Float8,
         report_count -> Int2,
         unresolved_report_count -> Int2,
-        is_english_required -> Bool,
+        intended_use -> IntendedUseEnum,
+        job_type -> JobTypeEnum,
         budget -> Float8,
         deadline -> Nullable<Timestamptz>,
-        job_type -> JobTypeEnum,
-        intended_use -> IntendedUseEnum,
+        is_english_required -> Bool,
+        pending -> Bool,
     }
 }
 
@@ -1090,6 +1088,8 @@ diesel::table! {
         last_refreshed_at -> Timestamptz,
         #[max_length = 255]
         inbox_url -> Varchar,
+        private_key -> Nullable<Text>,
+        public_key -> Text,
         instance_id -> Int4,
         content_warning -> Nullable<Text>,
     }
@@ -1105,7 +1105,6 @@ diesel::table! {
 diesel::table! {
     tag (id) {
         id -> Int4,
-        ap_id -> Text,
         display_name -> Text,
         community_id -> Int4,
         published_at -> Timestamptz,
@@ -1133,9 +1132,9 @@ diesel::table! {
         #[max_length = 255]
         account_name -> Varchar,
         is_default -> Nullable<Bool>,
+        is_verified -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        is_verified -> Bool,
         verification_image_path -> Nullable<Varchar>,
     }
 }

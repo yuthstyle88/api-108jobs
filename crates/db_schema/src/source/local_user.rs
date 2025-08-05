@@ -82,7 +82,6 @@ pub struct LocalUser {
   pub show_upvote_percentage: bool,
   pub show_person_votes: bool,
   pub role: Role,
-  /// The country/region of the user for bank filtering
   pub country: String,
 }
 
@@ -160,8 +159,6 @@ pub struct LocalUserInsertForm {
   pub show_person_votes: Option<bool>,
   #[new(default)]
   pub role: Option<Role>,
-  #[new(default)]
-  pub country: Option<String>,
 }
 
 #[derive(Clone, Default)]
@@ -202,5 +199,4 @@ pub struct LocalUserUpdateForm {
   pub show_downvotes: Option<VoteShow>,
   pub show_upvote_percentage: Option<bool>,
   pub show_person_votes: Option<bool>,
-  pub country: Option<String>,
 }

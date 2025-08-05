@@ -11,7 +11,7 @@ pub struct EmailVerification {
   pub id: i32,
   pub local_user_id: LocalUserId,
   pub email: String,
-  pub verification_code: String,
+  pub verification_token: String,
   pub published_at: DateTime<Utc>,
 }
 
@@ -20,5 +20,5 @@ pub struct EmailVerification {
 pub struct EmailVerificationForm {
   pub local_user_id: LocalUserId,
   pub email: String,
-  pub verification_code: String,
+  pub verification_token: String,
 }

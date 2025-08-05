@@ -1138,6 +1138,8 @@ diesel::table! {
         escrow_balance -> Float8,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        is_verified -> Bool,
+        verification_image_path -> Nullable<Varchar>,
     }
 }
 

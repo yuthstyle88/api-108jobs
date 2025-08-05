@@ -6,6 +6,7 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryD
 use lemmy_api_utils::{
   claims::Claims,
   context::FastJobContext,
+  geolocation::GeolocationService,
   utils::{
     check_email_verified,
     check_local_user_valid,
@@ -148,7 +149,7 @@ pub async fn register(
        };
 
        let local_user =
-        create_local_user(conn, language_tags, local_user_form, &site_view.local_site).await?;
+        create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req).await?;
 
        if site_view.local_site.site_setup && require_registration_application {
          if let Some(answer) = tx_data.answer.clone() {
@@ -324,7 +325,7 @@ pub async fn register_with_oauth(
          };
 
          let local_user =
-          create_local_user(conn, language_tags, local_user_form, &site_view.local_site)
+          create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req)
            .await?;
 
          // Create the oauth account
@@ -550,7 +551,7 @@ pub async fn authenticate_with_oauth(
            };
 
            let local_user =
-            create_local_user(conn, language_tags, local_user_form, &site_view.local_site)
+            create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req)
              .await?;
 
            // Create the oauth account
@@ -656,6 +657,7 @@ async fn create_local_user(
   language_tags: Vec<String>,
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
+  req: &HttpRequest,
 ) -> Result<LocalUser, FastJobError> {
   let conn_ = &mut conn.into();
   let all_languages = Language::read_all(conn_).await?;
@@ -690,6 +692,21 @@ async fn create_local_user(
     None
   };
   local_user_form.interface_language = interface_lang;
+
+  // Detect user's country from IP address
+  if let Some(client_ip) = req.peer_addr().map(|addr| addr.ip()) {
+    let geo_service = GeolocationService::new();
+    if let Ok(country_info) = geo_service.detect_country_from_ip(client_ip).await {
+      local_user_form.country = Some(country_info.name);
+    } else {
+      // Default to Thailand if geolocation fails
+      local_user_form.country = Some("Thailand".to_string());
+    }
+  } else {
+    // Default to Thailand if IP detection fails
+    local_user_form.country = Some("Thailand".to_string());
+  }
+
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
   // Create a wallet for the new user

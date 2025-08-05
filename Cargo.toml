@@ -78,6 +78,7 @@ members = [
     "crates/db_views/site",
     "crates/db_views/wallet",
     "crates/db_views/billing",
+    "crates/db_views/bank_account",
     "crates/routes",
     "crates/multilang",
     "crates/ws",
@@ -146,6 +147,7 @@ lemmy_db_views_site = { version = "=1.0.0-alpha.5", path = "./crates/db_views/si
 lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vote" }
 lemmy_db_views_wallet = { version = "=1.0.0-alpha.5", path = "./crates/db_views/wallet" }
 lemmy_db_views_billing = { version = "=1.0.0-alpha.5", path = "./crates/db_views/billing" }
+lemmy_db_views_bank_account = { version = "=1.0.0-alpha.5", path = "./crates/db_views/bank_account" }
 lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 diesel = { version = "2.2.10", features = [
     "chrono",

@@ -1,0 +1,1097 @@
+warning: lemmy_email@1.0.0-alpha.5: Key `new_registration_denied_body` exists in pl but not in fallback language
+warning: lemmy_email@1.0.0-alpha.5: Key `new_registration_denied_body` exists in da but not in fallback language
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.62s
+     Running `target/debug/lemmy_server`
+Starting FastJob v1.0.0-alpha.5
+[2m2025-08-03T14:11:50.813771Z[0m [32m INFO[0m [2mactix_server::builder[0m[2m:[0m starting 14 workers
+[2m2025-08-03T14:11:50.846679Z[0m [32m INFO[0m [2mactix_server::server[0m[2m:[0m Actix runtime found; starting in Actix runtime
+[2m2025-08-03T14:11:50.846721Z[0m [32m INFO[0m [2mactix_server::server[0m[2m:[0m starting service: "actix-web-service-0.0.0.0:8536", workers: 14, listening on: 0.0.0.0:8536
+Starting HTTP server at 0.0.0.0:8536
+Connected to Redis at redis://localhost:6379
+[2m2025-08-03T14:11:50.995941Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.995951Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.995972Z[0m [32m INFO[0m [2mactix_server::accept[0m[2m:[0m accept thread stopped
+[2m2025-08-03T14:11:50.995997Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996000Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996029Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996045Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996051Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996026Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996000Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996020Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996069Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996075Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996060Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.996032Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T14:11:50.997749Z[0m [32m INFO[0m [2mactix_server::builder[0m[2m:[0m starting 14 workers
+[2m2025-08-03T14:11:50.997865Z[0m [32m INFO[0m [2mactix_server::server[0m[2m:[0m Actix runtime found; starting in Actix runtime
+[2m2025-08-03T14:11:50.997872Z[0m [32m INFO[0m [2mactix_server::server[0m[2m:[0m starting service: "actix-web-service-0.0.0.0:8536", workers: 14, listening on: 0.0.0.0:8536
+connect to url: ws://localhost:4000/socket/websocket?vsn=2.0.0
+Connect status : Connected
+[2m2025-08-03T14:11:58.973286Z[0m [33m WARN[0m [1mHTTP request[0m[1m{[0m[3mhttp.method[0m[2m=[0mGET [3mhttp.route[0m[2m=[0m/api/v4/site [3mhttp.flavor[0m[2m=[0m1.1 [3mhttp.scheme[0m[2m=[0mhttp [3mhttp.host[0m[2m=[0mlocalhost:8536 [3mhttp.client_ip[0m[2m=[0m127.0.0.1 [3mhttp.user_agent[0m[2m=[0mcurl/8.7.1 [3mhttp.target[0m[2m=[0m/api/v4/site [3motel.name[0m[2m=[0mGET /api/v4/site [3motel.kind[0m[2m=[0m"server" [3mrequest_id[0m[2m=[0m2c100c7f-85cb-43ba-97d2-c5f462d5afae[1m}[0m[2m:[0m [2mlemmy_api_utils::plugins[0m[2m:[0m Failed to read plugin folder: No such file or directory (os error 2)
+[2m2025-08-03T14:11:58.974461Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/site HTTP/1.1' 200 4718 '-' 'curl/8.7.1' 0.029706    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:12:50.833512Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.732412    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:14:49.896005Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 23 '-' 'curl/8.7.1' 0.010647    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:15:15.455284Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 421 '-' 'curl/8.7.1' 0.713226    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:15:34.338843Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000264    
+[2m2025-08-03T14:15:34.347327Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000259    
+Task spawned!
+[2m2025-08-03T14:15:48.342764Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.721227    
+[2m2025-08-03T14:15:49.058513Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 421 '-' 'curl/8.7.1' 0.706562    
+[2m2025-08-03T14:15:49.236778Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 48 '-' 'curl/8.7.1' 0.009667    
+[2m2025-08-03T14:15:49.252051Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 48 '-' 'curl/8.7.1' 0.007442    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:16:13.098065Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000251    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:16:36.627802Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.707147    
+[2m2025-08-03T14:16:36.639850Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 51 '-' 'curl/8.7.1' 0.004449    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:17:25.023639Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 421 '-' 'curl/8.7.1' 0.699362    
+[2m2025-08-03T14:17:25.042486Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/create-invoice HTTP/1.1' 200 210 '-' 'curl/8.7.1' 0.011332    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:17:45.525246Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/approve-quotation HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000267    
+[2m2025-08-03T14:17:45.535215Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000216    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:18:07.406779Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.706298    
+[2m2025-08-03T14:18:07.434716Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/approve-quotation HTTP/1.1' 200 52 '-' 'curl/8.7.1' 0.020302    
+[2m2025-08-03T14:18:07.447936Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 50 '-' 'curl/8.7.1' 0.002725    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:18:42.427227Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 421 '-' 'curl/8.7.1' 0.706491    
+[2m2025-08-03T14:18:42.438030Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/submit-work HTTP/1.1' 400 90 '-' 'curl/8.7.1' 0.003065    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:19:08.455022Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/submit-work HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000257    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:20:24.726131Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.708296    
+[2m2025-08-03T14:20:24.746941Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/approve-work HTTP/1.1' 200 51 '-' 'curl/8.7.1' 0.012601    
+[2m2025-08-03T14:20:24.760953Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 50 '-' 'curl/8.7.1' 0.004204    
+[2m2025-08-03T14:20:25.468446Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 421 '-' 'curl/8.7.1' 0.699434    
+[2m2025-08-03T14:20:25.480017Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 51 '-' 'curl/8.7.1' 0.004203    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:36:00.413812Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/site HTTP/1.1' 200 5209 '-' 'curl/8.7.1' 0.013303    
+[2m2025-08-03T14:36:00.531920Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000329    
+[2m2025-08-03T14:36:00.646097Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000272    
+Task spawned!
+[2m2025-08-03T14:36:09.954856Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000263    
+[2m2025-08-03T14:36:10.063007Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000311    
+Task spawned!
+[2m2025-08-03T14:36:19.157192Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 32 '-' 'curl/8.7.1' 0.000308    
+[2m2025-08-03T14:36:19.277993Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 32 '-' 'curl/8.7.1' 0.000450    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:36:46.040289Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 32 '-' 'curl/8.7.1' 0.000279    
+Task spawned!
+[2m2025-08-03T14:36:53.242718Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000310    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:38:47.181836Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/site HTTP/1.1' 200 5209 '-' 'curl/8.7.1' 0.011938    
+[2m2025-08-03T14:38:47.189221Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 32 '-' 'curl/8.7.1' 0.000276    
+[2m2025-08-03T14:38:47.196697Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000284    
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:39:09.455677Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 31 '-' 'curl/8.7.1' 0.000300    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:43:32.262515Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 30 '-' 'curl/8.7.1' 0.000320    
+[2m2025-08-03T14:43:40.152160Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 30 '-' 'curl/8.7.1' 0.000264    
+Task spawned!
+[2m2025-08-03T14:43:46.284392Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/auth/get-captcha HTTP/1.1' 200 488971 '-' 'curl/8.7.1' 0.217317    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:44:13.791435Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/auth/get-captcha HTTP/1.1' 200 390471 '-' 'curl/8.7.1' 0.180852    
+Task spawned!
+[2m2025-08-03T14:44:24.273089Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 32 '-' 'curl/8.7.1' 0.000291    
+Task spawned!
+[2m2025-08-03T14:44:34.240731Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 417 '-' 'curl/8.7.1' 0.723268    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:45:52.744875Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/auth/get-captcha HTTP/1.1' 200 489319 '-' 'curl/8.7.1' 0.214079    
+[2m2025-08-03T14:45:53.477251Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 420 '-' 'curl/8.7.1' 0.722457    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:47:28.865830Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 49 '-' 'curl/8.7.1' 0.003188    
+[2m2025-08-03T14:47:28.876388Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 49 '-' 'curl/8.7.1' 0.003518    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:48:03.437895Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/create-invoice HTTP/1.1' 404 0 '-' 'curl/8.7.1' 0.000192    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:48:31.562097Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/create-invoice HTTP/1.1' 401 26 '-' 'curl/8.7.1' 0.000260    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:49:09.925659Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/services/test HTTP/1.1' 404 0 '-' 'curl/8.7.1' 0.000179    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T14:55:13.135502Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 401 30 '-' 'PostmanRuntime/7.45.0' 0.001599    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T15:00:44.347038Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 28 '-' 'PostmanRuntime/7.45.0' 0.013710    
+[2m2025-08-03T15:00:45.383288Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 28 '-' 'PostmanRuntime/7.45.0' 0.007294    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T15:01:31.149675Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 24 '-' 'curl/8.7.1' 0.005841    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T15:02:01.340219Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 24 '-' 'curl/8.7.1' 0.004780    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T15:03:00.445807Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/auth/get-captcha HTTP/1.1' 200 488911 '-' 'curl/8.7.1' 0.216720    
+Task spawned!
+[2m2025-08-03T15:03:01.169927Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 398 '-' 'curl/8.7.1' 0.714155    
+Task spawned!
+Task spawned!
+[2m2025-08-03T15:03:24.184499Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 398 '-' 'curl/8.7.1' 0.698747    
+[2m2025-08-03T15:03:24.202744Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/top-up HTTP/1.1' 200 148 '-' 'curl/8.7.1' 0.007527    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:16:42.388400Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 28 '-' 'PostmanRuntime/7.45.0' 0.009136    
+[2m2025-08-03T16:16:43.747684Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 400 28 '-' 'PostmanRuntime/7.45.0' 0.006873    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:17:13.140018Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 401 30 '-' 'PostmanRuntime/7.45.0' 0.719517    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:18:08.425608Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 401 30 '-' 'PostmanRuntime/7.45.0' 0.758117    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:18:56.550936Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 34 '-' 'PostmanRuntime/7.45.0' 0.019933    
+Task spawned!
+[2m2025-08-03T16:19:01.844984Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 400 34 '-' 'PostmanRuntime/7.45.0' 0.017051    
+Task spawned!
+[2m2025-08-03T16:19:19.668353Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 341 '-' 'PostmanRuntime/7.45.0' 0.761358    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:20:37.723852Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/register HTTP/1.1' 200 344 '-' 'PostmanRuntime/7.45.0' 0.777774    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:21:19.618124Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account/wallet HTTP/1.1' 200 50 '-' 'PostmanRuntime/7.45.0' 0.010455    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:24:04.410125Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/auth/login HTTP/1.1' 200 339 '-' 'PostmanRuntime/7.45.0' 0.772795    
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:24:24.905254Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account HTTP/1.1' 200 647 '-' 'PostmanRuntime/7.45.0' 0.015083    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:25:27.304533Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/top-up HTTP/1.1' 400 117 '-' 'PostmanRuntime/7.45.0' 0.008770    
+Task spawned!
+[2m2025-08-03T16:25:38.283883Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/top-up HTTP/1.1' 200 116 '-' 'PostmanRuntime/7.45.0' 0.015050    
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:26:02.892824Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'GET /api/v4/account HTTP/1.1' 200 669 '-' 'PostmanRuntime/7.45.0' 0.012826    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:26:50.934401Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/withdraw HTTP/1.1' 400 35 '-' 'PostmanRuntime/7.45.0' 0.009108    
+Task spawned!
+[2m2025-08-03T16:26:56.360590Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/withdraw HTTP/1.1' 200 121 '-' 'PostmanRuntime/7.45.0' 0.016374    
+Task spawned!
+[2m2025-08-03T16:27:05.521854Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/admin/wallet/top-up HTTP/1.1' 200 116 '-' 'PostmanRuntime/7.45.0' 0.012198    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:28:00.946224Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/post HTTP/1.1' 200 909 '-' 'PostmanRuntime/7.45.0' 0.691009    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:28:31.824302Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/post HTTP/1.1' 200 908 '-' 'PostmanRuntime/7.45.0' 0.086890    
+Task spawned!
+[2m2025-08-03T16:28:47.114793Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/post HTTP/1.1' 200 912 '-' 'PostmanRuntime/7.45.0' 0.084671    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:31:00.879393Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/create-invoice HTTP/1.1' 400 117 '-' 'PostmanRuntime/7.45.0' 0.010020    
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:31:19.605864Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/wallet/create-invoice HTTP/1.1' 200 167 '-' 'PostmanRuntime/7.45.0' 0.010964    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:33:27.255177Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.011406    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:34:07.828925Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.012314    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:35:08.141073Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.011302    
+[2m2025-08-03T16:35:08.971873Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.007811    
+[2m2025-08-03T16:35:09.543953Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.005940    
+[2m2025-08-03T16:35:10.533832Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.005248    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:36:13.283018Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.010119    
+[2m2025-08-03T16:36:14.029286Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.007009    
+[2m2025-08-03T16:36:15.686035Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.007849    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:37:14.866242Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.009918    
+[2m2025-08-03T16:37:15.564758Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.004424    
+[2m2025-08-03T16:37:15.951544Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.011918    
+[2m2025-08-03T16:37:16.475307Z[0m [32m INFO[0m [2mactix_web::middleware::logger[0m[2m:[0m 127.0.0.1 'POST /api/v4/account/services/approve-quotation HTTP/1.1' 404 0 '-' 'PostmanRuntime/7.45.0' 0.006772    
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+Task spawned!
+[2m2025-08-03T16:39:31.942896Z[0m [33m WARN[0m [2mlemmy_server[0m[2m:[0m Received terminate, shutting down gracefully...
+[2m2025-08-03T16:39:31.942989Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943004Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943005Z[0m [32m INFO[0m [2mactix_server::accept[0m[2m:[0m accept thread stopped
+[2m2025-08-03T16:39:31.943041Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943086Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943124Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943172Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943194Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943190Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943488Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943547Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943050Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943051Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943543Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+[2m2025-08-03T16:39:31.943078Z[0m [32m INFO[0m [2mactix_server::worker[0m[2m:[0m shutting down idle worker
+   Compiling proc-macro2 v1.0.95
+   Compiling serde v1.0.219
+   Compiling libc v0.2.172
+   Compiling parking_lot_core v0.9.11
+   Compiling lock_api v0.4.13
+   Compiling typenum v1.18.0
+   Compiling zerocopy v0.8.25
+   Compiling serde_json v1.0.140
+   Compiling slab v0.4.9
+   Compiling getrandom v0.3.3
+   Compiling icu_properties_data v1.5.1
+   Compiling icu_locid_transform_data v1.5.1
+   Compiling icu_normalizer_data v1.5.1
+error: failed to run custom build command for `proc-macro2 v1.0.95`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/proc-macro2-a533828a61a292a6/build-script-build` (signal: 9, SIGKILL: kill)
+warning: build failed, waiting for other jobs to finish...
+error: failed to run custom build command for `serde v1.0.219`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/serde-89f0664cacf762e9/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `serde v1.0.219`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/serde-89f0664cacf762e9/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `libc v0.2.172`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/libc-40bf8facc5233fc4/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `libc v0.2.172`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/libc-bc39062df1eea5b7/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `parking_lot_core v0.9.11`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/parking_lot_core-fb37af2c71bc534f/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `lock_api v0.4.13`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/lock_api-6fef6b3f799d81ad/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `typenum v1.18.0`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/typenum-caeb4f0109abc0e6/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `zerocopy v0.8.25`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/zerocopy-6fd6d777f5148c9f/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `serde_json v1.0.140`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/serde_json-8832a394e8171e65/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `slab v0.4.9`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/slab-860deb631144e90f/build-script-build` (signal: 9, SIGKILL: kill)
+error: failed to run custom build command for `getrandom v0.3.3`
+
+Caused by:
+  process didn't exit successfully: `/Users/khoitran/fast-work-new/target/release/build/getrandom-7e3b2929089e3e6d/build-script-build` (signal: 9, SIGKILL: kill)
+warning: lemmy_email@1.0.0-alpha.5: Key `new_registration_denied_body` exists in pl but not in fallback language
+warning: lemmy_email@1.0.0-alpha.5: Key `new_registration_denied_body` exists in da but not in fallback language
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.73s
+     Running `target/debug/lemmy_server`

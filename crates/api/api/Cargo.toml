@@ -37,6 +37,7 @@ lemmy_db_views_person_content_combined = { workspace = true, features = [
 lemmy_db_views_report_combined = { workspace = true, features = ["full"] }
 lemmy_db_views_wallet = { workspace = true, features = ["full"] }
 lemmy_db_views_billing = { workspace = true }
+lemmy_db_views_bank_account = { workspace = true, features = ["full"] }
 lemmy_db_views_site = { workspace = true, features = ["full"] }
 lemmy_db_views_registration_applications = { workspace = true, features = [
     "full",

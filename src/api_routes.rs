@@ -3,6 +3,7 @@ use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work, update_work_after_revision};
+use lemmy_api::local_user::bank_account::{create_bank_account, list_user_bank_accounts, set_default_bank_account, delete_bank_account, list_banks};
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::{
   comment::{
@@ -281,6 +282,18 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/wallet")
                 .route("", get().to(get_wallet))
+            )
+            // Bank account management scope
+            .service(
+              scope("/bank-account")
+                .route("", post().to(create_bank_account))
+                .route("", get().to(list_user_bank_accounts))
+                .route("/default", put().to(set_default_bank_account))
+                .route("/delete", post().to(delete_bank_account))
+            )
+            .service(
+              scope("/banks")
+                .route("", get().to(list_banks))
             )
             // Services scope for freelancer service delivery
             .service(

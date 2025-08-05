@@ -3381,6 +3381,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_bank_account",
  "lemmy_db_views_billing",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3676,6 +3677,20 @@ dependencies = [
  "serial_test",
  "tracing",
  "unified-diff",
+]
+
+[[package]]
+name = "lemmy_db_views_bank_account"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]

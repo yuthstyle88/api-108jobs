@@ -21,6 +21,7 @@ pub struct Wallet {
   pub escrow_balance: f64,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  /// Money held in escrow for ongoing jobs
 }
 
 #[derive(Clone, derive_new::new)]

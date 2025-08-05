@@ -81,6 +81,7 @@ pub struct LocalSite {
   pub users_active_half_year: i64,
   /// Dont send multilang notifications to users for new replies, mentions etc
   pub disable_email_notifications: bool,
+  pub verify_with_otp: bool,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -132,6 +133,8 @@ pub struct LocalSiteInsertForm {
   pub disallow_self_promotion_content: bool,
   #[new(default)]
   pub disable_email_notifications: bool,
+  #[new(default)]
+  pub verify_with_otp: bool,
 }
 
 #[derive(Clone, Default)]
@@ -161,4 +164,5 @@ pub struct LocalSiteUpdateForm {
   pub default_post_time_range_seconds: Option<Option<i32>>,
   pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
+  pub verify_with_otp: Option<bool>,
 }

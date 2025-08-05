@@ -23,6 +23,7 @@ use uuid::Uuid;
 pub mod account;
 pub mod admin;
 pub mod notifications;
+
 mod translations {
   rosetta_i18n::include_translations!();
 }

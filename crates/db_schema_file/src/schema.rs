@@ -342,7 +342,7 @@ diesel::table! {
         id -> Int4,
         local_user_id -> Int4,
         email -> Text,
-        verification_token -> Text,
+        verification_code -> Text,
         published_at -> Timestamptz,
     }
 }
@@ -465,6 +465,7 @@ diesel::table! {
         users_active_month -> Int8,
         users_active_half_year -> Int8,
         disable_email_notifications -> Bool,
+        verify_with_otp -> Bool,
     }
 }
 
@@ -1079,11 +1080,11 @@ diesel::table! {
 }
 
 diesel::table! {
-tagline (id) {
-    id -> Int4,
-    content -> Text,
-    published_at -> Timestamptz,
-    updated_at -> Nullable<Timestamptz>,
+    tagline (id) {
+        id -> Int4,
+        content -> Text,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 

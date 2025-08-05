@@ -7,15 +7,11 @@ use lemmy_db_schema::{
   },
   utils::DbPool,
 };
-use lemmy_db_schema::source::otp_verification::{OTPVerification, OTPVerificationForm};
-use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{
-  error::FastJobResult,
-  settings::structs::Settings,
-  utils::markdown::markdown_to_html,
-};
 use lemmy_utils::utils::helper::rand_number5;
+use lemmy_utils::{
+  error::FastJobResult, settings::structs::Settings, utils::markdown::markdown_to_html,
+};
 
 pub async fn send_password_reset_email(
   user: &LocalUserView,
@@ -48,62 +44,65 @@ pub async fn send_verification_email(
   pool: &mut DbPool<'_>,
   settings: &Settings,
 ) -> FastJobResult<()> {
+  let verification_code = if local_site.verify_with_otp {
+    rand_number5()
+  } else {
+    Some(uuid::Uuid::new_v4().to_string())
+  };
+
+  let verification_code = verification_code.unwrap(); // safe unwrap, always Some above
   let form = EmailVerificationForm {
     local_user_id: user.local_user.id,
     email: new_email.to_string(),
-    verification_token: uuid::Uuid::new_v4().to_string(),
+    verification_code: verification_code.clone(),
   };
+
   let verify_link = format!(
     "{}/verify-email/{}",
     settings.get_protocol_and_hostname(),
-    &form.verification_token
+    &form.verification_code
   );
+
   EmailVerification::create(pool, &form).await?;
 
   let lang = user_language(user);
   let subject = lang.verify_email_subject(&settings.hostname);
 
-  // If an application is required, use a translation that includes that warning.
-  let body = if local_site.registration_mode == RegistrationMode::RequireApplication {
-    lang.verify_email_body_with_application(&settings.hostname, &user.person.name, verify_link)
-  } else {
-    lang.verify_email_body(&settings.hostname, &user.person.name, verify_link)
-  };
-
-  send_email(&subject, new_email, &user.person.name, &body, settings).await
-}
-
-/// Send a verification otp
-pub async fn send_verification_otp(
-  local_site: &LocalSite,
-  user: &LocalUserView,
-  new_email: &str,
-  pool: &mut DbPool<'_>,
-  settings: &Settings,
-) -> FastJobResult<()> {
-  let form = OTPVerificationForm {
-    local_user_id: user.local_user.id,
-    email: new_email.to_string(),
-    verification_otp: rand_number5(),
-  };
-  let verify_otp = format!(
-    "verify-otp [{:?}]",
-    &form.verification_otp
+  let footer = (
+    lang.contact_us(), // 0
+    lang.copyright(), // 1
+    lang.otp_body(), // 2
+    lang.otp_subject(), // 3
+    lang.privacy_policy(), // 4
+    lang.regards(), // 5
+    lang.sent_to(new_email), // 6
+    lang.team(), // 7
+    lang.terms_of_service(), // 8
+    lang.title(), // 9
+    lang.trouble_text(), // 10
   );
-  OTPVerification::create(pool, &form).await?;
 
-  let lang = user_language(user);
-  let subject = lang.verify_email_subject(&settings.hostname);
-
-  // If an application is required, use a translation that includes that warning.
-  let body = if local_site.registration_mode == RegistrationMode::RequireApplication {
-    lang.verify_email_body_with_application(&settings.hostname, &user.person.name, verify_otp)
+  let body = if local_site.verify_with_otp {
+    lang.verify_email_with_otp(
+      footer.0, footer.1, lang.otp_message(),
+      footer.2, footer.3,
+      footer.4, footer.5, footer.6,
+      footer.7, footer.8, footer.9,
+      footer.10,  &verification_code,
+    )
   } else {
-    lang.verify_email_body(&settings.hostname, &user.person.name, verify_otp)
+    lang.verify_email_with_url(
+      lang.button(), footer.0, footer.1,
+      lang.link_message(), footer.4,
+      footer.5, footer.6, footer.7,
+      footer.8, footer.9, footer.10,
+      &verify_link,
+    )
   };
 
   send_email(&subject, new_email, &user.person.name, &body, settings).await
 }
+
 
 /// Returns true if email was sent.
 pub async fn send_verification_email_if_required(
@@ -117,7 +116,7 @@ pub async fn send_verification_email_if_required(
     && !user.local_user.email_verified
   {
     let email = user_email(user)?;
-    send_verification_otp(local_site, user, &email, pool, settings).await?;
+    send_verification_email(local_site, user, &email, pool, settings).await?;
     Ok(true)
   } else {
     Ok(false)

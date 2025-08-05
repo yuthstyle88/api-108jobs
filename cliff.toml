@@ -7,7 +7,7 @@ repo = "lemmy"
 # token = ""
 
 [changelog]
-# template for the changelog body
+# templates for the changelog body
 # https://keats.github.io/tera/docs/#introduction
 body = """
 ## What's Changed
@@ -51,7 +51,7 @@ body = """
   https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 {%- endmacro -%}
 """
-# remove the leading and trailing whitespace from the template
+# remove the leading and trailing whitespace from the templates
 trim = true
 # changelog footer
 footer = """

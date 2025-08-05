@@ -1,61 +1,53 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "actor_type_enum"))]
-    pub struct ActorTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "actor_type_enum"))]
+  pub struct ActorTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "billing_status"))]
-    pub struct BillingStatus;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "comment_sort_type_enum"))]
+  pub struct CommentSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "comment_sort_type_enum"))]
-    pub struct CommentSortTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_follower_state"))]
+  pub struct CommunityFollowerState;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_follower_state"))]
-    pub struct CommunityFollowerState;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_visibility"))]
+  pub struct CommunityVisibility;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_visibility"))]
-    pub struct CommunityVisibility;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "listing_type_enum"))]
+  pub struct ListingTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "intended_use_enum"))]
-    pub struct IntendedUseEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "ltree"))]
+  pub struct Ltree;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "job_type_enum"))]
-    pub struct JobTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_listing_mode_enum"))]
+  pub struct PostListingModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "listing_type_enum"))]
-    pub struct ListingTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
+  pub struct PostNotificationsModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "ltree"))]
-    pub struct Ltree;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_sort_type_enum"))]
+  pub struct PostSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_listing_mode_enum"))]
-    pub struct PostListingModeEnum;
-
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
-    pub struct PostNotificationsModeEnum;
-
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_sort_type_enum"))]
-    pub struct PostSortTypeEnum;
-
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "registration_mode_enum"))]
-    pub struct RegistrationModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "registration_mode_enum"))]
+  pub struct RegistrationModeEnum;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "vote_show_enum"))]
   pub struct VoteShowEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "role"))]
+  pub struct RoleEnum;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "intended_use_enum"))]
@@ -68,10 +60,6 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
-
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "vote_show_enum"))]
-    pub struct VoteShowEnum;
 }
 
 diesel::table! {
@@ -132,47 +120,6 @@ diesel::table! {
         community_id -> Int4,
         reason -> Nullable<Text>,
         published_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    banks (id) {
-        id -> Int4,
-        #[max_length = 255]
-        name -> Varchar,
-        #[max_length = 100]
-        country -> Varchar,
-        #[max_length = 20]
-        bank_code -> Nullable<Varchar>,
-        #[max_length = 20]
-        swift_code -> Nullable<Varchar>,
-        is_active -> Nullable<Bool>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::BillingStatus;
-
-    billing (id) {
-        id -> Int4,
-        freelancer_id -> Int4,
-        employer_id -> Int4,
-        post_id -> Int4,
-        comment_id -> Nullable<Int4>,
-        amount -> Float8,
-        description -> Text,
-        max_revisions -> Int4,
-        revisions_used -> Int4,
-        status -> BillingStatus,
-        work_description -> Nullable<Text>,
-        deliverable_url -> Nullable<Text>,
-        revision_feedback -> Nullable<Text>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        paid_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -254,7 +201,7 @@ diesel::table! {
         id -> Varchar,
         room_name -> Varchar,
         created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -266,7 +213,7 @@ diesel::table! {
         content -> Text,
         status -> Int2,
         created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -395,7 +342,7 @@ diesel::table! {
         id -> Int4,
         local_user_id -> Int4,
         email -> Text,
-        verification_code -> Text,
+        verification_token -> Text,
         published_at -> Timestamptz,
     }
 }
@@ -507,7 +454,6 @@ diesel::table! {
         users_active_month -> Int8,
         users_active_half_year -> Int8,
         disable_email_notifications -> Bool,
-        verify_with_otp -> Bool,
     }
 }
 
@@ -549,6 +495,7 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::CommentSortTypeEnum;
     use super::sql_types::VoteShowEnum;
+    use super::sql_types::RoleEnum;
 
     local_user (id) {
         id -> Int4,
@@ -588,6 +535,7 @@ diesel::table! {
         show_downvotes -> VoteShowEnum,
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
+        role -> RoleEnum,
     }
 }
 
@@ -829,9 +777,6 @@ diesel::table! {
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
         instance_id -> Int4,
-        contact_id -> Int4,
-        address_id -> Int4,
-        identity_card_id -> Int4,
         post_count -> Int8,
         post_score -> Int8,
         comment_count -> Int8,
@@ -906,9 +851,8 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::JobTypeEnum;
     use super::sql_types::IntendedUseEnum;
-
+    use super::sql_types::JobTypeEnum;
     post (id) {
         id -> Int4,
         #[max_length = 200]
@@ -1135,8 +1079,8 @@ tagline (id) {
 diesel::table! {
     wallet (id) {
         id -> Int4,
-        balance -> Float8,
-        escrow_balance -> Float8,
+        balance -> Nullable<Float8>,
+        escrow_balance -> Nullable<Float8>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1154,152 +1098,18 @@ diesel::table! {
         comment_id -> Nullable<Int4>,
         amount -> Float8,
         description -> Text,
+        max_revisions -> Int4,
+        revisions_used -> Int4,
         status -> BillingStatus,
         work_description -> Nullable<Text>,
         deliverable_url -> Nullable<Text>,
+        revision_feedback -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         paid_at -> Nullable<Timestamptz>,
     }
 }
 
-diesel::table! {
-    billing_milestones (id) {
-        id -> Int4,
-        billing_id -> Int4,
-        seq -> Int4,
-        name -> Text,
-        amount -> Float8,
-        status -> Text,
-        submitted_at -> Timestamptz,
-        approved_at -> Nullable<Timestamptz>,
-        released_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    contact (id) {
-        id -> Int4,
-        phone -> Nullable<Text>,
-        email -> Nullable<Text>,
-        secondary_email -> Nullable<Text>,
-        line_id -> Nullable<Text>,
-        facebook -> Nullable<Text>,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    address (id) {
-        id -> Int4,
-        address_line1 -> Text,
-        address_line2 -> Nullable<Text>,
-        subdistrict -> Nullable<Text>,
-        district -> Text,
-        province -> Text,
-        postal_code -> Text,
-        #[max_length = 2]
-        country_id -> Varchar,
-        is_default -> Bool,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    identity_card (id) {
-        id -> Int4,
-        address_id -> Int4,
-        id_number -> Nullable<Text>,
-        issued_date -> Nullable<Date>,
-        expiry_date -> Nullable<Date>,
-        full_name -> Nullable<Text>,
-        date_of_birth -> Nullable<Date>,
-        nationality -> Nullable<Text>,
-        is_verified -> Bool,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    banks (id) {
-        id -> Int4,
-        name -> Varchar,
-        #[max_length = 2]
-        country_id -> Varchar,
-        bank_code -> Nullable<Varchar>,
-        swift_code -> Nullable<Varchar>,
-        is_active -> Nullable<Bool>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    user_bank_accounts (id) {
-        id -> Int4,
-        local_user_id -> Int4,
-        bank_id -> Int4,
-        account_number -> Varchar,
-        account_name -> Varchar,
-        is_default -> Nullable<Bool>,
-        is_verified -> Bool,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        verification_image_path -> Nullable<Varchar>,
-    }
-}
-
-diesel::table! {
-    education (id) {
-        id -> Int4,
-        person_id -> Int4,
-        school_name -> Text,
-        major -> Text,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    work_experience (id) {
-        id -> Int4,
-        person_id -> Int4,
-        company_name -> Text,
-        position -> Text,
-        start_date -> Date,
-        end_date -> Nullable<Date>,
-        is_current -> Nullable<Bool>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    skills (id) {
-        id -> Int4,
-        person_id -> Int4,
-        skill_name -> Text,
-        level_id -> Nullable<Int4>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    certificates (id) {
-        id -> Int4,
-        person_id -> Int4,
-        name -> Text,
-        achieved_date -> Date,
-        expires_date -> Date,
-        #[max_length = 255]
-        url -> Nullable<VarChar>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1311,6 +1121,7 @@ diesel::joinable!(admin_purge_person -> person (admin_person_id));
 diesel::joinable!(admin_purge_post -> community (community_id));
 diesel::joinable!(admin_purge_post -> person (admin_person_id));
 diesel::joinable!(billing -> comment (comment_id));
+diesel::joinable!(billing -> local_user (freelancer_id));
 diesel::joinable!(billing -> post (post_id));
 diesel::joinable!(comment -> language (language_id));
 diesel::joinable!(comment -> person (creator_id));
@@ -1327,7 +1138,6 @@ diesel::joinable!(community_language -> language (language_id));
 diesel::joinable!(community_report -> community (community_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
-diesel::joinable!(identity_card -> address (address_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
@@ -1413,15 +1223,7 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(user_bank_accounts -> banks (bank_id));
-diesel::joinable!(user_bank_accounts -> local_user (user_id));
-diesel::joinable!(person -> contact(contact_id));
-diesel::joinable!(person -> address (address_id));
-diesel::joinable!(person -> identity_card (identity_card_id));
-diesel::joinable!(education -> person (person_id));
-diesel::joinable!(work_experience -> person (person_id));
-diesel::joinable!(skills -> person (person_id));
-diesel::joinable!(certificates -> person (person_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1493,13 +1295,4 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   wallet,
-  contact,
-  address,
-  identity_card,
-  banks,
-  user_bank_accounts,
-  education,
-  work_experience,
-  skills,
-  certificates,
 );

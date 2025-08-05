@@ -1,0 +1,461 @@
+{
+  "info": {
+    "name": "Freelancer Payment System API",
+    "description": "Complete API collection for testing the freelancer payment system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8536"
+    },
+    {
+      "key": "freelancer_jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employer_jwt", 
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "post_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billing_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employer_user_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register Freelancer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"freelancer_test\",\n  \"password\": \"test123456\",\n  \"password_verify\": \"test123456\",\n  \"email\": \"freelancer@test.com\",\n  \"show_nsfw\": false,\n  \"captcha_uuid\": null,\n  \"captcha_answer\": null,\n  \"honeypot\": null,\n  \"answer\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "auth", "register"]
+            },
+            "description": "Register freelancer account. Save JWT token to freelancer_jwt variable."
+          }
+        },
+        {
+          "name": "Register Employer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"employer_test\",\n  \"password\": \"test123456\",\n  \"password_verify\": \"test123456\",\n  \"email\": \"employer@test.com\",\n  \"show_nsfw\": false,\n  \"captcha_uuid\": null,\n  \"captcha_answer\": null,\n  \"honeypot\": null,\n  \"answer\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "auth", "register"]
+            },
+            "description": "Register employer account. Save JWT token to employer_jwt variable."
+          }
+        },
+        {
+          "name": "Login Freelancer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username_or_email\": \"freelancer_test\",\n  \"password\": \"test123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Employer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username_or_email\": \"employer_test\",\n  \"password\": \"test123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Job Management",
+      "item": [
+        {
+          "name": "Create Job Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Website Development Project\",\n  \"body\": \"Need a freelancer to build a modern website with React and Node.js. The project includes user authentication, payment integration, and responsive design.\",\n  \"community_id\": 1,\n  \"nsfw\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/post",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "post"]
+            },
+            "description": "Create a job post. Save post_id from response."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Wallet Operations",
+      "item": [
+        {
+          "name": "Get Freelancer Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet"]
+            }
+          }
+        },
+        {
+          "name": "Get Employer Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employer_jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet"]
+            }
+          }
+        },
+        {
+          "name": "Deposit to Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "deposit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Quotation System",
+      "item": [
+        {
+          "name": "Create Quotation (Simple)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employer_id\": {{employer_user_id}},\n  \"post_id\": {{post_id}},\n  \"comment_id\": null,\n  \"price\": 1500.00,\n  \"proposal\": \"I will create a professional website with modern design and functionality.\",\n  \"name\": \"Website Development\",\n  \"job_description\": \"Complete website development including frontend and backend\",\n  \"work_steps\": [\"Planning and design\", \"Frontend development\", \"Backend development\", \"Testing and deployment\"],\n  \"revise_times\": 2,\n  \"revise_description\": \"Up to 2 rounds of revisions included\",\n  \"working_days\": 14,\n  \"deliverables\": [\"Complete website\", \"Source code\", \"Documentation\"],\n  \"note\": \"Price includes basic hosting setup\",\n  \"starting_day\": \"2025-08-05\",\n  \"delivery_day\": \"2025-08-19\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/create-invoice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "create-invoice"]
+            },
+            "description": "Create a simple quotation. Save billing_id from response."
+          }
+        },
+        {
+          "name": "Create Quotation (Detailed)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employer_id\": {{employer_user_id}},\n  \"post_id\": {{post_id}},\n  \"comment_id\": null,\n  \"price\": 2500.00,\n  \"proposal\": \"I will create a modern, responsive website using React for frontend and Node.js for backend. The site will include user authentication, database integration, and deployment setup.\",\n  \"name\": \"Modern Website Development\",\n  \"job_description\": \"Full-stack web development including frontend, backend, database design, and deployment\",\n  \"work_steps\": [\"Requirements analysis and planning\", \"Database schema design\", \"Backend API development with Node.js\", \"Frontend development with React\", \"Integration and testing\", \"Deployment and documentation\"],\n  \"revise_times\": 3,\n  \"revise_description\": \"Up to 3 rounds of revisions included for design changes, content updates, or minor functionality adjustments\",\n  \"working_days\": 21,\n  \"deliverables\": [\"Complete source code (frontend + backend)\", \"Deployed application on cloud platform\", \"Database setup and configuration\", \"API documentation\", \"User manual and admin guide\"],\n  \"note\": \"Price includes hosting setup for first 3 months. Additional features can be discussed separately.\",\n  \"starting_day\": \"2025-08-05\",\n  \"delivery_day\": \"2025-08-26\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/create-invoice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "create-invoice"]
+            },
+            "description": "Create a detailed quotation with all fields."
+          }
+        },
+        {
+          "name": "Approve Quotation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"billing_id\": {{billing_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/approve-quotation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "approve-quotation"]
+            },
+            "description": "Employer approves quotation to convert to order."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin Operations",
+      "item": [
+        {
+          "name": "Admin Top-up Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{employer_user_id}},\n  \"amount\": 1000.00,\n  \"reason\": \"Initial wallet funding for testing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/admin/wallet/top-up",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "admin", "wallet", "top-up"]
+            }
+          }
+        },
+        {
+          "name": "Admin Withdraw from Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{employer_user_id}},\n  \"amount\": 200.00,\n  \"reason\": \"Administrative adjustment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/admin/wallet/withdraw",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "admin", "wallet", "withdraw"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Account Information",
+      "item": [
+        {
+          "name": "Get Account Info (with Wallet)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v4/account",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account"]
+            },
+            "description": "Get account information including wallet data."
+          }
+        },
+        {
+          "name": "Get Site Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v4/site",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "site"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Error Testing",
+      "item": [
+        {
+          "name": "Test Negative Price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employer_id\": {{employer_user_id}},\n  \"post_id\": {{post_id}},\n  \"price\": -100.00,\n  \"proposal\": \"Test proposal\",\n  \"name\": \"Test Job\",\n  \"job_description\": \"Test description\",\n  \"work_steps\": [\"Step 1\"],\n  \"revise_times\": 1,\n  \"revise_description\": \"Test revisions\",\n  \"working_days\": 5,\n  \"deliverables\": [\"Test deliverable\"],\n  \"starting_day\": \"2025-08-05\",\n  \"delivery_day\": \"2025-08-10\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/create-invoice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "create-invoice"]
+            },
+            "description": "Test validation error for negative price."
+          }
+        },
+        {
+          "name": "Test Unauthorized Approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{freelancer_jwt}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"billing_id\": {{billing_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v4/account/wallet/approve-quotation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v4", "account", "wallet", "approve-quotation"]
+            },
+            "description": "Test authorization error - freelancer trying to approve quotation."
+          }
+        }
+      ]
+    }
+  ]
+}

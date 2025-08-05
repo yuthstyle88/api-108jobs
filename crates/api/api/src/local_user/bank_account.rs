@@ -71,7 +71,7 @@ pub async fn list_user_bank_accounts(
       account_number: view.user_bank_account.account_number,
       account_name: view.user_bank_account.account_name,
       is_default: view.user_bank_account.is_default.unwrap_or(false),
-      is_verified: view.user_bank_account.is_verified.unwrap_or(false),
+      is_verified: view.user_bank_account.is_verified,
       created_at: view.user_bank_account.created_at.to_rfc3339(),
     })
     .collect();

@@ -23,6 +23,7 @@ pub struct UserBankAccount {
   pub is_verified: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  pub verification_image_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]

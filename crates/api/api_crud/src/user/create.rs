@@ -134,6 +134,7 @@ pub async fn register(
   let conn = &mut get_conn(pool).await?;
   let tx_data = data.clone();
   let tx_context = context.clone();
+  let client_ip = req.peer_addr().map(|addr| addr.ip());
   let user = conn
    .run_transaction(|conn| {
      async move {
@@ -149,7 +150,7 @@ pub async fn register(
        };
 
        let local_user =
-        create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req).await?;
+        create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip).await?;
 
        if site_view.local_site.site_setup && require_registration_application {
          if let Some(answer) = tx_data.answer.clone() {
@@ -302,6 +303,7 @@ pub async fn register_with_oauth(
     // in a transaction, so that if any fail, the rows aren't created.
     let conn = &mut get_conn(pool).await?;
     let tx_context = context.clone();
+    let client_ip = req.peer_addr().map(|addr| addr.ip());
     let user = conn
      .run_transaction(|conn| {
        async move {
@@ -325,7 +327,7 @@ pub async fn register_with_oauth(
          };
 
          let local_user =
-          create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req)
+          create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip)
            .await?;
 
          // Create the oauth account
@@ -527,6 +529,7 @@ pub async fn authenticate_with_oauth(
       let conn = &mut get_conn(pool).await?;
       // let tx_data = data.clone();
       let tx_context = context.clone();
+      let client_ip = req.peer_addr().map(|addr| addr.ip());
       let user = conn
        .run_transaction(|conn| {
          async move {
@@ -551,7 +554,7 @@ pub async fn authenticate_with_oauth(
            };
 
            let local_user =
-            create_local_user(conn, language_tags, local_user_form, &site_view.local_site, &req)
+            create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip)
              .await?;
 
            // Create the oauth account
@@ -657,7 +660,7 @@ async fn create_local_user(
   language_tags: Vec<String>,
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
-  req: &HttpRequest,
+  client_ip: Option<std::net::IpAddr>,
 ) -> Result<LocalUser, FastJobError> {
   let conn_ = &mut conn.into();
   let all_languages = Language::read_all(conn_).await?;
@@ -694,7 +697,7 @@ async fn create_local_user(
   local_user_form.interface_language = interface_lang;
 
   // Detect user's country from IP address
-  if let Some(client_ip) = req.peer_addr().map(|addr| addr.ip()) {
+  if let Some(client_ip) = client_ip {
     let geo_service = GeolocationService::new();
     if let Ok(country_info) = geo_service.detect_country_from_ip(client_ip).await {
       local_user_form.country = Some(country_info.name);

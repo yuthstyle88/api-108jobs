@@ -31,7 +31,11 @@ impl GeolocationService {
     /// Detect country from IP address using ip-api.com (free tier)
     pub async fn detect_country_from_ip(&self, ip: IpAddr) -> FastJobResult<CountryInfo> {
         // Skip detection for local/private IPs
-        if ip.is_loopback() || ip.is_private() {
+        let is_private = match ip {
+            IpAddr::V4(v4) => v4.is_private(),
+            IpAddr::V6(v6) => v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local(),
+        };
+        if ip.is_loopback() || is_private {
             return Ok(CountryInfo {
                 name: "Thailand".to_string(), // Default for development
                 code: "TH".to_string(),
@@ -71,7 +75,11 @@ impl GeolocationService {
 
     /// Alternative method using a different free IP geolocation service
     pub async fn detect_country_from_ip_alt(&self, ip: IpAddr) -> FastJobResult<CountryInfo> {
-        if ip.is_loopback() || ip.is_private() {
+        let is_private = match ip {
+            IpAddr::V4(v4) => v4.is_private(),
+            IpAddr::V6(v6) => v6.is_loopback() || v6.is_unique_local() || v6.is_unicast_link_local(),
+        };
+        if ip.is_loopback() || is_private {
             return Ok(CountryInfo {
                 name: "Thailand".to_string(),
                 code: "TH".to_string(),

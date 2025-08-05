@@ -159,6 +159,8 @@ pub struct LocalUserInsertForm {
   pub show_person_votes: Option<bool>,
   #[new(default)]
   pub role: Option<Role>,
+  #[new(default)]
+  pub country: Option<String>,
 }
 
 #[derive(Clone, Default)]

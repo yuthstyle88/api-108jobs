@@ -471,7 +471,7 @@ diesel::table! {
     use super::sql_types::PostSortTypeEnum;
     use super::sql_types::CommentSortTypeEnum;
 
-    local_site (id) {
+local_site (id) {
         id -> Int4,
         site_id -> Int4,
         site_setup -> Bool,
@@ -1132,35 +1132,29 @@ tagline (id) {
 }
 
 diesel::table! {
-    wallet (id) {
+    user_bank_accounts (id) {
         id -> Int4,
-        balance -> Float8,
-        escrow_balance -> Float8,
+        user_id -> Int4,
+        bank_id -> Int4,
+        #[max_length = 50]
+        account_number -> Varchar,
+        #[max_length = 255]
+        account_name -> Varchar,
+        is_default -> Nullable<Bool>,
+        is_verified -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        is_verified -> Bool,
         verification_image_path -> Nullable<Varchar>,
     }
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::BillingStatus;
-
-    billing (id) {
+    wallet (id) {
         id -> Int4,
-        freelancer_id -> Int4,
-        employer_id -> Int4,
-        post_id -> Int4,
-        comment_id -> Nullable<Int4>,
-        amount -> Float8,
-        description -> Text,
-        status -> BillingStatus,
-        work_description -> Nullable<Text>,
-        deliverable_url -> Nullable<Text>,
+        balance -> Nullable<Float8>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        paid_at -> Nullable<Timestamptz>,
+        escrow_balance -> Nullable<Float8>,
     }
 }
 
@@ -1217,20 +1211,6 @@ diesel::table! {
         date_of_birth -> Nullable<Date>,
         nationality -> Nullable<Text>,
         is_verified -> Bool,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    banks (id) {
-        id -> Int4,
-        name -> Varchar,
-        #[max_length = 2]
-        country_id -> Varchar,
-        bank_code -> Nullable<Varchar>,
-        swift_code -> Nullable<Varchar>,
-        is_active -> Nullable<Bool>,
-        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }

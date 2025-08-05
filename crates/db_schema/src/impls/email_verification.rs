@@ -21,7 +21,7 @@ impl EmailVerification {
   pub async fn read_for_code(pool: &mut DbPool<'_>, code: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     email_verification::table
-      .filter(email_verification::verification_token.eq(code))
+      .filter(email_verification::verification_code.eq(code))
       .filter(email_verification::published_at.gt(now() - 7.days()))
       .first(conn)
       .await

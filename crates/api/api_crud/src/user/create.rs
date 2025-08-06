@@ -115,6 +115,8 @@ pub async fn register(
     let (_local_user, accepted_application) = LocalUser::check_is_email_taken(pool, email).await?;
     if !accepted_application {
       Err(FastJobErrorType::RequireVerification)?
+    }else {
+      Err(FastJobErrorType::EmailAlreadyExists)?
     }
   }
 

@@ -3381,6 +3381,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_bank_account",
  "lemmy_db_views_billing",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
@@ -3400,7 +3401,6 @@ dependencies = [
  "lemmy_db_views_vote",
  "lemmy_db_views_wallet",
  "lemmy_email",
- "lemmy_multilang",
  "lemmy_utils",
  "p256",
  "pretty_assertions",
@@ -3470,7 +3470,6 @@ dependencies = [
  "lemmy_db_views_site",
  "lemmy_db_views_wallet",
  "lemmy_email",
- "lemmy_multilang",
  "lemmy_utils",
  "log",
  "moka",
@@ -3509,7 +3508,6 @@ dependencies = [
  "lemmy_db_views_person",
  "lemmy_db_views_post",
  "lemmy_db_views_site",
- "lemmy_multilang",
  "lemmy_utils",
  "mime",
  "mime_guess",
@@ -3676,6 +3674,20 @@ dependencies = [
  "serial_test",
  "tracing",
  "unified-diff",
+]
+
+[[package]]
+name = "lemmy_db_views_bank_account"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]
@@ -4096,26 +4108,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy_multilang"
-version = "1.0.0-alpha.5"
-dependencies = [
- "anyhow",
- "html2text",
- "lemmy_db_schema",
- "lemmy_db_views_local_user",
- "lemmy_utils",
- "lettre",
- "maplit",
- "once_cell",
- "rand 0.9.1",
- "serde",
- "serde_json",
- "strfmt",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "lemmy_routes"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -4172,7 +4164,6 @@ dependencies = [
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_schema_setup",
- "lemmy_multilang",
  "lemmy_routes",
  "lemmy_utils",
  "lemmy_ws",
@@ -4465,12 +4456,6 @@ dependencies = [
  "proc-macro2",
  "quote",
 ]
-
-[[package]]
-name = "maplit"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "markdown-it"

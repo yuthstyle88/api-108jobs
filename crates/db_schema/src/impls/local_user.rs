@@ -169,7 +169,7 @@ impl LocalUser {
       .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
-  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<((LocalUserId, bool))> {
+  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<(LocalUserId, bool)> {
     let conn = &mut get_conn(pool).await?;
     let local_user = local_user::table
      .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))

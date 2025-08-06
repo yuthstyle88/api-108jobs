@@ -7,25 +7,21 @@ use crate::{
   },
   utils::{
     functions::{coalesce, lower},
-    get_conn,
-    now,
-    DbPool,
+    get_conn, now, DbPool,
   },
 };
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},
   result::Error,
-  CombineDsl,
-  ExpressionMethods,
-  QueryDsl,
+  CombineDsl, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
+use lemmy_db_schema_file::enums::Role;
 use lemmy_db_schema_file::{
   enums::CommunityVisibility,
   schema::{community, community_actions, local_user, person, registration_application},
 };
-use lemmy_db_schema_file::enums::Role;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUser {
@@ -98,7 +94,7 @@ impl LocalUser {
     local_user_id: LocalUserId,
     terms_accepted: bool,
     password: &str,
-    role_: Role
+    role_: Role,
   ) -> FastJobResult<Self> {
     #[derive(AsChangeset)]
     #[diesel(table_name = local_user)]
@@ -111,14 +107,14 @@ impl LocalUser {
     let form = UpdateForm {
       accepted_application: terms_accepted,
       password_encrypted: String::from(password_hash),
-        role: role_,
+      role: role_,
     };
     let conn = &mut get_conn(pool).await?;
-     diesel::update(local_user::table.find(local_user_id))
-     .set(form)
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+    diesel::update(local_user::table.find(local_user_id))
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
 
   pub async fn set_all_users_email_verified(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
@@ -169,15 +165,21 @@ impl LocalUser {
       .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
-  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<(LocalUserId, bool)> {
+  pub async fn check_is_email_taken(
+    pool: &mut DbPool<'_>,
+    email: &str,
+  ) -> FastJobResult<Option<(LocalUserId, bool)>> {
     let conn = &mut get_conn(pool).await?;
     let local_user = local_user::table
-     .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
-     .select((local_user::id,local_user::accepted_application))
-     .first::<(LocalUserId, bool)>(conn)
-     .await
-     .map_err(|_| FastJobErrorType::EmailNotFound)?;
-    Ok(local_user)
+      .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
+      .select((local_user::id, local_user::accepted_application))
+      .first::<(LocalUserId, bool)>(conn)
+      .await;
+
+    match local_user {
+      Ok((id, accepted)) => Ok(Some((id, accepted))),
+      Err(_) => Ok(None),
+    }
   }
 
   // TODO: maybe move this and pass in LocalUserView
@@ -185,10 +187,7 @@ impl LocalUser {
     pool: &mut DbPool<'_>,
     person_id_: PersonId,
   ) -> FastJobResult<UserBackupLists> {
-    use lemmy_db_schema_file::schema::{
-      instance,
-      instance_actions,
-    };
+    use lemmy_db_schema_file::schema::{instance, instance_actions};
     let conn = &mut get_conn(pool).await?;
 
     let blocked_instances = instance_actions::table
@@ -268,7 +267,10 @@ impl LocalUser {
       .select(community_actions::person_id);
 
     let res = admins.union_all(mods).get_results::<PersonId>(conn).await?;
-    let first_person = res.as_slice().first().ok_or(FastJobErrorType::NotHigherMod)?;
+    let first_person = res
+      .as_slice()
+      .first()
+      .ok_or(FastJobErrorType::NotHigherMod)?;
 
     // If the first result sorted by published is the acting mod
     if *first_person == admin_person_id {
@@ -322,7 +324,7 @@ impl LocalUserOptionHelper for Option<&LocalUser> {
       .map(|l| l.self_promotion)
       .unwrap_or(site.content_warning.is_some())
   }
-  
+
   fn hide_media(&self) -> bool {
     self.map(|l| l.hide_media).unwrap_or(false)
   }
@@ -438,10 +440,10 @@ mod tests {
       LocalUser::create(pool, &darwin_local_user_form, vec![]).await?;
 
     let check = LocalUser::check_is_email_taken(pool, darwin_email).await;
-    assert!(check.is_err());
+    assert!(check?.is_none());
 
     let passed_check = LocalUser::check_is_email_taken(pool, "not_charles@gmail.com").await;
-    assert!(passed_check.is_ok());
+    assert!(passed_check?.is_some());
 
     Ok(())
   }

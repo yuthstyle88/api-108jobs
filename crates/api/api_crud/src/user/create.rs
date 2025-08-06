@@ -112,11 +112,13 @@ pub async fn register(
   check_slurs_opt(&data.answer, &slur_regex)?;
 
   if let Some(email) = &data.email {
-    let (_local_user, accepted_application) = LocalUser::check_is_email_taken(pool, email).await?;
-    if !accepted_application {
-      Err(FastJobErrorType::RequireVerification)?
-    }else {
-      Err(FastJobErrorType::EmailAlreadyExists)?
+    let local_user = LocalUser::check_is_email_taken(pool, email).await?;
+    if let Some((_local_user, accept_app)) = local_user {
+      if accept_app {
+        Err(FastJobErrorType::EmailAlreadyExists)?
+      } else {
+        Err(FastJobErrorType::RequireVerification)?
+      }
     }
   }
 

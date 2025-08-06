@@ -13,7 +13,6 @@ use lemmy_api_utils::{
   utils::local_site_rate_limit_to_rate_limit_config,
 };
 use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
-use lemmy_multilang::load_all_translations;
 use lemmy_routes::{
   feeds,
   middleware::{
@@ -39,7 +38,6 @@ use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
-use std::path::Path;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 use lemmy_utils::redis::RedisClient;
@@ -244,7 +242,6 @@ fn create_http_server(
   // These must come before HttpServer creation so they can collect data across threads.
   let prom_api_metrics = new_prometheus_metrics()?;
   let idempotency_set = IdempotencySet::default();
-  let translations = load_all_translations(Path::new("crates/multilang/translations/website"))?;
   // Create Http server
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
@@ -282,10 +279,8 @@ fn create_http_server(
       ))
       // Application data - these don't affect middleware order
       .app_data(Data::new(context.clone()))
-      .app_data(Data::new(phoenix_manager.clone()))
-      .app_data(Data::new(translations.clone()));
+      .app_data(Data::new(phoenix_manager.clone()));
 
-    // The routes
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))
       .configure(feeds::config)

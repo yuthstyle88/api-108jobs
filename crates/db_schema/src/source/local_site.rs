@@ -1,3 +1,4 @@
+
 use crate::newtypes::{LocalSiteId, SiteId};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::{

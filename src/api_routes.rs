@@ -1,10 +1,10 @@
 use actix_web::{guard, web::*};
-use lemmy_api::lang::read::get_namespace;
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work, update_work_after_revision};
 use lemmy_api::local_user::bank_account::{create_bank_account, list_user_bank_accounts, set_default_bank_account, delete_bank_account, list_banks};
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
+use lemmy_api::admin::bank_account::{list_unverified_bank_accounts, verify_bank_account};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -360,6 +360,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/wallet")
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet)),
+            )
+            .service(
+              scope("/bank-account")
+                .route("/unverified", get().to(list_unverified_bank_accounts))
+                .route("/verify", post().to(verify_bank_account)),
             ),
         )
         .service(
@@ -394,6 +399,5 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/{filename}", get().to(get_image)),
         )
         // i18n Multi-languages
-        .service(scope("/i18n").route("/{lang}/{ns}", get().to(get_namespace))),
     );
 }

@@ -33,8 +33,24 @@ impl UserBankAccountView {
       .await
       .map_err(|_| FastJobErrorType::InvalidField("Bank not found or inactive".to_string()))?;
 
+    // Check if user has any existing bank accounts
+    let existing_accounts_count = user_bank_accounts::table
+      .filter(user_bank_accounts::user_id.eq(user_id))
+      .count()
+      .get_result::<i64>(conn)
+      .await?;
+
+    // Determine if this should be default account
+    let should_be_default = if existing_accounts_count == 0 {
+      // First bank account - automatically set as default
+      true
+    } else {
+      // Not first account - use provided preference or false
+      is_default.unwrap_or(false)
+    };
+
     // If setting as default, unset all other defaults for this user
-    if is_default.unwrap_or(false) {
+    if should_be_default {
       diesel::update(user_bank_accounts::table)
         .filter(user_bank_accounts::user_id.eq(user_id))
         .set(user_bank_accounts::is_default.eq(false))
@@ -56,7 +72,7 @@ impl UserBankAccountView {
       bank_id,
       account_number,
       account_name,
-      is_default,
+      is_default: Some(should_be_default),
       verification_image_path,
     };
 
@@ -145,7 +161,24 @@ impl UserBankAccountView {
       .await
       .map_err(|_| FastJobErrorType::InvalidField("Bank account not found".to_string()))?;
 
-    let was_default = account.is_default.unwrap_or(false);
+    let is_default = account.is_default.unwrap_or(false);
+
+    // Count total accounts for this user
+    let total_accounts = user_bank_accounts::table
+      .filter(user_bank_accounts::user_id.eq(user_id))
+      .count()
+      .get_result::<i64>(conn)
+      .await?;
+
+    // Prevent deletion of default account unless it's the only account
+    if is_default && total_accounts > 1 {
+      return Err(FastJobErrorType::InvalidField(
+        "Cannot delete default bank account. Please set another account as default first.".to_string()
+      ))?;
+    }
+
+    // If this is the only account, allow deletion (user will have no bank accounts)
+    // User can add a new account later when they need to make payments
 
     // Delete the account
     diesel::delete(user_bank_accounts::table)
@@ -153,22 +186,6 @@ impl UserBankAccountView {
       .filter(user_bank_accounts::user_id.eq(user_id))
       .execute(conn)
       .await?;
-
-    // If deleted account was default, set the next available account as default
-    if was_default {
-      if let Ok(next_account) = user_bank_accounts::table
-        .filter(user_bank_accounts::user_id.eq(user_id))
-        .order(user_bank_accounts::created_at.asc())
-        .first::<UserBankAccount>(conn)
-        .await
-      {
-        diesel::update(user_bank_accounts::table)
-          .filter(user_bank_accounts::id.eq(next_account.id))
-          .set(user_bank_accounts::is_default.eq(true))
-          .execute(conn)
-          .await?;
-      }
-    }
 
     Ok(true)
   }
@@ -181,7 +198,6 @@ impl UserBankAccountView {
     let results = user_bank_accounts::table
       .inner_join(banks::table)
       .filter(user_bank_accounts::is_verified.eq(false).or(user_bank_accounts::is_verified.is_null()))
-      .filter(banks::is_active.eq(true))
       .order(user_bank_accounts::created_at.desc())
       .select((UserBankAccount::as_select(), Bank::as_select()))
       .load::<(UserBankAccount, Bank)>(conn)

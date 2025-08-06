@@ -80,7 +80,6 @@ members = [
     "crates/db_views/billing",
     "crates/db_views/bank_account",
     "crates/routes",
-    "crates/multilang",
     "crates/ws",
     "crates/email",
 ]
@@ -125,7 +124,6 @@ lemmy_api_utils = { version = "=1.0.0-alpha.5", path = "./crates/api/api_utils" 
 lemmy_api_common = { version = "=1.0.0-alpha.5", path = "./crates/api/api_common" }
 lemmy_routes = { version = "=1.0.0-alpha.5", path = "./crates/routes" }
 lemmy_email = { version = "=1.0.0-alpha.5", path = "./crates/email" }
-lemmy_multilang = { version = "=1.0.0-alpha.5", path = "crates/multilang" }
 lemmy_db_views_comment = { version = "=1.0.0-alpha.5", path = "./crates/db_views/comment" }
 lemmy_db_views_community_person_ban = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community_person_ban" }
 lemmy_db_views_community = { version = "=1.0.0-alpha.5", path = "./crates/db_views/community" }
@@ -264,5 +262,4 @@ rustls = { workspace = true }
 tokio.workspace = true
 clap = { workspace = true }
 actix = { workspace = true }
-lemmy_multilang = { workspace = true }
 mimalloc = "0.1.46"

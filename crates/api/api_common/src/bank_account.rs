@@ -128,6 +128,7 @@ pub struct UnverifiedBankAccountResponse {
   pub bank_country: String,
   pub account_number: String,
   pub account_name: String,
+  pub is_default: bool,
   pub verification_image_path: Option<String>,
   pub created_at: String,
 }

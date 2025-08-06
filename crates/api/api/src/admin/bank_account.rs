@@ -29,6 +29,7 @@ pub async fn list_unverified_bank_accounts(
       bank_country: view.bank.country,
       account_number: view.user_bank_account.account_number,
       account_name: view.user_bank_account.account_name,
+      is_default: view.user_bank_account.is_default.unwrap_or(false),
       verification_image_path: view.user_bank_account.verification_image_path,
       created_at: view.user_bank_account.created_at.to_rfc3339(),
     })

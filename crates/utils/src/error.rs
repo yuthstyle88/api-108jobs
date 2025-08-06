@@ -74,6 +74,7 @@ pub enum FastJobErrorType {
   RegistrationApplicationAnswerRequired,
   RegistrationUsernameRequired,
   EmailAlreadyExists,
+  RequireVerification,
   UsernameAlreadyExists,
   PersonIsBannedFromCommunity,
   NoIdGiven,

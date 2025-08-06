@@ -21,14 +21,15 @@ pub async fn verify_email(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<VerifyEmailSuccessResponse>> {
   SiteView::read_local(&mut context.pool()).await?;
-  let code = data.code.clone();
-  let verification = EmailVerification::read_for_code(&mut context.pool(), &code).await?;
+  let token = data.token.clone();
+  let verification = EmailVerification::read_for_code(&mut context.pool(), &token).await?;
   let local_user_id = verification.local_user_id;
   let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
 
   let form = LocalUserUpdateForm {
     // necessary in case this is a new signup
     email_verified: Some(true),
+    accepted_application: Some(false),
     // necessary in case multilang of an existing user was changed
     email: Some(Some(verification.email)),
     ..Default::default()

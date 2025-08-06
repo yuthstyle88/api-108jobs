@@ -169,16 +169,15 @@ impl LocalUser {
       .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
-  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<()> {
-    use diesel::dsl::{exists, select};
+  pub async fn check_is_email_taken(pool: &mut DbPool<'_>, email: &str) -> FastJobResult<((LocalUserId, bool))> {
     let conn = &mut get_conn(pool).await?;
-    select(not(exists(local_user::table.filter(
-      lower(coalesce(local_user::email, "")).eq(email.to_lowercase()),
-    ))))
-    .get_result::<bool>(conn)
-    .await?
-    .then_some(())
-    .ok_or(FastJobErrorType::EmailAlreadyExists.into())
+    let local_user = local_user::table
+     .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
+     .select((local_user::id,local_user::accepted_application))
+     .first::<(LocalUserId, bool)>(conn)
+     .await
+     .map_err(|_| FastJobErrorType::EmailNotFound)?;
+    Ok(local_user)
   }
 
   // TODO: maybe move this and pass in LocalUserView

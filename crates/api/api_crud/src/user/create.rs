@@ -112,10 +112,13 @@ pub async fn register(
   check_slurs_opt(&data.answer, &slur_regex)?;
 
   if let Some(email) = &data.email {
-    LocalUser::check_is_email_taken(pool, email).await?;
+    let (_local_user, accepted_application) = LocalUser::check_is_email_taken(pool, email).await?;
+    if !accepted_application {
+      Err(FastJobErrorType::RequireVerification)?
+    }
   }
 
-  Person::check_username_taken(pool, &data.username).await?;
+  // Person::check_username_taken(pool, &data.username).await?;
 
   // Automatically set their application as accepted, if they created this with open registration.
   // Also fixes a bug which allows users to log in when registrations are changed to closed.

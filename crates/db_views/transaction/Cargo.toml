@@ -1,5 +1,6 @@
 [package]
-name = "lemmy_db_views_wallet"
+name = "lemmy_db_views_transaction"
+publish = false
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_db_views_wallet"
+name = "lemmy_db_views_transaction"
 path = "src/lib.rs"
 doctest = false
 
@@ -18,26 +19,24 @@ doctest = false
 workspace = true
 
 [features]
-full = [
-    "lemmy_db_schema/full",
-    "diesel",
-    "diesel-async",
-]
-ts-rs = ["dep:ts-rs"]
+full = ["lemmy_db_schema/full"]
 
 [dependencies]
-chrono = { workspace = true }
+lemmy_db_schema = { workspace = true, features = ["full"] }
+lemmy_db_schema_file = { workspace = true }
+lemmy_utils = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
 serde = { workspace = true }
 serde_with = { workspace = true }
-lemmy_db_schema = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
-diesel = { workspace = true, optional = true }
-diesel-async = { workspace = true, optional = true }
-lemmy_utils = { workspace = true }
+serde_json = { workspace = true }
 ts-rs = { workspace = true, optional = true }
+chrono = { workspace = true }
 bigdecimal = { version = "0.4", features = ["serde"] }
 num-traits = "0.2"
+lemmy_db_views_wallet = { workspace = true, features = ["full"] }
+lemmy_db_views_local_user = { workspace = true, features = ["full"] }
 
 [dev-dependencies]
-pretty_assertions = { workspace = true }
+tokio = { workspace = true }
 serial_test = { workspace = true }

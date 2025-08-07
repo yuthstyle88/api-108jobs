@@ -1,5 +1,5 @@
-use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId};
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::newtypes::{BillingId, PersonId, CommentId, PostId};
+use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::BillingStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -18,9 +18,9 @@ use lemmy_db_schema_file::schema::billing;
 pub struct Billing {
   pub id: BillingId,
   /// The freelancer who created this billing
-  pub freelancer_id: LocalUserId,
+  pub freelancer_person_id: PersonId,
   /// The employer who needs to pay this billing
-  pub employer_id: LocalUserId,
+  pub employer_person_id: PersonId,
   /// The job post this billing is for
   pub post_id: PostId,
   /// The comment/proposal this billing relates to
@@ -29,12 +29,18 @@ pub struct Billing {
   pub amount: f64,
   /// Description of work to be done
   pub description: String,
+  /// Maximum number of revisions allowed
+  pub max_revisions: i32,
+  /// Current number of revisions used
+  pub revisions_used: i32,
   /// Current status of the billing
   pub status: BillingStatus,
   /// Submitted work description
   pub work_description: Option<String>,
   /// URL to deliverable files
   pub deliverable_url: Option<String>,
+  /// Latest revision feedback from employer
+  pub revision_feedback: Option<String>,
   /// When the billing was created
   pub created_at: DateTime<Utc>,
   /// When the billing was last updated
@@ -54,6 +60,9 @@ pub struct BillingInsertForm {
   pub comment_id: Option<CommentId>,
   pub amount: f64,
   pub description: String,
+  pub max_revisions: i32,
+  #[new(default)]
+  pub revisions_used: Option<i32>,
   #[new(default)]
   pub status: Option<BillingStatus>,
   #[new(default)]
@@ -65,8 +74,10 @@ pub struct BillingInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = billing))]
 pub struct BillingUpdateForm {
   pub status: Option<BillingStatus>,
+  pub revisions_used: Option<i32>,
   pub work_description: Option<Option<String>>,
   pub deliverable_url: Option<Option<String>>,
+  pub revision_feedback: Option<Option<String>>,
   pub updated_at: Option<DateTime<Utc>>,
   pub paid_at: Option<Option<DateTime<Utc>>>,
 }

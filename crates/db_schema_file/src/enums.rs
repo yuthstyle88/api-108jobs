@@ -292,3 +292,70 @@ pub enum BillingStatus {
   /// Quotation/order cancelled before payment
   Cancelled,
 }
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::TransactionTypeEnum"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The transaction type for money transfers
+pub enum TransactionType {
+  /// Payment from employer to freelancer for completed job
+  JobPayment,
+  /// Money moved from wallet to escrow
+  EscrowDeposit,
+  /// Money released from escrow to freelancer
+  EscrowRelease,
+  /// Money refunded from escrow back to employer
+  EscrowRefund,
+  /// Admin adds money to user wallet
+  AdminTopUp,
+  /// Admin withdraws money from user wallet
+  AdminWithdraw,
+  /// User deposits money into their wallet
+  UserDeposit,
+  /// User withdraws money from their wallet
+  UserWithdraw,
+  /// Platform fee deduction
+  SystemFee,
+  /// General refund transaction
+  Refund,
+  /// Bonus payment
+  Bonus,
+  /// Penalty deduction
+  Penalty,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::TransactionStatusEnum"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The transaction status
+pub enum TransactionStatus {
+  /// Transaction initiated but not processed
+  #[default]
+  Pending,
+  /// Transaction being processed
+  Processing,
+  /// Transaction successfully completed
+  Completed,
+  /// Transaction failed
+  Failed,
+  /// Transaction was cancelled
+  Cancelled,
+  /// Transaction was refunded
+  Refunded,
+}

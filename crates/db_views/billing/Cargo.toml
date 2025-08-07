@@ -12,11 +12,15 @@ repository.workspace = true
 lemmy_db_schema = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_db_views_wallet = { workspace = true }
+lemmy_db_views_transaction = { workspace = true, features = ["full"] }
+lemmy_db_views_local_user = { workspace = true }
 lemmy_utils = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
+bigdecimal = { version = "0.4", features = ["serde"] }
+num-traits = "0.2"
 
 [dev-dependencies]
 tokio = { workspace = true }

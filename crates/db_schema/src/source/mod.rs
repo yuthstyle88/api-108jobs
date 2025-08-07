@@ -42,6 +42,7 @@ pub mod wallet;
 pub mod billing;
 pub mod bank;
 pub mod user_bank_account;
+pub mod transaction;
 pub mod chat_room;
 pub mod chat_message;
 pub mod contact;

@@ -72,6 +72,14 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "vote_show_enum"))]
     pub struct VoteShowEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "transaction_type_enum"))]
+    pub struct TransactionTypeEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "transaction_status_enum"))]
+    pub struct TransactionStatusEnum;
 }
 
 diesel::table! {
@@ -158,8 +166,8 @@ diesel::table! {
 
     billing (id) {
         id -> Int4,
-        freelancer_id -> Int4,
-        employer_id -> Int4,
+        freelancer_person_id -> Int4,
+        employer_person_id -> Int4,
         post_id -> Int4,
         comment_id -> Nullable<Int4>,
         amount -> Float8,
@@ -1132,6 +1140,28 @@ tagline (id) {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::{TransactionTypeEnum, TransactionStatusEnum};
+
+    transaction (id) {
+        id -> Int4,
+        from_user_id -> Nullable<Int4>,
+        to_user_id -> Nullable<Int4>,
+        amount -> Numeric,
+        transaction_type -> TransactionTypeEnum,
+        status -> TransactionStatusEnum,
+        billing_id -> Nullable<Int4>,
+        post_id -> Nullable<Int4>,
+        description -> Text,
+        reference_number -> Nullable<Text>,
+        metadata -> Nullable<Json>,
+        created_at -> Timestamptz,
+        completed_at -> Nullable<Timestamptz>,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     user_bank_accounts (id) {
         id -> Int4,
         user_id -> Int4,
@@ -1151,10 +1181,20 @@ diesel::table! {
 diesel::table! {
     wallet (id) {
         id -> Int4,
-        balance -> Nullable<Float8>,
+        available_balance -> Numeric,
+        escrow_balance -> Numeric,
+        pending_in -> Numeric,
+        pending_out -> Numeric,
+        reserved_balance -> Numeric,
+        is_frozen -> Bool,
+        freeze_reason -> Nullable<Text>,
+        currency -> Text,
+        version -> Int4,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        escrow_balance -> Nullable<Float8>,
+        last_transaction_at -> Nullable<Timestamptz>,
+        person_id -> Int4,
+        updated_by_person_id -> Nullable<Int4>,
     }
 }
 
@@ -1293,6 +1333,9 @@ diesel::joinable!(admin_purge_post -> community (community_id));
 diesel::joinable!(admin_purge_post -> person (admin_person_id));
 diesel::joinable!(billing -> comment (comment_id));
 diesel::joinable!(billing -> post (post_id));
+diesel::joinable!(billing -> person (freelancer_person_id));
+diesel::joinable!(chat_message -> chat_room (room_id));
+diesel::joinable!(chat_message -> local_user (sender_id));
 diesel::joinable!(comment -> language (language_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(comment -> post (post_id));
@@ -1394,8 +1437,11 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
+diesel::joinable!(transaction -> billing (billing_id));
+diesel::joinable!(transaction -> post (post_id));
 diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(user_bank_accounts -> local_user (user_id));
+diesel::joinable!(wallet -> person (person_id));
 diesel::joinable!(person -> contact(contact_id));
 diesel::joinable!(person -> address (address_id));
 diesel::joinable!(person -> identity_card (identity_card_id));
@@ -1483,4 +1529,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   work_experience,
   skills,
   certificates,
+    transaction,
 );

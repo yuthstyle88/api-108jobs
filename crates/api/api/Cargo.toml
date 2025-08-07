@@ -38,6 +38,7 @@ lemmy_db_views_report_combined = { workspace = true, features = ["full"] }
 lemmy_db_views_wallet = { workspace = true, features = ["full"] }
 lemmy_db_views_billing = { workspace = true }
 lemmy_db_views_bank_account = { workspace = true, features = ["full"] }
+lemmy_db_views_transaction = { workspace = true, features = ["full"] }
 lemmy_db_views_site = { workspace = true, features = ["full"] }
 lemmy_db_views_contact = { workspace = true, features = ["full"] }
 lemmy_db_views_address = { workspace = true, features = ["full"] }
@@ -67,6 +68,8 @@ diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
 either = { workspace = true }
 p256 = { workspace = true }
 hex = "0.4.3"
+bigdecimal = { version = "0.4", features = ["serde"] }
+num-traits = "0.2"
 
 [dev-dependencies]
 serial_test = { workspace = true }

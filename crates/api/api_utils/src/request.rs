@@ -6,7 +6,6 @@ use crate::{
 use actix_web::web::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
-use futures::StreamExt;
 use lemmy_db_schema::{
   source::{
     images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
@@ -171,19 +170,13 @@ async fn collect_bytes_until_limit(
   response: Response,
   requested_bytes: usize,
 ) -> Result<Vec<u8>, FastJobError> {
-  let mut stream = response.bytes_stream();
-  let mut bytes = Vec::with_capacity(requested_bytes);
-  while let Some(chunk) = stream.next().await {
-    let chunk = chunk.map_err(FastJobError::from)?;
-    // we may go over the requested size here but the important part is we don't keep aggregating
-    // more chunks than needed
-    bytes.extend_from_slice(&chunk);
-    if bytes.len() >= requested_bytes {
-      bytes.truncate(requested_bytes);
-      break;
-    }
+  let bytes = response.bytes().await.map_err(FastJobError::from)?;
+  // Truncate to requested size if necessary
+  if bytes.len() > requested_bytes {
+    Ok(bytes[..requested_bytes].to_vec())
+  } else {
+    Ok(bytes.to_vec())
   }
-  Ok(bytes)
 }
 
 /// Generates and saves a post thumbnail and metadata.

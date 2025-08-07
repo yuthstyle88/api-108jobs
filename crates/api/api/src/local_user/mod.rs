@@ -28,6 +28,7 @@ pub mod verify_email;
 pub mod exchange;
 pub mod update_term;
 pub mod wallet;
+pub mod enhanced_wallet;
 pub mod bank_account;
 pub mod education;
 pub mod work_experience;

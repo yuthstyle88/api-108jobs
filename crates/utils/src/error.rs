@@ -294,6 +294,8 @@ pub enum FastJobErrorType {
   CouldntDeleteBankAccount,
   CouldntUpdateBankAccount,
   CouldntUpdateBilling,
+  InsufficientBalance,
+  WalletUpdateFailed,
 }
 
 cfg_if! {

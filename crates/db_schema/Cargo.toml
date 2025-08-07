@@ -52,7 +52,7 @@ lemmy_utils = { workspace = true, optional = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_db_schema_setup = { workspace = true, optional = true }
 bcrypt = { workspace = true, optional = true }
-diesel = { workspace = true, optional = true }
+diesel = { workspace = true, features = ["numeric"], optional = true }
 diesel-derive-newtype = { workspace = true, optional = true }
 diesel-async = { workspace = true, features = [
     "deadpool",
@@ -74,6 +74,7 @@ derive-new.workspace = true
 tuplex = { workspace = true, optional = true }
 moka = { workspace = true, optional = true }
 validator = { workspace = true }
+bigdecimal = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 serial_test = { workspace = true }

@@ -82,6 +82,7 @@ members = [
     "crates/db_views/contact",
     "crates/db_views/address",
     "crates/db_views/identity_card",
+    "crates/db_views/transaction",
     "crates/routes",
     "crates/ws",
     "crates/email",
@@ -150,6 +151,7 @@ lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vo
 lemmy_db_views_wallet = { version = "=1.0.0-alpha.5", path = "./crates/db_views/wallet" }
 lemmy_db_views_billing = { version = "=1.0.0-alpha.5", path = "./crates/db_views/billing" }
 lemmy_db_views_bank_account = { version = "=1.0.0-alpha.5", path = "./crates/db_views/bank_account" }
+lemmy_db_views_transaction = { version = "=1.0.0-alpha.5", path = "./crates/db_views/transaction" }
 lemmy_db_views_contact = { version = "=1.0.0-alpha.5", path = "./crates/db_views/contact" }
 lemmy_db_views_address = { version = "=1.0.0-alpha.5", path = "./crates/db_views/address" }
 lemmy_db_views_identity_card = { version = "=1.0.0-alpha.5", path = "./crates/db_views/identity_card" }
@@ -161,6 +163,7 @@ diesel = { version = "2.2.10", features = [
     "serde_json",
     "uuid",
     "64-column-tables",
+    "numeric",
 ] }
 diesel_migrations = "2.2.0"
 diesel-async = "0.5.2"

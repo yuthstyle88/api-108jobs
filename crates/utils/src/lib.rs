@@ -9,12 +9,12 @@ cfg_if! {
     pub mod response;
     pub mod settings;
     pub mod utils;
+    pub mod crypto;
+    pub mod redis;
   }
 }
 
 pub mod error;
-pub mod crypto;
-pub mod redis;
 
 use std::time::Duration;
 

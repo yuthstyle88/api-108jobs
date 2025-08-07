@@ -309,6 +309,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
+            .service(
+              scope("/wallet")
+                .route("", get().to(get_wallet))
+                .route("/transactions", get().to(get_transactions))
+            )
             .service(scope("/wallet").route("", get().to(get_wallet)))
             // Bank account management scope
             .service(scope("/banks").route("", get().to(list_banks)))

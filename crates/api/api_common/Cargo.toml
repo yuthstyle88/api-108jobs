@@ -69,3 +69,4 @@ lemmy_db_views_bank_account.workspace = true
 lemmy_db_views_wallet.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }
 serde_with = "3.12.0"
+bigdecimal = { version = "0.4", features = ["serde"] }

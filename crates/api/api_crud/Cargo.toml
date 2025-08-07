@@ -54,6 +54,7 @@ diesel = "2.2.11"
 tracing = "0.1.41"
 p256 = { workspace = true }
 hex = "0.4.3"
+bigdecimal = { version = "0.4", features = ["serde"] }
 
 [package.metadata.cargo-shear]
 ignored = ["futures", "futures-util"]

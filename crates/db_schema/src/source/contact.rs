@@ -54,7 +54,6 @@ pub struct ContactUpdateForm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContactForm {
-  pub local_user_id: LocalUserId,
   pub phone: Option<String>,
   pub email: Option<String>,
   pub secondary_email: Option<String>,
@@ -62,14 +61,14 @@ pub struct ContactForm {
   pub facebook: Option<String>,
 }
 
-impl TryFrom<ContactForm> for ContactInsertForm {
+impl TryFrom<(LocalUserId,ContactForm)> for ContactInsertForm {
   type Error = FastJobError;
 
-  fn try_from(form: ContactForm) -> Result<Self, Self::Error> {
+  fn try_from((local_user_id, form): (LocalUserId, ContactForm)) -> Result<Self, Self::Error> {
     let _ = validate_contact(&form)?;
 
     Ok(Self {
-      local_user_id: form.local_user_id,
+      local_user_id,
       phone: form.phone,
       email: form.email,
       secondary_email: form.secondary_email,
@@ -95,7 +94,14 @@ impl TryFrom<ContactForm> for ContactUpdateForm {
   }
 }
 fn validate_contact(form: &ContactForm) -> Result<(), FastJobError> {
-  if form.phone.is_none() && form.email.is_none() && form.line_id.is_none() && form.facebook.is_none() {
+  let has_contact = [
+    &form.phone,
+    &form.email,
+    &form.line_id,
+    &form.facebook,
+  ].iter().any(|f| f.is_some());
+
+  if !has_contact {
     return Err(FastJobErrorType::ValidationError("At least one contact method must be provided".to_string()).into());
   }
 

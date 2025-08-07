@@ -6,7 +6,6 @@ use serde_with::skip_serializing_none;
 use lemmy_db_schema_file::schema::address;
 use std::convert::TryFrom;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
-use crate::source::contact::Contact;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -63,7 +62,6 @@ pub struct AddressUpdateForm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddressForm {
-  pub local_user_id: LocalUserId,
   pub address_line1: String,
   pub address_line2: Option<String>,
   pub subdistrict: Option<String>,
@@ -74,15 +72,15 @@ pub struct AddressForm {
   pub is_default: Option<bool>,
 }
 
-impl TryFrom<AddressForm> for AddressInsertForm {
+impl TryFrom<(LocalUserId,AddressForm)> for AddressInsertForm {
   type Error = FastJobError;
 
-  fn try_from(form: AddressForm) -> Result<Self, Self::Error> {
+  fn try_from((local_user_id, form): (LocalUserId, AddressForm)) -> Result<Self, Self::Error> {
     // Validate that required fields are not empty
     let _ = validate_address(&form)?;
 
     Ok(Self {
-      local_user_id: form.local_user_id,
+      local_user_id,
       address_line1: form.address_line1,
       address_line2: form.address_line2,
       subdistrict: form.subdistrict,
@@ -142,8 +140,8 @@ fn validate_address(form: &AddressForm) -> Result<(), FastJobError> {
 }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ContactResponse {
-  pub contact: Contact,
+pub struct AddressResponse {
+  pub contact: Address,
 }
 
 #[derive(Debug, Deserialize)]

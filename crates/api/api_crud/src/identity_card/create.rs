@@ -2,7 +2,7 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::identity_card::{IdentityCard, IdentityCardForm};
+use lemmy_db_schema::source::identity_card::{IdentityCard, IdentityCardForm, IdentityCardInsertForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_identity_card::{IdentityCardView, api::IdentityCardResponse};
 use lemmy_db_views_local_user::LocalUserView;
@@ -16,10 +16,8 @@ pub async fn create_identity_card(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<IdentityCardResponse>> {
   // Convert the form data to an insert form
-  let form = IdentityCardForm {
-    local_user_id: local_user_view.local_user.id,
-    ..data.into_inner()
-  }.try_into()?;
+  let form: IdentityCardInsertForm = (local_user_view.local_user.id, data.into_inner()
+  ).try_into()?;
   // Insert the identity card into the database
   let identity_card = IdentityCard::create(&mut context.pool(), &form).await?;
   

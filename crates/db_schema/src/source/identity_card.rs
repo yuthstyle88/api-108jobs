@@ -62,7 +62,6 @@ pub struct IdentityCardUpdateForm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentityCardForm {
-  pub local_user_id: LocalUserId,
   pub address_id: Option<AddressId>,
   pub id_number: Option<String>,
   pub issued_date: Option<NaiveDate>,
@@ -73,10 +72,10 @@ pub struct IdentityCardForm {
   pub is_verified: Option<bool>,
 }
 
-impl TryFrom<IdentityCardForm> for IdentityCardInsertForm {
+impl TryFrom<(LocalUserId, IdentityCardForm)> for IdentityCardInsertForm {
   type Error = FastJobError;
 
-  fn try_from(form: IdentityCardForm) -> Result<Self, Self::Error> {
+  fn try_from((local_user_id, form): (LocalUserId, IdentityCardForm)) -> Result<Self, Self::Error> {
     // Validate that required fields are not empty
     if form.id_number.is_none() {
       return Err(FastJobErrorType::ValidationError("ID number cannot be empty".to_string()).into());
@@ -88,7 +87,7 @@ impl TryFrom<IdentityCardForm> for IdentityCardInsertForm {
    }
 
     Ok(Self {
-      local_user_id: form.local_user_id,
+      local_user_id,
       address_id: form.address_id,
       id_number: form.id_number.unwrap(),
       issued_date: form.issued_date,

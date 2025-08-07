@@ -2,7 +2,7 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::address::{Address, AddressForm};
+use lemmy_db_schema::source::address::{Address, AddressForm, AddressInsertForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::{AddressView, api::AddressResponse};
 use lemmy_db_views_local_user::LocalUserView;
@@ -16,10 +16,9 @@ pub async fn create_address(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AddressResponse>> {
   // Convert the form data to an insert form
-  let form = AddressForm {
-    local_user_id: local_user_view.local_user.id,
-    ..data.into_inner()
-  }.try_into()?;
+
+  let form: AddressInsertForm = (local_user_view.local_user.id, data.into_inner())
+   .try_into()?;
   // Insert the address into the database
   let address = Address::create(&mut context.pool(), &form).await?;
   

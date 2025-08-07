@@ -2,7 +2,7 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::contact::ContactForm;
+use lemmy_db_schema::source::contact::{ContactForm, ContactInsertForm};
 use lemmy_db_schema::{
   source::contact::{Contact},
   traits::Crud,
@@ -18,10 +18,8 @@ pub async fn create_contact(
   context: web::Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ContactResponse>> {
-  let form = ContactForm {
-    local_user_id: local_user_view.local_user.id,
-    ..data.into_inner()
-  }.try_into()?;
+  let form: ContactInsertForm = (local_user_view.local_user.id, data.into_inner()
+  ).try_into()?;
   // Create the contact
   let contact = Contact::create(&mut context.pool(), &form).await?;
   let contact_view = ContactView { contact };

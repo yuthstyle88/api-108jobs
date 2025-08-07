@@ -105,6 +105,12 @@ pub struct PersonInsertForm {
   pub matrix_user_id: Option<String>,
   #[new(default)]
   pub bot_account: Option<bool>,
+  #[new(default)]
+  pub address_id: Option<AddressId>,
+  #[new(default)]
+  pub contact_id: Option<ContactId>,
+  #[new(default)]
+  pub identity_card_id: Option<IdentityCardId>,
 }
 
 #[derive(Clone, Default)]

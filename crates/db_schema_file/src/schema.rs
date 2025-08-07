@@ -1137,7 +1137,8 @@ diesel::table! {
         district -> Text,
         province -> Text,
         postal_code -> Text,
-        country_id -> Text,
+        #[max_length = 2]
+        country_id -> Varchar,
         is_default -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
@@ -1147,13 +1148,13 @@ diesel::table! {
 diesel::table! {
     identity_card (id) {
         id -> Int4,
-        address_id -> Nullable<Int4>,
+        address_id -> Int4,
         id_number -> Text,
-        issued_date -> Nullable<Date>,
-        expiry_date -> Nullable<Date>,
-        full_name -> Nullable<Text>,
-        date_of_birth -> Nullable<Date>,
-        nationality -> Nullable<Text>,
+        issued_date -> Date,
+        expiry_date -> Date,
+        full_name -> Text,
+        date_of_birth -> Date,
+        nationality -> Text,
         is_verified -> Bool,
         created_at -> Timestamptz,
     }
@@ -1163,6 +1164,7 @@ diesel::table! {
     banks (id) {
         id -> Int4,
         name -> Varchar,
+        #[max_length = 2]
         country_id -> Varchar,
         bank_code -> Nullable<Varchar>,
         swift_code -> Nullable<Varchar>,

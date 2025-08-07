@@ -18,13 +18,13 @@ use lemmy_utils::utils::validation::is_valid_issued_and_expiry;
 #[serde(rename_all = "camelCase")]
 pub struct IdentityCard {
   pub id: IdentityCardId,
-  pub address_id: Option<AddressId>,
+  pub address_id: AddressId,
   pub id_number: String,
-  pub issued_date: Option<NaiveDate>,
-  pub expiry_date: Option<NaiveDate>,
-  pub full_name: Option<String>,
-  pub date_of_birth: Option<NaiveDate>,
-  pub nationality: Option<String>,
+  pub issued_date: NaiveDate,
+  pub expiry_date: NaiveDate,
+  pub full_name: String,
+  pub date_of_birth: NaiveDate,
+  pub nationality: String,
   pub is_verified: bool,
   pub created_at: DateTime<Utc>,
 }
@@ -33,13 +33,13 @@ pub struct IdentityCard {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = identity_card))]
 pub struct IdentityCardInsertForm {
-  pub address_id: Option<AddressId>,
+  pub address_id: AddressId,
   pub id_number: String,
-  pub issued_date: Option<NaiveDate>,
-  pub expiry_date: Option<NaiveDate>,
-  pub full_name: Option<String>,
-  pub date_of_birth: Option<NaiveDate>,
-  pub nationality: Option<String>,
+  pub issued_date: NaiveDate,
+  pub expiry_date: NaiveDate,
+  pub full_name: String,
+  pub date_of_birth: NaiveDate,
+  pub nationality: String,
   pub is_verified: Option<bool>,
 }
 

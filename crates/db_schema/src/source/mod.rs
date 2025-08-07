@@ -44,6 +44,9 @@ pub mod bank;
 pub mod user_bank_account;
 pub mod chat_room;
 pub mod chat_message;
+pub mod contact;
+pub mod address;
+pub mod identity_card;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

@@ -6,7 +6,6 @@ use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryD
 use lemmy_api_utils::{
   claims::Claims,
   context::FastJobContext,
-  geolocation::GeolocationService,
   utils::{
     check_email_verified,
     check_local_user_valid,
@@ -113,16 +112,15 @@ pub async fn register(
   check_slurs_opt(&data.answer, &slur_regex)?;
 
   if let Some(email) = &data.email {
-    let local_user = LocalUser::check_is_email_taken(pool, email).await?;
-    if let Some((_local_user, accept_app)) = local_user {
-      if accept_app {
-        Err(FastJobErrorType::EmailAlreadyExists)?
-      } else {
-        Err(FastJobErrorType::RequireVerification)?
-      }
+    match LocalUser::check_is_email_taken(pool, email).await? {
+      //when accept application is true
+      Some((_, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
+      //when accept application is false
+      Some(_) => Err(FastJobErrorType::RequireVerification)?,
+      //when an email doesn't exist
+      None => (),
     }
   }
-
   // Person::check_username_taken(pool, &data.username).await?;
 
   // Automatically set their application as accepted, if they created this with open registration.
@@ -141,7 +139,6 @@ pub async fn register(
   let conn = &mut get_conn(pool).await?;
   let tx_data = data.clone();
   let tx_context = context.clone();
-  let client_ip = req.peer_addr().map(|addr| addr.ip());
   let user = conn
    .run_transaction(|conn| {
      async move {
@@ -157,7 +154,7 @@ pub async fn register(
        };
 
        let local_user =
-        create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip).await?;
+        create_local_user(conn, language_tags, local_user_form, &site_view.local_site).await?;
 
        if site_view.local_site.site_setup && require_registration_application {
          if let Some(answer) = tx_data.answer.clone() {
@@ -230,7 +227,7 @@ pub async fn register_with_oauth(
   let site_view = SiteView::read_local(pool).await?;
   let local_site = site_view.local_site.clone();
 
-  // Show self_promotion content if param is true, or if content_warning exists
+  // Show self_promotion content if the param is true or if content_warning exists
   let self_promotion = data
    .self_promotion
    .unwrap_or(site_view.site.content_warning.is_some());
@@ -310,7 +307,7 @@ pub async fn register_with_oauth(
     // in a transaction, so that if any fail, the rows aren't created.
     let conn = &mut get_conn(pool).await?;
     let tx_context = context.clone();
-    let client_ip = req.peer_addr().map(|addr| addr.ip());
+
     let user = conn
      .run_transaction(|conn| {
        async move {
@@ -334,7 +331,7 @@ pub async fn register_with_oauth(
          };
 
          let local_user =
-          create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip)
+          create_local_user(conn, language_tags, local_user_form, &site_view.local_site)
            .await?;
 
          // Create the oauth account
@@ -536,7 +533,6 @@ pub async fn authenticate_with_oauth(
       let conn = &mut get_conn(pool).await?;
       // let tx_data = data.clone();
       let tx_context = context.clone();
-      let client_ip = req.peer_addr().map(|addr| addr.ip());
       let user = conn
        .run_transaction(|conn| {
          async move {
@@ -561,7 +557,7 @@ pub async fn authenticate_with_oauth(
            };
 
            let local_user =
-            create_local_user(conn, language_tags, local_user_form, &site_view.local_site, client_ip)
+            create_local_user(conn, language_tags, local_user_form, &site_view.local_site)
              .await?;
 
            // Create the oauth account
@@ -667,7 +663,6 @@ async fn create_local_user(
   language_tags: Vec<String>,
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
-  client_ip: Option<std::net::IpAddr>,
 ) -> Result<LocalUser, FastJobError> {
   let conn_ = &mut conn.into();
   let all_languages = Language::read_all(conn_).await?;
@@ -702,20 +697,6 @@ async fn create_local_user(
     None
   };
   local_user_form.interface_language = interface_lang;
-
-  // Detect user's country from IP address
-  if let Some(client_ip) = client_ip {
-    let geo_service = GeolocationService::new();
-    if let Ok(country_info) = geo_service.detect_country_from_ip(client_ip).await {
-      local_user_form.country = Some(country_info.name);
-    } else {
-      // Default to Thailand if geolocation fails
-      local_user_form.country = Some("Thailand".to_string());
-    }
-  } else {
-    // Default to Thailand if IP detection fails
-    local_user_form.country = Some("Thailand".to_string());
-  }
 
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 

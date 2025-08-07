@@ -4,6 +4,7 @@ use invisible_characters::INVISIBLE_CHARS;
 use itertools::Itertools;
 use regex::{Regex, RegexBuilder, RegexSet};
 use std::sync::LazyLock;
+use diesel::internal::derives::multiconnection::chrono::NaiveDate;
 use unicode_segmentation::UnicodeSegmentation;
 use url::{ParseError, Url};
 
@@ -377,6 +378,20 @@ pub fn is_valid_email(email: &str) -> bool {
   email_re.is_match(email)
 }
 
+pub fn is_valid_phone(phone: &str) -> bool {
+  // Basic phone validation: only contains digits, +, -, and spaces
+  // and has at least 7 digits
+  let digit_count = phone.chars().filter(|c| c.is_digit(10)).count();
+  let valid_chars = phone.chars().all(|c| c.is_digit(10) || c == '+' || c == '-' || c == ' ');
+
+  valid_chars && digit_count >= 7
+}
+pub fn is_valid_issued_and_expiry(issued: Option<NaiveDate>, expiry: Option<NaiveDate>) -> bool {
+  match (issued, expiry) {
+    (Some(issued), Some(expiry)) => expiry > issued,
+    _ => true, // ถ้าไม่มีวันใดวันหนึ่ง ถือว่าผ่าน
+  }
+}
 pub fn get_required_trimmed(
   field: &Option<String>,
   err: FastJobErrorType,

@@ -10,7 +10,7 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{local_user, wallet};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl WalletView {
   pub async fn read(pool: &mut DbPool<'_>, wallet_id: WalletId) -> Result<Self, Error> {
@@ -19,7 +19,7 @@ impl WalletView {
     Ok(WalletView { wallet })
   }
 
-  pub async fn read_by_user(pool: &mut DbPool<'_>, user_id: LocalUserId) -> FastJobResult<Option<Self>> {
+  pub async fn read_by_user(pool: &mut DbPool<'_>, user_id: LocalUserId) -> FastJobResult<Wallet> {
     let conn = &mut get_conn(pool).await?;
     
     let wallet_opt = local_user::table
@@ -28,9 +28,8 @@ impl WalletView {
       .select(Wallet::as_select())
       .first::<Wallet>(conn)
       .await
-      .optional()?;
-
-    Ok(wallet_opt.map(|wallet| WalletView { wallet }))
+      .with_fastjob_type(FastJobErrorType::CouldntFindWalletByUser)?;
+    Ok(wallet_opt)
   }
   pub async fn create_wallet(pool: &mut DbPool<'_>, form: &WalletInsertForm) -> Result<Wallet, Error> {
     let conn = &mut get_conn(pool).await?;
@@ -109,7 +108,7 @@ impl WalletView {
       .first::<Wallet>(conn)
       .await?;
 
-    let new_balance = current_wallet.balance.unwrap_or(0.0) + amount;
+    let new_balance = current_wallet.balance + amount;
     
     if new_balance < 0.0 {
       return Err(FastJobErrorType::InsufficientBalance)?;
@@ -118,7 +117,7 @@ impl WalletView {
     // Update wallet
     let update_form = WalletUpdateForm {
       balance: Some(new_balance),
-      escrow_balance: None, // Don't change escrow balance in regular deposits
+      escrow_balance: None, // Don't change the escrow balance in regular deposits
       updated_at: Some(chrono::Utc::now()),
     };
 
@@ -167,11 +166,9 @@ impl WalletView {
     }
     
     // Create wallet for freelancer if it doesn't exist
-    let wallet_view = Self::read_by_user(pool, freelancer_user_id).await?;
-    if wallet_view.is_none() {
-      Self::create_for_user(pool, freelancer_user_id).await?;
-    }
-    
+    let _wallet_view = Self::read_by_user(pool, freelancer_user_id).await?;
+    Self::create_for_user(pool, freelancer_user_id).await?;
+
     // Add to freelancer's wallet
     Self::update_balance(pool, freelancer_user_id, amount).await
   }
@@ -208,14 +205,10 @@ impl WalletView {
 
     // Get current balance before operation
     let current_wallet = Self::read_by_user(pool, user_id).await?;
-    let previous_balance = current_wallet.as_ref()
-      .map(|w| w.wallet.balance.unwrap_or(0.0))
-      .unwrap_or(0.0);
+    let previous_balance = current_wallet.balance;
 
     // Create wallet if doesn't exist
-    if current_wallet.is_none() {
-      Self::create_for_user(pool, user_id).await?;
-    }
+    Self::create_for_user(pool, user_id).await?;
 
     // Add funds to wallet
     let updated_wallet = Self::update_balance(pool, user_id, amount).await?;
@@ -234,10 +227,9 @@ impl WalletView {
     }
 
     // Get current wallet and check balance
-    let current_wallet = Self::read_by_user(pool, user_id).await?
-      .ok_or(FastJobErrorType::WalletNotFound)?;
+    let current_wallet = Self::read_by_user(pool, user_id).await?;
     
-    let previous_balance = current_wallet.wallet.balance.unwrap_or(0.0);
+    let previous_balance = current_wallet.balance;
     
     if previous_balance < amount {
       return Err(FastJobErrorType::InsufficientBalance)?;

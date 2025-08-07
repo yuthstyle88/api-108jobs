@@ -17,20 +17,12 @@ pub async fn get_wallet(
 
   let wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
 
-  let response = if let Some(wallet_view) = wallet_view {
-    GetWalletResponse {
-      wallet_id: Some(wallet_view.wallet.id),
-      balance: wallet_view.wallet.balance,
-      escrow_balance: wallet_view.wallet.escrow_balance,
-    }
-  } else {
-    GetWalletResponse {
-      wallet_id: None,
-      balance: None,
-      escrow_balance: None,
-    }
-  };
 
+  let response =  GetWalletResponse {
+      wallet_id: wallet_view.id,
+      balance: wallet_view.balance,
+      escrow_balance: wallet_view.escrow_balance,
+    };
   Ok(Json(response))
 }
 
@@ -42,18 +34,17 @@ pub async fn deposit_wallet(
   let user_id = local_user_view.local_user.id;
 
   // Create wallet if it doesn't exist
-  let wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
-  if wallet_view.is_none() {
-    WalletView::create_for_user(&mut context.pool(), user_id).await?;
-  }
+  let _wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
 
+  let _ =  WalletView::create_for_user(&mut context.pool(), user_id).await?;
+  
   // Deposit funds
   let updated_wallet = WalletView::deposit_funds(&mut context.pool(), user_id, data.amount).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,
-    balance: updated_wallet.balance.unwrap_or(0.0),
-    escrow_balance: updated_wallet.escrow_balance.unwrap_or(0.0),
+    balance: updated_wallet.balance,
+    escrow_balance: updated_wallet.escrow_balance,
     transaction_amount: data.amount,
     success: true,
   }))

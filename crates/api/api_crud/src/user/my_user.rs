@@ -47,6 +47,6 @@ pub async fn get_my_user(
     person_blocks,
     keyword_blocks,
     discussion_languages,
-    wallet: wallet.map(|w| w.wallet),
+    wallet: Some(wallet),
   }))
 }

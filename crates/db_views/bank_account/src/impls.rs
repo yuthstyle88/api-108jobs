@@ -1,13 +1,12 @@
-use crate::{UserBankAccountView, BankView};
+use crate::{BankView, UserBankAccountView};
 use diesel::{prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
-  newtypes::{LocalUserId, BankId, UserBankAccountId},
+  newtypes::{BankId, LocalUserId, UserBankAccountId},
   source::{
-    bank::{Bank, BankInsertForm},
-    user_bank_account::{UserBankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm},
+    bank::Bank,
+    user_bank_account::{UserBankAccount, UserBankAccountInsertForm},
   },
-  traits::Crud,
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{banks, user_bank_accounts};
@@ -119,7 +118,7 @@ impl UserBankAccountView {
     let conn = &mut get_conn(pool).await?;
     
     // Check if account belongs to user
-    let account = user_bank_accounts::table
+    let _account = user_bank_accounts::table
       .find(bank_account_id)
       .filter(user_bank_accounts::user_id.eq(user_id))
       .first::<UserBankAccount>(conn)
@@ -237,7 +236,7 @@ impl UserBankAccountView {
 impl BankView {
   pub async fn list_by_country(
     pool: &mut DbPool<'_>,
-    country: Option<String>,
+    country_id: Option<String>,
   ) -> FastJobResult<Vec<Bank>> {
     let conn = &mut get_conn(pool).await?;
     
@@ -245,19 +244,19 @@ impl BankView {
       .filter(banks::is_active.eq(true))
       .into_boxed();
 
-    if let Some(country_filter) = country {
+    if let Some(country_filter) = country_id {
       // Only allow Thailand and Vietnam
-      if !["Thailand", "Vietnam"].contains(&country_filter.as_str()) {
+      if !["TH", "VI"].contains(&country_filter.as_str()) {
         return Err(FastJobErrorType::InvalidField("Only Thailand and Vietnam banks are supported".to_string()))?;
       }
-      query = query.filter(banks::country.eq(country_filter));
+      query = query.filter(banks::country_id.eq(country_filter));
     } else {
       // Default to showing both Thailand and Vietnam banks
-      query = query.filter(banks::country.eq_any(vec!["Thailand", "Vietnam"]));
+      query = query.filter(banks::country_id.eq_any(vec!["Thailand", "Vietnam"]));
     }
 
     let banks = query
-      .order(banks::country.asc())
+      .order(banks::country_id.asc())
       .order(banks::name.asc())
       .load::<Bank>(conn)
       .await?;

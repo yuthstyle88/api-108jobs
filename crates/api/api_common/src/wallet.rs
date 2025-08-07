@@ -15,9 +15,9 @@ pub struct GetWallet {}
 #[serde(rename_all = "camelCase")]
 /// Response for getting wallet.
 pub struct GetWalletResponse {
-  pub wallet_id: Option<WalletId>,
-  pub balance: Option<f64>,
-  pub escrow_balance: Option<f64>, // Money held in escrow
+  pub wallet_id: WalletId,
+  pub balance: f64,
+  pub escrow_balance: f64, // Money held in escrow
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

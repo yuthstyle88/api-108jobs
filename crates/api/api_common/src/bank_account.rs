@@ -44,7 +44,7 @@ pub struct DeleteBankAccount {
 pub struct BankResponse {
   pub id: BankId,
   pub name: String,
-  pub country: String,
+  pub country_id: String,
   pub bank_code: Option<String>,
   pub swift_code: Option<String>,
 }
@@ -58,7 +58,7 @@ pub struct UserBankAccountResponse {
   pub id: UserBankAccountId,
   pub bank_id: BankId,
   pub bank_name: String,
-  pub bank_country: String,
+  pub bank_country_id: String,
   pub account_number: String,
   pub account_name: String,
   pub is_default: bool,
@@ -99,7 +99,7 @@ pub struct BankAccountOperationResponse {
 #[cfg_attr(feature = "full", derive(ts_rs::TS))]
 #[cfg_attr(feature = "full", ts(export))]
 #[serde(rename_all = "camelCase")]
-/// Verify bank account (admin only).
+/// Verify a bank account (admin only).
 pub struct VerifyBankAccount {
   pub bank_account_id: UserBankAccountId,
   pub verified: bool,
@@ -125,7 +125,7 @@ pub struct UnverifiedBankAccountResponse {
   pub user_id: LocalUserId,
   pub bank_id: BankId,
   pub bank_name: String,
-  pub bank_country: String,
+  pub bank_country_id: String,
   pub account_number: String,
   pub account_name: String,
   pub is_default: bool,

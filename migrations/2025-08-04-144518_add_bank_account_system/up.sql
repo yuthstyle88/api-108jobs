@@ -18,9 +18,10 @@ CREATE TABLE user_bank_accounts (
     account_number VARCHAR(50) NOT NULL,
     account_name VARCHAR(255) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
-    is_verified BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ,
+    verification_image_path VARCHAR(255)
 );
 
 -- Create indexes

@@ -34,3 +34,6 @@ pub mod tag;
 pub mod tagline;
 pub mod chat_message;
 pub mod chat_room;
+pub mod contact;
+pub mod address;
+mod identity_card;

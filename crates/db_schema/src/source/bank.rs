@@ -16,7 +16,7 @@ use lemmy_db_schema_file::schema::banks;
 pub struct Bank {
   pub id: BankId,
   pub name: String,
-  pub country: String,
+  pub country_id: String,
   pub bank_code: Option<String>,
   pub swift_code: Option<String>,
   pub is_active: Option<bool>,
@@ -29,7 +29,7 @@ pub struct Bank {
 #[cfg_attr(feature = "full", diesel(table_name = banks))]
 pub struct BankInsertForm {
   pub name: String,
-  pub country: String,
+  pub country_id: String,
   pub bank_code: Option<String>,
   pub swift_code: Option<String>,
   pub is_active: Option<bool>,
@@ -40,7 +40,7 @@ pub struct BankInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = banks))]
 pub struct BankUpdateForm {
   pub name: Option<String>,
-  pub country: Option<String>,
+  pub country_id: Option<String>,
   pub bank_code: Option<Option<String>>,
   pub swift_code: Option<Option<String>>,
   pub is_active: Option<bool>,

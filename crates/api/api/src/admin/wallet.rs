@@ -10,7 +10,7 @@ pub async fn admin_top_up_wallet(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AdminWalletOperationResponse>> {
-  // Check if user is admin
+  // Check if the user is admin
   if !local_user_view.local_user.admin {
     return Err(lemmy_utils::error::FastJobErrorType::NotAnAdmin.into());
   }
@@ -25,7 +25,7 @@ pub async fn admin_top_up_wallet(
     user_id: data.user_id,
     wallet_id: updated_wallet.id,
     previous_balance,
-    new_balance: updated_wallet.balance.unwrap_or(0.0),
+    new_balance: updated_wallet.balance,
     operation_amount: data.amount,
     reason: data.reason.clone(),
     success: true,
@@ -52,7 +52,7 @@ pub async fn admin_withdraw_wallet(
     user_id: data.user_id,
     wallet_id: updated_wallet.id,
     previous_balance,
-    new_balance: updated_wallet.balance.unwrap_or(0.0),
+    new_balance: updated_wallet.balance,
     operation_amount: -data.amount, // Negative because it's a withdrawal
     reason: data.reason.clone(),
     success: true,

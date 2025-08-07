@@ -9,6 +9,7 @@ use i_love_jesus::CursorKeysModule;
 use lemmy_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use crate::newtypes::{ContactId, AddressId, IdentityCardId};
 use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
@@ -57,6 +58,12 @@ pub struct Person {
   /// Whether the person is a bot account.
   pub bot_account: bool,
   pub instance_id: InstanceId,
+  /// Reference to the contact information
+  pub contact_id: Option<ContactId>,
+  /// Reference to the address information
+  pub address_id: Option<AddressId>,
+  /// Reference to the address information
+  pub identity_card_id: Option<IdentityCardId>,
   pub post_count: i64,
   #[serde(skip)]
   pub post_score: i64,

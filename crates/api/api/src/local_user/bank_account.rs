@@ -6,6 +6,7 @@ use lemmy_api_common::bank_account::{
 };
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_bank_account::{UserBankAccountView, BankView};
+use lemmy_db_views_address::{AddressView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -15,8 +16,8 @@ pub async fn create_bank_account(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let user_id = local_user_view.local_user.id;
-  let user_country = &local_user_view.local_user.country;
-
+  let user_address_id = &local_user_view.person.address_id;
+  let country_id = "TH".to_string();
   // Validate account number format
   if data.account_number.trim().is_empty() || data.account_number.len() > 50 {
     return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Invalid account number".to_string()))?;
@@ -31,9 +32,9 @@ pub async fn create_bank_account(
   let bank = BankView::read(&mut context.pool(), data.bank_id).await
     .map_err(|_| lemmy_utils::error::FastJobErrorType::InvalidField("Bank not found".to_string()))?;
   
-  if bank.country != *user_country {
+  if bank.country_id != *country_id {
     return Err(lemmy_utils::error::FastJobErrorType::InvalidField(
-      format!("Bank {} is not available in your region ({})", bank.name, user_country)
+      format!("Bank {} is not available in your region ({:?})", bank.name, user_address_id)
     ))?;
   }
 
@@ -67,7 +68,7 @@ pub async fn list_user_bank_accounts(
       id: view.user_bank_account.id,
       bank_id: view.bank.id,
       bank_name: view.bank.name,
-      bank_country: view.bank.country,
+      bank_country_id: view.bank.country_id,
       account_number: view.user_bank_account.account_number,
       account_name: view.user_bank_account.account_name,
       is_default: view.user_bank_account.is_default.unwrap_or(false),
@@ -123,17 +124,18 @@ pub async fn list_banks(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListBanksResponse>> {
-  let user_country = &local_user_view.local_user.country;
-  
+  let local_user_id = local_user_view.local_user.id;
+
+  let country_id = AddressView::find_by_local_user_id(&mut context.pool(), local_user_id).await?;
   // Filter banks by user's country
-  let banks = BankView::list_by_country(&mut context.pool(), Some(user_country.clone())).await?;
+  let banks = BankView::list_by_country(&mut context.pool(), Some(country_id.address.country_id)).await?;
 
   let response_banks = banks
     .into_iter()
     .map(|bank| BankResponse {
       id: bank.id,
       name: bank.name,
-      country: bank.country,
+      country_id: bank.country_id,
       bank_code: bank.bank_code,
       swift_code: bank.swift_code,
     })

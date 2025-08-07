@@ -26,7 +26,7 @@ pub async fn list_unverified_bank_accounts(
       user_id: view.user_bank_account.user_id,
       bank_id: view.bank.id,
       bank_name: view.bank.name,
-      bank_country: view.bank.country,
+      bank_country_id: view.bank.country_id,
       account_number: view.user_bank_account.account_number,
       account_name: view.user_bank_account.account_name,
       is_default: view.user_bank_account.is_default.unwrap_or(false),

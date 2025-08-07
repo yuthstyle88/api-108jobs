@@ -1,65 +1,65 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "actor_type_enum"))]
-    pub struct ActorTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "actor_type_enum"))]
+  pub struct ActorTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "billing_status"))]
-    pub struct BillingStatus;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "comment_sort_type_enum"))]
+  pub struct CommentSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "comment_sort_type_enum"))]
-    pub struct CommentSortTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_follower_state"))]
+  pub struct CommunityFollowerState;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_follower_state"))]
-    pub struct CommunityFollowerState;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "community_visibility"))]
+  pub struct CommunityVisibility;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "community_visibility"))]
-    pub struct CommunityVisibility;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "listing_type_enum"))]
+  pub struct ListingTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "intended_use_enum"))]
-    pub struct IntendedUseEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "ltree"))]
+  pub struct Ltree;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "job_type_enum"))]
-    pub struct JobTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_listing_mode_enum"))]
+  pub struct PostListingModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "listing_type_enum"))]
-    pub struct ListingTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
+  pub struct PostNotificationsModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "ltree"))]
-    pub struct Ltree;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_sort_type_enum"))]
+  pub struct PostSortTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_listing_mode_enum"))]
-    pub struct PostListingModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "registration_mode_enum"))]
+  pub struct RegistrationModeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
-    pub struct PostNotificationsModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "vote_show_enum"))]
+  pub struct VoteShowEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "post_sort_type_enum"))]
-    pub struct PostSortTypeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "role"))]
+  pub struct RoleEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "registration_mode_enum"))]
-    pub struct RegistrationModeEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "intended_use_enum"))]
+  pub struct IntendedUseEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "role"))]
-    pub struct RoleEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "job_type_enum"))]
+  pub struct JobTypeEnum;
 
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "vote_show_enum"))]
-    pub struct VoteShowEnum;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "billing_status"))]
+  pub struct BillingStatus;
 }
 
 diesel::table! {
@@ -124,47 +124,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    banks (id) {
-        id -> Int4,
-        #[max_length = 255]
-        name -> Varchar,
-        #[max_length = 100]
-        country -> Varchar,
-        #[max_length = 20]
-        bank_code -> Nullable<Varchar>,
-        #[max_length = 20]
-        swift_code -> Nullable<Varchar>,
-        is_active -> Nullable<Bool>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::BillingStatus;
-
-    billing (id) {
-        id -> Int4,
-        freelancer_id -> Int4,
-        employer_id -> Int4,
-        post_id -> Int4,
-        comment_id -> Nullable<Int4>,
-        amount -> Float8,
-        description -> Text,
-        max_revisions -> Int4,
-        revisions_used -> Int4,
-        status -> BillingStatus,
-        work_description -> Nullable<Text>,
-        deliverable_url -> Nullable<Text>,
-        revision_feedback -> Nullable<Text>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        paid_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
     captcha_answer (uuid) {
         uuid -> Uuid,
         answer -> Text,
@@ -173,30 +132,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    chat_message (id) {
-        id -> Int4,
-        room_id -> Varchar,
-        sender_id -> Int4,
-        content -> Text,
-        status -> Int2,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    chat_room (id) {
-        id -> Varchar,
-        room_name -> Varchar,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
     use diesel::sql_types::*;
     use diesel_ltree::sql_types::Ltree;
-
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -256,6 +193,27 @@ diesel::table! {
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         violates_instance_rules -> Bool,
+    }
+}
+
+diesel::table! {
+    chat_room (id) {
+        id -> Varchar,
+        room_name -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    chat_message (id) {
+        id -> Int4,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        content -> Text,
+        status -> Int2,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -460,7 +418,7 @@ diesel::table! {
     use super::sql_types::PostSortTypeEnum;
     use super::sql_types::CommentSortTypeEnum;
 
-local_site (id) {
+    local_site (id) {
         id -> Int4,
         site_id -> Int4,
         site_setup -> Bool,
@@ -579,8 +537,6 @@ diesel::table! {
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
         role -> RoleEnum,
-        #[max_length = 100]
-        country -> Varchar,
     }
 }
 
@@ -822,6 +778,9 @@ diesel::table! {
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
         instance_id -> Int4,
+        contact_id -> Nullable<Int4>,
+        address_id -> Nullable<Int4>,
+        identity_card_id -> Nullable<Int4>,
         post_count -> Int8,
         post_score -> Int8,
         comment_count -> Int8,
@@ -944,7 +903,7 @@ diesel::table! {
         budget -> Float8,
         deadline -> Nullable<Timestamptz>,
         is_english_required -> Bool,
-        pending -> Bool,
+        pending  -> Bool,
     }
 }
 
@@ -1114,10 +1073,104 @@ diesel::table! {
 }
 
 diesel::table! {
-    tagline (id) {
+tagline (id) {
+    id -> Int4,
+    content -> Text,
+    published_at -> Timestamptz,
+    updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    wallet (id) {
         id -> Int4,
-        content -> Text,
-        published_at -> Timestamptz,
+        balance -> Float8,
+        escrow_balance -> Float8,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::BillingStatus;
+
+    billing (id) {
+        id -> Int4,
+        freelancer_id -> Int4,
+        employer_id -> Int4,
+        post_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        amount -> Float8,
+        description -> Text,
+        max_revisions -> Int4,
+        revisions_used -> Int4,
+        status -> BillingStatus,
+        work_description -> Nullable<Text>,
+        deliverable_url -> Nullable<Text>,
+        revision_feedback -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        paid_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    contact (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        phone -> Nullable<Text>,
+        email -> Nullable<Text>,
+        secondary_email -> Nullable<Text>,
+        line_id -> Nullable<Text>,
+        facebook -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    address (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        address_line1 -> Text,
+        address_line2 -> Nullable<Text>,
+        subdistrict -> Nullable<Text>,
+        district -> Text,
+        province -> Text,
+        postal_code -> Text,
+        country_id -> Text,
+        is_default -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    identity_card (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        address_id -> Nullable<Int4>,
+        id_number -> Text,
+        issued_date -> Nullable<Date>,
+        expiry_date -> Nullable<Date>,
+        full_name -> Nullable<Text>,
+        date_of_birth -> Nullable<Date>,
+        nationality -> Nullable<Text>,
+        is_verified -> Bool,
+        created_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    banks (id) {
+        id -> Int4,
+        name -> Varchar,
+        country_id -> Varchar,
+        bank_code -> Nullable<Varchar>,
+        swift_code -> Nullable<Varchar>,
+        is_active -> Nullable<Bool>,
+        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }
@@ -1127,9 +1180,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         bank_id -> Int4,
-        #[max_length = 50]
         account_number -> Varchar,
-        #[max_length = 255]
         account_name -> Varchar,
         is_default -> Nullable<Bool>,
         is_verified -> Bool,
@@ -1139,16 +1190,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    wallet (id) {
-        id -> Int4,
-        balance -> Nullable<Float8>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-        escrow_balance -> Nullable<Float8>,
-    }
-}
-
+diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
@@ -1160,9 +1202,8 @@ diesel::joinable!(admin_purge_person -> person (admin_person_id));
 diesel::joinable!(admin_purge_post -> community (community_id));
 diesel::joinable!(admin_purge_post -> person (admin_person_id));
 diesel::joinable!(billing -> comment (comment_id));
+diesel::joinable!(billing -> local_user (freelancer_id));
 diesel::joinable!(billing -> post (post_id));
-diesel::joinable!(chat_message -> chat_room (room_id));
-diesel::joinable!(chat_message -> local_user (sender_id));
 diesel::joinable!(comment -> language (language_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(comment -> post (post_id));
@@ -1178,6 +1219,8 @@ diesel::joinable!(community_language -> language (language_id));
 diesel::joinable!(community_report -> community (community_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
+diesel::joinable!(identity_card -> address (address_id));
+diesel::joinable!(identity_card -> local_user (local_user_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
@@ -1263,83 +1306,83 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(user_bank_accounts -> banks (bank_id));
-diesel::joinable!(user_bank_accounts -> local_user (user_id));
+diesel::joinable!(contact -> local_user (local_user_id));
+diesel::joinable!(address -> local_user (local_user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    admin_allow_instance,
-    admin_block_instance,
-    admin_purge_comment,
-    admin_purge_community,
-    admin_purge_person,
-    admin_purge_post,
-    banks,
-    billing,
-    captcha_answer,
-    chat_message,
-    chat_room,
-    comment,
-    comment_actions,
-    comment_reply,
-    comment_report,
-    community,
-    community_actions,
-    community_language,
-    community_report,
-    custom_emoji,
-    custom_emoji_keyword,
-    email_verification,
-    image_details,
-    inbox_combined,
-    instance,
-    instance_actions,
-    language,
-    local_image,
-    local_site,
-    local_site_rate_limit,
-    local_site_url_blocklist,
-    local_user,
-    local_user_keyword_block,
-    local_user_language,
-    login_token,
-    mod_add,
-    mod_add_community,
-    mod_ban,
-    mod_ban_from_community,
-    mod_change_community_visibility,
-    mod_feature_post,
-    mod_lock_post,
-    mod_remove_comment,
-    mod_remove_community,
-    mod_remove_post,
-    mod_transfer_community,
-    modlog_combined,
-    oauth_account,
-    oauth_provider,
-    password_reset_request,
-    person,
-    person_actions,
-    person_comment_mention,
-    person_content_combined,
-    person_liked_combined,
-    person_post_mention,
-    person_saved_combined,
-    post,
-    post_actions,
-    post_report,
-    post_tag,
-    previously_run_sql,
-    received_activity,
-    registration_application,
-    remote_image,
-    report_combined,
-    search_combined,
-    secret,
-    sent_activity,
-    site,
-    site_language,
-    tag,
-    tagline,
-    user_bank_accounts,
-    wallet,
+  admin_allow_instance,
+  admin_block_instance,
+  admin_purge_comment,
+  admin_purge_community,
+  admin_purge_person,
+  admin_purge_post,
+  billing,
+  captcha_answer,
+  comment,
+  comment_actions,
+  comment_reply,
+  comment_report,
+  community,
+  community_actions,
+  community_language,
+  community_report,
+  custom_emoji,
+  custom_emoji_keyword,
+  email_verification,
+  image_details,
+  inbox_combined,
+  instance,
+  instance_actions,
+  language,
+  local_image,
+  local_site,
+  local_site_rate_limit,
+  local_site_url_blocklist,
+  local_user,
+  local_user_keyword_block,
+  local_user_language,
+  login_token,
+  mod_add,
+  mod_add_community,
+  mod_ban,
+  mod_ban_from_community,
+  mod_change_community_visibility,
+  mod_feature_post,
+  mod_lock_post,
+  mod_remove_comment,
+  mod_remove_community,
+  mod_remove_post,
+  mod_transfer_community,
+  modlog_combined,
+  oauth_account,
+  oauth_provider,
+  password_reset_request,
+  person,
+  person_actions,
+  person_comment_mention,
+  person_content_combined,
+  person_liked_combined,
+  person_post_mention,
+  person_saved_combined,
+  post,
+  post_actions,
+  post_report,
+  post_tag,
+  previously_run_sql,
+  registration_application,
+  remote_image,
+  report_combined,
+  search_combined,
+  secret,
+  sent_activity,
+  site,
+  site_language,
+  tag,
+  tagline,
+  wallet,
+  contact,
+  address,
+  identity_card,
+  banks,
+  user_bank_accounts,
 );

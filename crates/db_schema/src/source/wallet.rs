@@ -17,11 +17,10 @@ use lemmy_db_schema_file::schema::wallet;
 pub struct Wallet {
   pub id: WalletId,
   /// Available balance for spending
-  pub balance: Option<f64>,
+  pub balance: f64,
+  pub escrow_balance: f64,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
-  /// Money held in escrow for ongoing jobs
-  pub escrow_balance: Option<f64>,
 }
 
 #[derive(Clone, derive_new::new)]

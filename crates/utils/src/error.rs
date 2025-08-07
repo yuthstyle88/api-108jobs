@@ -253,6 +253,20 @@ pub enum FastJobErrorType {
   WalletNotFound,
   InsufficientBalance,
   PostNameAlreadyExists,
+  // Contact related errors
+  CouldntCreateContact,
+  CouldntCreateAddress,
+  CouldntUpdateContact,
+  CouldntFindContact,
+  CouldntDeleteContact,
+  CouldntDeleteAddress,
+  CouldntFindIdentityCard,
+  CouldntFindAddress,
+  CouldntCreateIdentityCard,
+  CouldntUpdateIdentityCard,
+  CouldntDeleteIdentityCard,
+  InvalidIssueAndExpire,
+  CouldntFindWalletByUser,
 }
 
 cfg_if! {

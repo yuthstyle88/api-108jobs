@@ -778,9 +778,9 @@ diesel::table! {
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
         instance_id -> Int4,
-        contact_id -> Nullable<Int4>,
-        address_id -> Nullable<Int4>,
-        identity_card_id -> Nullable<Int4>,
+        contact_id -> Int4,
+        address_id -> Int4,
+        identity_card_id -> Int4,
         post_count -> Int8,
         post_score -> Int8,
         comment_count -> Int8,
@@ -1118,7 +1118,6 @@ diesel::table! {
 diesel::table! {
     contact (id) {
         id -> Int4,
-        local_user_id -> Int4,
         phone -> Nullable<Text>,
         email -> Nullable<Text>,
         secondary_email -> Nullable<Text>,
@@ -1132,7 +1131,6 @@ diesel::table! {
 diesel::table! {
     address (id) {
         id -> Int4,
-        local_user_id -> Int4,
         address_line1 -> Text,
         address_line2 -> Nullable<Text>,
         subdistrict -> Nullable<Text>,
@@ -1149,7 +1147,6 @@ diesel::table! {
 diesel::table! {
     identity_card (id) {
         id -> Int4,
-        local_user_id -> Int4,
         address_id -> Nullable<Int4>,
         id_number -> Text,
         issued_date -> Nullable<Date>,
@@ -1220,7 +1217,6 @@ diesel::joinable!(community_report -> community (community_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
 diesel::joinable!(identity_card -> address (address_id));
-diesel::joinable!(identity_card -> local_user (local_user_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
@@ -1306,9 +1302,9 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(contact -> local_user (local_user_id));
-diesel::joinable!(address -> local_user (local_user_id));
-
+diesel::joinable!(person -> contact(contact_id));
+diesel::joinable!(person -> address (address_id));
+diesel::joinable!(person -> identity_card (identity_card_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,

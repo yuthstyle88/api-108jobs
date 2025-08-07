@@ -124,9 +124,9 @@ pub async fn list_banks(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListBanksResponse>> {
-  let local_user_id = local_user_view.local_user.id;
+  let address_id = local_user_view.person.address_id;
 
-  let country_id = AddressView::find_by_local_user_id(&mut context.pool(), local_user_id).await?;
+  let country_id = AddressView::find_by_id(&mut context.pool(), address_id).await?;
   // Filter banks by user's country
   let banks = BankView::list_by_country(&mut context.pool(), Some(country_id.address.country_id)).await?;
 

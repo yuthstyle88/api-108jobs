@@ -59,11 +59,11 @@ pub struct Person {
   pub bot_account: bool,
   pub instance_id: InstanceId,
   /// Reference to the contact information
-  pub contact_id: Option<ContactId>,
+  pub contact_id: ContactId,
   /// Reference to the address information
-  pub address_id: Option<AddressId>,
+  pub address_id: AddressId,
   /// Reference to the address information
-  pub identity_card_id: Option<IdentityCardId>,
+  pub identity_card_id: IdentityCardId,
   pub post_count: i64,
   #[serde(skip)]
   pub post_score: i64,

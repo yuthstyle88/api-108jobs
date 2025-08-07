@@ -2,20 +2,20 @@ use crate::IdentityCardView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
-  newtypes::{LocalUserId},
   utils::{get_conn, DbPool},
 };
+use lemmy_db_schema::newtypes::IdentityCardId;
 use lemmy_db_schema_file::schema::identity_card;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl IdentityCardView {
-  pub async fn find_by_local_user_id(
+  pub async fn find_by_id(
     pool: &mut DbPool<'_>,
-    local_user_id: LocalUserId,
+    identity_card_id: IdentityCardId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     identity_card::table
-      .filter(identity_card::local_user_id.eq(local_user_id))
+      .filter(identity_card::id.eq(identity_card_id))
       .select(Self::as_select())
       .first(conn)
       .await

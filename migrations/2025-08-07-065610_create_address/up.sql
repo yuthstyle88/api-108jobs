@@ -2,7 +2,6 @@
 CREATE TABLE address
 (
     id            SERIAL PRIMARY KEY,
-    local_user_id INTEGER NOT NULL REFERENCES local_user (id) ON DELETE CASCADE,
     address_line1 TEXT    NOT NULL,
     address_line2 TEXT,
     subdistrict   TEXT    NOT NULL,

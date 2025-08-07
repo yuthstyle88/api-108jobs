@@ -101,11 +101,9 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_api_crud::address::create::create_address;
+
 use lemmy_api_crud::address::update::update_address;
-use lemmy_api_crud::contact::create::create_contact;
 use lemmy_api_crud::contact::update::update_contact;
-use lemmy_api_crud::identity_card::create::create_identity_card;
 use lemmy_api_crud::identity_card::update::update_identity_card;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
@@ -255,11 +253,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/account")
             .route("", get().to(get_my_user))
-            .route("/contact", post().to(create_contact))
+            .route("/contact", post().to(update_contact))
             .route("/contact", put().to(update_contact))
-            .route("/address", post().to(create_address))
+            .route("/address", post().to(update_address))
             .route("/address", put().to(update_address))
-            .route("/identity-card", post().to(create_identity_card))
+            .route("/identity-card", post().to(update_identity_card))
             .route("/identity-card", put().to(update_identity_card))
             .service(
               scope("/media")

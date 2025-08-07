@@ -25,7 +25,7 @@ impl UserBankAccountView {
     let conn = &mut get_conn(pool).await?;
     
     // Validate bank exists and is active
-    let bank = banks::table
+    let _bank = banks::table
       .find(bank_id)
       .filter(banks::is_active.eq(true))
       .first::<Bank>(conn)

@@ -2,21 +2,21 @@ use crate::ContactView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
-  newtypes::{LocalUserId},
   utils::{get_conn, DbPool},
 };
+use lemmy_db_schema::newtypes::ContactId;
 use lemmy_db_schema_file::schema::contact;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl ContactView {
 
-  pub async fn find_by_local_user_id(
+  pub async fn find_by_id(
     pool: &mut DbPool<'_>,
-    local_user_id: LocalUserId,
+    contact_id: ContactId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     contact::table
-      .filter(contact::local_user_id.eq(local_user_id))
+      .filter(contact::id.eq(contact_id))
       .select(Self::as_select())
       .first(conn)
       .await
@@ -59,7 +59,6 @@ mod tests {
     let local_user = LocalUser::create(pool, &local_user_form, vec![]).await?;
 
     let contact_form = ContactInsertForm {
-      local_user_id: local_user.id,
       phone: Some("1234567890".to_string()),
       email: Some("test@example.com".to_string()),
       secondary_email: None,
@@ -106,7 +105,7 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    let contact_view = ContactView::find_by_local_user_id(pool, data.local_user.id).await?;
+    let contact_view = ContactView::find_by_id(pool, data.local_user.id).await?;
     assert_eq!(contact_view.contact.id, data.contact.id);
     assert_eq!(contact_view.contact.local_user_id, data.local_user.id);
 

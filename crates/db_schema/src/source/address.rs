@@ -1,4 +1,4 @@
-use crate::newtypes::{AddressId, LocalUserId};
+use crate::newtypes::{AddressId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -17,7 +17,6 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType};
 #[serde(rename_all = "camelCase")]
 pub struct Address {
   pub id: AddressId,
-  pub local_user_id: LocalUserId,
   pub address_line1: String,
   pub address_line2: Option<String>,
   pub subdistrict: Option<String>,
@@ -34,7 +33,6 @@ pub struct Address {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = address))]
 pub struct AddressInsertForm {
-  pub local_user_id: LocalUserId,
   pub address_line1: String,
   pub address_line2: Option<String>,
   pub subdistrict: Option<String>,
@@ -70,27 +68,6 @@ pub struct AddressForm {
   pub postal_code: String,
   pub country_id: String,
   pub is_default: Option<bool>,
-}
-
-impl TryFrom<(LocalUserId,AddressForm)> for AddressInsertForm {
-  type Error = FastJobError;
-
-  fn try_from((local_user_id, form): (LocalUserId, AddressForm)) -> Result<Self, Self::Error> {
-    // Validate that required fields are not empty
-    let _ = validate_address(&form)?;
-
-    Ok(Self {
-      local_user_id,
-      address_line1: form.address_line1,
-      address_line2: form.address_line2,
-      subdistrict: form.subdistrict,
-      district: form.district,
-      province: form.province,
-      postal_code: form.postal_code,
-      country_id: form.country_id,
-      is_default: form.is_default,
-    })
-  }
 }
 
 impl TryFrom<AddressForm> for AddressUpdateForm {
@@ -142,10 +119,4 @@ fn validate_address(form: &AddressForm) -> Result<(), FastJobError> {
 #[serde(rename_all = "camelCase")]
 pub struct AddressResponse {
   pub contact: Address,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetAddress {
-  pub local_user_id: LocalUserId,
 }

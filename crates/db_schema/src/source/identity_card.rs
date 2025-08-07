@@ -1,4 +1,4 @@
-use crate::newtypes::{AddressId, IdentityCardId, LocalUserId};
+use crate::newtypes::{AddressId, IdentityCardId};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -18,7 +18,6 @@ use lemmy_utils::utils::validation::is_valid_issued_and_expiry;
 #[serde(rename_all = "camelCase")]
 pub struct IdentityCard {
   pub id: IdentityCardId,
-  pub local_user_id: LocalUserId,
   pub address_id: Option<AddressId>,
   pub id_number: String,
   pub issued_date: Option<NaiveDate>,
@@ -34,7 +33,6 @@ pub struct IdentityCard {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = identity_card))]
 pub struct IdentityCardInsertForm {
-  pub local_user_id: LocalUserId,
   pub address_id: Option<AddressId>,
   pub id_number: String,
   pub issued_date: Option<NaiveDate>,
@@ -72,33 +70,6 @@ pub struct IdentityCardForm {
   pub is_verified: Option<bool>,
 }
 
-impl TryFrom<(LocalUserId, IdentityCardForm)> for IdentityCardInsertForm {
-  type Error = FastJobError;
-
-  fn try_from((local_user_id, form): (LocalUserId, IdentityCardForm)) -> Result<Self, Self::Error> {
-    // Validate that required fields are not empty
-    if form.id_number.is_none() {
-      return Err(FastJobErrorType::ValidationError("ID number cannot be empty".to_string()).into());
-    }
-    
-    // Validate expiry date is after issued date if both are provided
-   if  !is_valid_issued_and_expiry(form.issued_date, form.expiry_date){
-     return Err(FastJobErrorType::InvalidIssueAndExpire.into());
-   }
-
-    Ok(Self {
-      local_user_id,
-      address_id: form.address_id,
-      id_number: form.id_number.unwrap(),
-      issued_date: form.issued_date,
-      expiry_date: form.expiry_date,
-      full_name: form.full_name,
-      date_of_birth: form.date_of_birth,
-      nationality: form.nationality,
-      is_verified: form.is_verified,
-    })
-  }
-}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -133,10 +104,4 @@ impl TryFrom<IdentityCardForm> for IdentityCardUpdateForm {
       is_verified: form.is_verified,
     })
   }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetIdentityCard {
-  pub local_user_id: LocalUserId,
 }

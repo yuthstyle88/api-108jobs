@@ -1,4 +1,4 @@
-use crate::newtypes::{ContactId, LocalUserId};
+use crate::newtypes::{ContactId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -18,7 +18,6 @@ use lemmy_utils::utils::validation::{is_valid_email, is_valid_phone};
 #[serde(rename_all = "camelCase")]
 pub struct Contact {
   pub id: ContactId,
-  pub local_user_id: LocalUserId,
   pub phone: Option<String>,
   pub email: Option<String>,
   pub secondary_email: Option<String>,
@@ -32,7 +31,6 @@ pub struct Contact {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = contact))]
 pub struct ContactInsertForm {
-  pub local_user_id: LocalUserId,
   pub phone: Option<String>,
   pub email: Option<String>,
   pub secondary_email: Option<String>,
@@ -61,22 +59,6 @@ pub struct ContactForm {
   pub facebook: Option<String>,
 }
 
-impl TryFrom<(LocalUserId,ContactForm)> for ContactInsertForm {
-  type Error = FastJobError;
-
-  fn try_from((local_user_id, form): (LocalUserId, ContactForm)) -> Result<Self, Self::Error> {
-    let _ = validate_contact(&form)?;
-
-    Ok(Self {
-      local_user_id,
-      phone: form.phone,
-      email: form.email,
-      secondary_email: form.secondary_email,
-      line_id: form.line_id,
-      facebook: form.facebook,
-    })
-  }
-}
 impl TryFrom<ContactForm> for ContactUpdateForm {
   type Error = FastJobError;
 
@@ -132,10 +114,4 @@ fn validate_contact(form: &ContactForm) -> Result<(), FastJobError> {
 #[serde(rename_all = "camelCase")]
 pub struct ContactResponse {
   pub contact: Contact,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetContact {
-  pub local_user_id: LocalUserId,
 }

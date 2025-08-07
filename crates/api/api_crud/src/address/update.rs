@@ -2,7 +2,6 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::AddressId;
 use lemmy_db_schema::source::address::AddressUpdateForm;
 use lemmy_db_schema::{
   source::address::{Address, AddressForm},
@@ -19,7 +18,7 @@ pub async fn update_address(
   context: web::Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AddressResponse>> {
-  let address_id = local_user_view.person.address_id.unwrap_or(AddressId(0));
+  let address_id = local_user_view.person.address_id;
   
   // Create the update form
   let update_form:AddressUpdateForm =  data.into_inner().try_into()?;

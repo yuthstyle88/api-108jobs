@@ -11,12 +11,12 @@ pub async fn get_address(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AddressResponse>> {
-  let local_user_id = local_user_view.local_user.id;
+  let address_id = local_user_view.person.address_id;
   
   // Get the address view from the database
-  let address_view = AddressView::find_by_local_user_id(
+  let address_view = AddressView::find_by_id(
     &mut context.pool(),
-    local_user_id,
+    address_id,
   ).await?;
   // Return the address response
   Ok(Json(AddressResponse { address_view }))

@@ -2,7 +2,6 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::IdentityCardId;
 use lemmy_db_schema::source::identity_card::IdentityCardUpdateForm;
 use lemmy_db_schema::{
   source::identity_card::{IdentityCard, IdentityCardForm},
@@ -19,7 +18,7 @@ pub async fn update_identity_card(
   context: web::Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<IdentityCardResponse>> {
-  let identity_card_id = local_user_view.person.identity_card_id.unwrap_or(IdentityCardId(0));
+  let identity_card_id = local_user_view.person.identity_card_id;
   // Create the update form
   let update_form: IdentityCardUpdateForm =  data.into_inner().try_into()?;
   

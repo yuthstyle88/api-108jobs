@@ -27,28 +27,28 @@ CREATE TABLE user_bank_accounts (
 -- Create indexes
 CREATE INDEX idx_user_bank_accounts_user_id ON user_bank_accounts(user_id);
 CREATE INDEX idx_user_bank_accounts_bank_id ON user_bank_accounts(bank_id);
-CREATE INDEX idx_banks_country ON banks(country);
+CREATE INDEX idx_banks_country ON banks(country_id);
 
 -- Insert popular Thai banks
-INSERT INTO banks (name, country, bank_code, swift_code) VALUES
-('Bangkok Bank', 'Thailand', 'BBL', 'BKKBTHBK'),
-('Kasikornbank', 'Thailand', 'KBANK', 'KASITHBK'),
-('Krung Thai Bank', 'Thailand', 'KTB', 'KRTHTHBK'),
-('Siam Commercial Bank', 'Thailand', 'SCB', 'SICOTHBK'),
-('TMBThanachart Bank', 'Thailand', 'TTB', 'TMBKTHBK'),
-('Bank of Ayudhya', 'Thailand', 'BAY', 'AYUDTHBK'),
-('Government Savings Bank', 'Thailand', 'GSB', 'GSBATHBK'),
-('Krungthai Card', 'Thailand', 'KTC', 'KTCBTHBK');
+INSERT INTO banks (name, country_id, bank_code, swift_code) VALUES
+('Bangkok Bank', 'TH', 'BBL', 'BKKBTHBK'),
+('Kasikornbank', 'TH', 'KBANK', 'KASITHBK'),
+('Krung Thai Bank', 'TH', 'KTB', 'KRTHTHBK'),
+('Siam Commercial Bank', 'TH', 'SCB', 'SICOTHBK'),
+('TMBThanachart Bank', 'TH', 'TTB', 'TMBKTHBK'),
+('Bank of Ayudhya', 'TH', 'BAY', 'AYUDTHBK'),
+('Government Savings Bank', 'TH', 'GSB', 'GSBATHBK'),
+('Krungthai Card', 'TH', 'KTC', 'KTCBTHBK');
 
 -- Insert popular Vietnamese banks
-INSERT INTO banks (name, country, bank_code, swift_code) VALUES
-('Vietcombank', 'Vietnam', 'VCB', 'BFTVVNVX'),
-('VietinBank', 'Vietnam', 'CTG', 'ICBVVNVX'),
-('BIDV', 'Vietnam', 'BIDV', 'BIDVVNVX'),
-('Agribank', 'Vietnam', 'AGRI', 'VBAAVNVX'),
-('Techcombank', 'Vietnam', 'TCB', 'VTCBVNVX'),
-('MB Bank', 'Vietnam', 'MB', 'MSCBVNVX'),
-('ACB', 'Vietnam', 'ACB', 'ASCBVNVX'),
-('VPBank', 'Vietnam', 'VPB', 'VPBKVNVX'),
-('SHB', 'Vietnam', 'SHB', 'SHBAVNVX'),
-('TPBank', 'Vietnam', 'TPB', 'TPBVVNVX');
+INSERT INTO banks (name, country_id, bank_code, swift_code) VALUES
+('Vietcombank', 'VI', 'VCB', 'BFTVVNVX'),
+('VietinBank', 'VI', 'CTG', 'ICBVVNVX'),
+('BIDV', 'VI', 'BIDV', 'BIDVVNVX'),
+('Agribank', 'VI', 'AGRI', 'VBAAVNVX'),
+('Techcombank', 'VI', 'TCB', 'VTCBVNVX'),
+('MB Bank', 'VI', 'MB', 'MSCBVNVX'),
+('ACB', 'VI', 'ACB', 'ASCBVNVX'),
+('VPBank', 'VI', 'VPB', 'VPBKVNVX'),
+('SHB', 'VI', 'SHB', 'SHBAVNVX'),
+('TPBank', 'VI', 'TPB', 'TPBVVNVX');

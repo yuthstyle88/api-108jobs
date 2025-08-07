@@ -2,7 +2,6 @@ use actix_web::web;
 
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::ContactId;
 use lemmy_db_schema::source::contact::ContactUpdateForm;
 use lemmy_db_schema::{
   source::contact::{Contact},
@@ -21,7 +20,7 @@ pub async fn update_contact(
   context: web::Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ContactResponse>> {
-  let contact_id = local_user_view.person.contact_id.unwrap_or(ContactId(0));
+  let contact_id = local_user_view.person.contact_id;
   
   // Create the update form
   let update_form: ContactUpdateForm = data.into_inner().try_into()?;

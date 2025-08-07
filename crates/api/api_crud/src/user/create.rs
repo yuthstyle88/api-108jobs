@@ -627,11 +627,15 @@ async fn create_person(
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
   let public_key = "public_key".to_string();
+  let (address_id, contact_id, identity_card_id) = Person::prepare_data_for_insert(&mut conn.into()).await?;
   // Register the new person
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
     private_key: Some("private_key".to_string()),
+    address_id: Some(address_id),
+    contact_id: Some(contact_id),
+    identity_card_id: Some(identity_card_id),
     ..PersonInsertForm::new(
       username.clone(),
       public_key,

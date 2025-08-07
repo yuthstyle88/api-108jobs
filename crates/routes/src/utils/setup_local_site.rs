@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::{Utc};
 use diesel::{
   dsl::{exists, not, select},
   query_builder::AsQuery,
@@ -25,9 +25,6 @@ use lemmy_utils::{
 };
 use tracing::info;
 use url::Url;
-use lemmy_db_schema::source::address::{Address, AddressInsertForm};
-use lemmy_db_schema::source::contact::{Contact, ContactInsertForm};
-use lemmy_db_schema::source::identity_card::{IdentityCard, IdentityCardInsertForm};
 use lemmy_db_schema_file::enums::Role;
 
 pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
@@ -50,40 +47,10 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
           let instance = Instance::read_or_create(&mut conn.into(), domain).await?;
 
           if let Some(setup) = &settings.setup {
-            let today_utc: NaiveDate = Utc::now().date_naive();
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = "public_key".to_string();
             let private_key = Some("private_key".to_string());
-            let form = AddressInsertForm{
-              address_line1: "No".to_string(),
-              address_line2: None,
-              subdistrict: None,
-              district: "Bang Ka Pi".to_string(),
-              province: "Bangkok".to_string(),
-              postal_code: "10240".to_string(),
-              country_id: "TH".to_string(),
-              is_default: Some(true),
-            };
-            let address_id = Address::create(&mut conn.into(), &form).await?.id;
-            let form = ContactInsertForm{
-              phone: Some("0812235666".to_string()),
-              email: Some("noreply@fastjob.com".to_string()),
-              secondary_email: None,
-              line_id: None,
-              facebook: None,
-            };
-            let contact_id = Contact::create(&mut conn.into(), &form).await?.id;
-            let from = IdentityCardInsertForm{
-              address_id,
-              id_number: "8888888888888".to_string(),
-              issued_date: today_utc,
-              expiry_date: today_utc,
-              full_name: "fast job".to_string(),
-              date_of_birth: today_utc,
-              nationality: "Thai".to_string(),
-              is_verified: Some(true),
-            };
-            let identity_card_id = IdentityCard::create(&mut conn.into(), &from).await?.id;
+            let (address_id, contact_id, identity_card_id) =Person::prepare_data_for_insert(&mut conn.into()).await?;
 
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {

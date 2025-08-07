@@ -13,7 +13,7 @@ use crate::{
   traits::{ApubActor, Blockable, Crud, Followable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use diesel::{
   dsl::{exists, insert_into, not, select},
   expression::SelectableHelper,
@@ -34,6 +34,10 @@ use lemmy_utils::{
   settings::structs::Settings,
 };
 use url::Url;
+use crate::newtypes::{AddressId, ContactId, IdentityCardId};
+use crate::source::address::{Address, AddressInsertForm};
+use crate::source::contact::{Contact, ContactInsertForm};
+use crate::source::identity_card::{IdentityCard, IdentityCardInsertForm};
 
 impl Crud for Person {
   type InsertForm = PersonInsertForm;
@@ -167,6 +171,42 @@ impl Person {
     .then_some(())
     .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
   }
+  pub async fn prepare_data_for_insert(pool: &mut DbPool<'_>) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
+    let today_utc: NaiveDate = Utc::now().date_naive();
+    let conn = &mut get_conn(pool).await?;
+    let form = AddressInsertForm{
+      address_line1: "".to_string(),
+      address_line2: None,
+      subdistrict: None,
+      district: "".to_string(),
+      province: "".to_string(),
+      postal_code: "".to_string(),
+      country_id: "TH".to_string(),
+      is_default: Some(true),
+    };
+    let address_id = Address::create(&mut conn.into(), &form).await?.id;
+    let form = ContactInsertForm{
+      phone: Some("".to_string()),
+      email: Some("".to_string()),
+      secondary_email: None,
+      line_id: None,
+      facebook: None,
+    };
+    let contact_id = Contact::create(&mut conn.into(), &form).await?.id;
+    let from = IdentityCardInsertForm{
+      address_id,
+      id_number: "".to_string(),
+      issued_date: today_utc,
+      expiry_date: today_utc,
+      full_name: "".to_string(),
+      date_of_birth: today_utc,
+      nationality: "Thai".to_string(),
+      is_verified: Some(true),
+    };
+    let identity_card_id = IdentityCard::create(&mut conn.into(), &from).await?.id;
+    Ok((address_id, contact_id, identity_card_id))
+  }
+
 }
 
 impl PersonInsertForm {
@@ -512,6 +552,9 @@ mod tests {
       inbox_url: inserted_person.inbox_url.clone(),
       matrix_user_id: None,
       instance_id: inserted_instance.id,
+      contact_id: Default::default(),
+      address_id: Default::default(),
+      identity_card_id: Default::default(),
       post_count: 0,
       post_score: 0,
       comment_count: 0,
@@ -584,7 +627,6 @@ mod tests {
       inserted_instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
-      "community-agg".to_string(),
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;
@@ -668,7 +710,7 @@ mod tests {
     // assert_eq!(0, after_parent_comment_delete.comment_score);
 
     // Add in the two comments again, then delete the post.
-    let new_parent_comment = Comment::create(pool, &comment_form).await?;
+    let new_parent_comment = Comment::create(pool, &comment_form, None).await?;
     let _new_child_comment =
       Comment::create(pool, &child_comment_form, None).await?;
     comment_like.comment_id = new_parent_comment.id;

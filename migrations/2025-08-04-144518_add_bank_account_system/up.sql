@@ -2,7 +2,7 @@
 CREATE TABLE banks (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    country VARCHAR(100) NOT NULL CHECK (country IN ('Thailand', 'Vietnam')),
+    country_id VARCHAR(2) NOT NULL,
     bank_code VARCHAR(20),
     swift_code VARCHAR(20),
     is_active BOOLEAN DEFAULT TRUE,

@@ -698,30 +698,19 @@ async fn create_local_user(
   };
   local_user_form.interface_language = interface_lang;
 
-  let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
+  let wallet_form = WalletInsertForm {
+    balance: Some(0.0),
+    escrow_balance: Some(0.0),
+    created_at: None,
+  };
 
-  // Create a wallet for the new user
-  {
-    use diesel::{ ExpressionMethods};
-    
-    let wallet_form = WalletInsertForm {
-      balance: Some(0.0),
-      escrow_balance: Some(0.0),
-      created_at: None,
-    };
-    
-    let wallet = diesel::insert_into(wallet::table)
-      .values(&wallet_form)
-      .get_result::<Wallet>(conn)
-      .await?;
-    
-    // Update the local user with the wallet_id
-    diesel::update(local_user::table)
-      .filter(local_user::id.eq(inserted_local_user.id))
-      .set(local_user::wallet_id.eq(wallet.id))
-      .execute(conn)
-      .await?;
-  }
+  let wallet = diesel::insert_into(wallet::table)
+   .values(&wallet_form)
+   .get_result::<Wallet>(conn)
+   .await?;
+  local_user_form.wallet_id = Some(wallet.id);
+
+  let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
 
   // Return the local user (the wallet_id will be updated in the database but not in our local object)
   Ok(inserted_local_user)

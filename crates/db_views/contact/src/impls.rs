@@ -3,7 +3,6 @@ use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   newtypes::{LocalUserId},
-  source::contact::Contact,
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::contact;

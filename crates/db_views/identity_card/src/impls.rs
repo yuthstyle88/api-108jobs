@@ -2,8 +2,7 @@ use crate::IdentityCardView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
-  newtypes::{IdentityCardId, LocalUserId},
-  source::identity_card::IdentityCard,
+  newtypes::{LocalUserId},
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::identity_card;

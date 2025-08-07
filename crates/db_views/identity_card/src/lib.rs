@@ -2,9 +2,7 @@ use lemmy_db_schema::source::identity_card::IdentityCard;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::utils::{functions::coalesce, queries::creator_banned},
-  lemmy_db_schema_file::schema::local_user,
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;

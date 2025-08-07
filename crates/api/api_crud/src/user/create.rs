@@ -2,7 +2,7 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use lemmy_api_utils::{
   claims::Claims,
   context::FastJobContext,
@@ -34,7 +34,6 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_schema::source::wallet::{Wallet, WalletInsertForm};
-use lemmy_db_schema_file::schema::{wallet, local_user};
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
 use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
 use lemmy_db_views_site::{
@@ -704,10 +703,7 @@ async fn create_local_user(
     created_at: None,
   };
 
-  let wallet = diesel::insert_into(wallet::table)
-   .values(&wallet_form)
-   .get_result::<Wallet>(conn)
-   .await?;
+  let wallet = Wallet::create(conn_, &wallet_form).await?;
   local_user_form.wallet_id = Some(wallet.id);
 
   let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;

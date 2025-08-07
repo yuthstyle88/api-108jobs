@@ -2,7 +2,7 @@ use lemmy_db_schema::source::contact::Contact;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  diesel::{NullableExpressionMethods, Queryable, Selectable},
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;

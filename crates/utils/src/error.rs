@@ -267,6 +267,9 @@ pub enum FastJobErrorType {
   CouldntDeleteIdentityCard,
   InvalidIssueAndExpire,
   CouldntFindWalletByUser,
+  InsufficientEscrowBalance,
+  CouldntCreateWallet,
+  CouldntUpdateWallet,
 }
 
 cfg_if! {

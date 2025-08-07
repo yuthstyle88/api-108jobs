@@ -8,6 +8,7 @@ use lemmy_db_schema::{
   },
   utils::{get_conn, DbPool},
 };
+use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_schema_file::{enums::BillingStatus, schema::billing};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -123,6 +124,7 @@ impl BillingView {
     pool: &mut DbPool<'_>,
     billing_id: BillingId,
     employer_id: LocalUserId,
+    wallet_id: WalletId,
   ) -> FastJobResult<Billing> {
     use lemmy_db_schema::source::billing::{BillingUpdateForm};
     use lemmy_db_views_wallet::WalletView;
@@ -140,7 +142,7 @@ impl BillingView {
 
     // Check employer has sufficient balance and deduct money from wallet
     let amount = billing.amount;
-    WalletView::pay_for_job(pool, employer_id, amount).await?;
+    WalletView::pay_for_job(pool, wallet_id, amount).await?;
 
     // Update status to PaidEscrow (money is now in escrow)
     let update_form = BillingUpdateForm {

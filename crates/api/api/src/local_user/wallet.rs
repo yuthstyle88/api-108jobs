@@ -4,6 +4,7 @@ use lemmy_api_common::wallet::{
   SubmitWork, ApproveWork, RequestRevision, UpdateWorkAfterRevision, WalletOperationResponse, BillingOperationResponse
 };
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_wallet::WalletView;
 use lemmy_db_views_billing::BillingView;
 use lemmy_db_views_local_user::LocalUserView;
@@ -34,12 +35,12 @@ pub async fn deposit_wallet(
   let user_id = local_user_view.local_user.id;
 
   // Create wallet if it doesn't exist
-  let _wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
+  let wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
 
   let _ =  WalletView::create_for_user(&mut context.pool(), user_id).await?;
-  
+  let wallet_id = wallet_view.id;
   // Deposit funds
-  let updated_wallet = WalletView::deposit_funds(&mut context.pool(), user_id, data.amount).await?;
+  let updated_wallet = WalletView::deposit_funds(&mut context.pool(), wallet_id, data.amount).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,
@@ -113,12 +114,13 @@ pub async fn approve_quotation(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BillingOperationResponse>> {
   let employer_id = local_user_view.local_user.id;
-
+  let wallet_id = local_user_view.local_user.wallet_id.unwrap_or(WalletId(0));
   // Approve the quotation and convert to order
   let updated_billing = BillingView::approve_quotation(
     &mut context.pool(),
     data.billing_id,
     employer_id,
+    wallet_id,
   ).await?;
 
   Ok(Json(BillingOperationResponse {

@@ -87,64 +87,24 @@ impl WalletView {
     Ok(wallet)
   }
 
-  pub async fn update_balance(
-    pool: &mut DbPool<'_>,
-    user_id: LocalUserId,
-    amount: f64,
-  ) -> FastJobResult<Wallet> {
-    let conn = &mut get_conn(pool).await?;
-    
-    // Get user's wallet
-    let user = local_user::table
-      .filter(local_user::id.eq(user_id))
-      .first::<LocalUser>(conn)
-      .await?;
-
-    let wallet_id = user.wallet_id.ok_or(FastJobErrorType::WalletNotFound)?;
-
-    // Get current wallet
-    let current_wallet = wallet::table
-      .find(wallet_id)
-      .first::<Wallet>(conn)
-      .await?;
-
-    let new_balance = current_wallet.balance + amount;
-    
-    if new_balance < 0.0 {
-      return Err(FastJobErrorType::InsufficientBalance)?;
-    }
-
-    // Update wallet
-    let update_form = WalletUpdateForm {
-      balance: Some(new_balance),
-      escrow_balance: None, // Don't change the escrow balance in regular deposits
-      updated_at: Some(chrono::Utc::now()),
-    };
-
-    diesel::update(wallet::table.find(wallet_id))
-      .set(&update_form)
-      .get_result::<Wallet>(conn)
-      .await
-      .map_err(Into::into)
-  }
 
   /// Deposit funds into user's wallet
   pub async fn deposit_funds(
     pool: &mut DbPool<'_>,
-    user_id: LocalUserId,
+    wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<Wallet> {
     if amount <= 0.0 {
       return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
     }
-    
-    Self::update_balance(pool, user_id, amount).await
+
+    Wallet::update_balance(pool, wallet_id, amount).await
   }
 
   /// Pay for a job (deduct from client's wallet and hold in escrow)
   pub async fn pay_for_job(
     pool: &mut DbPool<'_>,
-    client_user_id: LocalUserId,
+    wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<Wallet> {
     if amount <= 0.0 {
@@ -152,7 +112,7 @@ impl WalletView {
     }
     
     // Deduct from client's wallet (negative amount)
-    Self::update_balance(pool, client_user_id, -amount).await
+    Wallet::update_balance(pool, wallet_id, -amount).await
   }
 
   /// Complete job payment (transfer from escrow to freelancer)
@@ -166,29 +126,28 @@ impl WalletView {
     }
     
     // Create wallet for freelancer if it doesn't exist
-    let _wallet_view = Self::read_by_user(pool, freelancer_user_id).await?;
+    let wallet_view = Self::read_by_user(pool, freelancer_user_id).await?;
     Self::create_for_user(pool, freelancer_user_id).await?;
-
+    let wallet_id = wallet_view.id;
     // Add to freelancer's wallet
-    Self::update_balance(pool, freelancer_user_id, amount).await
+    Wallet::update_balance(pool, wallet_id, amount).await
   }
 
   /// Transfer funds between two users
   pub async fn transfer_funds(
     pool: &mut DbPool<'_>,
-    from_user_id: LocalUserId,
-    to_user_id: LocalUserId,
+    from_wallet_id: WalletId,
+    to_wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<(Wallet, Wallet)> {
     if amount <= 0.0 {
       return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
     }
-
     // Deduct from sender
-    let from_wallet = Self::update_balance(pool, from_user_id, -amount).await?;
+    let from_wallet = Wallet::update_balance(pool, from_wallet_id, -amount).await?;
     
     // Add to receiver
-    let to_wallet = Self::update_balance(pool, to_user_id, amount).await?;
+    let to_wallet = Wallet::update_balance(pool, to_wallet_id, amount).await?;
     
     Ok((from_wallet, to_wallet))
   }
@@ -205,15 +164,15 @@ impl WalletView {
 
     // Get current balance before operation
     let current_wallet = Self::read_by_user(pool, user_id).await?;
-    let previous_balance = current_wallet.balance;
+    let current_balance = current_wallet.balance;
 
     // Create wallet if doesn't exist
     Self::create_for_user(pool, user_id).await?;
-
+    let wallet_id = current_wallet.id;
     // Add funds to wallet
-    let updated_wallet = Self::update_balance(pool, user_id, amount).await?;
+    let updated_wallet = Wallet::update_balance(pool, wallet_id, amount).await?;
     
-    Ok((updated_wallet, previous_balance))
+    Ok((updated_wallet, current_balance))
   }
 
   /// Admin operation: Withdraw from user wallet
@@ -229,15 +188,15 @@ impl WalletView {
     // Get current wallet and check balance
     let current_wallet = Self::read_by_user(pool, user_id).await?;
     
-    let previous_balance = current_wallet.balance;
+    let current_balance = current_wallet.balance;
     
-    if previous_balance < amount {
+    if current_balance < amount {
       return Err(FastJobErrorType::InsufficientBalance)?;
     }
-
+    let wallet_id = current_wallet.id;
     // Deduct funds from wallet (negative amount)
-    let updated_wallet = Self::update_balance(pool, user_id, -amount).await?;
+    let updated_wallet = Wallet::update_balance(pool, wallet_id, -amount).await?;
     
-    Ok((updated_wallet, previous_balance))
+    Ok((updated_wallet, current_balance))
   }
 }

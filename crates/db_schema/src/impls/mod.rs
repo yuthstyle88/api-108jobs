@@ -37,3 +37,4 @@ pub mod chat_room;
 pub mod contact;
 pub mod address;
 mod identity_card;
+pub mod wallet;

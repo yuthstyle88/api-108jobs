@@ -43,7 +43,6 @@ pub async fn verify_email(
   let jwt = Claims::generate(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
-    local_user_view.local_user.role,
     local_user_view.local_user.interface_language,
     local_user_view.local_user.accepted_application,
     req,

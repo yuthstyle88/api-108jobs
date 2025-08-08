@@ -19,7 +19,7 @@ use lemmy_db_schema::{
   },
 };
 use lemmy_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, Role, VoteShow,
+  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::{PersonView, ProfileDataView};
@@ -97,7 +97,6 @@ pub struct RegisterWithOauthRequest {
   pub redirect_uri: Url,
   pub name: Option<String>,
   pub email: String,
-  pub role: Option<Role>,
   pub self_promotion: Option<bool>,
   pub answer: Option<String>,
   pub pkce_code_verifier: Option<String>,

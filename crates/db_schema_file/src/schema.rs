@@ -496,7 +496,6 @@ diesel::table! {
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::CommentSortTypeEnum;
     use super::sql_types::VoteShowEnum;
-    use super::sql_types::RoleEnum;
 
     local_user (id) {
         id -> Int4,
@@ -536,7 +535,6 @@ diesel::table! {
         show_downvotes -> VoteShowEnum,
         show_upvote_percentage -> Bool,
         show_person_votes -> Bool,
-        role -> RoleEnum,
     }
 }
 

@@ -3,7 +3,6 @@ use lemmy_db_schema::{
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
   sensitive::SensitiveString,
 };
-use lemmy_db_schema_file::enums::Role;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -75,7 +74,6 @@ pub struct Register {
   pub honeypot: Option<String>,
   /// An answer is mandatory if require application is enabled on the server
   pub answer: Option<String>,
-  pub role: Option<Role>,
   pub accepted_application: Option<bool>,
 }
 
@@ -94,7 +92,6 @@ pub struct RegisterRequest {
   pub captcha_answer: Option<String>,
   pub honeypot: Option<String>,
   pub answer: Option<String>,
-  pub role: Option<Role>,
   pub accepted_application: Option<bool>,
 }
 
@@ -108,7 +105,6 @@ pub struct OAuthUserUpdateRequest {
   pub password_verify: Option<SensitiveString>,
   pub email: Option<String>,
   pub terms_accepted: Option<bool>,
-  pub role: Option<Role>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

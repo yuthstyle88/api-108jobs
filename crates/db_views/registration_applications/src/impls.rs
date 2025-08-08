@@ -159,7 +159,6 @@ impl TryFrom<RegisterRequest> for Register {
       captcha_answer: None,
       honeypot: None,
       answer: form.answer.take(),
-      role: None,
       accepted_application: Some(false),
     })
   }

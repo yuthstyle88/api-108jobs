@@ -7,7 +7,6 @@ use lemmy_db_schema::{
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
-use lemmy_db_schema_file::enums::Role;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -21,7 +20,6 @@ pub struct Claims {
   pub iat: i64,
   pub exp: i64,
   pub session: String,
-  pub role: Role,
   pub email: Option<SensitiveString>,
   pub lang: String,
   pub accepted_application: bool,
@@ -46,7 +44,6 @@ impl Claims {
   pub async fn generate(
     user_id: LocalUserId,
     email: Option<SensitiveString>,
-    role: Role,
     lang: String,
     accepted_application: bool,
     req: HttpRequest,
@@ -59,7 +56,6 @@ impl Claims {
       iat: Utc::now().timestamp(),
       exp: (Utc::now() + Duration::hours(12)).timestamp(),
       session: generate_session(),
-      role,
       email,
       lang,
       accepted_application

@@ -148,7 +148,6 @@ pub async fn register(
          email: tx_data.email.as_deref().map(str::to_lowercase),
          self_promotion: Some(self_promotion),
          accepted_application,
-         role: tx_data.role,
          ..LocalUserInsertForm::new(person.id, Some(tx_data.password.to_string()))
        };
 
@@ -194,10 +193,9 @@ pub async fn register(
   if !local_site.site_setup
    || (!require_registration_application && !local_site.require_email_verification)
   {
-    let role =  user.local_user.role;
     let lang = user.local_user.interface_language;
     let accepted_application = user.local_user.accepted_application;
-    let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, lang, accepted_application, req, &context).await?;
+    let jwt = Claims::generate(user.local_user.id, user.local_user.email, lang, accepted_application, req, &context).await?;
     login_response.jwt = Some(jwt);
   } else {
     login_response.verify_email_sent = send_verification_email_if_required(
@@ -369,10 +367,9 @@ pub async fn register_with_oauth(
      })
      .await?;
     if !login_response.registration_created && !login_response.verify_email_sent {
-      let role  = user.local_user.role;
       let lang  = user.local_user.interface_language;
       let accepted_application = user.local_user.accepted_application;
-      let jwt = Claims::generate(user.local_user.id, user.local_user.email, role, lang, accepted_application, req, &context).await?;
+      let jwt = Claims::generate(user.local_user.id, user.local_user.email, lang, accepted_application, req, &context).await?;
       login_response.jwt = Some(jwt);
     }
 
@@ -608,10 +605,9 @@ pub async fn authenticate_with_oauth(
   };
 
   if (!login_response.registration_created && !login_response.verify_email_sent) || application_pending {
-    let role = local_user.role;
     let lang  = local_user.interface_language;
     let accepted_application  = local_user.accepted_application;
-    let jwt = Claims::generate(local_user.id, local_user.email, role, lang, accepted_application, req, &context).await?;
+    let jwt = Claims::generate(local_user.id, local_user.email, lang, accepted_application, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

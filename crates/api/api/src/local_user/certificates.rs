@@ -4,6 +4,13 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::certificates::{Certificates, CertificatesInsertForm};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
+use chrono::NaiveDate;
+
+// Helper function to parse date strings
+fn parse_date_string(date_str: &Option<String>) -> Option<NaiveDate> {
+    date_str.as_ref()
+        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+}
 
 pub async fn save_certificates(
     data: Json<CertificatesRequest>,
@@ -22,6 +29,9 @@ pub async fn save_certificates(
                     id, 
                     person_id, 
                     cert.name.clone(),
+                    parse_date_string(&cert.achieved_date),
+                    parse_date_string(&cert.expires_date),
+                    cert.url.clone(),
                 ).await?
             }
             // Create new certificate record
@@ -29,6 +39,9 @@ pub async fn save_certificates(
                 let form = CertificatesInsertForm::new(
                     person_id,
                     cert.name.clone(),
+                    parse_date_string(&cert.achieved_date),
+                    parse_date_string(&cert.expires_date),
+                    cert.url.clone(),
                 );
                 Certificates::create(&mut context.pool(), &form).await?
             }
@@ -75,6 +88,9 @@ pub async fn update_certificate(
         data.id, 
         person_id, 
         data.name.clone(),
+        parse_date_string(&data.achieved_date),
+        parse_date_string(&data.expires_date),
+        data.url.clone(),
     ).await?;
 
     Ok(Json(updated_certificate))

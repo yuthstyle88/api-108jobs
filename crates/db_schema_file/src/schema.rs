@@ -1227,6 +1227,9 @@ diesel::table! {
         id -> Int4,
         person_id -> Int4,
         name -> Text,
+        achieved_date -> Nullable<Date>,
+        expires_date -> Nullable<Date>,
+        url -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }

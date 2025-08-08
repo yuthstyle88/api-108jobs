@@ -106,6 +106,9 @@ pub struct SkillsRequest {
 pub struct CertificateItem {
     pub id: Option<i32>, // None for new items, Some(id) for updates
     pub name: String,
+    pub achieved_date: Option<String>, // Date as string in YYYY-MM-DD format
+    pub expires_date: Option<String>,  // Date as string in YYYY-MM-DD format
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -159,6 +162,9 @@ pub struct UpdateSkillRequest {
 pub struct UpdateCertificateRequest {
     pub id: i32,
     pub name: String,
+    pub achieved_date: Option<String>, // Date as string in YYYY-MM-DD format
+    pub expires_date: Option<String>,  // Date as string in YYYY-MM-DD format
+    pub url: Option<String>,
 }
 
 // Delete request structures

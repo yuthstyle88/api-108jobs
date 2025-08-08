@@ -1,5 +1,5 @@
 use crate::newtypes::PersonId;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -18,6 +18,9 @@ pub struct Certificates {
     pub id: i32,
     pub person_id: PersonId,
     pub name: String,
+    pub achieved_date: Option<NaiveDate>,
+    pub expires_date: Option<NaiveDate>,
+    pub url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -28,4 +31,7 @@ pub struct Certificates {
 pub struct CertificatesInsertForm {
     pub person_id: PersonId,
     pub name: String,
+    pub achieved_date: Option<NaiveDate>,
+    pub expires_date: Option<NaiveDate>,
+    pub url: Option<String>,
 }

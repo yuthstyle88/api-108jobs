@@ -52,6 +52,9 @@ impl Certificates {
     certificate_id: i32, 
     person_id: PersonId, 
     name: String,
+    achieved_date: Option<chrono::NaiveDate>,
+    expires_date: Option<chrono::NaiveDate>,
+    url: Option<String>,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(
@@ -61,6 +64,9 @@ impl Certificates {
     )
     .set((
       certificates::name.eq(name),
+      certificates::achieved_date.eq(achieved_date),
+      certificates::expires_date.eq(expires_date),
+      certificates::url.eq(url),
       certificates::updated_at.eq(diesel::dsl::now),
     ))
     .get_result::<Self>(conn)

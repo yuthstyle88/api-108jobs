@@ -47,7 +47,6 @@ pub async fn change_password(
       Claims::generate(
         updated_local_user.id,
         updated_local_user.email,
-        local_user_view.local_user.role,
         local_user_view.local_user.interface_language,
         local_user_view.local_user.accepted_application,
         req,

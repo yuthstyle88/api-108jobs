@@ -17,7 +17,6 @@ use diesel::{
   CombineDsl, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::enums::Role;
 use lemmy_db_schema_file::{
   enums::CommunityVisibility,
   schema::{community, community_actions, local_user, person, registration_application},
@@ -94,20 +93,17 @@ impl LocalUser {
     local_user_id: LocalUserId,
     terms_accepted: bool,
     password: &str,
-    role_: Role,
   ) -> FastJobResult<Self> {
     #[derive(AsChangeset)]
     #[diesel(table_name = local_user)]
     struct UpdateForm {
       accepted_application: bool,
       password_encrypted: String,
-      role: Role,
     }
     let password_hash = hash(password, DEFAULT_COST)?;
     let form = UpdateForm {
       accepted_application: terms_accepted,
       password_encrypted: String::from(password_hash),
-      role: role_,
     };
     let conn = &mut get_conn(pool).await?;
     diesel::update(local_user::table.find(local_user_id))

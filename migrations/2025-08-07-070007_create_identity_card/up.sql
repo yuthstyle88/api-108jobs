@@ -12,3 +12,6 @@ CREATE TABLE identity_card
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz
 );
+
+CREATE INDEX idx_identity_card_id_number
+    ON identity_card (id_number);

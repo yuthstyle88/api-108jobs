@@ -270,6 +270,12 @@ pub enum FastJobErrorType {
   InsufficientEscrowBalance,
   CouldntCreateWallet,
   CouldntUpdateWallet,
+    EmptyIDNumber,
+  EmptyNationality,
+  InvalidIDNumber,
+  EmpltyFullName,
+  MissingLocalUserId,
+  IDNumberAlreadyExist,
 }
 
 cfg_if! {

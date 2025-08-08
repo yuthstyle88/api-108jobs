@@ -1,15 +1,14 @@
--- Your SQL goes here
-
 CREATE TABLE identity_card
 (
-    id            SERIAL PRIMARY KEY,
-    address_id    INTEGER REFERENCES address (id) ON DELETE SET NULL,
-    id_number     TEXT    NOT NULL UNIQUE,
-    issued_date   DATE,
-    expiry_date   DATE,
-    full_name     TEXT,
-    date_of_birth DATE,
-    nationality   TEXT,
-    is_verified   BOOLEAN   DEFAULT FALSE,
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id            serial PRIMARY KEY,
+    address_id    int         REFERENCES address (id) ON DELETE SET NULL,
+    id_number     text        NOT NULL,
+    issued_date   date,
+    expiry_date   date,
+    full_name     text        NOT NULL,
+    date_of_birth date,
+    nationality   text,
+    is_verified   boolean              DEFAULT FALSE,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz
 );

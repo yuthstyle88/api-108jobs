@@ -71,7 +71,7 @@ p256 = { workspace = true }
 uuid = { workspace = true }
 pretty_assertions = "1.4.1"
 rand = "0.9.1"
-redis = { workspace = true }
+diesel-async = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }

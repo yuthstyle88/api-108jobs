@@ -1,13 +1,12 @@
+use crate::newtypes::{AddressId, ContactId, IdentityCardId};
+use crate::source::address::{Address, AddressInsertForm};
+use crate::source::contact::{Contact, ContactInsertForm};
+use crate::source::identity_card::{IdentityCard, IdentityCardInsertForm};
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CommunityId, DbUrl, InstanceId, LocalUserId, PersonId},
   source::person::{
-    Person,
-    PersonActions,
-    PersonBlockForm,
-    PersonFollowerForm,
-    PersonInsertForm,
-    PersonNoteForm,
+    Person, PersonActions, PersonBlockForm, PersonFollowerForm, PersonInsertForm, PersonNoteForm,
     PersonUpdateForm,
   },
   traits::{ApubActor, Blockable, Crud, Followable},
@@ -17,27 +16,17 @@ use chrono::{NaiveDate, Utc};
 use diesel::{
   dsl::{exists, insert_into, not, select},
   expression::SelectableHelper,
-  ExpressionMethods,
-  JoinOnDsl,
-  QueryDsl,
+  ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::{
-  instance,
-  instance_actions,
-  local_user,
-  person,
-  person_actions,
+  instance, instance_actions, local_user, person, person_actions,
 };
 use lemmy_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use url::Url;
-use crate::newtypes::{AddressId, ContactId, IdentityCardId};
-use crate::source::address::{Address, AddressInsertForm};
-use crate::source::contact::{Contact, ContactInsertForm};
-use crate::source::identity_card::{IdentityCard, IdentityCardInsertForm};
 
 impl Crud for Person {
   type InsertForm = PersonInsertForm;
@@ -92,13 +81,13 @@ impl Person {
   pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
-     .values(form)
-     .on_conflict(person::ap_id)
-     .do_update()
-     .set(form)
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+      .values(form)
+      .on_conflict(person::ap_id)
+      .do_update()
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn update_public_key(
@@ -109,10 +98,10 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-     .set(person::public_key.eq(new_public_key))
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+      .set(person::public_key.eq(new_public_key))
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
@@ -171,21 +160,24 @@ impl Person {
     .then_some(())
     .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
   }
-  pub async fn prepare_data_for_insert(pool: &mut DbPool<'_>) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
-    let today_utc: NaiveDate = Utc::now().date_naive();
+  pub async fn prepare_data_for_insert(
+    pool: &mut DbPool<'_>,
+    interface_language: Option<String>,
+  ) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
     let conn = &mut get_conn(pool).await?;
-    let form = AddressInsertForm{
+    let today_utc: NaiveDate = Utc::now().date_naive();
+    let form = AddressInsertForm {
       address_line1: "".to_string(),
       address_line2: None,
       subdistrict: None,
       district: "".to_string(),
       province: "".to_string(),
       postal_code: "".to_string(),
-      country_id: "TH".to_string(),
+      country_id: interface_language,
       is_default: Some(true),
     };
     let address_id = Address::create(&mut conn.into(), &form).await?.id;
-    let form = ContactInsertForm{
+    let form = ContactInsertForm {
       phone: Some("".to_string()),
       email: Some("".to_string()),
       secondary_email: None,
@@ -193,20 +185,19 @@ impl Person {
       facebook: None,
     };
     let contact_id = Contact::create(&mut conn.into(), &form).await?.id;
-    let from = IdentityCardInsertForm{
+    let from = IdentityCardInsertForm {
       address_id,
       id_number: "".to_string(),
       issued_date: today_utc,
       expiry_date: today_utc,
       full_name: "".to_string(),
       date_of_birth: today_utc,
-      nationality: "Thai".to_string(),
+      nationality: "".to_string(),
       is_verified: Some(true),
     };
     let identity_card_id = IdentityCard::create(&mut conn.into(), &from).await?.id;
     Ok((address_id, contact_id, identity_card_id))
   }
-
 }
 
 impl PersonInsertForm {
@@ -222,12 +213,12 @@ impl ApubActor for Person {
   ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     person::table
-     .filter(person::deleted.eq(false))
-     .filter(person::ap_id.eq(object_id))
-     .first(conn)
-     .await
-     .optional()
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .filter(person::deleted.eq(false))
+      .filter(person::ap_id.eq(object_id))
+      .first(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
   async fn read_from_name(
     pool: &mut DbPool<'_>,
@@ -505,7 +496,6 @@ impl PersonActions {
 
 #[cfg(test)]
 mod tests {
-
   use crate::{
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
@@ -657,8 +647,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_child_comment =
-      Comment::create(pool, &child_comment_form, None).await?;
+    let inserted_child_comment = Comment::create(pool, &child_comment_form, None).await?;
 
     let child_comment_like =
       CommentLikeForm::new(another_inserted_person.id, inserted_child_comment.id, 1);
@@ -711,8 +700,7 @@ mod tests {
 
     // Add in the two comments again, then delete the post.
     let new_parent_comment = Comment::create(pool, &comment_form, None).await?;
-    let _new_child_comment =
-      Comment::create(pool, &child_comment_form, None).await?;
+    let _new_child_comment = Comment::create(pool, &child_comment_form, None).await?;
     comment_like.comment_id = new_parent_comment.id;
     CommentActions::like(pool, &comment_like).await?;
     let after_comment_add = Person::read(pool, inserted_person.id).await?;

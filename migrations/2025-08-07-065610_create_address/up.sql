@@ -1,15 +1,14 @@
--- Your SQL goes here
 CREATE TABLE address
 (
-    id            SERIAL PRIMARY KEY,
-    address_line1 TEXT    NOT NULL,
-    address_line2 TEXT,
-    subdistrict   TEXT,
-    district      TEXT    NOT NULL,
-    province      TEXT    NOT NULL,
-    postal_code   TEXT    NOT NULL,
-    country_id       VARCHAR(2)      DEFAULT 'TH',
-    is_default    BOOLEAN   DEFAULT FALSE,
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id            serial PRIMARY KEY,
+    address_line1 text        NOT NULL,
+    address_line2 text,
+    subdistrict   text,
+    district      text        NOT NULL,
+    province      text        NOT NULL,
+    postal_code   text        NOT NULL,
+    country_id    varchar(2)           DEFAULT 'th',
+    is_default    boolean              DEFAULT FALSE,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz
 );

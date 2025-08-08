@@ -1,12 +1,12 @@
 use crate::newtypes::{AddressId, IdentityCardId};
 use chrono::{DateTime, NaiveDate, Utc};
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::identity_card;
-use std::convert::TryFrom;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use lemmy_utils::utils::validation::is_valid_issued_and_expiry;
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
+use std::convert::TryFrom;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -27,6 +27,7 @@ pub struct IdentityCard {
   pub nationality: String,
   pub is_verified: bool,
   pub created_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -55,6 +56,7 @@ pub struct IdentityCardUpdateForm {
   pub date_of_birth: Option<NaiveDate>,
   pub nationality: Option<String>,
   pub is_verified: Option<bool>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +74,6 @@ pub struct IdentityCardForm {
   pub is_verified: Option<bool>,
 }
 
-
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentityCardResponse {
@@ -86,12 +87,14 @@ impl TryFrom<IdentityCardForm> for IdentityCardUpdateForm {
     // Validate that id_number is not empty if provided
     if let Some(id_number) = &form.id_number {
       if id_number.trim().is_empty() {
-        return Err(FastJobErrorType::ValidationError("ID number cannot be empty".to_string()).into());
+        return Err(
+          FastJobErrorType::ValidationError("ID number cannot be empty".to_string()).into(),
+        );
       }
     }
-    
+
     // Validate expiry date is after issued date if both are provided
-    if  !is_valid_issued_and_expiry(form.issued_date, form.expiry_date){
+    if !is_valid_issued_and_expiry(form.issued_date, form.expiry_date) {
       return Err(FastJobErrorType::InvalidIssueAndExpire.into());
     }
 
@@ -104,6 +107,7 @@ impl TryFrom<IdentityCardForm> for IdentityCardUpdateForm {
       date_of_birth: form.date_of_birth,
       nationality: form.nationality,
       is_verified: form.is_verified,
+      updated_at: Some(Some(Utc::now())),
     })
   }
 }

@@ -49,7 +49,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = "public_key".to_string();
             let private_key = Some("private_key".to_string());
-            let (address_id, contact_id, identity_card_id) =Person::prepare_data_for_insert(&mut conn.into()).await?;
+            let (address_id, contact_id, identity_card_id) = Person::prepare_data_for_insert(&mut conn.into(), None).await?;
 
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {

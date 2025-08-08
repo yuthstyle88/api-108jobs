@@ -1118,7 +1118,7 @@ diesel::table! {
         line_id -> Nullable<Text>,
         facebook -> Nullable<Text>,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1135,7 +1135,7 @@ diesel::table! {
         country_id -> Varchar,
         is_default -> Bool,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1151,6 +1151,7 @@ diesel::table! {
         nationality -> Text,
         is_verified -> Bool,
         created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 

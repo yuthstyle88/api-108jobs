@@ -46,10 +46,6 @@ pub mod sql_types {
   pub struct VoteShowEnum;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "role"))]
-  pub struct RoleEnum;
-
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "intended_use_enum"))]
   pub struct IntendedUseEnum;
 

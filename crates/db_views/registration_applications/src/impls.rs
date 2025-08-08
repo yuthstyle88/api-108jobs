@@ -277,7 +277,6 @@ mod tests {
         show_score: sara_local_user.show_score,
         show_upvote_percentage: sara_local_user.show_upvote_percentage,
         show_person_votes: sara_local_user.show_person_votes,
-        role: Default::default(),
         wallet_id: None,
       },
       creator: Person {

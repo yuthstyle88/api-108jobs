@@ -107,7 +107,7 @@ mod tests {
     );
 
     // Insert two of those comments
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let _inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,

@@ -480,8 +480,8 @@ pub struct MyUserInfo {
   pub person_blocks: Vec<Person>,
   pub keyword_blocks: Vec<String>,
   pub discussion_languages: Vec<LanguageId>,
-  pub wallet: Option<Wallet>,
-  pub profile: Option<ProfileDataView>,
+  pub wallet: Wallet,
+  pub profile: ProfileDataView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

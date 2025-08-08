@@ -47,6 +47,10 @@ pub mod chat_message;
 pub mod contact;
 pub mod address;
 pub mod identity_card;
+pub mod education;
+pub mod work_experience;
+pub mod skills;
+pub mod certificates;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

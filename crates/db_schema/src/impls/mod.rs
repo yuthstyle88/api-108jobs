@@ -38,3 +38,7 @@ pub mod contact;
 pub mod address;
 mod identity_card;
 pub mod wallet;
+pub mod education;
+pub mod work_experience;
+pub mod skills;
+pub mod certificates;

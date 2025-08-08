@@ -3,6 +3,10 @@ use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work, update_work_after_revision};
 use lemmy_api::local_user::bank_account::{create_bank_account, list_user_bank_accounts, set_default_bank_account, delete_bank_account, list_banks};
+use lemmy_api::local_user::education::{save_education, list_education, update_education, delete_single_education};
+use lemmy_api::local_user::work_experience::{save_work_experience, list_work_experience, update_work_experience, delete_single_work_experience};
+use lemmy_api::local_user::skills::{save_skills, list_skills, update_skill, delete_single_skill};
+use lemmy_api::local_user::certificates::{save_certificates, list_certificates, update_certificate, delete_single_certificate};
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::admin::bank_account::{list_unverified_bank_accounts, verify_bank_account};
 use lemmy_api::{
@@ -312,6 +316,35 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/request-revision", post().to(request_revision))
                 .route("/update-work", post().to(update_work_after_revision))
                 .route("/approve-work", post().to(approve_work))
+            )
+            // Profile-related endpoints
+            .service(
+              scope("/education")
+                .route("", post().to(save_education))
+                .route("", get().to(list_education))
+                .route("/update", put().to(update_education))
+                .route("/delete", delete().to(delete_single_education))
+            )
+            .service(
+              scope("/work-experience")
+                .route("", post().to(save_work_experience))
+                .route("", get().to(list_work_experience))
+                .route("/update", put().to(update_work_experience))
+                .route("/delete", delete().to(delete_single_work_experience))
+            )
+            .service(
+              scope("/skills")
+                .route("", post().to(save_skills))
+                .route("", get().to(list_skills))
+                .route("/update", put().to(update_skill))
+                .route("/delete", delete().to(delete_single_skill))
+            )
+            .service(
+              scope("/certificates")
+                .route("", post().to(save_certificates))
+                .route("", get().to(list_certificates))
+                .route("/update", put().to(update_certificate))
+                .route("/delete", delete().to(delete_single_certificate))
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))

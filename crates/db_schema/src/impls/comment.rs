@@ -409,7 +409,6 @@ mod tests {
       inserted_instance.id,
       "test community".to_string(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -526,7 +525,6 @@ mod tests {
       inserted_instance.id,
       "TIL_comment_agg".into(),
       "nada".to_owned(),
-      "pubkey".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 

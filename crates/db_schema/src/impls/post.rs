@@ -778,7 +778,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -786,7 +786,7 @@ mod tests {
       "A test comment".into(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+      Comment::create(pool, &child_comment_form, None).await?;
 
     let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
 

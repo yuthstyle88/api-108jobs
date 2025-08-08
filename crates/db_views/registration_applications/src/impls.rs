@@ -185,8 +185,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use url::Url;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use lemmy_db_schema::newtypes::{AddressId, ContactId, DbUrl, IdentityCardId};
 
   #[tokio::test]
   #[serial]
@@ -298,6 +297,9 @@ mod tests {
         inbox_url: sara_person.inbox_url.clone(),
         matrix_user_id: None,
         instance_id: instance.id,
+        address_id: AddressId(0),
+        contact_id: ContactId(0),
+        identity_card_id: IdentityCardId(0),
         last_refreshed_at: sara_person.last_refreshed_at,
         post_count: 0,
         post_score: 0,
@@ -369,6 +371,9 @@ mod tests {
       inbox_url: timmy_person.inbox_url.clone(),
       matrix_user_id: None,
       instance_id: instance.id,
+      address_id: AddressId(0),
+      contact_id: ContactId(0),
+      identity_card_id: IdentityCardId(0),
       last_refreshed_at: timmy_person.last_refreshed_at,
       post_count: 0,
       post_score: 0,

@@ -541,7 +541,6 @@ mod tests {
       inserted_instance.id,
       "TIL".into(),
       "nada".to_owned(),
-      "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -583,7 +582,6 @@ mod tests {
       interactions_month: 0,
       local_removed: false,
       path: Ltree("".to_string()),
-      slug: "".to_string(),
       active: false,
       is_new: false,
     };
@@ -663,7 +661,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg".into(),
       "nada".to_owned(),
-      "nada".to_string(),
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 
@@ -671,7 +668,6 @@ mod tests {
       inserted_instance.id,
       "TIL_community_agg_2".into(),
       "nada".to_owned(),
-      "nada".to_string(),
     );
     let another_inserted_community = Community::create(pool, &another_community).await?;
 

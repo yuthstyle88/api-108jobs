@@ -6,6 +6,9 @@ use {
   lemmy_db_schema::utils::{functions::coalesce, queries::creator_banned},
   lemmy_db_schema_file::schema::local_user,
 };
+use lemmy_db_schema::source::address::Address;
+use lemmy_db_schema::source::contact::Contact;
+use lemmy_db_schema::source::identity_card::{IdentityCard};
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -36,4 +39,16 @@ pub struct PersonView {
     )
   )]
   pub creator_banned: bool,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// A ProfileData view.
+#[serde(rename_all = "camelCase")]
+pub struct ProfileDataView{
+  pub contact: Contact,
+  pub address: Address,
+  pub identity_card: IdentityCard,
+  pub show_country_selection_box: bool,
+  pub is_new_buyer: bool,
 }

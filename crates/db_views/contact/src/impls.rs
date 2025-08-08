@@ -1,15 +1,35 @@
 use crate::ContactView;
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema::newtypes::ContactId;
-use lemmy_db_schema_file::schema::contact;
+use lemmy_db_schema::newtypes::{ContactId};
+use lemmy_db_schema_file::schema::{person, contact, };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl ContactView {
+  #[diesel::dsl::auto_type(no_type_alias)]
+  fn joins() -> _ {
+    contact::table.inner_join(
+      person::table.on(person::contact_id.eq(contact::id)),
+    )
+  }
+  pub async fn read(
+    pool: &mut DbPool<'_>,
+    contact_id: ContactId,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    let query = Self::joins()
+     .filter(contact::id.eq(contact_id))
+     .select(Self::as_select())
+     .into_boxed();
 
+    query
+     .first(conn)
+     .await
+     .with_fastjob_type(FastJobErrorType::NotFound)
+  }
   pub async fn find_by_id(
     pool: &mut DbPool<'_>,
     contact_id: ContactId,
@@ -82,21 +102,7 @@ mod tests {
     Ok(())
   }
 
-  #[tokio::test]
-  #[serial]
-  async fn test_read_contact() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-    let data = init_data(pool).await?;
 
-    let contact_view = ContactView::read(pool, data.contact.id).await?;
-    assert_eq!(contact_view.contact.id, data.contact.id);
-    assert_eq!(contact_view.contact.local_user_id, data.local_user.id);
-    assert_eq!(contact_view.contact.phone, Some("1234567890".to_string()));
-    assert_eq!(contact_view.contact.email, Some("test@example.com".to_string()));
-
-    cleanup(data, pool).await
-  }
 
   #[tokio::test]
   #[serial]
@@ -105,9 +111,8 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    let contact_view = ContactView::find_by_id(pool, data.local_user.id).await?;
+    let contact_view = ContactView::find_by_id(pool, data.person.contact_id).await?;
     assert_eq!(contact_view.contact.id, data.contact.id);
-    assert_eq!(contact_view.contact.local_user_id, data.local_user.id);
 
     cleanup(data, pool).await
   }

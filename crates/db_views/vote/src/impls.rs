@@ -214,7 +214,6 @@ mod tests {
       inserted_instance.id,
       "test community vv".to_string(),
       "nada".to_owned(),
-      "na-da".to_string()
     );
     let inserted_community = Community::create(pool, &new_community).await?;
 

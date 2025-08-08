@@ -445,7 +445,6 @@ mod tests {
     .into_iter()
     .for_each(|c| assert!(!c.can_mod));
 
-    let person_id = data.local_user.person_id;
 
     let mod_query = CommunityQuery {
       local_user: Some(&data.local_user),

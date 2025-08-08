@@ -58,6 +58,8 @@ pub struct IdentityCardUpdateForm {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct IdentityCardForm {
   pub address_id: Option<AddressId>,

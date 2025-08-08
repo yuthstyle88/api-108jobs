@@ -37,7 +37,6 @@ impl LocalSite {
 
 #[cfg(test)]
 mod tests {
-
   use super::*;
   use crate::{
     source::{
@@ -76,7 +75,6 @@ mod tests {
       data.instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
-      "community-slug".to_string()
     );
 
     let inserted_community = Community::create(pool, &new_community).await?;
@@ -109,7 +107,7 @@ mod tests {
     );
 
     // Insert two of those comments
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
@@ -117,7 +115,7 @@ mod tests {
       "A test comment".into(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+      Comment::create(pool, &child_comment_form, None).await?;
 
     let site_aggregates_before_delete = read_local_site(pool).await?;
 

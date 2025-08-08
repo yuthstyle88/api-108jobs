@@ -427,7 +427,6 @@ mod tests {
       instance.id,
       "test community pcv".to_string(),
       "nada".to_owned(),
-      "na-da".to_string(),
     );
     let community = Community::create(pool, &community_form).await?;
 
@@ -444,7 +443,7 @@ mod tests {
 
     let sara_comment_form =
       CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
+    let sara_comment = Comment::create(pool, &sara_comment_form, None).await?;
 
     Ok(Data {
       instance,

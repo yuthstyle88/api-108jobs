@@ -253,12 +253,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/account")
             .route("", get().to(get_my_user))
-            .route("/contact", post().to(update_contact))
-            .route("/contact", put().to(update_contact))
-            .route("/address", post().to(update_address))
-            .route("/address", put().to(update_address))
-            .route("/identity-card", post().to(update_identity_card))
-            .route("/identity-card", put().to(update_identity_card))
+            .route("/update-contact", put().to(update_contact))
+            .route("/update-address", post().to(update_address))
+            .route("/update-identity-card", put().to(update_identity_card))
             .service(
               scope("/media")
                 .route("", delete().to(delete_image))

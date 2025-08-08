@@ -94,6 +94,7 @@ pub struct Community {
   pub local_removed: bool,
   #[cfg(feature = "full")]
   #[cfg_attr(feature = "full", serde(with = "LtreeDef"))]
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub path: Ltree,
   pub active: bool,
   pub is_new: bool,

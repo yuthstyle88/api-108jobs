@@ -48,5 +48,6 @@ pub async fn get_my_user(
     keyword_blocks,
     discussion_languages,
     wallet: Some(wallet),
+    profile: None,
   }))
 }

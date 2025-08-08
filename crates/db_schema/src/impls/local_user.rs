@@ -375,7 +375,6 @@ mod tests {
       local_user::{LocalUser, LocalUserInsertForm},
       person::{Person, PersonInsertForm},
     },
-    traits::Crud,
     utils::build_db_pool_for_tests,
   };
   use lemmy_utils::error::FastJobResult;

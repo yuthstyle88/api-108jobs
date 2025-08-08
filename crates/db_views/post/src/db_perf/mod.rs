@@ -80,7 +80,6 @@ async fn db_perf() -> FastJobResult<()> {
       instance.id,
       format!("c{i}"),
       i.to_string(),
-      "na-da".to_string(),
     );
     community_ids.push(Community::create(&mut conn.into(), &form).await?.id);
   }
@@ -190,6 +189,8 @@ fn site() -> FastJobResult<Site> {
     ap_id: Url::parse("http://example1.com")?.into(),
     last_refreshed_at: Default::default(),
     inbox_url: Url::parse("http://example.com")?.into(),
+    private_key: None,
+    public_key: "".to_string(),
     instance_id: Default::default(),
     content_warning: None,
   })

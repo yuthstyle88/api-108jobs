@@ -53,7 +53,6 @@ pub async fn get_my_user(
     contact,
     address,
     identity_card,
-    show_country_selection_box: false,
     is_new_buyer: false,
   };
   Ok(Json(MyUserInfo {

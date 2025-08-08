@@ -49,6 +49,5 @@ pub struct ProfileDataView{
   pub contact: Contact,
   pub address: Address,
   pub identity_card: IdentityCard,
-  pub show_country_selection_box: bool,
   pub is_new_buyer: bool,
 }

@@ -1,12 +1,14 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::bank_account::{
-  VerifyBankAccount, ListUnverifiedBankAccountsResponse, 
-  UnverifiedBankAccountResponse, BankAccountOperationResponse
+  VerifyBankAccount,
+  ListUnverifiedBankAccountsResponse,
+  UnverifiedBankAccountResponse,
+  BankAccountOperationResponse,
 };
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_bank_account::UserBankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobResult, FastJobErrorType};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn list_unverified_bank_accounts(
   context: Data<FastJobContext>,
@@ -23,7 +25,7 @@ pub async fn list_unverified_bank_accounts(
     .into_iter()
     .map(|view| UnverifiedBankAccountResponse {
       id: view.user_bank_account.id,
-      user_id: view.user_bank_account.user_id,
+      user_id: view.user_bank_account.local_user_id,
       bank_id: view.bank.id,
       bank_name: view.bank.name,
       bank_country_id: view.bank.country_id,
@@ -54,7 +56,8 @@ pub async fn verify_bank_account(
     &mut context.pool(),
     data.bank_account_id,
     data.verified,
-  ).await?;
+  )
+  .await?;
 
   // TODO: Store admin_notes if provided
 

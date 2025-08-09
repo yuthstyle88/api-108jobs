@@ -38,6 +38,9 @@ CREATE TABLE certificates (
     id SERIAL PRIMARY KEY,
     person_id INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    achieved_date DATE,
+    expires_date DATE,
+    url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -6,6 +6,5 @@ CREATE TABLE contact
     secondary_email text,
     line_id         text,
     facebook        text,
-    created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz
 );

@@ -24,6 +24,10 @@ use tokio::sync::RwLock;
 #[rtype(result = "()")]
 struct ConnectNow;
 
+#[derive(Message)]
+#[rtype(result = "()")]
+struct FlushDone;
+
 async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
   match socket.connect(Duration::from_secs(10)).await {
@@ -111,6 +115,7 @@ pub struct PhoenixManager {
   endpoint: Url,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
+  is_flushing: bool,
 }
 
 impl PhoenixManager {
@@ -125,6 +130,7 @@ impl PhoenixManager {
       endpoint: endpoint.clone().unwrap(),
       chat_store: HashMap::new(),
       pool,
+      is_flushing: false,
     }
   }
 
@@ -143,7 +149,7 @@ impl PhoenixManager {
       let form = ChatRoomInsertForm {
         room_name,
         created_at: now,
-        updated_at: now,
+        updated_at: None,
       };
       ChatRoom::create(&mut db_pool, &form).await?;
     }
@@ -185,12 +191,19 @@ impl Actor for PhoenixManager {
   fn started(&mut self, ctx: &mut Self::Context) {
     ctx.notify(ConnectNow);
     self.subscribe_system_async::<BridgeMessage>(ctx);
-    ctx.run_interval(Duration::from_secs(10), |actor, _ctx| {
-      let messages = std::mem::take(&mut actor.chat_store);
+    ctx.run_interval(Duration::from_secs(10), |actor, ctx| {
+      if actor.is_flushing {
+        // Skip this tick if a previous flush is still running
+        return;
+      }
+      actor.is_flushing = true;
+
+      let drained = std::mem::take(&mut actor.chat_store);
       let pool = actor.pool.clone();
+      let addr = ctx.address();
 
       actix::spawn(async move {
-        for (room_id, messages) in messages.iter() {
+        for (room_id, messages) in drained.into_iter() {
           if messages.is_empty() {
             continue;
           }
@@ -200,9 +213,8 @@ impl Actor for PhoenixManager {
             println!("Failed to flush messages: {}", e);
           }
         }
+        addr.do_send(FlushDone);
       });
-      println!("Task start run_interval 10 seconds!");
-      actor.chat_store.clear();
     });
   }
 }
@@ -229,7 +241,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       content: content.clone(),
       status: 0,
       created_at: Utc::now(),
-      updated_at: Utc::now(),
+      updated_at: None,
     };
 
     self.add_messages_to_room(chatroom_id, store_msg);
@@ -270,6 +282,13 @@ impl Handler<InitSocket> for PhoenixManager {
   }
 }
 
+impl Handler<FlushDone> for PhoenixManager {
+  type Result = ();
+  fn handle(&mut self, _msg: FlushDone, _ctx: &mut Context<Self>) {
+    self.is_flushing = false;
+  }
+}
+
 impl Handler<StoreChatMessage> for PhoenixManager {
   type Result = ();
 
@@ -289,4 +308,3 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
     let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
   }
 }
-

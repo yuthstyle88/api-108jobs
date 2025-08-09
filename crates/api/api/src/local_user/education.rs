@@ -1,7 +1,9 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::account::{EducationRequest, UpdateEducationRequest, DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::education::{Education, EducationInsertForm};
+use lemmy_db_schema::newtypes::EducationId;
+use lemmy_db_schema::source::education::{Education, EducationInsertForm, EducationUpdateForm};
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -17,12 +19,14 @@ pub async fn save_education(
         let saved = match edu.id {
             // Update existing education record
             Some(id) => {
-                Education::update_by_id_and_person(
+                let form = EducationUpdateForm{
+                    school_name: Some(edu.school_name.clone()),
+                    major: Some(edu.school_name.clone()),
+                };
+                Education::update(
                     &mut context.pool(), 
-                    id, 
-                    person_id, 
-                    edu.school_name.clone(), 
-                    edu.major.clone()
+                    id,
+                    &form
                 ).await?
             }
             // Create new education record
@@ -51,7 +55,7 @@ pub async fn list_education(
 }
 
 pub async fn delete_education(
-    data: Json<Vec<i32>>,
+    data: Json<Vec<EducationId>>,
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
@@ -59,7 +63,7 @@ pub async fn delete_education(
     
     // Delete specific education records
     for education_id in data.iter() {
-        Education::delete_by_id_and_person(&mut context.pool(), *education_id, person_id).await?;
+        Education::delete(&mut context.pool(), *education_id).await?;
     }
 
     Ok(Json("Education records deleted successfully".to_string()))
@@ -68,29 +72,26 @@ pub async fn delete_education(
 pub async fn update_education(
     data: Json<UpdateEducationRequest>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Education>> {
-    let person_id = local_user_view.person.id;
-    
-    let updated_education = Education::update_by_id_and_person(
+
+    let form = EducationUpdateForm{
+        school_name:  data.school_name.clone(),
+        major: data.major.clone()
+    };
+    let updated_education = Education::update(
         &mut context.pool(), 
-        data.id, 
-        person_id, 
-        data.school_name.clone(), 
-        data.major.clone()
+        data.id,
+        &form
     ).await?;
 
     Ok(Json(updated_education))
 }
 
 pub async fn delete_single_education(
-    data: Json<DeleteItemRequest>,
+    data: Json<DeleteItemRequest<EducationId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
-    Education::delete_by_id_and_person(&mut context.pool(), data.id, person_id).await?;
-
+    let id: EducationId = data.into_inner().id;
+    Education::delete(&mut context.pool(), id).await?;
     Ok(Json("Education record deleted successfully".to_string()))
 }

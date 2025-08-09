@@ -25,7 +25,6 @@ pub struct Address {
   pub postal_code: String,
   pub country_id: String,
   pub is_default: bool,
-  pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
 

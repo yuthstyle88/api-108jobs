@@ -42,3 +42,16 @@ pub struct WorkExperienceInsertForm {
     #[new(default)]
     pub is_current: Option<bool>,
 }
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = work_experience))]
+pub struct WorkExperienceUpdateForm {
+    pub company_name: Option<String>,
+    pub position: Option<String>,
+    pub start_month: Option<Option<String>>,
+    pub start_year: Option<Option<i32>>,
+    pub end_month: Option<Option<String>>,
+    pub end_year: Option<Option<i32>>,
+    pub is_current: Option<Option<bool>>,
+}

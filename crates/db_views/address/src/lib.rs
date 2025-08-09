@@ -20,3 +20,9 @@ pub struct AddressView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub address: Address,
 }
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddressResponse {
+  pub contact: Address,
+}

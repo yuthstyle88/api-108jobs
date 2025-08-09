@@ -5,8 +5,11 @@ use lemmy_api_common::bank_account::{
   ListUserBankAccountsResponse, BankAccountOperationResponse
 };
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::source::bank::Bank;
+use lemmy_db_schema::source::user_bank_account::UserBankAccount;
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_bank_account::{UserBankAccountView, BankView};
-use lemmy_db_views_address::{AddressView};
+use lemmy_db_views_address::AddressView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -16,8 +19,8 @@ pub async fn create_bank_account(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let user_id = local_user_view.local_user.id;
-  let user_address_id = &local_user_view.person.address_id;
-  let country_id = "TH".to_string();
+  let user_address_id = local_user_view.person.address_id;
+
   // Validate account number format
   if data.account_number.trim().is_empty() || data.account_number.len() > 50 {
     return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Invalid account number".to_string()))?;
@@ -28,13 +31,20 @@ pub async fn create_bank_account(
     return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Invalid account name".to_string()))?;
   }
 
+  // Load user's address to determine allowed country
+  let address_view = AddressView::find_by_id(&mut context.pool(), user_address_id).await?;
+
   // Verify bank belongs to user's country
-  let bank = BankView::read(&mut context.pool(), data.bank_id).await
+  let bank = Bank::read(&mut context.pool(), data.bank_id)
+    .await
     .map_err(|_| lemmy_utils::error::FastJobErrorType::InvalidField("Bank not found".to_string()))?;
   
-  if bank.country_id != *country_id {
+  if bank.country_id != address_view.address.country_id {
     return Err(lemmy_utils::error::FastJobErrorType::InvalidField(
-      format!("Bank {} is not available in your region ({:?})", bank.name, user_address_id)
+      format!(
+        "Bank {} is not available in your region ({})",
+        bank.name, address_view.address.country_id
+      )
     ))?;
   }
 
@@ -44,7 +54,6 @@ pub async fn create_bank_account(
     data.bank_id,
     data.account_number.clone(),
     data.account_name.clone(),
-    data.is_default,
     data.verification_image.clone(),
   ).await?;
 
@@ -126,12 +135,13 @@ pub async fn list_banks(
 ) -> FastJobResult<Json<ListBanksResponse>> {
   let address_id = local_user_view.person.address_id;
 
-  let country_id = AddressView::find_by_id(&mut context.pool(), address_id).await?;
-  // Filter banks by user's country
-  let banks = BankView::list_by_country(&mut context.pool(), Some(country_id.address.country_id)).await?;
+  let address_view = AddressView::find_by_id(&mut context.pool(), address_id).await?;
+  // Get active banks then filter by user's country
+  let banks = BankView::list(&mut context.pool()).await?;
 
   let response_banks = banks
     .into_iter()
+    .filter(|bank| bank.country_id == address_view.address.country_id)
     .map(|bank| BankResponse {
       id: bank.id,
       name: bank.name,

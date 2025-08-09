@@ -15,7 +15,7 @@ use lemmy_db_schema_file::schema::user_bank_accounts;
 #[serde(rename_all = "camelCase")]
 pub struct UserBankAccount {
   pub id: UserBankAccountId,
-  pub user_id: LocalUserId,
+  pub local_user_id: LocalUserId,
   pub bank_id: BankId,
   pub account_number: String,
   pub account_name: String,
@@ -30,7 +30,7 @@ pub struct UserBankAccount {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = user_bank_accounts))]
 pub struct UserBankAccountInsertForm {
-  pub user_id: LocalUserId,
+  pub local_user_id: LocalUserId,
   pub bank_id: BankId,
   pub account_number: String,
   pub account_name: String,

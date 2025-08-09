@@ -9,6 +9,5 @@ CREATE TABLE address
     postal_code   text        NOT NULL,
     country_id    varchar(2)           DEFAULT 'TH',
     is_default    boolean              DEFAULT FALSE,
-    created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz
 );

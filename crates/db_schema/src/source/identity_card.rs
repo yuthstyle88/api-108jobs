@@ -26,7 +26,6 @@ pub struct IdentityCard {
   pub date_of_birth: NaiveDate,
   pub nationality: String,
   pub is_verified: bool,
-  pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
 
@@ -56,7 +55,6 @@ pub struct IdentityCardUpdateForm {
   pub date_of_birth: Option<NaiveDate>,
   pub nationality: Option<String>,
   pub is_verified: Option<bool>,
-  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,7 +105,6 @@ impl TryFrom<IdentityCardForm> for IdentityCardUpdateForm {
       date_of_birth: form.date_of_birth,
       nationality: form.nationality,
       is_verified: form.is_verified,
-      updated_at: Some(Some(Utc::now())),
     })
   }
 }

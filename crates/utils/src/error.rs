@@ -143,6 +143,7 @@ pub enum FastJobErrorType {
   TooManyItems,
   BanExpirationInPast,
   InvalidUnixTime,
+  InvalidDateFormat,
   InvalidBotAction,
   InvalidTagName,
   TagNotInCommunity,
@@ -283,6 +284,14 @@ pub enum FastJobErrorType {
   EmptyPostalCode,
   EmptyCountryID,
   InvalidCountryID,
+  CouldntCreateSkill,
+  CouldntUpdateSkill,
+  CouldntCreateWorkExperience,
+  CouldntUpdateWorkExperience,
+  CouldntCreateEducation,
+  CouldntUpdateEducation,
+  SkillCouldntEmpty,
+  CouldntDeleteBankAccount,
 }
 
 cfg_if! {

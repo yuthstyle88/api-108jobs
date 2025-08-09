@@ -1,0 +1,16 @@
+root = true
+
+[*.rs]
+indent_style = space
+indent_size  = 2
+tab_width    = 2
+
+# บังคับเฉพาะไฟล์ schema.rs ให้ 2 ช่อง และปิดการเดา indent
+[**/schema.rs]
+indent_style = space
+indent_size  = 2
+tab_width    = 2
+ij_detect_indents = false
+ij_rust_indent_size = 2
+ij_rust_tab_size    = 2
+ij_continuation_indent_size = 2

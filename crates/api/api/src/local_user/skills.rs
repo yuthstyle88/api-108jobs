@@ -1,7 +1,9 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::account::{SkillsRequest, UpdateSkillRequest, DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm};
+use lemmy_db_schema::newtypes::SkillId;
+use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm, SkillsUpdateForm};
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobResult, FastJobErrorType};
 
@@ -30,12 +32,15 @@ pub async fn save_skills(
         let saved = match skill.id {
             // Update existing skill record
             Some(id) => {
-                Skills::update_by_id_and_person(
+                let form = SkillsUpdateForm {
+                    skill_name: Some(skill.skill_name.clone()),
+                    level_id: Some(skill.level_id),
+                };
+
+                Skills::update(
                     &mut context.pool(), 
-                    id, 
-                    person_id, 
-                    skill.skill_name.clone(),
-                    skill.level_id,
+                    id,
+                    &form
                 ).await?
             }
             // Create new skill record
@@ -64,49 +69,44 @@ pub async fn list_skills(
 }
 
 pub async fn delete_skills(
-    data: Json<Vec<i32>>,
+    data: Json<Vec<SkillId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
+
     // Delete specific skills records
     for skill_id in data.iter() {
-        Skills::delete_by_id_and_person(&mut context.pool(), *skill_id, person_id).await?;
+        Skills::delete(&mut context.pool(), *skill_id).await?;
     }
-
     Ok(Json("Skills records deleted successfully".to_string()))
 }
 
 pub async fn update_skill(
     data: Json<UpdateSkillRequest>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Skills>> {
-    let person_id = local_user_view.person.id;
-    
     // Validate skill level
     validate_skill_level(&data.level_id)?;
-    
-    let updated_skill = Skills::update_by_id_and_person(
+    let form = SkillsUpdateForm{
+        skill_name: data.skill_name.clone(),
+        level_id: Some(data.level_id),
+    };
+
+    let updated_skill = Skills::update(
         &mut context.pool(), 
         data.id, 
-        person_id, 
-        data.skill_name.clone(),
-        data.level_id,
+        &form
     ).await?;
 
     Ok(Json(updated_skill))
 }
 
 pub async fn delete_single_skill(
-    data: Json<DeleteItemRequest>,
+    data: Json<DeleteItemRequest<SkillId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
+    let id = data.into_inner().id;
     
-    Skills::delete_by_id_and_person(&mut context.pool(), data.id, person_id).await?;
+    Skills::delete(&mut context.pool(), id).await?;
 
     Ok(Json("Skill record deleted successfully".to_string()))
 }

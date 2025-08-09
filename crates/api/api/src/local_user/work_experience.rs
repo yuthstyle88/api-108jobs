@@ -1,7 +1,9 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::account::{WorkExperienceRequest, UpdateWorkExperienceRequest, DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::work_experience::{WorkExperience, WorkExperienceInsertForm};
+use lemmy_db_schema::newtypes::WorkExperienceId;
+use lemmy_db_schema::source::work_experience::{WorkExperience, WorkExperienceInsertForm, WorkExperienceUpdateForm};
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -17,17 +19,19 @@ pub async fn save_work_experience(
         let saved = match exp.id {
             // Update existing work experience record
             Some(id) => {
-                WorkExperience::update_by_id_and_person(
+                let form = WorkExperienceUpdateForm {
+                    company_name: None,
+                    position: None,
+                    start_month: None,
+                    start_year: None,
+                    end_month: None,
+                    end_year: None,
+                    is_current: None,
+                };
+                WorkExperience::update(
                     &mut context.pool(), 
                     id, 
-                    person_id, 
-                    exp.company_name.clone(),
-                    exp.position.clone(),
-                    exp.start_month.clone(),
-                    exp.start_year,
-                    exp.end_month.clone(),
-                    exp.end_year,
-                    exp.is_current,
+                   &form
                 ).await?
             }
             // Create new work experience record
@@ -60,15 +64,13 @@ pub async fn list_work_experience(
 }
 
 pub async fn delete_work_experience(
-    data: Json<Vec<i32>>,
+    data: Json<Vec<WorkExperienceId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
+
     // Delete specific work experience records
     for experience_id in data.iter() {
-        WorkExperience::delete_by_id_and_person(&mut context.pool(), *experience_id, person_id).await?;
+        WorkExperience::delete(&mut context.pool(), *experience_id).await?;
     }
 
     Ok(Json("Work experience records deleted successfully".to_string()))
@@ -77,34 +79,31 @@ pub async fn delete_work_experience(
 pub async fn update_work_experience(
     data: Json<UpdateWorkExperienceRequest>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkExperience>> {
-    let person_id = local_user_view.person.id;
-    
-    let updated_experience = WorkExperience::update_by_id_and_person(
+    let form = WorkExperienceUpdateForm {
+        company_name: data.company_name.clone(),
+        position: data.position.clone(),
+        start_month: Some(data.start_month.clone()),
+        start_year: Some(data.start_year),
+        end_month: Some(data.end_month.clone()),
+        end_year: Some(data.end_year),
+        is_current: Some(data.is_current),
+    };
+    let updated_experience = WorkExperience::update(
         &mut context.pool(), 
         data.id, 
-        person_id, 
-        data.company_name.clone(),
-        data.position.clone(),
-        data.start_month.clone(),
-        data.start_year,
-        data.end_month.clone(),
-        data.end_year,
-        data.is_current,
+        &form
     ).await?;
 
     Ok(Json(updated_experience))
 }
 
 pub async fn delete_single_work_experience(
-    data: Json<DeleteItemRequest>,
+    data: Json<DeleteItemRequest<WorkExperienceId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
-    WorkExperience::delete_by_id_and_person(&mut context.pool(), data.id, person_id).await?;
+    let id: WorkExperienceId = data.into_inner().id;
+    WorkExperience::delete(&mut context.pool(), id).await?;
 
     Ok(Json("Work experience record deleted successfully".to_string()))
 }

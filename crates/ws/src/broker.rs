@@ -201,7 +201,7 @@ impl Actor for PhoenixManager {
           }
         }
       });
-      println!("Task spawned!");
+      println!("Task start run_interval 10 seconds!");
       actor.chat_store.clear();
     });
   }

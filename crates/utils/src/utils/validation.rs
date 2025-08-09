@@ -448,24 +448,6 @@ impl NationalIdValidator for VietnamIdValidator {
   }
 }
 
-pub fn validate_country_id(country_id: &str) -> FastJobResult<()> {
-  // List of allowed ISO 3166-1 alpha-2 codes
-  static ALLOWED_CODES: [&str; 2] = ["VN", "TH"];
-
-  // Check format: must be exactly 2 uppercase ASCII letters
-  if country_id.len() != 2 || !country_id.chars().all(|c| c.is_ascii_uppercase()) {
-    return Err(FastJobErrorType::InvalidCountryID.into());
-  }
-
-  // Check existence in an allowed list
-  let allowed: HashSet<&str> = ALLOWED_CODES.iter().copied().collect();
-  if !allowed.contains(country_id) {
-    return Err(FastJobErrorType::InvalidCountryID.into());
-  }
-
-  Ok(())
-}
-
 #[cfg(test)]
 mod tests {
   use crate::{

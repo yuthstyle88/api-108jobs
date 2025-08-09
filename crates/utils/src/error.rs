@@ -276,6 +276,13 @@ pub enum FastJobErrorType {
   EmpltyFullName,
   MissingLocalUserId,
   IDNumberAlreadyExist,
+  EmptyAddressLine1,
+  EmptySubdistrict,
+  EmptyDistrict,
+  EmptyProvince,
+  EmptyPostalCode,
+  EmptyCountryID,
+  InvalidCountryID,
 }
 
 cfg_if! {

@@ -39,13 +39,14 @@ pub mod auth {
 }
 
 use serde::{Deserialize, Serialize};
+use lemmy_db_schema::newtypes::{CertificateId, EducationId, SkillId, WorkExperienceId};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct EducationItem {
-    pub id: Option<i32>, // None for new items, Some(id) for updates
+    pub id: Option<EducationId>, // None for new items, Some(id) for updates
     pub school_name: String,
     pub major: String,
 }
@@ -63,7 +64,7 @@ pub struct EducationRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct WorkExperienceItem {
-    pub id: Option<i32>, // None for new items, Some(id) for updates
+    pub id: Option<WorkExperienceId>, // None for new items, Some(id) for updates
     pub company_name: String,
     pub position: String,
     pub start_month: Option<String>,
@@ -86,7 +87,7 @@ pub struct WorkExperienceRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct SkillItem {
-    pub id: Option<i32>, // None for new items, Some(id) for updates
+    pub id: Option<SkillId>, // None for new items, Some(id) for updates
     pub skill_name: String,
     pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
 }
@@ -125,9 +126,9 @@ pub struct CertificatesRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEducationRequest {
-    pub id: i32,
-    pub school_name: String,
-    pub major: String,
+    pub id: EducationId,
+    pub school_name: Option<String>,
+    pub major: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -135,9 +136,9 @@ pub struct UpdateEducationRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateWorkExperienceRequest {
-    pub id: i32,
-    pub company_name: String,
-    pub position: String,
+    pub id: WorkExperienceId,
+    pub company_name: Option<String>,
+    pub position: Option<String>,
     pub start_month: Option<String>,
     pub start_year: Option<i32>,
     pub end_month: Option<String>,
@@ -150,8 +151,8 @@ pub struct UpdateWorkExperienceRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSkillRequest {
-    pub id: i32,
-    pub skill_name: String,
+    pub id: SkillId,
+    pub skill_name: Option<String>,
     pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
 }
 
@@ -160,7 +161,7 @@ pub struct UpdateSkillRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCertificateRequest {
-    pub id: i32,
+    pub id: CertificateId,
     pub name: String,
     pub achieved_date: Option<String>, // Date as string in YYYY-MM-DD format
     pub expires_date: Option<String>,  // Date as string in YYYY-MM-DD format
@@ -172,6 +173,6 @@ pub struct UpdateCertificateRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
-pub struct DeleteItemRequest {
-    pub id: i32,
+pub struct DeleteItemRequest<T> {
+    pub id: T,
 }

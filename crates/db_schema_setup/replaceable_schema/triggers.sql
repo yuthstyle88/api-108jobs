@@ -695,3 +695,39 @@ CREATE TRIGGER set_updated_at_user_bank_accounts
     BEFORE UPDATE ON user_bank_accounts
     FOR EACH ROW
     EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep skills.updated_at fresh
+CREATE TRIGGER set_updated_at_skills
+    BEFORE UPDATE ON skills
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep address.updated_at fresh
+CREATE TRIGGER set_updated_at_address
+    BEFORE UPDATE ON address
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep work_experience.updated_at fresh
+CREATE TRIGGER set_updated_at_work_experience
+    BEFORE UPDATE ON work_experience
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep education.updated_at fresh
+CREATE TRIGGER set_updated_at_education
+    BEFORE UPDATE ON education
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep identity_card.updated_at fresh
+CREATE TRIGGER set_updated_at_identity_card
+    BEFORE UPDATE ON identity_card
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep contact.updated_at fresh
+CREATE TRIGGER set_updated_at_contact
+    BEFORE UPDATE ON contact
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();

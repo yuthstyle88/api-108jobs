@@ -197,7 +197,7 @@ diesel::table! {
         id -> Varchar,
         room_name -> Varchar,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -209,7 +209,7 @@ diesel::table! {
         content -> Text,
         status -> Int2,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1117,7 +1117,6 @@ diesel::table! {
         secondary_email -> Nullable<Text>,
         line_id -> Nullable<Text>,
         facebook -> Nullable<Text>,
-        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }
@@ -1134,7 +1133,6 @@ diesel::table! {
         #[max_length = 2]
         country_id -> Varchar,
         is_default -> Bool,
-        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }
@@ -1150,7 +1148,6 @@ diesel::table! {
         date_of_birth -> Date,
         nationality -> Text,
         is_verified -> Bool,
-        created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
 }
@@ -1172,7 +1169,7 @@ diesel::table! {
 diesel::table! {
     user_bank_accounts (id) {
         id -> Int4,
-        user_id -> Int4,
+        local_user_id -> Int4,
         bank_id -> Int4,
         account_number -> Varchar,
         account_name -> Varchar,
@@ -1181,6 +1178,17 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         verification_image_path -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    education (id) {
+        id -> Int4,
+        person_id -> Int4,
+        school_name -> Text,
+        major -> Text,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1219,17 +1227,6 @@ diesel::table! {
         achieved_date -> Nullable<Date>,
         expires_date -> Nullable<Date>,
         url -> Nullable<Text>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    education (id) {
-        id -> Int4,
-        person_id -> Int4,
-        school_name -> Text,
-        major -> Text,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1433,7 +1430,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   identity_card,
   banks,
   user_bank_accounts,
-    education,
+  education,
   work_experience,
   skills,
   certificates,

@@ -1,10 +1,11 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::account::{CertificatesRequest, UpdateCertificateRequest, DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::certificates::{Certificates, CertificatesInsertForm};
+use lemmy_db_schema::source::certificates::{Certificates, CertificatesInsertForm, CertificatesUpdateForm};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use chrono::NaiveDate;
+use lemmy_db_schema::newtypes::CertificateId;
 
 // Helper function to parse date strings
 fn parse_date_string(date_str: &Option<String>) -> Option<NaiveDate> {
@@ -79,31 +80,28 @@ pub async fn delete_certificates(
 pub async fn update_certificate(
     data: Json<UpdateCertificateRequest>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Certificates>> {
-    let person_id = local_user_view.person.id;
-    
-    let updated_certificate = Certificates::update_by_id_and_person(
+
+    let form = CertificatesUpdateForm{
+        name: None,
+        achieved_date: None,
+        expires_date: None,
+        url: None,
+    };
+    let updated_certificate = Certificates::update(
         &mut context.pool(), 
-        data.id, 
-        person_id, 
-        data.name.clone(),
-        parse_date_string(&data.achieved_date),
-        parse_date_string(&data.expires_date),
-        data.url.clone(),
+        data.id,
+        &form,
     ).await?;
 
     Ok(Json(updated_certificate))
 }
 
 pub async fn delete_single_certificate(
-    data: Json<DeleteItemRequest>,
+    data: Json<DeleteItemRequest<CertificateId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
-    Certificates::delete_by_id_and_person(&mut context.pool(), data.id, person_id).await?;
-
+    let id = data.into_inner().id;
+    Certificates::delete(&mut context.pool(), id).await?;
     Ok(Json("Certificate record deleted successfully".to_string()))
 }

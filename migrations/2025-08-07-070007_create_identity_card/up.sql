@@ -9,7 +9,6 @@ CREATE TABLE identity_card
     date_of_birth date,
     nationality   text,
     is_verified   boolean              DEFAULT FALSE,
-    created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz
 );
 

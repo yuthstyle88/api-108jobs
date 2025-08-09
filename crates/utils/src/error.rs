@@ -276,6 +276,14 @@ pub enum FastJobErrorType {
   EmpltyFullName,
   MissingLocalUserId,
   IDNumberAlreadyExist,
+  CouldntCreateSkill,
+  CouldntUpdateSkill,
+  CouldntCreateWorkExperience,
+  CouldntUpdateWorkExperience,
+  CouldntCreateEducation,
+  CouldntUpdateEducation,
+  SkillCouldntEmpty,
+  CouldntDeleteBankAccount,
 }
 
 cfg_if! {

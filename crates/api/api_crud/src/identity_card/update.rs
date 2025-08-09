@@ -1,7 +1,6 @@
 use actix_web::web;
 
 use actix_web::web::Json;
-use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::identity_card::IdentityCardUpdateForm;
 use lemmy_db_schema::{
@@ -34,7 +33,6 @@ pub async fn update_identity_card(
     full_name: Some(data.full_name),
     date_of_birth: Some(data.date_of_birth),
     nationality: Some(data.nationality),
-    updated_at: Some(Some(Utc::now())),
     ..Default::default()
   };
 

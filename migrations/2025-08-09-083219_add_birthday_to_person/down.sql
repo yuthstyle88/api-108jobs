@@ -1,1 +1,0 @@
-ALTER TABLE person DROP COLUMN birthday;

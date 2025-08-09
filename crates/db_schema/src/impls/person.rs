@@ -27,6 +27,7 @@ use lemmy_utils::{
   settings::structs::Settings,
 };
 use url::Url;
+use lemmy_utils::utils::helper::lang_to_country_code;
 
 impl Crud for Person {
   type InsertForm = PersonInsertForm;
@@ -166,8 +167,7 @@ impl Person {
   ) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
     let conn = &mut get_conn(pool).await?;
     let today_utc: NaiveDate = Utc::now().date_naive();
-    let interface_language = interface_language
-        .map(|lang| lang.to_uppercase());
+    let country_code = lang_to_country_code(interface_language.as_deref());
 
     let form = AddressInsertForm {
       address_line1: "".to_string(),
@@ -176,7 +176,7 @@ impl Person {
       district: "".to_string(),
       province: "".to_string(),
       postal_code: "".to_string(),
-      country_id: interface_language,
+      country_id: country_code,
       is_default: Some(true),
     };
     let address_id = Address::create(&mut conn.into(), &form).await?.id;

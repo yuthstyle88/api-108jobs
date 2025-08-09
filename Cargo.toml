@@ -244,6 +244,7 @@ hex = "0.4.3"
 validator = "0.20.0"
 slug = "0.1.6"
 redis = { version = "0.32.4", features = ["tokio-comp"] }
+unic-langid = "0.9.6"
 
 [dependencies]
 lemmy_apub = { workspace = true }

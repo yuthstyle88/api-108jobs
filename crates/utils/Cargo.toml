@@ -95,6 +95,7 @@ tendril = "0.4.3"
 base64 = { workspace = true }
 redis = { workspace = true }
 fastrand = "2.3.0"
+unic-langid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

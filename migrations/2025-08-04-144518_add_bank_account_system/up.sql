@@ -41,24 +41,6 @@ CREATE UNIQUE INDEX uniq_user_bank_account
 CREATE INDEX idx_user_bank_accounts_default
     ON user_bank_accounts (local_user_id, is_default) WHERE is_default = TRUE;
 
--- Updated-at triggers
-CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_user_bank_accounts_updated_at
-    BEFORE UPDATE
-    ON user_bank_accounts
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-CREATE TRIGGER trg_banks_updated_at
-    BEFORE UPDATE
-    ON banks
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Seed: Thailand (TH)
 INSERT INTO banks (name, country_id, bank_code, swift_code)

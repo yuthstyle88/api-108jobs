@@ -672,3 +672,26 @@ CREATE TRIGGER search_combined_community_score
     AFTER UPDATE OF users_active_month ON community
     FOR EACH ROW
     EXECUTE FUNCTION r.search_combined_community_score_update ();
+
+-- Update updated_at on any table using a shared trigger function
+CREATE OR REPLACE FUNCTION r.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF row(NEW.*) IS DISTINCT FROM row(OLD.*) THEN
+    NEW.updated_at = now();
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Keep banks.updated_at fresh
+CREATE TRIGGER set_updated_at_banks
+    BEFORE UPDATE ON banks
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();
+
+-- Keep user_bank_accounts.updated_at fresh
+CREATE TRIGGER set_updated_at_user_bank_accounts
+    BEFORE UPDATE ON user_bank_accounts
+    FOR EACH ROW
+    EXECUTE FUNCTION r.set_updated_at();

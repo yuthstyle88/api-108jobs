@@ -35,3 +35,13 @@ pub struct CertificatesInsertForm {
     pub expires_date: Option<NaiveDate>,
     pub url: Option<String>,
 }
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = certificates))]
+pub struct CertificatesUpdateForm {
+    pub name: Option<String>,
+    pub achieved_date: Option<Option<NaiveDate>>,
+    pub expires_date: Option<Option<NaiveDate>>,
+    pub url: Option<Option<String>>,
+}

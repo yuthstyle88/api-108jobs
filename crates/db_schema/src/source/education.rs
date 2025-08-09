@@ -1,4 +1,4 @@
-use crate::newtypes::PersonId;
+use crate::newtypes::{EducationId, PersonId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -15,7 +15,7 @@ use lemmy_db_schema_file::schema::education;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct Education {
-    pub id: i32,
+    pub id: EducationId,
     pub person_id: PersonId,
     pub school_name: String,
     pub major: String,
@@ -30,4 +30,11 @@ pub struct EducationInsertForm {
     pub person_id: PersonId,
     pub school_name: String,
     pub major: String,
+}
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = education))]
+pub struct EducationUpdateForm {
+    pub school_name: Option<String>,
+    pub major: Option<String>,
 }

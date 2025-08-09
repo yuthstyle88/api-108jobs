@@ -23,7 +23,6 @@ pub struct Contact {
   pub secondary_email: Option<String>,
   pub line_id: Option<String>,
   pub facebook: Option<String>,
-  pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
 
@@ -47,7 +46,6 @@ pub struct ContactUpdateForm {
   pub secondary_email: Option<String>,
   pub line_id: Option<String>,
   pub facebook: Option<String>,
-  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,7 +73,6 @@ impl TryFrom<ContactForm> for ContactUpdateForm {
       secondary_email: form.secondary_email,
       line_id: form.line_id,
       facebook: form.facebook,
-      updated_at: Some(Some(Utc::now())),
     })
   }
 }

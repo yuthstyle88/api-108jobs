@@ -25,7 +25,6 @@ pub struct Address {
   pub postal_code: String,
   pub country_id: String,
   pub is_default: bool,
-  pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
 
@@ -56,7 +55,6 @@ pub struct AddressUpdateForm {
   pub postal_code: Option<String>,
   pub country_id: Option<String>,
   pub is_default: Option<bool>,
-  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,7 +87,6 @@ impl TryFrom<AddressForm> for AddressUpdateForm {
       postal_code: Some(form.postal_code),
       country_id: Some(form.country_id),
       is_default: form.is_default,
-      updated_at: Some(Some(Utc::now())),
     })
   }
 }
@@ -125,9 +122,4 @@ fn validate_address(form: &AddressForm) -> Result<(), FastJobError> {
     return Err(FastJobErrorType::ValidationError("Invalid postal code format".to_string()).into());
   }
   Ok(())
-}
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AddressResponse {
-  pub contact: Address,
 }

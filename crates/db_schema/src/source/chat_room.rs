@@ -15,7 +15,7 @@ pub struct ChatRoom {
     pub id: ChatRoomId,
     pub room_name: String,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
@@ -27,7 +27,7 @@ pub struct ChatRoom {
 pub struct ChatRoomInsertForm {
     pub room_name: String,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Default)]

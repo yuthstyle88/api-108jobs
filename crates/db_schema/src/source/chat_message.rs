@@ -18,7 +18,7 @@ pub struct ChatMessage {
     pub content: String,
     pub status: i16,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
@@ -33,7 +33,7 @@ pub struct ChatMessageInsertForm {
     pub content: String,
     pub status: i16,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 #[derive(Debug, Clone, Serialize)]
 pub enum ChatMessageContent {

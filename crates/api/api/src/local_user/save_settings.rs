@@ -10,8 +10,9 @@ use lemmy_db_schema::{
     local_user::{LocalUser, LocalUserUpdateForm},
     person::{Person, PersonUpdateForm},
   },
-  traits::Crud,
+  traits::{Crud, ApubActor},
   utils::{diesel_opt_number_update, diesel_string_update},
+  newtypes::DbUrl,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::{
@@ -31,6 +32,8 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
+use chrono::NaiveDate;
+use std::str::FromStr;
 
 pub async fn save_user_settings(
   data: Json<SaveUserSettings>,
@@ -51,6 +54,21 @@ pub async fn save_user_settings(
   let matrix_user_id = diesel_string_update(data.matrix_user_id.as_deref());
   let email_deref = data.email.as_deref().map(str::to_lowercase);
   let email = diesel_string_update(email_deref.as_deref());
+  
+  // Handle new profile fields
+  let username = data.username.clone();
+  let avatar_url = if let Some(url_str) = &data.avatar_url {
+    Some(Some(DbUrl::from_str(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?))
+  } else {
+    None
+  };
+  let birth_date = if let Some(date_str) = &data.birth_date {
+    Some(Some(NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
+      .map_err(|_| FastJobErrorType::InvalidDateFormat)?))
+  } else {
+    None
+  };
+  
 
   if let Some(Some(email)) = &email {
     let previous_email = local_user_view.local_user.email.clone().unwrap_or_default();
@@ -80,9 +98,9 @@ pub async fn save_user_settings(
     is_valid_bio_field(bio)?;
   }
 
-  if let Some(Some(display_name)) = &display_name {
+  if let Some(Some(display_name_val)) = &display_name {
     is_valid_display_name(
-      display_name.trim(),
+      display_name_val.trim(),
       site_view.local_site.actor_name_max_length,
     )?;
   }
@@ -99,6 +117,17 @@ pub async fn save_user_settings(
 
   let local_user_id = local_user_view.local_user.id;
   let person_id = local_user_view.person.id;
+  
+  // Validate username if provided (after person_id is available)
+  if let Some(name) = &username {
+    // Check if username is already taken (excluding current user)
+    if let Some(existing_person) = Person::read_from_name(&mut context.pool(), name, false).await? {
+      if existing_person.id != person_id {
+        return Err(FastJobErrorType::UsernameAlreadyExists.into());
+      }
+    }
+  }
+  
   let default_listing_type = data.default_listing_type;
   let default_post_sort_type = data.default_post_sort_type;
   let default_post_time_range_seconds =
@@ -106,10 +135,13 @@ pub async fn save_user_settings(
   let default_comment_sort_type = data.default_comment_sort_type;
 
   let person_form = PersonUpdateForm {
+    name: username,
     display_name,
     bio,
     matrix_user_id,
     bot_account: data.bot_account,
+    avatar: avatar_url,
+    birthday: birth_date,
     ..Default::default()
   };
 

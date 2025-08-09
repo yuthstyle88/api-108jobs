@@ -581,7 +581,14 @@ pub struct SaveUserSettings {
   pub hide_media: Option<bool>,
   /// Whether to show vote totals given to others.
   pub show_person_votes: Option<bool>,
+  /// Your username
+  pub username: Option<String>,
+  /// Your avatar URL
+  pub avatar_url: Option<String>,
+  /// Your birth date in YYYY-MM-DD format
+  pub birth_date: Option<String>,
 }
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

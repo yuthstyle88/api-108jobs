@@ -166,6 +166,9 @@ impl Person {
   ) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
     let conn = &mut get_conn(pool).await?;
     let today_utc: NaiveDate = Utc::now().date_naive();
+    let interface_language = interface_language
+        .map(|lang| lang.to_uppercase());
+
     let form = AddressInsertForm {
       address_line1: "".to_string(),
       address_line2: None,

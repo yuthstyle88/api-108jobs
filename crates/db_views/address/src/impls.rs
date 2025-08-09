@@ -34,7 +34,7 @@ impl TryFrom<UpsertAddressRequest> for UpsertAddress {
     let postal_code = get_required_trimmed(&form.postal_code, FastJobErrorType::EmptyPostalCode)?;
 
     let country_id = get_required_trimmed(&form.country_id, FastJobErrorType::EmptyCountryID)?;
-    validate_country_id(country_id);
+    validate_country_id(&country_id)?;
 
     Ok(Self {
       address_line1,

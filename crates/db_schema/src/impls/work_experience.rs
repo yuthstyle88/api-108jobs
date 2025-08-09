@@ -18,10 +18,10 @@ impl WorkExperience {
       .with_fastjob_type(lemmy_utils::error::FastJobErrorType::DatabaseError)
   }
 
-  pub async fn read_by_person_id(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Vec<Self>> {
+  pub async fn read_by_person_id(pool: &mut DbPool<'_>, person_id_param: PersonId) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     work_experience::table
-      .filter(work_experience::person_id.eq(person_id))
+      .filter(work_experience::person_id.eq(person_id_param))
       .load::<Self>(conn)
       .await
       .with_fastjob_type(lemmy_utils::error::FastJobErrorType::DatabaseError)

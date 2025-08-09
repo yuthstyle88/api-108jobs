@@ -1135,7 +1135,7 @@ diesel::table! {
         country_id -> Varchar,
         is_default -> Bool,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1151,6 +1151,7 @@ diesel::table! {
         nationality -> Text,
         is_verified -> Bool,
         created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1180,6 +1181,57 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         verification_image_path -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    work_experience (id) {
+        id -> Int4,
+        person_id -> Int4,
+        company_name -> Text,
+        position -> Text,
+        start_month -> Nullable<Text>,
+        start_year -> Nullable<Int4>,
+        end_month -> Nullable<Text>,
+        end_year -> Nullable<Int4>,
+        is_current -> Nullable<Bool>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    skills (id) {
+        id -> Int4,
+        person_id -> Int4,
+        skill_name -> Text,
+        level_id -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    certificates (id) {
+        id -> Int4,
+        person_id -> Int4,
+        name -> Text,
+        achieved_date -> Nullable<Date>,
+        expires_date -> Nullable<Date>,
+        url -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    education (id) {
+        id -> Int4,
+        person_id -> Int4,
+        school_name -> Text,
+        major -> Text,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1301,6 +1353,10 @@ diesel::joinable!(tag -> community (community_id));
 diesel::joinable!(person -> contact(contact_id));
 diesel::joinable!(person -> address (address_id));
 diesel::joinable!(person -> identity_card (identity_card_id));
+diesel::joinable!(education -> person (person_id));
+diesel::joinable!(work_experience -> person (person_id));
+diesel::joinable!(skills -> person (person_id));
+diesel::joinable!(certificates -> person (person_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1377,4 +1433,8 @@ diesel::allow_tables_to_appear_in_same_query!(
   identity_card,
   banks,
   user_bank_accounts,
+    education,
+  work_experience,
+  skills,
+  certificates,
 );

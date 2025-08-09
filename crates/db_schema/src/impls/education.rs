@@ -9,7 +9,6 @@ use crate::{
 use diesel::{ExpressionMethods, QueryDsl};
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
-#[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::education;
 #[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobErrorExt, FastJobResult};

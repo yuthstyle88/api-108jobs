@@ -88,7 +88,7 @@ pub struct WorkExperienceRequest {
 pub struct SkillItem {
     pub id: Option<i32>, // None for new items, Some(id) for updates
     pub skill_name: String,
-    pub level_id: Option<i32>,
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -152,7 +152,7 @@ pub struct UpdateWorkExperienceRequest {
 pub struct UpdateSkillRequest {
     pub id: i32,
     pub skill_name: String,
-    pub level_id: Option<i32>,
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

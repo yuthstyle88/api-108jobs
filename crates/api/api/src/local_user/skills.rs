@@ -3,7 +3,17 @@ use lemmy_api_common::account::{SkillsRequest, UpdateSkillRequest, DeleteItemReq
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use lemmy_utils::error::{FastJobResult, FastJobErrorType};
+
+// Helper function to validate skill level
+fn validate_skill_level(level_id: &Option<i32>) -> FastJobResult<()> {
+    if let Some(level) = level_id {
+        if *level < 1 || *level > 5 {
+            Err(FastJobErrorType::InvalidField("Proficient level must from 1 to 5".to_string()))?;
+        }
+    }
+    Ok(())
+}
 
 pub async fn save_skills(
     data: Json<SkillsRequest>,
@@ -14,6 +24,9 @@ pub async fn save_skills(
 
     let mut saved_skills = Vec::new();
     for skill in &data.skills {
+        // Validate skill level
+        validate_skill_level(&skill.level_id)?;
+        
         let saved = match skill.id {
             // Update existing skill record
             Some(id) => {
@@ -71,6 +84,9 @@ pub async fn update_skill(
     local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Skills>> {
     let person_id = local_user_view.person.id;
+    
+    // Validate skill level
+    validate_skill_level(&data.level_id)?;
     
     let updated_skill = Skills::update_by_id_and_person(
         &mut context.pool(), 

@@ -402,6 +402,52 @@ pub fn get_required_trimmed(
       .filter(|s| !s.is_empty())
       .ok_or_else(|| err.into())
 }
+
+// National ID validation
+pub trait NationalIdValidator {
+  fn is_valid(&self, id: &str) -> bool;
+  fn country_name(&self) -> &'static str;
+}
+
+pub struct ThaiIdValidator;
+
+impl NationalIdValidator for ThaiIdValidator {
+  fn is_valid(&self, id: &str) -> bool {
+    if id.len() != 13 || !id.chars().all(|c| c.is_ascii_digit()) {
+      return false;
+    }
+
+    let digits: Vec<u32> = id.chars().filter_map(|c| c.to_digit(10)).collect();
+
+    let sum: u32 = digits.iter()
+        .take(12)
+        .enumerate()
+        .map(|(i, &digit)| digit * (13 - i as u32))
+        .sum();
+
+    let check_digit = (11 - (sum % 11)) % 10;
+    check_digit == digits[12]
+  }
+
+  fn country_name(&self) -> &'static str {
+    "Thailand"
+  }
+}
+
+pub struct VietnamIdValidator;
+
+impl NationalIdValidator for VietnamIdValidator {
+  fn is_valid(&self, id: &str) -> bool {
+    // Must be either 9 or 12 digits
+    matches!(id.len(), 9 | 12) && id.chars().all(|c| c.is_ascii_digit())
+  }
+
+  fn country_name(&self) -> &'static str {
+    "Vietnam"
+  }
+}
+
+
 #[cfg(test)]
 mod tests {
   use crate::{

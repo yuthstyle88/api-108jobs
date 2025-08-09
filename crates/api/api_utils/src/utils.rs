@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::{
   claims::Claims,
   context::FastJobContext,
@@ -44,10 +45,13 @@ use lemmy_utils::{error::{FastJobError, FastJobErrorExt2, FastJobErrorType, Fast
 use moka::future::Cache;
 use regex::{escape, Regex, RegexSet};
 use std::sync::LazyLock;
-
+use diesel_async::AsyncPgConnection;
 use rand::Rng;
 use url::{ParseError, Url};
 use urlencoding::encode;
+use lemmy_db_schema::newtypes::LanguageId;
+use lemmy_db_schema::source::actor_language::SiteLanguage;
+use lemmy_db_schema::source::language::Language;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
@@ -791,6 +795,32 @@ pub fn check_comment_depth(comment: &Comment) -> FastJobResult<()> {
     Ok(())
   }
 }
+
+pub async fn prepare_user_languages(
+  conn: &mut AsyncPgConnection,
+  local_site: &LocalSite,
+  language_tags: &[String],
+) -> FastJobResult<(Vec<LanguageId>, Option<String>)> {
+  let conn_ = &mut conn.into();
+  let all_languages = Language::read_all(conn_).await?;
+  let mut language_ids = HashSet::new();
+
+  let discussion_languages = SiteLanguage::read(conn_, local_site.site_id).await?;
+  if !discussion_languages.is_empty() {
+    for tag in language_tags {
+      if let Some(found) = all_languages.iter().find(|lang| &lang.code == tag) {
+        language_ids.insert(found.id);
+      }
+    }
+  }
+  language_ids.extend(discussion_languages);
+
+  let interface_language = language_tags.first().cloned();
+
+  Ok((language_ids.into_iter().collect(), interface_language))
+}
+
+
 #[cfg(test)]
 mod tests {
   use super::*;

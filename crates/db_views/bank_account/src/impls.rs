@@ -244,7 +244,7 @@ impl BankView {
       .filter(banks::is_active.eq(true))
       .into_boxed();
 
-    if let Some(country_filter) = country_id {
+      if let Some(country_filter) = country_id {
       // Only allow Thailand and Vietnam
       if !["TH", "VI"].contains(&country_filter.as_str()) {
         return Err(FastJobErrorType::InvalidField("Only Thailand and Vietnam banks are supported".to_string()))?;
@@ -252,7 +252,7 @@ impl BankView {
       query = query.filter(banks::country_id.eq(country_filter));
     } else {
       // Default to showing both Thailand and Vietnam banks
-      query = query.filter(banks::country_id.eq_any(vec!["Thailand", "Vietnam"]));
+      query = query.filter(banks::country_id.eq_any(vec!["TH", "VI"]));
     }
 
     let banks = query

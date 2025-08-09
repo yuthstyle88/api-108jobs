@@ -29,3 +29,7 @@ pub mod exchange;
 pub mod update_term;
 pub mod wallet;
 pub mod bank_account;
+pub mod education;
+pub mod work_experience;
+pub mod skills;
+pub mod certificates;

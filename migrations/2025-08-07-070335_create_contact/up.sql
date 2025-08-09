@@ -1,11 +1,11 @@
--- Your SQL goes here
-CREATE TABLE contact (
-                         id SERIAL PRIMARY KEY,
-                         phone TEXT,
-                         email TEXT,
-                         secondary_email TEXT,
-                         line_id TEXT,
-                         facebook TEXT,
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE contact
+(
+    id              serial PRIMARY KEY,
+    phone           text,
+    email           text,
+    secondary_email text,
+    line_id         text,
+    facebook        text,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz
 );

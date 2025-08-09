@@ -1118,7 +1118,7 @@ diesel::table! {
         line_id -> Nullable<Text>,
         facebook -> Nullable<Text>,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1171,7 +1171,7 @@ diesel::table! {
 diesel::table! {
     user_bank_accounts (id) {
         id -> Int4,
-        local_user_id -> Int4,
+        user_id -> Int4,
         bank_id -> Int4,
         account_number -> Varchar,
         account_name -> Varchar,
@@ -1183,7 +1183,6 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(user_bank_accounts -> local_user (local_user_id));
 diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));

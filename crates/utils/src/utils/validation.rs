@@ -448,7 +448,6 @@ impl NationalIdValidator for VietnamIdValidator {
   }
 }
 
-
 #[cfg(test)]
 mod tests {
   use crate::{

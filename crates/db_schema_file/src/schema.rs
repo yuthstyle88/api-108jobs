@@ -779,6 +779,7 @@ diesel::table! {
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
+        birthday -> Nullable<Date>,
     }
 }
 

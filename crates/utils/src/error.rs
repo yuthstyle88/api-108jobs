@@ -143,6 +143,7 @@ pub enum FastJobErrorType {
   TooManyItems,
   BanExpirationInPast,
   InvalidUnixTime,
+  InvalidDateFormat,
   InvalidBotAction,
   InvalidTagName,
   TagNotInCommunity,

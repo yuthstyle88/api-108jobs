@@ -2,7 +2,7 @@ use crate::{
   newtypes::{DbUrl, InstanceId, PersonId},
   source::placeholder_apub_url,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDate};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
@@ -70,6 +70,8 @@ pub struct Person {
   pub comment_count: i64,
   #[serde(skip)]
   pub comment_score: i64,
+  /// Person's birthday
+  pub birthday: Option<NaiveDate>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -111,12 +113,15 @@ pub struct PersonInsertForm {
   pub contact_id: Option<ContactId>,
   #[new(default)]
   pub identity_card_id: Option<IdentityCardId>,
+  #[new(default)]
+  pub birthday: Option<NaiveDate>,
 }
 
 #[derive(Clone, Default)]
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = person))]
 pub struct PersonUpdateForm {
+  pub name: Option<String>,
   pub display_name: Option<Option<String>>,
   pub avatar: Option<Option<DbUrl>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
@@ -131,6 +136,7 @@ pub struct PersonUpdateForm {
   pub inbox_url: Option<DbUrl>,
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
+  pub birthday: Option<Option<NaiveDate>>,
 }
 
 #[skip_serializing_none]

@@ -1,6 +1,8 @@
-use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
+use crate::BankAccountView;
+use lemmy_db_schema::newtypes::{BankAccountId, BankId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -133,26 +135,9 @@ pub struct VerifyBankAccount {
 #[serde(rename_all = "camelCase")]
 /// List unverified bank accounts (admin only).
 pub struct ListBankAccountsResponse {
-  pub bank_accounts: Vec<BankAccountResponse>,
+  pub bank_accounts: Vec<BankAccountView>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Unverified bank account response for admin.
-pub struct BankAccountResponse {
-  pub id: BankAccountId,
-  pub user_id: LocalUserId,
-  pub bank_id: BankId,
-  pub bank_name: String,
-  pub bank_country_id: String,
-  pub account_number: String,
-  pub account_name: String,
-  pub is_default: bool,
-  pub verification_image_path: Option<String>,
-  pub created_at: String,
-}
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

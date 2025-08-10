@@ -1,1 +1,1 @@
-pub use lemmy_db_views_bank_account::api::{BankAccountOperationResponse, BankAccountResponse};
+pub use lemmy_db_views_bank_account::api::{BankAccountOperationResponse};

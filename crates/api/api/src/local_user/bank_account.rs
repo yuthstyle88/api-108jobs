@@ -7,8 +7,8 @@ use lemmy_db_schema::source::bank::Bank;
 use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::AddressView;
-use lemmy_db_views_bank_account::{BankAccountView, ListBankAccountsResponse};
-use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, SetDefaultBankAccount};
+use lemmy_db_views_bank_account::{BankAccountView};
+use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, ListBankAccountsResponse, SetDefaultBankAccount};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 

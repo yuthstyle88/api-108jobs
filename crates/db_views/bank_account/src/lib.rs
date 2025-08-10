@@ -16,11 +16,3 @@ pub struct BankAccountView {
   pub bank: Bank,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-/// List of user bank accounts response.
-pub struct ListBankAccountsResponse {
-  pub bank_accounts: Vec<BankAccountView>,
-}

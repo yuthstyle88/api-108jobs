@@ -21,6 +21,7 @@ full = [
 ts-rs = [
     "dep:ts-rs",
     "lemmy_db_schema/ts-rs",
+    "lemmy_db_schema_file/ts-rs",
 ]
 
 [dependencies]

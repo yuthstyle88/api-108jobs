@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::{BankId, UserBankAccountId, LocalUserId};
+use lemmy_db_schema::newtypes::{BankId, BankAccountId, LocalUserId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -23,7 +23,7 @@ pub struct CreateUserBankAccount {
 #[serde(rename_all = "camelCase")]
 /// Set default bank account.
 pub struct SetDefaultBankAccount {
-  pub bank_account_id: UserBankAccountId,
+  pub bank_account_id: BankAccountId,
 }
 
 #[skip_serializing_none]
@@ -33,7 +33,7 @@ pub struct SetDefaultBankAccount {
 #[serde(rename_all = "camelCase")]
 /// Delete bank account.
 pub struct DeleteBankAccount {
-  pub bank_account_id: UserBankAccountId,
+  pub bank_account_id: BankAccountId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -54,8 +54,8 @@ pub struct BankResponse {
 #[cfg_attr(feature = "full", ts(export))]
 #[serde(rename_all = "camelCase")]
 /// User bank account response.
-pub struct UserBankAccountResponse {
-  pub id: UserBankAccountId,
+pub struct BankAccountResponse {
+  pub id: BankAccountId,
   pub bank_id: BankId,
   pub bank_name: String,
   pub bank_country_id: String,
@@ -75,14 +75,6 @@ pub struct ListBanksResponse {
   pub banks: Vec<BankResponse>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "full", derive(ts_rs::TS))]
-#[cfg_attr(feature = "full", ts(export))]
-#[serde(rename_all = "camelCase")]
-/// List of user bank accounts response.
-pub struct ListUserBankAccountsResponse {
-  pub bank_accounts: Vec<UserBankAccountResponse>,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(ts_rs::TS))]
@@ -90,7 +82,7 @@ pub struct ListUserBankAccountsResponse {
 #[serde(rename_all = "camelCase")]
 /// Bank account operation response.
 pub struct BankAccountOperationResponse {
-  pub bank_account_id: UserBankAccountId,
+  pub bank_account_id: BankAccountId,
   pub success: bool,
 }
 
@@ -101,7 +93,7 @@ pub struct BankAccountOperationResponse {
 #[serde(rename_all = "camelCase")]
 /// Verify a bank account (admin only).
 pub struct VerifyBankAccount {
-  pub bank_account_id: UserBankAccountId,
+  pub bank_account_id: BankAccountId,
   pub verified: bool,
   pub admin_notes: Option<String>,
 }
@@ -121,7 +113,7 @@ pub struct ListUnverifiedBankAccountsResponse {
 #[serde(rename_all = "camelCase")]
 /// Unverified bank account response for admin.
 pub struct UnverifiedBankAccountResponse {
-  pub id: UserBankAccountId,
+  pub id: BankAccountId,
   pub user_id: LocalUserId,
   pub bank_id: BankId,
   pub bank_name: String,

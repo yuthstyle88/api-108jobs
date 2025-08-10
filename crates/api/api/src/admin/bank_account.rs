@@ -6,7 +6,7 @@ use lemmy_api_common::bank_account::{
   BankAccountOperationResponse,
 };
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_bank_account::UserBankAccountView;
+use lemmy_db_views_bank_account::BankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -19,7 +19,9 @@ pub async fn list_unverified_bank_accounts(
     return Err(FastJobErrorType::NotAnAdmin)?;
   }
 
-  let bank_accounts = UserBankAccountView::list_unverified(&mut context.pool()).await?;
+  let local_user_id = local_user_view.local_user.id;
+  let verified = Some(false);
+  let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), local_user_id, verified).await?;
 
   let response_accounts = bank_accounts
     .into_iter()
@@ -52,7 +54,7 @@ pub async fn verify_bank_account(
     return Err(FastJobErrorType::NotAnAdmin)?;
   }
 
-  let _updated_account = UserBankAccountView::verify(
+  let _updated_account = BankAccountView::update_verify(
     &mut context.pool(),
     data.bank_account_id,
     data.verified,

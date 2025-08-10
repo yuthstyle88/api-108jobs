@@ -1,6 +1,6 @@
 #[cfg(feature = "full")]
 use crate::{
-  newtypes::UserBankAccountId,
+  newtypes::BankAccountId,
   source::user_bank_account::{
     UserBankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm,
   },
@@ -21,7 +21,7 @@ use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 impl Crud for UserBankAccount {
   type InsertForm = UserBankAccountInsertForm;
   type UpdateForm = UserBankAccountUpdateForm;
-  type IdType = UserBankAccountId;
+  type IdType = BankAccountId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;

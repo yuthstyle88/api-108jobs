@@ -292,6 +292,7 @@ pub enum FastJobErrorType {
   CouldntUpdateEducation,
   SkillCouldntEmpty,
   CouldntDeleteBankAccount,
+  CouldntUpdateBankAccount,
 }
 
 cfg_if! {

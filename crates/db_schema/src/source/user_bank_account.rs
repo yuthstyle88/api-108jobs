@@ -1,4 +1,4 @@
-use crate::newtypes::{UserBankAccountId, LocalUserId, BankId};
+use crate::newtypes::{BankAccountId, LocalUserId, BankId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -14,7 +14,7 @@ use lemmy_db_schema_file::schema::user_bank_accounts;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct UserBankAccount {
-  pub id: UserBankAccountId,
+  pub id: BankAccountId,
   pub local_user_id: LocalUserId,
   pub bank_id: BankId,
   pub account_number: String,
@@ -47,6 +47,6 @@ pub struct UserBankAccountUpdateForm {
   pub account_name: Option<String>,
   pub is_default: Option<bool>,
   pub is_verified: Option<bool>,
-  pub updated_at: Option<DateTime<Utc>>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
   pub verification_image_path: Option<String>,
 }

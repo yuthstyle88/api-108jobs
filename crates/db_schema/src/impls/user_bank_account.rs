@@ -2,7 +2,7 @@
 use crate::{
   newtypes::BankAccountId,
   source::user_bank_account::{
-    UserBankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm,
+    BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
@@ -18,7 +18,7 @@ use lemmy_db_schema_file::schema::user_bank_accounts;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 #[cfg(feature = "full")]
-impl Crud for UserBankAccount {
+impl Crud for BankAccount {
   type InsertForm = UserBankAccountInsertForm;
   type UpdateForm = UserBankAccountUpdateForm;
   type IdType = BankAccountId;

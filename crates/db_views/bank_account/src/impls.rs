@@ -9,26 +9,32 @@ use lemmy_db_schema::{
   newtypes::{LocalUserId, BankAccountId},
   source::{
     bank::Bank,
-    user_bank_account::{UserBankAccount, UserBankAccountInsertForm},
+    user_bank_account::{BankAccount, UserBankAccountInsertForm},
   },
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{banks, user_bank_accounts};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult};
 
+impl From<(BankAccount, Bank)> for BankAccountView {
+  fn from(parts: (BankAccount, Bank)) -> Self {
+    BankAccountView { user_bank_account: parts.0, bank: parts.1 }
+  }
+}
+
 impl BankAccountView {
   pub async fn update_verify(
     pool: &mut DbPool<'_>,
     bank_account_id: BankAccountId,
     verified: bool,
-  ) -> FastJobResult<UserBankAccount> {
+  ) -> FastJobResult<BankAccount> {
     // keep path usage
     let form = UserBankAccountUpdateForm {
       is_verified: Some(verified),
       updated_at: Some(Some(Utc::now())),
       ..Default::default()
     };
-    let updated = UserBankAccount::update(pool, bank_account_id, &form).await?;
+    let updated = BankAccount::update(pool, bank_account_id, &form).await?;
     Ok(updated)
   }
   async fn is_default_account(
@@ -53,7 +59,7 @@ impl BankAccountView {
   pub async fn create(
     pool: &mut DbPool<'_>,
     form: &mut UserBankAccountInsertForm,
-  ) -> FastJobResult<UserBankAccount> {
+  ) -> FastJobResult<BankAccount> {
     let conn = &mut get_conn(pool).await?;
 
     // Decide default based on existing accounts, then reuse Crud::create
@@ -71,7 +77,7 @@ impl BankAccountView {
     let should_be_default = existing == 0;
     form.is_default = Some(should_be_default);
 
-    let created = UserBankAccount::create(pool, &form).await?;
+    let created = BankAccount::create(pool, &form).await?;
     Ok(created)
   }
 
@@ -81,14 +87,15 @@ impl BankAccountView {
     verify: Option<bool>,
   ) -> FastJobResult<Vec<BankAccountView>> {
     // Call list_with_filter with Some(user_id), verify=true, order_by=None
-    Self::query_with_filters(pool, Some(user_id), verify, None).await
+    let views = Self::query_with_filters(pool, Some(user_id), verify, None).await?;
+    Ok(views)
   }
 
   pub async fn set_default(
     pool: &mut DbPool<'_>,
     user_id: LocalUserId,
     bank_account_id: BankAccountId,
-  ) -> FastJobResult<UserBankAccount> {
+  ) -> FastJobResult<BankAccount> {
     let conn = &mut get_conn(pool).await?;
 
     // 1-step flow inside one transaction
@@ -120,7 +127,7 @@ impl BankAccountView {
           user_bank_accounts::is_default.eq(Some(true)),
           user_bank_accounts::updated_at.eq(now_time),
         ))
-        .get_result::<UserBankAccount>(conn)
+        .get_result::<BankAccount>(conn)
         .await
         .with_fastjob_type(FastJobErrorType::CouldntUpdateBankAccount)?;
 
@@ -145,7 +152,7 @@ impl BankAccountView {
     }
 
     // Delete the account via Crud implementation (ownership checked above)
-    let _ = UserBankAccount::delete(pool, bank_account_id).await
+    let _ = BankAccount::delete(pool, bank_account_id).await
             .with_fastjob_type(FastJobErrorType::CouldntDeleteBankAccount)?;
     Ok(true)
   }
@@ -201,19 +208,15 @@ impl BankAccountView {
       }
     }
 
-    let results = query
-      .select((UserBankAccount::as_select(), Bank::as_select()))
-      .load::<(UserBankAccount, Bank)>(conn)
-      .await?;
+    let items = query
+    .select((BankAccount::as_select(), Bank::as_select()))
+    .load::<(BankAccount, Bank)>(conn)
+    .await
+    .with_fastjob_type(FastJobErrorType::NotFound)?
+    .into_iter()
+    .map(Into::into)
+    .collect();
 
-    Ok(
-      results
-        .into_iter()
-        .map(|(user_bank_account, bank)| BankAccountView {
-          user_bank_account,
-          bank,
-        })
-        .collect(),
-    )
+    Ok(items)
   }
 }

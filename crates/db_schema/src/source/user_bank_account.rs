@@ -13,7 +13,7 @@ use lemmy_db_schema_file::schema::user_bank_accounts;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-pub struct UserBankAccount {
+pub struct BankAccount {
   pub id: BankAccountId,
   pub local_user_id: LocalUserId,
   pub bank_id: BankId,

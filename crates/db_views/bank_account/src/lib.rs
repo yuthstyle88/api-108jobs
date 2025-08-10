@@ -2,7 +2,7 @@ pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
 
-use lemmy_db_schema::source::{bank::Bank, user_bank_account::UserBankAccount};
+use lemmy_db_schema::source::{bank::Bank, user_bank_account::BankAccount};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -12,7 +12,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(export))]
 /// A user bank account view with bank information.
 pub struct BankAccountView {
-  pub user_bank_account: UserBankAccount,
+  pub user_bank_account: BankAccount,
   pub bank: Bank,
 }
 

@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::wallet::{AdminTopUpWallet, AdminWithdrawWallet, AdminWalletOperationResponse};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_wallet::WalletView;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_wallet::api::{AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet};
 use lemmy_utils::error::FastJobResult;
 
 pub async fn admin_top_up_wallet(

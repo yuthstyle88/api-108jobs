@@ -1,11 +1,9 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::bank_account::{
-  VerifyBankAccount,
-  ListUnverifiedBankAccountsResponse,
-  UnverifiedBankAccountResponse,
   BankAccountOperationResponse,
 };
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_views_bank_account::api::{ListUnverifiedBankAccountsResponse, UnverifiedBankAccountResponse, VerifyBankAccount};
 use lemmy_db_views_bank_account::BankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -49,7 +47,7 @@ pub async fn verify_bank_account(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
-  // Check if user is admin
+  // Check if the user is admin
   if !local_user_view.local_user.admin {
     return Err(FastJobErrorType::NotAnAdmin)?;
   }

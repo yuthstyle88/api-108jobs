@@ -1,8 +1,6 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_common::bank_account::{
-  BankAccountOperationResponse, CreateUserBankAccount,
-  DeleteBankAccount,
-  SetDefaultBankAccount
+  BankAccountOperationResponse
 };
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::bank::Bank;
@@ -10,11 +8,12 @@ use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::AddressView;
 use lemmy_db_views_bank_account::{BankAccountView, ListBankAccountsResponse};
+use lemmy_db_views_bank_account::api::{CreateBankAccount, DeleteBankAccount, SetDefaultBankAccount};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn create_bank_account(
-  data: Json<CreateUserBankAccount>,
+  data: Json<CreateBankAccount>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {

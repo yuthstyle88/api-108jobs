@@ -3421,6 +3421,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_bank_account",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_custom_emoji",
@@ -3439,6 +3440,7 @@ dependencies = [
  "lemmy_db_views_search_combined",
  "lemmy_db_views_site",
  "lemmy_db_views_vote",
+ "lemmy_db_views_wallet",
  "lemmy_utils",
  "serde",
  "serde_with",

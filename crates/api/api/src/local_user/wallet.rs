@@ -1,13 +1,10 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::wallet::{
-  GetWalletResponse, DepositWallet, CreateInvoice, CreateInvoiceResponse, ApproveQuotation, 
-  SubmitWork, ApproveWork, RequestRevision, UpdateWorkAfterRevision, WalletOperationResponse, BillingOperationResponse
-};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_wallet::WalletView;
 use lemmy_db_views_billing::BillingView;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoice, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, WalletOperationResponse};
 use lemmy_utils::error::{ FastJobResult};
 
 pub async fn get_wallet(

@@ -1,6 +1,5 @@
 use crate::{api::resolve_object::resolve_object_internal, fetcher::resolve_ap_identifier};
-use activitypub_federation::config::Data;
-use actix_web::web::{Json, Query};
+use actix_web::web::{Data, Json, Query};
 use futures::future::join;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::{check_conflicting_like_filters, check_private_instance};
@@ -26,7 +25,7 @@ pub async fn search(
 
   let community_id = if let Some(name) = &data.community_name {
     Some(
-      resolve_ap_identifier::<ApubCommunity, Community>(name, &context, &local_user_view, false)
+      resolve_ap_identifier::<ApubCommunity, Community>(name, &context, false)
         .await?,
     )
     .map(|c| c.id)

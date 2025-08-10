@@ -1,0 +1,8 @@
+ALTER TABLE person
+DROP COLUMN IF EXISTS identity_card_id;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS contact_id;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS address_id;

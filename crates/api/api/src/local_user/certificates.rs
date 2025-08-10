@@ -1,17 +1,11 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::account::{CertificatesRequest, UpdateCertificateRequest, DeleteItemRequest};
+use lemmy_api_common::account::{UpdateCertificateRequest, DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::certificates::{Certificates, CertificatesInsertForm, CertificatesUpdateForm};
+use lemmy_db_schema::source::certificates::{CertificateView, Certificates, CertificatesInsertForm, CertificatesRequest, CertificatesUpdateForm};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
-use chrono::NaiveDate;
 use lemmy_db_schema::newtypes::CertificateId;
-
-// Helper function to parse date strings
-fn parse_date_string(date_str: &Option<String>) -> Option<NaiveDate> {
-    date_str.as_ref()
-        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
-}
+use lemmy_db_schema::traits::Crud;
 
 pub async fn save_certificates(
     data: Json<CertificatesRequest>,
@@ -25,14 +19,16 @@ pub async fn save_certificates(
         let saved = match cert.id {
             // Update existing certificate record
             Some(id) => {
-                Certificates::update_by_id_and_person(
+                let form = CertificatesUpdateForm{
+                    name: Some(cert.name.clone()),
+                    achieved_date: cert.achieved_date,
+                    expires_date: cert.expires_date,
+                    url: Some(cert.url.clone()),
+                };
+                Certificates::update(
                     &mut context.pool(), 
                     id, 
-                    person_id, 
-                    cert.name.clone(),
-                    parse_date_string(&cert.achieved_date),
-                    parse_date_string(&cert.expires_date),
-                    cert.url.clone(),
+                    &form,
                 ).await?
             }
             // Create new certificate record
@@ -40,8 +36,8 @@ pub async fn save_certificates(
                 let form = CertificatesInsertForm::new(
                     person_id,
                     cert.name.clone(),
-                    parse_date_string(&cert.achieved_date),
-                    parse_date_string(&cert.expires_date),
+                    cert.achieved_date,
+                    cert.expires_date,
                     cert.url.clone(),
                 );
                 Certificates::create(&mut context.pool(), &form).await?
@@ -56,22 +52,19 @@ pub async fn save_certificates(
 pub async fn list_certificates(
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<Certificates>>> {
-    let person_id = local_user_view.person.id;
-    let certificates = Certificates::read_by_person_id(&mut context.pool(), person_id).await?;
+) -> FastJobResult<Json<Vec<CertificateView>>> {
+    let person_id = Some(local_user_view.person.id);
+    let certificates = Certificates::query_with_filters(&mut context.pool(), person_id).await?;
     Ok(Json(certificates))
 }
 
 pub async fn delete_certificates(
-    data: Json<Vec<i32>>,
+    data: Json<Vec<CertificateId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
     // Delete specific certificates records
     for certificate_id in data.iter() {
-        Certificates::delete_by_id_and_person(&mut context.pool(), *certificate_id, person_id).await?;
+        Certificates::delete(&mut context.pool(), *certificate_id).await?;
     }
 
     Ok(Json("Certificates records deleted successfully".to_string()))

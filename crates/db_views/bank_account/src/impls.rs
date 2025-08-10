@@ -14,7 +14,9 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{banks, user_bank_accounts};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult};
+use lemmy_utils::utils::validation::validate_bank_account;
+use crate::api::{BankAccountForm, CreateBankAccount};
 
 impl From<(BankAccount, Bank)> for BankAccountView {
   fn from(parts: (BankAccount, Bank)) -> Self {
@@ -218,5 +220,28 @@ impl BankAccountView {
     }
 
     Ok(items.into_iter().map(Into::into).collect::<Vec<BankAccountView>>())
+  }
+}
+
+impl TryFrom<BankAccountForm>  for CreateBankAccount{
+  type Error = FastJobError;
+
+  fn try_from(data: BankAccountForm) -> Result<Self, Self::Error> {
+
+    if data.account_number.trim().is_empty() ||
+       validate_bank_account(&data.country_id, &data.account_number) {
+      return Err(FastJobErrorType::InvalidField("Invalid account number".to_string()))?;
+    }
+    // Validate account name
+    if data.account_name.trim().is_empty() {
+      return Err(FastJobErrorType::InvalidField("Invalid account name".to_string()))?;
+    }
+    Ok(CreateBankAccount{
+      bank_id: data.bank_id,
+      account_number: data.account_number,
+      account_name: data.account_name,
+      is_default: None,
+      verification_image: None,
+    })
   }
 }

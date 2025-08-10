@@ -446,6 +446,26 @@ impl NationalIdValidator for VietnamIdValidator {
     "Vietnam"
   }
 }
+pub fn validate_bank_account(country_id: &str, account_number: &str) -> bool {
+  let num = account_number.trim();
+
+  match country_id.to_uppercase().as_str() {
+    // Thailand: usually 10-12 digits, all numeric
+    "TH" => {
+      num.len() >= 10
+      && num.len() <= 12
+      && num.chars().all(|c| c.is_ascii_digit())
+    }
+    // Vietnam: usually 8-15 digits, all numeric
+    "VN" => {
+      num.len() >= 8
+      && num.len() <= 15
+      && num.chars().all(|c| c.is_ascii_digit())
+    }
+    // Unsupported country
+    _ => false,
+  }
+}
 
 #[cfg(test)]
 mod tests {

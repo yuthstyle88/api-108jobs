@@ -1,21 +1,18 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::bank_account::{
-  BankAccountOperationResponse,
-};
+use lemmy_api_common::bank_account::BankAccountOperationResponse;
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_api_utils::utils::is_admin;
 use lemmy_db_views_bank_account::api::{ListUnverifiedBankAccountsResponse, UnverifiedBankAccountResponse, VerifyBankAccount};
 use lemmy_db_views_bank_account::BankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::FastJobResult;
 
 pub async fn list_unverified_bank_accounts(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListUnverifiedBankAccountsResponse>> {
   // Check if user is admin
-  if !local_user_view.local_user.admin {
-    return Err(FastJobErrorType::NotAnAdmin)?;
-  }
+  is_admin(&local_user_view)?;
 
   let local_user_id = local_user_view.local_user.id;
   let verified = Some(false);
@@ -48,9 +45,7 @@ pub async fn verify_bank_account(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   // Check if the user is admin
-  if !local_user_view.local_user.admin {
-    return Err(FastJobErrorType::NotAnAdmin)?;
-  }
+  is_admin(&local_user_view)?;
 
   let _updated_account = BankAccountView::update_verify(
     &mut context.pool(),

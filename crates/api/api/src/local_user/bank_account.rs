@@ -8,29 +8,19 @@ use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::AddressView;
 use lemmy_db_views_bank_account::{BankAccountView, ListBankAccountsResponse};
-use lemmy_db_views_bank_account::api::{CreateBankAccount, DeleteBankAccount, SetDefaultBankAccount};
+use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, SetDefaultBankAccount};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn create_bank_account(
-  data: Json<CreateBankAccount>,
+  data: Json<BankAccountForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let user_id = local_user_view.local_user.id;
   let user_address_id = local_user_view.person.address_id;
-
-  // Validate account number format
-  if data.account_number.trim().is_empty() || data.account_number.len() > 50 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Invalid account number".to_string()))?;
-  }
-
-  // Validate account name
-  if data.account_name.trim().is_empty() || data.account_name.len() > 255 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Invalid account name".to_string()))?;
-  }
-
-  // Load user's address to determine allowed country
+  let data: CreateBankAccount = data.into_inner().try_into()?;
+  // Load the user's address to determine the allowed country
   let address_view = AddressView::find_by_id(&mut context.pool(), user_address_id).await?;
 
   // Verify bank belongs to user's country
@@ -91,11 +81,11 @@ pub async fn set_default_bank_account(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
-  let user_id = local_user_view.local_user.id;
+  let local_user_id = local_user_view.local_user.id;
 
   let _updated_account = BankAccountView::set_default(
     &mut context.pool(),
-    user_id,
+    local_user_id,
     data.bank_account_id,
   ).await?;
 
@@ -110,11 +100,11 @@ pub async fn delete_bank_account(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
-  let user_id = local_user_view.local_user.id;
+  let local_user_id = local_user_view.local_user.id;
 
   let _result = BankAccountView::delete(
     &mut context.pool(),
-    user_id,
+    local_user_id,
     data.bank_account_id,
   ).await?;
 

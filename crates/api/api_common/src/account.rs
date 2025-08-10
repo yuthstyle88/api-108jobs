@@ -100,25 +100,7 @@ pub struct SkillsRequest {
     pub skills: Vec<SkillItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-pub struct CertificateItem {
-    pub id: Option<i32>, // None for new items, Some(id) for updates
-    pub name: String,
-    pub achieved_date: Option<String>, // Date as string in YYYY-MM-DD format
-    pub expires_date: Option<String>,  // Date as string in YYYY-MM-DD format
-    pub url: Option<String>,
-}
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-pub struct CertificatesRequest {
-    pub certificates: Vec<CertificateItem>,
-}
 
 // Individual update request structures
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -77,6 +77,20 @@ pub struct CreateBankAccount {
   pub is_default: Option<bool>,
   pub verification_image: Option<String>, // Base64 encoded image or image path
 }
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Create a new bank account for user.
+pub struct BankAccountForm {
+  pub bank_id: BankId,
+  pub account_number: String,
+  pub account_name: String,
+  pub is_default: Option<bool>,
+  pub country_id: String,
+  pub verification_image: Option<String>, // Base64 encoded image or image path
+}
 
 
 #[skip_serializing_none]

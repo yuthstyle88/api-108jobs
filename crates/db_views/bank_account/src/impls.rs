@@ -208,15 +208,15 @@ impl BankAccountView {
       }
     }
 
-    let items = query
+    let items: Vec<(BankAccount, Bank)> = query
     .select((BankAccount::as_select(), Bank::as_select()))
-    .load::<(BankAccount, Bank)>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::NotFound)?
-    .into_iter()
-    .map(Into::into)
-    .collect();
+    .load(conn)
+    .await?;
 
-    Ok(items)
+    if items.is_empty() {
+      return Err(FastJobErrorType::NotFound.into());
+    }
+
+    Ok(items.into_iter().map(Into::into).collect::<Vec<BankAccountView>>())
   }
 }

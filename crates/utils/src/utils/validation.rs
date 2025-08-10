@@ -1,11 +1,10 @@
-use std::collections::HashSet;
 use crate::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS};
 use clearurls::UrlCleaner;
+use diesel::internal::derives::multiconnection::chrono::NaiveDate;
 use invisible_characters::INVISIBLE_CHARS;
 use itertools::Itertools;
 use regex::{Regex, RegexBuilder, RegexSet};
 use std::sync::LazyLock;
-use diesel::internal::derives::multiconnection::chrono::NaiveDate;
 use unicode_segmentation::UnicodeSegmentation;
 use url::{ParseError, Url};
 

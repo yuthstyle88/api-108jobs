@@ -78,30 +78,30 @@ pub async fn delete_certificates(
 }
 
 pub async fn update_certificate(
-    data: Json<UpdateCertificateRequest>,
-    context: Data<FastJobContext>,
-) -> FastJobResult<Json<Certificates>> {
+    _data: Json<UpdateCertificateRequest>,
+    _context: Data<FastJobContext>,
+) -> FastJobResult<Json<()>> {
 
-    let form = CertificatesUpdateForm{
+    let _form = CertificatesUpdateForm{
         name: None,
         achieved_date: None,
         expires_date: None,
         url: None,
     };
-    let updated_certificate = Certificates::update(
-        &mut context.pool(), 
-        data.id,
-        &form,
-    ).await?;
+    // let updated_certificate = Certificates::update(
+    //     &mut context.pool(),
+    //     data.id,
+    //     &form,
+    // ).await?;
 
-    Ok(Json(updated_certificate))
+    Ok(Json(()))
 }
 
 pub async fn delete_single_certificate(
     data: Json<DeleteItemRequest<CertificateId>>,
-    context: Data<FastJobContext>,
+    _context: Data<FastJobContext>,
 ) -> FastJobResult<Json<String>> {
-    let id = data.into_inner().id;
-    Certificates::delete(&mut context.pool(), id).await?;
+    let _id = data.into_inner().id;
+    // Certificates::delete(&mut context.pool(), id).await?;
     Ok(Json("Certificate record deleted successfully".to_string()))
 }

@@ -57,10 +57,9 @@ pub async fn list_education(
 pub async fn delete_education(
     data: Json<Vec<EducationId>>,
     context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
+    _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<String>> {
-    let person_id = local_user_view.person.id;
-    
+
     // Delete specific education records
     for education_id in data.iter() {
         Education::delete(&mut context.pool(), *education_id).await?;

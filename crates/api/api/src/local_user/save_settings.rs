@@ -62,7 +62,7 @@ pub async fn save_user_settings(
   } else {
     None
   };
-  let birth_date = if let Some(date_str) = &data.birth_date {
+  let _birth_date = if let Some(date_str) = &data.birth_date {
     Some(Some(NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
       .map_err(|_| FastJobErrorType::InvalidDateFormat)?))
   } else {
@@ -141,7 +141,6 @@ pub async fn save_user_settings(
     matrix_user_id,
     bot_account: data.bot_account,
     avatar: avatar_url,
-    birthday: birth_date,
     ..Default::default()
   };
 

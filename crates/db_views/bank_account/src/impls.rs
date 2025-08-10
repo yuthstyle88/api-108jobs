@@ -19,7 +19,7 @@ impl UserBankAccountView {
     bank_account_id: UserBankAccountId,
     verified: bool,
   ) -> FastJobResult<UserBankAccount> {
-    use crate::UserBankAccountView as _Dummy; // keep path usage
+    // keep path usage
     use chrono::Utc;
     use lemmy_db_schema::source::user_bank_account::UserBankAccountUpdateForm;
     let form = UserBankAccountUpdateForm {

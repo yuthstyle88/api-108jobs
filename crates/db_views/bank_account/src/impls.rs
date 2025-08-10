@@ -85,11 +85,11 @@ impl BankAccountView {
 
   pub async fn list_by_user(
     pool: &mut DbPool<'_>,
-    user_id: LocalUserId,
+    local_user_id: Option<LocalUserId>,
     verify: Option<bool>,
   ) -> FastJobResult<Vec<BankAccountView>> {
     // Call list_with_filter with Some(user_id), verify=true, order_by=None
-    let views = Self::query_with_filters(pool, Some(user_id), verify, None).await?;
+    let views = Self::query_with_filters(pool, local_user_id, verify, None).await?;
     Ok(views)
   }
 

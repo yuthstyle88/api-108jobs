@@ -15,7 +15,7 @@ pub async fn list_bank_accounts(
   // Check if user is admin
   is_admin(&local_user_view)?;
   let verified = data.verify;
-  let local_user_id = local_user_view.local_user.id;
+  let local_user_id = data.local_user_id;
   let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), local_user_id, verified).await?;
   Ok(Json(ListBankAccountsResponse {
     bank_accounts,

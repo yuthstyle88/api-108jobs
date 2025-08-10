@@ -1,5 +1,5 @@
 use crate::BankAccountView;
-use lemmy_db_schema::newtypes::{BankAccountId, BankId};
+use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -145,5 +145,6 @@ pub struct ListBankAccountsResponse {
 /// Fetches a list of taglines.
 #[serde(rename_all = "camelCase")]
 pub struct ListBankAccounts {
+  pub local_user_id: Option<LocalUserId>,
   pub verify: Option<bool>,
 }

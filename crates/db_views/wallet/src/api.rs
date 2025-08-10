@@ -183,8 +183,8 @@ pub struct AdminWalletOperationResponse {
 /// Response for creating an invoice.
 pub struct CreateInvoiceResponse {
   pub billing_id: BillingId,
-  pub freelancer_id: LocalUserId,
-  pub employer_id: LocalUserId,
+  pub issuer_id: LocalUserId,
+  pub recipient_id: LocalUserId,
   pub post_id: PostId,
   pub amount: f64,
   pub status: String,

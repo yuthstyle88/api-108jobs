@@ -55,7 +55,7 @@ pub async fn create_invoice(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CreateInvoiceResponse>> {
-  let freelancer_id = local_user_view.local_user.id;
+  let local_user_id = local_user_view.local_user.id;
   
   // Validate input
   if data.price <= 0.0 {
@@ -73,7 +73,7 @@ pub async fn create_invoice(
   // Create the invoice/billing record with detailed quotation fields
   let billing = BillingView::create_invoice(
     &mut context.pool(),
-    freelancer_id,
+    local_user_id,
     data.employer_id,
     data.post_id,
     data.comment_id,
@@ -93,8 +93,8 @@ pub async fn create_invoice(
 
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
-    freelancer_id,
-    employer_id: data.employer_id,
+    issuer_id: local_user_id,
+    recipient_id: data.employer_id,
     post_id: data.post_id,
     amount: data.price,
     status: "QuotationPending".to_string(),
@@ -132,13 +132,13 @@ pub async fn submit_work(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BillingOperationResponse>> {
-  let freelancer_id = local_user_view.local_user.id;
+  let worker_id = local_user_view.local_user.id;
 
-  // Submit the work
+  // Submit the work as the worker
   let updated_billing = BillingView::submit_work(
     &mut context.pool(),
     data.billing_id,
-    freelancer_id,
+    worker_id,
     data.work_description.clone(),
     data.deliverable_url.clone(),
   ).await?;
@@ -157,7 +157,7 @@ pub async fn request_revision(
 ) -> FastJobResult<Json<BillingOperationResponse>> {
   let employer_id = local_user_view.local_user.id;
 
-  // Request revision from freelancer
+  // Request revision from worker
   let updated_billing = BillingView::request_revision(
     &mut context.pool(),
     data.billing_id,
@@ -179,7 +179,7 @@ pub async fn approve_work(
 ) -> FastJobResult<Json<BillingOperationResponse>> {
   let employer_id = local_user_view.local_user.id;
 
-  // Approve work and release payment to freelancer
+  // Approve work and release payment to worker
   let updated_billing = BillingView::approve_work(
     &mut context.pool(),
     data.billing_id,
@@ -198,13 +198,13 @@ pub async fn update_work_after_revision(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BillingOperationResponse>> {
-  let freelancer_id = local_user_view.local_user.id;
-  
-  // Update work after revision request
+  let worker_id = local_user_view.local_user.id;
+
+  // Update work after revision request as the worker
   let updated_billing = BillingView::update_work_after_revision(
     &mut context.pool(),
     data.billing_id,
-    freelancer_id,
+    worker_id,
     data.updated_work_description.clone(),
     data.updated_deliverable_url.clone(),
   ).await?;

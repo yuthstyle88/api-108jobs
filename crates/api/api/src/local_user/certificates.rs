@@ -15,11 +15,11 @@ pub async fn save_certificates(
     let person_id = local_user_view.person.id;
 
     let mut saved_certificates = Vec::new();
-    for cert in &data.certificates {
+    for cert in data.certificates.clone() {
         let saved = match cert.id {
             // Update existing certificate record
             Some(id) => {
-                let form = cert.into();
+                let form: CertificatesUpdateForm = cert.into();
                 Certificates::update(
                     &mut context.pool(), 
                     id, 
@@ -71,11 +71,11 @@ pub async fn update_certificate(
 ) -> FastJobResult<Json<()>> {
     // Extract request once to avoid use-after-move, then take id before conversion
     let req = data.into_inner();
-    let id = req.id;
-    let form: CertificatesUpdateForm = req.into();
-    // Apply update
-    let _updated = Certificates::update(&mut context.pool(), id, &form).await?;
-
+    if let Some(id )  = req.id {
+        let form: CertificatesUpdateForm = req.into();
+        // Apply update
+        let _updated = Certificates::update(&mut context.pool(), id, &form).await?;
+    }
     Ok(Json(()))
 }
 

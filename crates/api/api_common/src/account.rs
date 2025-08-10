@@ -38,8 +38,8 @@ pub mod auth {
   };
 }
 
+use lemmy_db_schema::newtypes::{EducationId, SkillId, WorkExperienceId};
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::newtypes::{CertificateId, EducationId, SkillId, WorkExperienceId};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

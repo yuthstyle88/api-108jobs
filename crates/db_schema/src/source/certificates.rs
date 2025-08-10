@@ -71,7 +71,7 @@ pub struct CertificatesRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCertificateRequestItem {
-    pub id: CertificateId,
+    pub id: Option<CertificateId>,
     pub name: String,
     pub achieved_date: Option<NaiveDate>, // Date as string in YYYY-MM-DD format
     pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format

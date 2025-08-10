@@ -1,26 +1,26 @@
-use actix_web::web::{Data, Json};
-use lemmy_api_common::bank_account::BankAccountOperationResponse;
+use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::is_admin;
-use lemmy_db_views_bank_account::api::{ListUnverifiedBankAccountsResponse, UnverifiedBankAccountResponse, VerifyBankAccount};
+use lemmy_db_views_bank_account::api::{BankAccountResponse, ListBankAccounts, ListBankAccountsResponse};
 use lemmy_db_views_bank_account::BankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
+
 use lemmy_utils::error::FastJobResult;
 
-pub async fn list_unverified_bank_accounts(
+pub async fn list_bank_accounts(
+  data: Query<ListBankAccounts>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<ListUnverifiedBankAccountsResponse>> {
+) -> FastJobResult<Json<ListBankAccountsResponse>> {
   // Check if user is admin
   is_admin(&local_user_view)?;
-
+  let verified = data.verify;
   let local_user_id = local_user_view.local_user.id;
-  let verified = Some(false);
   let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), local_user_id, verified).await?;
 
   let response_accounts = bank_accounts
     .into_iter()
-    .map(|view| UnverifiedBankAccountResponse {
+    .map(|view| BankAccountResponse {
       id: view.user_bank_account.id,
       user_id: view.user_bank_account.local_user_id,
       bank_id: view.bank.id,
@@ -34,30 +34,7 @@ pub async fn list_unverified_bank_accounts(
     })
     .collect();
 
-  Ok(Json(ListUnverifiedBankAccountsResponse {
+  Ok(Json(ListBankAccountsResponse {
     bank_accounts: response_accounts,
-  }))
-}
-
-pub async fn verify_bank_account(
-  data: Json<VerifyBankAccount>,
-  context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
-) -> FastJobResult<Json<BankAccountOperationResponse>> {
-  // Check if the user is admin
-  is_admin(&local_user_view)?;
-
-  let _updated_account = BankAccountView::update_verify(
-    &mut context.pool(),
-    data.bank_account_id,
-    data.verified,
-  )
-  .await?;
-
-  // TODO: Store admin_notes if provided
-
-  Ok(Json(BankAccountOperationResponse {
-    bank_account_id: data.bank_account_id,
-    success: true,
   }))
 }

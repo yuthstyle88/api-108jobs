@@ -8,7 +8,7 @@ use lemmy_api::local_user::work_experience::{save_work_experience, list_work_exp
 use lemmy_api::local_user::skills::{save_skills, list_skills, update_skill, delete_single_skill};
 use lemmy_api::local_user::certificates::{save_certificates, list_certificates, update_certificate, delete_single_certificate};
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
-use lemmy_api::admin::bank_account::{list_unverified_bank_accounts, verify_bank_account};
+use lemmy_api::admin::bank_account::{list_bank_accounts};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -404,8 +404,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .service(
               scope("/bank-account")
-                .route("/unverified", get().to(list_unverified_bank_accounts))
-                .route("/verify", post().to(verify_bank_account)),
+              .route("list", get().to(list_bank_accounts))
             ),
         )
         .service(

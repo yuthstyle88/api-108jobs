@@ -38,7 +38,6 @@ pub mod auth {
   };
 }
 
-use lemmy_db_schema::newtypes::{EducationId, SkillId, WorkExperienceId};
 use serde::{Deserialize, Serialize};
 
 // Delete request structures

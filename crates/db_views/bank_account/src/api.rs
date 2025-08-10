@@ -1,18 +1,6 @@
-use lemmy_db_schema::newtypes::{BankId, BankAccountId, LocalUserId};
+use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::BankAccountView;
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// A comment response.
-pub struct BankAccountResponse {
-  pub bank_account_view: BankAccountView,
-}
-
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -144,8 +132,8 @@ pub struct VerifyBankAccount {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// List unverified bank accounts (admin only).
-pub struct ListUnverifiedBankAccountsResponse {
-  pub bank_accounts: Vec<UnverifiedBankAccountResponse>,
+pub struct ListBankAccountsResponse {
+  pub bank_accounts: Vec<BankAccountResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -153,7 +141,7 @@ pub struct ListUnverifiedBankAccountsResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Unverified bank account response for admin.
-pub struct UnverifiedBankAccountResponse {
+pub struct BankAccountResponse {
   pub id: BankAccountId,
   pub user_id: LocalUserId,
   pub bank_id: BankId,
@@ -164,4 +152,13 @@ pub struct UnverifiedBankAccountResponse {
   pub is_default: bool,
   pub verification_image_path: Option<String>,
   pub created_at: String,
+}
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Fetches a list of taglines.
+#[serde(rename_all = "camelCase")]
+pub struct ListBankAccounts {
+  pub verify: Option<bool>,
 }

@@ -138,17 +138,7 @@ pub struct UpdateSkillRequest {
     pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateCertificateRequest {
-    pub id: CertificateId,
-    pub name: String,
-    pub achieved_date: Option<String>, // Date as string in YYYY-MM-DD format
-    pub expires_date: Option<String>,  // Date as string in YYYY-MM-DD format
-    pub url: Option<String>,
-}
+
 
 // Delete request structures
 #[derive(Debug, Serialize, Deserialize, Clone)]

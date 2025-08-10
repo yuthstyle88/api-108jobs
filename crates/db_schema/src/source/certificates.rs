@@ -45,17 +45,6 @@ pub struct CertificatesUpdateForm {
     pub url: Option<Option<DbUrl>>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-pub struct CertificateItem {
-    pub id: Option<CertificateId>, // None for new items, Some(id) for updates
-    pub name: String,
-    pub achieved_date: Option<NaiveDate>, // Date as string in YYYY-MM-DD format
-    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format
-    pub url: Option<DbUrl>,
-}
-#[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "full", diesel(table_name = certificates))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -74,5 +63,17 @@ pub struct CertificateView {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct CertificatesRequest {
-    pub certificates: Vec<CertificateItem>,
+    pub certificates: Vec<UpdateCertificateRequestItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateCertificateRequestItem {
+    pub id: CertificateId,
+    pub name: String,
+    pub achieved_date: Option<NaiveDate>, // Date as string in YYYY-MM-DD format
+    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format
+    pub url: Option<DbUrl>,
 }

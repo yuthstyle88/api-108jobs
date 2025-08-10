@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::account::{UpdateCertificateRequest, DeleteItemRequest};
+use lemmy_api_common::account::DeleteItemRequest;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::certificates::{CertificateView, Certificates, CertificatesInsertForm, CertificatesRequest, CertificatesUpdateForm};
+use lemmy_db_schema::newtypes::CertificateId;
+use lemmy_db_schema::source::certificates::{CertificateView, Certificates, CertificatesInsertForm, CertificatesRequest, CertificatesUpdateForm, UpdateCertificateRequestItem};
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
-use lemmy_db_schema::newtypes::CertificateId;
-use lemmy_db_schema::traits::Crud;
 
 pub async fn save_certificates(
     data: Json<CertificatesRequest>,
@@ -19,12 +19,7 @@ pub async fn save_certificates(
         let saved = match cert.id {
             // Update existing certificate record
             Some(id) => {
-                let form = CertificatesUpdateForm{
-                    name: Some(cert.name.clone()),
-                    achieved_date: cert.achieved_date,
-                    expires_date: cert.expires_date,
-                    url: Some(cert.url.clone()),
-                };
+                let form = cert.into();
                 Certificates::update(
                     &mut context.pool(), 
                     id, 
@@ -71,30 +66,24 @@ pub async fn delete_certificates(
 }
 
 pub async fn update_certificate(
-    _data: Json<UpdateCertificateRequest>,
-    _context: Data<FastJobContext>,
+    data: Json<UpdateCertificateRequestItem>,
+    context: Data<FastJobContext>,
 ) -> FastJobResult<Json<()>> {
-
-    let _form = CertificatesUpdateForm{
-        name: None,
-        achieved_date: None,
-        expires_date: None,
-        url: None,
-    };
-    // let updated_certificate = Certificates::update(
-    //     &mut context.pool(),
-    //     data.id,
-    //     &form,
-    // ).await?;
+    // Extract request once to avoid use-after-move, then take id before conversion
+    let req = data.into_inner();
+    let id = req.id;
+    let form: CertificatesUpdateForm = req.into();
+    // Apply update
+    let _updated = Certificates::update(&mut context.pool(), id, &form).await?;
 
     Ok(Json(()))
 }
 
 pub async fn delete_single_certificate(
     data: Json<DeleteItemRequest<CertificateId>>,
-    _context: Data<FastJobContext>,
+    context: Data<FastJobContext>,
 ) -> FastJobResult<Json<String>> {
-    let _id = data.into_inner().id;
-    // Certificates::delete(&mut context.pool(), id).await?;
+    let id = data.into_inner().id;
+    Certificates::delete(&mut context.pool(), id).await?;
     Ok(Json("Certificate record deleted successfully".to_string()))
 }

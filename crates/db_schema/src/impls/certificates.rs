@@ -1,4 +1,4 @@
-use crate::source::certificates::CertificateView;
+use crate::source::certificates::{CertificateView, UpdateCertificateRequestItem};
 use crate::{
   newtypes::{CertificateId, PersonId},
   source::certificates::{Certificates, CertificatesInsertForm, CertificatesUpdateForm},
@@ -70,6 +70,17 @@ impl From<Certificates> for CertificateView {
       achieved_date: parts.achieved_date,
       expires_date: parts.expires_date,
       url: parts.url.unwrap(),
+    }
+  }
+}
+impl From<UpdateCertificateRequestItem> for CertificatesUpdateForm {
+
+  fn from(data: UpdateCertificateRequestItem) -> Self {
+    Self{
+      name: Some(data.name),
+      achieved_date: data.achieved_date,
+      expires_date: data.expires_date,
+      url: Some(data.url),
     }
   }
 }

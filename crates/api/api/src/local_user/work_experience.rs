@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::account::{WorkExperienceRequest, UpdateWorkExperienceRequest, DeleteItemRequest};
+use lemmy_api_common::account::{DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WorkExperienceId;
-use lemmy_db_schema::source::work_experience::{WorkExperience, WorkExperienceInsertForm, WorkExperienceUpdateForm};
+use lemmy_db_schema::source::work_experience::{UpdateWorkExperienceRequest, WorkExperience, WorkExperienceInsertForm, WorkExperienceRequest, WorkExperienceUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
@@ -20,13 +20,11 @@ pub async fn save_work_experience(
             // Update existing work experience record
             Some(id) => {
                 let form = WorkExperienceUpdateForm {
-                    company_name: None,
-                    position: None,
-                    start_month: None,
-                    start_year: None,
-                    end_month: None,
-                    end_year: None,
-                    is_current: None,
+                    company_name: Some(exp.company_name.clone()),
+                    position: Some(exp.position.clone()),
+                    start_date: Some(exp.start_date),
+                    end_date: Some(exp.end_date),
+                    is_current: Some(exp.is_current),
                 };
                 WorkExperience::update(
                     &mut context.pool(), 
@@ -40,10 +38,8 @@ pub async fn save_work_experience(
                     person_id,
                     exp.company_name.clone(),
                     exp.position.clone(),
-                    exp.start_month.clone(),
-                    exp.start_year,
-                    exp.end_month.clone(),
-                    exp.end_year,
+                    exp.start_date,
+                    exp.end_date,
                 );
                 WorkExperience::create(&mut context.pool(), &form).await?
             }
@@ -83,10 +79,8 @@ pub async fn update_work_experience(
     let form = WorkExperienceUpdateForm {
         company_name: data.company_name.clone(),
         position: data.position.clone(),
-        start_month: Some(data.start_month.clone()),
-        start_year: Some(data.start_year),
-        end_month: Some(data.end_month.clone()),
-        end_year: Some(data.end_year),
+        start_date: data.start_date,
+        end_date: Some(data.end_date),
         is_current: Some(data.is_current),
     };
     let updated_experience = WorkExperience::update(

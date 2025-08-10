@@ -1,12 +1,12 @@
+use crate::traits::Crud;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::{PersonId, SkillId},
   source::skills::{Skills, SkillsInsertForm, SkillsUpdateForm},
   utils::{get_conn, DbPool},
 };
-use crate::traits::Crud;
 #[cfg(feature = "full")]
-use diesel::{dsl, ExpressionMethods, QueryDsl};
+use diesel::{ExpressionMethods, QueryDsl};
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
@@ -52,29 +52,6 @@ impl Skills {
       .load::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  pub async fn update_by_id_and_person(
-    pool: &mut DbPool<'_>,
-    skill_id: i32,
-    person_id: PersonId,
-    skill_name: String,
-    level_id: Option<i32>,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    diesel::update(
-      skills::table
-        .filter(skills::id.eq(skill_id))
-        .filter(skills::person_id.eq(person_id)),
-    )
-    .set((
-      skills::skill_name.eq(skill_name),
-      skills::level_id.eq(level_id),
-      skills::updated_at.eq(dsl::now),
-    ))
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 
   pub async fn delete_by_id_and_person(

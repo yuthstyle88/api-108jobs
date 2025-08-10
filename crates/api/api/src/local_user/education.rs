@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::account::{EducationRequest, UpdateEducationRequest, DeleteItemRequest};
+use lemmy_api_common::account::{DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::EducationId;
-use lemmy_db_schema::source::education::{Education, EducationInsertForm, EducationUpdateForm};
+use lemmy_db_schema::source::education::{Education, EducationInsertForm, EducationRequest, EducationUpdateForm, UpdateEducationRequest};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;

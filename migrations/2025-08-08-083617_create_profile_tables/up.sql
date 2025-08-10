@@ -14,11 +14,9 @@ CREATE TABLE work_experience (
     person_id INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,
     company_name TEXT NOT NULL,
     position TEXT NOT NULL,
-    start_month TEXT,
-    start_year INTEGER,
-    end_month TEXT,
-    end_year INTEGER,
-    is_current BOOLEAN DEFAULT FALSE,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    is_current BOOLEAN,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -38,3 +38,34 @@ pub struct EducationUpdateForm {
     pub school_name: Option<String>,
     pub major: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct EducationRequest {
+    pub educations: Vec<EducationItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct EducationItem {
+    pub id: Option<EducationId>, // None for new items, Some(id) for updates
+    pub school_name: String,
+    pub major: String,
+}
+
+
+
+// Individual update request structures
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateEducationRequest {
+    pub id: EducationId,
+    pub school_name: Option<String>,
+    pub major: Option<String>,
+}

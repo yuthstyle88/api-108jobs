@@ -1,4 +1,4 @@
-use crate::newtypes::PersonId;
+use crate::newtypes::{PersonId, SkillId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -51,6 +51,36 @@ pub struct SkillsForm {
     pub skill_name: String,
     pub level_id: Option<i32>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSkillRequest {
+    pub id: SkillId,
+    pub skill_name: Option<String>,
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct SkillsRequest {
+    pub skills: Vec<SkillItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct SkillItem {
+    pub id: Option<SkillId>, // None for new items, Some(id) for updates
+    pub skill_name: String,
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
+}
+
+
+
 
 impl SkillsForm {
     fn validate(&self) -> FastJobResult<()> {

@@ -1,5 +1,5 @@
-use crate::newtypes::PersonId;
-use chrono::{DateTime, Utc};
+use crate::newtypes::{PersonId, WorkExperienceId};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -19,10 +19,8 @@ pub struct WorkExperience {
     pub person_id: PersonId,
     pub company_name: String,
     pub position: String,
-    pub start_month: Option<String>,
-    pub start_year: Option<i32>,
-    pub end_month: Option<String>,
-    pub end_year: Option<i32>,
+    pub start_date: NaiveDate,
+    pub end_date: Option<NaiveDate>,
     pub is_current: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -35,10 +33,8 @@ pub struct WorkExperienceInsertForm {
     pub person_id: PersonId,
     pub company_name: String,
     pub position: String,
-    pub start_month: Option<String>,
-    pub start_year: Option<i32>,
-    pub end_month: Option<String>,
-    pub end_year: Option<i32>,
+    pub start_date: NaiveDate,
+    pub end_date: Option<NaiveDate>,
     #[new(default)]
     pub is_current: Option<bool>,
 }
@@ -49,9 +45,38 @@ pub struct WorkExperienceInsertForm {
 pub struct WorkExperienceUpdateForm {
     pub company_name: Option<String>,
     pub position: Option<String>,
-    pub start_month: Option<Option<String>>,
-    pub start_year: Option<Option<i32>>,
-    pub end_month: Option<Option<String>>,
-    pub end_year: Option<Option<i32>>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<Option<NaiveDate>>,
     pub is_current: Option<Option<bool>>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateWorkExperienceRequest {
+    pub id: WorkExperienceId,
+    pub company_name: Option<String>,
+    pub position: Option<String>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+    pub is_current: Option<bool>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct WorkExperienceRequest {
+    pub work_experiences: Vec<WorkExperienceItem>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct WorkExperienceItem {
+    pub id: Option<WorkExperienceId>, // None for new items, Some(id) for updates
+    pub company_name: String,
+    pub position: String,
+    pub start_date: NaiveDate,
+    pub end_date: Option<NaiveDate>,
+    pub is_current: Option<bool>,
 }

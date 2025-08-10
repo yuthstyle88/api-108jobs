@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json};
-use lemmy_api_common::account::{SkillsRequest, UpdateSkillRequest, DeleteItemRequest};
+use lemmy_api_common::account::{DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::SkillId;
-use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm, SkillsUpdateForm};
+use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm, SkillsRequest, SkillsUpdateForm, UpdateSkillRequest};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobResult, FastJobErrorType};

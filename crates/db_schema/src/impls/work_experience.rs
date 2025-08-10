@@ -54,38 +54,4 @@ impl WorkExperience {
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-
-  #[allow(clippy::too_many_arguments)]
-  pub async fn update_by_id_and_person(
-    pool: &mut DbPool<'_>,
-    experience_id: i32,
-    person_id: PersonId,
-    company_name: String,
-    position: String,
-    start_month: Option<String>,
-    start_year: Option<i32>,
-    end_month: Option<String>,
-    end_year: Option<i32>,
-    is_current: Option<bool>,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    diesel::update(
-      work_experience::table
-        .filter(work_experience::id.eq(experience_id))
-        .filter(work_experience::person_id.eq(person_id)),
-    )
-    .set((
-      work_experience::company_name.eq(company_name),
-      work_experience::position.eq(position),
-      work_experience::start_month.eq(start_month),
-      work_experience::start_year.eq(start_year),
-      work_experience::end_month.eq(end_month),
-      work_experience::end_year.eq(end_year),
-      work_experience::is_current.eq(is_current),
-      work_experience::updated_at.eq(diesel::dsl::now),
-    ))
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)
-  }
 }

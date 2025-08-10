@@ -6,6 +6,8 @@ pub mod list_comments;
 pub mod list_person_content;
 pub mod list_posts;
 pub mod read_community;
+// pub mod search;
+// pub mod resolve_object;
 
 /// Returns default listing type, depending if the query is for frontpage or community.
 fn listing_type_with_default(

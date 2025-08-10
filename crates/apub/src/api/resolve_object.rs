@@ -1,6 +1,5 @@
 use crate::fetcher::search::{search_query_to_object_id, search_query_to_object_id_local};
-use activitypub_federation::config::Data;
-use actix_web::web::{Json, Query};
+use actix_web::web::{Data, Json, Query};
 use either::Either::*;
 use lemmy_api_utils::{ utils::check_private_instance};
 use lemmy_api_utils::context::FastJobContext;

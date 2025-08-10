@@ -1,14 +1,26 @@
 use actix_web::{guard, web::*};
-use lemmy_api::local_user::exchange::exchange_key;
-use lemmy_api::local_user::update_term::update_term;
-use lemmy_api::local_user::wallet::{get_wallet, create_invoice, approve_quotation, submit_work, request_revision, approve_work, update_work_after_revision};
-use lemmy_api::local_user::bank_account::{create_bank_account, list_user_bank_accounts, set_default_bank_account, delete_bank_account, list_banks};
-use lemmy_api::local_user::education::{save_education, list_education, update_education, delete_single_education};
-use lemmy_api::local_user::work_experience::{save_work_experience, list_work_experience, update_work_experience, delete_single_work_experience};
-use lemmy_api::local_user::skills::{save_skills, list_skills, update_skill, delete_single_skill};
-use lemmy_api::local_user::certificates::{save_certificates, list_certificates, update_certificate, delete_single_certificate};
+use lemmy_api::admin::bank_account::list_bank_accounts;
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
-use lemmy_api::admin::bank_account::{list_bank_accounts};
+use lemmy_api::local_user::bank_account::{
+  create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
+  set_default_bank_account,
+};
+use lemmy_api::local_user::certificates::{
+  delete_single_certificate, list_certificates, save_certificates, update_certificate,
+};
+use lemmy_api::local_user::education::{
+  delete_single_education, list_education, save_education, update_education,
+};
+use lemmy_api::local_user::exchange::exchange_key;
+use lemmy_api::local_user::skills::{delete_single_skill, list_skills, save_skills, update_skill};
+use lemmy_api::local_user::update_term::update_term;
+use lemmy_api::local_user::wallet::{
+  approve_quotation, approve_work, create_invoice, get_wallet, request_revision, submit_work,
+  update_work_after_revision,
+};
+use lemmy_api::local_user::work_experience::{
+  delete_single_work_experience, list_work_experience, save_work_experience, update_work_experience,
+};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -81,12 +93,10 @@ use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_api_crud::{
   comment::{
-    create::create_comment, delete::delete_comment, read::get_comment,
-    remove::remove_comment, update::update_comment,
+    create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
+    update::update_comment,
   },
-  community::{
-    update::update_community,
-  },
+  community::update::update_community,
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
@@ -150,7 +160,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           resource("/community")
             .guard(guard::Post())
-            .wrap(rate_limit.register())
+            .wrap(rate_limit.register()),
         )
         .service(
           scope("/community")
@@ -160,7 +170,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list/children", get().to(list_communities))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))
-
             // Mod Actions
             .route("/icon", post().to(upload_community_icon))
             .route("/icon", delete().to(delete_community_icon))
@@ -248,7 +257,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/exchange-public-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
             .route("/get-captcha", get().to(get_captcha))
-
             .route(
               "/resend-verification-email",
               post().to(resend_verification_email),
@@ -267,6 +275,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
+            .service(
+              scope("/bank-account")
+                .route("", post().to(create_bank_account))
+                .route("", get().to(list_user_bank_accounts))
+                .route("/default", put().to(set_default_bank_account))
+                .route("/delete", post().to(delete_bank_account)),
+            )
             .service(
               scope("/mention")
                 .route(
@@ -291,22 +306,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
-            .service(
-              scope("/wallet")
-                .route("", get().to(get_wallet))
-            )
+            .service(scope("/wallet").route("", get().to(get_wallet)))
             // Bank account management scope
-            .service(
-              scope("/bank-account")
-                .route("", post().to(create_bank_account))
-                .route("", get().to(list_user_bank_accounts))
-                .route("/default", put().to(set_default_bank_account))
-                .route("/delete", post().to(delete_bank_account))
-            )
-            .service(
-              scope("/banks")
-                .route("", get().to(list_banks))
-            )
+            .service(scope("/banks").route("", get().to(list_banks)))
             // Services scope for freelancer service delivery
             .service(
               scope("/services")
@@ -315,7 +317,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/submit-work", post().to(submit_work))
                 .route("/request-revision", post().to(request_revision))
                 .route("/update-work", post().to(update_work_after_revision))
-                .route("/approve-work", post().to(approve_work))
+                .route("/approve-work", post().to(approve_work)),
             )
             // Profile-related endpoints
             .service(
@@ -323,28 +325,28 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", post().to(save_education))
                 .route("", get().to(list_education))
                 .route("/update", put().to(update_education))
-                .route("/delete", delete().to(delete_single_education))
+                .route("/delete", delete().to(delete_single_education)),
             )
             .service(
               scope("/work-experience")
                 .route("", post().to(save_work_experience))
                 .route("", get().to(list_work_experience))
                 .route("/update", put().to(update_work_experience))
-                .route("/delete", delete().to(delete_single_work_experience))
+                .route("/delete", delete().to(delete_single_work_experience)),
             )
             .service(
               scope("/skills")
                 .route("", post().to(save_skills))
                 .route("", get().to(list_skills))
                 .route("/update", put().to(update_skill))
-                .route("/delete", delete().to(delete_single_skill))
+                .route("/delete", delete().to(delete_single_skill)),
             )
             .service(
               scope("/certificates")
                 .route("", post().to(save_certificates))
                 .route("", get().to(list_certificates))
                 .route("/update", put().to(update_certificate))
-                .route("/delete", delete().to(delete_single_certificate))
+                .route("/delete", delete().to(delete_single_certificate)),
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))
@@ -402,10 +404,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet)),
             )
-            .service(
-              scope("/bank-account")
-              .route("list", get().to(list_bank_accounts))
-            ),
+            .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )
         .service(
           scope("/custom-emoji")
@@ -437,7 +436,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/health", get().to(pictrs_health))
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
-        )
-        // i18n Multi-languages
+        ), // i18n Multi-languages
     );
 }

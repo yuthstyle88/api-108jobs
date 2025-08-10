@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Data, Json, Query};
 use lemmy_api_common::bank_account::{
   BankAccountOperationResponse
 };
@@ -8,7 +8,7 @@ use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::AddressView;
 use lemmy_db_views_bank_account::{BankAccountView};
-use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, ListBankAccountsResponse, SetDefaultBankAccount};
+use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, ListBankAccounts, ListBankAccountsResponse, SetDefaultBankAccount};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -64,12 +64,13 @@ pub async fn create_bank_account(
 }
 
 pub async fn list_user_bank_accounts(
+  data: Query<ListBankAccounts>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListBankAccountsResponse>> {
-  let user_id = local_user_view.local_user.id;
-
-  let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), user_id, Some(true)).await?;
+  let local_user_id = local_user_view.local_user.id;
+  let verify = data.verify;
+  let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), Some(local_user_id), verify).await?;
 
   Ok(Json(ListBankAccountsResponse {
     bank_accounts,

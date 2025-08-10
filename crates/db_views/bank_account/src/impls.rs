@@ -223,20 +223,22 @@ impl BankAccountView {
   }
 }
 
-impl TryFrom<BankAccountForm>  for CreateBankAccount{
+impl TryFrom<BankAccountForm> for CreateBankAccount {
   type Error = FastJobError;
 
   fn try_from(data: BankAccountForm) -> Result<Self, Self::Error> {
-
-    if data.account_number.trim().is_empty() ||
-       validate_bank_account(&data.country_id, &data.account_number) {
-      return Err(FastJobErrorType::InvalidField("Invalid account number".to_string()))?;
+    // Validate account number presence and format by country
+    let acc_num = data.account_number.trim();
+    if acc_num.is_empty() || !validate_bank_account(&data.country_id, acc_num) {
+      return Err(FastJobErrorType::InvalidField("Invalid account number".to_string()).into());
     }
+
     // Validate account name
     if data.account_name.trim().is_empty() {
-      return Err(FastJobErrorType::InvalidField("Invalid account name".to_string()))?;
+      return Err(FastJobErrorType::InvalidField("Invalid account name".to_string()).into());
     }
-    Ok(CreateBankAccount{
+
+    Ok(CreateBankAccount {
       bank_id: data.bank_id,
       account_number: data.account_number,
       account_name: data.account_name,

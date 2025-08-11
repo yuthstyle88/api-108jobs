@@ -12,7 +12,7 @@ use crate::{
   traits::{ApubActor, Blockable, Crud, Followable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
-use chrono::{NaiveDate, Utc};
+use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},
   expression::SelectableHelper,
@@ -166,7 +166,6 @@ impl Person {
     interface_language: Option<String>,
   ) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
     let conn = &mut get_conn(pool).await?;
-    let today_utc: NaiveDate = Utc::now().date_naive();
     let country_code = lang_to_country_code(interface_language.as_deref());
 
     let form = AddressInsertForm {
@@ -191,12 +190,12 @@ impl Person {
     let from = IdentityCardInsertForm {
       address_id,
       id_number: "".to_string(),
-      issued_date: today_utc,
-      expiry_date: today_utc,
-      full_name: "".to_string(),
-      date_of_birth: today_utc,
-      nationality: "".to_string(),
-      is_verified: Some(true),
+      issued_date: None,
+      expiry_date: None,
+      full_name: None,
+      date_of_birth: None,
+      nationality: None,
+      is_verified: Some(false),
     };
     let identity_card_id = IdentityCard::create(&mut conn.into(), &from).await?.id;
     Ok((address_id, contact_id, identity_card_id))

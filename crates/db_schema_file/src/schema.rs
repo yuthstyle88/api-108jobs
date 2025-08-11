@@ -1152,12 +1152,12 @@ diesel::table! {
     identity_card (id) {
         id -> Int4,
         address_id -> Int4,
-        id_number -> Text,
-        issued_date -> Date,
-        expiry_date -> Date,
-        full_name -> Text,
-        date_of_birth -> Date,
-        nationality -> Text,
+        id_number -> Nullable<Text>,
+        issued_date -> Nullable<Date>,
+        expiry_date -> Nullable<Date>,
+        full_name -> Nullable<Text>,
+        date_of_birth -> Nullable<Date>,
+        nationality -> Nullable<Text>,
         is_verified -> Bool,
         updated_at -> Nullable<Timestamptz>,
     }

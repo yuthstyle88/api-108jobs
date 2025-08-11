@@ -19,12 +19,12 @@ use std::convert::TryFrom;
 pub struct IdentityCard {
   pub id: IdentityCardId,
   pub address_id: AddressId,
-  pub id_number: String,
-  pub issued_date: NaiveDate,
-  pub expiry_date: NaiveDate,
-  pub full_name: String,
-  pub date_of_birth: NaiveDate,
-  pub nationality: String,
+  pub id_number: Option<String>,
+  pub issued_date: Option<NaiveDate>,
+  pub expiry_date: Option<NaiveDate>,
+  pub full_name: Option<String>,
+  pub date_of_birth: Option<NaiveDate>,
+  pub nationality: Option<String>,
   pub is_verified: bool,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -35,11 +35,11 @@ pub struct IdentityCard {
 pub struct IdentityCardInsertForm {
   pub address_id: AddressId,
   pub id_number: String,
-  pub issued_date: NaiveDate,
-  pub expiry_date: NaiveDate,
-  pub full_name: String,
-  pub date_of_birth: NaiveDate,
-  pub nationality: String,
+  pub issued_date: Option<NaiveDate>,
+  pub expiry_date: Option<NaiveDate>,
+  pub full_name: Option<String>,
+  pub date_of_birth: Option<NaiveDate>,
+  pub nationality: Option<String>,
   pub is_verified: Option<bool>,
 }
 

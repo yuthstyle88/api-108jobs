@@ -2,7 +2,7 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, ValidCreateInvoice, WalletOperationResponse};
+use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, SubmitWork, ValidCreateInvoice, WalletOperationResponse};
 use lemmy_db_views_wallet::WalletView;
 use lemmy_utils::error::FastJobResult;
 use lemmy_workflow::WorkFlowService;
@@ -50,7 +50,7 @@ pub async fn deposit_wallet(
 
 // Escrow-based billing workflow handlers
 
-pub async fn create_invoice(
+pub async fn create_quotation(
   data: Json<CreateInvoiceForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
@@ -67,7 +67,7 @@ pub async fn create_invoice(
   let data = validated.0.clone();
 
   // Create the invoice/billing record with detailed quotation fields
-  let billing = WorkFlowService::create_invoice(
+  let billing = WorkFlowService::create_billing_from_quotation(
     &mut context.pool(),
     local_user_id,
     validated,
@@ -132,27 +132,6 @@ pub async fn submit_work(
   }))
 }
 
-pub async fn request_revision(
-  data: Json<RequestRevision>,
-  context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
-) -> FastJobResult<Json<BillingOperationResponse>> {
-  let employer_id = local_user_view.local_user.id;
-
-  // Request revision from worker
-  let updated_billing = WorkFlowService::request_revision(
-    &mut context.pool(),
-    data.billing_id,
-    employer_id,
-    data.revision_feedback.clone(),
-  ).await?;
-
-  Ok(Json(BillingOperationResponse {
-    billing_id: updated_billing.id,
-    status: "RequestChange".to_string(),
-    success: true,
-  }))
-}
 
 pub async fn approve_work(
   data: Json<ApproveWork>,
@@ -175,25 +154,3 @@ pub async fn approve_work(
   }))
 }
 
-pub async fn update_work_after_revision(
-  data: Json<UpdateWorkAfterRevision>,
-  context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
-) -> FastJobResult<Json<BillingOperationResponse>> {
-  let worker_id = local_user_view.local_user.id;
-
-  // Update work after revision request as the worker
-  let updated_billing = WorkFlowService::update_work_after_revision(
-    &mut context.pool(),
-    data.billing_id,
-    worker_id,
-    data.updated_work_description.clone(),
-    data.updated_deliverable_url.clone(),
-  ).await?;
-
-  Ok(Json(BillingOperationResponse {
-    billing_id: updated_billing.id,
-    status: "Updated".to_string(),
-    success: true,
-  }))
-}

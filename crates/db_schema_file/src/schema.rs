@@ -1097,15 +1097,26 @@ diesel::table! {
         comment_id -> Nullable<Int4>,
         amount -> Float8,
         description -> Text,
-        max_revisions -> Int4,
-        revisions_used -> Int4,
         status -> BillingStatus,
         work_description -> Nullable<Text>,
         deliverable_url -> Nullable<Text>,
-        revision_feedback -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         paid_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    billing_milestones (id) {
+        id -> Int4,
+        billing_id -> Int4,
+        seq -> Int4,
+        name -> Text,
+        amount -> Float8,
+        status -> Text,
+        submitted_at -> Timestamptz,
+        approved_at -> Nullable<Timestamptz>,
+        released_at -> Nullable<Timestamptz>,
     }
 }
 

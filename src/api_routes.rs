@@ -15,8 +15,7 @@ use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::skills::{delete_single_skill, list_skills, save_skills, update_skill};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::{
-  approve_quotation, approve_work, create_invoice, get_wallet, request_revision, submit_work,
-  update_work_after_revision,
+  approve_quotation, approve_work, create_quotation, get_wallet, submit_work,
 };
 use lemmy_api::local_user::work_experience::{
   delete_single_work_experience, list_work_experience, save_work_experience, update_work_experience,
@@ -317,11 +316,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             // Services scope for freelancer service delivery
             .service(
               scope("/services")
-                .route("/create-invoice", post().to(create_invoice))
+                .route("/create-invoice", post().to(create_quotation))
                 .route("/approve-quotation", post().to(approve_quotation))
                 .route("/submit-work", post().to(submit_work))
-                .route("/request-revision", post().to(request_revision))
-                .route("/update-work", post().to(update_work_after_revision))
                 .route("/approve-work", post().to(approve_work)),
             )
             // Profile-related endpoints

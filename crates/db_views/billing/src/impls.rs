@@ -1,6 +1,4 @@
 use crate::BillingView;
-use diesel::QueryDsl;
-use diesel_async::RunQueryDsl;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::{
   newtypes::{BillingId, LocalUserId},

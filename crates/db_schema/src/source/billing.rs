@@ -29,18 +29,12 @@ pub struct Billing {
   pub amount: f64,
   /// Description of work to be done
   pub description: String,
-  /// Maximum number of revisions allowed
-  pub max_revisions: i32,
-  /// Current number of revisions used
-  pub revisions_used: i32,
   /// Current status of the billing
   pub status: BillingStatus,
   /// Submitted work description
   pub work_description: Option<String>,
   /// URL to deliverable files
   pub deliverable_url: Option<String>,
-  /// Latest revision feedback from employer
-  pub revision_feedback: Option<String>,
   /// When the billing was created
   pub created_at: DateTime<Utc>,
   /// When the billing was last updated
@@ -60,9 +54,6 @@ pub struct BillingInsertForm {
   pub comment_id: Option<CommentId>,
   pub amount: f64,
   pub description: String,
-  pub max_revisions: i32,
-  #[new(default)]
-  pub revisions_used: Option<i32>,
   #[new(default)]
   pub status: Option<BillingStatus>,
   #[new(default)]
@@ -74,10 +65,8 @@ pub struct BillingInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = billing))]
 pub struct BillingUpdateForm {
   pub status: Option<BillingStatus>,
-  pub revisions_used: Option<i32>,
   pub work_description: Option<Option<String>>,
   pub deliverable_url: Option<Option<String>>,
-  pub revision_feedback: Option<Option<String>>,
   pub updated_at: Option<DateTime<Utc>>,
   pub paid_at: Option<Option<DateTime<Utc>>>,
 }
@@ -105,8 +94,6 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       comment_id: v.comment_id,
       amount: v.amount,
       description: v.description,
-      max_revisions: v.max_revisions,
-      revisions_used: Some(0),
       status: Some(BillingStatus::QuotationPending),
       created_at: None,
     }

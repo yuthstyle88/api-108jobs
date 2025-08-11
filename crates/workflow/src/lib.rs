@@ -34,44 +34,11 @@ fn form_paid_escrow() -> BillingUpdateForm {
   }
 }
 
+#[allow(dead_code)]
 fn form_cancelled() -> BillingUpdateForm {
   BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() }
 }
 
-fn form_request_change(
-  feedback: String,
-  revisions_used: i32,
-  max_revisions: i32,
-) -> Result<(BillingUpdateForm, i32), FastJobErrorType> {
-  if feedback.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("revision_feedback is required".into()));
-  }
-  if revisions_used >= max_revisions {
-    return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into()));
-  }
-  let new_count = revisions_used + 1;
-  let form = BillingUpdateForm {
-    status: Some(BillingStatus::RequestChange),
-    revision_feedback: Some(Some(feedback)),
-    revisions_used: Some(new_count),
-    updated_at: Some(Utc::now()),
-    ..Default::default()
-  };
-  Ok((form, new_count))
-}
-
-fn form_updated(desc: String, url: Option<String>) -> Result<BillingUpdateForm, FastJobErrorType> {
-  if desc.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("updated_work_description is required".into()));
-  }
-  Ok(BillingUpdateForm {
-    status: Some(BillingStatus::Updated),
-    work_description: Some(Some(desc)),
-    deliverable_url: Some(url),
-    updated_at: Some(Utc::now()),
-    ..Default::default()
-  })
-}
 
 fn form_submit_work(desc: String, url: Option<String>) -> Result<BillingUpdateForm, FastJobErrorType> {
   if desc.trim().is_empty() {
@@ -84,6 +51,13 @@ fn form_submit_work(desc: String, url: Option<String>) -> Result<BillingUpdateFo
     updated_at: Some(Utc::now()),
     ..Default::default()
   })
+}
+
+fn form_touch_only() -> BillingUpdateForm {
+  BillingUpdateForm {
+    updated_at: Some(Utc::now()),
+    ..Default::default()
+  }
 }
 
 fn form_completed_and_wallet(
@@ -101,33 +75,29 @@ fn form_completed_and_wallet(
 // consume the current state and return the next state's struct + a domain transition payload.
 
 // Wallet side-effects described here; executed in apply_transition()
+#[allow(dead_code)]
 enum WalletAction {
   PayToEscrow { wallet_id: WalletId, amount: f64 },
   ReleaseToFreelancer { user_id: LocalUserId, amount: f64 },
+  RefundToEmployer { user_id: LocalUserId, amount: f64 }, // reserved for future use
 }
 
 // Domain transitions used by apply_transition()
 struct FundEscrowTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct ReleaseToFreelancerTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
-struct RequestRevisionTransition { pub form: BillingUpdateForm }
+struct ApproveMilestoneTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
+struct ReleaseRemainingTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct SubmitWorkTransition { pub form: BillingUpdateForm }
-struct UpdateAfterRevisionTransition { pub form: BillingUpdateForm }
-struct ReplaceDeliverableTransition { pub form: BillingUpdateForm }
-struct EditTermsTransition { pub form: BillingUpdateForm }
-struct CancelTransition { pub form: BillingUpdateForm }
-struct PrevTransition { pub form: BillingUpdateForm }
+struct CancelTransition { #[allow(dead_code)] pub form: BillingUpdateForm }
+// NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
 
 // Planner enum: unifies all transition variants for the DB/apply layer
 enum Planned {
   FundEscrow(FundEscrowTransition),
   ReleaseToFreelancer(ReleaseToFreelancerTransition),
-  RequestRevision(RequestRevisionTransition),
+  ApproveMilestone(ApproveMilestoneTransition),
+  ReleaseRemaining(ReleaseRemainingTransition),
   SubmitWork(SubmitWorkTransition),
-  UpdateAfterRevision(UpdateAfterRevisionTransition),
-  ReplaceDeliverable(ReplaceDeliverableTransition),
-  EditTerms(EditTermsTransition),
-  Cancel(CancelTransition),
-  Prev(PrevTransition),
 }
 
 // Shared data snapshot for typestate transitions
@@ -137,99 +107,67 @@ struct FlowData {
   employer_id: LocalUserId,
   freelancer_id: LocalUserId,
   amount: f64,
-  revisions_used: i32,
-  max_revisions: i32,
 }
 
 // ===== States as structs =====
 #[derive(Debug)] struct QuotationPendingTS { data: FlowData }
-#[derive(Debug)] struct OrderApprovedTS   { data: FlowData }
 #[derive(Debug)] struct PaidEscrowTS      { data: FlowData }
 #[derive(Debug)] struct WorkSubmittedTS   { data: FlowData }
-#[derive(Debug)] struct RevisionRequestedTS { data: FlowData }
-#[derive(Debug)] struct RequestChangeTS     { data: FlowData }
-#[derive(Debug)] struct UpdatedTS         { data: FlowData }
+#[allow(dead_code)]
 #[derive(Debug)] struct CompletedTS       { data: FlowData }
+#[allow(dead_code)]
 #[derive(Debug)] struct CancelledTS       { data: FlowData }
-#[derive(Debug)] struct DisputedTS        { data: FlowData }
+impl PaidEscrowTS {
+  /// Build typestate from a Billing row; only Some if the status is PaidEscrow.
+  fn try_from_billing(b: &Billing) -> Option<Self> {
+    if b.status == BillingStatus::PaidEscrow {
+      Some(PaidEscrowTS { data: into_ts(b) })
+    } else {
+      None
+    }
+  }
 
+  /// Submit work (first submission) from PaidEscrow state.
+  fn submit_work(self, desc: String, url: Option<String>) -> Result<SubmitWorkTransition, FastJobErrorType> {
+    let form = form_submit_work(desc, url)?;
+    Ok(SubmitWorkTransition { form })
+  }
+}
 // ===== Allowed transitions (methods consume self) =====
 impl QuotationPendingTS {
-  pub fn approve_and_fund(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
+  pub fn approve_and_fund(self, wallet_id: WalletId) -> Result<FundEscrowTransition, FastJobErrorType> {
     let form = form_paid_escrow();
     let tx = FundEscrowTransition {
       form,
       wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount },
     };
-    Ok((PaidEscrowTS { data: self.data }, tx))
+    Ok(tx)
   }
+  #[allow(dead_code)]
   pub fn cancel(self) -> (CancelledTS, CancelTransition) {
     let form = form_cancelled();
     (CancelledTS { data: self.data }, CancelTransition { form })
-  }
-}
-
-impl OrderApprovedTS {
-  pub fn pay_escrow(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
-    let form = form_paid_escrow();
-    let tx = FundEscrowTransition { form, wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount } };
-    Ok((PaidEscrowTS { data: self.data }, tx))
-  }
-  pub fn cancel(self) -> (CancelledTS, CancelTransition) {
-    let form = form_cancelled();
-    (CancelledTS { data: self.data }, CancelTransition { form })
-  }
-}
-
-impl PaidEscrowTS {
-  pub fn submit_work(self, desc: String, url: Option<String>) -> Result<(WorkSubmittedTS, SubmitWorkTransition), FastJobErrorType> {
-    let form = form_submit_work(desc, url)?;
-    Ok((WorkSubmittedTS { data: self.data }, SubmitWorkTransition { form }))
   }
 }
 
 impl WorkSubmittedTS {
-  pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
-    let (form, new_count) = form_request_change(feedback, self.data.revisions_used, self.data.max_revisions)?;
-    Ok((RevisionRequestedTS { data: FlowData { revisions_used: new_count, ..self.data } }, RequestRevisionTransition { form }))
+  pub fn approve_milestone(self, amount: f64) -> Result<ApproveMilestoneTransition, FastJobErrorType> {
+    if amount <= 0.0 { return Err(FastJobErrorType::InvalidField("milestone amount must be > 0".into())); }
+    let form = form_touch_only();
+    let wallet = WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount };
+    Ok(ApproveMilestoneTransition { form, wallet })
   }
-  pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
+  pub fn approve_work(self) -> ReleaseToFreelancerTransition {
     let (form, wallet) = form_completed_and_wallet(self.data.freelancer_id, self.data.amount);
-    let tx = ReleaseToFreelancerTransition { form, wallet };
-    (CompletedTS { data: self.data }, tx)
-  }
-}
-
-impl RevisionRequestedTS {
-  pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
-    let form = form_updated(desc, url)?;
-    Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
-  }
-}
-
-impl RequestChangeTS {
-  pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
-    let form = form_updated(desc, url)?;
-    Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
-  }
-}
-
-impl UpdatedTS {
-  pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
-    let (form, new_count) = form_request_change(feedback, self.data.revisions_used, self.data.max_revisions)?;
-    Ok((RevisionRequestedTS { data: FlowData { revisions_used: new_count, ..self.data } }, RequestRevisionTransition { form }))
-  }
-  pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
-    let (form, wallet) = form_completed_and_wallet(self.data.freelancer_id, self.data.amount);
-    let tx = ReleaseToFreelancerTransition { form, wallet };
-    (CompletedTS { data: self.data }, tx)
+    ReleaseToFreelancerTransition { form, wallet }
   }
 }
 
 // Terminal states (no outbound transitions)
+#[allow(dead_code)]
 impl CompletedTS {}
+#[allow(dead_code)]
 impl CancelledTS {}
-impl DisputedTS {}
 
 // Map Billing row → typestate
 fn into_ts(b: &Billing) -> FlowData {
@@ -238,8 +176,6 @@ fn into_ts(b: &Billing) -> FlowData {
     employer_id: b.employer_id,
     freelancer_id: b.freelancer_id,
     amount: b.amount,
-    revisions_used: b.revisions_used,
-    max_revisions: b.max_revisions,
   }
 }
 
@@ -249,19 +185,27 @@ async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Pl
   match &plan {
     Planned::FundEscrow(t) => { if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet { WalletView::pay_for_job(pool, *wallet_id, *amount).await?; } }
     Planned::ReleaseToFreelancer(t) => { if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet { WalletView::complete_job_payment(pool, *user_id, *amount).await?; } }
+    Planned::ApproveMilestone(t) => {
+      // partial release during work
+      if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet {
+        WalletView::complete_job_payment(pool, *user_id, *amount).await?;
+      }
+    }
+    Planned::ReleaseRemaining(t) => {
+      // release only the leftover amount at completion
+      if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet {
+        WalletView::complete_job_payment(pool, *user_id, *amount).await?;
+      }
+    }
     _ => {}
   }
 
   let form = match &plan {
     Planned::FundEscrow(t) => &t.form,
     Planned::ReleaseToFreelancer(t) => &t.form,
-    Planned::RequestRevision(t) => &t.form,
+    Planned::ApproveMilestone(t) => &t.form,
+    Planned::ReleaseRemaining(t) => &t.form,
     Planned::SubmitWork(t) => &t.form,
-    Planned::UpdateAfterRevision(t) => &t.form,
-    Planned::ReplaceDeliverable(t) => &t.form,
-    Planned::EditTerms(t) => &t.form,
-    Planned::Cancel(t) => &t.form,
-    Planned::Prev(t) => &t.form,
   };
 
   let conn = &mut get_conn(pool).await?;
@@ -292,13 +236,13 @@ impl WorkFlowService {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
     if b.status == BillingStatus::Completed { return Ok(b); }
-    if b.status != BillingStatus::WorkSubmitted && b.status != BillingStatus::Updated {
+    if b.status != BillingStatus::WorkSubmitted {
       return Err(FastJobErrorType::InvalidField("Billing not ready to approve".into()).into());
     }
     Ok(b)
   }
 
-  pub async fn create_invoice(
+  pub async fn create_billing_from_quotation(
     pool: &mut DbPool<'_>,
     freelancer_id: LocalUserId,
     data: ValidCreateInvoice,
@@ -308,10 +252,12 @@ impl WorkFlowService {
     let billing_form = BillingFromQuotation {
       employer_id: inner.employer_id,
       freelancer_id,
+      post_id: inner.post_id,
+      comment_id: inner.comment_id,
       description,
       amount: inner.amount,
+      max_revisions: inner.revise_times,
       delivery_day: inner.delivery_day,
-      ..Default::default()
     };
     let billing_form: BillingInsertForm = billing_form.into();
     Billing::create(pool, &billing_form).await
@@ -330,11 +276,7 @@ impl WorkFlowService {
     let data = into_ts(&b);
     let plan = match b.status {
       BillingStatus::QuotationPending => {
-        let ( _next, tx ) = QuotationPendingTS { data }.approve_and_fund(wallet_id)?;
-        Planned::FundEscrow(tx)
-      }
-      BillingStatus::OrderApproved => {
-        let ( _next, tx ) = OrderApprovedTS { data }.pay_escrow(wallet_id)?;
+        let tx = QuotationPendingTS { data }.approve_and_fund(wallet_id)?;
         Planned::FundEscrow(tx)
       }
       _ => return Err(FastJobErrorType::InvalidField("Billing not in a fundable state".into()).into()),
@@ -354,68 +296,16 @@ impl WorkFlowService {
     if b.freelancer_id != freelancer_id {
       return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
     }
-    let data = into_ts(&b);
-    let plan = match b.status {
-      BillingStatus::PaidEscrow => {
-        let ( _next, tx ) = PaidEscrowTS { data }.submit_work(work_description, deliverable_url)?;
-        Planned::SubmitWork(tx)
-      }
-      _ => return Err(FastJobErrorType::InvalidField("Billing not in PaidEscrow".into()).into()),
-    };
-    let updated = apply_transition(pool, billing_id, plan).await?;
-    Ok(updated)
-  }
-
-  pub async fn request_revision(
-    pool: &mut DbPool<'_>,
-    billing_id: BillingId,
-    employer_id: LocalUserId,
-    revision_feedback: String,
-  ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
-    if b.employer_id != employer_id {
-      return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
+    if b.paid_at.is_none() {
+      return Err(FastJobErrorType::InvalidField("Escrow not funded".into()).into());
     }
-    let data = into_ts(&b);
-    let plan = match b.status {
-      BillingStatus::WorkSubmitted => {
-        let ( _next, tx ) = WorkSubmittedTS { data }.request_revision(revision_feedback)?;
-        Planned::RequestRevision(tx)
-      }
-      BillingStatus::Updated => {
-        let ( _next, tx ) = UpdatedTS { data }.request_revision(revision_feedback)?;
-        Planned::RequestRevision(tx)
-      }
-      _ => return Err(FastJobErrorType::InvalidField("Billing not ready for revision".into()).into()),
-    };
-    let updated = apply_transition(pool, billing_id, plan).await?;
-    Ok(updated)
-  }
 
-  pub async fn update_work_after_revision(
-    pool: &mut DbPool<'_>,
-    billing_id: BillingId,
-    freelancer_id: LocalUserId,
-    updated_work_description: String,
-    updated_deliverable_url: Option<String>,
-  ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
-    if b.freelancer_id != freelancer_id {
-      return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
-    }
-    let data = into_ts(&b);
-    let plan = match b.status {
-      BillingStatus::RevisionRequested => {
-        let ( _next, tx ) = RevisionRequestedTS { data }.resubmit(updated_work_description, updated_deliverable_url)?;
-        Planned::UpdateAfterRevision(tx)
-      }
-      BillingStatus::RequestChange => {
-        let ( _next, tx ) = RequestChangeTS { data }.resubmit(updated_work_description, updated_deliverable_url)?;
-        Planned::UpdateAfterRevision(tx)
-      }
-      _ => return Err(FastJobErrorType::InvalidField("Billing not in revision state".into()).into()),
-    };
-    let updated = apply_transition(pool, billing_id, plan).await?;
+    // Pure typestate: build PaidEscrowTS from current billing or reject
+    let ts = PaidEscrowTS::try_from_billing(&b)
+      .ok_or_else(|| FastJobErrorType::InvalidField("Billing not in a submittable state".into()))?;
+
+    let tx = ts.submit_work(work_description, deliverable_url)?;
+    let updated = apply_transition(pool, billing_id, Planned::SubmitWork(tx)).await?;
     Ok(updated)
   }
 
@@ -431,15 +321,59 @@ impl WorkFlowService {
     let data = into_ts(&b);
     let plan = match b.status {
       BillingStatus::WorkSubmitted => {
-        let ( _next, tx ) = WorkSubmittedTS { data }.approve_work();
-        Planned::ReleaseToFreelancer(tx)
-      }
-      BillingStatus::Updated => {
-        let ( _next, tx ) = UpdatedTS { data }.approve_work();
+        let tx = WorkSubmittedTS { data }.approve_work();
         Planned::ReleaseToFreelancer(tx)
       }
       _ => return Err(FastJobErrorType::InvalidField("Billing not ready to approve".into()).into()),
     };
+    let updated = apply_transition(pool, billing_id, plan).await?;
+    Ok(updated)
+  }
+
+  /// Approve one milestone and release a partial payment without changing billing status.
+  pub async fn approve_milestone(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    employer_id: LocalUserId,
+    amount: f64,
+  ) -> FastJobResult<Billing> {
+    let b = Billing::read(pool, billing_id).await?;
+    if b.employer_id != employer_id {
+      return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
+    }
+    let data = into_ts(&b);
+    let plan = if b.status == BillingStatus::WorkSubmitted {
+      let tx = WorkSubmittedTS { data }.approve_milestone(amount)?;
+      Planned::ApproveMilestone(tx)
+    } else if b.paid_at.is_some() {
+      // funded but not yet in WorkSubmitted state → still allow partial payout without status change
+      if amount <= 0.0 { return Err(FastJobErrorType::InvalidField("milestone amount must be > 0".into()).into()); }
+      let form = form_touch_only();
+      let wallet = WalletAction::ReleaseToFreelancer { user_id: data.freelancer_id, amount };
+      Planned::ApproveMilestone(ApproveMilestoneTransition { form, wallet })
+    } else {
+      return Err(FastJobErrorType::InvalidField("Escrow not funded".into()).into());
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
+    Ok(updated)
+  }
+
+  /// Approve work by releasing only the remaining amount (callers compute remaining themselves).
+  pub async fn approve_work_with_remaining(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    employer_id: LocalUserId,
+    remaining_amount: f64,
+  ) -> FastJobResult<Billing> {
+    if remaining_amount <= 0.0 { return Err(FastJobErrorType::InvalidField("remaining_amount must be > 0".into()).into()); }
+    let b = Billing::read(pool, billing_id).await?;
+    if b.employer_id != employer_id {
+      return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
+    }
+    let data = into_ts(&b);
+    let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
+    let wallet = WalletAction::ReleaseToFreelancer { user_id: data.freelancer_id, amount: remaining_amount };
+    let plan = Planned::ReleaseRemaining(ReleaseRemainingTransition { form, wallet });
     let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }

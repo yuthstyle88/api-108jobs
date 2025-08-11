@@ -155,12 +155,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", delete().to(delete_site_banner)),
         )
         .route("/modlog", get().to(get_mod_log))
-          .service(
-            resource("/search")
-                .wrap(rate_limit.search())
-                .route(get().to(search)),
-          )
-        .service(resource("/resolve-object").wrap(rate_limit.search()))
+        .service(
+          resource("/search")
+            // .wrap(rate_limit.search())
+            .route(get().to(search)),
+        )
         // Community
         .service(
           resource("/community")

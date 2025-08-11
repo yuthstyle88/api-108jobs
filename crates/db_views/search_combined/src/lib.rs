@@ -13,7 +13,7 @@ use lemmy_db_schema::{
   SearchSortType,
   SearchType,
 };
-use lemmy_db_schema_file::enums::ListingType;
+use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType};
 use lemmy_db_views_comment::CommentView;
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_person::PersonView;
@@ -129,11 +129,11 @@ pub enum SearchCombinedView {
 /// Searches the site, given a search term, and some optional filters.
 #[serde(rename_all = "camelCase")]
 pub struct Search {
-  pub q: String,
+  pub q: Option<String>,
   pub community_id: Option<CommunityId>,
   pub community_name: Option<String>,
   pub creator_id: Option<PersonId>,
-  pub type_: Option<SearchType>,
+  pub r#type: Option<SearchType>,
   pub sort: Option<SearchSortType>,
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
@@ -145,6 +145,13 @@ pub struct Search {
   pub disliked_only: Option<bool>,
   /// If true, then show the self_promotion posts (even if your user setting is to hide them)
   pub self_promotion: Option<bool>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  /// Minimum budget in your preferred currency
+  pub budget_min: Option<i64>,
+  /// Maximum budget in your preferred currency
+  pub budget_max: Option<i64>,
+  pub requires_english: Option<bool>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

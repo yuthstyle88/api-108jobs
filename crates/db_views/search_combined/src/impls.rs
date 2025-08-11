@@ -67,6 +67,7 @@ use lemmy_db_schema_file::{
     search_combined,
   },
 };
+use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
@@ -213,6 +214,11 @@ pub struct SearchCombinedQuery {
   pub liked_only: Option<bool>,
   pub disliked_only: Option<bool>,
   pub self_promotion: Option<bool>,
+  pub intended_use: Option<IntendedUse>,
+  pub job_type: Option<JobType>,
+  pub budget_min: Option<i64>,
+  pub budget_max: Option<i64>,
+  pub requires_english: Option<bool>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -267,6 +273,26 @@ impl SearchCombinedQuery {
     // Community id
     if let Some(community_id) = self.community_id {
       query = query.filter(community::id.eq(community_id));
+    }
+
+    if let Some(true) = self.requires_english {
+      query = query.filter(post::is_english_required);
+    }
+
+    if let Some(min) = self.budget_min {
+      query = query.filter(post::budget.ge(min as f64));
+    }
+
+    if let Some(max) = self.budget_max {
+      query = query.filter(post::budget.le(max as f64));
+    }
+
+    if let Some(intended_use) = self.intended_use {
+      query = query.filter(post::intended_use.eq(intended_use));
+    }
+
+    if let Some(job_type) = self.job_type {
+      query = query.filter(post::job_type.eq(job_type));
     }
 
     // Creator id

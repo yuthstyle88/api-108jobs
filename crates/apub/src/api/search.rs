@@ -28,10 +28,10 @@ pub async fn search(
 
     let pool = &mut context.pool();
     let search_query = SearchCombinedQuery {
-        search_term: Some(data.q.clone()),
+        search_term: data.q.clone(),
         community_id: data.community_id,
         creator_id: data.creator_id,
-        type_: data.type_,
+        type_: data.r#type,
         sort: data.sort,
         time_range_seconds: data.time_range_seconds,
         listing_type: data.listing_type,
@@ -39,10 +39,15 @@ pub async fn search(
         post_url_only: data.post_url_only,
         liked_only: data.liked_only,
         disliked_only: data.disliked_only,
+        self_promotion: None,
+        intended_use: data.intended_use,
+        job_type: data.job_type,
+        budget_min: data.budget_min,
+        budget_max: data.budget_max,
+        requires_english: data.requires_english,
         cursor_data,
         page_back: data.page_back,
         limit: data.limit,
-        self_promotion: None,
     };
 
 

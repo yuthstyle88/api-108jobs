@@ -3727,6 +3727,7 @@ dependencies = [
  "lemmy_db_schema_file",
  "lemmy_db_views_wallet",
  "lemmy_utils",
+ "lemmy_workflow",
  "serde",
  "tokio",
 ]
@@ -4291,6 +4292,20 @@ dependencies = [
  "unified-diff",
  "url",
  "urlencoding",
+]
+
+[[package]]
+name = "lemmy_workflow"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_wallet",
+ "lemmy_utils",
+ "serde",
 ]
 
 [[package]]

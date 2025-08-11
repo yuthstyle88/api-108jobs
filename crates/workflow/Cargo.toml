@@ -1,0 +1,18 @@
+[package]
+name = "lemmy_workflow"
+version = "1.0.0-alpha.5"
+edition = "2021"
+authors = ["Lemmy Authors"]
+description = "Workflow services for billing and job lifecycle"
+license = "AGPL-3.0"
+publish = false
+
+[dependencies]
+lemmy_utils = { workspace = true }
+lemmy_db_schema = { workspace = true }
+lemmy_db_schema_file = { workspace = true }
+lemmy_db_views_wallet = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }

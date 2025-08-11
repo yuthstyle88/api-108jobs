@@ -12,6 +12,7 @@ repository.workspace = true
 lemmy_db_schema = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_db_views_wallet = { workspace = true }
+lemmy_workflow = { workspace = true }
 lemmy_utils = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true }

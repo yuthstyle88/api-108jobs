@@ -13,6 +13,14 @@ use lemmy_db_schema_file::schema::{local_user, wallet};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl WalletView {
+  #[inline]
+  fn validate_positive_amount(amount: f64) -> FastJobResult<()> {
+    if amount <= 0.0 {
+      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
+    }
+    Ok(())
+  }
+
   pub async fn read(pool: &mut DbPool<'_>, wallet_id: WalletId) -> Result<Self, Error> {
     let conn = &mut get_conn(pool).await?;
     let wallet = wallet::table.find(wallet_id).first::<Wallet>(conn).await?;
@@ -94,9 +102,7 @@ impl WalletView {
     wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<Wallet> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
 
     Wallet::update_balance(pool, wallet_id, amount).await
   }
@@ -107,9 +113,7 @@ impl WalletView {
     wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<Wallet> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
     
     // Deduct from client's wallet (negative amount)
     Wallet::update_balance(pool, wallet_id, -amount).await
@@ -121,9 +125,7 @@ impl WalletView {
     freelancer_user_id: LocalUserId,
     amount: f64,
   ) -> FastJobResult<Wallet> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
     
     // Create wallet for freelancer if it doesn't exist
     let wallet_view = Self::read_by_user(pool, freelancer_user_id).await?;
@@ -140,9 +142,7 @@ impl WalletView {
     to_wallet_id: WalletId,
     amount: f64,
   ) -> FastJobResult<(Wallet, Wallet)> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
     // Deduct from sender
     let from_wallet = Wallet::update_balance(pool, from_wallet_id, -amount).await?;
     
@@ -158,9 +158,7 @@ impl WalletView {
     user_id: LocalUserId,
     amount: f64,
   ) -> FastJobResult<(Wallet, f64)> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
 
     // Get current balance before operation
     let current_wallet = Self::read_by_user(pool, user_id).await?;
@@ -181,9 +179,7 @@ impl WalletView {
     user_id: LocalUserId,
     amount: f64,
   ) -> FastJobResult<(Wallet, f64)> {
-    if amount <= 0.0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()))?;
-    }
+    Self::validate_positive_amount(amount)?;
 
     // Get current wallet and check balance
     let current_wallet = Self::read_by_user(pool, user_id).await?;

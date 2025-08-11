@@ -38,7 +38,7 @@ pub struct DepositWallet {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Create invoice/quotation for job (freelancer creates detailed proposal).
-pub struct CreateInvoice {
+pub struct CreateInvoiceForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: Option<CommentId>,
@@ -54,6 +54,26 @@ pub struct CreateInvoice {
   pub note: Option<String>,
   pub starting_day: String,  // ISO date string (YYYY-MM-DD)
   pub delivery_day: String,  // ISO date string (YYYY-MM-DD)
+}
+
+/// Strongly-typed validated wrapper for CreateInvoice
+#[derive(Debug, Clone)]
+pub struct ValidCreateInvoice(pub CreateInvoiceForm);
+
+impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
+  type Error = String;
+  fn try_from(value: CreateInvoiceForm) -> Result<Self, Self::Error> {
+    if value.price <= 0.0 {
+      return Err("Price must be positive".to_string());
+    }
+    if value.revise_times < 0 {
+      return Err("Revise times cannot be negative".to_string());
+    }
+    if value.working_days <= 0 {
+      return Err("Working days must be positive".to_string());
+    }
+    Ok(ValidCreateInvoice(value))
+  }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

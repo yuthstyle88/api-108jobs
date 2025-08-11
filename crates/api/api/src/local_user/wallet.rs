@@ -4,7 +4,7 @@ use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_wallet::WalletView;
 use lemmy_db_views_billing::BillingView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoice, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, WalletOperationResponse};
+use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, WalletOperationResponse, ValidCreateInvoice};
 use lemmy_utils::error::{ FastJobResult};
 
 pub async fn get_wallet(
@@ -51,44 +51,26 @@ pub async fn deposit_wallet(
 // Escrow-based billing workflow handlers
 
 pub async fn create_invoice(
-  data: Json<CreateInvoice>,
+  data: Json<CreateInvoiceForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CreateInvoiceResponse>> {
   let local_user_id = local_user_view.local_user.id;
-  
-  // Validate input
-  if data.price <= 0.0 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Price must be positive".to_string()).into());
-  }
-  
-  if data.revise_times < 0 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Revise times cannot be negative".to_string()).into());
-  }
 
-  if data.working_days <= 0 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField("Working days must be positive".to_string()).into());
-  }
+  // Validate via TryFrom into a validated wrapper
+  let validated: ValidCreateInvoice = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => {
+      return Err(lemmy_utils::error::FastJobErrorType::InvalidField(msg).into());
+    }
+  };
+  let data = validated.0.clone();
 
   // Create the invoice/billing record with detailed quotation fields
   let billing = BillingView::create_invoice(
     &mut context.pool(),
     local_user_id,
-    data.employer_id,
-    data.post_id,
-    data.comment_id,
-    data.price,
-    data.proposal.clone(),
-    data.name.clone(),
-    data.job_description.clone(),
-    data.work_steps.clone(),
-    data.revise_times,
-    data.revise_description.clone(),
-    data.working_days,
-    data.deliverables.clone(),
-    data.note.clone(),
-    data.starting_day.clone(),
-    data.delivery_day.clone(),
+    validated,
   ).await?;
 
   Ok(Json(CreateInvoiceResponse {

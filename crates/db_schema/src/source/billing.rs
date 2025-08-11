@@ -81,3 +81,33 @@ pub struct BillingUpdateForm {
   pub updated_at: Option<DateTime<Utc>>,
   pub paid_at: Option<Option<DateTime<Utc>>>,
 }
+
+/// Helper input for creating BillingInsertForm from a quotation context.
+/// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule issues.
+#[derive(Clone)]
+pub struct BillingFromQuotation {
+  pub freelancer_id: LocalUserId,
+  pub employer_id: LocalUserId,
+  pub post_id: PostId,
+  pub comment_id: Option<CommentId>,
+  pub amount: f64,
+  pub description: String,
+  pub max_revisions: i32,
+}
+
+impl From<BillingFromQuotation> for BillingInsertForm {
+  fn from(v: BillingFromQuotation) -> Self {
+    BillingInsertForm {
+      freelancer_id: v.freelancer_id,
+      employer_id: v.employer_id,
+      post_id: v.post_id,
+      comment_id: v.comment_id,
+      amount: v.amount,
+      description: v.description,
+      max_revisions: v.max_revisions,
+      revisions_used: Some(0),
+      status: Some(BillingStatus::QuotationPending),
+      created_at: None,
+    }
+  }
+}

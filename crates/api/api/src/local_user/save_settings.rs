@@ -9,6 +9,7 @@ use lemmy_db_schema::{
     keyword_block::LocalUserKeywordBlock,
     local_user::{LocalUser, LocalUserUpdateForm},
     person::{Person, PersonUpdateForm},
+    identity_card::{IdentityCard, IdentityCardUpdateForm},
   },
   traits::{Crud, ApubActor},
   utils::{diesel_opt_number_update, diesel_string_update},
@@ -62,7 +63,7 @@ pub async fn save_user_settings(
   } else {
     None
   };
-  let _birth_date = if let Some(date_str) = &data.birth_date {
+  let birth_date = if let Some(date_str) = &data.birth_date {
     Some(Some(NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
       .map_err(|_| FastJobErrorType::InvalidDateFormat)?))
   } else {
@@ -200,6 +201,16 @@ pub async fn save_user_settings(
   };
 
   LocalUser::update(&mut context.pool(), local_user_id, &local_user_form).await?;
+
+  // Update birth date in identity card if provided
+  if let Some(birth_date_option) = birth_date {
+    let identity_card_id = local_user_view.person.identity_card_id;
+    let identity_card_form = IdentityCardUpdateForm {
+      date_of_birth: birth_date_option,
+      ..Default::default()
+    };
+    IdentityCard::update(&mut context.pool(), identity_card_id, &identity_card_form).await.ok();
+  }
 
   Ok(Json(SuccessResponse::default()))
 }

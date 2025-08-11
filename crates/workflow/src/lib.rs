@@ -25,14 +25,17 @@ fn build_detailed_description(data: &CreateInvoiceForm) -> String {
 }
 
 /// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
-// ===== State Machine Core =====
-// Side-effects for wallet operations (described but not executed here)
+// ===== Typestate State Machine (structs-only) =====
+// Each state is a distinct struct; allowed transitions are methods that
+// consume the current state and return the next state's struct + a domain transition payload.
+
+// Wallet side-effects described here; executed in apply_transition()
 enum WalletAction {
   PayToEscrow { wallet_id: WalletId, amount: f64 },
   ReleaseToFreelancer { user_id: LocalUserId, amount: f64 },
 }
 
-// Domain-specific transitions
+// Domain transitions used by apply_transition()
 struct FundEscrowTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct ReleaseToFreelancerTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct RequestRevisionTransition { pub form: BillingUpdateForm }
@@ -43,6 +46,7 @@ struct EditTermsTransition { pub form: BillingUpdateForm }
 struct CancelTransition { pub form: BillingUpdateForm }
 struct PrevTransition { pub form: BillingUpdateForm }
 
+// Planner enum: unifies all transition variants for the DB/apply layer
 enum Planned {
   FundEscrow(FundEscrowTransition),
   ReleaseToFreelancer(ReleaseToFreelancerTransition),
@@ -55,247 +59,137 @@ enum Planned {
   Prev(PrevTransition),
 }
 
-// Snapshot (pure) of billing data that states need
-#[derive(Clone)]
-struct Snapshot {
+// Shared data snapshot for typestate transitions
+#[derive(Clone, Debug)]
+struct FlowData {
   billing_id: BillingId,
   employer_id: LocalUserId,
   freelancer_id: LocalUserId,
-  status: BillingStatus,
+  amount: f64,
   revisions_used: i32,
   max_revisions: i32,
-  amount: f64,
 }
 
-trait BillingState {
-  fn snap(&self) -> &Snapshot;
+// ===== States as structs =====
+#[derive(Debug)] struct QuotationPendingTS { data: FlowData }
+#[derive(Debug)] struct OrderApprovedTS   { data: FlowData }
+#[derive(Debug)] struct PaidEscrowTS      { data: FlowData }
+#[derive(Debug)] struct WorkSubmittedTS   { data: FlowData }
+#[derive(Debug)] struct RevisionRequestedTS { data: FlowData }
+#[derive(Debug)] struct RequestChangeTS     { data: FlowData }
+#[derive(Debug)] struct UpdatedTS         { data: FlowData }
+#[derive(Debug)] struct CompletedTS       { data: FlowData }
+#[derive(Debug)] struct CancelledTS       { data: FlowData }
+#[derive(Debug)] struct DisputedTS        { data: FlowData }
 
-  fn approve_quotation(&self, _wallet_id: WalletId) -> Result<FundEscrowTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn submit_work(&self, _desc: String, _url: Option<String>) -> Result<SubmitWorkTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn request_revision(&self, _feedback: String) -> Result<RequestRevisionTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn update_after_revision(&self, _desc: String, _url: Option<String>) -> Result<UpdateAfterRevisionTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn approve_work(&self) -> Result<ReleaseToFreelancerTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn cancel(&self) -> Result<CancelTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-  fn prev(&self) -> Result<PrevTransition, FastJobErrorType> {
-    Err(FastJobErrorType::InvalidField("Not allowed".into()))
-  }
-}
-
-// ===== Concrete States =====
-struct QuotationPending { s: Snapshot }
-impl BillingState for QuotationPending {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn approve_quotation(&self, wallet_id: WalletId) -> Result<FundEscrowTransition, FastJobErrorType> {
-    Ok(FundEscrowTransition{ form: BillingUpdateForm{
+// ===== Allowed transitions (methods consume self) =====
+impl QuotationPendingTS {
+  pub fn approve_and_fund(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
+    let form = BillingUpdateForm {
       status: Some(BillingStatus::PaidEscrow),
       paid_at: Some(Some(Utc::now())),
       updated_at: Some(Utc::now()),
       ..Default::default()
-    }, wallet: WalletAction::PayToEscrow{ wallet_id, amount: self.s.amount } })
+    };
+    let tx = FundEscrowTransition {
+      form,
+      wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount },
+    };
+    Ok((PaidEscrowTS { data: self.data }, tx))
   }
-  fn cancel(&self) -> Result<CancelTransition, FastJobErrorType> {
-    Ok(CancelTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Cancelled),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
-  }
-}
-
-struct OrderApproved { s: Snapshot }
-impl BillingState for OrderApproved {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn approve_quotation(&self, wallet_id: WalletId) -> Result<FundEscrowTransition, FastJobErrorType> {
-    Ok(FundEscrowTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::PaidEscrow),
-      paid_at: Some(Some(Utc::now())),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    }, wallet: WalletAction::PayToEscrow{ wallet_id, amount: self.s.amount } })
-  }
-  fn cancel(&self) -> Result<CancelTransition, FastJobErrorType> {
-    Ok(CancelTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Cancelled),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+  pub fn cancel(self) -> (CancelledTS, CancelTransition) {
+    let form = BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() };
+    (CancelledTS { data: self.data }, CancelTransition { form })
   }
 }
 
-struct PaidEscrow { s: Snapshot }
-impl BillingState for PaidEscrow {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn submit_work(&self, desc: String, url: Option<String>) -> Result<SubmitWorkTransition, FastJobErrorType> {
-    Ok(SubmitWorkTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::WorkSubmitted),
-      work_description: Some(Some(desc)),
-      deliverable_url: Some(url),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+impl OrderApprovedTS {
+  pub fn pay_escrow(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
+    let form = BillingUpdateForm { status: Some(BillingStatus::PaidEscrow), paid_at: Some(Some(Utc::now())), updated_at: Some(Utc::now()), ..Default::default() };
+    let tx = FundEscrowTransition { form, wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount } };
+    Ok((PaidEscrowTS { data: self.data }, tx))
+  }
+  pub fn cancel(self) -> (CancelledTS, CancelTransition) {
+    let form = BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() };
+    (CancelledTS { data: self.data }, CancelTransition { form })
   }
 }
 
-struct WorkSubmitted { s: Snapshot }
-impl BillingState for WorkSubmitted {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn request_revision(&self, feedback: String) -> Result<RequestRevisionTransition, FastJobErrorType> {
-    if self.s.revisions_used >= self.s.max_revisions {
-      return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into()));
-    }
-    Ok(RequestRevisionTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::RequestChange),
-      revision_feedback: Some(Some(feedback)),
-      revisions_used: Some(self.s.revisions_used + 1),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
-  }
-  fn approve_work(&self) -> Result<ReleaseToFreelancerTransition, FastJobErrorType> {
-    Ok(ReleaseToFreelancerTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Completed),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    }, wallet: WalletAction::ReleaseToFreelancer{ user_id: self.s.freelancer_id, amount: self.s.amount } })
-  }
-  fn prev(&self) -> Result<PrevTransition, FastJobErrorType> {
-    Ok(PrevTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::PaidEscrow),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+impl PaidEscrowTS {
+  pub fn submit_work(self, desc: String, url: Option<String>) -> Result<(WorkSubmittedTS, SubmitWorkTransition), FastJobErrorType> {
+    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("work_description is required".into())); }
+    let form = BillingUpdateForm { status: Some(BillingStatus::WorkSubmitted), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    Ok((WorkSubmittedTS { data: self.data }, SubmitWorkTransition { form }))
   }
 }
 
-struct RequestChange { s: Snapshot }
-impl BillingState for RequestChange {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn update_after_revision(&self, desc: String, url: Option<String>) -> Result<UpdateAfterRevisionTransition, FastJobErrorType> {
-    Ok(UpdateAfterRevisionTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Updated),
-      work_description: Some(Some(desc)),
-      deliverable_url: Some(url),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+impl WorkSubmittedTS {
+  pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
+    if feedback.trim().is_empty() { return Err(FastJobErrorType::InvalidField("revision_feedback is required".into())); }
+    if self.data.revisions_used >= self.data.max_revisions { return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into())); }
+    let form = BillingUpdateForm { status: Some(BillingStatus::RequestChange), revision_feedback: Some(Some(feedback)), revisions_used: Some(self.data.revisions_used + 1), updated_at: Some(Utc::now()), ..Default::default() };
+    Ok((RevisionRequestedTS { data: FlowData { revisions_used: self.data.revisions_used + 1, ..self.data } }, RequestRevisionTransition { form }))
   }
-  fn prev(&self) -> Result<PrevTransition, FastJobErrorType> {
-    Ok(PrevTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::WorkSubmitted),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+  pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
+    let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
+    let tx = ReleaseToFreelancerTransition { form, wallet: WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount: self.data.amount } };
+    (CompletedTS { data: self.data }, tx)
   }
 }
 
-struct RevisionRequested { s: Snapshot }
-impl BillingState for RevisionRequested {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn update_after_revision(&self, desc: String, url: Option<String>) -> Result<UpdateAfterRevisionTransition, FastJobErrorType> {
-    Ok(UpdateAfterRevisionTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Updated),
-      work_description: Some(Some(desc)),
-      deliverable_url: Some(url),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
-  }
-  fn prev(&self) -> Result<PrevTransition, FastJobErrorType> {
-    Ok(PrevTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::WorkSubmitted),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+impl RevisionRequestedTS {
+  pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
+    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("updated_work_description is required".into())); }
+    let form = BillingUpdateForm { status: Some(BillingStatus::Updated), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
   }
 }
 
-struct Updated { s: Snapshot }
-impl BillingState for Updated {
-  fn snap(&self) -> &Snapshot { &self.s }
-  fn request_revision(&self, feedback: String) -> Result<RequestRevisionTransition, FastJobErrorType> {
-    if self.s.revisions_used >= self.s.max_revisions {
-      return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into()));
-    }
-    Ok(RequestRevisionTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::RequestChange),
-      revision_feedback: Some(Some(feedback)),
-      revisions_used: Some(self.s.revisions_used + 1),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
-  }
-  fn approve_work(&self) -> Result<ReleaseToFreelancerTransition, FastJobErrorType> {
-    Ok(ReleaseToFreelancerTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::Completed),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    }, wallet: WalletAction::ReleaseToFreelancer{ user_id: self.s.freelancer_id, amount: self.s.amount } })
-  }
-  fn prev(&self) -> Result<PrevTransition, FastJobErrorType> {
-    Ok(PrevTransition{ form: BillingUpdateForm{
-      status: Some(BillingStatus::RequestChange),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    } })
+impl RequestChangeTS {
+  pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
+    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("updated_work_description is required".into())); }
+    let form = BillingUpdateForm { status: Some(BillingStatus::Updated), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
   }
 }
 
-// Terminal state for completed or cancelled billings (no ops allowed)
-struct Terminal { s: Snapshot }
-impl BillingState for Terminal {
-  fn snap(&self) -> &Snapshot { &self.s }
+impl UpdatedTS {
+  pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
+    if feedback.trim().is_empty() { return Err(FastJobErrorType::InvalidField("revision_feedback is required".into())); }
+    if self.data.revisions_used >= self.data.max_revisions { return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into())); }
+    let form = BillingUpdateForm { status: Some(BillingStatus::RequestChange), revision_feedback: Some(Some(feedback)), revisions_used: Some(self.data.revisions_used + 1), updated_at: Some(Utc::now()), ..Default::default() };
+    Ok((RevisionRequestedTS { data: FlowData { revisions_used: self.data.revisions_used + 1, ..self.data } }, RequestRevisionTransition { form }))
+  }
+  pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
+    let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
+    let tx = ReleaseToFreelancerTransition { form, wallet: WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount: self.data.amount } };
+    (CompletedTS { data: self.data }, tx)
+  }
 }
 
-// Map a Billing row to its state struct
-fn to_state(b: &Billing) -> Box<dyn BillingState> {
-  let s = Snapshot {
+// Terminal states (no outbound transitions)
+impl CompletedTS {}
+impl CancelledTS {}
+impl DisputedTS {}
+
+// Map Billing row → typestate
+fn into_ts(b: &Billing) -> FlowData {
+  FlowData {
     billing_id: b.id,
     employer_id: b.employer_id,
     freelancer_id: b.freelancer_id,
-    status: b.status,
+    amount: b.amount,
     revisions_used: b.revisions_used,
     max_revisions: b.max_revisions,
-    amount: b.amount,
-  };
-  match b.status {
-    BillingStatus::QuotationPending   => Box::new(QuotationPending { s }),
-    BillingStatus::OrderApproved      => Box::new(OrderApproved { s }),
-    BillingStatus::PaidEscrow         => Box::new(PaidEscrow { s }),
-    BillingStatus::WorkSubmitted      => Box::new(WorkSubmitted { s }),
-    BillingStatus::RevisionRequested  => Box::new(RevisionRequested { s }),
-    BillingStatus::RequestChange      => Box::new(RequestChange { s }),
-    BillingStatus::Updated            => Box::new(Updated { s }),
-    BillingStatus::Completed          => Box::new(Terminal { s }),
-    BillingStatus::Disputed           => Box::new(Terminal { s }),
-    BillingStatus::Cancelled          => Box::new(Terminal { s }),
   }
 }
 
-// Helper to apply transitions (wallet action + DB update via Crud) consistently
+// Helper: apply transitions (wallet + Crud update)
 async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Planned) -> FastJobResult<Billing> {
+  // Wallet side-effects first (API expects &mut DbPool). If *_tx available, move inside txn.
   match &plan {
-    Planned::FundEscrow(t) => {
-      if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet {
-        WalletView::pay_for_job(pool, *wallet_id, *amount).await?;
-      }
-    }
-    Planned::ReleaseToFreelancer(t) => {
-      if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet {
-        WalletView::complete_job_payment(pool, *user_id, *amount).await?;
-      }
-    }
+    Planned::FundEscrow(t) => { if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet { WalletView::pay_for_job(pool, *wallet_id, *amount).await?; } }
+    Planned::ReleaseToFreelancer(t) => { if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet { WalletView::complete_job_payment(pool, *user_id, *amount).await?; } }
     _ => {}
   }
 
@@ -323,7 +217,6 @@ async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Pl
       .scope_boxed()
     })
     .await?;
-
   Ok(updated)
 }
 
@@ -375,8 +268,19 @@ impl WorkFlowService {
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let plan = to_state(&b).approve_quotation(wallet_id)?; // FundEscrowTransition
-    let updated = apply_transition(pool, billing_id, Planned::FundEscrow(plan)).await?;
+    let data = into_ts(&b);
+    let plan = match b.status {
+      BillingStatus::QuotationPending => {
+        let ( _next, tx ) = QuotationPendingTS { data }.approve_and_fund(wallet_id)?;
+        Planned::FundEscrow(tx)
+      }
+      BillingStatus::OrderApproved => {
+        let ( _next, tx ) = OrderApprovedTS { data }.pay_escrow(wallet_id)?;
+        Planned::FundEscrow(tx)
+      }
+      _ => return Err(FastJobErrorType::InvalidField("Billing not in a fundable state".into()).into()),
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
 
@@ -391,8 +295,15 @@ impl WorkFlowService {
     if b.freelancer_id != freelancer_id {
       return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
     }
-    let plan = to_state(&b).submit_work(work_description, deliverable_url)?;
-    let updated = apply_transition(pool, billing_id, Planned::SubmitWork(plan)).await?;
+    let data = into_ts(&b);
+    let plan = match b.status {
+      BillingStatus::PaidEscrow => {
+        let ( _next, tx ) = PaidEscrowTS { data }.submit_work(work_description, deliverable_url)?;
+        Planned::SubmitWork(tx)
+      }
+      _ => return Err(FastJobErrorType::InvalidField("Billing not in PaidEscrow".into()).into()),
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
 
@@ -406,8 +317,19 @@ impl WorkFlowService {
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let plan = to_state(&b).request_revision(revision_feedback)?;
-    let updated = apply_transition(pool, billing_id, Planned::RequestRevision(plan)).await?;
+    let data = into_ts(&b);
+    let plan = match b.status {
+      BillingStatus::WorkSubmitted => {
+        let ( _next, tx ) = WorkSubmittedTS { data }.request_revision(revision_feedback)?;
+        Planned::RequestRevision(tx)
+      }
+      BillingStatus::Updated => {
+        let ( _next, tx ) = UpdatedTS { data }.request_revision(revision_feedback)?;
+        Planned::RequestRevision(tx)
+      }
+      _ => return Err(FastJobErrorType::InvalidField("Billing not ready for revision".into()).into()),
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
 
@@ -422,8 +344,19 @@ impl WorkFlowService {
     if b.freelancer_id != freelancer_id {
       return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
     }
-    let plan = to_state(&b).update_after_revision(updated_work_description, updated_deliverable_url)?;
-    let updated = apply_transition(pool, billing_id, Planned::UpdateAfterRevision(plan)).await?;
+    let data = into_ts(&b);
+    let plan = match b.status {
+      BillingStatus::RevisionRequested => {
+        let ( _next, tx ) = RevisionRequestedTS { data }.resubmit(updated_work_description, updated_deliverable_url)?;
+        Planned::UpdateAfterRevision(tx)
+      }
+      BillingStatus::RequestChange => {
+        let ( _next, tx ) = RequestChangeTS { data }.resubmit(updated_work_description, updated_deliverable_url)?;
+        Planned::UpdateAfterRevision(tx)
+      }
+      _ => return Err(FastJobErrorType::InvalidField("Billing not in revision state".into()).into()),
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
 
@@ -436,8 +369,19 @@ impl WorkFlowService {
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let plan = to_state(&b).approve_work()?; // ReleaseToFreelancerTransition
-    let updated = apply_transition(pool, billing_id, Planned::ReleaseToFreelancer(plan)).await?;
+    let data = into_ts(&b);
+    let plan = match b.status {
+      BillingStatus::WorkSubmitted => {
+        let ( _next, tx ) = WorkSubmittedTS { data }.approve_work();
+        Planned::ReleaseToFreelancer(tx)
+      }
+      BillingStatus::Updated => {
+        let ( _next, tx ) = UpdatedTS { data }.approve_work();
+        Planned::ReleaseToFreelancer(tx)
+      }
+      _ => return Err(FastJobErrorType::InvalidField("Billing not ready to approve".into()).into()),
+    };
+    let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
 }

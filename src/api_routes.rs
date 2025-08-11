@@ -121,6 +121,7 @@ use lemmy_api_crud::contact::update::update_contact;
 use lemmy_api_crud::identity_card::update::update_identity_card;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
+use lemmy_apub::api::search::search;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -154,7 +155,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", delete().to(delete_site_banner)),
         )
         .route("/modlog", get().to(get_mod_log))
-        .service(resource("/search").wrap(rate_limit.search()))
+          .service(
+            resource("/search")
+                .wrap(rate_limit.search())
+                .route(get().to(search)),
+          )
         .service(resource("/resolve-object").wrap(rate_limit.search()))
         // Community
         .service(

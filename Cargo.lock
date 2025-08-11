@@ -3404,6 +3404,7 @@ dependencies = [
  "lemmy_db_views_wallet",
  "lemmy_email",
  "lemmy_utils",
+ "lemmy_workflow",
  "p256",
  "pretty_assertions",
  "regex",
@@ -3727,7 +3728,6 @@ dependencies = [
  "lemmy_db_schema_file",
  "lemmy_db_views_wallet",
  "lemmy_utils",
- "lemmy_workflow",
  "serde",
  "tokio",
 ]
@@ -4303,6 +4303,7 @@ dependencies = [
  "diesel-async",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_billing",
  "lemmy_db_views_wallet",
  "lemmy_utils",
  "serde",

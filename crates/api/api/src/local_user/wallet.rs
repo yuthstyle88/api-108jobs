@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
-use lemmy_db_views_wallet::WalletView;
-use lemmy_db_views_billing::BillingView;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, WalletOperationResponse, ValidCreateInvoice};
-use lemmy_utils::error::{ FastJobResult};
+use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, RequestRevision, SubmitWork, UpdateWorkAfterRevision, ValidCreateInvoice, WalletOperationResponse};
+use lemmy_db_views_wallet::WalletView;
+use lemmy_utils::error::FastJobResult;
+use lemmy_workflow::WorkFlowService;
 
 pub async fn get_wallet(
   context: Data<FastJobContext>,
@@ -67,7 +67,7 @@ pub async fn create_invoice(
   let data = validated.0.clone();
 
   // Create the invoice/billing record with detailed quotation fields
-  let billing = BillingView::create_invoice(
+  let billing = WorkFlowService::create_invoice(
     &mut context.pool(),
     local_user_id,
     validated,
@@ -78,7 +78,7 @@ pub async fn create_invoice(
     issuer_id: local_user_id,
     recipient_id: data.employer_id,
     post_id: data.post_id,
-    amount: data.price,
+    amount: data.amount,
     status: "QuotationPending".to_string(),
     max_revisions: data.revise_times,
     delivery_timeframe_days: data.working_days,
@@ -95,7 +95,7 @@ pub async fn approve_quotation(
   let employer_id = local_user_view.local_user.id;
   let wallet_id = local_user_view.local_user.wallet_id.unwrap_or(WalletId(0));
   // Approve the quotation and convert to order
-  let updated_billing = BillingView::approve_quotation(
+  let updated_billing = WorkFlowService::approve_quotation(
     &mut context.pool(),
     data.billing_id,
     employer_id,
@@ -117,7 +117,7 @@ pub async fn submit_work(
   let worker_id = local_user_view.local_user.id;
 
   // Submit the work as the worker
-  let updated_billing = BillingView::submit_work(
+  let updated_billing = WorkFlowService::submit_work(
     &mut context.pool(),
     data.billing_id,
     worker_id,
@@ -140,7 +140,7 @@ pub async fn request_revision(
   let employer_id = local_user_view.local_user.id;
 
   // Request revision from worker
-  let updated_billing = BillingView::request_revision(
+  let updated_billing = WorkFlowService::request_revision(
     &mut context.pool(),
     data.billing_id,
     employer_id,
@@ -162,7 +162,7 @@ pub async fn approve_work(
   let employer_id = local_user_view.local_user.id;
 
   // Approve work and release payment to worker
-  let updated_billing = BillingView::approve_work(
+  let updated_billing = WorkFlowService::approve_work(
     &mut context.pool(),
     data.billing_id,
     employer_id,
@@ -183,7 +183,7 @@ pub async fn update_work_after_revision(
   let worker_id = local_user_view.local_user.id;
 
   // Update work after revision request as the worker
-  let updated_billing = BillingView::update_work_after_revision(
+  let updated_billing = WorkFlowService::update_work_after_revision(
     &mut context.pool(),
     data.billing_id,
     worker_id,

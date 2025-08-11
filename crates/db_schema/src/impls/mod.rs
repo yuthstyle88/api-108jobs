@@ -44,3 +44,4 @@ pub mod skills;
 pub mod certificates;
 pub mod user_bank_account;
 pub mod bank;
+mod billing;

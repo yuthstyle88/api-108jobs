@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use lemmy_db_schema::newtypes::{BillingId, CommentId, LocalUserId, PostId, WalletId};
 
@@ -42,18 +43,18 @@ pub struct CreateInvoiceForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: Option<CommentId>,
-  pub price: f64,
+  pub amount: f64,
   pub proposal: String,
-  pub name: String,
-  pub job_description: String,
+  pub project_name: String,
+  pub project_details: String,
   pub work_steps: Vec<String>,
   pub revise_times: i32,
   pub revise_description: String,
   pub working_days: i32,
   pub deliverables: Vec<String>,
   pub note: Option<String>,
-  pub starting_day: String,  // ISO date string (YYYY-MM-DD)
-  pub delivery_day: String,  // ISO date string (YYYY-MM-DD)
+  pub starting_day: NaiveDate,  // ISO date string (YYYY-MM-DD)
+  pub delivery_day: NaiveDate,  // ISO date string (YYYY-MM-DD)
 }
 
 /// Strongly-typed validated wrapper for CreateInvoice
@@ -63,7 +64,7 @@ pub struct ValidCreateInvoice(pub CreateInvoiceForm);
 impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
   type Error = String;
   fn try_from(value: CreateInvoiceForm) -> Result<Self, Self::Error> {
-    if value.price <= 0.0 {
+    if value.amount <= 0.0 {
       return Err("Price must be positive".to_string());
     }
     if value.revise_times < 0 {

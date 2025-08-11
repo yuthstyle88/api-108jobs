@@ -1,5 +1,5 @@
 use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::BillingStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -84,7 +84,7 @@ pub struct BillingUpdateForm {
 
 /// Helper input for creating BillingInsertForm from a quotation context.
 /// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule issues.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct BillingFromQuotation {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
@@ -93,6 +93,7 @@ pub struct BillingFromQuotation {
   pub amount: f64,
   pub description: String,
   pub max_revisions: i32,
+  pub delivery_day: NaiveDate,
 }
 
 impl From<BillingFromQuotation> for BillingInsertForm {

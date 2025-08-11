@@ -1,62 +1,66 @@
-use diesel::{prelude::*, QueryDsl};
-use diesel_async::RunQueryDsl;
+use chrono::Utc;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use lemmy_db_schema::source::billing::BillingUpdateForm;
+use lemmy_db_schema::traits::Crud;
+use lemmy_db_schema::utils::get_conn;
 use lemmy_db_schema::{
   newtypes::{BillingId, LocalUserId, WalletId},
-  source::billing::{Billing, BillingInsertForm},
-  utils::{get_conn, DbPool},
+  source::billing::{Billing, BillingFromQuotation, BillingInsertForm},
+  utils::DbPool,
 };
-use lemmy_db_schema_file::{enums::BillingStatus, schema::billing};
-use lemmy_db_views_wallet::api::ValidCreateInvoice;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_db_schema_file::enums::BillingStatus;
+use lemmy_db_views_wallet::api::{CreateInvoiceForm, ValidCreateInvoice};
+use lemmy_db_views_wallet::WalletView;
+use lemmy_utils::error::FastJobErrorType;
+use lemmy_utils::error::{FastJobErrorExt2, FastJobResult};
+
+fn build_detailed_description(data: &CreateInvoiceForm) -> String {
+  format!(
+    "Invoice for project: {}\nDetails: {}\nAmount: {}\nDue date: {}",
+    data.project_name,
+    data.project_details,
+    data.amount,
+    data.delivery_day
+  )
+}
 
 /// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
 pub struct WorkFlowService;
 
 impl WorkFlowService {
+  pub async fn validate_before_approve(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    employer_id: LocalUserId,
+  ) -> FastJobResult<Billing> {
+    let b = Billing::read(pool, billing_id).await?;
+    if b.employer_id != employer_id {
+      return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
+    }
+    if b.status == BillingStatus::Completed { return Ok(b); }
+    if b.status != BillingStatus::WorkSubmitted && b.status != BillingStatus::Updated {
+      return Err(FastJobErrorType::InvalidField("Billing not ready to approve".into()).into());
+    }
+    Ok(b)
+  }
+
   pub async fn create_invoice(
     pool: &mut DbPool<'_>,
     freelancer_id: LocalUserId,
     data: ValidCreateInvoice,
   ) -> FastJobResult<Billing> {
-    let conn = &mut get_conn(pool).await?;
-    let data = data.0;
-
-    // Create detailed description from all quotation fields
-    let detailed_description = format!(
-      "=== QUOTATION: {} ===\n\nProposal:\n{}\n\nJob Description:\n{}\n\nWork Steps:\n{}\n\nDeliverables:\n{}\n\nRevision Policy:\n- Maximum revisions: {}\n- Revision description: {}\n\nTimeline:\n- Working days: {}\n- Starting day: {}\n- Delivery day: {}\n\n{}",
-      data.name,
-      data.proposal,
-      data.job_description,
-      data.work_steps.iter().enumerate().map(|(i, step)| format!("{}. {}", i + 1, step)).collect::<Vec<_>>().join("\n"),
-      data.deliverables.iter().map(|item| format!("- {}", item)).collect::<Vec<_>>().join("\n"),
-      data.revise_times,
-      data.revise_description,
-      data.working_days,
-      data.starting_day,
-      data.delivery_day,
-      data.note.as_ref().map(|n| format!("Additional Notes:\n{}", n)).unwrap_or_default()
-    );
-
-    // Create the billing record
-    let billing_form = BillingInsertForm {
+    let inner = data.0;
+    let description = build_detailed_description(&inner);
+    let billing_form = BillingFromQuotation {
+      employer_id: inner.employer_id,
       freelancer_id,
-      employer_id: data.employer_id,
-      post_id: data.post_id,
-      comment_id: data.comment_id,
-      amount: data.price,
-      description: detailed_description,
-      max_revisions: data.revise_times,
-      revisions_used: Some(0),
-      status: Some(BillingStatus::QuotationPending),
-      created_at: None,
+      description,
+      amount: inner.amount,
+      delivery_day: inner.delivery_day,
+      ..Default::default()
     };
-
-    let billing = diesel::insert_into(billing::table)
-      .values(&billing_form)
-      .get_result::<Billing>(conn)
-      .await?;
-
-    Ok(billing)
+    let billing_form: BillingInsertForm = billing_form.into();
+    Billing::create(pool, &billing_form).await
   }
 
   pub async fn approve_quotation(
@@ -65,42 +69,33 @@ impl WorkFlowService {
     employer_id: LocalUserId,
     wallet_id: WalletId,
   ) -> FastJobResult<Billing> {
-    use lemmy_db_schema::source::billing::BillingUpdateForm;
-    use lemmy_db_views_wallet::WalletView;
+    let conn = &mut get_conn(pool).await?;
+    // 1) Read the billing, ensure it belongs to employer and is QuotationPending.
+    let billing = Self::validate_before_approve(&mut conn.into(), billing_id, employer_id).await?;
 
-    // First check if the billing exists and belongs to this employer
-    let billing = {
-      let conn = &mut get_conn(pool).await?;
-      billing::table
-        .find(billing_id)
-        .filter(billing::employer_id.eq(employer_id))
-        .filter(billing::status.eq(BillingStatus::QuotationPending))
-        .first::<Billing>(conn)
-        .await?
-    };
+    // 2) Move funds to escrow.
+    WalletView::pay_for_job(&mut conn.into(), wallet_id, billing.amount).await?;
 
-    // Check employer has sufficient balance and deduct money from wallet
-    let amount = billing.amount;
-    WalletView::pay_for_job(pool, wallet_id, amount).await?;
-
-    // Update status to PaidEscrow (money is now in escrow)
+    // 3) Build update form.
     let update_form = BillingUpdateForm {
       status: Some(BillingStatus::PaidEscrow),
-      paid_at: Some(Some(chrono::Utc::now())),
-      updated_at: Some(chrono::Utc::now()),
+      paid_at: Some(Some(Utc::now())),
+      updated_at: Some(Utc::now()),
       ..Default::default()
     };
+    // 4) Update billing in a transaction, using Crud path.
+    let updated = conn
+    .run_transaction(|conn| {
+      async move {
+        Billing::update(&mut conn.into(), billing_id, &update_form)
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntUpdateBilling)
+      }
+      .scope_boxed()
+    })
+    .await?;
 
-    let updated_billing = {
-      let conn = &mut get_conn(pool).await?;
-      diesel::update(billing::table)
-        .filter(billing::id.eq(billing_id))
-        .set(&update_form)
-        .get_result::<Billing>(conn)
-        .await?
-    };
-
-    Ok(updated_billing)
+    Ok(updated)
   }
 
   pub async fn submit_work(
@@ -110,31 +105,33 @@ impl WorkFlowService {
     work_description: String,
     deliverable_url: Option<String>,
   ) -> FastJobResult<Billing> {
-    use lemmy_db_schema::source::billing::BillingUpdateForm;
     let conn = &mut get_conn(pool).await?;
-
-    // First check if the billing exists and belongs to this freelancer and is in PaidEscrow status
-    let _billing = billing::table
-      .find(billing_id)
-      .filter(billing::freelancer_id.eq(freelancer_id))
-      .filter(billing::status.eq(BillingStatus::PaidEscrow))
-      .first::<Billing>(conn)
-      .await?;
-
-    // Update status to WorkSubmitted and add work details
-    let update_form = BillingUpdateForm {
-      status: Some(BillingStatus::WorkSubmitted),
-      work_description: Some(Some(work_description)),
-      deliverable_url: Some(deliverable_url),
-      updated_at: Some(chrono::Utc::now()),
-      ..Default::default()
-    };
-
-    let updated_billing = diesel::update(billing::table)
-      .filter(billing::id.eq(billing_id))
-      .set(&update_form)
-      .get_result::<Billing>(conn)
-      .await?;
+    // 1) Read billing and validate ownership & status
+    let billing = Billing::read(&mut conn.into(), billing_id).await?;
+    if billing.freelancer_id != freelancer_id {
+      return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
+    }
+    if billing.status != BillingStatus::PaidEscrow {
+      return Err(FastJobErrorType::InvalidField("Billing not in PaidEscrow status".into()).into());
+    }
+    // 2) Update to WorkSubmitted within a transaction
+    let updated_billing = conn
+    .run_transaction(|conn| {
+      async move {
+        let form = BillingUpdateForm {
+          status: Some(BillingStatus::WorkSubmitted),
+          work_description: Some(Some(work_description)),
+          deliverable_url: Some(deliverable_url),
+          updated_at: Some(chrono::Utc::now()),
+          ..Default::default()
+        };
+        let b = Billing::update(&mut conn.into(), billing_id, &form).await
+        .with_fastjob_type(FastJobErrorType::CouldntUpdateBilling)?;
+        Ok(b)
+      }
+      .scope_boxed()
+    })
+    .await?;
 
     Ok(updated_billing)
   }
@@ -145,39 +142,39 @@ impl WorkFlowService {
     employer_id: LocalUserId,
     revision_feedback: String,
   ) -> FastJobResult<Billing> {
-    use lemmy_db_schema::source::billing::BillingUpdateForm;
     let conn = &mut get_conn(pool).await?;
-
-    // First check if the billing exists and belongs to this employer and work is submitted or updated
-    let billing = billing::table
-      .find(billing_id)
-      .filter(billing::employer_id.eq(employer_id))
-      .filter(
-        billing::status.eq(BillingStatus::WorkSubmitted)
-          .or(billing::status.eq(BillingStatus::Updated))
-      )
-      .first::<Billing>(conn)
-      .await?;
-
-    // Check if revisions are available
+    // อ่านบิล + ตรวจสิทธิ์/สถานะ
+    let billing = Billing::read(&mut conn.into(), billing_id).await?;
+    if billing.employer_id != employer_id {
+      return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
+    }
+    if billing.status != BillingStatus::WorkSubmitted && billing.status != BillingStatus::Updated {
+      return Err(FastJobErrorType::InvalidField("Billing not ready for revision".into()).into());
+    }
     if billing.revisions_used >= billing.max_revisions {
-      return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".to_string()))?;
+      return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".to_string()).into());
     }
 
-    // Update status to RequestChange and add revision feedback
-    let update_form = BillingUpdateForm {
-      status: Some(BillingStatus::RequestChange),
-      revision_feedback: Some(Some(revision_feedback)),
-      revisions_used: Some(billing.revisions_used + 1),
-      updated_at: Some(chrono::Utc::now()),
-      ..Default::default()
-    };
+    // อัปเดตเป็น RequestChange ในทรานแซกชัน
+    let updated_billing = {
 
-    let updated_billing = diesel::update(billing::table)
-      .filter(billing::id.eq(billing_id))
-      .set(&update_form)
-      .get_result::<Billing>(conn)
-      .await?;
+      conn.run_transaction(|conn| {
+        async move {
+          let form = BillingUpdateForm {
+            status: Some(BillingStatus::RequestChange),
+            revision_feedback: Some(Some(revision_feedback)),
+            revisions_used: Some(billing.revisions_used + 1),
+            updated_at: Some(chrono::Utc::now()),
+            ..Default::default()
+          };
+          let b = Billing::update(&mut conn.into(), billing_id, &form)
+          .await
+          .with_fastjob_type(FastJobErrorType::CouldntUpdateBilling)?;
+          Ok(b)
+        }
+        .scope_boxed()
+      }).await?
+    };
 
     Ok(updated_billing)
   }
@@ -189,31 +186,35 @@ impl WorkFlowService {
     updated_work_description: String,
     updated_deliverable_url: Option<String>,
   ) -> FastJobResult<Billing> {
-    use lemmy_db_schema::source::billing::BillingUpdateForm;
     let conn = &mut get_conn(pool).await?;
+    // 1) อ่านบิลและตรวจสิทธิ์/สถานะ
+    let billing = Billing::read(&mut conn.into(), billing_id).await?;
+    if billing.freelancer_id != freelancer_id {
+      return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
+    }
+    if billing.status != BillingStatus::RequestChange {
+      return Err(FastJobErrorType::InvalidField("Billing not in RequestChange status".into()).into());
+    }
 
-    // First check if the billing exists and belongs to this freelancer and is in RequestChange status
-    let _billing = billing::table
-      .find(billing_id)
-      .filter(billing::freelancer_id.eq(freelancer_id))
-      .filter(billing::status.eq(BillingStatus::RequestChange))
-      .first::<Billing>(conn)
-      .await?;
-
-    // Update work description and set status to Updated
-    let update_form = BillingUpdateForm {
-      status: Some(BillingStatus::Updated),
-      work_description: Some(Some(updated_work_description)),
-      deliverable_url: updated_deliverable_url.map(Some),
-      updated_at: Some(chrono::Utc::now()),
-      ..Default::default()
-    };
-
-    let updated_billing = diesel::update(billing::table)
-      .filter(billing::id.eq(billing_id))
-      .set(&update_form)
-      .get_result::<Billing>(conn)
-      .await?;
+    // 2) อัปเดตงานหลังแก้ไขในทรานแซกชัน
+    let updated_billing = conn
+    .run_transaction(|conn| {
+      async move {
+        let form = BillingUpdateForm {
+          status: Some(BillingStatus::Updated),
+          work_description: Some(Some(updated_work_description)),
+          deliverable_url: updated_deliverable_url.map(Some),
+          updated_at: Some(chrono::Utc::now()),
+          ..Default::default()
+        };
+        let b = Billing::update(&mut conn.into(), billing_id, &form)
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntUpdateBilling)?;
+        Ok(b)
+      }
+      .scope_boxed()
+    })
+    .await?;
 
     Ok(updated_billing)
   }
@@ -223,43 +224,31 @@ impl WorkFlowService {
     billing_id: BillingId,
     employer_id: LocalUserId,
   ) -> FastJobResult<Billing> {
-    use lemmy_db_schema::source::billing::BillingUpdateForm;
-    use lemmy_db_views_wallet::WalletView;
-
-    // First check if the billing exists and belongs to this employer and work is submitted or updated
-    let billing = {
-      let conn = &mut get_conn(pool).await?;
-      billing::table
-        .find(billing_id)
-        .filter(billing::employer_id.eq(employer_id))
-        .filter(
-          billing::status.eq(BillingStatus::WorkSubmitted)
-            .or(billing::status.eq(BillingStatus::Updated))
-        )
-        .first::<Billing>(conn)
-        .await?
-    };
-
+    let conn = &mut get_conn(pool).await?;
+    // อ่านบิล
+    let billing = Self::validate_before_approve(&mut conn.into(), billing_id, employer_id).await?;
     let amount = billing.amount;
     let freelancer_id = billing.freelancer_id;
 
-    // Release payment to freelancer
-    WalletView::complete_job_payment(pool, freelancer_id, amount).await?;
-
-    // Update status to Completed
-    let update_form = BillingUpdateForm {
-      status: Some(BillingStatus::Completed),
-      updated_at: Some(chrono::Utc::now()),
-      ..Default::default()
-    };
+    // จ่ายเงินให้ฟรีแลนซ์
+    WalletView::complete_job_payment(&mut conn.into(), freelancer_id, amount).await?;
 
     let updated_billing = {
-      let conn = &mut get_conn(pool).await?;
-      diesel::update(billing::table)
-        .filter(billing::id.eq(billing_id))
-        .set(&update_form)
-        .get_result::<Billing>(conn)
-        .await?
+
+      conn.run_transaction(|conn| {
+        async move {
+          let form = BillingUpdateForm {
+            status: Some(BillingStatus::Completed),
+            updated_at: Some(chrono::Utc::now()),
+            ..Default::default()
+          };
+          let b = Billing::update(&mut conn.into(), billing_id, &form)
+          .await
+          .with_fastjob_type(FastJobErrorType::CouldntUpdateBilling)?;
+          Ok(b)
+        }
+        .scope_boxed()
+      }).await?
     };
 
     Ok(updated_billing)

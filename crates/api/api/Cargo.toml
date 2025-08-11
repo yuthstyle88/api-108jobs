@@ -50,6 +50,7 @@ lemmy_api_utils = { workspace = true }
 lemmy_api_common = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 lemmy_email = { workspace = true }
+lemmy_workflow = { workspace = true }
 tracing = { workspace = true }
 bcrypt = { workspace = true }
 actix-web = { workspace = true }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BillingView {
-  pub billing: Billing,
+  pub billings: Vec<Billing>,
 }
 
 pub mod impls;

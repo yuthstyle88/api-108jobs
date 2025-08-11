@@ -24,6 +24,77 @@ fn build_detailed_description(data: &CreateInvoiceForm) -> String {
   )
 }
 
+// ===== Small helpers to reduce duplication =====
+fn form_paid_escrow() -> BillingUpdateForm {
+  BillingUpdateForm {
+    status: Some(BillingStatus::PaidEscrow),
+    paid_at: Some(Some(Utc::now())),
+    updated_at: Some(Utc::now()),
+    ..Default::default()
+  }
+}
+
+fn form_cancelled() -> BillingUpdateForm {
+  BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() }
+}
+
+fn form_request_change(
+  feedback: String,
+  revisions_used: i32,
+  max_revisions: i32,
+) -> Result<(BillingUpdateForm, i32), FastJobErrorType> {
+  if feedback.trim().is_empty() {
+    return Err(FastJobErrorType::InvalidField("revision_feedback is required".into()));
+  }
+  if revisions_used >= max_revisions {
+    return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into()));
+  }
+  let new_count = revisions_used + 1;
+  let form = BillingUpdateForm {
+    status: Some(BillingStatus::RequestChange),
+    revision_feedback: Some(Some(feedback)),
+    revisions_used: Some(new_count),
+    updated_at: Some(Utc::now()),
+    ..Default::default()
+  };
+  Ok((form, new_count))
+}
+
+fn form_updated(desc: String, url: Option<String>) -> Result<BillingUpdateForm, FastJobErrorType> {
+  if desc.trim().is_empty() {
+    return Err(FastJobErrorType::InvalidField("updated_work_description is required".into()));
+  }
+  Ok(BillingUpdateForm {
+    status: Some(BillingStatus::Updated),
+    work_description: Some(Some(desc)),
+    deliverable_url: Some(url),
+    updated_at: Some(Utc::now()),
+    ..Default::default()
+  })
+}
+
+fn form_submit_work(desc: String, url: Option<String>) -> Result<BillingUpdateForm, FastJobErrorType> {
+  if desc.trim().is_empty() {
+    return Err(FastJobErrorType::InvalidField("work_description is required".into()));
+  }
+  Ok(BillingUpdateForm {
+    status: Some(BillingStatus::WorkSubmitted),
+    work_description: Some(Some(desc)),
+    deliverable_url: Some(url),
+    updated_at: Some(Utc::now()),
+    ..Default::default()
+  })
+}
+
+fn form_completed_and_wallet(
+  freelancer_id: LocalUserId,
+  amount: f64,
+) -> (BillingUpdateForm, WalletAction) {
+  let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
+  let wallet = WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount };
+  (form, wallet)
+}
+
 /// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
 // ===== Typestate State Machine (structs-only) =====
 // Each state is a distinct struct; allowed transitions are methods that
@@ -85,12 +156,7 @@ struct FlowData {
 // ===== Allowed transitions (methods consume self) =====
 impl QuotationPendingTS {
   pub fn approve_and_fund(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
-    let form = BillingUpdateForm {
-      status: Some(BillingStatus::PaidEscrow),
-      paid_at: Some(Some(Utc::now())),
-      updated_at: Some(Utc::now()),
-      ..Default::default()
-    };
+    let form = form_paid_escrow();
     let tx = FundEscrowTransition {
       form,
       wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount },
@@ -98,71 +164,64 @@ impl QuotationPendingTS {
     Ok((PaidEscrowTS { data: self.data }, tx))
   }
   pub fn cancel(self) -> (CancelledTS, CancelTransition) {
-    let form = BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_cancelled();
     (CancelledTS { data: self.data }, CancelTransition { form })
   }
 }
 
 impl OrderApprovedTS {
   pub fn pay_escrow(self, wallet_id: WalletId) -> Result<(PaidEscrowTS, FundEscrowTransition), FastJobErrorType> {
-    let form = BillingUpdateForm { status: Some(BillingStatus::PaidEscrow), paid_at: Some(Some(Utc::now())), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_paid_escrow();
     let tx = FundEscrowTransition { form, wallet: WalletAction::PayToEscrow { wallet_id, amount: self.data.amount } };
     Ok((PaidEscrowTS { data: self.data }, tx))
   }
   pub fn cancel(self) -> (CancelledTS, CancelTransition) {
-    let form = BillingUpdateForm { status: Some(BillingStatus::Cancelled), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_cancelled();
     (CancelledTS { data: self.data }, CancelTransition { form })
   }
 }
 
 impl PaidEscrowTS {
   pub fn submit_work(self, desc: String, url: Option<String>) -> Result<(WorkSubmittedTS, SubmitWorkTransition), FastJobErrorType> {
-    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("work_description is required".into())); }
-    let form = BillingUpdateForm { status: Some(BillingStatus::WorkSubmitted), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_submit_work(desc, url)?;
     Ok((WorkSubmittedTS { data: self.data }, SubmitWorkTransition { form }))
   }
 }
 
 impl WorkSubmittedTS {
   pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
-    if feedback.trim().is_empty() { return Err(FastJobErrorType::InvalidField("revision_feedback is required".into())); }
-    if self.data.revisions_used >= self.data.max_revisions { return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into())); }
-    let form = BillingUpdateForm { status: Some(BillingStatus::RequestChange), revision_feedback: Some(Some(feedback)), revisions_used: Some(self.data.revisions_used + 1), updated_at: Some(Utc::now()), ..Default::default() };
-    Ok((RevisionRequestedTS { data: FlowData { revisions_used: self.data.revisions_used + 1, ..self.data } }, RequestRevisionTransition { form }))
+    let (form, new_count) = form_request_change(feedback, self.data.revisions_used, self.data.max_revisions)?;
+    Ok((RevisionRequestedTS { data: FlowData { revisions_used: new_count, ..self.data } }, RequestRevisionTransition { form }))
   }
   pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
-    let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
-    let tx = ReleaseToFreelancerTransition { form, wallet: WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount: self.data.amount } };
+    let (form, wallet) = form_completed_and_wallet(self.data.freelancer_id, self.data.amount);
+    let tx = ReleaseToFreelancerTransition { form, wallet };
     (CompletedTS { data: self.data }, tx)
   }
 }
 
 impl RevisionRequestedTS {
   pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
-    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("updated_work_description is required".into())); }
-    let form = BillingUpdateForm { status: Some(BillingStatus::Updated), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_updated(desc, url)?;
     Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
   }
 }
 
 impl RequestChangeTS {
   pub fn resubmit(self, desc: String, url: Option<String>) -> Result<(UpdatedTS, UpdateAfterRevisionTransition), FastJobErrorType> {
-    if desc.trim().is_empty() { return Err(FastJobErrorType::InvalidField("updated_work_description is required".into())); }
-    let form = BillingUpdateForm { status: Some(BillingStatus::Updated), work_description: Some(Some(desc)), deliverable_url: Some(url), updated_at: Some(Utc::now()), ..Default::default() };
+    let form = form_updated(desc, url)?;
     Ok((UpdatedTS { data: self.data }, UpdateAfterRevisionTransition { form }))
   }
 }
 
 impl UpdatedTS {
   pub fn request_revision(self, feedback: String) -> Result<(RevisionRequestedTS, RequestRevisionTransition), FastJobErrorType> {
-    if feedback.trim().is_empty() { return Err(FastJobErrorType::InvalidField("revision_feedback is required".into())); }
-    if self.data.revisions_used >= self.data.max_revisions { return Err(FastJobErrorType::InvalidField("Maximum revisions exceeded".into())); }
-    let form = BillingUpdateForm { status: Some(BillingStatus::RequestChange), revision_feedback: Some(Some(feedback)), revisions_used: Some(self.data.revisions_used + 1), updated_at: Some(Utc::now()), ..Default::default() };
-    Ok((RevisionRequestedTS { data: FlowData { revisions_used: self.data.revisions_used + 1, ..self.data } }, RequestRevisionTransition { form }))
+    let (form, new_count) = form_request_change(feedback, self.data.revisions_used, self.data.max_revisions)?;
+    Ok((RevisionRequestedTS { data: FlowData { revisions_used: new_count, ..self.data } }, RequestRevisionTransition { form }))
   }
   pub fn approve_work(self) -> (CompletedTS, ReleaseToFreelancerTransition) {
-    let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
-    let tx = ReleaseToFreelancerTransition { form, wallet: WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount: self.data.amount } };
+    let (form, wallet) = form_completed_and_wallet(self.data.freelancer_id, self.data.amount);
+    let tx = ReleaseToFreelancerTransition { form, wallet };
     (CompletedTS { data: self.data }, tx)
   }
 }

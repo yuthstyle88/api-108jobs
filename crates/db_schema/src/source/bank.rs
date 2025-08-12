@@ -46,3 +46,12 @@ pub struct BankUpdateForm {
   pub is_active: Option<bool>,
   pub updated_at: Option<DateTime<Utc>>,
 }
+
+#[derive(Debug, Clone, Default)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct BanksResponse {
+  pub banks: Vec<Bank>,
+}

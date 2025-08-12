@@ -7,7 +7,7 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::wallet;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{ FastJobResult};
 
 impl WalletView {
 

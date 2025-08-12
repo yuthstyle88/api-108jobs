@@ -8,6 +8,10 @@ use lemmy_api::local_user::bank_account::{
 use lemmy_api::local_user::certificates::{
   delete_single_certificate, list_certificates, save_certificates, update_certificate,
 };
+use lemmy_api::local_user::language_profile::{
+  delete_single_language_profile, list_language_profiles, save_language_profiles, 
+  update_language_profile,
+};
 use lemmy_api::local_user::education::{
   delete_single_education, list_education, save_education, update_education,
 };
@@ -324,29 +328,36 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/education")
                 .route("", post().to(save_education))
                 .route("", get().to(list_education))
-                .route("/update", put().to(update_education))
-                .route("/delete", delete().to(delete_single_education)),
+                .route("", put().to(update_education))
+                .route("", delete().to(delete_single_education)),
             )
             .service(
               scope("/work-experience")
                 .route("", post().to(save_work_experience))
                 .route("", get().to(list_work_experience))
-                .route("/update", put().to(update_work_experience))
-                .route("/delete", delete().to(delete_single_work_experience)),
+                .route("", put().to(update_work_experience))
+                .route("", delete().to(delete_single_work_experience)),
             )
             .service(
               scope("/skills")
                 .route("", post().to(save_skills))
                 .route("", get().to(list_skills))
-                .route("/update", put().to(update_skill))
-                .route("/delete", delete().to(delete_single_skill)),
+                .route("", put().to(update_skill))
+                .route("", delete().to(delete_single_skill)),
             )
             .service(
               scope("/certificates")
                 .route("", post().to(save_certificates))
                 .route("", get().to(list_certificates))
-                .route("/update", put().to(update_certificate))
-                .route("/delete", delete().to(delete_single_certificate)),
+                .route("", put().to(update_certificate))
+                .route("", delete().to(delete_single_certificate)),
+            )
+            .service(
+              scope("/language-profiles")
+                .route("", post().to(save_language_profiles))
+                .route("", get().to(list_language_profiles))
+                .route("", put().to(update_language_profile))
+                .route("", delete().to(delete_single_language_profile)),
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))

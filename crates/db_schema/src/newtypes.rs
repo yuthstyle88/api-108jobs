@@ -524,6 +524,13 @@ pub struct SkillId(pub i32);
 /// The Certificate id.
 pub struct CertificateId(pub i32);
 
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Language Profile id.
+pub struct LanguageProfileId(pub i32);
+
 /// A pagination cursor
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

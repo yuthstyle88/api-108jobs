@@ -42,6 +42,7 @@ pub mod education;
 pub mod work_experience;
 pub mod skills;
 pub mod certificates;
+pub mod language_profile;
 pub mod user_bank_account;
 pub mod bank;
 mod billing;

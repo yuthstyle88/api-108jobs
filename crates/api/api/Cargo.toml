@@ -68,6 +68,7 @@ either = { workspace = true }
 p256 = { workspace = true }
 hex = "0.4.3"
 uuid =  { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }

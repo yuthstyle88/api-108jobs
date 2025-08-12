@@ -3408,6 +3408,7 @@ dependencies = [
  "p256",
  "pretty_assertions",
  "regex",
+ "serde",
  "serial_test",
  "sitemap-rs",
  "tokio",

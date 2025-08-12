@@ -1264,6 +1264,19 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    language_profile (id) {
+        id -> Int4,
+        person_id -> Int4,
+        #[max_length = 100]
+        lang -> Varchar,
+        #[max_length = 50]
+        level_name -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
 diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
@@ -1387,6 +1400,7 @@ diesel::joinable!(education -> person (person_id));
 diesel::joinable!(work_experience -> person (person_id));
 diesel::joinable!(skills -> person (person_id));
 diesel::joinable!(certificates -> person (person_id));
+diesel::joinable!(language_profile -> person (person_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1468,4 +1482,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   work_experience,
   skills,
   certificates,
+  language_profile,
 );

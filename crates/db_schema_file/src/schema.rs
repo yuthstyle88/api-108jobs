@@ -56,6 +56,10 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "tx_kind"))]
+  pub struct TxKind;
 }
 
 diesel::table! {
@@ -496,7 +500,7 @@ diesel::table! {
     local_user (id) {
         id -> Int4,
         person_id -> Int4,
-        wallet_id -> Nullable<Int4>,
+        wallet_id -> Int4,
         password_encrypted -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
@@ -1078,10 +1082,28 @@ tagline (id) {
 diesel::table! {
     wallet (id) {
         id -> Int4,
-        balance -> Float8,
-        escrow_balance -> Float8,
+        balance_total -> Float8,
+        balance_available -> Float8,
+        balance_outstanding -> Float8,
+        is_platform -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TxKind;
+    wallet_transaction (id) {
+        id -> Int4,
+        wallet_id -> Int4,
+        reference_type -> Text,
+        reference_id -> Int4,
+        kind -> TxKind,
+        amount -> Float8,
+        description -> Text,
+        counter_user_id -> Nullable<Int4>,
+        idempotency_key -> Text,
     }
 }
 
@@ -1325,6 +1347,7 @@ diesel::joinable!(oauth_account -> oauth_provider (oauth_provider_id));
 diesel::joinable!(password_reset_request -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_comment_mention -> comment (comment_id));
+diesel::joinable!(wallet_transaction -> wallet (wallet_id));
 diesel::joinable!(person_comment_mention -> person (recipient_id));
 diesel::joinable!(person_content_combined -> comment (comment_id));
 diesel::joinable!(person_content_combined -> post (post_id));
@@ -1435,6 +1458,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   wallet,
+  wallet_transaction,
   contact,
   address,
   identity_card,

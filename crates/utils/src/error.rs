@@ -294,6 +294,8 @@ pub enum FastJobErrorType {
   CouldntDeleteBankAccount,
   CouldntUpdateBankAccount,
   CouldntUpdateBilling,
+  CouldntUpdateWalletTranSaction,
+  CouldntCreateWalletTranSaction,
 }
 
 cfg_if! {

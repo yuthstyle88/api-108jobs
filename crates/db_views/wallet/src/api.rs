@@ -166,7 +166,7 @@ pub struct BillingOperationResponse {
 #[serde(rename_all = "camelCase")]
 /// Admin top up user wallet.
 pub struct AdminTopUpWallet {
-  pub user_id: LocalUserId,
+  pub wallet_id: WalletId,
   pub amount: f64,
   pub reason: String,
 }
@@ -177,7 +177,7 @@ pub struct AdminTopUpWallet {
 #[serde(rename_all = "camelCase")]
 /// Admin withdraw from user wallet.
 pub struct AdminWithdrawWallet {
-  pub user_id: LocalUserId,
+  pub wallet_id: WalletId,
   pub amount: f64,
   pub reason: String,
 }
@@ -188,9 +188,7 @@ pub struct AdminWithdrawWallet {
 #[serde(rename_all = "camelCase")]
 /// Response for admin wallet operations.
 pub struct AdminWalletOperationResponse {
-  pub user_id: LocalUserId,
   pub wallet_id: WalletId,
-  pub previous_balance: f64,
   pub new_balance: f64,
   pub operation_amount: f64,
   pub reason: String,

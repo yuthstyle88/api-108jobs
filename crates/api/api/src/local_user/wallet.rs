@@ -4,6 +4,7 @@ use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, SubmitWork, ValidCreateInvoice, WalletOperationResponse};
 use lemmy_db_views_wallet::WalletView;
+use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_utils::error::FastJobResult;
 use lemmy_workflow::WorkFlowService;
 
@@ -13,13 +14,12 @@ pub async fn get_wallet(
 ) -> FastJobResult<Json<GetWalletResponse>> {
   let user_id = local_user_view.local_user.id;
 
-  let wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
-
+  let wallet = Wallet::get_by_user(&mut context.pool(), user_id).await?;
 
   let response =  GetWalletResponse {
-      wallet_id: wallet_view.id,
-      balance: wallet_view.balance,
-      escrow_balance: wallet_view.escrow_balance,
+      wallet_id: wallet.id,
+      balance: wallet.balance,
+      escrow_balance: wallet.escrow_balance,
     };
   Ok(Json(response))
 }

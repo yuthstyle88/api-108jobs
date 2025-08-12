@@ -1,10 +1,11 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::is_admin;
-use lemmy_db_views_wallet::WalletView;
+use lemmy_db_schema::source::wallet::{Wallet, WalletTransactionInsertForm, TxKind};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet};
 use lemmy_utils::error::FastJobResult;
+use uuid::Uuid;
 
 pub async fn admin_top_up_wallet(
   data: Json<AdminTopUpWallet>,
@@ -14,17 +15,22 @@ pub async fn admin_top_up_wallet(
   // Check if the user is admin
   is_admin(&local_user_view)?;
 
-  let (updated_wallet, previous_balance) = WalletView::admin_top_up(
-    &mut context.pool(),
-    data.user_id,
-    data.amount,
-  ).await?;
+  let form = WalletTransactionInsertForm {
+    wallet_id: data.wallet_id,
+    reference_type: "admin_top_up".to_string(),
+    reference_id: 0,
+    kind: TxKind::Deposit,
+    amount: data.amount,
+    description: data.reason.clone(),
+    counter_user_id: None,
+    idempotency_key: Uuid::new_v4().to_string(),
+  };
+
+  let wallet = Wallet::create_transaction(&mut context.pool(), &form).await?;
 
   Ok(Json(AdminWalletOperationResponse {
-    user_id: data.user_id,
-    wallet_id: updated_wallet.id,
-    previous_balance,
-    new_balance: updated_wallet.balance,
+    wallet_id: data.wallet_id,
+    new_balance: wallet.balance_total,
     operation_amount: data.amount,
     reason: data.reason.clone(),
     success: true,
@@ -39,17 +45,22 @@ pub async fn admin_withdraw_wallet(
   // Check if user is admin
   is_admin(&local_user_view)?;
 
-  let (updated_wallet, previous_balance) = WalletView::admin_withdraw(
-    &mut context.pool(),
-    data.user_id,
-    data.amount,
-  ).await?;
+  let form = WalletTransactionInsertForm {
+    wallet_id: data.wallet_id,
+    reference_type: "admin_withdraw".to_string(),
+    reference_id: 0,
+    kind: TxKind::Withdraw,
+    amount: data.amount,
+    description: data.reason.clone(),
+    counter_user_id: None,
+    idempotency_key: Uuid::new_v4().to_string(),
+  };
+
+  let wallet = Wallet::create_transaction(&mut context.pool(), &form).await?;
 
   Ok(Json(AdminWalletOperationResponse {
-    user_id: data.user_id,
-    wallet_id: updated_wallet.id,
-    previous_balance,
-    new_balance: updated_wallet.balance,
+    wallet_id: wallet.id,
+    new_balance: wallet.balance_total,
     operation_amount: -data.amount, // Negative because it's a withdrawal
     reason: data.reason.clone(),
     success: true,

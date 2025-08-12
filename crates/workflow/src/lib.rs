@@ -183,51 +183,21 @@ fn into_ts(b: &Billing) -> FlowData {
 // Helper: apply transitions (wallet + Crud update)
 async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Planned) -> FastJobResult<Billing> {
   // Wallet side-effects first (API expects &mut DbPool). If *_tx available, move inside txn.
-  // Wallet side-effects first (API expects &mut DbPool).
   match &plan {
-    // กันเงินเข้ากอง escrow จากกระเป๋านายจ้าง (employer wallet)
-    Planned::FundEscrow(t) => {
-      if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet {
-        Wallet::hold(pool, *wallet_id, *amount).await?;
-      }
-    }
-
-    // ปล่อยเงินให้ฟรีแลนซ์ (จ่ายจากนายจ้าง -> ฟรีแลนซ์)
-    Planned::ReleaseToFreelancer(t) => {
-      if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        // โหลด billing เพื่อรู้ employer_id
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        // ตัดจาก outstanding/total ของนายจ้าง
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        // เติมเข้ากระเป๋าฟรีแลนซ์
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
-      }
-    }
-
-    // จ่ายบางงวด (milestone) ระหว่างงาน
+    Planned::FundEscrow(t) => { if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet { WalletView::pay_for_job(pool, *wallet_id, *amount).await?; } }
+    Planned::ReleaseToFreelancer(t) => { if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet { WalletView::complete_job_payment(pool, *user_id, *amount).await?; } }
     Planned::ApproveMilestone(t) => {
-      if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
+      // partial release during work
+      if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet {
+        WalletView::complete_job_payment(pool, *user_id, *amount).await?;
       }
     }
-
-    // จ่ายส่วนที่เหลือเมื่อปิดงาน
     Planned::ReleaseRemaining(t) => {
-      if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
+      // release only the leftover amount at completion
+      if let WalletAction::ReleaseToFreelancer { user_id, amount } = &t.wallet {
+        WalletView::complete_job_payment(pool, *user_id, *amount).await?;
       }
     }
-
     _ => {}
   }
 

@@ -56,7 +56,7 @@ use url::Url;
 use lemmy_utils::settings::structs::Settings;
 use crate::sensitive::SensitiveString;
 
-const FETCH_LIMIT_DEFAULT: i64 = 20;
+const FETCH_LIMIT_DEFAULT: i64 = 500;
 pub const FETCH_LIMIT_MAX: usize = 50;
 pub const SITEMAP_LIMIT: i64 = 50000;
 pub const SITEMAP_DAYS: TimeDelta = TimeDelta::days(31);

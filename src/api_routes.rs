@@ -86,7 +86,7 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api_crud::community::list::{list_communities, list_communities_ltree};
+use lemmy_api_crud::community::list::list_communities;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -169,8 +169,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/community")
             .route("", put().to(update_community))
             .route("/random", get().to(get_random_community))
-            .route("/list", get().to(list_communities_ltree))
-            .route("/list/children", get().to(list_communities))
+            .route("/list", get().to(list_communities))
             .route("/report", post().to(create_community_report))
             .route("/report/resolve", put().to(resolve_community_report))
             // Mod Actions

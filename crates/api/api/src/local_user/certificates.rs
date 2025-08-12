@@ -6,6 +6,12 @@ use lemmy_db_schema::source::certificates::{CertificateView, Certificates, Certi
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CertificatesListResponse {
+    pub certificates: Vec<CertificateView>,
+}
 
 pub async fn save_certificates(
     data: Json<CertificatesRequest>,
@@ -47,10 +53,12 @@ pub async fn save_certificates(
 pub async fn list_certificates(
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<CertificateView>>> {
+) -> FastJobResult<Json<CertificatesListResponse>> {
     let person_id = Some(local_user_view.person.id);
-    let certificates = Certificates::query_with_filters(&mut context.pool(), person_id).await?;
-    Ok(Json(certificates))
+    let certificates = Certificates::query_with_filters(&mut context.pool(), person_id).await.unwrap_or_else(|_| Vec::new());
+    Ok(Json(CertificatesListResponse {
+        certificates,
+    }))
 }
 
 pub async fn delete_certificates(

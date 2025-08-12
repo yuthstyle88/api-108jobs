@@ -6,6 +6,12 @@ use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm, SkillsRequest, S
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobResult, FastJobErrorType};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SkillsListResponse {
+    pub skills: Vec<Skills>,
+}
 
 // Helper function to validate skill level
 fn validate_skill_level(level_id: &Option<i32>) -> FastJobResult<()> {
@@ -62,10 +68,12 @@ pub async fn save_skills(
 pub async fn list_skills(
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<Skills>>> {
+) -> FastJobResult<Json<SkillsListResponse>> {
     let person_id = local_user_view.person.id;
-    let skills = Skills::read_by_person_id(&mut context.pool(), person_id).await?;
-    Ok(Json(skills))
+    let skills = Skills::read_by_person_id(&mut context.pool(), person_id).await.unwrap_or_else(|_| Vec::new());
+    Ok(Json(SkillsListResponse {
+        skills,
+    }))
 }
 
 pub async fn delete_skills(

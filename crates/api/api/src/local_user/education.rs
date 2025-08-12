@@ -6,6 +6,12 @@ use lemmy_db_schema::source::education::{Education, EducationInsertForm, Educati
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EducationListResponse {
+    pub education: Vec<Education>,
+}
 
 pub async fn save_education(
     data: Json<EducationRequest>,
@@ -48,10 +54,12 @@ pub async fn save_education(
 pub async fn list_education(
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<Education>>> {
+) -> FastJobResult<Json<EducationListResponse>> {
     let person_id = local_user_view.person.id;
-    let educations = Education::read_by_person_id(&mut context.pool(), person_id).await?;
-    Ok(Json(educations))
+    let educations = Education::read_by_person_id(&mut context.pool(), person_id).await.unwrap_or_else(|_| Vec::new());
+    Ok(Json(EducationListResponse {
+        education: educations,
+    }))
 }
 
 pub async fn delete_education(

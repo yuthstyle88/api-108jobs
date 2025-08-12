@@ -53,7 +53,7 @@ pub async fn list_language_profiles(
 ) -> FastJobResult<Json<ListLanguageProfilesResponse>> {
   let person_id = local_user_view.person.id;
 
-  let language_profiles = LanguageProfile::list_for_person(&mut context.pool(), person_id).await?;
+  let language_profiles = LanguageProfile::list_for_person(&mut context.pool(), person_id).await.unwrap_or_else(|_| Vec::new());
 
   Ok(Json(ListLanguageProfilesResponse {
     language_profiles,

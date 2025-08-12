@@ -6,6 +6,12 @@ use lemmy_db_schema::source::work_experience::{UpdateWorkExperienceRequest, Work
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WorkExperienceListResponse {
+    pub work_experience: Vec<WorkExperience>,
+}
 
 pub async fn save_work_experience(
     data: Json<WorkExperienceRequest>,
@@ -53,10 +59,12 @@ pub async fn save_work_experience(
 pub async fn list_work_experience(
     context: Data<FastJobContext>,
     local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<WorkExperience>>> {
+) -> FastJobResult<Json<WorkExperienceListResponse>> {
     let person_id = local_user_view.person.id;
-    let experiences = WorkExperience::read_by_person_id(&mut context.pool(), person_id).await?;
-    Ok(Json(experiences))
+    let experiences = WorkExperience::read_by_person_id(&mut context.pool(), person_id).await.unwrap_or_else(|_| Vec::new());
+    Ok(Json(WorkExperienceListResponse {
+        work_experience: experiences,
+    }))
 }
 
 pub async fn delete_work_experience(

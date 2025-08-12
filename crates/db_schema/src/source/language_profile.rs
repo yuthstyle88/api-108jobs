@@ -1,3 +1,4 @@
+use std::io::Write;
 use crate::newtypes::{LanguageProfileId, PersonId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

@@ -1,9 +1,11 @@
 -- Wallet platform and triple-balance columns
-CREATE TYPE tx_kind AS ENUM (
-  'Deposit',
-  'Withdraw',
-  'Transfer',
-);
+DO $$
+BEGIN
+  CREATE TYPE tx_kind AS ENUM ('Deposit','Withdraw','Transfer');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END
+$$;
 
 
 ALTER TABLE wallet
@@ -16,11 +18,6 @@ ALTER TABLE wallet
 CREATE INDEX IF NOT EXISTS idx_wallet_platform
   ON wallet(is_platform) WHERE is_platform = true;
 
--- Ensure one platform wallet exists
-INSERT INTO wallet (is_platform, balance, escrow_balance, balance_total, balance_available, balance_outstanding, created_at)
-SELECT true, 0.0, 0.0, 0.0, 0.0, 0.0, now()
-WHERE NOT EXISTS (SELECT 1 FROM wallet WHERE is_platform = true)
-RETURNING id;
 
 -- Wallet transactions (journal)
 CREATE TABLE IF NOT EXISTS wallet_transaction (

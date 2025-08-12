@@ -3,7 +3,6 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, SubmitWork, ValidCreateInvoice, WalletOperationResponse};
-use lemmy_db_views_wallet::WalletView;
 use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_utils::error::FastJobResult;
 use lemmy_workflow::WorkFlowService;
@@ -16,11 +15,11 @@ pub async fn get_wallet(
 
   let wallet = Wallet::get_by_user(&mut context.pool(), user_id).await?;
 
-  let response =  GetWalletResponse {
-      wallet_id: wallet.id,
-      balance: wallet.balance,
-      escrow_balance: wallet.escrow_balance,
-    };
+  let response = GetWalletResponse {
+    wallet_id: wallet.id,
+    balance: wallet.balance_available,
+    escrow_balance: wallet.balance_outstanding,
+  };
   Ok(Json(response))
 }
 
@@ -31,18 +30,16 @@ pub async fn deposit_wallet(
 ) -> FastJobResult<Json<WalletOperationResponse>> {
   let user_id = local_user_view.local_user.id;
 
-  // Create wallet if it doesn't exist
-  let wallet_view = WalletView::read_by_user(&mut context.pool(), user_id).await?;
+  // Load user's wallet (must exist per NOT NULL constraint)
+  let wallet = Wallet::get_by_user(&mut context.pool(), user_id).await?;
 
-  let _ =  WalletView::create_for_user(&mut context.pool(), user_id).await?;
-  let wallet_id = wallet_view.id;
   // Deposit funds
-  let updated_wallet = WalletView::deposit_funds(&mut context.pool(), wallet_id, data.amount).await?;
+  let updated_wallet = Wallet::deposit(&mut context.pool(), wallet.id, data.amount).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,
-    balance: updated_wallet.balance,
-    escrow_balance: updated_wallet.escrow_balance,
+    balance: updated_wallet.balance_available,
+    escrow_balance: updated_wallet.balance_outstanding,
     transaction_amount: data.amount,
     success: true,
   }))
@@ -93,7 +90,7 @@ pub async fn approve_quotation(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BillingOperationResponse>> {
   let employer_id = local_user_view.local_user.id;
-  let wallet_id = local_user_view.local_user.wallet_id.unwrap_or(WalletId(0));
+  let wallet_id: WalletId = local_user_view.local_user.wallet_id;
   // Approve the quotation and convert to order
   let updated_billing = WorkFlowService::approve_quotation(
     &mut context.pool(),

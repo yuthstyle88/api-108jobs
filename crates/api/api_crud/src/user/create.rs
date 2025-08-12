@@ -13,7 +13,7 @@ use lemmy_api_utils::{
   },
 };
 use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::source::wallet::{Wallet, WalletInsertForm};
+use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_db_schema::{
   newtypes::OAuthProviderId,
   source::{
@@ -729,7 +729,6 @@ async fn create_local_user(
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
 ) -> Result<LocalUser, FastJobError> {
-  let conn_ = &mut conn.into();
 
   local_user_form.default_listing_type = Some(local_site.default_post_listing_type);
   local_user_form.post_listing_mode = Some(local_site.default_post_listing_mode);
@@ -738,16 +737,12 @@ async fn create_local_user(
   // Extract the interface language using indexing to avoid Diesel trait conflicts
   local_user_form.interface_language = interface_language;
 
-  let wallet_form = WalletInsertForm {
-    balance: Some(0.0),
-    escrow_balance: Some(0.0),
-    created_at: None,
-  };
+  // Create a new wallet for this user
+  let wallet = Wallet::create_for_user(conn).await?;
+  // Attach the wallet to the local user form
+  local_user_form.wallet_id = wallet.id;
 
-  let wallet = Wallet::create(conn_, &wallet_form).await?;
-  local_user_form.wallet_id = Some(wallet.id);
-
-  let inserted_local_user = LocalUser::create(conn_, &local_user_form, language_ids).await?;
+  let inserted_local_user = LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;
 
   // Return the local user (the wallet_id will be updated in the database but not in our local object)
   Ok(inserted_local_user)

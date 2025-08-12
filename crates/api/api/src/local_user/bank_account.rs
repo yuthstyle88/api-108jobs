@@ -3,7 +3,7 @@ use lemmy_api_common::bank_account::{
   BankAccountOperationResponse
 };
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::bank::Bank;
+use lemmy_db_schema::source::bank::{Bank, BanksResponse};
 use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_address::AddressView;
@@ -117,14 +117,10 @@ pub async fn delete_bank_account(
 
 pub async fn list_banks(
   context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
-) -> FastJobResult<Json<ListBankAccountsResponse>> {
-   let local_user_id = Some(local_user_view.local_user.id);
-  let order_by = Some("bank_name_desc".to_string());
-  // Get active banks then filter by user's country
-  let bank_accounts = BankAccountView::query_with_filters(&mut context.pool(), local_user_id, None, order_by).await?;
 
-  Ok(Json(ListBankAccountsResponse {
-    bank_accounts
-  }))
+) -> FastJobResult<Json<BanksResponse>> {
+
+  let bank_accounts = Bank::query_with_order_by( &mut context.pool() ,None).await?;
+
+  Ok(Json(bank_accounts))
 }

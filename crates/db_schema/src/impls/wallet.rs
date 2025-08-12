@@ -168,45 +168,47 @@ impl Wallet {
   }
 
   /// Ensures a single platform wallet exists, operating on the provided transaction connection
-  async fn ensure_platform_on(conn: &mut diesel_async::AsyncPgConnection) -> FastJobResult<Self> {
-    if let Some(w) = wallet::table
-      .filter(wallet::is_platform.eq(true))
-      .first::<Self>(conn)
-      .await
-      .optional()?
-    {
-      return Ok(w);
-    }
+  /// Internal helper: create an empty wallet (platform or user) on the same connection/txn.
+  async fn create_blank_on(
+    conn: &mut diesel_async::AsyncPgConnection,
+    is_platform: bool,
+  ) -> FastJobResult<Self> {
     let form = WalletInsertForm {
       balance_total: Some(0.0),
       balance_available: Some(0.0),
       balance_outstanding: Some(0.0),
-      is_platform: Some(true),
+      is_platform: Some(is_platform),
       created_at: Some(Utc::now()),
     };
-    let w =  diesel::insert_into(wallet::table)
-    .values(form)
+    let w = diesel::insert_into(wallet::table)
+    .values(&form)
     .get_result::<Self>(conn)
     .await
     .with_fastjob_type(FastJobErrorType::CouldntCreateWallet)?;
     Ok(w)
   }
-  /// Create a wallet for a given user and link it to local_user.wallet_id in one transaction.
-  pub async fn create_for_user(conn: &mut diesel_async::AsyncPgConnection) -> FastJobResult<Self> {
-    // create empty wallet (non-platform)
-    let form = WalletInsertForm {
-      balance_total: Some(0.0),
-      balance_available: Some(0.0),
-      balance_outstanding: Some(0.0),
-      is_platform: Some(false),
-      created_at: Some(Utc::now()),
-    };
-    let w =  diesel::insert_into(wallet::table)
-    .values(form)
-    .get_result::<Self>(conn)
+
+  /// Create a wallet for a user (non-platform) on the given connection (caller links to local_user).
+  pub async fn create_for_user(
+    conn: &mut diesel_async::AsyncPgConnection,
+  ) -> FastJobResult<Self> {
+    Self::create_blank_on(conn, false).await
+  }
+
+  /// Get the platform wallet id (must be pre-seeded). Error if missing.
+  async fn platform_wallet_id(
+    conn: &mut diesel_async::AsyncPgConnection,
+  ) -> FastJobResult<WalletId> {
+    let id = wallet::table
+    .filter(wallet::is_platform.eq(true))
+    .select(wallet::id)
+    .first::<WalletId>(conn)
     .await
-    .with_fastjob_type(FastJobErrorType::CouldntCreateWallet)?;
-    Ok(w)
+    .optional()?;
+    match id {
+      Some(wid) => Ok(wid),
+      None => Err(FastJobErrorType::InvalidField("Platform wallet not initialized".into()).into()),
+    }
   }
 
   /// Deposit funds: total += amount, available += amount
@@ -266,14 +268,6 @@ impl Wallet {
       .get_result::<WalletTransaction>(conn)
       .await?;
     Ok(tx)
-  }
-
-  /// Fetch or create the platform wallet id within the current transaction.
-  async fn platform_wallet_id(
-    conn: &mut diesel_async::AsyncPgConnection,
-  ) -> FastJobResult<WalletId> {
-    let w = Self::ensure_platform_on(conn).await?;
-    Ok(w.id)
   }
 
   /// Paired transfer: from -> to. Always creates two wallet_transaction rows with the same idempotency_key.

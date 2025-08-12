@@ -132,7 +132,7 @@ impl CommunityQuery<'_> {
     }
 
     if let Some(depth) = o.max_depth {
-      query = query.filter(nlevel(community::path).eq(depth));
+      query = query.filter(nlevel(community::path).le(depth));
     }
 
     query = o.local_user.visible_communities_only(query);
@@ -444,7 +444,6 @@ mod tests {
     .await?
     .into_iter()
     .for_each(|c| assert!(!c.can_mod));
-
 
     let mod_query = CommunityQuery {
       local_user: Some(&data.local_user),

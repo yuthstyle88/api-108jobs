@@ -2,7 +2,7 @@ CREATE TABLE identity_card
 (
     id            serial PRIMARY KEY,
     address_id int NOT NULL REFERENCES address(id) ON DELETE RESTRICT,
-    id_number     text        NOT NULL,
+    id_number     text,
     issued_date   date,
     expiry_date   date,
     full_name     text        NOT NULL,

@@ -47,7 +47,6 @@ pub struct BankUpdateForm {
   pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Default)]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

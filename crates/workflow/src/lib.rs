@@ -98,6 +98,7 @@ enum Planned {
   ApproveMilestone(ApproveMilestoneTransition),
   ReleaseRemaining(ReleaseRemainingTransition),
   SubmitWork(SubmitWorkTransition),
+  Cancel(CancelTransition),
 }
 
 // Shared data snapshot for typestate transitions
@@ -144,9 +145,9 @@ impl QuotationPendingTS {
     Ok(tx)
   }
   #[allow(dead_code)]
-  pub fn cancel(self) -> (CancelledTS, CancelTransition) {
+  pub fn cancel(self) -> CancelTransition {
     let form = form_cancelled();
-    (CancelledTS { data: self.data }, CancelTransition { form })
+    CancelTransition { form }
   }
 }
 
@@ -206,6 +207,7 @@ async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Pl
     Planned::ApproveMilestone(t) => &t.form,
     Planned::ReleaseRemaining(t) => &t.form,
     Planned::SubmitWork(t) => &t.form,
+    Planned::Cancel(t) => &t.form,
   };
 
   let conn = &mut get_conn(pool).await?;
@@ -224,14 +226,58 @@ async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Pl
 }
 
 pub struct WorkFlowService;
-
+pub struct LoadedWorkflow {
+  pub billing: Billing,
+  pub flow_data: FlowData,
+  pub available_actions: Vec<&'static str>,
+}
 impl WorkFlowService {
+  /// Load a billing row and prepare FlowData for typestate use.
+  pub async fn load(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+  ) -> FastJobResult<LoadedWorkflow> {
+    let b = Billing::read(pool, billing_id).await?;
+    let data = into_ts(&b);
+    let actions = match b.status {
+      BillingStatus::QuotationPending => vec!["approveAndFund", "cancel"],
+      BillingStatus::PaidEscrow => vec!["submitWork", "approveMilestone", "cancel"],
+      BillingStatus::WorkSubmitted => vec!["approveWork", "approveMilestone", "cancel"],
+      BillingStatus::Completed => vec![],
+      BillingStatus::Cancelled => vec![],
+      _ => vec![],
+    };
+    Ok(LoadedWorkflow {
+      billing: b,
+      flow_data: data,
+      available_actions: actions,
+    })
+  }
+
+  /// Cancel a billing from either side in any non-terminal state.
+  pub async fn cancel_billing_any(
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    actor_id: LocalUserId,
+  ) -> FastJobResult<Billing> {
+    let LoadedWorkflow { billing: b, .. } = Self::load(pool, billing_id).await?;
+    if b.employer_id != actor_id && b.freelancer_id != actor_id {
+      return Err(FastJobErrorType::InvalidField("Not a participant of this billing".into()).into());
+    }
+    if matches!(b.status, BillingStatus::Completed | BillingStatus::Cancelled) {
+      return Err(FastJobErrorType::InvalidField("Billing already finalized".into()).into());
+    }
+    let plan = Planned::Cancel(CancelTransition { form: form_cancelled() });
+    let updated = apply_transition(pool, billing_id, plan).await?;
+    Ok(updated)
+  }
+
   pub async fn validate_before_approve(
     pool: &mut DbPool<'_>,
     billing_id: BillingId,
     employer_id: LocalUserId,
   ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
@@ -269,11 +315,10 @@ impl WorkFlowService {
     employer_id: LocalUserId,
     wallet_id: WalletId,
   ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let data = into_ts(&b);
     let plan = match b.status {
       BillingStatus::QuotationPending => {
         let tx = QuotationPendingTS { data }.approve_and_fund(wallet_id)?;
@@ -292,14 +337,10 @@ impl WorkFlowService {
     work_description: String,
     deliverable_url: Option<String>,
   ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, .. } = Self::load(pool, billing_id).await?;
     if b.freelancer_id != freelancer_id {
       return Err(FastJobErrorType::InvalidField("Not the freelancer of this billing".into()).into());
     }
-    if b.paid_at.is_none() {
-      return Err(FastJobErrorType::InvalidField("Escrow not funded".into()).into());
-    }
-
     // Pure typestate: build PaidEscrowTS from current billing or reject
     let ts = PaidEscrowTS::try_from_billing(&b)
       .ok_or_else(|| FastJobErrorType::InvalidField("Billing not in a submittable state".into()))?;
@@ -314,11 +355,10 @@ impl WorkFlowService {
     billing_id: BillingId,
     employer_id: LocalUserId,
   ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let data = into_ts(&b);
     let plan = match b.status {
       BillingStatus::WorkSubmitted => {
         let tx = WorkSubmittedTS { data }.approve_work();
@@ -337,11 +377,10 @@ impl WorkFlowService {
     employer_id: LocalUserId,
     amount: f64,
   ) -> FastJobResult<Billing> {
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let data = into_ts(&b);
     let plan = if b.status == BillingStatus::WorkSubmitted {
       let tx = WorkSubmittedTS { data }.approve_milestone(amount)?;
       Planned::ApproveMilestone(tx)
@@ -366,11 +405,10 @@ impl WorkFlowService {
     remaining_amount: f64,
   ) -> FastJobResult<Billing> {
     if remaining_amount <= 0.0 { return Err(FastJobErrorType::InvalidField("remaining_amount must be > 0".into()).into()); }
-    let b = Billing::read(pool, billing_id).await?;
+    let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());
     }
-    let data = into_ts(&b);
     let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
     let wallet = WalletAction::ReleaseToFreelancer { user_id: data.freelancer_id, amount: remaining_amount };
     let plan = Planned::ReleaseRemaining(ReleaseRemainingTransition { form, wallet });

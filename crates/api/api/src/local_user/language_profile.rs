@@ -4,7 +4,7 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::LanguageProfileId;
 use lemmy_db_schema::source::language_profile::{
   LanguageProfile, LanguageProfileInsertForm, LanguageProfileResponse,
-  SaveLanguageProfiles, ListLanguageProfilesResponse, LanguageProfileUpdateForm,
+  SaveLanguageProfiles, ListLanguageProfilesResponse, LanguageProfileUpdateForm, LanguageLevel,
 };
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
@@ -64,7 +64,7 @@ pub async fn list_language_profiles(
 pub struct UpdateLanguageProfileRequest {
   pub id: LanguageProfileId,
   pub lang: String,
-  pub level_name: String,
+  pub level_name: LanguageLevel,
 }
 
 

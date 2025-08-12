@@ -195,7 +195,7 @@ impl Wallet {
     Self::create_blank_on(conn, false).await
   }
 
-  pub async fn create_for_for_platform(
+  pub async fn create_for_platform(
     conn: &mut diesel_async::AsyncPgConnection,
   ) -> FastJobResult<Self> {
     Self::create_blank_on(conn, true).await

@@ -1,7 +1,6 @@
 -- Create wallet table for user balance management
 CREATE TABLE wallet (
     id SERIAL PRIMARY KEY,
-    balance FLOAT8 DEFAULT 0.0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ
 );

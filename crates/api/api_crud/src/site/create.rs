@@ -108,10 +108,7 @@ pub async fn create_site(
 
 
   LocalSite::update(&mut context.pool(), &local_site_form).await?;
-  let pool = &mut context.pool();
-  let conn = &mut get_conn(pool).await?;
 
-  let _ = Wallet::create_for_platform(conn).await?;
   let local_site_rate_limit_form = LocalSiteRateLimitUpdateForm {
     message_max_requests: data.rate_limit_message_max_requests,
     message_interval_seconds: not_zero(data.rate_limit_message_interval_seconds),

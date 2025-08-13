@@ -1,7 +1,5 @@
 use lemmy_db_schema::source::wallet::{Wallet};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "full")]
-use diesel::{Queryable, Selectable};
 
 pub mod api;
 #[cfg(feature = "full")]

@@ -1,10 +1,17 @@
-use chrono::{Utc};
+use chrono::Utc;
 use diesel::{
   dsl::{exists, not, select},
   query_builder::AsQuery,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
+use lemmy_api_utils::plugins::plugin_metadata;
 use lemmy_api_utils::utils::generate_inbox_url;
+use lemmy_db_schema::source::actor_language::SiteLanguage;
+use lemmy_db_schema::source::language::Language;
+use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
+use lemmy_db_schema::source::oauth_provider::OAuthProvider;
+use lemmy_db_schema::source::tagline::Tagline;
+use lemmy_db_schema::source::wallet::WalletModel;
 use lemmy_db_schema::{
   source::{
     instance::Instance,
@@ -18,22 +25,21 @@ use lemmy_db_schema::{
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::local_site;
-use lemmy_db_views_site::SiteView;
 use lemmy_db_views_person::impls::PersonQuery;
-use lemmy_utils::{error::{FastJobErrorExt, FastJobErrorType, FastJobResult}, settings::structs::Settings, VERSION};
+use lemmy_db_views_site::api::SiteSnapshot;
+use lemmy_db_views_site::SiteView;
+use lemmy_utils::{
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+  VERSION,
+};
 use tracing::info;
 use url::Url;
-use lemmy_api_utils::plugins::plugin_metadata;
-use lemmy_db_schema::source::actor_language::SiteLanguage;
-use lemmy_db_schema::source::language::Language;
-use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
-use lemmy_db_schema::source::oauth_provider::OAuthProvider;
-use lemmy_db_schema::source::tagline::Tagline;
-use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_views_site::api::{GetSiteResponse, SiteSnapshot};
-use lemmy_db_schema::source::wallet::WalletModel;
 
-pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteSnapshot> {
+pub async fn setup_local_site(
+  pool: &mut DbPool<'_>,
+  settings: &Settings,
+) -> FastJobResult<SiteSnapshot> {
   let conn = &mut get_conn(pool).await?;
   // Check to see if local_site exists, without the cache wrapper
   if select(not(exists(local_site::table.as_query())))
@@ -56,7 +62,8 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = "public_key".to_string();
             let private_key = Some("private_key".to_string());
-            let (address_id, contact_id, identity_card_id) = Person::prepare_data_for_insert(&mut conn.into(), None).await?;
+            let (address_id, contact_id, identity_card_id) =
+              Person::prepare_data_for_insert(&mut conn.into(), None).await?;
 
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
@@ -66,11 +73,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
               address_id: Some(address_id),
               contact_id: Some(contact_id),
               identity_card_id: Some(identity_card_id),
-              ..PersonInsertForm::new(
-                setup.admin_username.clone(),
-                public_key,
-                instance.id,
-              )
+              ..PersonInsertForm::new(setup.admin_username.clone(), public_key, instance.id)
             };
             let person_inserted = Person::create(&mut conn.into(), &person_form).await?;
             let wallet = WalletModel::create_for_platform(conn).await?;
@@ -99,7 +102,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
             inbox_url: Some(generate_inbox_url()?),
             private_key: Some(site_key_pair.clone()),
             public_key: Some(site_key_pair),
-             ..SiteInsertForm::new(name, instance.id)
+            ..SiteInsertForm::new(name, instance.id)
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;
 
@@ -126,8 +129,8 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
     admins_only: Some(true),
     ..Default::default()
   }
-      .list(None, site_view.instance.id, pool)
-      .await?;
+  .list(None, site_view.instance.id, pool)
+  .await?;
   let all_languages = Language::read_all(pool).await?;
   let discussion_languages = SiteLanguage::read_local_raw(pool).await?;
   let blocked_urls = LocalSiteUrlBlocklist::get_all(pool).await?;

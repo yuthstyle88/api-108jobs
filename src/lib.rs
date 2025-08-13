@@ -1,6 +1,5 @@
 pub mod api_routes;
 
-use std::sync::Arc;
 use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},

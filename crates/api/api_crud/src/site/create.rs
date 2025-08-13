@@ -42,8 +42,6 @@ use lemmy_utils::{
   },
 };
 use url::Url;
-use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_schema::utils::get_conn;
 
 pub async fn create_site(
   data: Json<CreateSite>,

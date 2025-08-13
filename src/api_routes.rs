@@ -223,7 +223,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           // Handle POST to /comment separately to add the comment() rate limitter
           resource("/comment")
             .guard(guard::Post())
-            .wrap(rate_limit.comment())
+            // .wrap(rate_limit.comment())
             .route(post().to(create_comment)),
         )
         .service(

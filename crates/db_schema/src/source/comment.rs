@@ -82,8 +82,7 @@ pub struct CommentInsertForm {
   pub updated_at: Option<DateTime<Utc>>,
   #[new(default)]
   pub deleted: Option<bool>,
-  #[new(default)]
-  pub ap_id: Option<DbUrl>,
+  pub ap_id: DbUrl,
   #[new(default)]
   pub local: Option<bool>,
   #[new(default)]

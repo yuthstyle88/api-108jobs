@@ -23,6 +23,7 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
+use uuid::Uuid;
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,
@@ -63,12 +64,6 @@ pub async fn create_comment(
     Err(FastJobErrorType::Locked)?
   }
 
-  let parent_opt = if let Some(parent_id) = data.parent_id {
-    Comment::read(&mut context.pool(), parent_id).await.ok()
-  } else {
-    None
-  };
-
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
@@ -79,22 +74,26 @@ pub async fn create_comment(
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("cannot comment on your own post".to_string())))?;
+    return Err(FastJobError::from(FastJobErrorType::InvalidField(
+      "cannot comment on your own post".to_string(),
+    )))?;
   }
 
   // Check if user has already commented on this post
   check_user_already_commented(&mut context.pool(), local_user_view.person.id, post_id).await?;
+  let ap_id =
+    Comment::generate_comment_url(Uuid::new_v4().to_string().as_str(), &context.settings())?;
 
-  let mut comment_form = CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone());
+  let mut comment_form = CommentInsertForm::new(
+    local_user_view.person.id,
+    data.post_id,
+    content.clone(),
+    ap_id,
+  );
   comment_form.language_id = Some(language_id);
 
-  // Add required proposal fields (all comments now require these)
-  // Debug: Output the comment form structure
-  tracing::info!("Comment form to be inserted: {:#?}", comment_form);
-  let parent_path = parent_opt.clone().map(|t| t.path);
   // Create the comment
-  let inserted_comment =
-    Comment::create(&mut context.pool(), &comment_form, parent_path.as_ref()).await?;
+  let inserted_comment = Comment::create(&mut context.pool(), &comment_form).await?;
 
   tracing::info!("Successfully inserted comment: {:#?}", inserted_comment);
 
@@ -141,16 +140,15 @@ pub async fn create_comment(
   ))
 }
 
-
 async fn check_user_already_commented(
   pool: &mut DbPool<'_>,
   person_id: PersonId,
-  _post_id: PostId
+  _post_id: PostId,
 ) -> FastJobResult<()> {
-  use lemmy_db_schema_file::schema::comment::dsl::*;
-  use lemmy_db_schema::utils::get_conn;
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
+  use lemmy_db_schema::utils::get_conn;
+  use lemmy_db_schema_file::schema::comment::dsl::*;
 
   let conn = &mut get_conn(pool).await?;
 
@@ -165,7 +163,9 @@ async fn check_user_already_commented(
     .map_err(|_| FastJobError::from(FastJobErrorType::CouldntCreateComment))?;
 
   if existing_comment.is_some() {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField("You have already commented on this post".to_string())))?;
+    return Err(FastJobError::from(FastJobErrorType::InvalidField(
+      "You have already commented on this post".to_string(),
+    )))?;
   }
 
   Ok(())

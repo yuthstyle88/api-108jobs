@@ -467,6 +467,14 @@ pub fn validate_bank_account(country_id: &str, account_number: &str) -> bool {
   }
 }
 
+pub fn validate_amount(amount: &f64) -> FastJobResult<()> {
+  if amount.is_sign_negative() {
+    return Err(FastJobErrorType::NegativeAmount.into());
+  }
+
+  Ok(())
+}
+
 #[cfg(test)]
 mod tests {
   use crate::{

@@ -296,6 +296,7 @@ pub enum FastJobErrorType {
   CouldntUpdateBilling,
   CouldntUpdateWalletTranSaction,
   CouldntCreateWalletTranSaction,
+  NegativeAmount,
 }
 
 cfg_if! {

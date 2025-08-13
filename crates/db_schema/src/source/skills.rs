@@ -5,6 +5,7 @@ use serde_with::skip_serializing_none;
 
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::skills;
+#[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 #[skip_serializing_none]
@@ -75,13 +76,53 @@ pub struct SkillsRequest {
 #[serde(rename_all = "camelCase")]
 pub struct SkillItem {
     pub id: Option<SkillId>, // None for new items, Some(id) for updates
-    pub skill_name: String,
+    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
+    pub skill_name: Option<String>,
+    #[serde(rename = "level", skip_serializing_if = "Option::is_none")]
     pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
+    #[serde(default)]
+    pub deleted: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct SkillResponse {
+    pub id: i32,
+    #[serde(rename = "name")]
+    pub skill_name: String,
+    #[serde(rename = "level")]
+    pub level_id: Option<i32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+impl From<Skills> for SkillResponse {
+    fn from(skill: Skills) -> Self {
+        Self {
+            id: skill.id,
+            skill_name: skill.skill_name,
+            level_id: skill.level_id,
+            created_at: skill.created_at,
+            updated_at: skill.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteSkillsRequest {
+    #[serde(rename = "skillIds")]
+    pub skill_ids: Vec<SkillId>,
 }
 
 
 
 
+#[cfg(feature = "full")]
 impl SkillsForm {
     fn validate(&self) -> FastJobResult<()> {
         if self.skill_name.is_empty() {
@@ -98,6 +139,7 @@ impl SkillsForm {
     }
 }
 
+#[cfg(feature = "full")]
 impl TryFrom<SkillsForm> for SkillsInsertForm {
     type Error = FastJobError;
 
@@ -111,6 +153,7 @@ impl TryFrom<SkillsForm> for SkillsInsertForm {
     }
 }
 
+#[cfg(feature = "full")]
 impl TryFrom<SkillsForm> for SkillsUpdateForm {
     type Error = FastJobError;
 

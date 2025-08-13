@@ -69,7 +69,7 @@ impl From<Certificates> for CertificateView {
       name:parts.name,
       achieved_date: parts.achieved_date,
       expires_date: parts.expires_date,
-      url: parts.url.unwrap(),
+      url: parts.url,
     }
   }
 }
@@ -77,8 +77,8 @@ impl From<UpdateCertificateRequestItem> for CertificatesUpdateForm {
 
   fn from(data: UpdateCertificateRequestItem) -> Self {
     Self{
-      name: Some(data.name),
-      achieved_date: data.achieved_date,
+      name: data.name,
+      achieved_date: Some(data.achieved_date), // achieved_date is now required in request
       expires_date: data.expires_date,
       url: Some(data.url),
     }

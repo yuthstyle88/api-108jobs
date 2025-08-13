@@ -5,7 +5,9 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::contact;
 use std::convert::TryFrom;
+#[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
+#[cfg(feature = "full")]
 use lemmy_utils::utils::validation::{is_valid_email, is_valid_phone};
 
 #[skip_serializing_none]
@@ -60,6 +62,7 @@ pub struct ContactForm {
   pub facebook: Option<String>,
 }
 
+#[cfg(feature = "full")]
 impl TryFrom<ContactForm> for ContactUpdateForm {
   type Error = FastJobError;
 
@@ -76,6 +79,7 @@ impl TryFrom<ContactForm> for ContactUpdateForm {
     })
   }
 }
+#[cfg(feature = "full")]
 fn validate_contact(form: &ContactForm) -> Result<(), FastJobError> {
   let has_contact = [
     &form.phone,

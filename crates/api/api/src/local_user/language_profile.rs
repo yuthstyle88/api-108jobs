@@ -5,46 +5,38 @@ use lemmy_db_schema::newtypes::LanguageProfileId;
 use lemmy_db_schema::source::language_profile::{
   LanguageProfile, LanguageProfileInsertForm, LanguageProfileResponse,
   SaveLanguageProfiles, ListLanguageProfilesResponse, LanguageProfileUpdateForm, LanguageLevel,
+  DeleteLanguageProfilesRequest,
 };
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use lemmy_utils::error::{FastJobResult, FastJobErrorType};
 use serde::{Deserialize, Serialize};
 use chrono::Utc;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteResponse {
+  pub success: bool,
+  pub message: String,
+}
 
 pub async fn save_language_profiles(
   data: Json<SaveLanguageProfiles>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<Vec<LanguageProfile>>> {
+) -> FastJobResult<Json<ListLanguageProfilesResponse>> {
   let person_id = local_user_view.person.id;
 
-  let mut saved_profiles = Vec::new();
-  for profile_request in data.language_profiles.clone() {
-    let result = match profile_request.id {
-      Some(id) => {
-        // Update existing profile
-        let update_form = LanguageProfileUpdateForm {
-          lang: Some(profile_request.lang),
-          level_name: Some(profile_request.level_name),
-          updated_at: Some(chrono::Utc::now()),
-        };
-        LanguageProfile::update(&mut context.pool(), id, &update_form).await?
-      }
-      None => {
-        // Create new profile
-        let insert_form = LanguageProfileInsertForm::new(
-          person_id,
-          profile_request.lang,
-          profile_request.level_name,
-        );
-        LanguageProfile::create(&mut context.pool(), &insert_form).await?
-      }
-    };
-    saved_profiles.push(result);
-  }
+  // Use the database implementation that handles duplicate validation
+  let language_profiles = LanguageProfile::save_language_profiles(
+    &mut context.pool(),
+    person_id,
+    data.language_profiles.clone(),
+  ).await?;
 
-  Ok(Json(saved_profiles))
+  Ok(Json(ListLanguageProfilesResponse {
+    language_profiles,
+  }))
 }
 
 pub async fn list_language_profiles(
@@ -61,9 +53,11 @@ pub async fn list_language_profiles(
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateLanguageProfileRequest {
   pub id: LanguageProfileId,
   pub lang: String,
+  #[serde(rename = "level")]
   pub level_name: LanguageLevel,
 }
 
@@ -87,9 +81,47 @@ pub async fn update_language_profile(
 pub async fn delete_single_language_profile(
   data: Json<DeleteItemRequest<LanguageProfileId>>,
   context: Data<FastJobContext>,
-  _local_user_view: LocalUserView,
-) -> FastJobResult<Json<String>> {
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<DeleteResponse>> {
   let id = data.into_inner().id;
-  LanguageProfile::delete(&mut context.pool(), id).await?;
-  Ok(Json("Language profile deleted successfully".to_string()))
+  let person_id = local_user_view.person.id;
+  
+  // First verify the profile belongs to the user
+  if let Ok(profile) = LanguageProfile::read(&mut context.pool(), id).await {
+    if profile.person_id == person_id {
+      LanguageProfile::delete(&mut context.pool(), id).await?;
+      Ok(Json(DeleteResponse {
+        success: true,
+        message: "1 record deleted successfully".to_string(),
+      }))
+    } else {
+      Err(FastJobErrorType::NotFound)?
+    }
+  } else {
+    Err(FastJobErrorType::NotFound)?
+  }
+}
+
+pub async fn delete_language_profiles(
+  data: Json<DeleteLanguageProfilesRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<DeleteResponse>> {
+  let person_id = local_user_view.person.id;
+  let mut deleted_count = 0;
+
+  for profile_id in data.language_profile_ids.clone() {
+    // First verify the profile belongs to the user
+    if let Ok(profile) = LanguageProfile::read(&mut context.pool(), profile_id).await {
+      if profile.person_id == person_id {
+        LanguageProfile::delete(&mut context.pool(), profile_id).await?;
+        deleted_count += 1;
+      }
+    }
+  }
+
+  Ok(Json(DeleteResponse {
+    success: true,
+    message: format!("{} records deleted successfully", deleted_count),
+  }))
 }

@@ -18,7 +18,7 @@ pub struct Certificates {
     pub person_id: PersonId,
     pub name: String,
     pub achieved_date: NaiveDate,
-    pub expires_date: NaiveDate,
+    pub expires_date: Option<NaiveDate>,
     pub url: Option<DbUrl>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -54,8 +54,8 @@ pub struct CertificateView {
     pub id: CertificateId, // None for new items, Some(id) for updates
     pub name: String,
     pub achieved_date: NaiveDate, // Date as string in YYYY-MM-DD format
-    pub expires_date: NaiveDate,  // Date as string in YYYY-MM-DD format
-    pub url: DbUrl,
+    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format
+    pub url: Option<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -72,8 +72,20 @@ pub struct CertificatesRequest {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCertificateRequestItem {
     pub id: Option<CertificateId>,
-    pub name: String,
-    pub achieved_date: Option<NaiveDate>, // Date as string in YYYY-MM-DD format
-    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    pub achieved_date: NaiveDate, // Date as string in YYYY-MM-DD format - REQUIRED
+    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format - OPTIONAL
     pub url: Option<DbUrl>,
+    #[serde(default)]
+    pub deleted: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteCertificatesRequest {
+    #[serde(rename = "certificateIds")]
+    pub certificate_ids: Vec<CertificateId>,
 }

@@ -1,8 +1,8 @@
-use std::io::Write;
 use crate::newtypes::{LanguageProfileId, PersonId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use std::io::Write;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::language_profile;
 
@@ -117,6 +117,7 @@ pub struct LanguageProfileUpdateForm {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct SaveLanguageProfiles {
+    #[serde(rename = "languageProfiles")]
     pub language_profiles: Vec<LanguageProfileRequest>,
 }
 
@@ -128,6 +129,8 @@ pub struct LanguageProfileRequest {
     pub id: Option<LanguageProfileId>,
     pub lang: String,
     pub level_name: LanguageLevel,
+    #[serde(default)]
+    pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -137,6 +140,7 @@ pub struct LanguageProfileRequest {
 pub struct LanguageProfileResponse {
     pub id: LanguageProfileId,
     pub lang: String,
+    #[serde(rename = "level")]
     pub level_name: LanguageLevel,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -155,6 +159,17 @@ impl From<LanguageProfile> for LanguageProfileResponse {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteLanguageProfilesRequest {
+    #[serde(rename = "languageProfileIds")]
+    pub language_profile_ids: Vec<LanguageProfileId>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListLanguageProfilesResponse {
+    #[serde(rename = "languageProfiles")]
     pub language_profiles: Vec<LanguageProfileResponse>,
 }

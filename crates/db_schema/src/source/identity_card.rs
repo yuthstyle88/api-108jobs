@@ -2,7 +2,9 @@ use crate::newtypes::{AddressId, IdentityCardId};
 use chrono::{DateTime, NaiveDate, Utc};
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::identity_card;
+#[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
+#[cfg(feature = "full")]
 use lemmy_utils::utils::validation::is_valid_issued_and_expiry;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -78,6 +80,7 @@ pub struct IdentityCardResponse {
   pub identity_card: IdentityCard,
 }
 
+#[cfg(feature = "full")]
 impl TryFrom<IdentityCardForm> for IdentityCardUpdateForm {
   type Error = FastJobError;
 

@@ -68,8 +68,9 @@ pub struct WalletUpdateForm {
 }
 
 // crates/db_schema/src/source/wallet_transaction.rs
-#[derive(Debug, Clone, Queryable, Identifiable)]
-#[diesel(table_name = wallet_transaction)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "full", derive(Queryable, Identifiable))]
+#[cfg_attr(feature = "full", diesel(table_name = wallet_transaction))]
 pub struct WalletTransaction {
   pub id: i32,
   pub wallet_id: WalletId,
@@ -122,8 +123,9 @@ impl From<&WalletTransactionForm> for WalletTransactionInsertForm {
     }
   }
 }
-#[derive(Debug, AsChangeset, Default, Clone)]
-#[diesel(table_name = wallet_transaction)]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "full", derive(AsChangeset))]
+#[cfg_attr(feature = "full", diesel(table_name = wallet_transaction))]
 pub struct WalletTransactionUpdateForm {
   pub description: Option<String>,
 }

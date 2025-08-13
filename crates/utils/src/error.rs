@@ -297,6 +297,10 @@ pub enum FastJobErrorType {
   CouldntUpdateWalletTranSaction,
   CouldntCreateWalletTranSaction,
   NegativeAmount,
+  CouldntDeleteEducation,
+  CouldntDeleteWorkExperience,
+    CouldntDeleteCertificate,
+    CouldntDeleteLanguageProfile,
 }
 
 cfg_if! {

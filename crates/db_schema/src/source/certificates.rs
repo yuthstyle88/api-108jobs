@@ -24,6 +24,22 @@ pub struct Certificates {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct CertificatesItem {
+    pub id: Option<CertificateId>, // None for new items, Some(id) for updates
+    #[serde(rename = "school", skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub achieved_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<DbUrl>,
+}
+
 #[derive(Clone, derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = certificates))]
@@ -58,12 +74,27 @@ pub struct CertificateView {
     pub url: Option<DbUrl>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct CertificateResponse {
+    pub id: CertificateId,
+    pub person_id: PersonId,
+    pub name: String,
+    pub achieved_date: NaiveDate,
+    pub expires_date: Option<NaiveDate>,
+    pub url: Option<DbUrl>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct CertificatesRequest {
-    pub certificates: Vec<UpdateCertificateRequestItem>,
+    pub certificates: Vec<CertificatesItem>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -71,21 +102,13 @@ pub struct CertificatesRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCertificateRequestItem {
-    pub id: Option<CertificateId>,
+    pub id: CertificateId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    pub achieved_date: NaiveDate, // Date as string in YYYY-MM-DD format - REQUIRED
-    pub expires_date: Option<NaiveDate>,  // Date as string in YYYY-MM-DD format - OPTIONAL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub achieved_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<DbUrl>,
-    #[serde(default)]
-    pub deleted: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
-pub struct DeleteCertificatesRequest {
-    #[serde(rename = "certificateIds")]
-    pub certificate_ids: Vec<CertificateId>,
 }

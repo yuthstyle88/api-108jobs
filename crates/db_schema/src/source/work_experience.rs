@@ -82,8 +82,6 @@ pub struct WorkExperienceItem {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
     pub is_current: Option<bool>,
-    #[serde(default)]
-    pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

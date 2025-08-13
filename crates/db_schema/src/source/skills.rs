@@ -17,7 +17,7 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct Skills {
-    pub id: i32,
+    pub id: SkillId,
     pub person_id: PersonId,
     pub skill_name: String,
     pub level_id: Option<i32>,
@@ -39,7 +39,7 @@ pub struct SkillsInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = skills))]
 pub struct SkillsUpdateForm {
     pub skill_name: Option<String>,
-    pub level_id: Option<Option<i32>>,
+    pub level_id: Option<i32>,
 }
 
 // A common form used for both insert and update flows.
@@ -89,7 +89,7 @@ pub struct SkillItem {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct SkillResponse {
-    pub id: i32,
+    pub id: SkillId,
     #[serde(rename = "name")]
     pub skill_name: String,
     #[serde(rename = "level")]
@@ -161,7 +161,7 @@ impl TryFrom<SkillsForm> for SkillsUpdateForm {
         value.validate()?;
         Ok(SkillsUpdateForm {
             skill_name: Some(value.skill_name),
-            level_id: Some(value.level_id),
+            level_id: value.level_id,
         })
     }
 }

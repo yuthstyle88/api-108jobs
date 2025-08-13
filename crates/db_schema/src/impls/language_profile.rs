@@ -2,7 +2,7 @@ use crate::{
   newtypes::{LanguageProfileId, PersonId},
   source::language_profile::{
     LanguageProfile, LanguageProfileInsertForm, LanguageProfileResponse,
-    LanguageProfileUpdateForm,
+    LanguageProfileUpdateForm, LanguageProfileItem
   },
   traits::Crud,
   utils::{get_conn, DbPool},
@@ -10,9 +10,8 @@ use crate::{
 use chrono::Utc;
 use diesel::{ExpressionMethods, QueryDsl, OptionalExtension};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::language_profile;
+use lemmy_db_schema_file::schema::{language_profile};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use tracing::warn;
 
 impl Crud for LanguageProfile {
   type InsertForm = LanguageProfileInsertForm;
@@ -84,70 +83,77 @@ impl LanguageProfile {
     Ok(result)
   }
 
-  pub async fn save_language_profiles(
+
+  pub async fn delete_not_in_list(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-    profiles: Vec<crate::source::language_profile::LanguageProfileRequest>,
-  ) -> FastJobResult<Vec<LanguageProfileResponse>> {
-    let mut results = Vec::new();
+    language_profile_ids: &[LanguageProfileId],
+  ) -> FastJobResult<usize> {
+    let conn = &mut get_conn(pool).await?;
 
-    for profile_request in profiles {
-      match (profile_request.id, profile_request.deleted) {
-        (Some(id), true) => {
-          // Delete existing profile
-          Self::delete(pool, id).await?;
-          // Don't add to results for deleted items
-        }
-        (Some(id), false) => {
-          // Update existing profile
-          let update_form = LanguageProfileUpdateForm {
-            lang: Some(profile_request.lang),
-            level_name: Some(profile_request.level_name),
-            updated_at: Some(Utc::now()),
-          };
-          let result = Self::update(pool, id, &update_form).await?;
-          results.push(LanguageProfileResponse::from(result));
-        }
-        (None, false) => {
-          // Create new profile or update existing one if it already exists
-          if let (lang, level_name) = (profile_request.lang.clone(), profile_request.level_name) {
-            // Check if a language profile already exists for this person and language
-            if let Some(existing_profile) = Self::find_by_person_and_language(pool, person_id, &lang).await? {
-              // Log the duplicate detection and update existing profile instead
-              warn!(
-                "Duplicate language profile detected for person_id: {}, lang: '{}'. Updating existing profile with id: {} instead of creating new one.",
-                person_id.0,
-                lang,
-                existing_profile.id.0
-              );
-              
-              let update_form = LanguageProfileUpdateForm {
-                lang: Some(lang),
-                level_name: Some(level_name),
-                updated_at: Some(Utc::now()),
-              };
-              let result = Self::update(pool, existing_profile.id, &update_form).await?;
-              results.push(LanguageProfileResponse::from(result));
-            } else {
-              // Create new profile only if none exists
-              let insert_form = LanguageProfileInsertForm::new(
-                person_id,
-                lang,
-                level_name,
-              );
-              let result = Self::create(pool, &insert_form).await?;
-              results.push(LanguageProfileResponse::from(result));
-            }
-          }
-          // Skip invalid create requests
-        }
-        (None, true) => {
-          // Skip invalid delete requests (can't delete without ID)
-        }
-      }
-    }
-
-    Ok(results)
+    diesel::delete(language_profile::table)
+        .filter(language_profile::person_id.eq(person_id))
+        .filter(language_profile::id.ne_all(language_profile_ids))
+        .execute(conn)
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntDeleteLanguageProfile)
   }
 
+  pub async fn save_language_profile_list(
+    pool: &mut DbPool<'_>,
+    person_id: PersonId,
+    language_profiles: &[LanguageProfileItem],
+  ) -> FastJobResult<Vec<LanguageProfileResponse>> {
+    let conn = &mut get_conn(pool).await?;
+
+    conn.build_transaction()
+        .run(|conn| {
+          Box::pin(async move {
+            let mut saved_language_profiles = Vec::new();
+            let mut language_profile_ids = Vec::new();
+
+            for lang_profile_item in language_profiles {
+              match lang_profile_item.id {
+                Some(id) => {
+                  // Update existing work experience
+                  let form = LanguageProfileUpdateForm {
+                    lang: lang_profile_item.lang.clone(),
+                    level_name: lang_profile_item.level_name.clone(),
+                    updated_at: Some(Utc::now()),
+                  };
+                  let updated = Self::update(&mut conn.into(), id, &form).await?;
+                  language_profile_ids.push(id);
+                  saved_language_profiles.push(updated);
+                }
+                None => {
+                  // Create new work experience
+                  if let (Some(ref lang), Some(ref level_name)) =
+                      (&lang_profile_item.lang, &lang_profile_item.level_name) {
+                    let form = LanguageProfileInsertForm::new(
+                      person_id,
+                      lang.clone(),
+                      level_name.clone()
+                    );
+                    let created = Self::create(&mut conn.into(), &form).await?;
+                    language_profile_ids.push(created.id);
+                    saved_language_profiles.push(created);
+                  }
+                }
+              }
+            }
+
+            // Delete any records not in the current list
+            Self::delete_not_in_list(&mut conn.into(), person_id, &language_profile_ids).await?;
+
+            // Convert to response format
+            let language_profile_responses: Vec<LanguageProfileResponse> = saved_language_profiles
+                .into_iter()
+                .map(LanguageProfileResponse::from)
+                .collect();
+
+            Ok(language_profile_responses)
+          }) as _
+        })
+        .await
+  }
 }

@@ -1,4 +1,4 @@
-use crate::newtypes::{LanguageProfileId, PersonId};
+use crate::newtypes::{ LanguageProfileId, PersonId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -92,6 +92,18 @@ pub struct LanguageProfile {
     pub level_name: LanguageLevel,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+#[serde(rename_all = "camelCase")]
+pub struct LanguageProfileItem {
+    pub id: Option<LanguageProfileId>, // None for new items, Some(id) for updates
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lang: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub level_name: Option<LanguageLevel>,
 }
 
 #[derive(Clone, derive_new::new)]

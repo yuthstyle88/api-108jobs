@@ -57,8 +57,6 @@ pub struct EducationItem {
     pub school_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub major: Option<String>,
-    #[serde(default)]
-    pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

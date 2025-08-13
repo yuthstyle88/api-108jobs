@@ -55,7 +55,7 @@ impl WalletModel {
     if amount <= 0 {
       return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into());
     }
-    let (mut t, mut a, mut o) = (w.balance_total, w.balance_available, w.balance_outstanding);
+    let (mut t, mut a, o) = (w.balance_total, w.balance_available, w.balance_outstanding);
     match op {
       WalletOp::Deposit => {
         // External credit into this wallet (used only by legacy paths). For platform-backed

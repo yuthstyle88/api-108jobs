@@ -6,22 +6,22 @@ use lemmy_api::local_user::bank_account::{
   set_default_bank_account,
 };
 use lemmy_api::local_user::certificates::{
-  delete_certificates, list_certificates, save_certificates,
+  list_certificates, save_certificates,
 };
 use lemmy_api::local_user::language_profile::{
-  delete_language_profiles, list_language_profiles, save_language_profiles,
+  list_language_profiles, save_language_profiles,
 };
 use lemmy_api::local_user::education::{
   delete_educations, list_education, save_education,
 };
 use lemmy_api::local_user::exchange::exchange_key;
-use lemmy_api::local_user::skills::{ delete_skills, list_skills, save_skills};
+use lemmy_api::local_user::skills::{list_skills, save_skills};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::{
   approve_quotation, approve_work, create_quotation, get_wallet, submit_work,
 };
 use lemmy_api::local_user::work_experience::{
-  delete_work_experience, list_work_experience, save_work_experience,
+  list_work_experience, save_work_experience,
 };
 use lemmy_api::{
   comment::{
@@ -333,25 +333,21 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/work-experience")
                 .route("", post().to(save_work_experience))
                 .route("", get().to(list_work_experience))
-                .route("", delete().to(delete_work_experience)),
             )
             .service(
               scope("/skills")
                 .route("", post().to(save_skills))
                 .route("", get().to(list_skills))
-                .route("", delete().to(delete_skills)),
-            )
+              )
             .service(
               scope("/certificates")
                 .route("", post().to(save_certificates))
                 .route("", get().to(list_certificates))
-                .route("", delete().to(delete_certificates)),
             )
             .service(
               scope("/language-profiles")
                 .route("", post().to(save_language_profiles))
                 .route("", get().to(list_language_profiles))
-                .route("", delete().to(delete_language_profiles)),
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))

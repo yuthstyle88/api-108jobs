@@ -2,7 +2,7 @@ use actix_web::web::{Data, Json};
 use lemmy_api_common::account::{DeleteItemRequest};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::SkillId;
-use lemmy_db_schema::source::skills::{Skills, SkillsInsertForm, SkillsRequest, SkillsUpdateForm, UpdateSkillRequest, SkillResponse, DeleteSkillsRequest};
+use lemmy_db_schema::source::skills::{Skills, SkillsRequest, SkillsUpdateForm, UpdateSkillRequest, SkillResponse, DeleteSkillsRequest};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobResult, FastJobErrorType};
@@ -21,15 +21,6 @@ pub struct SkillsListResponse {
     pub skills: Vec<SkillResponse>,
 }
 
-// Helper function to validate skill level
-fn validate_skill_level(level_id: &Option<i32>) -> FastJobResult<()> {
-    if let Some(level) = level_id {
-        if *level < 1 || *level > 5 {
-            Err(FastJobErrorType::InvalidField("Proficient level must from 1 to 5".to_string()))?;
-        }
-    }
-    Ok(())
-}
 
 pub async fn save_skills(
     data: Json<SkillsRequest>,
@@ -38,49 +29,13 @@ pub async fn save_skills(
 ) -> FastJobResult<Json<SkillsListResponse>> {
     let person_id = local_user_view.person.id;
 
-    let mut saved_skills = Vec::new();
-    for skill in &data.skills {
-        match (skill.id, skill.deleted) {
-            // Delete existing skill
-            (Some(id), true) => {
-                Skills::delete(&mut context.pool(), id).await?;
-                // Don't add to saved_skills since it's deleted
-            }
-            // Update existing skill
-            (Some(id), false) => {
-                // Validate skill level
-                validate_skill_level(&skill.level_id)?;
-                
-                let form = SkillsUpdateForm {
-                    skill_name: skill.skill_name.clone(),
-                    level_id: Some(skill.level_id),
-                };
-                let updated = Skills::update(&mut context.pool(), id, &form).await?;
-                saved_skills.push(updated);
-            }
-            // Create new skill
-            (None, false) => {
-                if let (Some(skill_name), Some(level_id)) = (&skill.skill_name, skill.level_id) {
-                    // Validate skill level
-                    validate_skill_level(&Some(level_id))?;
-                    
-                    let form = SkillsInsertForm::new(
-                        person_id,
-                        skill_name.clone(),
-                        Some(level_id),
-                    );
-                    let created = Skills::create(&mut context.pool(), &form).await?;
-                    saved_skills.push(created);
-                }
-            }
-            // Invalid: trying to delete without ID
-            (None, true) => {
-                // Skip invalid delete requests
-            }
-        }
-    }
+    // Use the new replacement strategy - any records not in the request will be deleted
+    let skill_responses = Skills::save_skills_list(
+        &mut context.pool(),
+        person_id,
+        &data.skills,
+    ).await?;
 
-    let skill_responses: Vec<SkillResponse> = saved_skills.into_iter().map(SkillResponse::from).collect();
     Ok(Json(SkillsListResponse {
         skills: skill_responses,
     }))
@@ -127,10 +82,15 @@ pub async fn update_skill(
     context: Data<FastJobContext>,
 ) -> FastJobResult<Json<Skills>> {
     // Validate skill level
-    validate_skill_level(&data.level_id)?;
+    if let Some(level_id) = data.level_id {
+        if level_id < 1 || level_id > 5 {
+            return Err(FastJobErrorType::InvalidField("Proficient level must from 1 to 5".to_string()).into());
+        }
+    }
+    
     let form = SkillsUpdateForm{
         skill_name: data.skill_name.clone(),
-        level_id: Some(data.level_id),
+        level_id: data.level_id,
     };
 
     let updated_skill = Skills::update(

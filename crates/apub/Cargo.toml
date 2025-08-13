@@ -54,7 +54,6 @@ anyhow = { workspace = true }
 serde_with.workspace = true
 enum_delegate = "0.2.0"
 either = { workspace = true }
-async-trait = "0.1.88"
 
 [dev-dependencies]
 serial_test = { workspace = true }

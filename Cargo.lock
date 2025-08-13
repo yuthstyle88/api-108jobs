@@ -3500,6 +3500,7 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "anyhow",
+ "async-trait",
  "chrono",
  "diesel-async",
  "either",
@@ -3548,7 +3549,6 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "actix-web",
  "anyhow",
- "async-trait",
  "chrono",
  "diesel",
  "either",
@@ -3588,7 +3588,6 @@ dependencies = [
  "actix-web",
  "anyhow",
  "assert-json-diff",
- "async-trait",
  "chrono",
  "diesel_ltree",
  "either",
@@ -4103,6 +4102,7 @@ name = "lemmy_db_views_site"
 version = "1.0.0-alpha.5"
 dependencies = [
  "anyhow",
+ "async-trait",
  "chrono",
  "diesel",
  "diesel-async",
@@ -4116,9 +4116,9 @@ dependencies = [
  "lemmy_utils",
  "serde",
  "serde_with",
+ "tokio",
  "ts-rs",
  "url",
- "uuid",
  "validator",
 ]
 
@@ -4196,6 +4196,7 @@ dependencies = [
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
  "lemmy_db_views_modlog_combined",
+ "lemmy_db_views_person",
  "lemmy_db_views_person_content_combined",
  "lemmy_db_views_post",
  "lemmy_db_views_site",
@@ -4226,10 +4227,9 @@ dependencies = [
  "lemmy_api_crud",
  "lemmy_api_utils",
  "lemmy_apub",
- "lemmy_apub_objects",
  "lemmy_db_schema",
- "lemmy_db_schema_file",
  "lemmy_db_schema_setup",
+ "lemmy_db_views_site",
  "lemmy_routes",
  "lemmy_utils",
  "lemmy_ws",

@@ -10,6 +10,7 @@ use lemmy_utils::{
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
+use crate::site_snapshot::SiteConfigProvider;
 
 #[derive(Clone)]
 pub struct FastJobContext {
@@ -23,6 +24,7 @@ pub struct FastJobContext {
   // Wrap rate_limit_cell in Arc to avoid expensive clones
   rate_limit_cell: Arc<RateLimit>,
   redis: Arc<RedisClient>,
+  site_config: Arc<dyn SiteConfigProvider + Send + Sync>,
 }
 
 impl FastJobContext {
@@ -33,6 +35,7 @@ impl FastJobContext {
     secret: Secret,
     rate_limit_cell: RateLimit,
     redis: RedisClient,
+    site_config: Box<dyn SiteConfigProvider + Send + Sync>,
   ) -> FastJobContext {
     FastJobContext {
       // Wrap all fields in Arc to reduce cloning overhead
@@ -42,6 +45,7 @@ impl FastJobContext {
       secret: Arc::new(secret),
       rate_limit_cell: Arc::new(rate_limit_cell),
       redis: Arc::new(redis),
+      site_config: Arc::from(site_config),
     }
   }
   
@@ -85,6 +89,12 @@ impl FastJobContext {
     // Return a reference to the RedisClient inside the Arc
     &self.redis
   }
+
+  pub fn site_config(&self) -> &(dyn SiteConfigProvider + Send + Sync) {
+    // Return a reference to the SiteView inside the Arc
+    self.site_config.as_ref()
+  }
+
   #[allow(clippy::expect_used)]
   pub async fn init_test_federation_config() -> FastJobResult<()> {
     // call this to run migrations

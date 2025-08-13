@@ -1,5 +1,6 @@
 use crate::SiteView;
 use chrono::{DateTime, Utc};
+use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_db_schema::{
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
@@ -33,7 +34,6 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use lemmy_db_schema::source::wallet::Wallet;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -315,6 +315,30 @@ pub struct EditSite {
 /// An expanded response for a site.
 #[serde(rename_all = "camelCase")]
 pub struct GetSiteResponse {
+  pub site_view: SiteView,
+  pub admins: Vec<PersonView>,
+  pub version: String,
+  pub all_languages: Vec<Language>,
+  pub discussion_languages: Vec<LanguageId>,
+  /// If the site has any taglines, a random one is included here for displaying
+  pub tagline: Option<Tagline>,
+  /// A list of external auth methods your site supports.
+  pub oauth_providers: Vec<PublicOAuthProvider>,
+  pub admin_oauth_providers: Vec<OAuthProvider>,
+  pub blocked_urls: Vec<LocalSiteUrlBlocklist>,
+  // If true then uploads for post images or markdown images are disabled. Only avatars, icons and
+  // banners can be set.
+  pub image_upload_disabled: bool,
+  pub active_plugins: Vec<PluginMetadata>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// An expanded response for a site.
+#[serde(rename_all = "camelCase")]
+pub struct SiteSnapshot {
   pub site_view: SiteView,
   pub admins: Vec<PersonView>,
   pub version: String,

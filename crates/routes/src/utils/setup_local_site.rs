@@ -19,15 +19,21 @@ use lemmy_db_schema::{
 };
 use lemmy_db_schema_file::schema::local_site;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-};
+use lemmy_db_views_person::impls::PersonQuery;
+use lemmy_utils::{error::{FastJobErrorExt, FastJobErrorType, FastJobResult}, settings::structs::Settings, VERSION};
 use tracing::info;
 use url::Url;
+use lemmy_api_utils::plugins::plugin_metadata;
+use lemmy_db_schema::source::actor_language::SiteLanguage;
+use lemmy_db_schema::source::language::Language;
+use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
+use lemmy_db_schema::source::oauth_provider::OAuthProvider;
+use lemmy_db_schema::source::tagline::Tagline;
+use lemmy_db_schema::source::wallet::Wallet;
+use lemmy_db_views_site::api::{GetSiteResponse, SiteSnapshot};
 use lemmy_db_schema::source::wallet::WalletModel;
 
-pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
+pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteSnapshot> {
   let conn = &mut get_conn(pool).await?;
   // Check to see if local_site exists, without the cache wrapper
   if select(not(exists(local_site::table.as_query())))
@@ -115,5 +121,31 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
       .await?;
   }
 
-  SiteView::read_local(pool).await
+  let site_view = SiteView::read_local(pool).await?;
+  let admins = PersonQuery {
+    admins_only: Some(true),
+    ..Default::default()
+  }
+      .list(None, site_view.instance.id, pool)
+      .await?;
+  let all_languages = Language::read_all(pool).await?;
+  let discussion_languages = SiteLanguage::read_local_raw(pool).await?;
+  let blocked_urls = LocalSiteUrlBlocklist::get_all(pool).await?;
+  let tagline = Tagline::get_random(pool).await.ok();
+  let admin_oauth_providers = OAuthProvider::get_all(pool).await?;
+  let oauth_providers = OAuthProvider::convert_providers_to_public(admin_oauth_providers.clone());
+
+  Ok(SiteSnapshot {
+    site_view,
+    admins,
+    version: VERSION.to_string(),
+    all_languages,
+    discussion_languages,
+    blocked_urls,
+    tagline,
+    oauth_providers,
+    admin_oauth_providers,
+    image_upload_disabled: settings.pictrs()?.image_upload_disabled,
+    active_plugins: plugin_metadata(),
+  })
 }

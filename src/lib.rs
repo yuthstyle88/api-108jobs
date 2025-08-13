@@ -1,5 +1,6 @@
 pub mod api_routes;
 
+use std::sync::Arc;
 use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
@@ -40,6 +41,7 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_api_utils::site_snapshot::CachedSiteConfigProvider;
 use lemmy_utils::redis::RedisClient;
 
 #[global_allocator]
@@ -143,11 +145,14 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let secret = Secret::init(&mut (&pool).into()).await?;
 
   // Make sure the local site is set up.
-  let site_view = setup_local_site(&mut (&pool).into(), &SETTINGS).await?;
+  let site_snapshot = setup_local_site(&mut (&pool).into(), &SETTINGS).await?;
+
+  let site_config = CachedSiteConfigProvider::new(pool.clone(), site_snapshot.clone(), SETTINGS.clone());
+  // site_config.clone().start_background_refresh(60);
 
   // Set up the rate limiter
   let rate_limit_config =
-    local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
+    local_site_rate_limit_to_rate_limit_config(&site_snapshot.site_view.local_site_rate_limit);
   let rate_limit_cell = RateLimit::new(rate_limit_config);
 
   println!(
@@ -169,7 +174,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
-    redis_client
+    redis_client,
+    Box::new(site_config),
   );
 
   let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone())

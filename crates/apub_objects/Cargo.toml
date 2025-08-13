@@ -40,7 +40,6 @@ url = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
 itertools = { workspace = true }
-async-trait = "0.1.88"
 anyhow = { workspace = true }
 moka.workspace = true
 serde_with.workspace = true

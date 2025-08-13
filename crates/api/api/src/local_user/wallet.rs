@@ -3,9 +3,10 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, SubmitWork, ValidCreateInvoice, WalletOperationResponse};
-use lemmy_db_schema::source::wallet::WalletModel;
+use lemmy_db_schema::source::wallet::{WalletModel, WalletTransactionInsertForm, TxKind};
 use lemmy_utils::error::FastJobResult;
 use lemmy_workflow::WorkFlowService;
+use uuid::Uuid;
 
 pub async fn get_wallet(
   context: Data<FastJobContext>,
@@ -33,13 +34,23 @@ pub async fn deposit_wallet(
   // Load user's wallet (must exist per NOT NULL constraint)
   let wallet = WalletModel::get_by_user(&mut context.pool(), user_id).await?;
 
-  // Deposit funds
-  let updated_wallet = WalletModel::deposit(&mut context.pool(), wallet.id, data.amount).await?;
+  // Deposit funds: construct a wallet transaction insert form and call deposit
+  let form = WalletTransactionInsertForm {
+    wallet_id: wallet.id,
+    reference_type: "user_deposit".to_string(),
+    reference_id: 0,
+    kind: TxKind::Deposit,
+    amount: data.amount,
+    description: "User deposit".to_string(),
+    counter_user_id: None,
+    idempotency_key: Uuid::new_v4().to_string(),
+  };
+
+  let updated_wallet = WalletModel::deposit(&mut context.pool(), &form).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,
     balance: updated_wallet.balance_available,
-    escrow_balance: updated_wallet.balance_outstanding,
     transaction_amount: data.amount,
     success: true,
   }))
@@ -77,7 +88,6 @@ pub async fn create_quotation(
     post_id: data.post_id,
     amount: data.amount,
     status: "QuotationPending".to_string(),
-    max_revisions: data.revise_times,
     delivery_timeframe_days: data.working_days,
     created_at: billing.created_at.to_rfc3339(),
     success: true,

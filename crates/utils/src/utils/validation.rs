@@ -475,6 +475,10 @@ pub fn validate_amount(amount: &f64) -> FastJobResult<()> {
   Ok(())
 }
 
+#[inline]
+pub fn round_to_2_decimals(amount: f64) -> f64 {
+  (amount * 100.0).round() / 100.0
+}
 #[cfg(test)]
 mod tests {
   use crate::{

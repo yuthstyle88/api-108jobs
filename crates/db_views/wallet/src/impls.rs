@@ -3,9 +3,10 @@ use diesel::{result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   newtypes::{LocalUserId, WalletId},
-  source::wallet::Wallet,
+  source::wallet::WalletModel,
   utils::{get_conn, DbPool},
 };
+use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_db_schema_file::schema::wallet;
 use lemmy_utils::error::{ FastJobResult};
 
@@ -18,7 +19,7 @@ impl WalletView {
   }
 
   pub async fn read_by_user(pool: &mut DbPool<'_>, user_id: LocalUserId) -> FastJobResult<Wallet> {
-    Wallet::get_by_user(pool, user_id).await
+    WalletModel::get_by_user(pool, user_id).await
   }
 
 }

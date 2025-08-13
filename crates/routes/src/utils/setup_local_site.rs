@@ -25,7 +25,7 @@ use lemmy_utils::{
 };
 use tracing::info;
 use url::Url;
-use lemmy_db_schema::source::wallet::Wallet;
+use lemmy_db_schema::source::wallet::WalletModel;
 
 pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> FastJobResult<SiteView> {
   let conn = &mut get_conn(pool).await?;
@@ -67,7 +67,7 @@ pub async fn setup_local_site(pool: &mut DbPool<'_>, settings: &Settings) -> Fas
               )
             };
             let person_inserted = Person::create(&mut conn.into(), &person_form).await?;
-            let wallet = Wallet::create_for_platform(conn).await?;
+            let wallet = WalletModel::create_for_platform(conn).await?;
             let wallet_id = wallet.id;
             let local_user_form = LocalUserInsertForm {
               email: setup.admin_email.clone(),

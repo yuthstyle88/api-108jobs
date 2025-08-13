@@ -17,3 +17,4 @@ diesel = { workspace = true }
 diesel-async = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
+uuid =  { workspace = true }

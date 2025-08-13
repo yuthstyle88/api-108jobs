@@ -13,7 +13,7 @@ use lemmy_api_utils::{
   },
 };
 use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::source::wallet::Wallet;
+use lemmy_db_schema::source::wallet::WalletModel;
 use lemmy_db_schema::{
   newtypes::OAuthProviderId,
   source::{
@@ -738,7 +738,7 @@ async fn create_local_user(
   local_user_form.interface_language = interface_language;
 
   // Create a new wallet for this user
-  let wallet = Wallet::create_for_user(conn).await?;
+  let wallet = WalletModel::create_for_user(conn).await?;
   // Attach the wallet to the local user form
   local_user_form.wallet_id = wallet.id;
 

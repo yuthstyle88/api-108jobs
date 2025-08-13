@@ -15,7 +15,6 @@ use lemmy_db_schema::{
     person::Person,
     post::Post,
     tagline::Tagline,
-    wallet::Wallet,
   },
 };
 use lemmy_db_schema_file::enums::{
@@ -34,6 +33,7 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
+use lemmy_db_schema::source::wallet::Wallet;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

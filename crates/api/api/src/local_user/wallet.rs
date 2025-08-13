@@ -3,7 +3,7 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::WalletId;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, DepositWallet, GetWalletResponse, SubmitWork, ValidCreateInvoice, WalletOperationResponse};
-use lemmy_db_schema::source::wallet::Wallet;
+use lemmy_db_schema::source::wallet::WalletModel;
 use lemmy_utils::error::FastJobResult;
 use lemmy_workflow::WorkFlowService;
 
@@ -13,7 +13,7 @@ pub async fn get_wallet(
 ) -> FastJobResult<Json<GetWalletResponse>> {
   let user_id = local_user_view.local_user.id;
 
-  let wallet = Wallet::get_by_user(&mut context.pool(), user_id).await?;
+  let wallet = WalletModel::get_by_user(&mut context.pool(), user_id).await?;
 
   let response = GetWalletResponse {
     wallet_id: wallet.id,
@@ -31,10 +31,10 @@ pub async fn deposit_wallet(
   let user_id = local_user_view.local_user.id;
 
   // Load user's wallet (must exist per NOT NULL constraint)
-  let wallet = Wallet::get_by_user(&mut context.pool(), user_id).await?;
+  let wallet = WalletModel::get_by_user(&mut context.pool(), user_id).await?;
 
   // Deposit funds
-  let updated_wallet = Wallet::deposit(&mut context.pool(), wallet.id, data.amount).await?;
+  let updated_wallet = WalletModel::deposit(&mut context.pool(), wallet.id, data.amount).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,

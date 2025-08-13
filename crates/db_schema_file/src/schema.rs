@@ -1082,9 +1082,9 @@ tagline (id) {
 diesel::table! {
     wallet (id) {
         id -> Int4,
-        balance_total -> Float8,
-        balance_available -> Float8,
-        balance_outstanding -> Float8,
+        balance_total -> Int4,
+        balance_available -> Int4,
+        balance_outstanding -> Int4,
         is_platform -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
@@ -1100,7 +1100,7 @@ diesel::table! {
         reference_type -> Text,
         reference_id -> Int4,
         kind -> TxKind,
-        amount -> Float8,
+        amount -> Int4,
         description -> Text,
         counter_user_id -> Nullable<Int4>,
         idempotency_key -> Text,
@@ -1117,7 +1117,7 @@ diesel::table! {
         employer_id -> Int4,
         post_id -> Int4,
         comment_id -> Nullable<Int4>,
-        amount -> Float8,
+        amount -> Int4,
         description -> Text,
         status -> BillingStatus,
         work_description -> Nullable<Text>,
@@ -1134,7 +1134,7 @@ diesel::table! {
         billing_id -> Int4,
         seq -> Int4,
         name -> Text,
-        amount -> Float8,
+        amount -> Int4,
         status -> Text,
         submitted_at -> Timestamptz,
         approved_at -> Nullable<Timestamptz>,
@@ -1272,6 +1272,18 @@ diesel::table! {
         lang -> Varchar,
         #[max_length = 50]
         level_name -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+// Coin table schema
+diesel::table! {
+    coin (id) {
+        id -> Int4,
+        code -> Text,
+        name -> Text,
+        supply_total -> Int4,
+        supply_minted_total -> Int4,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1483,4 +1495,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   skills,
   certificates,
   language_profile,
+  coin,
 );

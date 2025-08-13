@@ -1,11 +1,12 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::is_admin;
-use lemmy_db_schema::source::wallet::{Wallet, WalletTransactionInsertForm, TxKind};
+use lemmy_db_schema::source::wallet::{WalletModel, WalletTransactionInsertForm, TxKind};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet};
 use lemmy_utils::error::FastJobResult;
 use uuid::Uuid;
+use lemmy_utils::utils::validation::round_to_2_decimals;
 
 pub async fn admin_top_up_wallet(
   data: Json<AdminTopUpWallet>,
@@ -20,13 +21,13 @@ pub async fn admin_top_up_wallet(
     reference_type: "admin_top_up".to_string(),
     reference_id: 0,
     kind: TxKind::Deposit,
-    amount: data.amount,
+    amount: round_to_2_decimals(data.amount),
     description: data.reason.clone(),
     counter_user_id: None,
     idempotency_key: Uuid::new_v4().to_string(),
   };
 
-  let wallet = Wallet::create_transaction(&mut context.pool(), &form).await?;
+  let wallet = WalletModel::create_transaction(&mut context.pool(), &form).await?;
 
   Ok(Json(AdminWalletOperationResponse {
     wallet_id: data.wallet_id,
@@ -50,13 +51,13 @@ pub async fn admin_withdraw_wallet(
     reference_type: "admin_withdraw".to_string(),
     reference_id: 0,
     kind: TxKind::Withdraw,
-    amount: data.amount,
+    amount: round_to_2_decimals(data.amount),
     description: data.reason.clone(),
     counter_user_id: None,
     idempotency_key: Uuid::new_v4().to_string(),
   };
 
-  let wallet = Wallet::create_transaction(&mut context.pool(), &form).await?;
+  let wallet = WalletModel::create_transaction(&mut context.pool(), &form).await?;
 
   Ok(Json(AdminWalletOperationResponse {
     wallet_id: wallet.id,

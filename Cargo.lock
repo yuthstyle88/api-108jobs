@@ -4309,6 +4309,7 @@ dependencies = [
  "lemmy_db_views_wallet",
  "lemmy_utils",
  "serde",
+ "uuid",
 ]
 
 [[package]]

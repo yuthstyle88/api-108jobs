@@ -8,15 +8,17 @@ use lemmy_db_schema::{
   source::billing::{Billing, BillingFromQuotation, BillingInsertForm},
   utils::DbPool,
 };
+use lemmy_db_schema::newtypes::Coin;
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_db_views_wallet::api::{CreateInvoiceForm, ValidCreateInvoice};
-use lemmy_db_schema::source::wallet::Wallet;
+use lemmy_db_schema::source::wallet::{WalletModel, WalletTransactionInsertForm, TxKind};
+use uuid::Uuid;
 use lemmy_utils::error::FastJobErrorType;
 use lemmy_utils::error::{FastJobErrorExt2, FastJobResult};
 
 fn build_detailed_description(data: &CreateInvoiceForm) -> String {
   format!(
-    "Invoice for project: {}\nDetails: {}\nAmount: {}\nDue date: {}",
+    "Invoice for project: {}\nDetails: {:?}\nAmount: {:?}\nDue date: {}",
     data.project_name,
     data.project_details,
     data.amount,
@@ -62,7 +64,7 @@ fn form_touch_only() -> BillingUpdateForm {
 
 fn form_completed_and_wallet(
   freelancer_id: LocalUserId,
-  amount: f64,
+  amount: Coin,
 ) -> (BillingUpdateForm, WalletAction) {
   let form = BillingUpdateForm { status: Some(BillingStatus::Completed), updated_at: Some(Utc::now()), ..Default::default() };
   let wallet = WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount };
@@ -77,9 +79,9 @@ fn form_completed_and_wallet(
 // Wallet side-effects described here; executed in apply_transition()
 #[allow(dead_code)]
 enum WalletAction {
-  PayToEscrow { wallet_id: WalletId, amount: f64 },
-  ReleaseToFreelancer { user_id: LocalUserId, amount: f64 },
-  RefundToEmployer { user_id: LocalUserId, amount: f64 }, // reserved for future use
+  PayToEscrow { wallet_id: WalletId, amount: Coin },
+  ReleaseToFreelancer { user_id: LocalUserId, amount: Coin },
+  RefundToEmployer { user_id: LocalUserId, amount: Coin }, // reserved for future use
 }
 
 // Domain transitions used by apply_transition()
@@ -88,7 +90,7 @@ struct ReleaseToFreelancerTransition { pub form: BillingUpdateForm, pub wallet: 
 struct ApproveMilestoneTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct ReleaseRemainingTransition { pub form: BillingUpdateForm, pub wallet: WalletAction }
 struct SubmitWorkTransition { pub form: BillingUpdateForm }
-struct CancelTransition { #[allow(dead_code)] pub form: BillingUpdateForm }
+struct CancelTransition { pub form: BillingUpdateForm, pub wallet: Option<WalletAction> }
 // NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
 
 // Planner enum: unifies all transition variants for the DB/apply layer
@@ -107,7 +109,7 @@ struct FlowData {
   billing_id: BillingId,
   employer_id: LocalUserId,
   freelancer_id: LocalUserId,
-  amount: f64,
+  amount: Coin,
 }
 
 // ===== States as structs =====
@@ -147,13 +149,16 @@ impl QuotationPendingTS {
   #[allow(dead_code)]
   pub fn cancel(self) -> CancelTransition {
     let form = form_cancelled();
-    CancelTransition { form }
+    CancelTransition { form, wallet: None }
   }
 }
 
 impl WorkSubmittedTS {
-  pub fn approve_milestone(self, amount: f64) -> Result<ApproveMilestoneTransition, FastJobErrorType> {
-    if amount <= 0.0 { return Err(FastJobErrorType::InvalidField("milestone amount must be > 0".into())); }
+  pub fn approve_milestone(self, amount: Coin) -> Result<ApproveMilestoneTransition, FastJobErrorType> {
+    // Coin is integer-based; disallow zero/negative amounts
+    if amount <= 0 {
+      return Err(FastJobErrorType::InvalidField("milestone amount must be a positive coin".into()));
+    }
     let form = form_touch_only();
     let wallet = WalletAction::ReleaseToFreelancer { user_id: self.data.freelancer_id, amount };
     Ok(ApproveMilestoneTransition { form, wallet })
@@ -182,49 +187,96 @@ fn into_ts(b: &Billing) -> FlowData {
 
 // Helper: apply transitions (wallet + Crud update)
 async fn apply_transition(pool: &mut DbPool<'_>, billing_id: BillingId, plan: Planned) -> FastJobResult<Billing> {
-  // Wallet side-effects first (API expects &mut DbPool). If *_tx available, move inside txn.
   // Wallet side-effects first (API expects &mut DbPool).
   match &plan {
-    // กันเงินเข้ากอง escrow จากกระเป๋านายจ้าง (employer wallet)
+    // กันเงินเข้ากอง escrow: โอนจากกระเป๋านายจ้าง → กระเป๋าแพลตฟอร์ม (escrow)
     Planned::FundEscrow(t) => {
       if let WalletAction::PayToEscrow { wallet_id, amount } = &t.wallet {
-        Wallet::hold(pool, *wallet_id, *amount).await?;
+        let out_form = WalletTransactionInsertForm {
+          wallet_id: *wallet_id,
+          reference_type: "billing".to_string(),
+          reference_id: billing_id.0,
+          kind: TxKind::Transfer,
+          amount: *amount,
+          description: format!("Fund escrow for billing {}", billing_id.0),
+          counter_user_id: None,
+          idempotency_key: Uuid::new_v4().to_string(),
+        };
+        // This will determine platform wallet and perform mirrored transfer/journals
+        let _ = WalletModel::hold(pool, &out_form).await?;
       }
     }
-
-    // ปล่อยเงินให้ฟรีแลนซ์ (จ่ายจากนายจ้าง -> ฟรีแลนซ์)
+    // ปล่อยเงินให้ฟรีแลนซ์: โอนจากกระเป๋าแพลตฟอร์ม (escrow) → กระเป๋าฟรีแลนซ์
     Planned::ReleaseToFreelancer(t) => {
       if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        // โหลด billing เพื่อรู้ employer_id
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        // ตัดจาก outstanding/total ของนายจ้าง
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        // เติมเข้ากระเป๋าฟรีแลนซ์
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
+        let freelancer_wallet = WalletModel::get_by_user(pool, *freelancer_id).await?;
+        let form = WalletTransactionInsertForm {
+          wallet_id: freelancer_wallet.id,
+          reference_type: "billing".to_string(),
+          reference_id: billing_id.0,
+          kind: TxKind::Deposit,
+          amount: *amount,
+          description: format!("Release payment for billing {}", billing_id.0),
+          counter_user_id: None,
+          idempotency_key: Uuid::new_v4().to_string(),
+        };
+        let _ = WalletModel::deposit_from_platform(pool, &form).await?;
       }
     }
 
-    // จ่ายบางงวด (milestone) ระหว่างงาน
+    // จ่ายบางงวด (milestone): โอนจากกระเป๋าแพลตฟอร์ม (escrow) → กระเป๋าฟรีแลนซ์ (บางส่วน)
     Planned::ApproveMilestone(t) => {
       if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
+        let freelancer_wallet = WalletModel::get_by_user(pool, *freelancer_id).await?;
+        let form = WalletTransactionInsertForm {
+          wallet_id: freelancer_wallet.id,
+          reference_type: "billing".to_string(),
+          reference_id: billing_id.0,
+          kind: TxKind::Deposit,
+          amount: *amount,
+          description: format!("Milestone payout for billing {}", billing_id.0),
+          counter_user_id: None,
+          idempotency_key: Uuid::new_v4().to_string(),
+        };
+        let _ = WalletModel::deposit_from_platform(pool, &form).await?;
       }
     }
 
-    // จ่ายส่วนที่เหลือเมื่อปิดงาน
+    // จ่ายส่วนที่เหลือเมื่อปิดงาน: โอนจากกระเป๋าแพลตฟอร์ม (escrow) → กระเป๋าฟรีแลนซ์ (ยอดที่เหลือ)
     Planned::ReleaseRemaining(t) => {
       if let WalletAction::ReleaseToFreelancer { user_id: freelancer_id, amount } = &t.wallet {
-        let b = Billing::read(pool, billing_id).await?;
-        let employer_wallet = Wallet::get_by_user(pool, b.employer_id).await?;
-        let freelancer_wallet = Wallet::get_by_user(pool, *freelancer_id).await?;
-        Wallet::spend(pool, employer_wallet.id, *amount).await?;
-        Wallet::deposit(pool, freelancer_wallet.id, *amount).await?;
+        let freelancer_wallet = WalletModel::get_by_user(pool, *freelancer_id).await?;
+        let form = WalletTransactionInsertForm {
+          wallet_id: freelancer_wallet.id,
+          reference_type: "billing".to_string(),
+          reference_id: billing_id.0,
+          kind: TxKind::Deposit,
+          amount: *amount,
+          description: format!("Release remaining amount for billing {}", billing_id.0),
+          counter_user_id: None,
+          idempotency_key: Uuid::new_v4().to_string(),
+        };
+        let _ = WalletModel::deposit_from_platform(pool, &form).await?;
+      }
+    }
+
+    // ยกเลิกงาน: คืนเหรียญจาก escrow → นายจ้าง
+    Planned::Cancel(t) => {
+      if let Some(WalletAction::RefundToEmployer { user_id: employer_id, amount }) = &t.wallet {
+        if *amount > 0 {
+          let employer_wallet = WalletModel::get_by_user(pool, *employer_id).await?;
+          let form = WalletTransactionInsertForm {
+            wallet_id: employer_wallet.id,
+            reference_type: "billing".to_string(),
+            reference_id: billing_id.0,
+            kind: TxKind::Deposit,
+            amount: *amount,
+            description: format!("Refund escrow for billing {}", billing_id.0),
+            counter_user_id: None,
+            idempotency_key: Uuid::new_v4().to_string(),
+          };
+          let _ = WalletModel::deposit_from_platform(pool, &form).await?;
+        }
       }
     }
 
@@ -297,7 +349,10 @@ impl WorkFlowService {
     if matches!(b.status, BillingStatus::Completed | BillingStatus::Cancelled) {
       return Err(FastJobErrorType::InvalidField("Billing already finalized".into()).into());
     }
-    let plan = Planned::Cancel(CancelTransition { form: form_cancelled() });
+    let wallet_opt = if b.paid_at.is_some() {
+      Some(WalletAction::RefundToEmployer { user_id: b.employer_id, amount: b.amount })
+    } else { None };
+    let plan = Planned::Cancel(CancelTransition { form: form_cancelled(), wallet: wallet_opt });
     let updated = apply_transition(pool, billing_id, plan).await?;
     Ok(updated)
   }
@@ -332,7 +387,6 @@ impl WorkFlowService {
       comment_id: inner.comment_id,
       description,
       amount: inner.amount,
-      max_revisions: inner.revise_times,
       delivery_day: inner.delivery_day,
     };
     let billing_form: BillingInsertForm = billing_form.into();
@@ -405,7 +459,7 @@ impl WorkFlowService {
     pool: &mut DbPool<'_>,
     billing_id: BillingId,
     employer_id: LocalUserId,
-    amount: f64,
+    amount: Coin,
   ) -> FastJobResult<Billing> {
     let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
@@ -416,7 +470,7 @@ impl WorkFlowService {
       Planned::ApproveMilestone(tx)
     } else if b.paid_at.is_some() {
       // funded but not yet in WorkSubmitted state → still allow partial payout without status change
-      if amount <= 0.0 { return Err(FastJobErrorType::InvalidField("milestone amount must be > 0".into()).into()); }
+      if amount <= 0 { return Err(FastJobErrorType::InvalidField("milestone amount must be a positive coin".into()).into()); }
       let form = form_touch_only();
       let wallet = WalletAction::ReleaseToFreelancer { user_id: data.freelancer_id, amount };
       Planned::ApproveMilestone(ApproveMilestoneTransition { form, wallet })
@@ -432,9 +486,9 @@ impl WorkFlowService {
     pool: &mut DbPool<'_>,
     billing_id: BillingId,
     employer_id: LocalUserId,
-    remaining_amount: f64,
+    remaining_amount: Coin,
   ) -> FastJobResult<Billing> {
-    if remaining_amount <= 0.0 { return Err(FastJobErrorType::InvalidField("remaining_amount must be > 0".into()).into()); }
+    if remaining_amount <= 0 { return Err(FastJobErrorType::InvalidField("remaining_amount must be > 0".into()).into()); }
     let LoadedWorkflow { billing: b, flow_data: data, .. } = Self::load(pool, billing_id).await?;
     if b.employer_id != employer_id {
       return Err(FastJobErrorType::InvalidField("Not the employer of this billing".into()).into());

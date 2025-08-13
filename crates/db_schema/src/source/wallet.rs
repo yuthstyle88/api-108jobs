@@ -1,4 +1,4 @@
-use crate::newtypes::{LocalUserId, WalletId};
+use crate::newtypes::{Coin, LocalUserId, WalletId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -19,24 +19,37 @@ use lemmy_db_schema_file::schema::wallet_transaction;
 #[serde(rename_all = "camelCase")]
 pub struct Wallet {
   pub id: WalletId,
-  pub balance_total: f64,
-  pub balance_available: f64,
-  pub balance_outstanding: f64,
+  pub balance_total: Coin,
+  pub balance_available: Coin,
+  pub balance_outstanding: Coin,
   pub is_platform: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
+#[skip_serializing_none]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// A user wallet for managing balance and transactions.
+#[serde(rename_all = "camelCase")]
+pub struct WalletModel {
+  pub platform_wallet_id: WalletId,
+  pub balance_total: Coin,
+  pub balance_available: Coin,
+  pub balance_outstanding: Coin,
+}
+
 
 #[derive(Clone, derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = wallet))]
 pub struct WalletInsertForm {
   #[new(default)]
-  pub balance_total: Option<f64>,
+  pub balance_total: Option<Coin>,
   #[new(default)]
-  pub balance_available: Option<f64>,
+  pub balance_available: Option<Coin>,
   #[new(default)]
-  pub balance_outstanding: Option<f64>,
+  pub balance_outstanding: Option<Coin>,
   #[new(default)]
   pub is_platform: Option<bool>,
   #[new(default)]
@@ -47,9 +60,9 @@ pub struct WalletInsertForm {
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = wallet))]
 pub struct WalletUpdateForm {
-  pub balance_total: Option<f64>,
-  pub balance_available: Option<f64>,
-  pub balance_outstanding: Option<f64>,
+  pub balance_total: Option<Coin>,
+  pub balance_available: Option<Coin>,
+  pub balance_outstanding: Option<Coin>,
   pub is_platform: Option<bool>,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -63,7 +76,7 @@ pub struct WalletTransaction {
   pub reference_type: String,
   pub reference_id: i32,
   pub kind: TxKind,
-  pub amount: f64,
+  pub amount: Coin,
   pub description: String,
   pub counter_user_id: Option<LocalUserId>,
   pub idempotency_key: String,
@@ -76,7 +89,7 @@ pub struct WalletTransactionInsertForm {
   pub reference_type: String,
   pub reference_id: i32,
   pub kind: TxKind,
-  pub amount: f64,
+  pub amount: Coin,
   pub description: String,
   pub counter_user_id: Option<LocalUserId>,
   pub idempotency_key: String,
@@ -89,7 +102,7 @@ pub struct WalletTransactionForm {
   pub reference_type: String,
   pub reference_id: i32,
   pub kind: TxKind,
-  pub amount: f64,
+  pub amount: Coin,
   pub description: String,
   pub counter_user_id: Option<LocalUserId>,
   pub idempotency_key: String,
@@ -102,7 +115,7 @@ impl From<&WalletTransactionForm> for WalletTransactionInsertForm {
       reference_type: f.reference_type.clone(),
       reference_id: f.reference_id,
       kind: f.kind,
-      amount: f.amount,
+      amount: f.amount, 
       description: f.description.clone(),
       counter_user_id: f.counter_user_id,
       idempotency_key: f.idempotency_key.clone(),

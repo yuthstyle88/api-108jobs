@@ -1,4 +1,4 @@
-use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId};
+use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin};
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::BillingStatus;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ pub struct Billing {
   /// The comment/proposal this billing relates to
   pub comment_id: Option<CommentId>,
   /// Amount to be paid
-  pub amount: f64,
+  pub amount: Coin,
   /// Description of work to be done
   pub description: String,
   /// Current status of the billing
@@ -52,7 +52,7 @@ pub struct BillingInsertForm {
   pub post_id: PostId,
   #[new(default)]
   pub comment_id: Option<CommentId>,
-  pub amount: f64,
+  pub amount: Coin,
   pub description: String,
   #[new(default)]
   pub status: Option<BillingStatus>,
@@ -79,9 +79,8 @@ pub struct BillingFromQuotation {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: Option<CommentId>,
-  pub amount: f64,
+  pub amount: Coin,
   pub description: String,
-  pub max_revisions: i32,
   pub delivery_day: NaiveDate,
 }
 

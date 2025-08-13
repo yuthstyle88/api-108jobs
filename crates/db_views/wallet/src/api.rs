@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::newtypes::{BillingId, CommentId, LocalUserId, PostId, WalletId};
+use lemmy_db_schema::newtypes::{BillingId, Coin, CommentId, LocalUserId, PostId, WalletId};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Get wallet for a user.
@@ -11,7 +11,7 @@ pub struct GetWallet {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// Update wallet balance.
 pub struct UpdateWallet {
-  pub amount: f64,
+  pub amount: Coin,
 }
 
 
@@ -22,8 +22,8 @@ pub struct UpdateWallet {
 /// Response for getting wallet.
 pub struct GetWalletResponse {
   pub wallet_id: WalletId,
-  pub balance: f64,
-  pub escrow_balance: f64, // Money held in escrow
+  pub balance: Coin,
+  pub escrow_balance: Coin, // Money held in escrow
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,7 +31,7 @@ pub struct GetWalletResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Add funds to wallet (deposit).
 pub struct DepositWallet {
-  pub amount: f64,
+  pub amount: Coin,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -43,13 +43,11 @@ pub struct CreateInvoiceForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: Option<CommentId>,
-  pub amount: f64,
+  pub amount: Coin,
   pub proposal: String,
   pub project_name: String,
   pub project_details: String,
   pub work_steps: Vec<String>,
-  pub revise_times: i32,
-  pub revise_description: String,
   pub working_days: i32,
   pub deliverables: Vec<String>,
   pub note: Option<String>,
@@ -64,14 +62,8 @@ pub struct ValidCreateInvoice(pub CreateInvoiceForm);
 impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
   type Error = String;
   fn try_from(value: CreateInvoiceForm) -> Result<Self, Self::Error> {
-    if value.amount <= 0.0 {
+    if value.amount <= 0 {
       return Err("Price must be positive".to_string());
-    }
-    if value.revise_times < 0 {
-      return Err("Revise times cannot be negative".to_string());
-    }
-    if value.working_days <= 0 {
-      return Err("Working days must be positive".to_string());
     }
     Ok(ValidCreateInvoice(value))
   }
@@ -143,9 +135,8 @@ pub struct ApproveWork {
 /// Response for wallet operations.
 pub struct WalletOperationResponse {
   pub wallet_id: WalletId,
-  pub balance: f64,
-  pub escrow_balance: f64,
-  pub transaction_amount: f64,
+  pub balance: Coin,
+  pub transaction_amount: Coin,
   pub success: bool,
 }
 
@@ -167,7 +158,7 @@ pub struct BillingOperationResponse {
 /// Admin top up user wallet.
 pub struct AdminTopUpWallet {
   pub wallet_id: WalletId,
-  pub amount: f64,
+  pub amount: Coin,
   pub reason: String,
 }
 
@@ -178,7 +169,7 @@ pub struct AdminTopUpWallet {
 /// Admin withdraw from user wallet.
 pub struct AdminWithdrawWallet {
   pub wallet_id: WalletId,
-  pub amount: f64,
+  pub amount: Coin,
   pub reason: String,
 }
 
@@ -189,8 +180,8 @@ pub struct AdminWithdrawWallet {
 /// Response for admin wallet operations.
 pub struct AdminWalletOperationResponse {
   pub wallet_id: WalletId,
-  pub new_balance: f64,
-  pub operation_amount: f64,
+  pub new_balance: Coin,
+  pub operation_amount: Coin,
   pub reason: String,
   pub success: bool,
 }
@@ -205,9 +196,8 @@ pub struct CreateInvoiceResponse {
   pub issuer_id: LocalUserId,
   pub recipient_id: LocalUserId,
   pub post_id: PostId,
-  pub amount: f64,
+  pub amount: Coin,
   pub status: String,
-  pub max_revisions: i32,
   pub delivery_timeframe_days: i32,
   pub created_at: String,
   pub success: bool,

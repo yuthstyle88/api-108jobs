@@ -6,6 +6,8 @@ use std::{
 };
 use std::str::FromStr;
 use url::Url;
+use std::cmp::Ordering;
+use std::ops::{Add, AddAssign, Sub, SubAssign, Neg};
 #[cfg(feature = "full")]
 use {
 
@@ -98,7 +100,67 @@ pub struct BillingId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The bank id.
 pub struct BankId(pub i32);
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Coin id.
+pub struct CoinId(pub i32);
+#[derive(
+  Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize
+)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The coin.
+pub struct Coin(pub i32);
 
+impl PartialEq<i32> for Coin {
+  #[inline]
+  fn eq(&self, other: &i32) -> bool {
+    self.0 == *other
+  }
+}
+
+impl PartialOrd<i32> for Coin {
+  #[inline]
+  fn partial_cmp(&self, other: &i32) -> Option<Ordering> {
+    self.0.partial_cmp(other)
+  }
+}
+impl Add for Coin {
+  type Output = Coin;
+  #[inline]
+  fn add(self, rhs: Coin) -> Coin { Coin(self.0 + rhs.0) }
+}
+
+impl Sub for Coin {
+  type Output = Coin;
+  #[inline]
+  fn sub(self, rhs: Coin) -> Coin { Coin(self.0 - rhs.0) }
+}
+
+impl AddAssign for Coin {
+  #[inline]
+  fn add_assign(&mut self, rhs: Coin) { self.0 += rhs.0; }
+}
+
+impl SubAssign for Coin {
+  #[inline]
+  fn sub_assign(&mut self, rhs: Coin) { self.0 -= rhs.0; }
+}
+
+impl Neg for Coin {
+  type Output = Coin;
+  #[inline]
+  fn neg(self) -> Coin { Coin(-self.0) }
+}
+
+impl Neg for &Coin {
+  type Output = Coin;
+  #[inline]
+  fn neg(self) -> Coin { Coin(-self.0) }
+}
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

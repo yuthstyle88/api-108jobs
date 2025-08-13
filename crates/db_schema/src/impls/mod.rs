@@ -46,3 +46,4 @@ pub mod language_profile;
 pub mod user_bank_account;
 pub mod bank;
 mod billing;
+mod coin;

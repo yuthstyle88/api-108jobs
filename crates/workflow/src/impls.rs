@@ -1,18 +1,17 @@
-// Rust
 use chrono::Utc;
-use core::future::Future;
-use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{BillingId, Coin, LocalUserId, WalletId, WorkflowId};
-use lemmy_db_schema::source::billing::{Billing, BillingInsertForm};
-use lemmy_db_schema::source::wallet::{WalletModel, WalletTransactionInsertForm};
-use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_schema::utils::{get_conn, DbPool};
-use lemmy_db_schema_file::enums::{TxKind, WorkFlowStatus};
-use lemmy_db_views_wallet::api::ValidCreateInvoice;
-use lemmy_utils::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
 use uuid::Uuid;
-
+use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use lemmy_db_schema::utils::{get_conn, DbPool};
+use lemmy_db_schema::newtypes::{BillingId, Coin, LocalUserId, WalletId, WorkflowId};
+use lemmy_db_schema::source::billing::Billing;
+use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
+use lemmy_db_schema::source::wallet::{WalletModel, WalletTransactionInsertForm, TxKind};
+use diesel_async::scoped_futures::ScopedFutureExt;
+use lemmy_db_schema::source::billing::{BillingInsertForm};
+use lemmy_db_schema::traits::Crud;
+use lemmy_db_schema_file::enums::WorkFlowStatus;
+use lemmy_db_views_wallet::api::ValidCreateInvoice;
+use lemmy_utils::error::FastJobErrorExt2;
 // ---------- Typestate payload ----------
 #[derive(Clone, Copy, Debug)]
 pub struct FlowData {
@@ -193,9 +192,210 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
   Ok(())
 }
 
-// ---------- DB-applied transitions (inherent on state) ----------
+// ================= Reusable helpers =================
+
+async fn load_billing_and_check_employer(
+  pool: &mut DbPool<'_>,
+  billing_id: BillingId,
+  employer_id: LocalUserId,
+) -> FastJobResult<Billing> {
+  let conn = &mut get_conn(pool).await?;
+  let billing = Billing::read(&mut conn.into(), billing_id)
+    .await
+    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+  if billing.employer_id != employer_id {
+    return Err(FastJobErrorType::NotAllowed.into());
+  }
+  Ok(billing)
+}
+
+async fn reserve_to_escrow(
+  pool: &mut DbPool<'_>,
+  from_wallet_id: WalletId,
+  billing_id: BillingId,
+  amount: Coin,
+  employer_id: LocalUserId,
+  reference_type: &str,
+  description: String,
+) -> FastJobResult<()> {
+  if amount <= Coin(0) {
+    return Err(FastJobErrorType::InvalidField("amount must be positive".into()).into());
+  }
+  let tx_form = WalletTransactionInsertForm {
+    wallet_id: from_wallet_id,
+    reference_type: reference_type.to_string(),
+    reference_id: billing_id.0,
+    kind: TxKind::Transfer, // hold: move user -> platform (escrow)
+    amount,
+    description,
+    counter_user_id: Some(employer_id),
+    idempotency_key: Uuid::new_v4().to_string(),
+  };
+  let _ = WalletModel::hold(pool, &tx_form).await?;
+  Ok(())
+}
+
+async fn release_from_escrow_to_freelancer(
+  pool: &mut DbPool<'_>,
+  billing: &Billing,
+  amount: Coin,
+  reference_type: &str,
+  description: String,
+) -> FastJobResult<()> {
+  if amount <= Coin(0) {
+    return Err(FastJobErrorType::InvalidField("amount must be positive".into()).into());
+  }
+  let freelancer_wallet = WalletModel::get_by_user(pool, billing.freelancer_id).await?;
+  let tx_form = WalletTransactionInsertForm {
+    wallet_id: freelancer_wallet.id,
+    reference_type: reference_type.to_string(),
+    reference_id: billing.id.0,
+    kind: TxKind::Transfer, // ใช้ deposit_from_platform ด้านล่าง (escrow -> freelancer)
+    amount,
+    description,
+    counter_user_id: Some(billing.freelancer_id),
+    idempotency_key: Uuid::new_v4().to_string(),
+  };
+  let _ = WalletModel::deposit_from_platform(pool, &tx_form).await?;
+  Ok(())
+}
+
+async fn do_transition(
+  pool: &mut DbPool<'_>,
+  workflow_id: WorkflowId,
+  from: WorkFlowStatus,
+  to: WorkFlowStatus,
+  mutate: impl FnOnce(&Workflow, &mut WorkflowUpdateForm) + Send + 'static,
+) -> FastJobResult<()> {
+  set_status_from(pool, workflow_id, from, to, mutate).await
+}
+
+// ================= Refactored public methods =================
+
 impl QuotationPendingTS {
+  // อนุมัติใบเสนอราคา: กันเงินรวมเข้า escrow แล้วเลื่อนไป OrderApprovedTS
   pub async fn approve_on(
+    self,
+    pool: &mut DbPool<'_>,
+    employer_id: LocalUserId,
+    wallet_id: WalletId,
+    billing_id: BillingId,
+  ) -> FastJobResult<OrderApprovedTS> {
+    // 1) โหลดบิล + ตรวจสิทธิ์
+    let billing = load_billing_and_check_employer(pool, billing_id, employer_id).await?;
+
+    // 2) กันเงินเข้า escrow (รวม)
+    reserve_to_escrow(
+      pool,
+      wallet_id,
+      billing_id,
+      billing.amount,
+      employer_id,
+      "billing",
+      "escrow reserve for approved quotation".to_string(),
+    ).await?;
+
+    // 3) เปลี่ยนสถานะ
+    do_transition(
+      pool,
+      self.data.workflow_id,
+      WorkFlowStatus::QuotationPending,
+      WorkFlowStatus::OrderApproved,
+      |_cur, f| f.updated_at = Some(Utc::now()),
+    ).await?;
+
+    // 4) อัปเดต FlowData
+    let mut next = self.approve();
+    next.data.billing_id = Some(billing_id);
+    next.data.amount = Some(billing.amount);
+    Ok(next)
+  }
+}
+
+impl OrderApprovedTS {
+  // กันเงินงวดเข้า escrow แล้วเลื่อนเข้าทำงาน (InProgress)
+  pub async fn fund_milestone_on(
+    self,
+    pool: &mut DbPool<'_>,
+    employer_id: LocalUserId,
+    employer_wallet_id: WalletId,
+    billing_id: BillingId,
+    milestone_index: i32,
+    amount: Coin,
+  ) -> FastJobResult<InProgressTS> {
+    // 1) โหลดบิล + ตรวจสิทธิ์
+    let _ = load_billing_and_check_employer(pool, billing_id, employer_id).await?;
+
+    // 2) กันเงินเข้า escrow (รายงวด)
+    reserve_to_escrow(
+      pool,
+      employer_wallet_id,
+      billing_id,
+      amount,
+      employer_id,
+      "billing_milestone",
+      format!("escrow reserve for milestone #{milestone_index}"),
+    ).await?;
+
+    // 3) เปลี่ยนสถานะ OrderApproved -> InProgress (ถ้ายังไม่ได้เริ่ม)
+    do_transition(
+      pool,
+      self.data.workflow_id,
+      WorkFlowStatus::OrderApproved,
+      WorkFlowStatus::InProgress,
+      |_c, f| f.updated_at = Some(Utc::now()),
+    ).await?;
+
+    let mut next = self.start_work();
+    next.data.billing_id = Some(billing_id);
+    Ok(next)
+  }
+}
+
+impl InProgressTS {
+  // ปล่อยเงินงวดจาก escrow ไปยัง freelancer และถ้าเป็นงวดสุดท้ายก็ปิดงาน
+  pub async fn approve_milestone_on(
+    self,
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    milestone_index: i32,
+    amount: Coin,
+    immediately_if_last: bool,
+  ) -> FastJobResult<InProgressTS> {
+    // 1) โหลดบิล (รู้ freelancer และซิงก์ข้อมูล)
+    let conn = &mut get_conn(pool).await?;
+    let billing = Billing::read(&mut conn.into(), billing_id)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+    // 2) ปล่อยเงินจาก escrow -> freelancer
+    release_from_escrow_to_freelancer(
+      pool,
+      &billing,
+      amount,
+      "billing_milestone",
+      format!("escrow release for milestone #{milestone_index}"),
+    ).await?;
+
+    // 3) ถ้าเป็นงวดสุดท้าย ปิดงาน
+    if immediately_if_last {
+      do_transition(
+        pool,
+        self.data.workflow_id,
+        WorkFlowStatus::InProgress,
+        WorkFlowStatus::Completed,
+        |_c, f| f.updated_at = Some(Utc::now()),
+      ).await?;
+      // หมายเหตุ: ถ้ามี CompletedTS ให้คืน CompletedTS ตาม pure transition ของคุณ
+      return Ok(self); // หรือแปลงเป็น CompletedTS ถ้าต้องการ
+    }
+
+    Ok(self)
+  }
+}
+
+impl QuotationPendingTS {
+  pub async fn approve_on_old(
     self,
     pool: &mut DbPool<'_>,
     employer_id: LocalUserId,
@@ -257,7 +457,7 @@ impl OrderApprovedTS {
     .await?;
     Ok(self.start_work())
   }
-  pub async fn fund_milestone_on(
+  pub async fn fund_milestone_on_old(
     self,
     pool: &mut DbPool<'_>,
     employer_id: LocalUserId,
@@ -325,7 +525,7 @@ impl InProgressTS {
     .await?;
     Ok(self.submit_work())
   }
-  pub async fn approve_milestone_on(
+  pub async fn approve_milestone_on_old(
     self,
     pool: &mut DbPool<'_>,
     billing_id: BillingId,

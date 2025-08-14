@@ -62,6 +62,9 @@ impl InProgressTS {
   pub fn submit_work(self) -> WorkSubmittedTS {
     WorkSubmittedTS { data: self.data }
   }
+  pub fn request_revision(self) -> InProgressTS {
+    InProgressTS { data: self.data }
+  }
 }
 impl WorkSubmittedTS {
   pub fn request_revision(self) -> InProgressTS {
@@ -254,6 +257,58 @@ impl OrderApprovedTS {
     .await?;
     Ok(self.start_work())
   }
+  pub async fn fund_milestone_on(
+    self,
+    pool: &mut DbPool<'_>,
+    employer_id: LocalUserId,
+    employer_wallet_id: WalletId,
+    billing_id: BillingId,
+    milestone_index: i32,
+    amount: Coin,
+  ) -> FastJobResult<InProgressTS> {
+    if amount <= Coin(0) {
+      return Err(FastJobErrorType::InvalidField("milestone amount must be positive".into()).into());
+    }
+
+    // ตรวจสิทธิ์ employer จาก Billing
+    let conn = &mut get_conn(pool).await?;
+    let billing = Billing::read(&mut conn.into(), billing_id)
+    .await
+    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    if billing.employer_id != employer_id {
+      return Err(FastJobErrorType::NotAllowed.into());
+    }
+
+    // กันเงินเข้า escrow (user -> platform)
+    let tx_form = WalletTransactionInsertForm {
+      wallet_id: employer_wallet_id,
+      reference_type: "billing_milestone".to_string(),
+      reference_id: billing_id.0,
+      kind: TxKind::Transfer,
+      amount,
+      description: format!("escrow reserve for milestone #{milestone_index}"),
+      counter_user_id: Some(employer_id),
+      idempotency_key: Uuid::new_v4().to_string(),
+    };
+    let _ = WalletModel::hold(pool, &tx_form).await?;
+
+    // สถานะยังคงอยู่ฝั่งทำงาน (ถ้ายังไม่ InProgress ให้เลื่อนเข้า InProgress)
+    set_status_from(
+      pool,
+      self.data.workflow_id,
+      WorkFlowStatus::OrderApproved,
+      WorkFlowStatus::InProgress,
+      |_c, f: &mut WorkflowUpdateForm| {
+        f.updated_at = Some(Utc::now());
+      },
+    ).await?;
+
+    let mut next = self.start_work();
+    // เก็บข้อมูลช่วย (ถ้ามีใน FlowData ของคุณ)
+    next.data.billing_id = Some(billing_id);
+    Ok(next)
+  }
+
 }
 
 impl InProgressTS {
@@ -270,6 +325,58 @@ impl InProgressTS {
     .await?;
     Ok(self.submit_work())
   }
+  pub async fn approve_milestone_on(
+    self,
+    pool: &mut DbPool<'_>,
+    billing_id: BillingId,
+    milestone_index: i32,
+    amount: Coin,
+    immediately_if_last: bool,
+  ) -> FastJobResult<InProgressTS> {
+    if amount <= Coin(0) {
+      return Err(FastJobErrorType::InvalidField("milestone amount must be positive".into()).into());
+    }
+
+    // โหลด Billing เพื่อรู้ผู้รับเงินและจำนวน
+    let conn = &mut get_conn(pool).await?;
+    let billing = Billing::read(&mut conn.into(), billing_id)
+    .await
+    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+    // ปล่อยเงินจาก escrow (platform) ไปยัง freelancer
+    // หากคุณเก็บ escrow ใน platform wallet, ใช้ deposit_from_platform เพื่อโอน platform -> freelancer
+    let freelancer_wallet = WalletModel::get_by_user(pool, billing.freelancer_id).await?;
+    let tx_form = WalletTransactionInsertForm {
+      wallet_id: freelancer_wallet.id,
+      reference_type: "billing_milestone".to_string(),
+      reference_id: billing_id.0,
+      kind: TxKind::Transfer, // หรือ Deposit จากแพลตฟอร์ม ถ้าคุณใช้ deposit_from_platform
+      amount,
+      description: format!("escrow release for milestone #{milestone_index}"),
+      counter_user_id: Some(billing.freelancer_id),
+      idempotency_key: Uuid::new_v4().to_string(),
+    };
+    // ใช้ deposit_from_platform หาก escrow อยู่ที่ platform wallet เดิม
+    let _ = WalletModel::deposit_from_platform(pool, &tx_form).await?;
+
+    // ถ้างวดสุดท้าย ปิดงาน
+    if immediately_if_last {
+      set_status_from(
+        pool,
+        self.data.workflow_id,
+        WorkFlowStatus::InProgress,
+        WorkFlowStatus::Completed,
+        |_c, f: &mut WorkflowUpdateForm| {
+          f.updated_at = Some(Utc::now());
+        },
+      ).await?;
+      return Ok(self.request_revision()); // ใช้ pure transition ใดๆ ให้ได้ CompletedTS ตามโมเดลของคุณ
+    }
+
+    // ถ้ายังมีงวดถัดไป คงสถานะ InProgress ไว้
+    Ok(self)
+  }
+
 }
 
 impl WorkSubmittedTS {

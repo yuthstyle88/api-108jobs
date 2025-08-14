@@ -2,10 +2,7 @@ use actix_web::web::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
-  api::{ResendVerificationEmail, SuccessResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{ResendVerificationEmail, SuccessResponse};
 use lemmy_email::account::send_verification_email_if_required;
 use lemmy_utils::error::FastJobResult;
 
@@ -13,7 +10,7 @@ pub async fn resend_verification_email(
   data: Json<ResendVerificationEmail>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<SuccessResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let email = data.email.to_string();
 
   // Fetch that multilang

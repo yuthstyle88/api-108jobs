@@ -20,7 +20,6 @@ use lemmy_db_schema::{
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::FastJobResult,
   utils::{
@@ -38,7 +37,7 @@ pub async fn create_post(
   
   let data: CreatePost = data.into_inner().try_into()?;
   honeypot_check(&data.honeypot)?;
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site= context.site_config().get().await?.site_view.local_site;
 
   let slur_regex = slur_regex(&context).await?;
   check_slurs(&data.name, &slur_regex)?;

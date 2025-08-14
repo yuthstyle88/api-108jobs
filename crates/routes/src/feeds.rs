@@ -15,7 +15,6 @@ use lemmy_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView
 use lemmy_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
 use lemmy_db_views_person_content_combined::impls::PersonContentCombinedQuery;
 use lemmy_db_views_post::{impls::PostQuery, PostView};
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   cache_header::cache_1hour,
   error::{FastJobError, FastJobErrorType, FastJobResult},
@@ -23,12 +22,8 @@ use lemmy_utils::{
   utils::markdown::markdown_to_html,
 };
 use rss::{
-  extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap}
-  ,
-  Channel,
-  EnclosureBuilder,
-  Guid,
-  Item,
+  extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap},
+  Channel, EnclosureBuilder, Guid, Item,
 };
 use serde::Deserialize;
 use std::{collections::BTreeMap, str::FromStr, sync::LazyLock};
@@ -123,7 +118,7 @@ async fn get_feed_data(
   sort_type: PostSortType,
   limit: i64,
 ) -> FastJobResult<HttpResponse> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   check_private_instance(&None, &site_view.local_site)?;
 
@@ -202,7 +197,7 @@ async fn get_feed_user(
   limit: &i64,
   user_name: &str,
 ) -> FastJobResult<Channel> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let person = Person::read_from_name(&mut context.pool(), user_name, false)
     .await?
     .ok_or(FastJobErrorType::NotFound)?;
@@ -244,7 +239,7 @@ async fn get_feed_community(
   limit: &i64,
   community_name: &str,
 ) -> FastJobResult<Channel> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let community = Community::read_from_name(&mut context.pool(), community_name, false)
     .await?
     .ok_or(FastJobErrorType::NotFound)?;
@@ -285,8 +280,8 @@ async fn get_feed_front(
   limit: &i64,
   jwt: &str,
 ) -> FastJobResult<Channel> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
-  let (local_user,_) = local_user_view_from_jwt(jwt, context).await?;
+  let site_view = context.site_config().get().await?.site_view;
+  let (local_user, _) = local_user_view_from_jwt(jwt, context).await?;
 
   check_private_instance(&Some(local_user.clone()), &site_view.local_site)?;
 
@@ -318,9 +313,9 @@ async fn get_feed_front(
 }
 
 async fn get_feed_inbox(context: &FastJobContext, jwt: &str) -> FastJobResult<Channel> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_instance_id = site_view.site.instance_id;
-  let (local_user,_) = local_user_view_from_jwt(jwt, context).await?;
+  let (local_user, _) = local_user_view_from_jwt(jwt, context).await?;
   let my_person_id = local_user.person.id;
   let show_bot_accounts = Some(local_user.local_user.show_bot_accounts);
 
@@ -353,7 +348,7 @@ async fn get_feed_inbox(context: &FastJobContext, jwt: &str) -> FastJobResult<Ch
 
 /// Gets your ModeratorView modlog
 async fn get_feed_modlog(context: &FastJobContext, jwt: &str) -> FastJobResult<Channel> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let (local_user, _) = local_user_view_from_jwt(jwt, context).await?;
   check_private_instance(&Some(local_user.clone()), &site_view.local_site)?;
 

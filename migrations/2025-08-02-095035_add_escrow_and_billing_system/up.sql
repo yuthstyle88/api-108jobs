@@ -11,18 +11,15 @@ CREATE TYPE billing_status AS ENUM (
 -- Create billing table for escrow jobs (money in NUMERIC)
 CREATE TABLE billing (
     id SERIAL PRIMARY KEY,
-    freelancer_id INTEGER NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    employer_id   INTEGER NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    post_id       INTEGER NOT NULL REFERENCES post(id)        ON UPDATE CASCADE ON DELETE CASCADE,
-    comment_id    INTEGER REFERENCES comment(id)              ON UPDATE CASCADE ON DELETE SET NULL,
-
-    amount        FLOAT8 NOT NULL CHECK (amount > 0),
+    freelancer_id INT NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    employer_id   INT NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    post_id       INT NOT NULL REFERENCES post(id)        ON UPDATE CASCADE ON DELETE CASCADE,
+    comment_id    INT REFERENCES comment(id)              ON UPDATE CASCADE ON DELETE SET NULL,
+    amount        INT NOT NULL CHECK (amount > 0),
     description   TEXT NOT NULL,
-
     status        billing_status NOT NULL DEFAULT 'QuotationPending',
     work_description TEXT,
     deliverable_url TEXT,
-
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ,
     paid_at       TIMESTAMPTZ

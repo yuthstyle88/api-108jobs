@@ -15,7 +15,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::impls::PersonQuery;
-use lemmy_db_views_site::{api::GetSiteResponse, SiteView};
+use lemmy_db_views_site::api::GetSiteResponse;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   VERSION,
@@ -67,7 +67,7 @@ pub async fn leave_admin(
   ModAdd::create(&mut context.pool(), &form).await?;
 
   // Reread site and admins
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let admins = PersonQuery {
     admins_only: Some(true),
     ..Default::default()

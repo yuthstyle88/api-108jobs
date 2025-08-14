@@ -6,10 +6,7 @@ use chrono::Utc;
 use lemmy_api_utils::{
   context::FastJobContext,
   utils::{
-    get_url_blocklist,
-    is_admin,
-    local_site_rate_limit_to_rate_limit_config,
-    process_markdown_opt,
+    get_url_blocklist, is_admin, local_site_rate_limit_to_rate_limit_config, process_markdown_opt,
     slur_regex,
   },
 };
@@ -36,10 +33,7 @@ use lemmy_utils::{
   utils::{
     slurs::check_slurs_opt,
     validation::{
-      build_and_check_regex,
-      check_urls_are_valid,
-      is_valid_body_field,
-      site_name_length_check,
+      build_and_check_regex, check_urls_are_valid, is_valid_body_field, site_name_length_check,
       site_or_community_description_length_check,
     },
   },
@@ -50,7 +44,7 @@ pub async fn update_site(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SiteResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site;
   let site = site_view.site;
 

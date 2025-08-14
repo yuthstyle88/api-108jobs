@@ -6,7 +6,6 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_search_combined::{
     impls::SearchCombinedQuery, Search, SearchCombinedView, SearchResponse,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn search(
@@ -14,7 +13,7 @@ pub async fn search(
     context: Data<FastJobContext>,
     local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<SearchResponse>> {
-    let site_view = SiteView::read_local(&mut context.pool()).await?;
+    let site_view = context.site_config().get().await?.site_view;
     let local_site = site_view.local_site;
 
     check_private_instance(&local_user_view, &local_site)?;

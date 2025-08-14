@@ -2,10 +2,7 @@ use actix_web::web::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::{context::FastJobContext, utils::check_email_verified};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
-  api::{PasswordReset, SuccessResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{PasswordReset, SuccessResponse};
 
 use lemmy_email::account::send_password_reset_email;
 use lemmy_utils::error::FastJobResult;
@@ -24,7 +21,7 @@ pub async fn reset_password(
 
 async fn try_reset_password(email: &str, context: &FastJobContext) -> FastJobResult<()> {
   let local_user_view = LocalUserView::find_by_email(&mut context.pool(), email).await?;
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   check_email_verified(&local_user_view, &site_view)?;
   if let Err(e) =

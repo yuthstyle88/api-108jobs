@@ -10,9 +10,9 @@ $$;
 
 ALTER TABLE wallet
   ADD COLUMN IF NOT EXISTS is_platform boolean NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS balance_total        float8 NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS balance_available    float8 NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS balance_outstanding  float8 NOT NULL DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS balance_total        INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS balance_available    INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS balance_outstanding  INT NOT NULL DEFAULT 0;
 
 -- Partial index for platform wallet
 CREATE INDEX IF NOT EXISTS idx_wallet_platform
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS wallet_transaction (
   reference_type   TEXT NOT NULL,
   reference_id     INT  NOT NULL,
   kind             tx_kind  DEFAULT 'Deposit' NOT NULL,
-  amount           FLOAT8 NOT NULL CHECK (amount > 0),
+  amount           INT NOT NULL CHECK (amount > 0),
   description      TEXT  NOT NULL,
   counter_user_id  INT,
   idempotency_key  TEXT NOT NULL,

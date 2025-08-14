@@ -48,7 +48,7 @@ pub async fn create_site(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SiteResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   // Make sure user is an admin; other types of users should not create site data...
   is_admin(&local_user_view)?;

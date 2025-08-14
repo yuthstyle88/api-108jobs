@@ -11,7 +11,6 @@ use lemmy_db_views_post::{
   impls::PostQuery,
   PostView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn list_posts(
@@ -19,7 +18,7 @@ pub async fn list_posts(
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<GetPostsResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   check_private_instance(&local_user_view, &site_view.local_site)?;
 

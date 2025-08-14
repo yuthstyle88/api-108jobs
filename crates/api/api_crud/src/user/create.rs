@@ -17,8 +17,7 @@ use lemmy_db_schema::source::wallet::WalletModel;
 use lemmy_db_schema::{
   newtypes::OAuthProviderId,
   source::{
-    captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer}
-    ,
+    captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer},
     local_site::LocalSite,
     local_user::{LocalUser, LocalUserInsertForm},
     oauth_account::{OAuthAccount, OAuthAccountInsertForm},
@@ -32,11 +31,8 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
+use lemmy_db_views_site::api::{AuthenticateWithOauth, LoginResponse};
 use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
-use lemmy_db_views_site::{
-  api::{AuthenticateWithOauth, LoginResponse},
-  SiteView,
-};
 use lemmy_email::{
   account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
 };
@@ -51,6 +47,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::sync::LazyLock;
+use lemmy_db_views_site::SiteView;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -70,7 +67,7 @@ pub async fn register(
 ) -> FastJobResult<Json<LoginResponse>> {
   let data: Register = data.into_inner().try_into()?;
   let pool = &mut context.pool();
-  let site_view = SiteView::read_local(pool).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
   let require_registration_application =
     local_site.registration_mode == RegistrationMode::RequireApplication;
@@ -241,7 +238,7 @@ pub async fn register_with_oauth(
   let data = data.into_inner();
 
   let pool = &mut context.pool();
-  let site_view = SiteView::read_local(pool).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
 
   // Show self_promotion content if the param is true or if content_warning exists
@@ -427,7 +424,7 @@ pub async fn authenticate_with_oauth(
   let data: AuthenticateWithOauth = data.into_inner().try_into()?;
 
   let pool = &mut context.pool();
-  let site_view = SiteView::read_local(pool).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
 
   // Show nsfw content if param is true, or if content_warning exists
@@ -573,8 +570,7 @@ pub async fn authenticate_with_oauth(
           async move {
             // Prepare languages (reuses our earlier helper)
             let (language_ids, interface_language) =
-              prepare_user_languages(conn.into(), &site_view.local_site, &language_tags)
-                .await?;
+              prepare_user_languages(conn.into(), &site_view.local_site, &language_tags).await?;
 
             // make sure the username is provided
             let username = &email;
@@ -729,7 +725,6 @@ async fn create_local_user(
   mut local_user_form: LocalUserInsertForm,
   local_site: &LocalSite,
 ) -> Result<LocalUser, FastJobError> {
-
   local_user_form.default_listing_type = Some(local_site.default_post_listing_type);
   local_user_form.post_listing_mode = Some(local_site.default_post_listing_mode);
   // If its the initial site setup, they are an admin
@@ -742,7 +737,8 @@ async fn create_local_user(
   // Attach the wallet to the local user form
   local_user_form.wallet_id = wallet.id;
 
-  let inserted_local_user = LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;
+  let inserted_local_user =
+    LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;
 
   // Return the local user (the wallet_id will be updated in the database but not in our local object)
   Ok(inserted_local_user)

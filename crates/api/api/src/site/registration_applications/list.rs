@@ -7,7 +7,6 @@ use lemmy_db_views_registration_applications::{
   impls::RegistrationApplicationQuery,
   RegistrationApplicationView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 /// Lists registration applications, filterable by undenied only.
@@ -16,7 +15,7 @@ pub async fn list_registration_applications(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListRegistrationApplicationsResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   // Make sure user is an admin
   is_admin(&local_user_view)?;

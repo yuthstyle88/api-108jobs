@@ -11,10 +11,7 @@ use lemmy_api_utils::{
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::LoginRequest;
-use lemmy_db_views_site::{
-  api::{Login, LoginResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{Login, LoginResponse};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
@@ -24,7 +21,7 @@ pub async fn login(
 ) -> FastJobResult<Json<LoginResponse>> {
   let data: Login = data.0.clone().try_into()?;
 
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   // Fetch that username / multilang
   let username_or_email = data.username_or_email.clone();

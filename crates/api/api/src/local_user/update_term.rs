@@ -7,7 +7,7 @@ use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::OAuthUserUpdateRequest;
-use lemmy_db_views_site::{api::LoginResponse, SiteView};
+use lemmy_db_views_site::api::LoginResponse;
 use lemmy_email::admin::send_new_applicant_email_to_admins;
 use lemmy_utils::utils::validation::password_length_check;
 use lemmy_utils::{
@@ -23,7 +23,7 @@ pub async fn update_term(
 ) -> FastJobResult<Json<LoginResponse>> {
   let pool = &mut context.pool();
   let data = data.into_inner();
-  let site_view = SiteView::read_local(pool).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
 
   if local_site.registration_mode == RegistrationMode::Closed {

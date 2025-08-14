@@ -13,7 +13,6 @@ use lemmy_db_views_community::{
   CommunityView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 use moka::future::Cache;
 use std::hash::{Hash, Hasher};
@@ -80,8 +79,8 @@ pub async fn list_communities(
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<ListCommunitiesResponse>> {
   // Check private instance first to avoid unnecessary processing
-  let local_site = SiteView::read_local(&mut context.pool()).await?;
-  check_private_instance(&local_user_view, &local_site.local_site)?;
+  let site_view = context.site_config().get().await?.site_view;
+  check_private_instance(&local_user_view, &site_view.local_site)?;
 
   // Create a cache key based on the query parameters
   let cache_key = CommunitiesListCacheKey {
@@ -119,7 +118,7 @@ pub async fn list_communities(
   // Show self_promotion content if param is true, or if content_warning exists
   let self_promotion = data
     .self_promotion
-    .unwrap_or(local_site.site.content_warning.is_some());
+    .unwrap_or(site_view.site.content_warning.is_some());
 
   let communities = CommunityQuery {
     listing_type: data.type_,
@@ -133,7 +132,7 @@ pub async fn list_communities(
     limit: data.limit,
     ..Default::default()
   }
-  .list(&local_site.site, &mut context.pool())
+  .list(&site_view.site, &mut context.pool())
   .await?;
 
   let next_page = communities.last().map(PaginationCursorBuilder::to_cursor);

@@ -18,7 +18,6 @@ use lemmy_db_views_post::{
   PostView,
 };
 use lemmy_db_views_search_combined::impls::SearchCombinedQuery;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_post(
@@ -26,7 +25,7 @@ pub async fn get_post(
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<GetPostResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site;
   let local_instance_id = site_view.site.instance_id;
 

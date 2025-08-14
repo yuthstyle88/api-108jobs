@@ -16,7 +16,6 @@ use lemmy_db_views_reports::{
   api::{CreatePostReport, PostReportResponse},
   PostReportView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
@@ -53,7 +52,7 @@ pub async fn create_post_report(
   let post_report_view = PostReportView::read(&mut context.pool(), report.id, person_id).await?;
 
   // Email the admins
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
   if local_site.reports_email_admins {
     send_new_report_email_to_admins(
       &post_report_view.creator.name,

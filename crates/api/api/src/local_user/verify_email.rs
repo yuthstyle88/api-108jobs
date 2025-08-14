@@ -8,10 +8,7 @@ use lemmy_db_schema::source::{
   local_user::{LocalUser, LocalUserUpdateForm},
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
-  api::{VerifyEmail, VerifyEmailSuccessResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{VerifyEmail, VerifyEmailSuccessResponse};
 use lemmy_email::account::send_email_verified_email;
 use lemmy_utils::error::FastJobResult;
 
@@ -20,7 +17,6 @@ pub async fn verify_email(
   req: HttpRequest,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<VerifyEmailSuccessResponse>> {
-  SiteView::read_local(&mut context.pool()).await?;
   let code = data.code.clone();
   let verification = EmailVerification::read_for_code(&mut context.pool(), &code).await?;
   let local_user_id = verification.local_user_id;

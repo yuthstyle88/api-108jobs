@@ -8,17 +8,15 @@ use lemmy_db_views_person_saved_combined::{
   ListPersonSavedResponse,
   PersonSavedCombinedView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
-
 pub async fn list_person_saved(
   data: Query<ListPersonSaved>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListPersonSavedResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
-  check_private_instance(&Some(local_user_view.clone()), &local_site.local_site)?;
+  check_private_instance(&Some(local_user_view.clone()), &site_view.local_site)?;
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(PersonSavedCombinedView::from_cursor(cursor, &mut context.pool()).await?)

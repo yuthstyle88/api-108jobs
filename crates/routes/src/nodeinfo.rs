@@ -1,7 +1,6 @@
 use actix_web::{web, Error, HttpResponse, Result};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   cache_header::{cache_1hour, cache_3days},
   error::FastJobResult,
@@ -43,7 +42,7 @@ async fn node_info_well_known(context: web::Data<FastJobContext>) -> FastJobResu
 }
 
 async fn node_info(context: web::Data<FastJobContext>) -> Result<HttpResponse, Error> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   // Since there are 3 registration options,
   // we need to set open_registrations as true if RegistrationMode is not Closed.

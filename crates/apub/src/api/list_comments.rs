@@ -16,7 +16,6 @@ use lemmy_db_views_comment::{
   CommentView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 struct CommentsCommonOutput {
@@ -31,7 +30,7 @@ async fn list_comments_common(
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<CommentsCommonOutput> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let community_id = if let Some(name) = &data.community_name {

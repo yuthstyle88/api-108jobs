@@ -28,7 +28,6 @@ use lemmy_db_views_post::{
   api::{EditPost, PostResponse},
   PostView,
 };
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::{
@@ -50,7 +49,7 @@ pub async fn update_post(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
   let data: EditPost = data.into_inner().try_into()?;
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
   let local_instance_id = local_user_view.person.instance_id;
   let url = diesel_url_update(data.url.as_deref())?;
 

@@ -4,24 +4,22 @@ use lemmy_api_utils::{
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
 use lemmy_db_schema::{
+  newtypes::DbUrl,
   source::{
     actor_language::LocalUserLanguage,
+    identity_card::{IdentityCard, IdentityCardUpdateForm},
     keyword_block::LocalUserKeywordBlock,
     local_user::{LocalUser, LocalUserUpdateForm},
     person::{Person, PersonUpdateForm},
-    identity_card::{IdentityCard, IdentityCardUpdateForm},
   },
-  traits::{Crud, ApubActor},
+  traits::{ApubActor, Crud},
   utils::{diesel_opt_number_update, diesel_string_update},
-  newtypes::DbUrl,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
-  api::{SaveUserSettings, SuccessResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{SaveUserSettings, SuccessResponse};
 
 use actix_web::web::Json;
+use chrono::NaiveDate;
 use lemmy_email::account::send_verification_email;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
@@ -33,7 +31,6 @@ use lemmy_utils::{
   },
 };
 use std::ops::Deref;
-use chrono::NaiveDate;
 use std::str::FromStr;
 
 pub async fn save_user_settings(
@@ -41,7 +38,7 @@ pub async fn save_user_settings(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
-  let site_view = SiteView::read_local(&mut context.pool()).await?;
+  let site_view = context.site_config().get().await?.site_view;
 
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;

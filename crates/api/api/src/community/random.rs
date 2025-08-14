@@ -6,7 +6,6 @@ use lemmy_db_views_community::{
   CommunityView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn get_random_community(
@@ -14,9 +13,9 @@ pub async fn get_random_community(
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<CommunityResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let site_view = context.site_config().get().await?.site_view;
 
-  check_private_instance(&local_user_view, &local_site)?;
+  check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let local_user = local_user_view.as_ref().map(|u| &u.local_user);
 

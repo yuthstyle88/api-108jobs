@@ -12,15 +12,13 @@ use lemmy_api_utils::{
 use lemmy_db_schema::{
   source::{
     actor_language::{CommunityLanguage, SiteLanguage},
-    community::{Community, CommunityUpdateForm}
-    ,
+    community::{Community, CommunityUpdateForm},
   },
   traits::Crud,
   utils::diesel_string_update,
 };
 use lemmy_db_views_community::api::{CommunityResponse, EditCommunity};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs_opt, validation::is_valid_body_field},
@@ -32,8 +30,8 @@ pub async fn update_community(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommunityResponse>> {
   is_admin(&local_user_view)?;
-  
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;

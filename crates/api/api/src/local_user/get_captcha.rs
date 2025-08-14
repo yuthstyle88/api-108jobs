@@ -11,14 +11,11 @@ use actix_web::{
 use captcha::{generate, Difficulty};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm};
-use lemmy_db_views_site::{
-  api::{CaptchaResponse, GetCaptchaResponse},
-  SiteView,
-};
+use lemmy_db_views_site::api::{CaptchaResponse, GetCaptchaResponse};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_captcha(context: Data<FastJobContext>) -> FastJobResult<HttpResponse> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
   let mut res = HttpResponseBuilder::new(StatusCode::OK);
   res.insert_header(CacheControl(vec![CacheDirective::NoStore]));
 

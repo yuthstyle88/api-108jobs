@@ -9,7 +9,6 @@ use lemmy_db_views_community::{
   CommunityView,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_community(
@@ -17,7 +16,7 @@ pub async fn get_community(
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
 ) -> FastJobResult<Json<GetCommunityResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   if data.name.is_none() && data.id.is_none() {
     Err(FastJobErrorType::NoIdGiven)?

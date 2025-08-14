@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use crate::{
   claims::Claims,
   context::FastJobContext,
@@ -7,7 +6,11 @@ use crate::{
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
+use diesel_async::AsyncPgConnection;
 use enum_map::{enum_map, EnumMap};
+use lemmy_db_schema::newtypes::LanguageId;
+use lemmy_db_schema::source::actor_language::SiteLanguage;
+use lemmy_db_schema::source::language::Language;
 use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
   source::{
@@ -18,16 +21,12 @@ use lemmy_db_schema::{
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
     mod_log::moderator::{
-      ModRemoveComment,
-      ModRemoveCommentForm,
-      ModRemovePost,
-      ModRemovePostForm,
+      ModRemoveComment, ModRemoveCommentForm, ModRemovePost, ModRemovePostForm,
     },
     oauth_account::OAuthAccount,
     person::{Person, PersonUpdateForm},
     post::{Post, PostActions, PostReadCommentsForm},
-    registration_application::RegistrationApplication
-    ,
+    registration_application::RegistrationApplication,
   },
   traits::{Crud, Likeable, ReadComments},
   utils::DbPool,
@@ -37,21 +36,24 @@ use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_site::SiteView;
-use lemmy_utils::{error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult}, rate_limit::{ActionType, BucketConfig}, settings::{structs::PictrsImageMode, SETTINGS}, utils::{
-  markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
-  slurs::remove_slurs,
-  validation::{build_and_check_regex, clean_urls_in_text},
-}, CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT};
+use lemmy_utils::{
+  error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  rate_limit::{ActionType, BucketConfig},
+  settings::{structs::PictrsImageMode, SETTINGS},
+  utils::{
+    markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
+    slurs::remove_slurs,
+    validation::{build_and_check_regex, clean_urls_in_text},
+  },
+  CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT,
+};
 use moka::future::Cache;
-use regex::{escape, Regex, RegexSet};
-use std::sync::LazyLock;
-use diesel_async::AsyncPgConnection;
 use rand::Rng;
+use regex::{escape, Regex, RegexSet};
+use std::collections::HashSet;
+use std::sync::LazyLock;
 use url::{ParseError, Url};
 use urlencoding::encode;
-use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::source::actor_language::SiteLanguage;
-use lemmy_db_schema::source::language::Language;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
 
@@ -61,8 +63,8 @@ pub async fn check_is_mod_or_admin(
   local_instance_id: InstanceId,
 ) -> FastJobResult<()> {
   if PersonView::read(pool, person_id, None, local_instance_id, false)
-   .await
-   .is_ok_and(|t| t.is_admin)
+    .await
+    .is_ok_and(|t| t.is_admin)
   {
     Ok(())
   } else {
@@ -242,10 +244,7 @@ pub async fn slur_regex(context: &FastJobContext) -> FastJobResult<Regex> {
   Ok(
     CACHE
       .try_get_with((), async {
-        let local_site = SiteView::read_local(&mut context.pool())
-          .await
-          .ok()
-          .map(|s| s.local_site);
+        let local_site = Some(context.site_config().get().await?.site_view.local_site);
         build_and_check_regex(local_site.and_then(|s| s.slur_filter_regex).as_deref())
       })
       .await
@@ -279,7 +278,10 @@ pub async fn get_url_blocklist(context: &FastJobContext) -> FastJobResult<RegexS
   )
 }
 
-pub fn check_self_promotion_allowed(self_promotion: Option<bool>, local_site: Option<&LocalSite>) -> FastJobResult<()> {
+pub fn check_self_promotion_allowed(
+  self_promotion: Option<bool>,
+  local_site: Option<&LocalSite>,
+) -> FastJobResult<()> {
   let is_self_promotion = self_promotion.unwrap_or_default();
   let self_promotion_disallowed = local_site.is_some_and(|s| s.disallow_self_promotion_content);
 
@@ -306,7 +308,10 @@ pub async fn purge_post_images(
 }
 
 /// Delete local images attributed to a person
-async fn delete_local_user_images(person_id: PersonId, context: &FastJobContext) -> FastJobResult<()> {
+async fn delete_local_user_images(
+  person_id: PersonId,
+  context: &FastJobContext,
+) -> FastJobResult<()> {
   let pictrs_uploads = LocalImageView::get_all_by_person_id(&mut context.pool(), person_id).await?;
 
   // Delete their images
@@ -722,8 +727,6 @@ pub fn read_auth_token(req: &HttpRequest) -> FastJobResult<Option<String>> {
   }
 }
 
-
-
 /// Extracts the username from an multilang address by taking the part before the @ symbol
 pub fn extract_username(email: String) -> Option<String> {
   email.split('@').next().map(|s| s.to_string())
@@ -734,7 +737,10 @@ pub fn extract_username(email: String) -> Option<String> {
 /// If the extracted username is available, it will be used.
 /// If not, it will try adding random numbers (instead of sequential) until it finds
 /// an available username or reaches the maximum attempt limit.
-pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> FastJobResult<String> {
+pub async fn generate_unique_username(
+  pool: &mut DbPool<'_>,
+  email: String,
+) -> FastJobResult<String> {
   // Extract username from multilang
   let mut base_username = extract_username(email).unwrap_or_else(|| "user".to_string());
 
@@ -755,7 +761,10 @@ pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> F
   }
 
   // First check if the base username is available
-  if Person::check_username_taken(pool, &base_username).await.is_err() {
+  if Person::check_username_taken(pool, &base_username)
+    .await
+    .is_err()
+  {
     // Username is already taken, try with random numbers
     let mut rng = rand::rng();
     let mut attempts = 0;
@@ -766,7 +775,10 @@ pub async fn generate_unique_username(pool: &mut DbPool<'_>, email: String) -> F
       let random_num = rng.random_range(1000..10000);
       let try_username = format!("{}{}", base_username, random_num);
 
-      if Person::check_username_taken(pool, &try_username).await.is_ok() {
+      if Person::check_username_taken(pool, &try_username)
+        .await
+        .is_ok()
+      {
         return Ok(try_username);
       }
 
@@ -819,7 +831,6 @@ pub async fn prepare_user_languages(
 
   Ok((language_ids.into_iter().collect(), interface_language))
 }
-
 
 #[cfg(test)]
 mod tests {

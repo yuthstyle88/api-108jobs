@@ -4,14 +4,13 @@ use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
 use lemmy_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::RegistrationApplicationView;
-use lemmy_db_views_site::SiteView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn get_unread_registration_application_count(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<GetUnreadRegistrationApplicationCountResponse>> {
-  let local_site = SiteView::read_local(&mut context.pool()).await?.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   // Only let admins do this
   is_admin(&local_user_view)?;

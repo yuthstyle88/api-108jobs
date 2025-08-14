@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS billing_milestones (
   billing_id    INT NOT NULL REFERENCES billing(id) ON DELETE CASCADE,
   seq           INT NOT NULL,
   name          TEXT NOT NULL,
-  amount        NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  amount        INT NOT NULL CHECK (amount > 0),
   status        TEXT NOT NULL DEFAULT 'Draft', -- Draft|Submitted|Approved|Released
   submitted_at  TIMESTAMPTZ NOT NULL,
   approved_at   TIMESTAMPTZ,

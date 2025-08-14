@@ -16,7 +16,7 @@ CREATE TABLE billing (
     amount        FLOAT8 NOT NULL CHECK (amount > 0),
     description   TEXT NOT NULL,
 
-    status        billing_status NOT NULL DEFAULT 'QuotationPending',
+    status        billing_status NOT NULL DEFAULT 'QuotePendingReview',
     work_description TEXT,
     deliverable_url TEXT,
 

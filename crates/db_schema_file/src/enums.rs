@@ -269,26 +269,40 @@ pub enum JobType {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// The billing status for escrow workflow
+/// The minimal billing status states required by the database enum
 pub enum BillingStatus {
+  /// quotation created; waiting for employer review
+  QuotePendingReview,
+  /// employer approved quotation (became order)
+  OrderApproved,
+  /// canceled before payment or by agreement
+  Canceled,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::WorkFlowStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The billing status for escrow workflow
+pub enum WorkFlowStatus {
   /// Quotation created by freelancer, waiting for employer review
+  #[default]
   QuotationPending,
   /// Employer approved quotation, became an order, ready for invoice payment
   OrderApproved,
   /// Employer paid invoice, money in escrow, waiting for work submission
-  PaidEscrow,
+  InProgress,
   /// Freelancer submitted work, waiting for employer review
   WorkSubmitted,
-  /// Employer requested revision, freelancer needs to update work
-  RevisionRequested,
-  /// Employer requested changes to the work
-  RequestChange,
-  /// Freelancer updated work after revision request
-  Updated,
   /// Employer approved work, money released to freelancer
   Completed,
-  /// Disputed work quality or requirements
-  Disputed,
   /// Quotation/order cancelled before payment
   Cancelled,
 }
@@ -308,4 +322,30 @@ pub enum TxKind {
   Deposit,
   Withdraw,
   Transfer,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::LanguageLevel"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+pub enum LanguageLevel {
+  /// Native or bilingual proficiency
+  Native,
+  /// Near-native proficiency (C2)
+  NearNative,
+  /// Advanced proficiency (C1)
+  Advanced,
+  /// Upper intermediate proficiency (B2)
+  UpperIntermediate,
+  /// Intermediate proficiency (B1)
+  Intermediate,
+  /// Pre-intermediate proficiency (A2)
+  PreIntermediate,
+  /// Beginner proficiency (A1)
+  Beginner,
 }

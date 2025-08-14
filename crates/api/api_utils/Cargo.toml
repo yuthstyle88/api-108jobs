@@ -72,7 +72,6 @@ uuid = { workspace = true }
 pretty_assertions = "1.4.1"
 rand = "0.9.1"
 diesel-async = { workspace = true }
-async-trait = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }

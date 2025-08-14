@@ -8,18 +8,16 @@ use lemmy_api::local_user::bank_account::{
 use lemmy_api::local_user::certificates::{
   list_certificates, save_certificates,
 };
-use lemmy_api::local_user::language_profile::{
-  list_language_profiles, save_language_profiles,
-};
 use lemmy_api::local_user::education::{
   delete_educations, list_education, save_education,
 };
 use lemmy_api::local_user::exchange::exchange_key;
+use lemmy_api::local_user::language_profile::{
+  list_language_profiles, save_language_profiles,
+};
 use lemmy_api::local_user::skills::{list_skills, save_skills};
 use lemmy_api::local_user::update_term::update_term;
-use lemmy_api::local_user::wallet::{
-  approve_quotation, approve_work, create_quotation, get_wallet, submit_work,
-};
+use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::work_experience::{
   list_work_experience, save_work_experience,
 };
@@ -89,6 +87,7 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api::local_user::workflow::{approve_quotation, approve_work, create_quotation, submit_work};
 use lemmy_api_crud::community::list::list_communities;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;

@@ -3500,7 +3500,6 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "anyhow",
- "async-trait",
  "chrono",
  "diesel-async",
  "either",

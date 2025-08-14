@@ -34,3 +34,4 @@ pub mod work_experience;
 pub mod skills;
 pub mod certificates;
 pub mod language_profile;
+pub mod workflow;

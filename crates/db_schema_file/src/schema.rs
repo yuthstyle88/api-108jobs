@@ -56,10 +56,21 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "workflow_status"))]
+  pub struct WorkFlowStatus;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "tx_kind"))]
   pub struct TxKind;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "language_level"))]
+  pub struct LanguageLevel;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "citext"))]
+  pub struct Citext;
 }
 
 diesel::table! {
@@ -1265,13 +1276,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::LanguageLevel;
+
     language_profile (id) {
         id -> Int4,
         person_id -> Int4,
         #[max_length = 100]
-        lang -> Varchar,
-        #[max_length = 50]
-        level_name -> Varchar,
+        lang -> Citext,
+        level_name -> LanguageLevel,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1286,6 +1299,28 @@ diesel::table! {
         supply_minted_total -> Int4,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Workflow table schema
+// Rust
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::WorkFlowStatus;
+
+    workflow (id) {
+        id -> Int4,
+        post_id -> Int4,
+        status -> WorkFlowStatus,
+        revision_required -> Bool,
+        revision_count -> Int2,
+        revision_reason -> Nullable<Text>,
+        deliverable_version -> Int2,
+        deliverable_submitted_at -> Nullable<Timestamptz>,
+        deliverable_accepted -> Bool,
+        accepted_at -> Nullable<Timestamptz>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -1312,6 +1347,7 @@ diesel::joinable!(comment_reply -> comment (comment_id));
 diesel::joinable!(comment_reply -> person (recipient_id));
 diesel::joinable!(comment_report -> comment (comment_id));
 diesel::joinable!(community -> instance (instance_id));
+diesel::joinable!(workflow -> post (post_id));
 diesel::joinable!(community_actions -> community (community_id));
 diesel::joinable!(community_language -> community (community_id));
 diesel::joinable!(community_language -> language (language_id));
@@ -1421,6 +1457,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   admin_purge_person,
   admin_purge_post,
   billing,
+  workflow,
   captcha_answer,
   comment,
   comment_actions,
@@ -1497,3 +1534,4 @@ diesel::allow_tables_to_appear_in_same_query!(
   language_profile,
   coin,
 );
+

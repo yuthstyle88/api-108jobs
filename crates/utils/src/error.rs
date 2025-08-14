@@ -301,6 +301,7 @@ pub enum FastJobErrorType {
   CouldntDeleteWorkExperience,
     CouldntDeleteCertificate,
     CouldntDeleteLanguageProfile,
+  NotAllowed,
 }
 
 cfg_if! {

@@ -1,6 +1,6 @@
-use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin};
+use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin, DbUrl};
 use chrono::{DateTime, NaiveDate, Utc};
-use lemmy_db_schema_file::enums::BillingStatus;
+use lemmy_db_schema_file::enums::{BillingStatus};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -57,6 +57,10 @@ pub struct BillingInsertForm {
   #[new(default)]
   pub status: Option<BillingStatus>,
   #[new(default)]
+  pub work_description: Option<String>,
+  #[new(default)]
+  pub deliverable_url: Option<DbUrl>,
+  #[new(default)]
   pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -93,7 +97,9 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       comment_id: v.comment_id,
       amount: v.amount,
       description: v.description,
-      status: Some(BillingStatus::QuotationPending),
+      status: Some(BillingStatus::QuotePendingReview),
+      work_description: None,
+      deliverable_url: None,
       created_at: None,
     }
   }

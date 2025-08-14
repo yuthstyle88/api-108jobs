@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use lemmy_db_schema::source::actor_language::SiteLanguage;
 use lemmy_db_schema::source::language::Language;
 use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
@@ -13,13 +12,14 @@ use lemmy_utils::settings::structs::Settings;
 use lemmy_utils::VERSION;
 use std::sync::{Arc, RwLock};
 use crate::plugins::plugin_metadata;
+use futures::future::BoxFuture;
+use futures::FutureExt;
 
-#[async_trait::async_trait]
 pub trait SiteConfigProvider: Send + Sync {
     /// Returns a cached snapshot; impl is responsible for warming/refreshing.
-    async fn get(&self) -> FastJobResult<SiteSnapshot>;
+    fn get<'a>(&'a self) -> BoxFuture<'a, FastJobResult<SiteSnapshot>>;
     /// Optional: force refresh after updates in local_site.
-    async fn refresh(&self) -> FastJobResult<()>;
+    fn refresh<'a>(&'a self) -> BoxFuture<'a, FastJobResult<()>>;
 }
 
 pub struct CachedSiteConfigProvider {
@@ -82,23 +82,28 @@ impl CachedSiteConfigProvider {
     }
 }
 
-#[async_trait]
 impl SiteConfigProvider for CachedSiteConfigProvider {
-    async fn get(&self) -> FastJobResult<SiteSnapshot> {
-        let snapshot = self
-            .cache
-            .read()
-            .map_err(|e| anyhow::anyhow!("RwLock poisoned: {}", e))?;
-        Ok(snapshot.clone())
+    fn get<'a>(&'a self) -> BoxFuture<'a, FastJobResult<SiteSnapshot>> {
+        async move {
+            let snapshot = self
+                .cache
+                .read()
+                .map_err(|e| anyhow::anyhow!("RwLock poisoned: {}", e))?;
+            Ok(snapshot.clone())
+        }
+        .boxed()
     }
 
-    async fn refresh(&self) -> FastJobResult<()> {
-        let new_snapshot = self.fetch_from_source().await?;
-        let mut cache = self
-            .cache
-            .write()
-            .map_err(|e| anyhow::anyhow!("RwLock poisoned: {}", e))?;
-        *cache = new_snapshot;
-        Ok(())
+    fn refresh<'a>(&'a self) -> BoxFuture<'a, FastJobResult<()>> {
+        async move {
+            let new_snapshot = self.fetch_from_source().await?;
+            let mut cache = self
+                .cache
+                .write()
+                .map_err(|e| anyhow::anyhow!("RwLock poisoned: {}", e))?;
+            *cache = new_snapshot;
+            Ok(())
+        }
+        .boxed()
     }
 }

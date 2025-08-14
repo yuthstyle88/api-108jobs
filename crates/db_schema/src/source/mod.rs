@@ -53,6 +53,7 @@ pub mod skills;
 pub mod certificates;
 pub mod language_profile;
 pub mod coin;
+pub mod workflow;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

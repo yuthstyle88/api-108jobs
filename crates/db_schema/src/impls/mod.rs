@@ -47,3 +47,4 @@ pub mod user_bank_account;
 pub mod bank;
 mod billing;
 mod coin;
+pub mod workflow;

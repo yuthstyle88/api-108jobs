@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::newtypes::{BillingId, Coin, CommentId, LocalUserId, PostId, WalletId};
+use lemmy_db_schema::newtypes::{BillingId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Get wallet for a user.
@@ -76,6 +76,8 @@ impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
 /// Approve quotation and convert to order (employer approves freelancer's quotation).
 pub struct ApproveQuotation {
   pub billing_id: BillingId,
+  pub wallet_id: WalletId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,8 +94,8 @@ pub struct PayInvoice {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Submit completed work (freelancer submits work).
-pub struct SubmitWork {
-  pub billing_id: BillingId,
+pub struct SubmitStartWork {
+  pub workflow_id: WorkflowId,
   pub work_description: String,
   pub deliverable_url: Option<String>,
 }
@@ -125,7 +127,7 @@ pub struct UpdateWorkAfterRevision {
 #[serde(rename_all = "camelCase")]
 /// Approve work and release payment (employer approves).
 pub struct ApproveWork {
-  pub billing_id: BillingId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -8,8 +8,11 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use chrono::Utc;
-use diesel::{ExpressionMethods, QueryDsl, OptionalExtension};
+use diesel::{ExpressionMethods, QueryDsl, OptionalExtension, BoolExpressionMethods};
+use diesel::dsl::{insert_into, not};
+use diesel::upsert::excluded;
 use diesel_async::RunQueryDsl;
+use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema_file::schema::{language_profile};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -105,55 +108,49 @@ impl LanguageProfile {
     language_profiles: &[LanguageProfileItem],
   ) -> FastJobResult<Vec<LanguageProfileResponse>> {
     let conn = &mut get_conn(pool).await?;
+    conn.build_transaction().run(|conn| {
+      async move {
+        // เตรียม forms และรายการภาษาในบรรทัดเดียว
+        let entries: Vec<(LanguageProfileInsertForm, String)> = language_profiles
+        .iter()
+        .filter_map(|i| i.lang.as_ref().zip(i.level_name.as_ref())
+        .map(|(lang, level)| (LanguageProfileInsertForm::new(person_id, lang.clone(), level.clone()), lang.clone())))
+        .collect();
+        let (forms, langs_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
 
-    conn.build_transaction()
-        .run(|conn| {
-          Box::pin(async move {
-            let mut saved_language_profiles = Vec::new();
-            let mut language_profile_ids = Vec::new();
+        // ลิสต์ว่าง: ลบทั้งหมดของคนนี้
+        if forms.is_empty() {
+          diesel::delete(language_profile::table.filter(language_profile::person_id.eq(person_id)))
+          .execute(conn).await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          return Ok(Vec::new());
+        }
 
-            for lang_profile_item in language_profiles {
-              match lang_profile_item.id {
-                Some(id) => {
-                  // Update existing work experience
-                  let form = LanguageProfileUpdateForm {
-                    lang: lang_profile_item.lang.clone(),
-                    level_name: lang_profile_item.level_name.clone(),
-                    updated_at: Some(Utc::now()),
-                  };
-                  let updated = Self::update(&mut conn.into(), id, &form).await?;
-                  language_profile_ids.push(id);
-                  saved_language_profiles.push(updated);
-                }
-                None => {
-                  // Create new work experience
-                  if let (Some(ref lang), Some(ref level_name)) =
-                      (&lang_profile_item.lang, &lang_profile_item.level_name) {
-                    let form = LanguageProfileInsertForm::new(
-                      person_id,
-                      lang.clone(),
-                      level_name.clone()
-                    );
-                    let created = Self::create(&mut conn.into(), &form).await?;
-                    language_profile_ids.push(created.id);
-                    saved_language_profiles.push(created);
-                  }
-                }
-              }
-            }
+        // Bulk upsert ครั้งเดียว
+        let upserted = insert_into(language_profile::table)
+        .values(&forms)
+        .on_conflict((language_profile::person_id, language_profile::lang))
+        .do_update()
+        .set((
+          language_profile::level_name.eq(excluded(language_profile::level_name)),
+          language_profile::updated_at.eq(Utc::now()),
+        ))
+        .returning(language_profile::all_columns)
+        .get_results::<LanguageProfile>(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-            // Delete any records not in the current list
-            Self::delete_not_in_list(&mut conn.into(), person_id, &language_profile_ids).await?;
+        // ลบที่ไม่อยู่ในรายการล่าสุด
+        diesel::delete(
+          language_profile::table.filter(
+            language_profile::person_id.eq(person_id)
+            .and(not(language_profile::lang.eq_any(&langs_to_keep))),
+          ),
+        )
+        .execute(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-            // Convert to response format
-            let language_profile_responses: Vec<LanguageProfileResponse> = saved_language_profiles
-                .into_iter()
-                .map(LanguageProfileResponse::from)
-                .collect();
-
-            Ok(language_profile_responses)
-          }) as _
-        })
-        .await
+        Ok(upserted.into_iter().map(LanguageProfileResponse::from).collect())
+      }.scope_boxed()
+    }).await
   }
 }

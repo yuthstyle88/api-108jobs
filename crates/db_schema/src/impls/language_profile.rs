@@ -99,7 +99,7 @@ impl LanguageProfile {
         .filter(language_profile::id.ne_all(language_profile_ids))
         .execute(conn)
         .await
-        .with_fastjob_type(FastJobErrorType::CouldntDeleteLanguageProfile)
+        .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn save_language_profile_list(
@@ -110,15 +110,14 @@ impl LanguageProfile {
     let conn = &mut get_conn(pool).await?;
     conn.build_transaction().run(|conn| {
       async move {
-        // เตรียม forms และรายการภาษาในบรรทัดเดียว
         let entries: Vec<(LanguageProfileInsertForm, String)> = language_profiles
         .iter()
-        .filter_map(|i| i.lang.as_ref().zip(i.level_name.as_ref())
-        .map(|(lang, level)| (LanguageProfileInsertForm::new(person_id, lang.clone(), level.clone()), lang.clone())))
+        .filter_map(|i| i.lang.as_ref().zip(i.level_id.as_ref())
+        .filter(|(_, level)| **level >= 1 && **level <= 3)
+        .map(|(lang, level_id)| (LanguageProfileInsertForm::new(person_id, lang.clone(), *level_id), lang.clone())))
         .collect();
         let (forms, langs_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
 
-        // ลิสต์ว่าง: ลบทั้งหมดของคนนี้
         if forms.is_empty() {
           diesel::delete(language_profile::table.filter(language_profile::person_id.eq(person_id)))
           .execute(conn).await
@@ -126,20 +125,18 @@ impl LanguageProfile {
           return Ok(Vec::new());
         }
 
-        // Bulk upsert ครั้งเดียว
         let upserted = insert_into(language_profile::table)
         .values(&forms)
         .on_conflict((language_profile::person_id, language_profile::lang))
         .do_update()
         .set((
-          language_profile::level_name.eq(excluded(language_profile::level_name)),
+          language_profile::level_id.eq(excluded(language_profile::level_id)),
           language_profile::updated_at.eq(Utc::now()),
         ))
         .returning(language_profile::all_columns)
         .get_results::<LanguageProfile>(conn).await
         .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-        // ลบที่ไม่อยู่ในรายการล่าสุด
         diesel::delete(
           language_profile::table.filter(
             language_profile::person_id.eq(person_id)

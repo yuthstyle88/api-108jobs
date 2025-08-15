@@ -1242,8 +1242,10 @@ diesel::table! {
         person_id -> Int4,
         company_name -> Text,
         position -> Text,
-        start_date -> Date,
-        end_date -> Nullable<Date>,
+        startmonth -> Int4,
+        startyear -> Int4,
+        endmonth -> Nullable<Int4>,
+        endyear -> Nullable<Int4>,
         is_current -> Nullable<Bool>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
@@ -1284,7 +1286,7 @@ diesel::table! {
         person_id -> Int4,
         #[max_length = 100]
         lang -> Citext,
-        level_name -> LanguageLevel,
+        level_id -> Int4,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }

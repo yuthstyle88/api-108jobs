@@ -30,7 +30,7 @@ pub async fn save_work_experience(
     let work_experience_responses = WorkExperience::save_work_experience_list(
         &mut context.pool(),
         person_id,
-        &data.work_experiences,
+        &data.work_experience,
     ).await?;
 
     Ok(Json(WorkExperienceListResponse {

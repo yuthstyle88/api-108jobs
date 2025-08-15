@@ -29,6 +29,17 @@ pub async fn save_skills(
 ) -> FastJobResult<Json<SkillsListResponse>> {
     let person_id = local_user_view.person.id;
 
+    // Validate level_id for all skills
+    for skill in &data.skills {
+        if let Some(level_id) = skill.level_id {
+            if level_id < 1 || level_id > 3 {
+                return Err(FastJobErrorType::InvalidField(
+                    "Skill level must be 1 (Low), 2 (Medium), or 3 (High)".to_string()
+                ).into());
+            }
+        }
+    }
+
     // Use the new replacement strategy - any records not in the request will be deleted
     let skill_responses = Skills::save_skills_list(
         &mut context.pool(),
@@ -83,8 +94,8 @@ pub async fn update_skill(
 ) -> FastJobResult<Json<Skills>> {
     // Validate skill level
     if let Some(level_id) = data.level_id {
-        if level_id < 1 || level_id > 5 {
-            return Err(FastJobErrorType::InvalidField("Proficient level must from 1 to 5".to_string()).into());
+        if level_id < 1 || level_id > 3 {
+            return Err(FastJobErrorType::InvalidField("Proficient level must be 1 (Low), 2 (Medium), or 3 (High)".to_string()).into());
         }
     }
     

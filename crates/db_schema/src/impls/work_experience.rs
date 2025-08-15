@@ -7,9 +7,12 @@ use crate::{
 use crate::traits::Crud;
 use crate::newtypes::PersonId;
 #[cfg(feature = "full")]
-use diesel::{ExpressionMethods, QueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, BoolExpressionMethods};
+use diesel::dsl::{insert_into, not};
+use diesel::upsert::excluded;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
+use diesel_async::scoped_futures::ScopedFutureExt;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::work_experience;
 #[cfg(feature = "full")]
@@ -67,7 +70,7 @@ impl WorkExperience {
       .filter(work_experience::id.ne_all(work_experience_ids))
       .execute(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntDeleteWorkExperience)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn save_work_experience_list(
@@ -76,59 +79,51 @@ impl WorkExperience {
     work_experiences: &[WorkExperienceItem],
   ) -> FastJobResult<Vec<WorkExperienceResponse>> {
     let conn = &mut get_conn(pool).await?;
+    conn.build_transaction().run(|conn| {
+      async move {
+        let entries: Vec<(WorkExperienceInsertForm, (String, String))> = work_experiences
+        .iter()
+        .filter_map(|i| i.company_name.as_ref().zip(i.position.as_ref()).zip(i.startmonth.as_ref()).zip(i.startyear.as_ref())
+        .map(|(((company, position), start_month), start_year)| (WorkExperienceInsertForm::new(person_id, company.clone(), position.clone(), *start_month, *start_year, i.endmonth, i.endyear), (company.clone(), position.clone()))))
+        .collect();
+        let (forms, keys_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
 
-    conn.build_transaction()
-      .run(|conn| {
-        Box::pin(async move {
-          let mut saved_work_experiences = Vec::new();
-          let mut work_experience_ids = Vec::new();
+        if forms.is_empty() {
+          diesel::delete(work_experience::table.filter(work_experience::person_id.eq(person_id)))
+          .execute(conn).await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          return Ok(Vec::new());
+        }
 
-          for work_exp_item in work_experiences {
-            match work_exp_item.id {
-              Some(id) => {
-                // Update existing work experience
-                let form = WorkExperienceUpdateForm {
-                  company_name: work_exp_item.company_name.clone(),
-                  position: work_exp_item.position.clone(),
-                  start_date: work_exp_item.start_date,
-                  end_date: Some(work_exp_item.end_date),
-                  is_current: Some(work_exp_item.is_current),
-                };
-                let updated = Self::update(&mut conn.into(), id, &form).await?;
-                work_experience_ids.push(id);
-                saved_work_experiences.push(updated);
-              }
-              None => {
-                // Create new work experience
-                if let (Some(company_name), Some(position), Some(start_date)) = 
-                  (&work_exp_item.company_name, &work_exp_item.position, work_exp_item.start_date) {
-                  let form = WorkExperienceInsertForm::new(
-                    person_id,
-                    company_name.clone(),
-                    position.clone(),
-                    start_date,
-                    work_exp_item.end_date,
-                  );
-                  let created = Self::create(&mut conn.into(), &form).await?;
-                  work_experience_ids.push(created.id);
-                  saved_work_experiences.push(created);
-                }
-              }
-            }
-          }
+        let upserted = insert_into(work_experience::table)
+        .values(&forms)
+        .on_conflict((work_experience::person_id, work_experience::company_name, work_experience::position))
+        .do_update()
+        .set((
+          work_experience::startmonth.eq(excluded(work_experience::startmonth)),
+          work_experience::startyear.eq(excluded(work_experience::startyear)),
+          work_experience::endmonth.eq(excluded(work_experience::endmonth)),
+          work_experience::endyear.eq(excluded(work_experience::endyear)),
+          work_experience::is_current.eq(excluded(work_experience::is_current)),
+        ))
+        .returning(work_experience::all_columns)
+        .get_results::<WorkExperience>(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          // Delete any records not in the current list
-          Self::delete_not_in_list(&mut conn.into(), person_id, &work_experience_ids).await?;
+        let companies_to_keep: Vec<String> = keys_to_keep.iter().map(|(company, _)| company.clone()).collect();
+        let positions_to_keep: Vec<String> = keys_to_keep.iter().map(|(_, position)| position.clone()).collect();
 
-          // Convert to response format
-          let work_experience_responses: Vec<WorkExperienceResponse> = saved_work_experiences
-            .into_iter()
-            .map(WorkExperienceResponse::from)
-            .collect();
+        diesel::delete(
+          work_experience::table.filter(
+            work_experience::person_id.eq(person_id)
+            .and(not(work_experience::company_name.eq_any(&companies_to_keep).and(work_experience::position.eq_any(&positions_to_keep)))),
+          ),
+        )
+        .execute(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          Ok(work_experience_responses)
-        }) as _
-      })
-      .await
+        Ok(upserted.into_iter().map(WorkExperienceResponse::from).collect())
+      }.scope_boxed()
+    }).await
   }
 }

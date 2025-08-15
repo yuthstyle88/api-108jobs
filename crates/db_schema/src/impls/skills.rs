@@ -2,11 +2,14 @@ use crate::traits::Crud;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::{PersonId, SkillId},
-  source::skills::{Skills, SkillsInsertForm, SkillsUpdateForm, SkillItem, SkillResponse},
+  source::skills::{SkillItem, SkillResponse, Skills, SkillsInsertForm, SkillsUpdateForm},
   utils::{get_conn, DbPool},
 };
+use diesel::dsl::{insert_into, not};
+use diesel::upsert::excluded;
 #[cfg(feature = "full")]
-use diesel::{ExpressionMethods, QueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl};
+use diesel_async::scoped_futures::ScopedFutureExt;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
@@ -45,7 +48,10 @@ impl Crud for Skills {
 
 #[cfg(feature = "full")]
 impl Skills {
-  pub async fn read_by_person_id(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Vec<Self>> {
+  pub async fn read_by_person_id(
+    pool: &mut DbPool<'_>,
+    person_id: PersonId,
+  ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     skills::table
       .filter(skills::person_id.eq(person_id))
@@ -76,7 +82,7 @@ impl Skills {
     skill_ids: &[SkillId],
   ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
-    
+
     diesel::delete(skills::table)
       .filter(skills::person_id.eq(person_id))
       .filter(skills::id.ne_all(skill_ids))
@@ -91,57 +97,59 @@ impl Skills {
     skills: &[SkillItem],
   ) -> FastJobResult<Vec<SkillResponse>> {
     let conn = &mut get_conn(pool).await?;
-
-    conn.build_transaction()
+    conn
+      .build_transaction()
       .run(|conn| {
-        Box::pin(async move {
-          let mut saved_skills = Vec::new();
-          let mut skill_ids = Vec::new();
-
-          for skill_item in skills {
-            match skill_item.id {
-              Some(id) => {
-                // Update existing skill
-                let form = SkillsUpdateForm {
-                  skill_name: skill_item.skill_name.clone(),
-                  level_id: skill_item.level_id,
-                };
-                let updated = Self::update(&mut conn.into(), id, &form).await?;
-                skill_ids.push(id);
-                saved_skills.push(updated);
-              }
-              None => {
-                // Create new skill
-                if let (Some(skill_name), Some(level_id)) = (&skill_item.skill_name, skill_item.level_id) {
-                  // Validate skill level
-                  if level_id < 1 || level_id > 5 {
-                    return Err(FastJobErrorType::InvalidField("Proficient level must from 1 to 5".to_string()).into());
-                  }
-                  
-                  let form = SkillsInsertForm::new(
-                    person_id,
+        async move {
+          let entries: Vec<(SkillsInsertForm, String)> = skills
+            .iter()
+            .filter_map(|i| {
+              i.skill_name
+                .as_ref()
+                .zip(i.level_id.as_ref())
+                .filter(|(_, level)| **level >= 1 && **level <= 3)
+                .map(|(skill_name, level_id)| {
+                  (
+                    SkillsInsertForm::new(person_id, skill_name.clone(), Some(*level_id)),
                     skill_name.clone(),
-                    Some(level_id),
-                  );
-                  let created = Self::create(&mut conn.into(), &form).await?;
-                  skill_ids.push(created.id);
-                  saved_skills.push(created);
-                }
-              }
-            }
+                  )
+                })
+            })
+            .collect();
+          let (forms, skills_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
+
+          if forms.is_empty() {
+            diesel::delete(skills::table.filter(skills::person_id.eq(person_id)))
+              .execute(conn)
+              .await
+              .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+            return Ok(Vec::new());
           }
 
-          // Delete any records not in the current list
-          Self::delete_not_in_list(&mut conn.into(), person_id, &skill_ids).await?;
+          let upserted = insert_into(skills::table)
+            .values(&forms)
+            .on_conflict((skills::person_id, skills::skill_name))
+            .do_update()
+            .set(skills::level_id.eq(excluded(skills::level_id)))
+            .returning(skills::all_columns)
+            .get_results::<Skills>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          // Convert to response format
-          let skill_responses: Vec<SkillResponse> = saved_skills
-            .into_iter()
-            .map(SkillResponse::from)
-            .collect();
+          diesel::delete(
+            skills::table.filter(
+              skills::person_id
+                .eq(person_id)
+                .and(not(skills::skill_name.eq_any(&skills_to_keep))),
+            ),
+          )
+          .execute(conn)
+          .await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          Ok(skill_responses)
-        }) as _
+          Ok(upserted.into_iter().map(SkillResponse::from).collect())
+        }
+        .scope_boxed()
       })
       .await
   }

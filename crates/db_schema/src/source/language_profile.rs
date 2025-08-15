@@ -2,7 +2,6 @@ use crate::newtypes::{LanguageProfileId, PersonId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use lemmy_db_schema_file::enums::LanguageLevel;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::language_profile;
 
@@ -20,7 +19,7 @@ pub struct LanguageProfile {
     pub id: LanguageProfileId,
     pub person_id: PersonId,
     pub lang: String,
-    pub level_name: LanguageLevel,
+    pub level_id: i32, // 1=low, 2=medium, 3=high
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -31,7 +30,7 @@ pub struct LanguageProfile {
 pub struct LanguageProfileInsertForm {
     pub person_id: PersonId,
     pub lang: String,
-    pub level_name: LanguageLevel,
+    pub level_id: i32, // 1=low, 2=medium, 3=high
 }
 
 #[derive(Debug, Clone, Default)]
@@ -39,7 +38,7 @@ pub struct LanguageProfileInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = language_profile))]
 pub struct LanguageProfileUpdateForm {
     pub lang: Option<String>,
-    pub level_name: Option<LanguageLevel>,
+    pub level_id: Option<i32>, // 1=low, 2=medium, 3=high
     pub updated_at: Option<DateTime<Utc>>,
 }
 
@@ -58,7 +57,7 @@ pub struct SaveLanguageProfiles {
 pub struct LanguageProfileRequest {
     pub id: Option<LanguageProfileId>,
     pub lang: String,
-    pub level_name: LanguageLevel,
+    pub level_id: i32, // 1=low, 2=medium, 3=high
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -68,7 +67,7 @@ pub struct LanguageProfileRequest {
 pub struct LanguageProfileResponse {
     pub id: LanguageProfileId,
     pub lang: String,
-    pub level_name: LanguageLevel,
+    pub level_id: i32, // 1=low, 2=medium, 3=high
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -78,7 +77,7 @@ impl From<LanguageProfile> for LanguageProfileResponse {
         Self {
             id: profile.id,
             lang: profile.lang,
-            level_name: profile.level_name,
+            level_id: profile.level_id,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
         }
@@ -106,7 +105,7 @@ pub struct ListLanguageProfilesResponse {
 pub struct LanguageProfileItem {
     pub id: Option<LanguageProfileId>,
     pub lang: Option<String>,
-    pub level_name: Option<LanguageLevel>,
+    pub level_id: Option<i32>, // 1=low, 2=medium, 3=high
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }

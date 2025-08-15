@@ -5,8 +5,12 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{ExpressionMethods, QueryDsl};
+use chrono::Utc;
+use diesel::{ExpressionMethods, QueryDsl, BoolExpressionMethods};
+use diesel::dsl::{insert_into, not};
+use diesel::upsert::excluded;
 use diesel_async::RunQueryDsl;
+use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema_file::schema::{certificates};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::source::certificates::{CertificatesItem};
@@ -75,7 +79,7 @@ impl Certificates {
         .filter(certificates::id.ne_all(certificate_ids))
         .execute(conn)
         .await
-        .with_fastjob_type(FastJobErrorType::CouldntDeleteCertificate)
+        .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn save_certificate_list(
@@ -84,67 +88,57 @@ impl Certificates {
     certificates: &[CertificatesItem],
   ) -> FastJobResult<Vec<CertificateResponse>> {
     let conn = &mut get_conn(pool).await?;
+    conn.build_transaction().run(|conn| {
+      async move {
+        let entries: Vec<(CertificatesInsertForm, String)> = certificates
+        .iter()
+        .filter_map(|i| i.name.as_ref()
+        .map(|name| (CertificatesInsertForm::new(person_id, name.clone(), i.achieved_date.clone(), i.expires_date.clone(), i.url.clone()), name.clone())))
+        .collect();
+        let (forms, names_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
 
-    conn.build_transaction()
-        .run(|conn| {
-          Box::pin(async move {
-            let mut saved_certificates = Vec::new();
-            let mut certificate_ids = Vec::new();
+        if forms.is_empty() {
+          diesel::delete(certificates::table.filter(certificates::person_id.eq(person_id)))
+          .execute(conn).await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          return Ok(Vec::new());
+        }
 
-            for certificate_item in certificates {
-              match certificate_item.id {
-                Some(id) => {
-                  // Update existing certificate
-                  let form = CertificatesUpdateForm {
-                    name: certificate_item.name.clone(),
-                    achieved_date: certificate_item.achieved_date.clone(),
-                    expires_date: certificate_item.expires_date.clone(),
-                    url: Some(certificate_item.url.clone()),
-                  };
-                  let updated = Self::update(&mut conn.into(), id, &form).await?;
-                  certificate_ids.push(id);
-                  saved_certificates.push(updated);
-                }
-                None => {
-                  // Create new certificate
-                  if let (Some(name), Some(achieved_date), Some(expires_date), Some(url)) = (&certificate_item.name, &certificate_item.achieved_date, &certificate_item.expires_date, &certificate_item.url) {
-                    let form = CertificatesInsertForm::new(
-                      person_id,
-                      name.clone(),
-                      Some(achieved_date.clone()),
-                      Some(expires_date.clone()),
-                      Some(url.clone())
-                    );
-                    let created = Self::create(&mut conn.into(), &form).await?;
-                    certificate_ids.push(created.id);
-                    saved_certificates.push(created);
-                  }
-                }
-              }
-            }
+        let upserted = insert_into(certificates::table)
+        .values(&forms)
+        .on_conflict((certificates::person_id, certificates::name))
+        .do_update()
+        .set((
+          certificates::achieved_date.eq(excluded(certificates::achieved_date)),
+          certificates::expires_date.eq(excluded(certificates::expires_date)),
+          certificates::url.eq(excluded(certificates::url)),
+          certificates::updated_at.eq(Utc::now()),
+        ))
+        .returning(certificates::all_columns)
+        .get_results::<Certificates>(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-            // Delete any records not in the current list
-            Self::delete_not_in_list(&mut conn.into(), person_id, &certificate_ids).await?;
+        diesel::delete(
+          certificates::table.filter(
+            certificates::person_id.eq(person_id)
+            .and(not(certificates::name.eq_any(&names_to_keep))),
+          ),
+        )
+        .execute(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-            // Convert to response format
-            let certificate_responses: Vec<CertificateResponse> = saved_certificates
-                .into_iter()
-                .map(|cert| CertificateResponse {
-                    id: cert.id,
-                    person_id: cert.person_id,
-                    name: cert.name,
-                    achieved_date: cert.achieved_date,
-                    expires_date: cert.expires_date,
-                    url: cert.url,
-                    created_at: cert.created_at,
-                    updated_at: cert.updated_at,
-                })
-                .collect();
-
-            Ok(certificate_responses)
-          }) as _
-        })
-        .await
+        Ok(upserted.into_iter().map(|cert| CertificateResponse {
+            id: cert.id,
+            person_id: cert.person_id,
+            name: cert.name,
+            achieved_date: cert.achieved_date,
+            expires_date: cert.expires_date,
+            url: cert.url,
+            created_at: cert.created_at,
+            updated_at: cert.updated_at,
+        }).collect())
+      }.scope_boxed()
+    }).await
   }
 }
 impl From<Certificates> for CertificateView {

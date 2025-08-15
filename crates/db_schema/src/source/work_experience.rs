@@ -1,5 +1,5 @@
 use crate::newtypes::{PersonId, WorkExperienceId};
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -19,8 +19,10 @@ pub struct WorkExperience {
     pub person_id: PersonId,
     pub company_name: String,
     pub position: String,
-    pub start_date: NaiveDate,
-    pub end_date: Option<NaiveDate>,
+    pub startmonth: i32,
+    pub startyear: i32,
+    pub endmonth: Option<i32>,
+    pub endyear: Option<i32>,
     pub is_current: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -33,8 +35,10 @@ pub struct WorkExperienceInsertForm {
     pub person_id: PersonId,
     pub company_name: String,
     pub position: String,
-    pub start_date: NaiveDate,
-    pub end_date: Option<NaiveDate>,
+    pub startmonth: i32,
+    pub startyear: i32,
+    pub endmonth: Option<i32>,
+    pub endyear: Option<i32>,
     #[new(default)]
     pub is_current: Option<bool>,
 }
@@ -45,8 +49,10 @@ pub struct WorkExperienceInsertForm {
 pub struct WorkExperienceUpdateForm {
     pub company_name: Option<String>,
     pub position: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<Option<NaiveDate>>,
+    pub startmonth: Option<i32>,
+    pub startyear: Option<i32>,
+    pub endmonth: Option<Option<i32>>,
+    pub endyear: Option<Option<i32>>,
     pub is_current: Option<Option<bool>>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -57,8 +63,10 @@ pub struct UpdateWorkExperienceRequest {
     pub id: WorkExperienceId,
     pub company_name: Option<String>,
     pub position: Option<String>,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
+    pub startmonth: Option<i32>,
+    pub startyear: Option<i32>,
+    pub endmonth: Option<i32>,
+    pub endyear: Option<i32>,
     pub is_current: Option<bool>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -66,7 +74,7 @@ pub struct UpdateWorkExperienceRequest {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct WorkExperienceRequest {
-    pub work_experiences: Vec<WorkExperienceItem>,
+    pub work_experience: Vec<WorkExperienceItem>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -79,8 +87,11 @@ pub struct WorkExperienceItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub position: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
+    pub startmonth: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startyear: Option<i32>,
+    pub endmonth: Option<i32>,
+    pub endyear: Option<i32>,
     pub is_current: Option<bool>,
 }
 
@@ -92,8 +103,10 @@ pub struct WorkExperienceResponse {
     pub id: WorkExperienceId,
     pub company_name: String,
     pub position: String,
-    pub start_date: NaiveDate,
-    pub end_date: Option<NaiveDate>,
+    pub startmonth: i32,
+    pub startyear: i32,
+    pub endmonth: Option<i32>,
+    pub endyear: Option<i32>,
     pub is_current: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -105,8 +118,10 @@ impl From<WorkExperience> for WorkExperienceResponse {
             id: experience.id,
             company_name: experience.company_name,
             position: experience.position,
-            start_date: experience.start_date,
-            end_date: experience.end_date,
+            startmonth: experience.startmonth,
+            startyear: experience.startyear,
+            endmonth: experience.endmonth,
+            endyear: experience.endyear,
             is_current: experience.is_current,
             created_at: experience.created_at,
             updated_at: experience.updated_at,

@@ -109,13 +109,13 @@ pub async fn setup_local_site(
           let site = Site::create(&mut conn.into(), &site_form).await?;
 
           // Create default platform coin
-          let coin_form = CoinModelInsertForm {
-            code: "FJC".to_string(),
-            name: "FastJob Coin".to_string(),
-            supply_total: Some(Coin(1000000000)), // 1 billion initial supply
-            supply_minted_total: Some(Coin(0)), // No coins minted initially
-            ..CoinModelInsertForm::new("FJC".to_string(), "FastJob Coin".to_string(), None, None)
-          };
+          let total_supply = Coin(1000000000); // 1 billion initial supply
+          let coin_form = CoinModelInsertForm::new(
+            "FJC".to_string(),
+            "FastJob Coin".to_string(),
+            Some(total_supply),
+            Some(total_supply), // Set minted equal to total initially
+          );
           let coin = CoinModel::create(&mut conn.into(), &coin_form).await?;
 
           // Finally create the local_site row with coin reference

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::billing;
+use lemmy_db_schema_file::schema::sql_types::WorkFlowStatus;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -112,9 +113,9 @@ pub struct WorkStep {
   pub description: String,
   pub amount: Coin,         // ใช้ Coin ให้สอดคล้องกับระบบเงินทั้งหมด
   pub working_days: i32,
+  pub status: WorkFlowStatus,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub starting_day: NaiveDate,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub delivery_day: NaiveDate,
-
 }

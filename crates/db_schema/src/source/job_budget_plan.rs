@@ -20,7 +20,7 @@ pub struct JobBudgetPlan {
   pub total_amount: Coin,
   pub installments: JsonValue,
   pub created_at: DateTime<Utc>,
-  pub updated_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -35,7 +35,7 @@ pub struct JobBudgetPlanInsertForm {
   #[new(default)]
   pub created_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub updated_at: Option<DateTime<Utc>>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Clone, Default)]
@@ -44,5 +44,5 @@ pub struct JobBudgetPlanInsertForm {
 pub struct JobBudgetPlanUpdateForm {
   pub total_amount: Option<Coin>,
   pub installments: Option<JsonValue>,
-  pub updated_at: Option<DateTime<Utc>>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
 }

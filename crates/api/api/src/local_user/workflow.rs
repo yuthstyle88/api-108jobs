@@ -2,10 +2,11 @@ use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::BillingId;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_wallet::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, SubmitStartWork, ValidCreateInvoice};
+use lemmy_db_views_billing::api::{ApproveQuotation, ApproveWork, CreateInvoiceForm, SubmitStartWork, ValidCreateInvoice, CreateInvoiceResponse, BillingOperationResponse};
 use lemmy_utils::error::FastJobResult;
 
 use lemmy_db_schema_file::enums::WorkFlowStatus;
+use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_workflow::{WorkFlowOperationResponse, WorkflowService};
 
 // Escrow-based billing workflow handlers
@@ -39,7 +40,7 @@ pub async fn create_quotation(
     recipient_id: data.employer_id,
     post_id: data.post_id,
     amount: data.amount,
-    status: "QuotationPending".to_string(),
+    status: BillingStatus::QuotePendingReview,
     delivery_timeframe_days: data.working_days,
     created_at: billing.created_at.to_rfc3339(),
     success: true,
@@ -61,7 +62,7 @@ pub async fn approve_quotation(
 
   Ok(Json(BillingOperationResponse {
     billing_id: wf.data.billing_id.unwrap_or(BillingId(0)),
-    status: "OrderApproved".to_string(),
+    status: BillingStatus::OrderApproved,
     success: true,
   }))
 }

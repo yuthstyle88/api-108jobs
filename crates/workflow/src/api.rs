@@ -1,12 +1,11 @@
 use lemmy_db_schema::newtypes::WorkflowId;
 
-use crate::{ApproveMilestoneTransition, CancelTransition, FundEscrowTransition, ReleaseRemainingTransition, ReleaseToFreelancerTransition, SubmitWorkTransition};
+use crate::{CancelTransition, FundEscrowTransition, ReleaseRemainingTransition, ReleaseToFreelancerTransition, SubmitWorkTransition};
 
 // Planner enum: unifies all transition variants for the DB/apply layer
 pub enum Planned {
   FundEscrow(FundEscrowTransition),
   ReleaseToFreelancer(ReleaseToFreelancerTransition),
-  ApproveMilestone(ApproveMilestoneTransition),
   ReleaseRemaining(ReleaseRemainingTransition),
   SubmitWork(SubmitWorkTransition),
   Cancel(CancelTransition),

@@ -1127,7 +1127,7 @@ diesel::table! {
         freelancer_id -> Int4,
         employer_id -> Int4,
         post_id -> Int4,
-        comment_id -> Nullable<Int4>,
+        comment_id -> Int4,
         amount -> Int4,
         description -> Text,
         status -> BillingStatus,
@@ -1139,19 +1139,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    billing_milestones (id) {
-        id -> Int4,
-        billing_id -> Int4,
-        seq -> Int4,
-        name -> Text,
-        amount -> Int4,
-        status -> Text,
-        submitted_at -> Timestamptz,
-        approved_at -> Nullable<Timestamptz>,
-        released_at -> Nullable<Timestamptz>,
-    }
-}
 
 diesel::table! {
     contact (id) {

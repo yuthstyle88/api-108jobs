@@ -26,7 +26,7 @@ pub struct Workflow {
   pub deliverable_accepted: bool,
   pub accepted_at: Option<DateTime<Utc>>,
   pub created_at: DateTime<Utc>,
-  pub updated_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -53,7 +53,7 @@ pub struct WorkflowInsertForm {
   #[new(default)]
   pub created_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub updated_at: Option<DateTime<Utc>>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 #[derive(Clone, Default)]
@@ -68,7 +68,7 @@ pub struct WorkflowUpdateForm {
   pub deliverable_submitted_at: Option<Option<DateTime<Utc>>>,
   pub deliverable_accepted: Option<bool>,
   pub accepted_at: Option<Option<DateTime<Utc>>>,
-  pub updated_at: Option<DateTime<Utc>>,
+  pub updated_at: Option<Option<DateTime<Utc>>>,
 }
 
 

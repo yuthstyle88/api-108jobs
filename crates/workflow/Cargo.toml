@@ -7,6 +7,12 @@ description = "Workflow services for billing and job lifecycle"
 license = "AGPL-3.0"
 publish = false
 
+[features]
+ts-rs = [
+  "dep:ts-rs",
+  "lemmy_db_schema/ts-rs",
+  "lemmy_db_schema_file/ts-rs",
+]
 [dependencies]
 lemmy_utils = { workspace = true }
 lemmy_db_schema = { workspace = true }
@@ -18,3 +24,5 @@ diesel-async = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
 uuid =  { workspace = true }
+serde_json  =  { workspace = true }
+ts-rs = { workspace = true, optional = true }

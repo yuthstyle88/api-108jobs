@@ -16,7 +16,6 @@ pub use crate::impls::WorkflowService;
 // Domain transitions used by apply_transition()
 struct FundEscrowTransition { pub form: WorkflowUpdateForm }
 struct ReleaseToFreelancerTransition { pub form: WorkflowUpdateForm }
-struct ApproveMilestoneTransition { pub form: WorkflowUpdateForm }
 struct ReleaseRemainingTransition { pub form: WorkflowUpdateForm }
 struct SubmitWorkTransition { pub form: WorkflowUpdateForm }
 struct CancelTransition { pub form: WorkflowUpdateForm }

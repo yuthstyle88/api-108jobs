@@ -17,6 +17,14 @@ diesel = { workspace = true }
 diesel-async = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+
+[features]
+ts-rs = [
+    "dep:ts-rs",
+    "lemmy_db_schema/ts-rs",
+    "lemmy_db_schema_file/ts-rs",
+]
 
 [dev-dependencies]
 tokio = { workspace = true }

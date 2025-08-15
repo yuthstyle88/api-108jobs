@@ -3730,6 +3730,7 @@ dependencies = [
  "lemmy_utils",
  "serde",
  "tokio",
+ "ts-rs",
 ]
 
 [[package]]
@@ -4308,6 +4309,8 @@ dependencies = [
  "lemmy_db_views_wallet",
  "lemmy_utils",
  "serde",
+ "serde_json",
+ "ts-rs",
  "uuid",
 ]
 

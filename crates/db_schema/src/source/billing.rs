@@ -24,7 +24,7 @@ pub struct Billing {
   /// The job post this billing is for
   pub post_id: PostId,
   /// The comment/proposal this billing relates to
-  pub comment_id: Option<CommentId>,
+  pub comment_id: CommentId,
   /// Amount to be paid
   pub amount: Coin,
   /// Description of work to be done
@@ -50,8 +50,7 @@ pub struct BillingInsertForm {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  #[new(default)]
-  pub comment_id: Option<CommentId>,
+  pub comment_id: CommentId,
   pub amount: Coin,
   pub description: String,
   #[new(default)]
@@ -82,7 +81,7 @@ pub struct BillingFromQuotation {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<CommentId>,
+  pub comment_id: CommentId,
   pub amount: Coin,
   pub description: String,
   pub delivery_day: NaiveDate,
@@ -103,4 +102,19 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       created_at: None,
     }
   }
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct WorkStep {
+  pub seq: i32,
+  pub description: String,
+  pub amount: Coin,         // ใช้ Coin ให้สอดคล้องกับระบบเงินทั้งหมด
+  pub working_days: i32,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub starting_day: NaiveDate,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub delivery_day: NaiveDate,
+
 }

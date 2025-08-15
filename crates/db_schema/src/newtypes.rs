@@ -113,6 +113,13 @@ pub struct CoinId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The Workflow id.
 pub struct WorkflowId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Job Budget Plan id.
+pub struct JobBudgetPlanId(pub i32);
 #[derive(
   Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize
 )]

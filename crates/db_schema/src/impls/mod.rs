@@ -48,3 +48,4 @@ pub mod bank;
 mod billing;
 mod coin;
 pub mod workflow;
+pub mod job_budget_plan;

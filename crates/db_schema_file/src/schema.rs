@@ -1322,7 +1322,21 @@ diesel::table! {
         deliverable_accepted -> Bool,
         accepted_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Job budget plan table schema
+diesel::table! {
+    use diesel::sql_types::*;
+    
+    job_budget_plan (id) {
+        id -> Int4,
+        post_id -> Int4,
+        total_amount -> Int4,
+        installments -> Jsonb,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1350,6 +1364,7 @@ diesel::joinable!(comment_reply -> person (recipient_id));
 diesel::joinable!(comment_report -> comment (comment_id));
 diesel::joinable!(community -> instance (instance_id));
 diesel::joinable!(workflow -> post (post_id));
+diesel::joinable!(job_budget_plan -> post (post_id));
 diesel::joinable!(community_actions -> community (community_id));
 diesel::joinable!(community_language -> community (community_id));
 diesel::joinable!(community_language -> language (language_id));
@@ -1535,5 +1550,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   certificates,
   language_profile,
   coin,
+  job_budget_plan,
 );
 

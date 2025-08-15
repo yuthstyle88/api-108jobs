@@ -323,29 +323,3 @@ pub enum TxKind {
   Withdraw,
   Transfer,
 }
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DbEnum))]
-#[cfg_attr(
-  feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::LanguageLevel"
-)]
-#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-pub enum LanguageLevel {
-  /// Native or bilingual proficiency
-  Native,
-  /// Near-native proficiency (C2)
-  NearNative,
-  /// Advanced proficiency (C1)
-  Advanced,
-  /// Upper intermediate proficiency (B2)
-  UpperIntermediate,
-  /// Intermediate proficiency (B1)
-  Intermediate,
-  /// Pre-intermediate proficiency (A2)
-  PreIntermediate,
-  /// Beginner proficiency (A1)
-  Beginner,
-}

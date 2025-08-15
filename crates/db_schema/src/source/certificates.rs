@@ -30,7 +30,7 @@ pub struct Certificates {
 #[serde(rename_all = "camelCase")]
 pub struct CertificatesItem {
     pub id: Option<CertificateId>, // None for new items, Some(id) for updates
-    #[serde(rename = "school", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub achieved_date: Option<NaiveDate>,

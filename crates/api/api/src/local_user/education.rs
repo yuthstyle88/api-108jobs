@@ -52,30 +52,6 @@ pub async fn list_education(
     }))
 }
 
-pub async fn delete_educations(
-    data: Json<DeleteEducationsRequest>,
-    context: Data<FastJobContext>,
-    local_user_view: LocalUserView,
-) -> FastJobResult<Json<DeleteResponse>> {
-    let person_id = local_user_view.person.id;
-    let mut deleted_count = 0;
-
-    for education_id in data.education_ids.clone() {
-        // First verify the education belongs to the user
-        if let Ok(education) = Education::read(&mut context.pool(), education_id).await {
-            if education.person_id == person_id {
-                Education::delete(&mut context.pool(), education_id).await?;
-                deleted_count += 1;
-            }
-        }
-    }
-
-    Ok(Json(DeleteResponse {
-        success: true,
-        message: format!("{} records deleted successfully", deleted_count),
-    }))
-}
-
 pub async fn update_education(
     data: Json<UpdateEducationRequest>,
     context: Data<FastJobContext>,

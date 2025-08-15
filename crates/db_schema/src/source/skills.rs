@@ -60,7 +60,7 @@ pub struct SkillsForm {
 pub struct UpdateSkillRequest {
     pub id: SkillId,
     pub skill_name: Option<String>,
-    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Low), 2 (Medium), 3 (High)
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -76,10 +76,10 @@ pub struct SkillsRequest {
 #[serde(rename_all = "camelCase")]
 pub struct SkillItem {
     pub id: Option<SkillId>, // None for new items, Some(id) for updates
-    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub skill_name: Option<String>,
-    #[serde(rename = "level", skip_serializing_if = "Option::is_none")]
-    pub level_id: Option<i32>, // Skill proficiency level: 1 (Beginner) to 5 (Expert)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub level_id: Option<i32>, // Skill proficiency level: 1 (Low), 2 (Medium), 3 (High)
     #[serde(default)]
     pub deleted: bool,
 }
@@ -90,9 +90,7 @@ pub struct SkillItem {
 #[serde(rename_all = "camelCase")]
 pub struct SkillResponse {
     pub id: SkillId,
-    #[serde(rename = "name")]
     pub skill_name: String,
-    #[serde(rename = "level")]
     pub level_id: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -129,9 +127,9 @@ impl SkillsForm {
             Err(FastJobErrorType::SkillCouldntEmpty)?
         }
         if let Some(level) = self.level_id {
-            if level < 1 || level > 5 {
+            if level < 1 || level > 3 {
                 return Err(FastJobError::from(FastJobErrorType::InvalidField(
-                    "Proficient level must from 1 to 5".to_string(),
+                    "Proficient level must be 1 (Low), 2 (Medium), or 3 (High)".to_string(),
                 )));
             }
         }

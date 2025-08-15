@@ -6,13 +6,17 @@ use crate::{
 };
 
 use crate::traits::Crud;
+use chrono::Utc;
 #[cfg(feature = "full")]
 use diesel::{
   ExpressionMethods,
   QueryDsl,
+  BoolExpressionMethods,
 };
+use diesel::dsl::{insert_into, not};
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
+use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema_file::schema::education;
 #[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobErrorExt, FastJobResult};
@@ -68,7 +72,7 @@ impl Education {
       .filter(education::id.ne_all(education_ids))
       .execute(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntDeleteEducation)
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn save_education_list(
@@ -77,53 +81,45 @@ impl Education {
     educations: &[EducationItem],
   ) -> FastJobResult<Vec<EducationResponse>> {
     let conn = &mut get_conn(pool).await?;
+    conn.build_transaction().run(|conn| {
+      async move {
+        let entries: Vec<(EducationInsertForm, (String, String))> = educations
+        .iter()
+        .filter_map(|i| i.school_name.as_ref().zip(i.major.as_ref())
+        .map(|(school, major)| (EducationInsertForm::new(person_id, school.clone(), major.clone()), (school.clone(), major.clone()))))
+        .collect();
+        let (forms, keys_to_keep): (Vec<_>, Vec<_>) = entries.into_iter().unzip();
 
-    conn.build_transaction()
-      .run(|conn| {
-        Box::pin(async move {
-          let mut saved_educations = Vec::new();
-          let mut education_ids = Vec::new();
+        if forms.is_empty() {
+          diesel::delete(education::table.filter(education::person_id.eq(person_id)))
+          .execute(conn).await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          return Ok(Vec::new());
+        }
 
-          for education_item in educations {
-            match education_item.id {
-              Some(id) => {
-                // Update existing education
-                let form = EducationUpdateForm {
-                  school_name: education_item.school_name.clone(),
-                  major: education_item.major.clone(),
-                };
-                let updated = Self::update(&mut conn.into(), id, &form).await?;
-                education_ids.push(id);
-                saved_educations.push(updated);
-              }
-              None => {
-                // Create new education
-                if let (Some(school_name), Some(major)) = (&education_item.school_name, &education_item.major) {
-                  let form = EducationInsertForm::new(
-                    person_id,
-                    school_name.clone(),
-                    major.clone(),
-                  );
-                  let created = Self::create(&mut conn.into(), &form).await?;
-                  education_ids.push(created.id);
-                  saved_educations.push(created);
-                }
-              }
-            }
-          }
+        let upserted = insert_into(education::table)
+        .values(&forms)
+            .on_conflict((education::person_id, education::school_name, education::major ))
+        .do_update()
+        .set(education::updated_at.eq(Utc::now()))
+        .returning(education::all_columns)
+        .get_results::<Education>(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          // Delete any records not in the current list
-          Self::delete_not_in_list(&mut conn.into(), person_id, &education_ids).await?;
+        let schools_to_keep: Vec<String> = keys_to_keep.iter().map(|(school, _)| school.clone()).collect();
+        let majors_to_keep: Vec<String> = keys_to_keep.iter().map(|(_, major)| major.clone()).collect();
 
-          // Convert to response format
-          let education_responses: Vec<EducationResponse> = saved_educations
-            .into_iter()
-            .map(EducationResponse::from)
-            .collect();
+        diesel::delete(
+          education::table.filter(
+            education::person_id.eq(person_id)
+            .and(not(education::school_name.eq_any(&schools_to_keep).and(education::major.eq_any(&majors_to_keep)))),
+          ),
+        )
+        .execute(conn).await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          Ok(education_responses)
-        }) as _
-      })
-      .await
+        Ok(upserted.into_iter().map(EducationResponse::from).collect())
+      }.scope_boxed()
+    }).await
   }
 }

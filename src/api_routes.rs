@@ -9,7 +9,7 @@ use lemmy_api::local_user::certificates::{
   list_certificates, save_certificates,
 };
 use lemmy_api::local_user::education::{
-  delete_educations, list_education, save_education,
+  list_education, save_education,
 };
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::language_profile::{
@@ -326,7 +326,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/education")
                 .route("", post().to(save_education))
                 .route("", get().to(list_education))
-                .route("", delete().to(delete_educations)),
             )
             .service(
               scope("/work-experience")

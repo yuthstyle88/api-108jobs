@@ -56,7 +56,7 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug)]
   #[diesel(postgres_type(name = "workflow_status"))]
   pub struct WorkFlowStatus;
 

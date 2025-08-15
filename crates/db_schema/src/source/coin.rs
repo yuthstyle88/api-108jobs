@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::schema::coin;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::newtypes::Coin;
+use crate::newtypes::{Coin, CoinId};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -15,7 +15,7 @@ use crate::newtypes::Coin;
 /// Platform coin metadata (single row when using one coin).
 #[serde(rename_all = "camelCase")]
 pub struct CoinModel {
-  pub id: i32,
+  pub id: CoinId,
   /// Ticker/symbol, e.g. "FJC" (FastJob Coin)
   pub code: String,
   /// Human-readable name

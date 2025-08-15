@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::billing;
+#[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::sql_types::WorkFlowStatus;
 
 #[skip_serializing_none]

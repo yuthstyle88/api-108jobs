@@ -72,7 +72,7 @@ pub async fn submit_start_work(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let worker_id = local_user_view.local_user.id;
+  let _worker_id = local_user_view.local_user.id;
   let workflow_id = data.workflow_id.into();
   let wf =  WorkflowService::load_order_approve(&mut context.pool(), workflow_id).await?
   .start_work_on(&mut context.pool()).await?;

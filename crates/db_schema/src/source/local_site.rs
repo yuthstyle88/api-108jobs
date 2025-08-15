@@ -1,5 +1,5 @@
 
-use crate::newtypes::{LocalSiteId, SiteId};
+use crate::newtypes::{CoinId, LocalSiteId, SiteId};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::{
   CommentSortType,
@@ -83,6 +83,8 @@ pub struct LocalSite {
   /// Dont send multilang notifications to users for new replies, mentions etc
   pub disable_email_notifications: bool,
   pub verify_with_otp: bool,
+  /// The coin used by this platform
+  pub coin_id: Option<CoinId>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -136,6 +138,8 @@ pub struct LocalSiteInsertForm {
   pub disable_email_notifications: bool,
   #[new(value = "Some(true)")]
   pub verify_with_otp: Option<bool>,
+  #[new(default)]
+  pub coin_id: Option<CoinId>,
 }
 
 #[derive(Clone, Default)]
@@ -166,4 +170,5 @@ pub struct LocalSiteUpdateForm {
   pub disallow_self_promotion_content: Option<bool>,
   pub disable_email_notifications: Option<bool>,
   pub verify_with_otp: Option<bool>,
+  pub coin_id: Option<CoinId>,
 }

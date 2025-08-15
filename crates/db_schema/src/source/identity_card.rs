@@ -8,7 +8,6 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use lemmy_utils::utils::validation::is_valid_issued_and_expiry;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::convert::TryFrom;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

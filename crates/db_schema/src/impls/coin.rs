@@ -61,11 +61,11 @@ impl CoinModel {
   ) -> FastJobResult<CoinModel> {
     // 1) Lock & read current supply
     let current_total: i32 = coin::table
-      .find(coin_id)
-      .select(coin::supply_total)
-      .for_update()
-      .first::<i32>(conn)
-      .await?;
+        .find(coin_id)
+        .select(coin::supply_total)
+        .for_update()
+        .first::<i32>(conn)
+        .await?;
 
     // 2) Compute new total (integer, no decimals)
     let new_total = current_total + delta.0 as i32;
@@ -75,12 +75,12 @@ impl CoinModel {
 
     // 3) Persist
     let updated = diesel::update(coin::table.find(coin_id))
-      .set((
-        coin::supply_total.eq(new_total),
-        coin::updated_at.eq(now),
-      ))
-      .get_result::<CoinModel>(conn)
-      .await?;
+        .set((
+          coin::supply_total.eq(new_total),
+          coin::updated_at.eq(now),
+        ))
+        .get_result::<CoinModel>(conn)
+        .await?;
 
     Ok(updated)
   }

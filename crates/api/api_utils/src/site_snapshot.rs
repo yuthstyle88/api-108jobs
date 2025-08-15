@@ -55,7 +55,7 @@ impl CachedSiteConfigProvider {
         let oauth_providers = OAuthProvider::convert_providers_to_public(admin_oauth_providers.clone());
 
         Ok(SiteSnapshot {
-            site_view,
+            site_view: site_view.clone(),
             admins,
             version: VERSION.to_string(),
             all_languages,
@@ -66,6 +66,7 @@ impl CachedSiteConfigProvider {
             oauth_providers,
             admin_oauth_providers,
             active_plugins: plugin_metadata(),
+            coin_id: site_view.local_site.coin_id,
         })
     }
 

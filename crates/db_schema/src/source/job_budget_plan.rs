@@ -1,6 +1,7 @@
 use crate::newtypes::{JobBudgetPlanId, PostId, Coin};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "full")]
 use serde_json::Value as JsonValue;
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]

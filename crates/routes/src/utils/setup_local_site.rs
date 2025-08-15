@@ -12,6 +12,8 @@ use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
 use lemmy_db_schema::source::oauth_provider::OAuthProvider;
 use lemmy_db_schema::source::tagline::Tagline;
 use lemmy_db_schema::source::wallet::WalletModel;
+use lemmy_db_schema::source::coin::{CoinModel, CoinModelInsertForm};
+use lemmy_db_schema::newtypes::Coin;
 use lemmy_db_schema::{
   source::{
     instance::Instance,
@@ -106,10 +108,21 @@ pub async fn setup_local_site(
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;
 
-          // Finally create the local_site row
+          // Create default platform coin
+          let coin_form = CoinModelInsertForm {
+            code: "FJC".to_string(),
+            name: "FastJob Coin".to_string(),
+            supply_total: Some(Coin(1000000000)), // 1 billion initial supply
+            supply_minted_total: Some(Coin(0)), // No coins minted initially
+            ..CoinModelInsertForm::new("FJC".to_string(), "FastJob Coin".to_string(), None, None)
+          };
+          let coin = CoinModel::create(&mut conn.into(), &coin_form).await?;
+
+          // Finally create the local_site row with coin reference
           let local_site_form = LocalSiteInsertForm {
             site_setup: Some(settings.setup.is_some()),
             community_creation_admin_only: Some(true),
+            coin_id: Some(coin.id),
             ..LocalSiteInsertForm::new(site.id)
           };
           let local_site = LocalSite::create(&mut conn.into(), &local_site_form).await?;
@@ -139,7 +152,7 @@ pub async fn setup_local_site(
   let oauth_providers = OAuthProvider::convert_providers_to_public(admin_oauth_providers.clone());
 
   Ok(SiteSnapshot {
-    site_view,
+    site_view: site_view.clone(),
     admins,
     version: VERSION.to_string(),
     all_languages,
@@ -150,5 +163,6 @@ pub async fn setup_local_site(
     admin_oauth_providers,
     image_upload_disabled: settings.pictrs()?.image_upload_disabled,
     active_plugins: plugin_metadata(),
+    coin_id: site_view.local_site.coin_id,
   })
 }

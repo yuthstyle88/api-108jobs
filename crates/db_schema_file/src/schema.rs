@@ -53,14 +53,14 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
 
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug)]
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
   #[diesel(postgres_type(name = "workflow_status"))]
   pub struct WorkFlowStatus;
 
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
   #[diesel(postgres_type(name = "tx_kind"))]
   pub struct TxKind;
 
@@ -466,6 +466,7 @@ diesel::table! {
         users_active_half_year -> Int8,
         disable_email_notifications -> Bool,
         verify_with_otp -> Bool,
+        coin_id -> Nullable<Int4>,
     }
 }
 
@@ -1367,6 +1368,7 @@ diesel::joinable!(instance_actions -> person (person_id));
 diesel::joinable!(local_image -> person (person_id));
 diesel::joinable!(local_image -> post (thumbnail_for_post_id));
 diesel::joinable!(local_site -> site (site_id));
+diesel::joinable!(local_site -> coin (coin_id));
 diesel::joinable!(local_site_rate_limit -> local_site (local_site_id));
 diesel::joinable!(local_user -> person (person_id));
 diesel::joinable!(local_user -> wallet (wallet_id));

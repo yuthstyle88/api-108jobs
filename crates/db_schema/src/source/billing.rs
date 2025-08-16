@@ -1,4 +1,4 @@
-use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin, DbUrl};
+use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin, DbUrl, PersonId};
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::{BillingStatus};
 use serde::{Deserialize, Serialize};
@@ -20,9 +20,9 @@ use lemmy_db_schema_file::schema::sql_types::WorkFlowStatus;
 pub struct Billing {
   pub id: BillingId,
   /// The freelancer who created this billing
-  pub freelancer_id: LocalUserId,
+  pub freelancer_id: PersonId,
   /// The employer who needs to pay this billing
-  pub employer_id: LocalUserId,
+  pub employer_id: PersonId,
   /// The job post this billing is for
   pub post_id: PostId,
   /// The comment/proposal this billing relates to

@@ -44,7 +44,7 @@ pub async fn get_my_user(
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),
     |pool| LocalUserLanguage::read(pool, local_user_id),
-    |pool| WalletView::read_by_user(pool, local_user_id),
+    |pool| WalletView::read_by_user(pool, person_id),
     |pool| Contact::read(pool, local_user_view.person.contact_id),
     |pool| Address::read(pool, local_user_view.person.address_id),
     |pool| IdentityCard::read(pool, local_user_view.person.identity_card_id)

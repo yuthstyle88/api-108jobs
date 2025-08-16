@@ -512,7 +512,6 @@ diesel::table! {
     local_user (id) {
         id -> Int4,
         person_id -> Int4,
-        wallet_id -> Int4,
         password_encrypted -> Nullable<Text>,
         email -> Nullable<Text>,
         self_promotion -> Bool,
@@ -795,6 +794,7 @@ diesel::table! {
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
+        wallet_id -> Int4,
     }
 }
 
@@ -1371,7 +1371,7 @@ diesel::joinable!(local_site -> site (site_id));
 diesel::joinable!(local_site -> coin (coin_id));
 diesel::joinable!(local_site_rate_limit -> local_site (local_site_id));
 diesel::joinable!(local_user -> person (person_id));
-diesel::joinable!(local_user -> wallet (wallet_id));
+diesel::joinable!(person -> wallet (wallet_id));
 diesel::joinable!(local_user_keyword_block -> local_user (local_user_id));
 diesel::joinable!(local_user_language -> language (language_id));
 diesel::joinable!(local_user_language -> local_user (local_user_id));

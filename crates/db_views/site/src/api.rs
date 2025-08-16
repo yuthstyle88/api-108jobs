@@ -2,7 +2,7 @@ use crate::SiteView;
 use chrono::{DateTime, Utc};
 use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_db_schema::{
-  newtypes::{CoinId, InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
+  newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
     comment::Comment,
@@ -354,8 +354,6 @@ pub struct SiteSnapshot {
   // banners can be set.
   pub image_upload_disabled: bool,
   pub active_plugins: Vec<PluginMetadata>,
-  /// The coin used by this platform
-  pub coin_id: Option<CoinId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

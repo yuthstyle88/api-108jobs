@@ -53,7 +53,7 @@ pub async fn setup_local_site(
     let domain = settings
       .get_hostname_without_port()
       .with_fastjob_type(FastJobErrorType::Unknown("must have domain".into()))?;
-
+     let supply_minted_total = settings.supply_minted_total;
     conn
       .run_transaction(|conn| {
         async move {
@@ -66,7 +66,8 @@ pub async fn setup_local_site(
             let private_key = Some("private_key".to_string());
             let (address_id, contact_id, identity_card_id) =
               Person::prepare_data_for_insert(&mut conn.into(), None).await?;
-
+            let wallet = WalletModel::create_for_platform(conn).await?;
+            let wallet_id = Some(wallet.id);
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
               ap_id: Some(person_ap_id.clone()),
@@ -75,15 +76,14 @@ pub async fn setup_local_site(
               address_id: Some(address_id),
               contact_id: Some(contact_id),
               identity_card_id: Some(identity_card_id),
+              wallet_id,
               ..PersonInsertForm::new(setup.admin_username.clone(), public_key, instance.id)
             };
             let person_inserted = Person::create(&mut conn.into(), &person_form).await?;
-            let wallet = WalletModel::create_for_platform(conn).await?;
-            let wallet_id = wallet.id;
+
             let local_user_form = LocalUserInsertForm {
               email: setup.admin_email.clone(),
               admin: Some(true),
-              wallet_id,
               ..LocalUserInsertForm::new(person_inserted.id, Some(setup.admin_password.clone()))
             };
             LocalUser::create(&mut conn.into(), &local_user_form, vec![]).await?;
@@ -109,7 +109,7 @@ pub async fn setup_local_site(
           let site = Site::create(&mut conn.into(), &site_form).await?;
 
           // Create default platform coin
-          let total_supply = Coin(1000000000); // 1 billion initial supply
+          let total_supply = Coin(supply_minted_total);
           let coin_form = CoinModelInsertForm::new(
             "FJC".to_string(),
             "FastJob Coin".to_string(),
@@ -163,6 +163,5 @@ pub async fn setup_local_site(
     admin_oauth_providers,
     image_upload_disabled: settings.pictrs()?.image_upload_disabled,
     active_plugins: plugin_metadata(),
-    coin_id: site_view.local_site.coin_id,
   })
 }

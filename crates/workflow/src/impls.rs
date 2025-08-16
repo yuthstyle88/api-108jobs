@@ -1,6 +1,6 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{BillingId, Coin, LocalUserId, WalletId, WorkflowId};
+use lemmy_db_schema::newtypes::{BillingId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanInsertForm};
@@ -199,7 +199,7 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
 async fn load_billing_and_check_employer(
   pool: &mut DbPool<'_>,
   billing_id: BillingId,
-  employer_id: LocalUserId,
+  employer_id: PersonId,
 ) -> FastJobResult<Billing> {
   let conn = &mut get_conn(pool).await?;
   let billing = Billing::read(&mut conn.into(), billing_id)
@@ -216,7 +216,7 @@ async fn reserve_to_escrow(
   from_wallet_id: WalletId,
   billing_id: BillingId,
   amount: Coin,
-  employer_id: LocalUserId,
+  employer_id: PersonId,
   reference_type: &str,
   description: String,
 ) -> FastJobResult<()> {
@@ -241,8 +241,10 @@ async fn release_from_escrow_to_freelancer(
   pool: &mut DbPool<'_>,
   billing: &Billing,
   amount: Coin,
+  coin_id: CoinId,
   reference_type: &str,
   description: String,
+  platform_wallet_id: WalletId,
 ) -> FastJobResult<()> {
   if amount <= Coin(0) {
     return Err(FastJobErrorType::InvalidField("amount must be positive".into()).into());
@@ -258,7 +260,7 @@ async fn release_from_escrow_to_freelancer(
     counter_user_id: Some(billing.freelancer_id),
     idempotency_key: Uuid::new_v4().to_string(),
   };
-  let _ = WalletModel::deposit_from_platform(pool, &tx_form).await?;
+  let _ = WalletModel::deposit_from_platform(pool, &tx_form, coin_id, platform_wallet_id).await?;
   Ok(())
 }
 
@@ -279,7 +281,7 @@ impl QuotationPendingTS {
   pub async fn approve_on(
     self,
     pool: &mut DbPool<'_>,
-    employer_id: LocalUserId,
+    employer_id: PersonId,
     wallet_id: WalletId,
     billing_id: BillingId,
   ) -> FastJobResult<OrderApprovedTS> {
@@ -376,7 +378,9 @@ impl WorkSubmittedTS {
     .await?;
     Ok(self.request_revision())
   }
-  pub async fn approve_work_on(self, pool: &mut DbPool<'_>) -> FastJobResult<CompletedTS> {
+  pub async fn approve_work_on(
+    self, pool: &mut DbPool<'_>, coin_id: CoinId, platform_wallet_id: WalletId
+  ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
     let billing_id = self.data.billing_id.ok_or_else(|| FastJobErrorType::InvalidField("missing billing_id".into()))?;
@@ -399,7 +403,7 @@ impl WorkSubmittedTS {
     };
     // ใช้ transfer จาก platform -> freelancer (ควรมี helper release_from_escrow; ที่นี่ใช้ transfer_between_wallets ผ่านฟังก์ชันระดับ model ถ้ามี)
     // สำหรับตัวอย่างนี้ ใช้ deposit_from_platform ก็พอได้หากโมเดลของคุณถือ escrow ใน platform wallet
-    let _ = WalletModel::deposit_from_platform(pool, &tx_form).await?;
+    let _ = WalletModel::deposit_from_platform(pool, &tx_form, coin_id, platform_wallet_id).await?;
 
     // 3) อัปเดตสถานะ WorkSubmitted -> Completed
     set_status_from(

@@ -9,7 +9,7 @@ use i_love_jesus::CursorKeysModule;
 use lemmy_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::newtypes::{ContactId, AddressId, IdentityCardId};
+use crate::newtypes::{ContactId, AddressId, IdentityCardId, WalletId};
 use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
@@ -70,6 +70,7 @@ pub struct Person {
   pub comment_count: i64,
   #[serde(skip)]
   pub comment_score: i64,
+  pub wallet_id: WalletId,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -111,6 +112,8 @@ pub struct PersonInsertForm {
   pub contact_id: Option<ContactId>,
   #[new(default)]
   pub identity_card_id: Option<IdentityCardId>,
+  #[new(default)]
+  pub wallet_id: Option<WalletId>,
 }
 
 #[derive(Clone, Default)]

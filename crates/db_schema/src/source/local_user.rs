@@ -1,5 +1,5 @@
 use crate::{
-  newtypes::{LocalUserId, PersonId, WalletId},
+  newtypes::{LocalUserId, PersonId},
   sensitive::SensitiveString,
 };
 use chrono::{DateTime, Utc};
@@ -25,8 +25,6 @@ pub struct LocalUser {
   pub id: LocalUserId,
   /// The person_id for the local user.
   pub person_id: PersonId,
-  /// The wallet_id for the local user.
-  pub wallet_id: WalletId,
   #[serde(skip)]
   pub password_encrypted: Option<SensitiveString>,
   pub email: Option<SensitiveString>,
@@ -88,8 +86,6 @@ pub struct LocalUser {
 #[cfg_attr(feature = "full", diesel(table_name = local_user))]
 pub struct LocalUserInsertForm {
   pub person_id: PersonId,
-  #[new(default)]
-  pub wallet_id: WalletId,
   pub password_encrypted: Option<String>,
   #[new(default)]
   pub email: Option<String>,

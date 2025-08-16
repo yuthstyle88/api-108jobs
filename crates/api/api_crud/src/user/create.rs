@@ -689,6 +689,11 @@ async fn create_person(
   let public_key = "public_key".to_string();
   let (address_id, contact_id, identity_card_id) =
     Person::prepare_data_for_insert(&mut conn.into(), interface_language).await?;
+  // Create a new wallet for this user
+  let wallet = WalletModel::create_for_user(conn).await?;
+  // Attach the wallet to the local user form
+  let wallet_id = Some(wallet.id);
+
   // Register the new person
   let person_form = PersonInsertForm {
     ap_id: Some(ap_id.clone()),
@@ -697,6 +702,7 @@ async fn create_person(
     address_id: Some(address_id),
     contact_id: Some(contact_id),
     identity_card_id: Some(identity_card_id),
+    wallet_id,
     ..PersonInsertForm::new(username.clone(), public_key, site_view.site.instance_id)
   };
 
@@ -732,10 +738,6 @@ async fn create_local_user(
   // Extract the interface language using indexing to avoid Diesel trait conflicts
   local_user_form.interface_language = interface_language;
 
-  // Create a new wallet for this user
-  let wallet = WalletModel::create_for_user(conn).await?;
-  // Attach the wallet to the local user form
-  local_user_form.wallet_id = wallet.id;
 
   let inserted_local_user =
     LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;

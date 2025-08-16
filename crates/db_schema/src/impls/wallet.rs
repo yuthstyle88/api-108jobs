@@ -1,20 +1,20 @@
 /// Move funds from one wallet to another using the three-balance model.
 use crate::{
-  newtypes::{LocalUserId, WalletId},
-  source::wallet::{WalletModel, WalletInsertForm, WalletUpdateForm},
+  newtypes::WalletId,
+  source::wallet::{WalletInsertForm, WalletModel, WalletUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 
+use crate::newtypes::{Coin, CoinId, PersonId};
+use crate::source::coin::CoinModel;
 use crate::source::wallet::{TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{local_user, wallet, wallet_transaction};
+use lemmy_db_schema_file::schema::{person, wallet, wallet_transaction};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::newtypes::{Coin, CoinId};
-use crate::source::coin::CoinModel;
 
 enum WalletOp {
   Deposit,
@@ -135,12 +135,12 @@ impl WalletModel {
   }
 
   /// Get a wallet by user ID
-  pub async fn get_by_user(pool: &mut DbPool<'_>, user_id: LocalUserId) -> FastJobResult<Wallet> {
+  pub async fn get_by_user(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Wallet> {
     let conn = &mut get_conn(pool).await?;
 
-    let wallet = local_user::table
-      .inner_join(wallet::table.on(local_user::wallet_id.eq(wallet::id)))
-      .filter(local_user::id.eq(user_id))
+    let wallet = person::table
+      .inner_join(wallet::table.on(person::wallet_id.eq(wallet::id)))
+      .filter(person::id.eq(person_id))
       .select(wallet::all_columns)
       .first::<Wallet>(conn)
       .await
@@ -154,14 +154,16 @@ impl WalletModel {
   pub async fn create_transaction(
     pool: &mut DbPool<'_>,
     form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
     // Façade kept for compatibility; forwards to appropriate handler and returns the updated user wallet.
     let w = match form.kind {
       TxKind::Deposit => {
-        Self::deposit_from_platform(pool, form).await?
+        Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Withdraw => {
-        Self::withdraw_to_platform(pool, form).await?
+        Self::withdraw_to_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Transfer => {
         return Err(FastJobErrorType::InvalidField(
@@ -229,9 +231,11 @@ impl WalletModel {
   pub async fn deposit(
       pool: &mut DbPool<'_>,
       form: &WalletTransactionInsertForm,
+      coin_id: CoinId,
+      platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
       // Delegate to platform-backed deposit so coins are deducted from platform escrow.
-      Self::deposit_from_platform(pool, form).await
+      Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await
   }
 
   /// Reserve to escrow (no real "hold" balance):
@@ -339,6 +343,8 @@ impl WalletModel {
   pub async fn deposit_from_platform(
     pool: &mut DbPool<'_>,
     form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
     let amount = form.amount;
     Self::validate_positive_amount(amount)?;
@@ -348,14 +354,13 @@ impl WalletModel {
       .run_transaction(|conn| {
         async move {
           // move funds: platform -> user
-          let platform_id = Self::platform_wallet_id(conn).await?;
-          Self::move_funds(conn, platform_id, form.wallet_id, amount).await?;
-          let _ = CoinModel::update_balance(conn, CoinId(1), -amount).await?;
+          Self::move_funds(conn, platform_wallet_id, form.wallet_id, amount).await?;
+          let _ = CoinModel::update_balance(conn, coin_id, -amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
           // mirrored platform-side entry
           let mut mirror = form.clone();
-          mirror.wallet_id = platform_id;
+          mirror.wallet_id = platform_wallet_id;
           mirror.description = format!("platform counter: {}", mirror.description);
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet
@@ -371,6 +376,8 @@ impl WalletModel {
   pub async fn withdraw_to_platform(
     pool: &mut DbPool<'_>,
     form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
     let amount = form.amount;
     Self::validate_positive_amount(amount)?;
@@ -380,14 +387,13 @@ impl WalletModel {
       .run_transaction(|conn| {
         async move {
           // move funds: user -> platform
-          let platform_id = Self::platform_wallet_id(conn).await?;
-          Self::move_funds(conn, form.wallet_id, platform_id, amount).await?;
-          let _ = CoinModel::update_balance(conn.into(), CoinId(1), amount).await?;
+          Self::move_funds(conn, form.wallet_id, platform_wallet_id, amount).await?;
+          let _ = CoinModel::update_balance(conn.into(), coin_id, amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
           // mirrored platform-side entry
           let mut mirror = form.clone();
-          mirror.wallet_id = platform_id;
+          mirror.wallet_id = platform_wallet_id;
           mirror.description = format!("platform counter: {}", mirror.description);
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet

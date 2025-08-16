@@ -1,4 +1,4 @@
-use crate::newtypes::{Coin, LocalUserId, WalletId};
+use crate::newtypes::{Coin, LocalUserId, PersonId, WalletId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -92,20 +92,21 @@ pub struct WalletTransactionInsertForm {
   pub kind: TxKind,
   pub amount: Coin,
   pub description: String,
-  pub counter_user_id: Option<LocalUserId>,
+  pub counter_user_id: Option<PersonId>,
   pub idempotency_key: String,
 }
 
 // ฟอร์มสำหรับ DB เท่านั้น (Insertable) — kind เป็น String
 #[derive(Debug, Clone)]
 pub struct WalletTransactionForm {
+  pub platform_wallet_id: WalletId,
   pub wallet_id: WalletId,
   pub reference_type: String,
   pub reference_id: i32,
   pub kind: TxKind,
   pub amount: Coin,
   pub description: String,
-  pub counter_user_id: Option<LocalUserId>,
+  pub counter_user_id: Option<PersonId>,
   pub idempotency_key: String,
 }
 

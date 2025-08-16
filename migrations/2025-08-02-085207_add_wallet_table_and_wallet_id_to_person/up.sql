@@ -5,10 +5,10 @@ CREATE TABLE wallet (
     updated_at TIMESTAMPTZ
 );
 
-ALTER TABLE local_user
+ALTER TABLE person
   ADD COLUMN wallet_id INTEGER NOT NULL UNIQUE
     REFERENCES wallet(id)
     ON DELETE RESTRICT;
 
 -- Create index for wallet lookups
-CREATE INDEX idx_local_user_wallet_id ON local_user(wallet_id);
+CREATE INDEX idx_person_wallet_id ON person(wallet_id);

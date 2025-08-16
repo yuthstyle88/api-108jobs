@@ -11,9 +11,9 @@ pub async fn get_wallet(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<GetWalletResponse>> {
-  let user_id = local_user_view.local_user.id;
+  let person_id = local_user_view.local_user.person_id;
 
-  let wallet = WalletModel::get_by_user(&mut context.pool(), user_id).await?;
+  let wallet = WalletModel::get_by_user(&mut context.pool(), person_id).await?;
 
   let response = GetWalletResponse {
     wallet_id: wallet.id,
@@ -28,10 +28,12 @@ pub async fn deposit_wallet(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WalletOperationResponse>> {
-  let user_id = local_user_view.local_user.id;
-
+  let person_id = local_user_view.local_user.person_id;
+  let site_view = context.site_config().get().await?.site_view;
+  let coin_id = site_view.clone().local_site.coin_id.ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
+  let platform_wallet_id = context.site_config().get().await?.admins.first().unwrap().person.wallet_id;
   // Load user's wallet (must exist per NOT NULL constraint)
-  let wallet = WalletModel::get_by_user(&mut context.pool(), user_id).await?;
+  let wallet = WalletModel::get_by_user(&mut context.pool(), person_id).await?;
 
   // Deposit funds: construct a wallet transaction insert form and call deposit
   let form = WalletTransactionInsertForm {
@@ -45,7 +47,7 @@ pub async fn deposit_wallet(
     idempotency_key: Uuid::new_v4().to_string(),
   };
 
-  let updated_wallet = WalletModel::deposit(&mut context.pool(), &form).await?;
+  let updated_wallet = WalletModel::deposit(&mut context.pool(), &form, coin_id, platform_wallet_id).await?;
 
   Ok(Json(WalletOperationResponse {
     wallet_id: updated_wallet.id,

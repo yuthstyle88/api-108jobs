@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::BillingId;
+use lemmy_db_views_billing::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, SubmitStartWork, ValidCreateInvoice};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_billing::api::{ApproveQuotation, ApproveWork, CreateInvoiceForm, SubmitStartWork, ValidCreateInvoice, CreateInvoiceResponse, BillingOperationResponse};
 use lemmy_utils::error::FastJobResult;
 
-use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_db_schema_file::enums::BillingStatus;
+use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_workflow::{WorkFlowOperationResponse, WorkflowService};
 
 // Escrow-based billing workflow handlers
@@ -52,7 +52,7 @@ pub async fn approve_quotation(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BillingOperationResponse>> {
-  let employer_id = local_user_view.local_user.id;
+  let employer_id = local_user_view.local_user.person_id;
   let workflow_id = data.workflow_id.into();
   let wallet_id = data.wallet_id.into();
   let billing_id = data.billing_id.into();
@@ -109,8 +109,12 @@ pub async fn approve_work(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let workflow_id = data.workflow_id.into();
+  let site_view = context.site_config().get().await?.site_view;
+  let coin_id = site_view.clone().local_site.coin_id.ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
+  let platform_wallet_id = context.site_config().get().await?.admins.first().unwrap().person.wallet_id;
+
   let wf =  WorkflowService::load_work_submit(&mut context.pool(), workflow_id).await?
-  .approve_work_on(&mut context.pool()).await?;
+  .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id).await?;
   // Approve work and release payment to worker
 
   Ok(Json(WorkFlowOperationResponse {

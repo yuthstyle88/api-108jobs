@@ -54,6 +54,8 @@ pub struct Settings {
   pub phoenix_url: Option<Url>,
   pub google: GoogleConfig,
   pub redis: RedisConfig,
+  #[default(1_000_000_000)]
+  pub supply_minted_total: i32,
 }
 
 impl Settings {

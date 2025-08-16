@@ -66,7 +66,6 @@ impl CachedSiteConfigProvider {
             oauth_providers,
             admin_oauth_providers,
             active_plugins: plugin_metadata(),
-            coin_id: site_view.local_site.coin_id,
         })
     }
 

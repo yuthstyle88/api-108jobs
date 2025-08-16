@@ -302,6 +302,8 @@ pub enum FastJobErrorType {
     CouldntDeleteCertificate,
     CouldntDeleteLanguageProfile,
   NotAllowed,
+  NoSiteConfig,
+  NoAdmin,
 }
 
 cfg_if! {

@@ -16,9 +16,14 @@ pub async fn admin_top_up_wallet(
   // Check if the user is admin
   is_admin(&local_user_view)?;
   let site_config = context.site_config().get().await?;
-  let admin_person = site_config.admins.first().unwrap();
-  let platform_wallet_id = admin_person.person.wallet_id;
   let coin_id = site_config.site_view.local_site.coin_id.unwrap_or(CoinId(1));
+  let platform_wallet_id = site_config
+  .admins
+  .first()
+  .expect("At least one admin must exist to perform admin wallet operations")
+  .person
+  .wallet_id;
+
   let form = WalletTransactionInsertForm {
     wallet_id: data.wallet_id,
     reference_type: "admin_top_up".to_string(),
@@ -48,9 +53,16 @@ pub async fn admin_withdraw_wallet(
 ) -> FastJobResult<Json<AdminWalletOperationResponse>> {
   // Check if user is admin
   is_admin(&local_user_view)?;
-  let site_view = context.site_config().get().await?.site_view;
-  let coin_id = site_view.clone().local_site.coin_id.ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-  let platform_wallet_id = context.site_config().get().await?.admins.first().unwrap().person.wallet_id;
+
+  // Fetch site config once to avoid redundant await calls and clones
+  let site_config = context.site_config().get().await?;
+  let coin_id = site_config.site_view.local_site.coin_id.unwrap_or(CoinId(1));
+  let platform_wallet_id = site_config
+    .admins
+    .first()
+    .expect("At least one admin must exist to perform admin wallet operations")
+    .person
+    .wallet_id;
 
   let form = WalletTransactionInsertForm {
     wallet_id: data.wallet_id,
@@ -66,7 +78,7 @@ pub async fn admin_withdraw_wallet(
   let wallet = WalletModel::create_transaction(&mut context.pool(), &form, coin_id, platform_wallet_id).await?;
 
   Ok(Json(AdminWalletOperationResponse {
-    wallet_id: wallet.id,
+    wallet_id: data.wallet_id,
     new_balance: wallet.balance_total,
     operation_amount: -data.amount, // Negative because it's a withdrawal
     reason: data.reason.clone(),

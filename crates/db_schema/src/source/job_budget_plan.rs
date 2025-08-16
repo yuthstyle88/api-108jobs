@@ -1,7 +1,6 @@
 use crate::newtypes::{JobBudgetPlanId, PostId, Coin};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "full")]
 use serde_json::Value as JsonValue;
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -19,6 +18,7 @@ pub struct JobBudgetPlan {
   pub id: JobBudgetPlanId,
   pub post_id: PostId,
   pub total_amount: Coin,
+  #[cfg_attr(feature = "ts-rs", ts(type = "any"))]
   pub installments: JsonValue,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,

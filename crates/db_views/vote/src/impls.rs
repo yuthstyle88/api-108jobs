@@ -193,6 +193,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
+  use lemmy_db_schema::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -228,8 +229,9 @@ mod tests {
       inserted_timmy.id,
       inserted_post.id,
       "A test comment vv".into(),
+      DbUrl::try_from("https://example.com/comment-vv").unwrap(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form,).await?;
 
     // Timmy upvotes his own post
     let timmy_post_vote_form = PostLikeForm::new(inserted_post.id, inserted_timmy.id, 1);

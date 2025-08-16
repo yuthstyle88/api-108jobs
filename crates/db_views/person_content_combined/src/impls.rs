@@ -292,7 +292,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-
+  use crate::impls::lemmy_db_schema::newtypes::DbUrl;
   struct Data {
     instance: Instance,
     timmy: Person,
@@ -331,16 +331,16 @@ mod tests {
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form, None).await?;
+      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into(), DbUrl::try_from("https://example.com/comment-site").unwrap(),);
+    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form, None).await?;
+      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap(),);
+    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
     let sara_comment_form_2 =
-      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2, None).await?;
+      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into(), DbUrl::try_from("https://example.com/comment-site").unwrap(),);
+    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     Ok(Data {
       instance,

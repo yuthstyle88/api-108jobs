@@ -277,7 +277,6 @@ mod tests {
         show_score: sara_local_user.show_score,
         show_upvote_percentage: sara_local_user.show_upvote_percentage,
         show_person_votes: sara_local_user.show_person_votes,
-        wallet_id: None,
       },
       creator: Person {
         id: sara_person.id,
@@ -305,6 +304,7 @@ mod tests {
         comment_score: 0,
         ap_id: DbUrl::from_str("")?,
         public_key: "".to_string(),
+        wallet_id: Default::default(),
       },
       admin: None,
     };
@@ -379,6 +379,7 @@ mod tests {
       comment_score: 0,
       ap_id: DbUrl::from_str("")?,
       public_key: "".to_string(),
+      wallet_id: Default::default(),
     });
     assert_eq!(read_sara_app_view_after_approve, expected_sara_app_view);
 

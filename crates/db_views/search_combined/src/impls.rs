@@ -508,6 +508,7 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
+  use lemmy_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -584,23 +585,24 @@ mod tests {
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
     let timmy_comment_form =
-     CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form, None).await?;
+     CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
+    let timmy_comment = Comment::create(pool, &timmy_comment_form,).await?;
 
     let sara_comment_form =
-     CommentInsertForm::new(sara.id, sara_post.id, "sara comment prv gold".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form, None).await?;
+     CommentInsertForm::new(sara.id, sara_post.id, "sara comment prv gold".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
+    let sara_comment = Comment::create(pool, &sara_comment_form,).await?;
 
     let sara_comment_form_2 =
-     CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2, None).await?;
+     CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into(), DbUrl::try_from("https://example.com/comment-site").unwrap() );
+    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     let comment_in_self_promotion_post_form = CommentInsertForm::new(
       sara.id,
       self_promotion_post.id,
       "sara comment in self_promotion post prv 2".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap()
     );
-    let comment_in_self_promotion_post = Comment::create(pool, &comment_in_self_promotion_post_form, None).await?;
+    let comment_in_self_promotion_post = Comment::create(pool, &comment_in_self_promotion_post_form).await?;
 
     // Timmy likes and dislikes a few things
     let timmy_like_post_form = PostLikeForm::new(timmy_post.id, timmy.id, 1);

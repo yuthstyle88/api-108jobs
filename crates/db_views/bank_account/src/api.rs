@@ -18,39 +18,8 @@ pub struct GetBanks {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Get user bank accounts.
-pub struct GetUserBankAccounts {}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Create user bank account.
-pub struct CreateUserBankAccount {
-  pub bank_id: BankId,
-  pub account_number: String,
-  pub account_name: String,
-  pub is_default: Option<bool>,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 /// Set default bank account.
 pub struct SetDefaultBankAccount {
-  pub bank_account_id: BankAccountId,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Delete bank account.
-pub struct DeleteUserBankAccount {
   pub bank_account_id: BankAccountId,
 }
 
@@ -139,12 +108,22 @@ pub struct ListBankAccountsResponse {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Fetches a list of taglines.
 #[serde(rename_all = "camelCase")]
 pub struct ListBankAccounts {
+  pub bank_accounts: Vec<BankAccountView>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Fetches a random community
+pub struct GetBankAccounts {
   pub local_user_id: Option<LocalUserId>,
-  pub verify: Option<bool>,
+  pub is_verified: Option<bool>,
 }

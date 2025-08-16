@@ -42,9 +42,6 @@ use serde::{Deserialize, Serialize};
 
 // Delete request structures
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
-#[serde(rename_all = "camelCase")]
 pub struct DeleteItemRequest<T> {
     pub id: T,
 }

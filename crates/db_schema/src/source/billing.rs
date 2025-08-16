@@ -32,6 +32,7 @@ pub struct Billing {
   /// Description of work to be done
   pub description: String,
   /// Current status of the billing
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub status: BillingStatus,
   /// Submitted work description
   pub work_description: Option<String>,
@@ -114,6 +115,7 @@ pub struct WorkStep {
   pub description: String,
   pub amount: Coin,         // ใช้ Coin ให้สอดคล้องกับระบบเงินทั้งหมด
   pub working_days: i32,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub status: WorkFlowStatus,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub starting_day: NaiveDate,

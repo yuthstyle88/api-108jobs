@@ -299,8 +299,8 @@ pub enum WorkFlowStatus {
   OrderApproved,
   /// Employer paid invoice, money in escrow, waiting for work submission
   InProgress,
-  /// Freelancer submitted work, waiting for employer review
-  WorkSubmitted,
+  /// Work submitted to employer; pending employer review before payment release
+  PendingEmployerReview,
   /// Employer approved work, money released to freelancer
   Completed,
   /// Quotation/order cancelled before payment

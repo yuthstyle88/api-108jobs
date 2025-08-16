@@ -54,6 +54,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
+  use crate::newtypes::DbUrl;
 
   async fn read_local_site(pool: &mut DbPool<'_>) -> FastJobResult<LocalSite> {
     let conn = &mut get_conn(pool).await?;
@@ -104,18 +105,20 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
 
     // Insert two of those comments
-    let _inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let _inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
+      DbUrl::try_from("https://example.com/comment-site-child").unwrap(),
     );
     let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form, None).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let site_aggregates_before_delete = read_local_site(pool).await?;
 

@@ -3,7 +3,7 @@ use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema::newtypes::{BillingId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
-use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanInsertForm};
+use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanInsertForm, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
@@ -191,6 +191,8 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
       .scope_boxed()
     })
     .await?;
+  // Also cancel current workstep if present
+  let _ = update_current_workstep_status(pool, workflow_id, WorkFlowStatus::Cancelled).await;
   Ok(())
 }
 
@@ -338,7 +340,9 @@ impl OrderApprovedTS {
       |_c, _f| {},
     )
     .await?;
-    Ok(self.start_work())
+    // Update current workstep to InProgress as work starts
+        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::InProgress).await.ok();
+        Ok(self.start_work())
   }
 
 }
@@ -349,13 +353,15 @@ impl InProgressTS {
       pool,
       self.data.workflow_id,
       WorkFlowStatus::InProgress,
-      WorkFlowStatus::WorkSubmitted,
+      WorkFlowStatus::PendingEmployerReview,
       |_c, _f| {
         // ตัวอย่าง: ตั้ง submitted_at / version ได้ที่นี่
       },
     )
     .await?;
-    Ok(self.submit_work())
+    // Update current workstep to WorkSubmitted when submit
+        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::PendingEmployerReview).await.ok();
+        Ok(self.submit_work())
   }
 
 }
@@ -365,7 +371,7 @@ impl WorkSubmittedTS {
     set_status_from(
       pool,
       self.data.workflow_id,
-      WorkFlowStatus::WorkSubmitted,
+      WorkFlowStatus::PendingEmployerReview,
       WorkFlowStatus::InProgress,
       |cur, form| {
         let _ = cur;
@@ -376,7 +382,9 @@ impl WorkSubmittedTS {
       },
     )
     .await?;
-    Ok(self.request_revision())
+    // Move current workstep back to InProgress on revision request
+        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::InProgress).await.ok();
+        Ok(self.request_revision())
   }
   pub async fn approve_work_on(
     self, pool: &mut DbPool<'_>, coin_id: CoinId, platform_wallet_id: WalletId
@@ -409,10 +417,13 @@ impl WorkSubmittedTS {
     set_status_from(
       pool,
       self.data.workflow_id,
-      WorkFlowStatus::WorkSubmitted,
+      WorkFlowStatus::PendingEmployerReview,
       WorkFlowStatus::Completed,
       |_c, _f| {},
     ).await?;
+
+    // Mark the current workstep as Completed at the end of this job
+    update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::Completed).await.ok();
 
     Ok(self.approve_work())
   }
@@ -562,7 +573,7 @@ impl WorkflowService {
     .await
     .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-    if wf.status != WorkFlowStatus::WorkSubmitted {
+    if wf.status != WorkFlowStatus::PendingEmployerReview {
       return Err(
         FastJobErrorType::InvalidField(format!(
           "Illegal state: expected WorkSubmitted, found {:?}",
@@ -619,4 +630,45 @@ impl WorkflowService {
     }
     Ok(wf)
   }
+}
+
+
+// Update the current work step's status in JobBudgetPlan.installments
+async fn update_current_workstep_status(
+  pool: &mut DbPool<'_>,
+  workflow_id: WorkflowId,
+  desired: WorkFlowStatus,
+) -> FastJobResult<()> {
+  use lemmy_db_schema::source::billing::WorkStep;
+  let conn = &mut get_conn(pool).await?;
+  // Load workflow to get post_id
+  let wf = Workflow::read(&mut conn.into(), workflow_id)
+    .await
+    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+  // Load budget plan by post_id
+  let maybe_plan = JobBudgetPlan::get_by_post_id(pool, wf.post_id).await?;
+  let Some(plan) = maybe_plan else { return Ok(()); };
+
+  // Deserialize installments into Vec<WorkStep>
+  let mut steps: Vec<WorkStep> = match serde_json::from_value(plan.installments.clone()) {
+    Ok(v) => v,
+    Err(_) => return Ok(()), // Silently ignore if malformed
+  };
+
+  // Find the first non-completed step to update its status
+  if let Some(step) = steps.iter_mut().find(|s| s.status != WorkFlowStatus::Completed) {
+    step.status = desired;
+
+    // Save back
+    let updated_json = serde_json::to_value(&steps).unwrap_or(plan.installments);
+    let update_form = JobBudgetPlanUpdateForm {
+      installments: Some(updated_json),
+      total_amount: None,
+      updated_at: Some(Some(Utc::now())),
+    };
+    let _ = <JobBudgetPlan as Crud>::update(pool, plan.id, &update_form).await?;
+  }
+
+  Ok(())
 }

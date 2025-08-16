@@ -599,6 +599,7 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
+  use crate::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -777,16 +778,18 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
+      DbUrl::try_from("https://example.com/comment").unwrap(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let child_comment_form = CommentInsertForm::new(
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
+      DbUrl::try_from("https://example.com/comment-child").unwrap(),
     );
     let inserted_child_comment =
-      Comment::create(pool, &child_comment_form, None).await?;
+      Comment::create(pool, &child_comment_form).await?;
 
     let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
 
@@ -876,9 +879,10 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
+      DbUrl::try_from("https://example.com/comment-soft").unwrap(),
     );
 
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let post_aggregates_before = Post::read(pool, inserted_post.id).await?;
     assert_eq!(1, post_aggregates_before.comments);

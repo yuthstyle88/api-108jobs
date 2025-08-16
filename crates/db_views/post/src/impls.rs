@@ -633,6 +633,7 @@ mod tests {
   };
   use test_context::{test_context, AsyncTestContext};
   use url::Url;
+  use lemmy_db_schema::newtypes::DbUrl;
 
   const POST_BY_BLOCKED_PERSON: &str = "post by blocked person";
   const POST_BY_BOT: &str = "post by bot";
@@ -1569,8 +1570,8 @@ mod tests {
 
         for _ in 0..comments {
           let comment_form =
-            CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
-          let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+            CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned(),DbUrl::try_from("https://example.com/comment-site").unwrap());
+          let inserted_comment = Comment::create(pool, &comment_form,).await?;
           inserted_comment_ids.push(inserted_comment.id);
         }
       }

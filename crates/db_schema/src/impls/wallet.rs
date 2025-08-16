@@ -34,9 +34,6 @@ impl WalletModel {
     }
   }
 
-  fn get_platform_wallet_id(&self) -> WalletId {
-    self.platform_wallet_id.clone()
-  }
   /// Load a wallet row with FOR UPDATE lock
   async fn load_for_update(
     conn: &mut diesel_async::AsyncPgConnection,

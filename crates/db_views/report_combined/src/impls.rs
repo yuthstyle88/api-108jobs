@@ -439,6 +439,7 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
+  use lemmy_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -509,8 +510,9 @@ mod tests {
       inserted_timmy.id,
       inserted_post.id,
       "A test comment rv".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form, None).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     Ok(Data {
       instance: inserted_instance,

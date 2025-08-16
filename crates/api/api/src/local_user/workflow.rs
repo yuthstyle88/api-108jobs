@@ -107,7 +107,7 @@ pub async fn submit_work(
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
-    status: WorkFlowStatus::WorkSubmitted,
+    status: WorkFlowStatus::PendingEmployerReview,
     success: true,
   }))
 }
@@ -141,7 +141,7 @@ pub async fn approve_work(
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
-    status: WorkFlowStatus::WorkSubmitted,
+    status: WorkFlowStatus::PendingEmployerReview,
     success: true,
   }))
 }

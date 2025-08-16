@@ -1,9 +1,17 @@
 use actix_web::web::{Data, Json};
+use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::BillingId;
-use lemmy_db_views_billing::api::{ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm, CreateInvoiceResponse, SubmitStartWork, ValidCreateInvoice};
+use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
+use lemmy_db_schema::traits::Crud;
+use lemmy_db_views_billing::api::{
+  ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm,
+  CreateInvoiceResponse, SubmitStartWork, UpdateBudgetPlanInstallments,
+  UpdateBudgetPlanInstallmentsResponse, ValidCreateInvoice, ValidUpdateBudgetPlanInstallments,
+};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use serde_json::json;
 
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
@@ -22,17 +30,14 @@ pub async fn create_quotation(
   let validated: ValidCreateInvoice = match data.into_inner().try_into() {
     Ok(v) => v,
     Err(msg) => {
-      return Err(lemmy_utils::error::FastJobErrorType::InvalidField(msg).into());
+      return Err(FastJobErrorType::InvalidField(msg).into());
     }
   };
   let data = validated.0.clone();
 
   // Create the invoice/billing record with detailed quotation fields
-  let (billing, _quotation) = WorkflowService::create_quotation(
-    &mut context.pool(),
-    local_user_id,
-    validated,
-  ).await?;
+  let (billing, _quotation) =
+    WorkflowService::create_quotation(&mut context.pool(), local_user_id, validated).await?;
 
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
@@ -56,8 +61,10 @@ pub async fn approve_quotation(
   let workflow_id = data.workflow_id.into();
   let wallet_id = data.wallet_id.into();
   let billing_id = data.billing_id.into();
-  let wf =  WorkflowService::load_quotation_pending(&mut context.pool(),workflow_id).await?
-  .approve_on(&mut context.pool(), employer_id, wallet_id, billing_id).await?;
+  let wf = WorkflowService::load_quotation_pending(&mut context.pool(), workflow_id)
+    .await?
+    .approve_on(&mut context.pool(), employer_id, wallet_id, billing_id)
+    .await?;
   // Approve the quotation and convert to order
 
   Ok(Json(BillingOperationResponse {
@@ -74,10 +81,11 @@ pub async fn submit_start_work(
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let _worker_id = local_user_view.local_user.id;
   let workflow_id = data.workflow_id.into();
-  let wf =  WorkflowService::load_order_approve(&mut context.pool(), workflow_id).await?
-  .start_work_on(&mut context.pool()).await?;
+  let wf = WorkflowService::load_order_approve(&mut context.pool(), workflow_id)
+    .await?
+    .start_work_on(&mut context.pool())
+    .await?;
   // Submit the work as the worker
-
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
@@ -86,15 +94,15 @@ pub async fn submit_start_work(
   }))
 }
 
-
 pub async fn submit_work(
   data: Json<ApproveWork>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-
   let workflow_id = data.workflow_id.into();
-  let wf =  WorkflowService::load_in_progress(&mut context.pool(), workflow_id).await?
-  .submit_work_on(&mut context.pool()).await?;
+  let wf = WorkflowService::load_in_progress(&mut context.pool(), workflow_id)
+    .await?
+    .submit_work_on(&mut context.pool())
+    .await?;
   // Approve work and release payment to worker
 
   Ok(Json(WorkFlowOperationResponse {
@@ -110,11 +118,25 @@ pub async fn approve_work(
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let workflow_id = data.workflow_id.into();
   let site_view = context.site_config().get().await?.site_view;
-  let coin_id = site_view.clone().local_site.coin_id.ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-  let platform_wallet_id = context.site_config().get().await?.admins.first().unwrap().person.wallet_id;
+  let coin_id = site_view
+    .clone()
+    .local_site
+    .coin_id
+    .ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
+  let platform_wallet_id = context
+    .site_config()
+    .get()
+    .await?
+    .admins
+    .first()
+    .unwrap()
+    .person
+    .wallet_id;
 
-  let wf =  WorkflowService::load_work_submit(&mut context.pool(), workflow_id).await?
-  .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id).await?;
+  let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
+    .await?
+    .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id)
+    .await?;
   // Approve work and release payment to worker
 
   Ok(Json(WorkFlowOperationResponse {
@@ -124,4 +146,38 @@ pub async fn approve_work(
   }))
 }
 
+/// Replace the installments array for a job budget plan using items like
+/// [{ "idx": 1, "amount": 500000, "status": "paid" }, ...]
+pub async fn update_budget_plan_status(
+  data: Json<UpdateBudgetPlanInstallments>,
+  context: Data<FastJobContext>,
+  _local_user_view: LocalUserView,
+) -> FastJobResult<Json<UpdateBudgetPlanInstallmentsResponse>> {
+  let post_id = data.post_id;
 
+  // Validate via TryFrom into a validated wrapper
+  let validated: ValidUpdateBudgetPlanInstallments = data.into_inner().try_into()?;
+
+  // Load plan
+  let plan = match JobBudgetPlan::get_by_post_id(&mut context.pool(), post_id).await? {
+    Some(p) => p,
+    None => {
+      return Err(FastJobErrorType::NotFound.into());
+    }
+  };
+
+  let phases_json = serde_json::to_value(&validated.0.installments).unwrap_or_else(|_| json!([]));
+
+  let update = JobBudgetPlanUpdateForm {
+    installments: Some(phases_json),
+    updated_at: Some(Some(Utc::now())),
+    ..Default::default()
+  };
+
+  let updated = JobBudgetPlan::update(&mut context.pool(), plan.id, &update).await?;
+
+  Ok(Json(UpdateBudgetPlanInstallmentsResponse {
+    budget_plan: updated,
+    success: true,
+  }))
+}

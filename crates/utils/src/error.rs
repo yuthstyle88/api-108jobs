@@ -304,6 +304,9 @@ pub enum FastJobErrorType {
   NotAllowed,
   NoSiteConfig,
   NoAdmin,
+  DuplicateIDxInInstallments,
+  StatusPaidOrUnpaid,
+  NegativeIDx,
 }
 
 cfg_if! {

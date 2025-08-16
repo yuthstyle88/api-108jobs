@@ -13,7 +13,7 @@ CREATE TABLE billing (
     post_id       INTEGER NOT NULL REFERENCES post(id)        ON UPDATE CASCADE ON DELETE CASCADE,
     comment_id    INTEGER REFERENCES comment(id)              ON UPDATE CASCADE ON DELETE SET NULL,
 
-    amount        FLOAT8 NOT NULL CHECK (amount > 0),
+    amount        INT NOT NULL CHECK (amount > 0),
     description   TEXT NOT NULL,
 
     status        billing_status NOT NULL DEFAULT 'QuotePendingReview',

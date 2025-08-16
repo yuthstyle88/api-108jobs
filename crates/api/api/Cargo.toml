@@ -67,8 +67,9 @@ diesel-async = { workspace = true, features = ["deadpool", "postgres"] }
 either = { workspace = true }
 p256 = { workspace = true }
 hex = "0.4.3"
-uuid =  { workspace = true }
+uuid = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }

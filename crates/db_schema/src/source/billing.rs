@@ -1,12 +1,12 @@
 use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin, DbUrl, PersonId};
 use chrono::{DateTime, NaiveDate, Utc};
-use lemmy_db_schema_file::enums::{BillingStatus};
+use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::billing;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::sql_types::WorkFlowStatus;
+
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

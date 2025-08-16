@@ -87,7 +87,7 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api::local_user::workflow::{approve_quotation, approve_work, create_quotation, submit_work};
+use lemmy_api::local_user::workflow::{approve_quotation, approve_work, create_quotation, submit_work, update_budget_plan_status};
 use lemmy_api_crud::community::list::list_communities;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
@@ -319,7 +319,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/create-invoice", post().to(create_quotation))
                 .route("/approve-quotation", post().to(approve_quotation))
                 .route("/submit-work", post().to(submit_work))
-                .route("/approve-work", post().to(approve_work)),
+                .route("/approve-work", post().to(approve_work))
+                .route("/budget-plan", put().to(update_budget_plan_status)),
             )
             // Profile-related endpoints
             .service(

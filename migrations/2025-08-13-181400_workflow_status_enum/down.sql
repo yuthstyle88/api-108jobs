@@ -1,6 +1,6 @@
 -- Revert workflow objects in correct dependency order
--- 1) Drop unique index
-DROP INDEX IF EXISTS idx_workflow_post_unique;
+DROP INDEX IF EXISTS one_active_workflow_per_post;
+DROP INDEX IF EXISTS one_active_workflow_per_post_seq;
 -- 2) Drop table referencing the enum
 DROP TABLE IF EXISTS workflow;
 -- 3) Finally drop the enum type

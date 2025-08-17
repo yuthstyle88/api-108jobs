@@ -17,13 +17,12 @@ pub struct CreateInvoiceForm {
     pub employer_id: LocalUserId,
     pub post_id: PostId,
     pub comment_id: CommentId,
+    pub seq_number: i16,
     pub amount: Coin,
     pub proposal: String,
     pub project_name: String,
     #[serde(default)]
     pub project_details: String,
-    #[serde(default)]
-    pub work_steps: Vec<WorkStep>,
     pub working_days: i32,
     #[serde(default)]
     pub deliverables: Vec<String>,
@@ -44,6 +43,9 @@ impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
         if value.amount <= 0 {
             return Err("Price must be positive".to_string());
         }
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".to_string());
+        }
         Ok(ValidCreateInvoice(value))
     }
 }
@@ -54,6 +56,7 @@ impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
 #[serde(rename_all = "camelCase")]
 /// Approve quotation and convert to order (employer approves freelancer's quotation).
 pub struct ApproveQuotation {
+    pub seq_number: i16,
     pub billing_id: BillingId,
     pub wallet_id: WalletId,
     pub workflow_id: WorkflowId,
@@ -65,6 +68,7 @@ pub struct ApproveQuotation {
 #[serde(rename_all = "camelCase")]
 /// Submit completed work (freelancer starts work).
 pub struct SubmitStartWork {
+    pub seq_number: i16,
     pub workflow_id: WorkflowId,
     pub work_description: String,
     pub deliverable_url: Option<String>,
@@ -76,6 +80,7 @@ pub struct SubmitStartWork {
 #[serde(rename_all = "camelCase")]
 /// Approve work and release payment (employer approves).
 pub struct ApproveWork {
+    pub seq_number: i16,
     pub workflow_id: WorkflowId,
 }
 

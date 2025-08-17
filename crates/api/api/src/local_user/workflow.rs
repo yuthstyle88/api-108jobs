@@ -3,6 +3,8 @@ use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::BillingId;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
+use lemmy_db_schema::source::workflow::Workflow;
+use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_billing::api::{
   ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm,
@@ -16,6 +18,54 @@ use serde_json::json;
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_workflow::{WorkFlowOperationResponse, WorkflowService};
+
+// Helper: update JobBudgetPlan.installments' status for a given workflow and seq
+async fn update_job_plan_step_status(
+  pool: &mut lemmy_db_schema::utils::DbPool<'_>,
+  workflow_id: lemmy_db_schema::newtypes::WorkflowId,
+  seq_number: i16,
+  new_status: WorkFlowStatus,
+) -> FastJobResult<()> {
+  // Load workflow to get post_id (and authoritatve seq if needed)
+  let wf_row = Workflow::read(pool, workflow_id).await?;
+  let post_id = wf_row.post_id;
+  let target_seq = seq_number as i32;
+
+  // Load JobBudgetPlan by post_id
+  let plan = match JobBudgetPlan::get_by_post_id(pool, post_id).await? {
+    Some(p) => p,
+    None => return Err(FastJobErrorType::NotFound.into()),
+  };
+
+  // Parse installments -> Vec<WorkStep>
+  let mut steps: Vec<WorkStep> = match serde_json::from_value(plan.installments.clone()) {
+    Ok(v) => v,
+    Err(_) => Vec::new(),
+  };
+
+  // Update the matching step's status
+  let mut found = false;
+  for s in &mut steps {
+    if s.seq == target_seq {
+      s.status = new_status;
+      found = true;
+      break;
+    }
+  }
+  if !found {
+    // If not found, we won't fail hard; just return OK to avoid blocking WF progression
+    return Ok(());
+  }
+
+  let phases_json = serde_json::to_value(&steps).unwrap_or_else(|_| json!([]));
+  let update = JobBudgetPlanUpdateForm {
+    installments: Some(phases_json),
+    updated_at: Some(Some(Utc::now())),
+    ..Default::default()
+  };
+  let _ = JobBudgetPlan::update(pool, plan.id, &update).await?;
+  Ok(())
+}
 
 // Escrow-based billing workflow handlers
 
@@ -81,11 +131,20 @@ pub async fn submit_start_work(
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let _worker_id = local_user_view.local_user.id;
   let workflow_id = data.workflow_id.into();
+  let seq_number = data.seq_number; // use provided seq for plan update
   let wf = WorkflowService::load_order_approve(&mut context.pool(), workflow_id)
     .await?
     .start_work_on(&mut context.pool())
     .await?;
-  // Submit the work as the worker
+
+  // Update JobBudgetPlan step status -> InProgress for this seq
+  update_job_plan_step_status(
+    &mut context.pool(),
+    workflow_id,
+    seq_number,
+    WorkFlowStatus::InProgress,
+  )
+  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
@@ -99,11 +158,20 @@ pub async fn submit_work(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let workflow_id = data.workflow_id.into();
+  let seq_number = data.seq_number;
   let wf = WorkflowService::load_in_progress(&mut context.pool(), workflow_id)
     .await?
     .submit_work_on(&mut context.pool())
     .await?;
-  // Approve work and release payment to worker
+
+  // Update JobBudgetPlan step status -> PendingEmployerReview for this seq
+  update_job_plan_step_status(
+    &mut context.pool(),
+    workflow_id,
+    seq_number,
+    WorkFlowStatus::PendingEmployerReview,
+  )
+  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
@@ -117,6 +185,7 @@ pub async fn approve_work(
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let workflow_id = data.workflow_id.into();
+  let seq_number = data.seq_number;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -137,7 +206,15 @@ pub async fn approve_work(
     .await?
     .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id)
     .await?;
-  // Approve work and release payment to worker
+
+  // Update JobBudgetPlan step status -> Completed for this seq
+  update_job_plan_step_status(
+    &mut context.pool(),
+    workflow_id,
+    seq_number,
+    WorkFlowStatus::Completed,
+  )
+  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
@@ -166,7 +243,10 @@ pub async fn update_budget_plan_status(
     }
   };
 
-  let phases_json = serde_json::to_value(&validated.0.installments).unwrap_or_else(|_| json!([]));
+  // Ensure sorted by seq to keep order by seq_number
+  let mut items = validated.0.installments.clone();
+  items.sort_by_key(|w| w.seq);
+  let phases_json = serde_json::to_value(&items).unwrap_or_else(|_| json!([]));
 
   let update = JobBudgetPlanUpdateForm {
     installments: Some(phases_json),

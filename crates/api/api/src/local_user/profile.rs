@@ -27,5 +27,5 @@ pub async fn save_profile(
         ..Default::default()
       };
       let _person = Person::update(&mut context.pool(),person_id, &form).await?;
-      Ok(Json(SuccessResponse{success: true}))
+  Ok(Json(SuccessResponse::default()))
 }

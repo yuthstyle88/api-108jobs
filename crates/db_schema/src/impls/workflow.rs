@@ -50,21 +50,23 @@ impl Workflow {
   pub async fn get_by_post_id(
     pool: &mut DbPool<'_>,
     post_id: PostId,
+    seq_number: i16
   ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     wf::workflow
       .filter(wf::post_id.eq(post_id))
+      .filter(wf::seq_number.eq(seq_number))
       .first::<Self>(conn)
       .await
       .optional()
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn upsert_default(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<Self> {
-    if let Some(w) = Self::get_by_post_id(pool, post_id).await? {
+  pub async fn upsert_default(pool: &mut DbPool<'_>, post_id: PostId, seq_number: i16) -> FastJobResult<Self> {
+    if let Some(w) = Self::get_by_post_id(pool, post_id, seq_number).await? {
       return Ok(w);
     }
-    let form = WorkflowInsertForm::new(post_id);
+    let form = WorkflowInsertForm::new(post_id, seq_number);
     Self::create(pool, &form).await
   }
   pub async fn delete_by_post(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<()> {

@@ -17,6 +17,7 @@ use lemmy_db_schema_file::schema::workflow;
 pub struct Workflow {
   pub id: WorkflowId,
   pub post_id: PostId,
+  pub seq_number: i16,
   pub status: WorkFlowStatus,
   pub revision_required: bool,
   pub revision_count: i16,
@@ -34,6 +35,7 @@ pub struct Workflow {
 #[cfg_attr(feature = "full", diesel(table_name = workflow))]
 pub struct WorkflowInsertForm {
   pub post_id: PostId,
+  pub seq_number: i16,
   #[new(default)]
   pub status: Option<WorkFlowStatus>,
   #[new(default)]

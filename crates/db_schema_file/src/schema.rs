@@ -1215,6 +1215,7 @@ diesel::table! {
     workflow (id) {
         id -> Int4,
         post_id -> Int4,
+        seq_number -> Int2,
         status -> WorkFlowStatus,
         revision_required -> Bool,
         revision_count -> Int2,

@@ -1,9 +1,10 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{BillingId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId};
+use lemmy_db_schema::newtypes::{
+  BillingId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId, PostId,
+};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
-use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanInsertForm, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
@@ -12,7 +13,6 @@ use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use serde_json::json;
 use uuid::Uuid;
 // ---------- Typestate payload ----------
 #[derive(Clone, Copy, Debug)]
@@ -191,12 +191,46 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
       .scope_boxed()
     })
     .await?;
-  // Also cancel current workstep if present
-  let _ = update_current_workstep_status(pool, workflow_id, WorkFlowStatus::Cancelled).await;
   Ok(())
 }
 
 // ================= Reusable helpers =================
+
+// สร้างฟอร์ม WorkflowInsertForm แบบ reuse ได้
+#[inline]
+fn build_workflow_insert(post_id: PostId, seq_number: i16) -> WorkflowInsertForm {
+  WorkflowInsertForm {
+    post_id,
+    status: Some(WorkFlowStatus::QuotationPending),
+    seq_number,
+    revision_required: None,
+    revision_count: None,
+    revision_reason: None,
+    deliverable_version: None,
+    deliverable_submitted_at: None,
+    deliverable_accepted: None,
+    accepted_at: None,
+    created_at: Some(Utc::now()),
+    updated_at: None,
+  }
+}
+
+// สร้าง Workflow ใหม่สำหรับโพสต์ โดยบังคับกติกา:
+// ถ้ามีของเก่าอยู่และยังไม่ถูกยกเลิก -> return error
+// ถ้าไม่มี หรือของเก่าถูกยกเลิกแล้ว -> สร้างใหม่
+async fn create_new_workflow_for_post(
+  pool: &mut DbPool<'_>,
+  post_id: PostId,
+  seq_number: i16,
+) -> FastJobResult<Workflow> {
+  let insert = WorkflowInsertForm {
+    post_id,
+    seq_number,
+    status: None, // ให้ DB ใส่ DEFAULT เอง
+    ..WorkflowInsertForm::new(post_id, seq_number)
+  };
+  Workflow::create(pool, &insert).await
+}
 
 async fn load_billing_and_check_employer(
   pool: &mut DbPool<'_>,
@@ -278,7 +312,6 @@ async fn do_transition(
 
 // ================= Refactored public methods =================
 
-
 impl QuotationPendingTS {
   pub async fn approve_on(
     self,
@@ -290,8 +323,8 @@ impl QuotationPendingTS {
     // 1) โหลด Billing เพื่อเอา amount และตรวจสิทธิ์
     let conn = &mut get_conn(pool).await?;
     let billing = Billing::read(&mut conn.into(), billing_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
     if billing.employer_id != employer_id {
       return Err(FastJobErrorType::NotAllowed.into());
     }
@@ -318,7 +351,8 @@ impl QuotationPendingTS {
       |_current, form: &mut WorkflowUpdateForm| {
         form.updated_at = Some(Some(Utc::now()));
       },
-    ).await?;
+    )
+    .await?;
 
     // 4) อัปเดต FlowData ให้มี billing_id และ amount
     let mut next = self.approve();
@@ -327,7 +361,6 @@ impl QuotationPendingTS {
 
     Ok(next)
   }
-
 }
 
 impl OrderApprovedTS {
@@ -340,11 +373,8 @@ impl OrderApprovedTS {
       |_c, _f| {},
     )
     .await?;
-    // Update current workstep to InProgress as work starts
-        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::InProgress).await.ok();
-        Ok(self.start_work())
+    Ok(self.start_work())
   }
-
 }
 
 impl InProgressTS {
@@ -359,11 +389,9 @@ impl InProgressTS {
       },
     )
     .await?;
-    // Update current workstep to WorkSubmitted when submit
-        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::PendingEmployerReview).await.ok();
-        Ok(self.submit_work())
-  }
 
+    Ok(self.submit_work())
+  }
 }
 
 impl WorkSubmittedTS {
@@ -382,19 +410,24 @@ impl WorkSubmittedTS {
       },
     )
     .await?;
-    // Move current workstep back to InProgress on revision request
-        update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::InProgress).await.ok();
-        Ok(self.request_revision())
+
+    Ok(self.request_revision())
   }
   pub async fn approve_work_on(
-    self, pool: &mut DbPool<'_>, coin_id: CoinId, platform_wallet_id: WalletId
+    self,
+    pool: &mut DbPool<'_>,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
   ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
-    let billing_id = self.data.billing_id.ok_or_else(|| FastJobErrorType::InvalidField("missing billing_id".into()))?;
+    let billing_id = self
+      .data
+      .billing_id
+      .ok_or_else(|| FastJobErrorType::InvalidField("missing billing_id".into()))?;
     let billing = Billing::read(&mut conn.into(), billing_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     // 2) ปล่อยเงินจาก escrow ไปยัง freelancer (platform -> freelancer)
     // สมมติว่าคุณมีวิธีหา wallet ของ freelancer เช่น WalletModel::get_by_user
@@ -420,14 +453,11 @@ impl WorkSubmittedTS {
       WorkFlowStatus::PendingEmployerReview,
       WorkFlowStatus::Completed,
       |_c, _f| {},
-    ).await?;
-
-    // Mark the current workstep as Completed at the end of this job
-    update_current_workstep_status(pool, self.data.workflow_id, WorkFlowStatus::Completed).await.ok();
+    )
+    .await?;
 
     Ok(self.approve_work())
   }
-
 }
 
 // ---------- WorkflowService: เฉพาะ entry/utility ----------
@@ -445,7 +475,7 @@ impl WorkflowService {
     let (billing, wf_id) = conn
       .run_transaction(|conn| {
         async move {
-          // 1) สร้าง Billing (ปล่อยให้ DB ใส่ DEFAULT ของ status)
+          // 1) สร้าง Billing
           let insert_billing = BillingInsertForm {
             freelancer_id,
             employer_id: data.employer_id,
@@ -466,44 +496,12 @@ impl WorkflowService {
             .await
             .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-          // 2) รับรอง Workflow แถว (DEFAULT -> QuotationPending)
-          // Rust
-          let wf = match Workflow::get_by_post_id(&mut conn.into(), data.post_id).await {
-            Ok(Some(existing)) => existing,
-            Ok(None) => {
-              let wf_insert = WorkflowInsertForm {
-                post_id: data.post_id,
-                status: None,
-                revision_required: None,
-                revision_count: None,
-                revision_reason: None,
-                deliverable_version: None,
-                deliverable_submitted_at: None,
-                deliverable_accepted: None,
-                accepted_at: None,
-                created_at: Some(Utc::now()),
-                updated_at: None,
-              };
-              Workflow::create(&mut conn.into(), &wf_insert)
-                .await
-                .with_fastjob_type(FastJobErrorType::DatabaseError)?
-            }
-            Err(e) => return Err(e),
-          };
-
-          // 3) สร้าง Project Budget Plan แทน Milestones โดยใช้ work_steps เป็น phases
-          // Persist phases as JSON (serialize work_steps vector to JSONB)
-          let phases_json = serde_json::to_value(&data.work_steps).unwrap_or_else(|_| json!([]));
-          let plan_insert = JobBudgetPlanInsertForm {
-            post_id: data.post_id,
-            total_amount: Some(data.amount),
-            installments: Some(phases_json),
-            created_at: Some(Utc::now()),
-            updated_at: None,
-          };
-          let _ = <JobBudgetPlan as Crud>::create(&mut conn.into(), &plan_insert)
-            .await
-            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          // 2) สร้าง Workflow ใหม่ภายใต้กติกา "ต้องยกเลิกของเก่าก่อน"
+          let wf = create_new_workflow_for_post(
+            &mut conn.into(),
+            data.post_id,
+            data.seq_number,
+          ).await?;
 
           Ok::<_, lemmy_utils::error::FastJobError>((billing, wf.id))
         }
@@ -512,7 +510,11 @@ impl WorkflowService {
       .await?;
 
     let ts = QuotationPendingTS {
-      data: FlowData { workflow_id: wf_id, billing_id: Default::default(), amount: Default::default() },
+      data: FlowData {
+        workflow_id: wf_id,
+        billing_id: Default::default(),
+        amount: Default::default(),
+      },
     };
     Ok((billing, ts))
   }
@@ -521,14 +523,17 @@ impl WorkflowService {
     workflow_id: WorkflowId,
   ) -> FastJobResult<QuotationPendingTS> {
     let wf = Workflow::read(pool, workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     if wf.status != WorkFlowStatus::QuotationPending {
-      return Err(FastJobErrorType::InvalidField(format!(
-        "Illegal state: expected QuotationPending, found {:?}",
-        wf.status
-      )).into());
+      return Err(
+        FastJobErrorType::InvalidField(format!(
+          "Illegal state: expected QuotationPending, found {:?}",
+          wf.status
+        ))
+        .into(),
+      );
     }
 
     // ถ้าคุณมีวิธีหา billing_id จาก workflow (เช่น mapping ด้วย post_id หรือส่งมาจาก request)
@@ -546,8 +551,8 @@ impl WorkflowService {
     workflow_id: WorkflowId,
   ) -> FastJobResult<OrderApprovedTS> {
     let wf = Workflow::read(pool, workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     if wf.status != WorkFlowStatus::OrderApproved {
       return Err(
@@ -561,7 +566,11 @@ impl WorkflowService {
 
     // สร้าง FlowData สำหรับ typestate ของคุณ
     // ปรับตาม constructor จริงในโปรเจกต์ (เช่น FlowData::from_workflow(wf))
-    let data = FlowData { workflow_id: wf.id, billing_id: None, amount: None };
+    let data = FlowData {
+      workflow_id: wf.id,
+      billing_id: None,
+      amount: None,
+    };
 
     Ok(OrderApprovedTS { data })
   }
@@ -570,8 +579,8 @@ impl WorkflowService {
     workflow_id: WorkflowId,
   ) -> FastJobResult<WorkSubmittedTS> {
     let wf = Workflow::read(pool, workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     if wf.status != WorkFlowStatus::PendingEmployerReview {
       return Err(
@@ -585,7 +594,11 @@ impl WorkflowService {
 
     // สร้าง FlowData สำหรับ typestate ของคุณ
     // ปรับตาม constructor จริงในโปรเจกต์ (เช่น FlowData::from_workflow(wf))
-    let data = FlowData { workflow_id: wf.id, billing_id: None, amount: None };
+    let data = FlowData {
+      workflow_id: wf.id,
+      billing_id: None,
+      amount: None,
+    };
 
     Ok(WorkSubmittedTS { data })
   }
@@ -594,8 +607,8 @@ impl WorkflowService {
     workflow_id: WorkflowId,
   ) -> FastJobResult<InProgressTS> {
     let wf = Workflow::read(pool, workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     if wf.status != WorkFlowStatus::InProgress {
       return Err(
@@ -609,7 +622,11 @@ impl WorkflowService {
 
     // สร้าง FlowData สำหรับ typestate ของคุณ
     // ปรับตาม constructor จริงในโปรเจกต์ (เช่น FlowData::from_workflow(wf))
-    let data = FlowData { workflow_id: wf.id, billing_id: None, amount: None };
+    let data = FlowData {
+      workflow_id: wf.id,
+      billing_id: None,
+      amount: None,
+    };
 
     Ok(InProgressTS { data })
   }
@@ -620,55 +637,17 @@ impl WorkflowService {
   ) -> FastJobResult<Workflow> {
     let conn = &mut get_conn(pool).await?;
     let wf = Workflow::read(&mut conn.into(), workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
     if wf.status != expected {
-      return Err(FastJobErrorType::InvalidField(format!(
-        "Illegal state: expected {:?}, found {:?}",
-        expected, wf.status
-      )).into());
+      return Err(
+        FastJobErrorType::InvalidField(format!(
+          "Illegal state: expected {:?}, found {:?}",
+          expected, wf.status
+        ))
+        .into(),
+      );
     }
     Ok(wf)
   }
-}
-
-
-// Update the current work step's status in JobBudgetPlan.installments
-async fn update_current_workstep_status(
-  pool: &mut DbPool<'_>,
-  workflow_id: WorkflowId,
-  desired: WorkFlowStatus,
-) -> FastJobResult<()> {
-  use lemmy_db_schema::source::billing::WorkStep;
-  let conn = &mut get_conn(pool).await?;
-  // Load workflow to get post_id
-  let wf = Workflow::read(&mut conn.into(), workflow_id)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)?;
-
-  // Load budget plan by post_id
-  let maybe_plan = JobBudgetPlan::get_by_post_id(pool, wf.post_id).await?;
-  let Some(plan) = maybe_plan else { return Ok(()); };
-
-  // Deserialize installments into Vec<WorkStep>
-  let mut steps: Vec<WorkStep> = match serde_json::from_value(plan.installments.clone()) {
-    Ok(v) => v,
-    Err(_) => return Ok(()), // Silently ignore if malformed
-  };
-
-  // Find the first non-completed step to update its status
-  if let Some(step) = steps.iter_mut().find(|s| s.status != WorkFlowStatus::Completed) {
-    step.status = desired;
-
-    // Save back
-    let updated_json = serde_json::to_value(&steps).unwrap_or(plan.installments);
-    let update_form = JobBudgetPlanUpdateForm {
-      installments: Some(updated_json),
-      total_amount: None,
-      updated_at: Some(Some(Utc::now())),
-    };
-    let _ = <JobBudgetPlan as Crud>::update(pool, plan.id, &update_form).await?;
-  }
-
-  Ok(())
 }

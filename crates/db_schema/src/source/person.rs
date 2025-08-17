@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use crate::newtypes::{ContactId, AddressId, IdentityCardId, WalletId};
 use crate::sensitive::SensitiveString;
+use crate::source::identity_card::{IdentityCardForm};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -204,3 +205,24 @@ pub struct PersonNoteForm {
   #[new(value = "Utc::now()")]
   pub noted_at: DateTime<Utc>,
 }
+#[skip_serializing_none]
+#[derive(Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct BasicProfileForm {
+  pub display_name: Option<String>,
+  pub name: Option<String>,
+  pub avatar: Option<DbUrl>,
+  pub bio: Option<String>,
+}
+#[skip_serializing_none]
+#[derive(Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct SaveUserProfileForm {
+  pub person: BasicProfileForm,
+  pub id_card: IdentityCardForm,
+}
+

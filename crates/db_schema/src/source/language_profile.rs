@@ -47,7 +47,7 @@ pub struct LanguageProfileUpdateForm {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(rename_all = "camelCase")]
 pub struct SaveLanguageProfiles {
-    pub language_profiles: Vec<LanguageProfileRequest>,
+    pub language_profiles: Vec<LanguageProfileItem>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

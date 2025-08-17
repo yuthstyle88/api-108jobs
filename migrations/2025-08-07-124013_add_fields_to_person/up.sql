@@ -1,11 +1,4 @@
 ALTER TABLE person
-    ADD COLUMN address_id INTEGER NOT NULL UNIQUE
-        REFERENCES address(id) ON DELETE RESTRICT;
-
+    ADD COLUMN contacts TEXT;
 ALTER TABLE person
-    ADD COLUMN contact_id INTEGER NOT NULL UNIQUE
-        REFERENCES contact(id) ON DELETE RESTRICT;
-
-ALTER TABLE person
-    ADD COLUMN identity_card_id INTEGER NOT NULL UNIQUE
-        REFERENCES identity_card(id) ON DELETE RESTRICT;
+    ADD COLUMN skills TEXT;

@@ -1,7 +1,3 @@
-use crate::newtypes::{AddressId, ContactId, IdentityCardId};
-use crate::source::address::{Address, AddressInsertForm};
-use crate::source::contact::{Contact, ContactInsertForm};
-use crate::source::identity_card::{IdentityCard, IdentityCardInsertForm};
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CommunityId, DbUrl, InstanceId, LocalUserId, PersonId},
@@ -27,7 +23,6 @@ use lemmy_utils::{
   settings::structs::Settings,
 };
 use url::Url;
-use lemmy_utils::utils::helper::lang_to_country_code;
 
 impl Crud for Person {
   type InsertForm = PersonInsertForm;
@@ -74,21 +69,21 @@ impl Person {
   pub async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
-      .values(form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+    .values(form)
+    .get_result::<Self>(conn)
+    .await
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
   pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
-      .values(form)
-      .on_conflict(person::ap_id)
-      .do_update()
-      .set(form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+    .values(form)
+    .on_conflict(person::ap_id)
+    .do_update()
+    .set(form)
+    .get_result::<Self>(conn)
+    .await
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn update_public_key(
@@ -99,10 +94,10 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-      .set(person::public_key.eq(new_public_key))
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+    .set(person::public_key.eq(new_public_key))
+    .get_result::<Self>(conn)
+    .await
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
@@ -114,94 +109,54 @@ impl Person {
     // Set the local user multilang to none, only if they aren't banned locally.
     let instance_actions_join = instance_actions::table.on(
       instance_actions::person_id
-        .eq(person_id)
-        .and(instance_actions::instance_id.eq(local_instance_id)),
+      .eq(person_id)
+      .and(instance_actions::instance_id.eq(local_instance_id)),
     );
 
     let not_banned_local_user_id = local_user::table
-      .left_join(instance_actions_join)
-      .filter(local_user::person_id.eq(person_id))
-      .filter(instance_actions::received_ban_at.nullable().is_null())
-      .select(local_user::id)
-      .first::<LocalUserId>(conn)
-      .await
-      .optional()?;
+    .left_join(instance_actions_join)
+    .filter(local_user::person_id.eq(person_id))
+    .filter(instance_actions::received_ban_at.nullable().is_null())
+    .select(local_user::id)
+    .first::<LocalUserId>(conn)
+    .await
+    .optional()?;
 
     if let Some(local_user_id) = not_banned_local_user_id {
       diesel::update(local_user::table.find(local_user_id))
-        .set(local_user::email.eq::<Option<String>>(None))
-        .execute(conn)
-        .await?;
+      .set(local_user::email.eq::<Option<String>>(None))
+      .execute(conn)
+      .await?;
     };
 
     diesel::update(person::table.find(person_id))
-      .set((
-        person::display_name.eq::<Option<String>>(None),
-        person::avatar.eq::<Option<String>>(None),
-        person::banner.eq::<Option<String>>(None),
-        person::bio.eq::<Option<String>>(None),
-        person::matrix_user_id.eq::<Option<String>>(None),
-        person::deleted.eq(true),
-        person::updated_at.eq(Utc::now()),
-      ))
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+    .set((
+      person::display_name.eq::<Option<String>>(None),
+      person::avatar.eq::<Option<String>>(None),
+      person::banner.eq::<Option<String>>(None),
+      person::bio.eq::<Option<String>>(None),
+      person::matrix_user_id.eq::<Option<String>>(None),
+      person::deleted.eq(true),
+      person::updated_at.eq(Utc::now()),
+    ))
+    .get_result::<Self>(conn)
+    .await
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
       person::table
-        .filter(lower(person::name).eq(username.to_lowercase()))
-        .filter(person::local.eq(true)),
+      .filter(lower(person::name).eq(username.to_lowercase()))
+      .filter(person::local.eq(true)),
     )))
     .get_result::<bool>(conn)
     .await?
     .then_some(())
     .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
   }
-  pub async fn prepare_data_for_insert(
-    pool: &mut DbPool<'_>,
-    interface_language: Option<String>,
-  ) -> FastJobResult<(AddressId, ContactId, IdentityCardId)> {
-    let conn = &mut get_conn(pool).await?;
-    let country_code = lang_to_country_code(interface_language.as_deref());
-
-    let form = AddressInsertForm {
-      address_line1: "".to_string(),
-      address_line2: None,
-      subdistrict: None,
-      district: "".to_string(),
-      province: "".to_string(),
-      postal_code: "".to_string(),
-      country_id: country_code,
-      is_default: Some(true),
-    };
-    let address_id = Address::create(&mut conn.into(), &form).await?.id;
-    let form = ContactInsertForm {
-      phone: Some("".to_string()),
-      email: Some("".to_string()),
-      secondary_email: None,
-      line_id: None,
-      facebook: None,
-    };
-    let contact_id = Contact::create(&mut conn.into(), &form).await?.id;
-    let from = IdentityCardInsertForm {
-      address_id,
-      id_number: "".to_string(),
-      issued_date: None,
-      expiry_date: None,
-      full_name: None,
-      date_of_birth: None,
-      nationality: None,
-      is_verified: Some(false),
-    };
-    let identity_card_id = IdentityCard::create(&mut conn.into(), &from).await?.id;
-    Ok((address_id, contact_id, identity_card_id))
-  }
 }
-
 impl PersonInsertForm {
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
     Self::new(name.to_owned(), "pubkey".to_string(), instance_id)
@@ -498,6 +453,7 @@ impl PersonActions {
 
 #[cfg(test)]
 mod tests {
+  use crate::newtypes::DbUrl;
   use crate::{
     source::{
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
@@ -512,7 +468,6 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use crate::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -545,14 +500,13 @@ mod tests {
       inbox_url: inserted_person.inbox_url.clone(),
       matrix_user_id: None,
       instance_id: inserted_instance.id,
-      contact_id: Default::default(),
-      address_id: Default::default(),
-      identity_card_id: Default::default(),
       post_count: 0,
       post_score: 0,
       comment_count: 0,
       comment_score: 0,
       wallet_id: Default::default(),
+      contacts: None,
+      skills: None,
     };
 
     let read_person = Person::read(pool, inserted_person.id).await?;

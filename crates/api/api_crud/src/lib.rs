@@ -6,6 +6,3 @@ pub mod post;
 pub mod site;
 pub mod tagline;
 pub mod user;
-pub mod contact;
-pub mod address;
-pub mod identity_card;

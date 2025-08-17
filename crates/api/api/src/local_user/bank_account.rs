@@ -6,7 +6,7 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::bank::{Bank, BanksResponse};
 use lemmy_db_schema::source::user_bank_account::{BankAccount, UserBankAccountInsertForm};
 use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_address::AddressView;
+
 use lemmy_db_views_bank_account::{BankAccountView};
 use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, GetBankAccounts, ListBankAccounts, ListBankAccountsResponse, SetDefaultBankAccount};
 use lemmy_db_views_local_user::LocalUserView;
@@ -18,24 +18,14 @@ pub async fn create_bank_account(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let user_id = local_user_view.local_user.id;
-  let user_address_id = local_user_view.person.address_id;
   let data: CreateBankAccount = data.into_inner().try_into()?;
   // Load the user's address to determine the allowed country
-  let address_view = AddressView::find_by_id(&mut context.pool(), user_address_id).await?;
 
   // Verify bank belongs to user's country
   let bank = Bank::read(&mut context.pool(), data.bank_id)
     .await
     .map_err(|_| lemmy_utils::error::FastJobErrorType::InvalidField("Bank not found".to_string()))?;
-  
-  if bank.country_id != address_view.address.country_id {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField(
-      format!(
-        "Bank {} is not available in your region ({})",
-        bank.name, address_view.address.country_id
-      )
-    ))?;
-  }
+
   let verification_image = data.verification_image.clone();
   let bank_id = data.bank_id;
   let account_number = data.account_number.clone();

@@ -787,14 +787,13 @@ diesel::table! {
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
         instance_id -> Int4,
-        contact_id -> Int4,
-        address_id -> Int4,
-        identity_card_id -> Int4,
         post_count -> Int8,
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
         wallet_id -> Int4,
+        contacts -> Nullable<Text>,
+        skills -> Nullable<Text>,
     }
 }
 
@@ -1140,50 +1139,6 @@ diesel::table! {
     }
 }
 
-
-diesel::table! {
-    contact (id) {
-        id -> Int4,
-        phone -> Nullable<Text>,
-        email -> Nullable<Text>,
-        secondary_email -> Nullable<Text>,
-        line_id -> Nullable<Text>,
-        facebook -> Nullable<Text>,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    address (id) {
-        id -> Int4,
-        address_line1 -> Text,
-        address_line2 -> Nullable<Text>,
-        subdistrict -> Nullable<Text>,
-        district -> Text,
-        province -> Text,
-        postal_code -> Text,
-        #[max_length = 2]
-        country_id -> Varchar,
-        is_default -> Bool,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    identity_card (id) {
-        id -> Int4,
-        address_id -> Int4,
-        id_number -> Nullable<Text>,
-        issued_date -> Nullable<Date>,
-        expiry_date -> Nullable<Date>,
-        full_name -> Nullable<Text>,
-        date_of_birth -> Nullable<Date>,
-        nationality -> Nullable<Text>,
-        is_verified -> Bool,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
 diesel::table! {
     banks (id) {
         id -> Int4,
@@ -1214,33 +1169,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    education (id) {
-        id -> Int4,
-        person_id -> Int4,
-        school_name -> Text,
-        major -> Text,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
-    work_experience (id) {
-        id -> Int4,
-        person_id -> Int4,
-        company_name -> Text,
-        position -> Text,
-        startmonth -> Int4,
-        startyear -> Int4,
-        endmonth -> Nullable<Int4>,
-        endyear -> Nullable<Int4>,
-        is_current -> Nullable<Bool>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
-
-diesel::table! {
     skills (id) {
         id -> Int4,
         person_id -> Int4,
@@ -1265,20 +1193,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::LanguageLevel;
-
-    language_profile (id) {
-        id -> Int4,
-        person_id -> Int4,
-        #[max_length = 100]
-        lang -> Citext,
-        level_id -> Int4,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
-    }
-}
 // Coin table schema
 diesel::table! {
     coin (id) {
@@ -1359,7 +1273,6 @@ diesel::joinable!(community_language -> language (language_id));
 diesel::joinable!(community_report -> community (community_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
-diesel::joinable!(identity_card -> address (address_id));
 diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
 diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
@@ -1447,14 +1360,8 @@ diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
-diesel::joinable!(person -> contact(contact_id));
-diesel::joinable!(person -> address (address_id));
-diesel::joinable!(person -> identity_card (identity_card_id));
-diesel::joinable!(education -> person (person_id));
-diesel::joinable!(work_experience -> person (person_id));
 diesel::joinable!(skills -> person (person_id));
 diesel::joinable!(certificates -> person (person_id));
-diesel::joinable!(language_profile -> person (person_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1528,16 +1435,8 @@ diesel::allow_tables_to_appear_in_same_query!(
   tagline,
   wallet,
   wallet_transaction,
-  contact,
-  address,
-  identity_card,
   banks,
   user_bank_accounts,
-  education,
-  work_experience,
-  skills,
-  certificates,
-  language_profile,
   coin,
   job_budget_plan,
 );

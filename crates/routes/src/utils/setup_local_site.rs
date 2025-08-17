@@ -64,8 +64,6 @@ pub async fn setup_local_site(
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = "public_key".to_string();
             let private_key = Some("private_key".to_string());
-            let (address_id, contact_id, identity_card_id) =
-              Person::prepare_data_for_insert(&mut conn.into(), None).await?;
             let wallet = WalletModel::create_for_platform(conn).await?;
             let wallet_id = Some(wallet.id);
             // Register the user if there's a site setup
@@ -73,9 +71,6 @@ pub async fn setup_local_site(
               ap_id: Some(person_ap_id.clone()),
               inbox_url: Some(generate_inbox_url()?),
               private_key,
-              address_id: Some(address_id),
-              contact_id: Some(contact_id),
-              identity_card_id: Some(identity_card_id),
               wallet_id,
               ..PersonInsertForm::new(setup.admin_username.clone(), public_key, instance.id)
             };

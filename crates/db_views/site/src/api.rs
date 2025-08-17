@@ -22,7 +22,7 @@ use lemmy_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{PersonView, ProfileDataView};
+use lemmy_db_views_person::{PersonView};
 use lemmy_db_views_post::PostView;
 use lemmy_utils::error::FastJobError;
 use serde::{Deserialize, Serialize};
@@ -505,7 +505,6 @@ pub struct MyUserInfo {
   pub keyword_blocks: Vec<String>,
   pub discussion_languages: Vec<LanguageId>,
   pub wallet: Wallet,
-  pub profile: ProfileDataView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

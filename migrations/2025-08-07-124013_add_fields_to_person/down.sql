@@ -1,8 +1,6 @@
 ALTER TABLE person
-DROP COLUMN IF EXISTS identity_card_id;
+DROP COLUMN IF EXISTS contacts;
 
 ALTER TABLE person
-DROP COLUMN IF EXISTS contact_id;
+DROP COLUMN IF EXISTS skills;
 
-ALTER TABLE person
-DROP COLUMN IF EXISTS address_id;

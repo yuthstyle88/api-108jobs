@@ -9,9 +9,8 @@ use i_love_jesus::CursorKeysModule;
 use lemmy_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::newtypes::{ContactId, AddressId, IdentityCardId, WalletId};
+use crate::newtypes::{WalletId};
 use crate::sensitive::SensitiveString;
-use crate::source::identity_card::{IdentityCardForm};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -59,12 +58,6 @@ pub struct Person {
   /// Whether the person is a bot account.
   pub bot_account: bool,
   pub instance_id: InstanceId,
-  /// Reference to the contact information
-  pub contact_id: ContactId,
-  /// Reference to the address information
-  pub address_id: AddressId,
-  /// Reference to the address information
-  pub identity_card_id: IdentityCardId,
   pub post_count: i64,
   #[serde(skip)]
   pub post_score: i64,
@@ -72,6 +65,8 @@ pub struct Person {
   #[serde(skip)]
   pub comment_score: i64,
   pub wallet_id: WalletId,
+  pub contacts: Option<String>,
+  pub skills: Option<String>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -108,13 +103,11 @@ pub struct PersonInsertForm {
   #[new(default)]
   pub bot_account: Option<bool>,
   #[new(default)]
-  pub address_id: Option<AddressId>,
-  #[new(default)]
-  pub contact_id: Option<ContactId>,
-  #[new(default)]
-  pub identity_card_id: Option<IdentityCardId>,
-  #[new(default)]
   pub wallet_id: Option<WalletId>,
+  #[new(default)]
+  pub contacts: Option<String>,
+  #[new(default)]
+  pub skills: Option<String>,
 }
 
 #[derive(Clone, Default)]
@@ -136,6 +129,8 @@ pub struct PersonUpdateForm {
   pub inbox_url: Option<DbUrl>,
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
+  pub contacts: Option<String>,
+  pub skills: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -215,6 +210,8 @@ pub struct BasicProfileForm {
   pub name: Option<String>,
   pub avatar: Option<DbUrl>,
   pub bio: Option<String>,
+  pub contacts: Option<String>,
+  pub skills: Option<String>,
 }
 #[skip_serializing_none]
 #[derive(Clone, Serialize, Deserialize)]
@@ -223,6 +220,5 @@ pub struct BasicProfileForm {
 #[serde(rename_all = "camelCase")]
 pub struct SaveUserProfileForm {
   pub person: BasicProfileForm,
-  pub id_card: IdentityCardForm,
 }
 

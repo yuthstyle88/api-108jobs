@@ -201,14 +201,13 @@ pub type Person1AliasAllColumnsTuple = (
   AliasedField<aliases::Person1, person::matrix_user_id>,
   AliasedField<aliases::Person1, person::bot_account>,
   AliasedField<aliases::Person1, person::instance_id>,
-  AliasedField<aliases::Person1, person::contact_id>,
-  AliasedField<aliases::Person1, person::address_id>,
-  AliasedField<aliases::Person1, person::identity_card_id>,
   AliasedField<aliases::Person1, person::post_count>,
   AliasedField<aliases::Person1, person::post_score>,
   AliasedField<aliases::Person1, person::comment_count>,
   AliasedField<aliases::Person1, person::comment_score>,
   AliasedField<aliases::Person1, person::wallet_id>,
+  AliasedField<aliases::Person1, person::contacts>,
+  AliasedField<aliases::Person1, person::skills>,
 );
 
 #[cfg(feature = "full")]
@@ -232,14 +231,13 @@ pub type Person2AliasAllColumnsTuple = (
   AliasedField<aliases::Person2, person::matrix_user_id>,
   AliasedField<aliases::Person2, person::bot_account>,
   AliasedField<aliases::Person2, person::instance_id>,
-  AliasedField<aliases::Person2, person::contact_id>,
-  AliasedField<aliases::Person2, person::address_id>,
-  AliasedField<aliases::Person2, person::identity_card_id>,
   AliasedField<aliases::Person2, person::post_count>,
   AliasedField<aliases::Person2, person::post_score>,
   AliasedField<aliases::Person2, person::comment_count>,
   AliasedField<aliases::Person2, person::comment_score>,
   AliasedField<aliases::Person2, person::wallet_id>,
+  AliasedField<aliases::Person2, person::contacts>,
+  AliasedField<aliases::Person2, person::skills>,
 );
 
 #[cfg(feature = "full")]

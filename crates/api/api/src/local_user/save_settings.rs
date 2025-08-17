@@ -7,7 +7,6 @@ use lemmy_db_schema::{
   newtypes::DbUrl,
   source::{
     actor_language::LocalUserLanguage,
-    identity_card::{IdentityCard, IdentityCardUpdateForm},
     keyword_block::LocalUserKeywordBlock,
     local_user::{LocalUser, LocalUserUpdateForm},
     person::{Person, PersonUpdateForm},
@@ -198,16 +197,6 @@ pub async fn save_user_settings(
   };
 
   LocalUser::update(&mut context.pool(), local_user_id, &local_user_form).await?;
-
-  // Update birth date in identity card if provided
-  if let Some(birth_date_option) = birth_date {
-    let identity_card_id = local_user_view.person.identity_card_id;
-    let identity_card_form = IdentityCardUpdateForm {
-      date_of_birth: birth_date_option,
-      ..Default::default()
-    };
-    IdentityCard::update(&mut context.pool(), identity_card_id, &identity_card_form).await.ok();
-  }
 
   Ok(Json(SuccessResponse::default()))
 }

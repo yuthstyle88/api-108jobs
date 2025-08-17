@@ -6,7 +6,6 @@ use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_utils::error::FastJobErrorType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use lemmy_db_schema::source::job_budget_plan::JobBudgetPlan;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

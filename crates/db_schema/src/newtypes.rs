@@ -557,55 +557,8 @@ pub struct TagId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The contact id.
-pub struct ContactId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The address id.
-pub struct AddressId(pub i32);
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The Education id.
-pub struct EducationId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The WorkExperience id.
-pub struct WorkExperienceId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The identity card id.
-pub struct IdentityCardId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The Skill id.
 pub struct SkillId(pub i32);
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The Certificate id.
-pub struct CertificateId(pub i32);
-
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(DieselNewType))]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The Language Profile id.
-pub struct LanguageProfileId(pub i32);
 
 /// A pagination cursor
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]

@@ -40,7 +40,6 @@ use lemmy_db_schema_file::{
     post_actions,
     post_tag,
     tag,
-    contact,
   },
 };
 
@@ -363,14 +362,6 @@ pub fn my_community_actions_join(my_person_id: Option<PersonId>) -> _ {
     community_actions::community_id
       .eq(community::id)
       .and(community_actions::person_id.nullable().eq(my_person_id)),
-  )
-}
-
-#[diesel::dsl::auto_type]
-pub fn my_contact_join() -> _ {
-  contact::table.on(
-    person::contact_id
-     .eq(contact::id),
   )
 }
 

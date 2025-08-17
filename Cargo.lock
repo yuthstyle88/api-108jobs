@@ -3381,12 +3381,10 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_address",
  "lemmy_db_views_bank_account",
  "lemmy_db_views_billing",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
- "lemmy_db_views_contact",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
@@ -3467,12 +3465,9 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_address",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
- "lemmy_db_views_contact",
  "lemmy_db_views_custom_emoji",
- "lemmy_db_views_identity_card",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",
@@ -3686,24 +3681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy_db_views_address"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
 name = "lemmy_db_views_bank_account"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -3789,24 +3766,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy_db_views_contact"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
 name = "lemmy_db_views_custom_emoji"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -3819,25 +3778,6 @@ dependencies = [
  "serde_with",
  "ts-rs",
  "url",
-]
-
-[[package]]
-name = "lemmy_db_views_identity_card"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
 ]
 
 [[package]]

@@ -4,7 +4,7 @@ DO $$ BEGIN
     'QuotationPending',
     'OrderApproved',
     'InProgress',
-    'WorkSubmitted',
+    'PendingEmployerReview',
     'Completed',
     'Cancelled'
   );

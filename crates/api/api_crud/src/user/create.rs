@@ -142,7 +142,6 @@ pub async fn register(
           tx_data.username.clone(),
           &site_view,
           &tx_context,
-          interface_language.clone(),
           conn,
         )
         .await?;
@@ -337,7 +336,6 @@ pub async fn register_with_oauth(
             username.parse().unwrap(),
             &site_view,
             &tx_context,
-            interface_language.clone(),
             conn,
           )
           .await?;
@@ -585,7 +583,6 @@ pub async fn authenticate_with_oauth(
               username.clone(),
               &site_view,
               &tx_context,
-              interface_language.clone(),
               conn,
             )
             .await?;
@@ -680,15 +677,12 @@ async fn create_person(
   username: String,
   site_view: &SiteView,
   context: &FastJobContext,
-  interface_language: Option<String>,
   conn: &mut AsyncPgConnection,
 ) -> Result<Person, FastJobError> {
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
 
   let public_key = "public_key".to_string();
-  let (address_id, contact_id, identity_card_id) =
-    Person::prepare_data_for_insert(&mut conn.into(), interface_language).await?;
   // Create a new wallet for this user
   let wallet = WalletModel::create_for_user(conn).await?;
   // Attach the wallet to the local user form
@@ -699,9 +693,6 @@ async fn create_person(
     ap_id: Some(ap_id.clone()),
     inbox_url: Some(generate_inbox_url()?),
     private_key: Some("private_key".to_string()),
-    address_id: Some(address_id),
-    contact_id: Some(contact_id),
-    identity_card_id: Some(identity_card_id),
     wallet_id,
     ..PersonInsertForm::new(username.clone(), public_key, site_view.site.instance_id)
   };

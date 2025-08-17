@@ -5,22 +5,9 @@ use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account,
 };
-use lemmy_api::local_user::certificates::{
-  list_certificates, save_certificates,
-};
-use lemmy_api::local_user::education::{
-  list_education, save_education,
-};
 use lemmy_api::local_user::exchange::exchange_key;
-use lemmy_api::local_user::language_profile::{
-  list_language_profiles, save_language_profiles,
-};
-use lemmy_api::local_user::skills::{list_skills, save_skills};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
-use lemmy_api::local_user::work_experience::{
-  list_work_experience, save_work_experience,
-};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -117,9 +104,6 @@ use lemmy_api_crud::{
   },
 };
 
-use lemmy_api_crud::address::update::update_address;
-use lemmy_api_crud::contact::update::update_contact;
-use lemmy_api_crud::identity_card::update::update_identity_card;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -269,9 +253,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/account")
             .route("", get().to(get_my_user))
-            .route("/update-contact", put().to(update_contact))
-            .route("/update-address", post().to(update_address))
-            .route("/update-identity-card", put().to(update_identity_card))
             .service(
               scope("/media")
                 .route("", delete().to(delete_image))
@@ -321,32 +302,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/submit-work", post().to(submit_work))
                 .route("/approve-work", post().to(approve_work))
                 .route("/budget-plan", put().to(update_budget_plan_status)),
-            )
-            // Profile-related endpoints
-            .service(
-              scope("/education")
-                .route("", post().to(save_education))
-                .route("", get().to(list_education))
-            )
-            .service(
-              scope("/work-experience")
-                .route("", post().to(save_work_experience))
-                .route("", get().to(list_work_experience))
-            )
-            .service(
-              scope("/skills")
-                .route("", post().to(save_skills))
-                .route("", get().to(list_skills))
-              )
-            .service(
-              scope("/certificates")
-                .route("", post().to(save_certificates))
-                .route("", get().to(list_certificates))
-            )
-            .service(
-              scope("/language-profiles")
-                .route("", post().to(save_language_profiles))
-                .route("", get().to(list_language_profiles))
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))

@@ -7,16 +7,12 @@ use lemmy_db_schema::{
     instance::InstanceActions,
     keyword_block::LocalUserKeywordBlock,
     person::PersonActions,
-    contact::Contact,
-    address::Address,
-    identity_card::IdentityCard,
   },
-  traits::{Blockable, Crud},
+  traits::{Blockable},
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::MyUserInfo;
 use lemmy_db_views_wallet::WalletView;
-use lemmy_db_views_person::ProfileDataView;
 use lemmy_utils::error::FastJobResult;
 
 pub async fn get_my_user(
@@ -36,25 +32,13 @@ pub async fn get_my_user(
     keyword_blocks,
     discussion_languages,
     wallet,
-    contact,
-    address,
-    identity_card,
   ) = lemmy_db_schema::try_join_with_pool!(pool => (
     |pool| InstanceActions::read_blocks_for_person(pool, person_id),
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),
     |pool| LocalUserLanguage::read(pool, local_user_id),
-    |pool| WalletView::read_by_user(pool, person_id),
-    |pool| Contact::read(pool, local_user_view.person.contact_id),
-    |pool| Address::read(pool, local_user_view.person.address_id),
-    |pool| IdentityCard::read(pool, local_user_view.person.identity_card_id)
+    |pool| WalletView::read_by_user(pool, person_id)
   ))?;
-  let profile = ProfileDataView{
-    contact,
-    address,
-    identity_card,
-    is_new_buyer: false,
-  };
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),
     community_blocks: Vec::new(),
@@ -63,6 +47,5 @@ pub async fn get_my_user(
     keyword_blocks,
     discussion_languages,
     wallet,
-    profile,
   }))
 }

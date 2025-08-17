@@ -35,3 +35,4 @@ pub mod skills;
 pub mod certificates;
 pub mod language_profile;
 pub mod workflow;
+pub mod profile;

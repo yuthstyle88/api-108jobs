@@ -8,6 +8,9 @@ use lemmy_api::local_user::bank_account::{
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
+use lemmy_api::local_user::workflow::{
+  approve_quotation, approve_work, create_quotation, submit_work, update_budget_plan_status,
+};
 use lemmy_api::{
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
@@ -74,7 +77,6 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api::local_user::workflow::{approve_quotation, approve_work, create_quotation, submit_work, update_budget_plan_status};
 use lemmy_api_crud::community::list::list_communities;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;

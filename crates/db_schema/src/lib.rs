@@ -208,6 +208,8 @@ pub type Person1AliasAllColumnsTuple = (
   AliasedField<aliases::Person1, person::wallet_id>,
   AliasedField<aliases::Person1, person::contacts>,
   AliasedField<aliases::Person1, person::skills>,
+  AliasedField<aliases::Person1, person::portfolio_pics>,
+  AliasedField<aliases::Person1, person::work_samples>,
 );
 
 #[cfg(feature = "full")]
@@ -238,6 +240,8 @@ pub type Person2AliasAllColumnsTuple = (
   AliasedField<aliases::Person2, person::wallet_id>,
   AliasedField<aliases::Person2, person::contacts>,
   AliasedField<aliases::Person2, person::skills>,
+  AliasedField<aliases::Person2, person::portfolio_pics>,
+  AliasedField<aliases::Person2, person::work_samples>,
 );
 
 #[cfg(feature = "full")]

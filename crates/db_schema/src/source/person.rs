@@ -1,3 +1,5 @@
+use crate::newtypes::WalletId;
+use crate::sensitive::SensitiveString;
 use crate::{
   newtypes::{DbUrl, InstanceId, PersonId},
   source::placeholder_apub_url,
@@ -8,9 +10,8 @@ use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 use serde_with::skip_serializing_none;
-use crate::newtypes::{WalletId};
-use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -67,6 +68,8 @@ pub struct Person {
   pub wallet_id: WalletId,
   pub contacts: Option<String>,
   pub skills: Option<String>,
+  pub portfolio_pics: Option<JsonValue>,
+  pub work_samples: Option<JsonValue>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -108,6 +111,10 @@ pub struct PersonInsertForm {
   pub contacts: Option<String>,
   #[new(default)]
   pub skills: Option<String>,
+  #[new(default)]
+  pub portfolio_pics: Option<JsonValue>,
+  #[new(default)]
+  pub work_samples: Option<JsonValue>,
 }
 
 #[derive(Clone, Default)]
@@ -130,7 +137,9 @@ pub struct PersonUpdateForm {
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
   pub contacts: Option<String>,
-  pub skills: Option<String>,
+  pub skills: Option<Option<String>>,
+  pub portfolio_pics: Option<Option<JsonValue>>,
+  pub work_samples: Option<Option<JsonValue>>,
 }
 
 #[skip_serializing_none]
@@ -222,3 +231,25 @@ pub struct SaveUserProfileForm {
   pub person: BasicProfileForm,
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct PortfolioPic {
+  pub id: i32,
+  pub image_url: DbUrl,
+  pub title: String,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct WorkSample {
+  pub id: i32,
+  pub title: String,
+  pub sample_url: DbUrl,
+  pub description: String,
+}

@@ -794,6 +794,8 @@ diesel::table! {
         wallet_id -> Int4,
         contacts -> Nullable<Text>,
         skills -> Nullable<Text>,
+        portfolio_pics -> Nullable<Jsonb>,
+        work_samples -> Nullable<Jsonb>,
     }
 }
 

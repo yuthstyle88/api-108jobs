@@ -34,6 +34,7 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
+use lemmy_db_schema::source::person::{PortfolioPic, WorkSample};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -608,8 +609,12 @@ pub struct SaveUserSettings {
   pub username: Option<String>,
   /// Your avatar URL
   pub avatar_url: Option<String>,
-  /// Your birth date in YYYY-MM-DD format
-  pub birth_date: Option<String>,
+  /// Your skills
+  pub skills: Option<String>,
+  /// Your portfolio pictures to prove your quality
+  pub portfolio_pics: Vec<PortfolioPic>,
+  /// Your work samples to prove your quality
+  pub work_samples: Vec<WorkSample>,
 }
 
 

@@ -13,10 +13,6 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_schema::newtypes::CoinId;
-use lemmy_db_schema::source::coin::CoinModel;
-use lemmy_db_schema::source::wallet::WalletModel;
-use lemmy_db_schema::utils::get_conn;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::impls::PersonQuery;
 use lemmy_db_views_site::api::GetSiteResponse;

@@ -18,17 +18,16 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{SaveUserSettings, SuccessResponse};
 
 use actix_web::web::Json;
-use chrono::NaiveDate;
 use lemmy_email::account::send_verification_email;
+use lemmy_utils::utils::slurs::check_slurs_opt;
 use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::{
-    check_blocking_keywords_are_valid,
-    is_valid_bio_field,
-    is_valid_display_name,
+    check_blocking_keywords_are_valid, is_valid_bio_field, is_valid_display_name,
     is_valid_matrix_id,
   },
 };
+use serde_json::json;
 use std::ops::Deref;
 use std::str::FromStr;
 
@@ -46,26 +45,23 @@ pub async fn save_user_settings(
       .await?
       .as_deref(),
   );
+  check_slurs_opt(&data.skills, &slur_regex)?;
 
   let display_name = diesel_string_update(data.display_name.as_deref());
   let matrix_user_id = diesel_string_update(data.matrix_user_id.as_deref());
+  let skills = diesel_string_update(data.skills.as_deref());
   let email_deref = data.email.as_deref().map(str::to_lowercase);
   let email = diesel_string_update(email_deref.as_deref());
-  
+
   // Handle new profile fields
   let username = data.username.clone();
   let avatar_url = if let Some(url_str) = &data.avatar_url {
-    Some(Some(DbUrl::from_str(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?))
+    Some(Some(
+      DbUrl::from_str(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?,
+    ))
   } else {
     None
   };
-  let birth_date = if let Some(date_str) = &data.birth_date {
-    Some(Some(NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
-      .map_err(|_| FastJobErrorType::InvalidDateFormat)?))
-  } else {
-    None
-  };
-  
 
   if let Some(Some(email)) = &email {
     let previous_email = local_user_view.local_user.email.clone().unwrap_or_default();
@@ -114,7 +110,7 @@ pub async fn save_user_settings(
 
   let local_user_id = local_user_view.local_user.id;
   let person_id = local_user_view.person.id;
-  
+
   // Validate username if provided (after person_id is available)
   if let Some(name) = &username {
     // Check if username is already taken (excluding current user)
@@ -124,20 +120,26 @@ pub async fn save_user_settings(
       }
     }
   }
-  
+
   let default_listing_type = data.default_listing_type;
   let default_post_sort_type = data.default_post_sort_type;
   let default_post_time_range_seconds =
     diesel_opt_number_update(data.default_post_time_range_seconds);
   let default_comment_sort_type = data.default_comment_sort_type;
+  let portfolio_pics_json =
+    serde_json::to_value(&data.portfolio_pics).unwrap_or_else(|_| json!([]));
+  let work_samples_json = serde_json::to_value(&data.work_samples).unwrap_or_else(|_| json!([]));
 
   let person_form = PersonUpdateForm {
     name: username,
     display_name,
     bio,
+    skills,
     matrix_user_id,
     bot_account: data.bot_account,
     avatar: avatar_url,
+    portfolio_pics: Some(Some(portfolio_pics_json)),
+    work_samples: Some(Some(work_samples_json)),
     ..Default::default()
   };
 

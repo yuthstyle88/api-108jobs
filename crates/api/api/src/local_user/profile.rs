@@ -9,7 +9,7 @@ use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct  ProfileResponse;
+pub struct ProfileResponse;
 
 pub async fn save_profile(
   data: Json<SaveUserProfileForm>,
@@ -18,14 +18,16 @@ pub async fn save_profile(
 ) -> FastJobResult<Json<SuccessResponse>> {
   let person_id = local_user_view.person.id;
 
-      let person_form = data.clone().person;
-      let form = PersonUpdateForm{
-        display_name: Some(person_form.display_name.clone()),
-        name: person_form.name.clone(),
-        avatar: Some(person_form.avatar.clone()),
-        bio: Some(person_form.bio.clone()),
-        ..Default::default()
-      };
-      let _person = Person::update(&mut context.pool(),person_id, &form).await?;
+  let person_form = data.clone().person;
+  let form = PersonUpdateForm {
+    display_name: Some(person_form.display_name.clone()),
+    name: person_form.name.clone(),
+    avatar: Some(person_form.avatar.clone()),
+    bio: Some(person_form.bio.clone()),
+    skills: Some(person_form.skills),
+    ..Default::default()
+  };
+  let _person = Person::update(&mut context.pool(), person_id, &form).await?;
+
   Ok(Json(SuccessResponse::default()))
 }

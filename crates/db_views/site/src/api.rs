@@ -609,6 +609,7 @@ pub struct SaveUserSettings {
   pub username: Option<String>,
   /// Your avatar URL
   pub avatar_url: Option<String>,
+  pub contacts: Option<String>,
   /// Your skills
   pub skills: Option<String>,
   /// Your portfolio pictures to prove your quality

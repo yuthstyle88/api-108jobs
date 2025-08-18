@@ -50,6 +50,7 @@ pub async fn save_user_settings(
   let display_name = diesel_string_update(data.display_name.as_deref());
   let matrix_user_id = diesel_string_update(data.matrix_user_id.as_deref());
   let skills = diesel_string_update(data.skills.as_deref());
+  let contacts = diesel_string_update(data.contacts.as_deref());
   let email_deref = data.email.as_deref().map(str::to_lowercase);
   let email = diesel_string_update(email_deref.as_deref());
 
@@ -135,6 +136,7 @@ pub async fn save_user_settings(
     display_name,
     bio,
     skills,
+    contacts,
     matrix_user_id,
     bot_account: data.bot_account,
     avatar: avatar_url,

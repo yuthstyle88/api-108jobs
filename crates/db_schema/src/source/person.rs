@@ -136,7 +136,7 @@ pub struct PersonUpdateForm {
   pub inbox_url: Option<DbUrl>,
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
-  pub contacts: Option<String>,
+  pub contacts: Option<Option<String>>,
   pub skills: Option<Option<String>>,
   pub portfolio_pics: Option<Option<JsonValue>>,
   pub work_samples: Option<Option<JsonValue>>,

@@ -30,10 +30,8 @@ pub async fn create_comment(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {
   let request_data = data.into_inner();
-  tracing::info!("Incoming comment request: {:#?}", request_data);
 
   let data: CreateComment = request_data.try_into()?;
-  tracing::info!("Converted to CreateComment: {:#?}", data);
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;
@@ -88,8 +86,6 @@ pub async fn create_comment(
 
   // Create the comment
   let inserted_comment = Comment::create(&mut context.pool(), &comment_form).await?;
-
-  tracing::info!("Successfully inserted comment: {:#?}", inserted_comment);
 
   send_local_notifs(
     &post,

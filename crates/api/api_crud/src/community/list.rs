@@ -92,7 +92,7 @@ pub async fn list_communities(
     self_promotion: data.self_promotion,
     page_cursor: data.page_cursor.clone(),
     page_back: data.page_back,
-    is_authenticated: local_user_view.is_some(),
+    is_authenticated: true,
   };
 
   // Only use cache for standard listings (not for authenticated users with custom views)

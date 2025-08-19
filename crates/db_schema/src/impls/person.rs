@@ -69,21 +69,21 @@ impl Person {
   pub async fn create(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
-    .values(form)
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+      .values(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
   pub async fn upsert(pool: &mut DbPool<'_>, form: &PersonInsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
-    .values(form)
-    .on_conflict(person::ap_id)
-    .do_update()
-    .set(form)
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+      .values(form)
+      .on_conflict(person::ap_id)
+      .do_update()
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn update_public_key(
@@ -94,10 +94,10 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-    .set(person::public_key.eq(new_public_key))
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
+      .set(person::public_key.eq(new_public_key))
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
   }
   pub async fn delete_account(
     pool: &mut DbPool<'_>,
@@ -109,54 +109,65 @@ impl Person {
     // Set the local user multilang to none, only if they aren't banned locally.
     let instance_actions_join = instance_actions::table.on(
       instance_actions::person_id
-      .eq(person_id)
-      .and(instance_actions::instance_id.eq(local_instance_id)),
+        .eq(person_id)
+        .and(instance_actions::instance_id.eq(local_instance_id)),
     );
 
     let not_banned_local_user_id = local_user::table
-    .left_join(instance_actions_join)
-    .filter(local_user::person_id.eq(person_id))
-    .filter(instance_actions::received_ban_at.nullable().is_null())
-    .select(local_user::id)
-    .first::<LocalUserId>(conn)
-    .await
-    .optional()?;
+      .left_join(instance_actions_join)
+      .filter(local_user::person_id.eq(person_id))
+      .filter(instance_actions::received_ban_at.nullable().is_null())
+      .select(local_user::id)
+      .first::<LocalUserId>(conn)
+      .await
+      .optional()?;
 
     if let Some(local_user_id) = not_banned_local_user_id {
       diesel::update(local_user::table.find(local_user_id))
-      .set(local_user::email.eq::<Option<String>>(None))
-      .execute(conn)
-      .await?;
+        .set(local_user::email.eq::<Option<String>>(None))
+        .execute(conn)
+        .await?;
     };
 
     diesel::update(person::table.find(person_id))
-    .set((
-      person::display_name.eq::<Option<String>>(None),
-      person::avatar.eq::<Option<String>>(None),
-      person::banner.eq::<Option<String>>(None),
-      person::bio.eq::<Option<String>>(None),
-      person::matrix_user_id.eq::<Option<String>>(None),
-      person::deleted.eq(true),
-      person::updated_at.eq(Utc::now()),
-    ))
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
+      .set((
+        person::display_name.eq::<Option<String>>(None),
+        person::avatar.eq::<Option<String>>(None),
+        person::banner.eq::<Option<String>>(None),
+        person::bio.eq::<Option<String>>(None),
+        person::matrix_user_id.eq::<Option<String>>(None),
+        person::deleted.eq(true),
+        person::updated_at.eq(Utc::now()),
+      ))
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
   pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
       person::table
-      .filter(lower(person::name).eq(username.to_lowercase()))
-      .filter(person::local.eq(true)),
+        .filter(lower(person::name).eq(username.to_lowercase()))
+        .filter(person::local.eq(true)),
     )))
     .get_result::<bool>(conn)
     .await?
     .then_some(())
     .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
   }
+
+  pub async fn read_by_name(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    
+    person::table
+      .filter(lower(person::name).eq(username.to_lowercase()))
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
 }
+
 impl PersonInsertForm {
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
     Self::new(name.to_owned(), "pubkey".to_string(), instance_id)
@@ -593,9 +604,9 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap()
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form,).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     let mut comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
 
@@ -605,9 +616,9 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap()
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
-    let inserted_child_comment = Comment::create(pool, &child_comment_form,).await?;
+    let inserted_child_comment = Comment::create(pool, &child_comment_form).await?;
 
     let child_comment_like =
       CommentLikeForm::new(another_inserted_person.id, inserted_child_comment.id, 1);
@@ -659,8 +670,8 @@ mod tests {
     // assert_eq!(0, after_parent_comment_delete.comment_score);
 
     // Add in the two comments again, then delete the post.
-    let new_parent_comment = Comment::create(pool, &comment_form, ).await?;
-    let _new_child_comment = Comment::create(pool, &child_comment_form, ).await?;
+    let new_parent_comment = Comment::create(pool, &comment_form).await?;
+    let _new_child_comment = Comment::create(pool, &child_comment_form).await?;
     comment_like.comment_id = new_parent_comment.id;
     CommentActions::like(pool, &comment_like).await?;
     let after_comment_add = Person::read(pool, inserted_person.id).await?;

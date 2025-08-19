@@ -1,4 +1,5 @@
 use crate::PersonView;
+use lemmy_db_schema::source::person::Person;
 use lemmy_db_schema::{newtypes::PersonId, source::site::Site};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -117,4 +118,12 @@ pub struct PurgePerson {
 pub struct NotePerson {
   pub person_id: PersonId,
   pub note: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct VisitProfileResponse {
+  pub profile: Person,
 }

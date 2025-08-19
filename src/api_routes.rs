@@ -6,6 +6,7 @@ use lemmy_api::local_user::bank_account::{
   set_default_bank_account,
 };
 use lemmy_api::local_user::exchange::exchange_key;
+use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
@@ -255,6 +256,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/account")
             .route("", get().to(get_my_user))
+            .route("/profile/{username}", get().to(visit_profile))
             .service(
               scope("/media")
                 .route("", delete().to(delete_image))

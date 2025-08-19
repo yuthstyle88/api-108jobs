@@ -1,14 +1,12 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_common::bank_account::{
-  BankAccountOperationResponse
-};
+use lemmy_api_common::bank_account::BankAccountOperationResponse;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::bank::{Bank, BanksResponse};
-use lemmy_db_schema::source::user_bank_account::{BankAccount, UserBankAccountInsertForm};
+use lemmy_db_schema::source::user_bank_account::UserBankAccountInsertForm;
 use lemmy_db_schema::traits::Crud;
 
-use lemmy_db_views_bank_account::{BankAccountView};
-use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, GetBankAccounts, ListBankAccounts, ListBankAccountsResponse, SetDefaultBankAccount};
+use lemmy_db_views_bank_account::api::{BankAccountForm, CreateBankAccount, DeleteBankAccount, GetBankAccounts, ListBankAccountsResponse, SetDefaultBankAccount};
+use lemmy_db_views_bank_account::BankAccountView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 

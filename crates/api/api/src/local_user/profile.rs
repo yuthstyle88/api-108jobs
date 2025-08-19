@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Data, Json, Path};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::person::{Person, PersonUpdateForm, SaveUserProfileForm};
 
@@ -7,6 +7,7 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::SuccessResponse;
 use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
+use lemmy_db_views_person::api::VisitProfileResponse;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProfileResponse;
@@ -30,4 +31,15 @@ pub async fn save_profile(
   let _person = Person::update(&mut context.pool(), person_id, &form).await?;
 
   Ok(Json(SuccessResponse::default()))
+}
+
+pub async fn visit_profile(
+  context: Data<FastJobContext>,
+  username: Path<String>,
+) -> FastJobResult<Json<VisitProfileResponse>> {
+  let found_person = Person::read_by_name(&mut context.pool(), &username).await?;
+
+  Ok(Json(VisitProfileResponse {
+    profile: found_person,
+  }))
 }

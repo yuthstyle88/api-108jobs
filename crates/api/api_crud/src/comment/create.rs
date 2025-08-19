@@ -23,7 +23,6 @@ use lemmy_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use uuid::Uuid;
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,
@@ -81,16 +80,11 @@ pub async fn create_comment(
 
   // Check if user has already commented on this post
   check_user_already_commented(&mut context.pool(), local_user_view.person.id, post_id).await?;
-  let ap_id =
-    Comment::generate_comment_url(Uuid::new_v4().to_string().as_str(), &context.settings())?;
 
-  let mut comment_form = CommentInsertForm::new(
-    local_user_view.person.id,
-    data.post_id,
-    content.clone(),
-    ap_id,
-  );
-  comment_form.language_id = Some(language_id);
+  let comment_form = CommentInsertForm {
+    language_id: Some(language_id),
+    ..CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone())
+  };
 
   // Create the comment
   let inserted_comment = Comment::create(&mut context.pool(), &comment_form).await?;

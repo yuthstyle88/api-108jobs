@@ -14,7 +14,6 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::{comment, comment_actions, community, post};
-use lemmy_utils::settings::SETTINGS;
 use lemmy_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
@@ -29,20 +28,11 @@ impl Crud for Comment {
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    let created = insert_into(comment::table)
+    insert_into(comment::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntCreateComment)?;
-
-    let updated = Self::update_ap_id(
-      pool,
-      created.id,
-      Self::generate_comment_url(created.id.to_string().as_str(), &SETTINGS)?,
-    )
-    .await?;
-
-    Ok(updated)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
   }
 
   async fn update(

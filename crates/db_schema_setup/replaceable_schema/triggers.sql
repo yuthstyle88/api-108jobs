@@ -16,12 +16,12 @@
 --
 -- Create triggers for both post and comments
 CREATE PROCEDURE r.post_or_comment (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$
-        -- When a thing gets a vote, update its aggregates and its creator's aggregates
-        CALL r.create_triggers ('thing_actions', $$
+EXECUTE replace($b$
+    -- When a thing gets a vote, update its aggregates and its creator's aggregates
+    CALL r.create_triggers ('thing_actions', $$
             BEGIN
                 WITH thing_diff AS ( UPDATE
                         thing AS a
@@ -45,8 +45,8 @@ BEGIN
                 WHERE
                     a.id = diff.creator_id
                     AND diff.score != 0;
-                RETURN NULL;
-            END;
+RETURN NULL;
+END;
     $$);
     $b$,
     'thing',
@@ -58,6 +58,19 @@ CALL r.post_or_comment ('post');
 
 CALL r.post_or_comment ('comment');
 
+-- Create triggers that update counts in parent aggregates
+CREATE FUNCTION r.parent_comment_ids (path ltree)
+    RETURNS SETOF int
+    LANGUAGE sql
+    IMMUTABLE parallel safe
+BEGIN ATOMIC
+SELECT
+    comment_id::int
+FROM
+    string_to_table (ltree2text (path), '.') AS comment_id
+    -- Skip first and last
+    LIMIT (nlevel (path) - 2) OFFSET 1;
+END;
 CALL r.create_triggers ('comment', $$
 BEGIN
     -- Prevent infinite recursion
@@ -84,6 +97,43 @@ FROM (
 WHERE
     a.id = diff.creator_id
     AND diff.comment_count != 0;
+UPDATE
+    comment AS a
+SET
+    child_count = a.child_count + diff.child_count
+FROM (
+    SELECT
+        parent_id,
+        coalesce(sum(count_diff), 0) AS child_count
+    FROM (
+        -- For each inserted or deleted comment, this outputs 1 row for each parent comment.
+        -- For example, this:
+        --
+        --  count_diff | (comment).path
+        -- ------------+----------------
+        --  1          | 0.5.6.7
+        --  1          | 0.5.6.7.8
+        --
+        -- becomes this:
+        --
+        --  count_diff | parent_id
+        -- ------------+-----------
+        --  1          | 5
+        --  1          | 6
+        --  1          | 5
+        --  1          | 6
+        --  1          | 7
+        SELECT
+            count_diff,
+            parent_id
+        FROM
+            select_old_and_new_rows AS old_and_new_rows,
+            LATERAL r.parent_comment_ids ((comment).path) AS parent_id) AS expanded_old_and_new_rows
+    GROUP BY
+        parent_id) AS diff
+WHERE
+    a.id = diff.parent_id
+    AND diff.child_count != 0;
 UPDATE
     post AS a
 SET
@@ -279,36 +329,77 @@ CREATE FUNCTION r.delete_follow_before_person ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    DELETE FROM community_actions AS c
-    WHERE c.person_id = OLD.id;
-    RETURN OLD;
+DELETE FROM community_actions AS c
+WHERE c.person_id = OLD.id;
+RETURN OLD;
 END;
 $$;
 CREATE TRIGGER delete_follow
     BEFORE DELETE ON person
     FOR EACH ROW
     EXECUTE FUNCTION r.delete_follow_before_person ();
+-- Triggers that change values before insert or update
+CREATE FUNCTION r.comment_change_values ()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+id text = NEW.id::text;
+BEGIN
+    -- Make `path` end with `id` if it doesn't already
+    IF NOT (NEW.path ~ ('*.' || id)::lquery) THEN
+        NEW.path = NEW.path || id;
+END IF;
+    -- Set local ap_id
+    IF NEW.local THEN
+        NEW.ap_id = coalesce(NEW.ap_id, r.local_url ('/comment/' || id));
+END IF;
+RETURN NEW;
+END
+$$;
+CREATE TRIGGER change_values
+    BEFORE INSERT OR UPDATE ON comment
+                         FOR EACH ROW
+                         EXECUTE FUNCTION r.comment_change_values ();
+CREATE FUNCTION r.post_change_values ()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Set local ap_id
+    IF NEW.local THEN
+        NEW.ap_id = coalesce(NEW.ap_id, r.local_url ('/post/' || NEW.id::text));
+END IF;
+    -- Set aggregates
+    NEW.newest_comment_time_at = NEW.published_at;
+    NEW.newest_comment_time_necro_at = NEW.published_at;
+RETURN NEW;
+END
+$$;
+CREATE TRIGGER change_values
+    BEFORE INSERT ON post
+    FOR EACH ROW
+    EXECUTE FUNCTION r.post_change_values ();
 -- Combined tables triggers
 -- These insert (published_at, item_id) into X_combined tables
--- Reports (comment_report, post_report, private_message_report)
 CREATE PROCEDURE r.create_report_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.report_combined_thing_insert ( )
+EXECUTE replace($b$ CREATE FUNCTION r.report_combined_thing_insert ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
             BEGIN
                 INSERT INTO report_combined (published_at, thing_id)
                     VALUES (NEW.published_at, NEW.id);
-                RETURN NEW;
-            END $$;
-    CREATE TRIGGER report_combined
-        AFTER INSERT ON thing
-        FOR EACH ROW
-        EXECUTE FUNCTION r.report_combined_thing_insert ( );
-        $b$,
+RETURN NEW;
+END $$;
+CREATE TRIGGER report_combined
+    AFTER INSERT ON thing
+    FOR EACH ROW
+    EXECUTE FUNCTION r.report_combined_thing_insert ( );
+$b$,
         'thing',
         table_name);
 END;
@@ -318,23 +409,23 @@ CALL r.create_report_combined_trigger ('comment_report');
 CALL r.create_report_combined_trigger ('community_report');
 -- person_content (comment, post)
 CREATE PROCEDURE r.create_person_content_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.person_content_combined_thing_insert ( )
+EXECUTE replace($b$ CREATE FUNCTION r.person_content_combined_thing_insert ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
             BEGIN
                 INSERT INTO person_content_combined (published_at, thing_id)
                     VALUES (NEW.published_at, NEW.id);
-                RETURN NEW;
-            END $$;
-    CREATE TRIGGER person_content_combined
-        AFTER INSERT ON thing
-        FOR EACH ROW
-        EXECUTE FUNCTION r.person_content_combined_thing_insert ( );
-        $b$,
+RETURN NEW;
+END $$;
+CREATE TRIGGER person_content_combined
+    AFTER INSERT ON thing
+    FOR EACH ROW
+    EXECUTE FUNCTION r.person_content_combined_thing_insert ( );
+$b$,
         'thing',
         table_name);
 END;
@@ -347,10 +438,10 @@ CALL r.create_person_content_combined_trigger ('comment');
 -- TODO a hack because local is not currently on the post_view table
 -- https://github.com/LemmyNet/lemmy/pull/5616#discussion_r2064219628
 CREATE PROCEDURE r.create_person_saved_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.person_saved_combined_change_values_thing ( )
+EXECUTE replace($b$ CREATE FUNCTION r.person_saved_combined_change_values_thing ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
@@ -359,26 +450,26 @@ BEGIN
                     DELETE FROM person_saved_combined AS p
                     WHERE p.person_id = OLD.person_id
                         AND p.thing_id = OLD.thing_id;
-                ELSIF (TG_OP = 'INSERT') THEN
+ELSIF (TG_OP = 'INSERT') THEN
                     IF NEW.saved_at IS NOT NULL THEN
                         INSERT INTO person_saved_combined (saved_at, person_id, thing_id)
                             VALUES (NEW.saved_at, NEW.person_id, NEW.thing_id);
-                    END IF;
+END IF;
                 ELSIF (TG_OP = 'UPDATE') THEN
                     IF NEW.saved_at IS NOT NULL THEN
                         INSERT INTO person_saved_combined (saved_at, person_id, thing_id)
                             VALUES (NEW.saved_at, NEW.person_id, NEW.thing_id);
                         -- If saved gets set as null, delete the row
-                    ELSE
-                        DELETE FROM person_saved_combined AS p
-                        WHERE p.person_id = NEW.person_id
-                            AND p.thing_id = NEW.thing_id;
-                    END IF;
-                END IF;
-                RETURN NULL;
-            END $$;
-    CREATE TRIGGER person_saved_combined
-        AFTER INSERT OR DELETE OR UPDATE OF saved_at ON thing_actions
+ELSE
+DELETE FROM person_saved_combined AS p
+WHERE p.person_id = NEW.person_id
+  AND p.thing_id = NEW.thing_id;
+END IF;
+END IF;
+RETURN NULL;
+END $$;
+CREATE TRIGGER person_saved_combined
+    AFTER INSERT OR DELETE OR UPDATE OF saved_at ON thing_actions
         FOR EACH ROW
         EXECUTE FUNCTION r.person_saved_combined_change_values_thing ( );
     $b$,
@@ -394,10 +485,10 @@ CALL r.create_person_saved_combined_trigger ('comment');
 -- TODO a hack because local is not currently on the post_view table
 -- https://github.com/LemmyNet/lemmy/pull/5616#discussion_r2064219628
 CREATE PROCEDURE r.create_person_liked_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.person_liked_combined_change_values_thing ( )
+EXECUTE replace($b$ CREATE FUNCTION r.person_liked_combined_change_values_thing ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
@@ -406,7 +497,7 @@ BEGIN
                     DELETE FROM person_liked_combined AS p
                     WHERE p.person_id = OLD.person_id
                         AND p.thing_id = OLD.thing_id;
-                ELSIF (TG_OP = 'INSERT') THEN
+ELSIF (TG_OP = 'INSERT') THEN
                     IF NEW.liked_at IS NOT NULL AND (
                         SELECT
                             local
@@ -416,7 +507,7 @@ BEGIN
                             id = NEW.person_id) = TRUE THEN
                         INSERT INTO person_liked_combined (liked_at, like_score, person_id, thing_id)
                             VALUES (NEW.liked_at, NEW.like_score, NEW.person_id, NEW.thing_id);
-                    END IF;
+END IF;
                 ELSIF (TG_OP = 'UPDATE') THEN
                     IF NEW.liked_at IS NOT NULL AND (
                         SELECT
@@ -428,16 +519,16 @@ BEGIN
                         INSERT INTO person_liked_combined (liked_at, like_score, person_id, thing_id)
                             VALUES (NEW.liked_at, NEW.like_score, NEW.person_id, NEW.thing_id);
                         -- If liked gets set as null, delete the row
-                    ELSE
-                        DELETE FROM person_liked_combined AS p
-                        WHERE p.person_id = NEW.person_id
-                            AND p.thing_id = NEW.thing_id;
-                    END IF;
-                END IF;
-                RETURN NULL;
-            END $$;
-    CREATE TRIGGER person_liked_combined
-        AFTER INSERT OR DELETE OR UPDATE OF liked_at ON thing_actions
+ELSE
+DELETE FROM person_liked_combined AS p
+WHERE p.person_id = NEW.person_id
+  AND p.thing_id = NEW.thing_id;
+END IF;
+END IF;
+RETURN NULL;
+END $$;
+CREATE TRIGGER person_liked_combined
+    AFTER INSERT OR DELETE OR UPDATE OF liked_at ON thing_actions
         FOR EACH ROW
         EXECUTE FUNCTION r.person_liked_combined_change_values_thing ( );
     $b$,
@@ -466,23 +557,23 @@ CALL r.create_person_liked_combined_trigger ('comment');
 -- mod_remove_post
 -- mod_transfer_community
 CREATE PROCEDURE r.create_modlog_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.modlog_combined_thing_insert ( )
+EXECUTE replace($b$ CREATE FUNCTION r.modlog_combined_thing_insert ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
             BEGIN
                 INSERT INTO modlog_combined (published_at, thing_id)
                     VALUES (NEW.published_at, NEW.id);
-                RETURN NEW;
-            END $$;
-    CREATE TRIGGER modlog_combined
-        AFTER INSERT ON thing
-        FOR EACH ROW
-        EXECUTE FUNCTION r.modlog_combined_thing_insert ( );
-        $b$,
+RETURN NEW;
+END $$;
+CREATE TRIGGER modlog_combined
+    AFTER INSERT ON thing
+    FOR EACH ROW
+    EXECUTE FUNCTION r.modlog_combined_thing_insert ( );
+$b$,
         'thing',
         table_name);
 END;
@@ -506,23 +597,23 @@ CALL r.create_modlog_combined_trigger ('mod_remove_post');
 CALL r.create_modlog_combined_trigger ('mod_transfer_community');
 -- Inbox: (replies, comment mentions, post mentions, and private_messages)
 CREATE PROCEDURE r.create_inbox_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.inbox_combined_thing_insert ( )
+EXECUTE replace($b$ CREATE FUNCTION r.inbox_combined_thing_insert ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
             BEGIN
                 INSERT INTO inbox_combined (published_at, thing_id)
                     VALUES (NEW.published_at, NEW.id);
-                RETURN NEW;
-            END $$;
-    CREATE TRIGGER inbox_combined
-        AFTER INSERT ON thing
-        FOR EACH ROW
-        EXECUTE FUNCTION r.inbox_combined_thing_insert ( );
-        $b$,
+RETURN NEW;
+END $$;
+CREATE TRIGGER inbox_combined
+    AFTER INSERT ON thing
+    FOR EACH ROW
+    EXECUTE FUNCTION r.inbox_combined_thing_insert ( );
+$b$,
         'thing',
         table_name);
 END;
@@ -538,8 +629,8 @@ CREATE FUNCTION r.require_uplete ()
 BEGIN
     IF pg_trigger_depth() = 1 AND NOT starts_with (current_query(), '/**/') THEN
         RAISE 'using delete instead of uplete is not allowed for this table';
-    END IF;
-    RETURN NULL;
+END IF;
+RETURN NULL;
 END
 $$;
 CREATE TRIGGER require_uplete
@@ -564,10 +655,10 @@ CREATE TRIGGER require_uplete
     EXECUTE FUNCTION r.require_uplete ();
 -- search: (post, comment, community, person, multi_community)
 CREATE PROCEDURE r.create_search_combined_trigger (table_name text)
-LANGUAGE plpgsql
+    LANGUAGE plpgsql
 AS $a$
 BEGIN
-    EXECUTE replace($b$ CREATE FUNCTION r.search_combined_thing_insert ( )
+EXECUTE replace($b$ CREATE FUNCTION r.search_combined_thing_insert ( )
             RETURNS TRIGGER
             LANGUAGE plpgsql
             AS $$
@@ -575,13 +666,13 @@ BEGIN
                 -- TODO need to figure out how to do the other columns here
                 INSERT INTO search_combined (published_at, thing_id)
                     VALUES (NEW.published_at, NEW.id);
-                RETURN NEW;
-            END $$;
-    CREATE TRIGGER search_combined
-        AFTER INSERT ON thing
-        FOR EACH ROW
-        EXECUTE FUNCTION r.search_combined_thing_insert ( );
-        $b$,
+RETURN NEW;
+END $$;
+CREATE TRIGGER search_combined
+    AFTER INSERT ON thing
+    FOR EACH ROW
+    EXECUTE FUNCTION r.search_combined_thing_insert ( );
+$b$,
         'thing',
         table_name);
 END;
@@ -602,13 +693,13 @@ CREATE FUNCTION r.search_combined_post_score_update ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    UPDATE
-        search_combined
-    SET
-        score = NEW.score
-    WHERE
-        post_id = NEW.id;
-    RETURN NULL;
+UPDATE
+    search_combined
+SET
+    score = NEW.score
+WHERE
+    post_id = NEW.id;
+RETURN NULL;
 END
 $$;
 CREATE TRIGGER search_combined_post_score
@@ -621,13 +712,13 @@ CREATE FUNCTION r.search_combined_comment_score_update ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    UPDATE
-        search_combined
-    SET
-        score = NEW.score
-    WHERE
-        comment_id = NEW.id;
-    RETURN NULL;
+UPDATE
+    search_combined
+SET
+    score = NEW.score
+WHERE
+    comment_id = NEW.id;
+RETURN NULL;
 END
 $$;
 CREATE TRIGGER search_combined_comment_score
@@ -640,13 +731,13 @@ CREATE FUNCTION r.search_combined_person_score_update ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    UPDATE
-        search_combined
-    SET
-        score = NEW.post_score
-    WHERE
-        person_id = NEW.id;
-    RETURN NULL;
+UPDATE
+    search_combined
+SET
+    score = NEW.post_score
+WHERE
+    person_id = NEW.id;
+RETURN NULL;
 END
 $$;
 CREATE TRIGGER search_combined_person_score
@@ -659,39 +750,16 @@ CREATE FUNCTION r.search_combined_community_score_update ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    UPDATE
-        search_combined
-    SET
-        score = NEW.users_active_month
-    WHERE
-        community_id = NEW.id;
-    RETURN NULL;
+UPDATE
+    search_combined
+SET
+    score = NEW.users_active_month
+WHERE
+    community_id = NEW.id;
+RETURN NULL;
 END
 $$;
 CREATE TRIGGER search_combined_community_score
     AFTER UPDATE OF users_active_month ON community
     FOR EACH ROW
     EXECUTE FUNCTION r.search_combined_community_score_update ();
-
--- Update updated_at on any table using a shared trigger function
-CREATE OR REPLACE FUNCTION r.set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF row(NEW.*) IS DISTINCT FROM row(OLD.*) THEN
-    NEW.updated_at = now();
-END IF;
-RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Keep banks.updated_at fresh
-CREATE TRIGGER set_updated_at_banks
-    BEFORE UPDATE ON banks
-    FOR EACH ROW
-    EXECUTE FUNCTION r.set_updated_at();
-
--- Keep user_bank_accounts.updated_at fresh
-CREATE TRIGGER set_updated_at_user_bank_accounts
-    BEFORE UPDATE ON user_bank_accounts
-    FOR EACH ROW
-    EXECUTE FUNCTION r.set_updated_at();

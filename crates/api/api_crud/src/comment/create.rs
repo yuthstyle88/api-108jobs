@@ -71,9 +71,7 @@ pub async fn create_comment(
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField(
-      "cannot comment on your own post".to_string(),
-    )))?;
+    return Err(FastJobErrorType::CannotCommentOnOwnPost)?;
   }
 
   // Check if user has already commented on this post
@@ -144,18 +142,16 @@ async fn check_user_already_commented(
 
   let existing_comment = comment
     .filter(creator_id.eq(person_id))
-    .filter(lemmy_db_schema_file::schema::comment::post_id.eq(post_id))
+    .filter(post_id.eq(post_id))
     .filter(deleted.eq(false))
     .filter(removed.eq(false))
     .first::<Comment>(conn)
     .await
     .optional()
-    .map_err(|_| FastJobError::from(FastJobErrorType::CouldntCreateComment))?;
+    .map_err(|_| FastJobError::from(FastJobErrorType::DatabaseError))?;
 
   if existing_comment.is_some() {
-    return Err(FastJobError::from(FastJobErrorType::InvalidField(
-      "You have already commented on this post".to_string(),
-    )))?;
+    return Err(FastJobErrorType::AlreadyCommented)?;
   }
 
   Ok(())

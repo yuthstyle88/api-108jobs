@@ -307,6 +307,8 @@ pub enum FastJobErrorType {
   DuplicateIDxInInstallments,
   StatusPaidOrUnpaid,
   NegativeIDx,
+  CannotCommentOnOwnPost,
+  AlreadyCommented,
 }
 
 cfg_if! {

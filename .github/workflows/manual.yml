@@ -22,7 +22,21 @@ jobs:
       - name: 📦 Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y mold libssl-dev pkg-config
+          sudo apt-get install -y mold libssl-dev pkg-config libpq-dev gettext
+
+      - name: 🧹 Clear Cargo cache
+        run: cargo cache --autoclean
+
+      - name: 🛠️ Debug build environment
+        run: |
+          rustc --version
+          cargo --version
+          clang --version
+          mold --version || echo "mold not found"
+          pkg-config --version || echo "pkg-config not found"
+          openssl version || echo "openssl not found"
+          gettext --version || echo "gettext not found"
+          ls -la crates/email || echo "crates/email directory not found"
 
       - name: Set APP_NAME
         run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV
@@ -30,7 +44,7 @@ jobs:
       - name: 🛠️ Build app
         run: |
           mkdir -p bin
-          cargo build --release --bin ${{ env.BASE_NAME }}
+          cargo build --release --bin ${{ env.BASE_NAME }} --verbose
           cp target/release/${{ env.BASE_NAME }} bin/${{ env.APP_NAME }}
           chmod +x bin/${{ env.APP_NAME }}
 

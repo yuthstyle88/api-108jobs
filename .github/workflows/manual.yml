@@ -20,6 +20,11 @@ jobs:
       - name: 🦀 Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: 📦 Install mold linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold
+
       - name: Set APP_NAME
         run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV
 
@@ -45,7 +50,7 @@ jobs:
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             set -euo pipefail
             APP_DIR="${{ env.APP_PATH }}"
-            SVC="fastwork-api.service"
+            SVC="lemmy_server.service"
 
             mkdir -p "$APP_DIR"
 
@@ -68,7 +73,7 @@ jobs:
             set -euo pipefail
             APP_DIR="${{ env.APP_PATH }}"
             APP_BIN="${{ env.APP_NAME }}"
-            SVC="fastwork-api.service"
+            SVC="lemmy_server.service"
 
             cd "$APP_DIR"
             sudo -n chown www-data:www-data "$APP_BIN" || true

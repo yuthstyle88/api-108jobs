@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BASE_NAME: fastwork-api
+      BASE_NAME: lemmy_server
       APP_PATH: ${{ vars.APP_PATH }} # e.g., /var/www/apps
 
     steps:

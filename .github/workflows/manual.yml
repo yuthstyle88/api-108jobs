@@ -13,15 +13,11 @@ jobs:
       APP_PATH: ${{ vars.APP_PATH }} # e.g., /var/www/apps
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Checkout code (with submodules via SSH)
         uses: actions/checkout@v4
         with:
-          submodules: false # don't auto-update, we'll control it
-
-      - name: 🔄 Init & Update Git submodules
-        run: |
-          git submodule init
-          git submodule update --recursive --depth=1
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: 🦀 Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -55,7 +51,7 @@ jobs:
           cp target/release/${{ env.BASE_NAME }} bin/${{ env.APP_NAME }}
           chmod +x bin/${{ env.APP_NAME }}
 
-      - name: 🔐 Setup SSH Agent
+      - name: 🔐 Setup SSH Agent (for deployment)
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}

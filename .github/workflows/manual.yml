@@ -15,6 +15,13 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: false # don't auto-update, we'll control it
+
+      - name: 🔄 Init & Update Git submodules
+        run: |
+          git submodule init
+          git submodule update --recursive --depth=1
 
       - name: 🦀 Setup Rust
         uses: dtolnay/rust-toolchain@stable

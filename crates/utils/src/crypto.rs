@@ -266,10 +266,11 @@ pub fn xchange_decrypt_data(
   hex_secret_key: &str,
   session: &str,
 ) -> FastJobResult<String> {
-  let iv = session[5..21].to_string();
+  // Derive IV safely from session, mirroring frontend logic: pad to 21, take bytes [5..21), ensure 16 bytes
+  let iv = derive_iv_from_session(session);
 
   let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::DecryptingError)?;
-  let crypto = Crypto::from((secret_key, iv.as_bytes().to_vec()));
+  let crypto = Crypto::from((secret_key, iv));
 
   let data = BASE64_STANDARD
     .decode(&encrypted_data)
@@ -290,16 +291,37 @@ pub fn xchange_encrypt_data(
   hex_secret_key: &str,
   session: &str,
 ) -> FastJobResult<String> {
-  let iv = session[5..21].to_string();
+  // Derive IV safely from session, mirroring frontend logic
+  let iv = derive_iv_from_session(session);
 
   let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::EncryptingError)?;
-  let crypto = Crypto::from((secret_key, iv.as_bytes().to_vec()));
+  let crypto = Crypto::from((secret_key, iv));
 
   match crypto.encrypt_aes_cbc(256, DataBuffer::from_vec(data.as_bytes())) {
     Ok(encrypted_text) => Ok(encrypted_text),
     Err(_err) => Err(FastJobErrorType::EncryptingError.into()),
   }
 }
+fn derive_iv_from_session(session: &str) -> Vec<u8> {
+  // Ensure at least 21 characters by right-padding with '0'
+  let mut s = session.to_string();
+  if s.len() < 21 {
+    s.push_str(&"0".repeat(21 - s.len()));
+  }
+  let bytes = s.as_bytes();
+  // Take bytes [5..21) => 16 bytes ideally
+  let start = 5usize.min(bytes.len());
+  let end = 21usize.min(bytes.len());
+  let mut iv = bytes[start..end].to_vec();
+  // Ensure exactly 16 bytes: right-pad with '0' or truncate
+  if iv.len() < 16 {
+    iv.extend(std::iter::repeat(b'0').take(16 - iv.len()));
+  } else if iv.len() > 16 {
+    iv.truncate(16);
+  }
+  iv
+}
+
 pub type AnyError = anyhow::Error;
 
 #[derive(Debug)]

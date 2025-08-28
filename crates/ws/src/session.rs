@@ -80,34 +80,40 @@ pub struct MessageRequest {
   pub content: String,
 }
 
+
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
   fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match msg {
       Ok(ws::Message::Text(text)) => {
         println!("Received: {}", text);
 
-        match serde_json::from_str::<MessageRequest>(&text) {
-          Ok(value) => {
+        // First, try to parse as the original backend format
+        if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
+          let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
             match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
-              Ok(messages) => {
-                let bridge_msg = BridgeMessage {
-                  source: MessageSource::WebSocket,
-                  channel: format!("room:{}", value.room_id).into(),
-                  user_id: value.sender_id,
-                  event: value.op.to_string(),
-                  messages,
-                  security_config: false,
-                };
-                self.issue_async::<SystemBroker, _>(bridge_msg);
-              }
+              Ok(messages) => Some(messages),
               Err(err) => {
-                eprintln!("Decryption error: {:?}", err);
+                eprintln!("Decryption error: {:?}. Falling back to plaintext content.", err);
+                None
               }
             }
-          }
-          Err(err) => {
-            eprintln!("Failed to parse MessageRequest: {:?}", err);
-          }
+          } else {
+            None
+          };
+
+          let messages = maybe_decrypted.unwrap_or_else(|| value.content.clone());
+
+          let bridge_msg = BridgeMessage {
+            source: MessageSource::WebSocket,
+            channel: format!("room:{}", value.room_id).into(),
+            user_id: value.sender_id,
+            event: value.op.to_string(),
+            messages,
+            security_config: false,
+          };
+          self.issue_async::<SystemBroker, _>(bridge_msg);
+        } else {
+          eprintln!("Failed to parse incoming message as known formats");
         }
       }
 

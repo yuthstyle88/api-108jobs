@@ -14,8 +14,12 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {
   pub token: Option<String>,
+  #[serde(alias = "roomId", alias = "room_id")]
   pub room_id: String,
-  pub room_name: String,
+  #[serde(alias = "roomName", alias = "room_name")]
+  pub room_name: Option<String>,
+  #[serde(alias = "userId", alias = "user_id")]
+  pub user_id: Option<i32>,
 }
 
 pub async fn chat_ws(
@@ -28,7 +32,11 @@ pub async fn chat_ws(
   // Extract query parameters
   let auth_token = query.token.clone();
   let room_id = query.room_id.clone().into();
-  let room_name = query.room_name.clone().into();
+  let room_name = query
+    .room_name
+    .clone()
+    .unwrap_or_else(|| query.room_id.clone())
+    .into();
 
   // Initialize authentication data
   let mut shared_key = "".to_string();
@@ -39,14 +47,25 @@ pub async fn chat_ws(
   if let Some(jwt_token) = auth_token {
     match local_user_view_from_jwt(&jwt_token, &context).await {
       Ok((local_user, session)) => {
-        session_id = session;
+        // Align IV derivation with frontend: use the JWT token as sessionId
+        // Frontend encrypts with AES-CBC using IV derived from the JWT string.
+        // Using the same here ensures decrypt/encrypt symmetry.
+        session_id = jwt_token.clone();
         user_id = Some(local_user.local_user.id);
-        // Get encryption key if user has public key
+        // Get encryption key if user has public key (this actually stores the shared secret in DB)
         shared_key = local_user.person.public_key
       }
       Err(_) => {
         eprintln!("Failed to get local user from jwt");
       }
+    }
+  }
+
+  // Fallback: if user_id is still None, use query.user_id (if supplied)
+  if user_id.is_none() {
+    if let Some(uid) = query.user_id {
+      use lemmy_db_schema::newtypes::LocalUserId;
+      user_id = Some(LocalUserId(uid));
     }
   }
 

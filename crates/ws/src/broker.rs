@@ -1,10 +1,10 @@
 use crate::chat_room::ChatRoomTemp;
 use crate::{
-  bridge_message::BridgeMessage,
+  bridge_message::{BridgeMessage, MessageSource},
   message::{RegisterClientMsg, StoreChatMessage},
 };
 use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
-use actix_broker::BrokerSubscribe;
+use actix_broker::{BrokerSubscribe, BrokerIssue, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::{
   newtypes::ChatRoomId,
@@ -229,9 +229,9 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let event = msg.event.clone();
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
-    let message = msg.messages;
+    let message = msg.messages.clone();
 
-    let content_enum = ChatMessageContent::from(message);
+    let content_enum = ChatMessageContent::from(message.clone());
     let chatroom_id = ChatRoomId::from(channel_name.clone());
     let content = serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
@@ -243,6 +243,16 @@ impl Handler<BridgeMessage> for PhoenixManager {
       created_at: Utc::now(),
       updated_at: None,
     };
+
+    // Immediately issue a reply back onto the SystemBroker so connected WsSessions can forward to clients
+    self.issue_async::<SystemBroker, _>(BridgeMessage {
+      source: MessageSource::Phoenix,
+      channel: ChatRoomId::from(channel_name.clone()),
+      user_id: msg.user_id.clone(),
+      event: event.clone(),
+      messages: message.clone(),
+      security_config: false,
+    });
 
     self.add_messages_to_room(chatroom_id, store_msg);
     Box::pin(async move {

@@ -7,7 +7,7 @@ use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use lemmy_utils::crypto::xchange_decrypt_data;
+use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
 use serde::Deserialize;
 
 pub struct WsSession {
@@ -48,9 +48,36 @@ impl Handler<BridgeMessage> for WsSession {
   type Result = ();
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
-    // Handle messages from broker
-    if let Ok(text) = serde_json::to_string(&msg.messages) {
-      ctx.text(text);
+    // Only forward messages that originate from Phoenix to the client, to avoid echo/loops
+    if !matches!(msg.source, MessageSource::Phoenix) {
+      return;
+    }
+
+    // Deliver only messages for this session's room
+    if msg.channel != self.client_msg.room_id {
+      return;
+    }
+
+    // Always encrypt before sending back to client
+    if self.shared_key.is_empty() || self.session_id.is_empty() {
+      eprintln!(
+        "Refusing to send plaintext to client: missing shared_key or session_id. Dropping message for event={} channel={}",
+        msg.event, msg.channel
+      );
+      return;
+    }
+
+    match xchange_encrypt_data(&msg.messages, &self.shared_key, &self.session_id) {
+      Ok(ciphertext) => {
+        ctx.text(ciphertext);
+      }
+      Err(err) => {
+        eprintln!(
+          "Encryption error when sending to client: {:?}. Message dropped to enforce encrypt-always policy.",
+          err
+        );
+        // Do not send plaintext according to the policy "always encrypt before sending back"
+      }
     }
   }
 }

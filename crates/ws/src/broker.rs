@@ -157,9 +157,11 @@ impl PhoenixManager {
     Ok(())
   }
   pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
-    if let Some(existing_messages) = self.chat_store.get_mut(&room_id) {
-      existing_messages.push(new_messages);
-    }
+    self
+      .chat_store
+      .entry(room_id)
+      .or_default()
+      .push(new_messages);
   }
 
   // Update a message in the chat store for a specific room
@@ -177,10 +179,18 @@ impl PhoenixManager {
     }
   }
 
-  async fn ensure_room_initialized(&mut self, room_id: ChatRoomId, room_name: String) {
+  fn ensure_room_initialized(&mut self, room_id: ChatRoomId, room_name: String) {
     if !self.chat_store.contains_key(&room_id) {
-      let _ = self.validate_or_create_room(room_id.clone(), room_name).await;
-      self.chat_store.insert(room_id, Vec::new());
+      // ensure in-memory buffer for this room exists
+      self.chat_store.insert(room_id.clone(), Vec::new());
+
+      // asynchronously validate or create the room in DB without blocking the actor
+      let pool = self.pool.clone();
+      tokio::spawn(async move {
+        if let Err(e) = validate_or_create_room_db(pool, room_id, room_name).await {
+          eprintln!("Failed to validate/create room in DB: {}", e);
+        }
+      });
     }
   }
 }
@@ -224,6 +234,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
   fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+    // Process only messages coming from WebSocket to avoid rebroadcast loops
+    if !matches!(msg.source, MessageSource::WebSocket) {
+      return Box::pin(async {});
+    }
+
     let channel_name = msg.channel.to_string();
     let user_id = msg.user_id.clone();
     let event = msg.event.clone();
@@ -317,4 +332,31 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
   fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
     let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
   }
+}
+
+
+// Helper function to validate or create a chat room in the DB without borrowing PhoenixManager
+async fn validate_or_create_room_db(
+  pool: ActualDbPool,
+  room_id: ChatRoomId,
+  room_name: String,
+) -> FastJobResult<()> {
+  let room_id_str = room_id.to_string();
+  let mut db_pool = DbPool::Pool(&pool);
+
+  if !ChatRoom::exists(&mut db_pool, room_id_str.clone().into()).await? {
+    // Validate room id structure if needed
+    let _ = ChatRoomTemp::parse_compact_room_id(&room_id_str)
+      .ok_or(FastJobErrorType::InvalidRoomId)?;
+
+    let now = Utc::now();
+    let form = ChatRoomInsertForm {
+      room_name,
+      created_at: now,
+      updated_at: None,
+    };
+    ChatRoom::create(&mut db_pool, &form).await?;
+  }
+
+  Ok(())
 }

@@ -1,10 +1,9 @@
-use crate::chat_room::ChatRoomTemp;
 use crate::{
   bridge_message::{BridgeMessage, MessageSource},
   message::{RegisterClientMsg, StoreChatMessage},
 };
 use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
-use actix_broker::{BrokerSubscribe, BrokerIssue, SystemBroker};
+use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::{
   newtypes::ChatRoomId,
@@ -120,10 +119,13 @@ pub struct PhoenixManager {
 
 impl PhoenixManager {
   pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool) -> Self {
-
-    let sock = Socket::spawn(endpoint.clone().expect("Phoenix url is require"), None, None)
-        .await
-        .expect("Failed to create socket");
+    let sock = Socket::spawn(
+      endpoint.clone().expect("Phoenix url is require"),
+      None,
+      None,
+    )
+    .await
+    .expect("Failed to create socket");
     Self {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
@@ -142,11 +144,10 @@ impl PhoenixManager {
     let room_id = room_id.to_string();
     let mut db_pool = DbPool::Pool(&self.pool);
     if !ChatRoom::exists(&mut db_pool, room_id.clone().into()).await? {
-      let (_, _, _job_id) = ChatRoomTemp::parse_compact_room_id(&room_id)
-          .ok_or(FastJobErrorType::InvalidRoomId)?;
 
       let now = Utc::now();
       let form = ChatRoomInsertForm {
+        id: ChatRoomId(room_id),
         room_name,
         created_at: now,
         updated_at: None,
@@ -247,7 +248,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let message = msg.messages.clone();
 
     let content_enum = ChatMessageContent::from(message.clone());
-    let chatroom_id = ChatRoomId::from(channel_name.clone());
+    let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str());
     let content = serde_json::to_string(&content_enum).unwrap_or_default();
     //TODO get sender id
     let store_msg = ChatMessageInsertForm {
@@ -334,7 +335,6 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
   }
 }
 
-
 // Helper function to validate or create a chat room in the DB without borrowing PhoenixManager
 async fn validate_or_create_room_db(
   pool: ActualDbPool,
@@ -345,12 +345,10 @@ async fn validate_or_create_room_db(
   let mut db_pool = DbPool::Pool(&pool);
 
   if !ChatRoom::exists(&mut db_pool, room_id_str.clone().into()).await? {
-    // Validate room id structure if needed
-    let _ = ChatRoomTemp::parse_compact_room_id(&room_id_str)
-      .ok_or(FastJobErrorType::InvalidRoomId)?;
 
     let now = Utc::now();
     let form = ChatRoomInsertForm {
+      id: ChatRoomId(room_id_str.clone()),
       room_name,
       created_at: now,
       updated_at: None,

@@ -25,6 +25,7 @@ pub struct ChatRoom {
 )]
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 pub struct ChatRoomInsertForm {
+    pub id: ChatRoomId,
     pub room_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,

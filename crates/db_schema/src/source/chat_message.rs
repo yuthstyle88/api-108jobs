@@ -37,7 +37,7 @@ pub struct ChatMessageInsertForm {
 }
 #[derive(Debug, Clone, Serialize)]
 pub enum ChatMessageContent {
-    Text { content: String },
+    Text { content: String, sent_at: DateTime<Utc> },
     File { name: String, file_type: String },
 }
 
@@ -49,7 +49,10 @@ impl From<String> for ChatMessageContent {
                 file_type: "".to_string(),
             }
         } else {
-            ChatMessageContent::Text { content }
+            ChatMessageContent::Text {
+                content,
+                sent_at: Utc::now(),
+            }
         }
     }
 }

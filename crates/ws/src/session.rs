@@ -54,7 +54,7 @@ impl Handler<BridgeMessage> for WsSession {
     }
 
     // Deliver only messages for this session's room
-    if msg.channel != self.client_msg.room_id {
+    if ChatRoomId::from_channel_name(msg.channel.as_ref()) != self.client_msg.room_id {
       return;
     }
 
@@ -116,8 +116,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
+          let encrypted = match xchange_encrypt_data(&value.content, &self.shared_key, &self.session_id) {
+            Ok(enc) => enc,
+            Err(err) => {
+              eprintln!("Encryption error: {:?}. Falling back to plaintext.", err);
+              value.content.clone()
+            }
+          };
+
           let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
-            match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
+            match xchange_decrypt_data(&encrypted, &self.shared_key, &self.session_id) {
               Ok(messages) => Some(messages),
               Err(err) => {
                 eprintln!("Decryption error: {:?}. Falling back to plaintext content.", err);

@@ -208,6 +208,14 @@ impl Deref for ChatRoomId {
   }
 }
 
+impl ChatRoomId {
+  /// Extract a `ChatRoomId` from a Phoenix channel name (`room:123`, `room:2:3`, etc).
+  pub fn from_channel_name(channel: &str) -> Self {
+    let rest = channel.strip_prefix("room:").unwrap_or(channel);
+    ChatRoomId(rest.to_string())
+  }
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

@@ -46,7 +46,7 @@ pub async fn chat_ws(
   // Handle authentication if token exists
   if let Some(jwt_token) = auth_token {
     match local_user_view_from_jwt(&jwt_token, &context).await {
-      Ok((local_user, session)) => {
+      Ok((local_user, _session)) => {
         // Align IV derivation with frontend: use the JWT token as sessionId
         // Frontend encrypts with AES-CBC using IV derived from the JWT string.
         // Using the same here ensures decrypt/encrypt symmetry.

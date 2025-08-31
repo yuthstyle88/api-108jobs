@@ -7,7 +7,7 @@ use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
+use lemmy_utils::crypto::xchange_decrypt_data;
 use serde::Deserialize;
 
 pub struct WsSession {
@@ -58,27 +58,8 @@ impl Handler<BridgeMessage> for WsSession {
       return;
     }
 
-    // Always encrypt before sending back to client
-    if self.shared_key.is_empty() || self.session_id.is_empty() {
-      eprintln!(
-        "Refusing to send plaintext to client: missing shared_key or session_id. Dropping message for event={} channel={}",
-        msg.event, msg.channel
-      );
-      return;
-    }
-
-    match xchange_encrypt_data(&msg.messages, &self.shared_key, &self.session_id) {
-      Ok(ciphertext) => {
-        ctx.text(ciphertext);
-      }
-      Err(err) => {
-        eprintln!(
-          "Encryption error when sending to client: {:?}. Message dropped to enforce encrypt-always policy.",
-          err
-        );
-        // Do not send plaintext according to the policy "always encrypt before sending back"
-      }
-    }
+    // Send plaintext list/data to client without encryption, per requirement
+    ctx.text(msg.messages);
   }
 }
 #[derive(Deserialize, Debug)]
@@ -86,6 +67,7 @@ pub enum MessageOp {
   SendMessage,
   LeaveRoom,
   JoinRoom,
+  FetchHistory,
 }
 
 impl std::fmt::Display for MessageOp {
@@ -94,6 +76,7 @@ impl std::fmt::Display for MessageOp {
       MessageOp::SendMessage => write!(f, "send_message"),
       MessageOp::LeaveRoom => write!(f, "leave_room"),
       MessageOp::JoinRoom => write!(f, "join_room"),
+      MessageOp::FetchHistory => write!(f, "fetch_history"),
     }
   }
 }
@@ -105,6 +88,10 @@ pub struct MessageRequest {
   pub receiver_id: LocalUserId,
   pub room_id: ChatRoomId,
   pub content: String,
+  #[serde(default)]
+  pub page: Option<i64>,
+  #[serde(default)]
+  pub page_size: Option<i64>,
 }
 
 
@@ -128,7 +115,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
             None
           };
 
-          let messages = maybe_decrypted.unwrap_or_else(|| value.content.clone());
+          // For fetch_history, forward page parameters instead of content
+          let messages = if matches!(value.op, MessageOp::FetchHistory) {
+            #[derive(serde::Serialize)]
+            struct Pager { page: Option<i64>, page_size: Option<i64> }
+            serde_json::to_string(&Pager { page: value.page, page_size: value.page_size })
+              .unwrap_or_else(|_| "{\"page\":null,\"page_size\":null}".to_string())
+          } else {
+            maybe_decrypted.unwrap_or_else(|| value.content.clone())
+          };
 
           let bridge_msg = BridgeMessage {
             source: MessageSource::WebSocket,

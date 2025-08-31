@@ -6,7 +6,7 @@ use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::{
-  newtypes::ChatRoomId,
+  newtypes::{ChatRoomId, LocalUserId},
   source::{
     chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
@@ -234,7 +234,7 @@ impl Actor for PhoenixManager {
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
     // Process only messages coming from WebSocket to avoid rebroadcast loops
     if !matches!(msg.source, MessageSource::WebSocket) {
       return Box::pin(async {});
@@ -243,6 +243,31 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channel_name = msg.channel.to_string();
     let user_id = msg.user_id.clone();
     let event = msg.event.clone();
+
+    // Special case: fetch_history should query DB with pagination and emit history, no storage, no phoenix send
+    if event == "fetch_history" {
+      let pool = self.pool.clone();
+      let room_id = ChatRoomId::from_channel_name(channel_name.as_str());
+      let addr = ctx.address();
+
+      #[derive(serde::Deserialize)]
+      struct Pager { page: Option<i64>, page_size: Option<i64> }
+      let (page, page_size) = match serde_json::from_str::<Pager>(&msg.messages) {
+        Ok(p) => (p.page.unwrap_or(1), p.page_size.unwrap_or(20)),
+        Err(_) => (1, 20),
+      };
+
+      tokio::spawn(async move {
+        let mut db_pool = DbPool::Pool(&pool);
+        let history = ChatMessage::list_by_room_paged(&mut db_pool, room_id.clone(), page, page_size)
+          .await
+          .unwrap_or_default();
+        addr.do_send(HistoryFetched { room_id, user_id: Some(user_id), messages: history });
+      });
+
+      return Box::pin(async {});
+    }
+
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
@@ -250,7 +275,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let content_enum = ChatMessageContent::from(message.clone());
     let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str());
     let content = serde_json::to_string(&content_enum).unwrap_or_default();
-    //TODO get sender id
     let store_msg = ChatMessageInsertForm {
       room_id: chatroom_id.clone(),
       sender_id: user_id,
@@ -330,8 +354,55 @@ impl Handler<StoreChatMessage> for PhoenixManager {
 impl Handler<RegisterClientMsg> for PhoenixManager {
   type Result = ();
 
-  fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
-    let _ = self.ensure_room_initialized(msg.room_id, msg.room_name);
+  fn handle(&mut self, msg: RegisterClientMsg, ctx: &mut Context<Self>) -> Self::Result {
+    let room_id = msg.room_id.clone();
+    let room_name = msg.room_name.clone();
+    let user_id = msg.user_id;
+
+    let _ = self.ensure_room_initialized(room_id.clone(), room_name);
+
+    // Fetch and emit history asynchronously
+    let pool = self.pool.clone();
+    let addr = ctx.address();
+    tokio::spawn(async move {
+      let mut db_pool = DbPool::Pool(&pool);
+      let history = ChatMessage::list_by_room(&mut db_pool, room_id.clone(), 10).await.unwrap_or_default();
+      addr.do_send(HistoryFetched { room_id, user_id, messages: history });
+    });
+  }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+struct HistoryFetched {
+  room_id: ChatRoomId,
+  user_id: Option<LocalUserId>,
+  messages: Vec<ChatMessage>,
+}
+
+impl Handler<HistoryFetched> for PhoenixManager {
+  type Result = ();
+
+  fn handle(&mut self, msg: HistoryFetched, _ctx: &mut Context<Self>) -> Self::Result {
+    let channel_name = format!("room:{}", msg.room_id);
+    let user_id = msg.user_id.unwrap_or(LocalUserId(0));
+
+    // Emit history as a stream of individual messages (oldest -> newest)
+    for m in msg.messages {
+      // For compatibility, forward the original stored content field
+      // m.content is already a JSON string (e.g., {"Text":{...}}) or plaintext depending on producer.
+      self.issue_async::<SystemBroker, _>(BridgeMessage {
+        source: MessageSource::Phoenix,
+        channel: ChatRoomId::from(channel_name.clone()),
+        user_id,
+        event: "history_item".to_string(),
+        messages: m.content.clone(),
+        security_config: false,
+      });
+    }
+
+    // Do not emit an extra history_end message; clients should infer end by stream completion
+    // (Removed previously sent empty/status payload to avoid confusing consumers)
   }
 }
 

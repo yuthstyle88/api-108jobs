@@ -53,14 +53,32 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
 
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
   #[diesel(postgres_type(name = "billing_status"))]
   pub struct BillingStatus;
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
   #[diesel(postgres_type(name = "workflow_status"))]
   pub struct WorkFlowStatus;
 
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType, Debug, serde::Serialize, serde::Deserialize)]
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
   #[diesel(postgres_type(name = "tx_kind"))]
   pub struct TxKind;
 
@@ -213,6 +231,14 @@ diesel::table! {
         room_name -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    chat_participant (room_id, member_id) {
+        room_id -> Varchar,
+        member_id -> Int4,
+        joined_at -> Timestamptz,
     }
 }
 
@@ -1234,7 +1260,7 @@ diesel::table! {
 // Job budget plan table schema
 diesel::table! {
     use diesel::sql_types::*;
-    
+
     job_budget_plan (id) {
         id -> Int4,
         post_id -> Int4,
@@ -1268,6 +1294,10 @@ diesel::joinable!(comment_reply -> comment (comment_id));
 diesel::joinable!(comment_reply -> person (recipient_id));
 diesel::joinable!(comment_report -> comment (comment_id));
 diesel::joinable!(community -> instance (instance_id));
+diesel::joinable!(chat_participant -> chat_room (room_id));
+diesel::joinable!(chat_participant -> local_user (member_id));
+diesel::joinable!(chat_message -> chat_room (room_id));
+diesel::joinable!(chat_message -> local_user (sender_id));
 diesel::joinable!(workflow -> post (post_id));
 diesel::joinable!(job_budget_plan -> post (post_id));
 diesel::joinable!(community_actions -> community (community_id));
@@ -1383,6 +1413,9 @@ diesel::allow_tables_to_appear_in_same_query!(
   community_actions,
   community_language,
   community_report,
+  chat_room,
+  chat_participant,
+  chat_message,
   custom_emoji,
   custom_emoji_keyword,
   email_verification,
@@ -1443,4 +1476,3 @@ diesel::allow_tables_to_appear_in_same_query!(
   coin,
   job_budget_plan,
 );
-

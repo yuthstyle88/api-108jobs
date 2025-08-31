@@ -5,6 +5,7 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use diesel::{dsl::insert_into, QueryDsl};
+use diesel::dsl::update;
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::chat_message;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -29,7 +30,7 @@ impl Crud for ChatMessage {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(chat_message::table.find(id))
+    update(chat_message::table.find(id))
       .set(form)
       .get_result::<Self>(conn)
       .await

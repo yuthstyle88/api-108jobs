@@ -14,7 +14,7 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::{ActualDbPool, DbPool},
 };
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
@@ -144,7 +144,6 @@ impl PhoenixManager {
     let room_id = room_id.to_string();
     let mut db_pool = DbPool::Pool(&self.pool);
     if !ChatRoom::exists(&mut db_pool, room_id.clone().into()).await? {
-
       let now = Utc::now();
       let form = ChatRoomInsertForm {
         id: ChatRoomId(room_id),
@@ -157,6 +156,7 @@ impl PhoenixManager {
 
     Ok(())
   }
+
   pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
     self
       .chat_store
@@ -345,7 +345,6 @@ async fn validate_or_create_room_db(
   let mut db_pool = DbPool::Pool(&pool);
 
   if !ChatRoom::exists(&mut db_pool, room_id_str.clone().into()).await? {
-
     let now = Utc::now();
     let form = ChatRoomInsertForm {
       id: ChatRoomId(room_id_str.clone()),

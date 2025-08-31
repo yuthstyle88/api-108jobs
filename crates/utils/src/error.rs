@@ -309,6 +309,8 @@ pub enum FastJobErrorType {
   NegativeIDx,
   CannotCommentOnOwnPost,
   AlreadyCommented,
+    CouldntCreateChatParticipant,
+  CouldntUpdateChatParticipant,
 }
 
 cfg_if! {

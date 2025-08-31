@@ -10,6 +10,7 @@ use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
 use serde::Deserialize;
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {
@@ -56,7 +57,7 @@ pub async fn chat_ws(
         shared_key = local_user.person.public_key
       }
       Err(_) => {
-        eprintln!("Failed to get local user from jwt");
+        return Err(Error::from(FastJobError::from(FastJobErrorType::IncorrectLogin)));
       }
     }
   }

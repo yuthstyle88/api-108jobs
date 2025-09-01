@@ -271,18 +271,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
-
-    let content_enum = ChatMessageContent::from(message.clone());
     let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str());
-    let content = serde_json::to_string(&content_enum).unwrap_or_default();
+
     let store_msg = ChatMessageInsertForm {
       room_id: chatroom_id.clone(),
       sender_id: user_id,
-      content: content.clone(),
-      status: 0,
+      content: message.clone(),
+      status: 1,
       created_at: Utc::now(),
       updated_at: None,
     };
+
+    let content = serde_json::to_string(&store_msg).unwrap_or_default();
 
     // Immediately issue a reply back onto the SystemBroker so connected WsSessions can forward to clients
     self.issue_async::<SystemBroker, _>(BridgeMessage {
@@ -290,7 +290,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       channel: ChatRoomId::from(channel_name.clone()),
       user_id: msg.user_id.clone(),
       event: event.clone(),
-      messages: message.clone(),
+      messages: content.clone(),
       security_config: false,
     });
 
@@ -391,12 +391,20 @@ impl Handler<HistoryFetched> for PhoenixManager {
     for m in msg.messages {
       // For compatibility, forward the original stored content field
       // m.content is already a JSON string (e.g., {"Text":{...}}) or plaintext depending on producer.
+      // Send the full ChatMessage JSON instead of only the content string
+      let full_msg_json = match serde_json::to_string(&m) {
+        Ok(s) => s,
+        Err(_) => {
+          // Fallback to original content in case of serialization error
+          m.content.clone()
+        }
+      };
       self.issue_async::<SystemBroker, _>(BridgeMessage {
         source: MessageSource::Phoenix,
         channel: ChatRoomId::from(channel_name.clone()),
         user_id,
         event: "history_item".to_string(),
-        messages: m.content.clone(),
+        messages: full_msg_json,
         security_config: false,
       });
     }

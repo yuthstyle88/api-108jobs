@@ -103,18 +103,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-          let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
-            match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
-              Ok(messages) => Some(messages),
-              Err(err) => {
-                eprintln!("Decryption error: {:?}. Falling back to plaintext content.", err);
-                None
-              }
-            }
-          } else {
-            None
-          };
-
           // For fetch_history, forward page parameters instead of content
           let messages = if matches!(value.op, MessageOp::FetchHistory) {
             #[derive(serde::Serialize)]
@@ -122,7 +110,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
             serde_json::to_string(&Pager { page: value.page, page_size: value.page_size })
               .unwrap_or_else(|_| "{\"page\":null,\"page_size\":null}".to_string())
           } else {
-            maybe_decrypted.unwrap_or_else(|| value.content.clone())
+            value.content.clone()
           };
 
           let bridge_msg = BridgeMessage {

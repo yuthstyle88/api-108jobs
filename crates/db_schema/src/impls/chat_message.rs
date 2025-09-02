@@ -9,6 +9,7 @@ use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::chat_message;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use crate::newtypes::ChatRoomId;
 
 impl Crud for ChatMessage {
   type InsertForm = ChatMessageInsertForm;
@@ -17,6 +18,7 @@ impl Crud for ChatMessage {
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
+
     insert_into(chat_message::table)
       .values(form)
       .get_result::<Self>(conn)
@@ -55,15 +57,14 @@ impl ChatMessage {
     /// Fetch the most recent messages for a room (default order: oldest -> newest)
     pub async fn list_by_room(
         pool: &mut DbPool<'_>,
-        room: crate::newtypes::ChatRoomId,
+        room: ChatRoomId,
         limit_num: i64,
     ) -> FastJobResult<Vec<Self>> {
-        use lemmy_db_schema_file::schema::chat_message::dsl as dsl;
-
         let conn = &mut get_conn(pool).await?;
-        let mut rows = dsl::chat_message
-            .filter(dsl::room_id.eq(room))
-            .order(dsl::created_at.desc())
+
+        let mut rows = chat_message::table
+            .filter(chat_message::room_id.eq(room))
+            .order(chat_message::created_at.desc())
             .limit(limit_num)
             .load::<Self>(conn)
             .await
@@ -77,26 +78,52 @@ impl ChatMessage {
     /// Fetch paginated messages for a room (page starts at 1). Returns oldest->newest within the page
     pub async fn list_by_room_paged(
         pool: &mut DbPool<'_>,
-        room: crate::newtypes::ChatRoomId,
+        room: ChatRoomId,
         page: i64,
         page_size: i64,
     ) -> FastJobResult<Vec<Self>> {
-        use lemmy_db_schema_file::schema::chat_message::dsl as dsl;
-
         let conn = &mut get_conn(pool).await?;
+
         let safe_page = if page < 1 { 1 } else { page };
         let safe_size = if page_size <= 0 { 20 } else { page_size.min(100) };
         let offset = (safe_page - 1) * safe_size;
 
-        let mut rows = dsl::chat_message
-            .filter(dsl::room_id.eq(room))
-            .order(dsl::created_at.desc())
+        let mut rows = chat_message::table
+            .filter(chat_message::room_id.eq(room))
+            .order(chat_message::created_at.desc())
             .limit(safe_size)
             .offset(offset)
             .load::<Self>(conn)
             .await
             .with_fastjob_type(FastJobErrorType::CouldntUpdateChatMessage)?;
         rows.reverse();
+        Ok(rows)
+    }
+
+    /// Cursor-based pagination: fetch messages after a given message id (strictly greater),
+    /// ordered oldest -> newest. If after_id is None, starts from the very first message.
+    pub async fn list_by_room_after_id(
+        pool: &mut DbPool<'_>,
+        room: ChatRoomId,
+        after_id: Option<ChatMessageId>,
+        limit_num: i64,
+    ) -> FastJobResult<Vec<Self>> {
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = chat_message::table
+            .filter(chat_message::room_id.eq(room))
+            .into_boxed();
+        if let Some(aid) = after_id {
+            query = query.filter(chat_message::id.gt(aid));
+        }
+
+        // Order ascending by id to return oldest -> newest for the page
+        let rows = RunQueryDsl::load(
+            query.order(chat_message::id.asc()).limit(limit_num),
+            conn,
+        )
+        .await
+        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatMessage)?;
         Ok(rows)
     }
 }

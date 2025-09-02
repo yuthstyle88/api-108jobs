@@ -88,6 +88,12 @@ pub struct MessageRequest {
   pub receiver_id: LocalUserId,
   pub room_id: ChatRoomId,
   pub content: String,
+  // New cursor-based pagination (preferred)
+  #[serde(default)]
+  pub after_id: Option<i32>,
+  #[serde(default)]
+  pub limit: Option<i64>,
+  // Legacy pagination (kept for backward compatibility)
   #[serde(default)]
   pub page: Option<i64>,
   #[serde(default)]
@@ -103,25 +109,24 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-          let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
-            match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
-              Ok(messages) => Some(messages),
-              Err(err) => {
-                eprintln!("Decryption error: {:?}. Falling back to plaintext content.", err);
-                None
-              }
-            }
-          } else {
-            None
-          };
-          
-          // For fetch_history, forward page parameters instead of content
+          // For fetch_history, forward cursor parameters instead of content (fallback to legacy if absent)
           let messages = if matches!(value.op, MessageOp::FetchHistory) {
             #[derive(serde::Serialize)]
-            struct Pager { page: Option<i64>, page_size: Option<i64> }
-            serde_json::to_string(&Pager { page: value.page, page_size: value.page_size })
-              .unwrap_or_else(|_| "{\"page\":null,\"page_size\":null}".to_string())
+            struct Pager { after_id: Option<i32>, limit: Option<i64>, page: Option<i64>, page_size: Option<i64> }
+            serde_json::to_string(&Pager { after_id: value.after_id, limit: value.limit, page: value.page, page_size: value.page_size })
+              .unwrap_or_else(|_| "{}".to_string())
           } else {
+            let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
+              match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {
+                Ok(messages) => Some(messages),
+                Err(err) => {
+                  eprintln!("Decryption error: {:?}. Falling back to plaintext content.", err);
+                  None
+                }
+              }
+            } else {
+              None
+            };
             maybe_decrypted.unwrap_or_else(|| value.content.clone())
           };
 

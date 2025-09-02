@@ -79,6 +79,7 @@ use lemmy_api::{
   },
 };
 use lemmy_api_crud::community::list::list_communities;
+use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -365,6 +366,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )
+        .route("/chat/rooms", get().to(list_chat_rooms))
         .service(
           scope("/custom-emoji")
             .route("", post().to(create_custom_emoji))

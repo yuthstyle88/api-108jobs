@@ -8,7 +8,7 @@ use chrono::Utc;
 use lemmy_db_schema::{
   newtypes::{ChatRoomId, LocalUserId},
   source::{
-    chat_message::{ChatMessage, ChatMessageContent, ChatMessageInsertForm},
+    chat_message::{ChatMessage, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
   },
   traits::Crud,
@@ -18,6 +18,7 @@ use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
+use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -251,17 +252,28 @@ impl Handler<BridgeMessage> for PhoenixManager {
       let addr = ctx.address();
 
       #[derive(serde::Deserialize)]
-      struct Pager { page: Option<i64>, page_size: Option<i64> }
-      let (page, page_size) = match serde_json::from_str::<Pager>(&msg.messages) {
-        Ok(p) => (p.page.unwrap_or(1), p.page_size.unwrap_or(20)),
-        Err(_) => (1, 20),
-      };
+      struct Pager { after_id: Option<i32>, limit: Option<i64>, page: Option<i64>, page_size: Option<i64> }
+      let parsed = serde_json::from_str::<Pager>(&msg.messages).ok();
+      let after_id = parsed.as_ref().and_then(|p| p.after_id);
+      let mut limit = parsed.as_ref().and_then(|p| p.limit).unwrap_or(20);
+      if limit <= 0 { limit = 20; }
+      if limit > 100 { limit = 100; }
 
       tokio::spawn(async move {
         let mut db_pool = DbPool::Pool(&pool);
-        let history = ChatMessage::list_by_room_paged(&mut db_pool, room_id.clone(), page, page_size)
-          .await
-          .unwrap_or_default();
+        let history = if after_id.is_some() {
+          ChatMessage::list_by_room_after_id(&mut db_pool, room_id.clone(), after_id.map(lemmy_db_schema::newtypes::ChatMessageId), limit)
+            .await
+            .unwrap_or_default()
+        } else {
+          // Fallback to old paging if clients still send page / page_size
+          let (page, page_size) = if let Some(p) = parsed {
+            (p.page.unwrap_or(1), p.page_size.unwrap_or(limit))
+          } else { (1, limit) };
+          ChatMessage::list_by_room_paged(&mut db_pool, room_id.clone(), page, page_size)
+            .await
+            .unwrap_or_default()
+        };
         addr.do_send(HistoryFetched { room_id, user_id: Some(user_id), messages: history });
       });
 
@@ -360,6 +372,21 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
     let user_id = msg.user_id;
 
     let _ = self.ensure_room_initialized(room_id.clone(), room_name);
+
+    // Ensure participant exists for this user in this room (create if missing)
+    let participant_user_id = user_id;
+    if let Some(uid) = participant_user_id {
+      let pool_for_participant = self.pool.clone();
+      let room_for_participant = room_id.clone();
+      let chat_participant_form = ChatParticipantInsertForm {
+        room_id: room_for_participant,
+        member_id: uid,
+      };
+      tokio::spawn(async move {
+        let mut db_pool = DbPool::Pool(&pool_for_participant);
+        let _ = ChatParticipant::ensure_participant(&mut db_pool, &chat_participant_form).await;
+      });
+    }
 
     // Fetch and emit history asynchronously
     let pool = self.pool.clone();

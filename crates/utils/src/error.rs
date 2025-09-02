@@ -311,6 +311,8 @@ pub enum FastJobErrorType {
   AlreadyCommented,
     CouldntCreateChatParticipant,
   CouldntUpdateChatParticipant,
+  CouldntListRoomForUser,
+  CouldntEnsureParticipant,
 }
 
 cfg_if! {

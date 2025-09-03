@@ -5,7 +5,7 @@ use crate::{
     utils::{get_conn, DbPool},
 };
 use diesel::dsl::update;
-use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl, OptionalExtension};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::schema::chat_message;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -41,6 +41,21 @@ impl Crud for ChatMessage {
 }
 
 impl ChatMessage {
+    /// Fetch the most recent message for a room, or None if no messages.
+    pub async fn last_by_room(
+        pool: &mut DbPool<'_>,
+        room: ChatRoomId,
+    ) -> FastJobResult<Option<Self>> {
+        let conn = &mut get_conn(pool).await?;
+        let opt = chat_message::table
+            .filter(chat_message::room_id.eq(room))
+            .order(chat_message::created_at.desc())
+            .first::<Self>(conn)
+            .await
+            .optional()
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateChatMessage)?;
+        Ok(opt)
+    }
     pub async fn bulk_insert(
         pool: &mut DbPool<'_>,
         forms: &[ChatMessageInsertForm],

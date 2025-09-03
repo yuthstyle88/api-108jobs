@@ -5,19 +5,33 @@ use lemmy_db_schema::source::chat_room::ChatRoom;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
+use lemmy_db_schema::newtypes::LocalUserId;
+use lemmy_db_schema::source::chat_message::ChatMessage;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListUserChatRooms {
   pub limit: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct ChatRoomWithParticipants {
-  pub room: ChatRoom,
-  pub participants: Vec<ChatParticipant>,
+#[serde(rename_all = "camelCase")]
+pub struct LastMessage {
+  pub content: String,
+  pub timestamp: String,
+  pub sender_id: LocalUserId,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatRoomWithParticipants {
+  pub room: ChatRoom,
+  pub participants: Vec<ChatParticipant>,
+  pub last_message: Option<LastMessage>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListUserChatRoomsResponse {
   pub rooms: Vec<ChatRoomWithParticipants>,
 }
@@ -49,14 +63,24 @@ pub async fn list_chat_rooms(
     grouped.entry(p.room_id.to_string()).or_default().push(p);
   }
 
-  // 4) compose response
-  let rooms_with_participants = rooms
-    .into_iter()
-    .map(|room| {
-      let parts = grouped.remove(&room.id.to_string()).unwrap_or_default();
-      ChatRoomWithParticipants { room, participants: parts }
-    })
-    .collect();
+  // 4) compose response with last_message per room
+  let mut rooms_with_participants = Vec::new();
+  for room in rooms {
+    let parts = grouped.remove(&room.id.to_string()).unwrap_or_default();
+
+    let last_message_opt = ChatMessage::last_by_room(&mut pool, room.id.clone()).await?;
+    let last_message = last_message_opt.map(|m| LastMessage {
+      content: m.content,
+      timestamp: m.created_at.to_rfc3339(),
+      sender_id: m.sender_id,
+    });
+
+    rooms_with_participants.push(ChatRoomWithParticipants {
+      room,
+      participants: parts,
+      last_message,
+    });
+  }
 
   Ok(Json(ListUserChatRoomsResponse { rooms: rooms_with_participants }))
 }

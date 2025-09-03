@@ -11,6 +11,7 @@ use crate::newtypes::ChatRoomId;
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 #[cfg_attr(feature = "full", diesel(primary_key(id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
+#[serde(rename_all = "camelCase")]
 pub struct ChatRoom {
     pub id: ChatRoomId,
     pub room_name: String,

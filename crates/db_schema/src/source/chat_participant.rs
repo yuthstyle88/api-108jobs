@@ -11,6 +11,7 @@ use crate::newtypes::{ChatRoomId, LocalUserId};
 #[cfg_attr(feature = "full", diesel(table_name = chat_participant))]
 #[cfg_attr(feature = "full", diesel(primary_key(room_id, member_id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
+#[serde(rename_all = "camelCase")]
 pub struct ChatParticipant {
     pub room_id: ChatRoomId,
     pub member_id: LocalUserId,

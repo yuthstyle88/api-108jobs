@@ -37,7 +37,7 @@ pub async fn visit_profile(
   context: Data<FastJobContext>,
   username: Path<String>,
 ) -> FastJobResult<Json<VisitProfileResponse>> {
-  let found_person = Person::read_by_name(&mut context.pool(), &username).await?;
+  let found_person = Person::read_by_name_or_local_user_id(&mut context.pool(), &username).await?;
 
   Ok(Json(VisitProfileResponse {
     profile: found_person,

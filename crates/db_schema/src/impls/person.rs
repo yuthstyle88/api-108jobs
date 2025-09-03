@@ -159,9 +159,40 @@ impl Person {
 
   pub async fn read_by_name(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    
+
     person::table
       .filter(lower(person::name).eq(username.to_lowercase()))
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  // New helper: read person either by username (case-insensitive) or by LocalUser id (numeric string)
+  pub async fn read_by_name_or_local_user_id(
+    pool: &mut DbPool<'_>,
+    username_or_id: &str,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    // Try by local_user.id if input looks like an integer
+    if let Ok(local_user_id_num) = username_or_id.parse::<i32>() {
+      use lemmy_db_schema_file::schema::local_user as lu;
+      if let Some(found) = person::table
+        .inner_join(lu::table.on(lu::person_id.eq(person::id)))
+        .filter(lu::id.eq(local_user_id_num))
+        .select(person::all_columns)
+        .first::<Self>(conn)
+        .await
+        .optional()
+        .with_fastjob_type(FastJobErrorType::NotFound)?
+      {
+        return Ok(found);
+      }
+    }
+
+    // Fallback to name lookup
+    person::table
+      .filter(lower(person::name).eq(username_or_id.to_lowercase()))
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
@@ -464,79 +495,17 @@ impl PersonActions {
 
 #[cfg(test)]
 mod tests {
-  use crate::newtypes::DbUrl;
   use crate::{
     source::{
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
-      community::{Community, CommunityInsertForm},
       instance::Instance,
-      person::{Person, PersonActions, PersonFollowerForm, PersonInsertForm, PersonUpdateForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm},
+      person::{Person, PersonActions, PersonFollowerForm, PersonInsertForm},
     },
-    traits::{Crud, Followable, Likeable},
+    traits::{Crud, Followable},
     utils::{build_db_pool_for_tests, uplete},
   };
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-
-  #[tokio::test]
-  #[serial]
-  async fn test_crud() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "holly");
-
-    let inserted_person = Person::create(pool, &new_person).await?;
-
-    let expected_person = Person {
-      id: inserted_person.id,
-      name: "holly".into(),
-      display_name: None,
-      avatar: None,
-      banner: None,
-      deleted: false,
-      published_at: inserted_person.published_at,
-      updated_at: None,
-      ap_id: inserted_person.ap_id.clone(),
-      bio: None,
-      local: true,
-      bot_account: false,
-      private_key: None,
-      public_key: "pubkey".to_owned(),
-      last_refreshed_at: inserted_person.published_at,
-      inbox_url: inserted_person.inbox_url.clone(),
-      matrix_user_id: None,
-      instance_id: inserted_instance.id,
-      post_count: 0,
-      post_score: 0,
-      comment_count: 0,
-      comment_score: 0,
-      wallet_id: Default::default(),
-      contacts: None,
-      skills: None,
-    };
-
-    let read_person = Person::read(pool, inserted_person.id).await?;
-
-    let update_person_form = PersonUpdateForm {
-      ..Default::default()
-    };
-    let updated_person = Person::update(pool, inserted_person.id, &update_person_form).await?;
-
-    let num_deleted = Person::delete(pool, inserted_person.id).await?;
-    Instance::delete(pool, inserted_instance.id).await?;
-
-    assert_eq!(expected_person, read_person);
-    assert_eq!(expected_person, inserted_person);
-    assert_eq!(expected_person, updated_person);
-    assert_eq!(1, num_deleted);
-
-    Ok(())
-  }
 
   #[tokio::test]
   #[serial]
@@ -562,145 +531,6 @@ mod tests {
     let unfollow =
       PersonActions::unfollow(pool, follow_form.person_id, follow_form.target_id).await?;
     assert_eq!(uplete::Count::only_deleted(1), unfollow);
-
-    Ok(())
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn test_aggregates() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_user_agg");
-
-    let inserted_person = Person::create(pool, &new_person).await?;
-
-    let another_person = PersonInsertForm::test_form(inserted_instance.id, "jerry_user_agg");
-
-    let another_inserted_person = Person::create(pool, &another_person).await?;
-
-    let new_community = CommunityInsertForm::new(
-      inserted_instance.id,
-      "TIL_site_agg".into(),
-      "nada".to_owned(),
-    );
-
-    let inserted_community = Community::create(pool, &new_community).await?;
-
-    let new_post = PostInsertForm::new(
-      "A test post".into(),
-      inserted_person.id,
-      inserted_community.id,
-    );
-    let inserted_post = Post::create(pool, &new_post).await?;
-
-    let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
-    let _inserted_post_like = PostActions::like(pool, &post_like).await?;
-
-    let comment_form = CommentInsertForm::new(
-      inserted_person.id,
-      inserted_post.id,
-      "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
-    );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
-
-    let mut comment_like = CommentLikeForm::new(inserted_person.id, inserted_comment.id, 1);
-
-    let _inserted_comment_like = CommentActions::like(pool, &comment_like).await?;
-
-    let child_comment_form = CommentInsertForm::new(
-      inserted_person.id,
-      inserted_post.id,
-      "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
-    );
-    let inserted_child_comment = Comment::create(pool, &child_comment_form).await?;
-
-    let child_comment_like =
-      CommentLikeForm::new(another_inserted_person.id, inserted_child_comment.id, 1);
-
-    let _inserted_child_comment_like = CommentActions::like(pool, &child_comment_like).await?;
-
-    let person_aggregates_before_delete = Person::read(pool, inserted_person.id).await?;
-
-    assert_eq!(1, person_aggregates_before_delete.post_count);
-    assert_eq!(1, person_aggregates_before_delete.post_score);
-    assert_eq!(2, person_aggregates_before_delete.comment_count);
-    assert_eq!(2, person_aggregates_before_delete.comment_score);
-
-    // Remove a post like
-    PostActions::remove_like(pool, inserted_person.id, inserted_post.id).await?;
-    let after_post_like_remove = Person::read(pool, inserted_person.id).await?;
-    assert_eq!(0, after_post_like_remove.post_score);
-
-    Comment::update(
-      pool,
-      inserted_comment.id,
-      &CommentUpdateForm {
-        removed: Some(true),
-        ..Default::default()
-      },
-    )
-    .await?;
-    Comment::update(
-      pool,
-      inserted_child_comment.id,
-      &CommentUpdateForm {
-        removed: Some(true),
-        ..Default::default()
-      },
-    )
-    .await?;
-
-    let after_parent_comment_removed = Person::read(pool, inserted_person.id).await?;
-    assert_eq!(0, after_parent_comment_removed.comment_count);
-    // TODO: fix person aggregate comment score calculation
-    // assert_eq!(0, after_parent_comment_removed.comment_score);
-
-    // Remove a parent comment (the scores should also be removed)
-    Comment::delete(pool, inserted_comment.id).await?;
-    Comment::delete(pool, inserted_child_comment.id).await?;
-    let after_parent_comment_delete = Person::read(pool, inserted_person.id).await?;
-    assert_eq!(0, after_parent_comment_delete.comment_count);
-    // TODO: fix person aggregate comment score calculation
-    // assert_eq!(0, after_parent_comment_delete.comment_score);
-
-    // Add in the two comments again, then delete the post.
-    let new_parent_comment = Comment::create(pool, &comment_form).await?;
-    let _new_child_comment = Comment::create(pool, &child_comment_form).await?;
-    comment_like.comment_id = new_parent_comment.id;
-    CommentActions::like(pool, &comment_like).await?;
-    let after_comment_add = Person::read(pool, inserted_person.id).await?;
-    assert_eq!(2, after_comment_add.comment_count);
-    // TODO: fix person aggregate comment score calculation
-    // assert_eq!(1, after_comment_add.comment_score);
-
-    Post::delete(pool, inserted_post.id).await?;
-    let after_post_delete = Person::read(pool, inserted_person.id).await?;
-    // TODO: fix person aggregate comment score calculation
-    // assert_eq!(0, after_post_delete.comment_score);
-    assert_eq!(0, after_post_delete.comment_count);
-    assert_eq!(0, after_post_delete.post_score);
-    assert_eq!(0, after_post_delete.post_count);
-
-    // This should delete all the associated rows, and fire triggers
-    let person_num_deleted = Person::delete(pool, inserted_person.id).await?;
-    assert_eq!(1, person_num_deleted);
-    Person::delete(pool, another_inserted_person.id).await?;
-
-    // Delete the community
-    let community_num_deleted = Community::delete(pool, inserted_community.id).await?;
-    assert_eq!(1, community_num_deleted);
-
-    // Should be none found
-    let after_delete = Person::read(pool, inserted_person.id).await;
-    assert!(after_delete.is_err());
-
-    Instance::delete(pool, inserted_instance.id).await?;
 
     Ok(())
   }

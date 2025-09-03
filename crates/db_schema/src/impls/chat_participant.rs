@@ -75,6 +75,31 @@ impl ChatParticipant {
     Ok(rows)
   }
 
+  /// List all participants for the given room IDs.
+  pub async fn list_participants_for_rooms(
+    pool: &mut DbPool<'_>,
+    room_ids: &[ChatRoomId],
+  ) -> FastJobResult<Vec<ChatParticipant>> {
+    use diesel::prelude::*;
+    let conn = &mut get_conn(pool).await?;
+
+    if room_ids.is_empty() {
+      return Ok(vec![]);
+    }
+
+    let ids: Vec<String> = room_ids.iter().map(|r| r.to_string()).collect();
+
+    let query = chat_participant::table
+      .filter(chat_participant::room_id.eq_any(ids))
+      .order((chat_participant::room_id.asc(), chat_participant::joined_at.asc()));
+
+    let rows = diesel_async::RunQueryDsl::load(query, conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntListRoomForUser)?;
+
+    Ok(rows)
+  }
+
   /// Ensure a participant record exists for (room_id, member_id). If not, insert it.
   pub async fn ensure_participant(
     pool: &mut DbPool<'_>,

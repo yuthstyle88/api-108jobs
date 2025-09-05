@@ -10,6 +10,7 @@ use lemmy_db_views_billing::api::{
   ApproveQuotation, ApproveWork, BillingOperationResponse, CreateInvoiceForm,
   CreateInvoiceResponse, SubmitStartWork, UpdateBudgetPlanInstallments,
   UpdateBudgetPlanInstallmentsResponse, ValidCreateInvoice, ValidUpdateBudgetPlanInstallments,
+  RequestRevision,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -38,10 +39,7 @@ async fn update_job_plan_step_status(
   };
 
   // Parse installments -> Vec<WorkStep>
-  let mut steps: Vec<WorkStep> = match serde_json::from_value(plan.installments.clone()) {
-    Ok(v) => v,
-    Err(_) => Vec::new(),
-  };
+  let mut steps: Vec<WorkStep> = serde_json::from_value(plan.installments.clone()).unwrap_or_else(|_| Vec::new());
 
   // Update the matching step's status
   let mut found = false;
@@ -219,6 +217,35 @@ pub async fn approve_work(
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
     status: WorkFlowStatus::PendingEmployerReview,
+    success: true,
+  }))
+}
+
+pub async fn request_revision(
+  data: Json<RequestRevision>,
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<WorkFlowOperationResponse>> {
+  let workflow_id = data.workflow_id.into();
+  let seq_number = data.seq_number;
+  let _reason = data.reason.clone();
+
+  let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
+    .await?
+    .request_revision_on(&mut context.pool())
+    .await?;
+
+  // Update JobBudgetPlan step status -> InProgress for this seq
+  update_job_plan_step_status(
+    &mut context.pool(),
+    workflow_id,
+    seq_number,
+    WorkFlowStatus::InProgress,
+  )
+  .await?;
+
+  Ok(Json(WorkFlowOperationResponse {
+    workflow_id: wf.data.workflow_id.into(),
+    status: WorkFlowStatus::InProgress,
     success: true,
   }))
 }

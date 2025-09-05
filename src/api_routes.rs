@@ -11,6 +11,7 @@ use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
   approve_quotation, approve_work, create_quotation, submit_work, update_budget_plan_status,
+  request_revision,
 };
 use lemmy_api::{
   comment::{
@@ -305,6 +306,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/create-invoice", post().to(create_quotation))
                 .route("/approve-quotation", post().to(approve_quotation))
                 .route("/submit-work", post().to(submit_work))
+                .route("/request-revision", post().to(request_revision))
                 .route("/approve-work", post().to(approve_work))
                 .route("/budget-plan", put().to(update_budget_plan_status)),
             )

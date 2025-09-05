@@ -54,7 +54,7 @@ impl Claims {
       sub: user_id.0.to_string(),
       iss: hostname,
       iat: Utc::now().timestamp(),
-      exp: (Utc::now() + Duration::hours(12)).timestamp(),
+      exp: (Utc::now() + Duration::hours(1200)).timestamp(),
       session: generate_session(),
       email,
       lang,

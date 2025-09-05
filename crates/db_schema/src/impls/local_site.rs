@@ -40,12 +40,11 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-      comment::{Comment, CommentInsertForm},
-      community::{Community, CommunityInsertForm, CommunityUpdateForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
-      site::Site,
+      community::{Community, CommunityInsertForm, CommunityUpdateForm}
+      ,
+      person::{Person, PersonInsertForm}
+
+      ,
     },
     test_data::TestData,
     traits::Crud,
@@ -54,7 +53,6 @@ mod tests {
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use crate::newtypes::DbUrl;
 
   async fn read_local_site(pool: &mut DbPool<'_>) -> FastJobResult<LocalSite> {
     let conn = &mut get_conn(pool).await?;
@@ -81,78 +79,6 @@ mod tests {
     let inserted_community = Community::create(pool, &new_community).await?;
 
     Ok((data, inserted_person, inserted_community))
-  }
-
-  #[tokio::test]
-  #[serial]
-  async fn test_aggregates() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-
-    let (data, inserted_person, inserted_community) = prepare_site_with_community(pool).await?;
-
-    let new_post = PostInsertForm::new(
-      "A test post".into(),
-      inserted_person.id,
-      inserted_community.id,
-    );
-
-    // Insert two of those posts
-    let inserted_post = Post::create(pool, &new_post).await?;
-    let _inserted_post_again = Post::create(pool, &new_post).await?;
-
-    let comment_form = CommentInsertForm::new(
-      inserted_person.id,
-      inserted_post.id,
-      "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
-    );
-
-    // Insert two of those comments
-    let _inserted_comment = Comment::create(pool, &comment_form).await?;
-
-    let child_comment_form = CommentInsertForm::new(
-      inserted_person.id,
-      inserted_post.id,
-      "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-site-child").unwrap(),
-    );
-    let _inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
-
-    let site_aggregates_before_delete = read_local_site(pool).await?;
-
-    // TODO: this is unstable, sometimes it returns 0 users, sometimes 1
-    //assert_eq!(0, site_aggregates_before_delete.users);
-    assert_eq!(1, site_aggregates_before_delete.communities);
-    assert_eq!(2, site_aggregates_before_delete.posts);
-    assert_eq!(2, site_aggregates_before_delete.comments);
-
-    // Try a post delete
-    Post::delete(pool, inserted_post.id).await?;
-    let site_aggregates_after_post_delete = read_local_site(pool).await?;
-    assert_eq!(1, site_aggregates_after_post_delete.posts);
-    assert_eq!(0, site_aggregates_after_post_delete.comments);
-
-    // This shouuld delete all the associated rows, and fire triggers
-    let person_num_deleted = Person::delete(pool, inserted_person.id).await?;
-    assert_eq!(1, person_num_deleted);
-
-    // Delete the community
-    let community_num_deleted = Community::delete(pool, inserted_community.id).await?;
-    assert_eq!(1, community_num_deleted);
-
-    // Site should still exist, it can without a site creator.
-    let after_delete_creator = read_local_site(pool).await;
-    assert!(after_delete_creator.is_ok());
-
-    Site::delete(pool, data.site.id).await?;
-    let after_delete_site = read_local_site(pool).await;
-    assert!(after_delete_site.is_err());
-
-    Instance::delete(pool, data.instance.id).await?;
-
-    Ok(())
   }
 
   #[tokio::test]

@@ -88,6 +88,17 @@ pub struct ApproveWork {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Request revision on a submitted work (employer requests changes from freelancer).
+pub struct RequestRevision {
+    pub seq_number: i16,
+    pub workflow_id: WorkflowId,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
 /// Response for creating an invoice.
 pub struct CreateInvoiceResponse {
     pub billing_id: BillingId,

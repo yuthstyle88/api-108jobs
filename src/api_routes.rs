@@ -108,7 +108,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-
+use lemmy_api_crud::chat::read::get_chat_room;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -369,6 +369,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )
         .route("/chat/rooms", get().to(list_chat_rooms))
+        .route("/chat/rooms/{id}", get().to(get_chat_room))
         .service(
           scope("/custom-emoji")
             .route("", post().to(create_custom_emoji))

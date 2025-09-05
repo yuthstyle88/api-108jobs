@@ -1,40 +1,15 @@
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::source::chat_message::ChatMessage;
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
-use lemmy_db_schema::source::chat_room::ChatRoom;
+use lemmy_db_views_chat::api::{
+  ChatRoomWithParticipants,
+  LastMessage,
+  ListUserChatRooms,
+  ListUserChatRoomsResponse,
+};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
-use serde::{Deserialize, Serialize};
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_schema::source::chat_message::ChatMessage;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ListUserChatRooms {
-  pub limit: Option<i64>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LastMessage {
-  pub content: String,
-  pub timestamp: String,
-  pub sender_id: LocalUserId,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ChatRoomWithParticipants {
-  pub room: ChatRoom,
-  pub participants: Vec<ChatParticipant>,
-  pub last_message: Option<LastMessage>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ListUserChatRoomsResponse {
-  pub rooms: Vec<ChatRoomWithParticipants>,
-}
 
 pub async fn list_chat_rooms(
   data: Query<ListUserChatRooms>,

@@ -3383,6 +3383,7 @@ dependencies = [
  "lemmy_db_schema_file",
  "lemmy_db_views_bank_account",
  "lemmy_db_views_billing",
+ "lemmy_db_views_chat",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_inbox_combined",
@@ -3465,6 +3466,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_chat",
  "lemmy_db_views_comment",
  "lemmy_db_views_community",
  "lemmy_db_views_custom_emoji",
@@ -3708,6 +3710,21 @@ dependencies = [
  "lemmy_utils",
  "serde",
  "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "lemmy_db_views_chat"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "serde",
  "ts-rs",
 ]
 

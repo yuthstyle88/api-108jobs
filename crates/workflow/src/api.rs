@@ -1,16 +1,5 @@
 use lemmy_db_schema::newtypes::WorkflowId;
 
-use crate::{CancelTransition, FundEscrowTransition, ReleaseRemainingTransition, ReleaseToFreelancerTransition, SubmitWorkTransition};
-
-// Planner enum: unifies all transition variants for the DB/apply layer
-pub enum Planned {
-  FundEscrow(FundEscrowTransition),
-  ReleaseToFreelancer(ReleaseToFreelancerTransition),
-  ReleaseRemaining(ReleaseRemainingTransition),
-  SubmitWork(SubmitWorkTransition),
-  Cancel(CancelTransition),
-}
-
 // Shared data snapshot for typestate transitions
 #[derive(Clone, Debug)]
 pub struct FlowData {

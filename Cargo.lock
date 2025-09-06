@@ -4286,6 +4286,7 @@ dependencies = [
  "hex",
  "lemmy_api_utils",
  "lemmy_db_schema",
+ "lemmy_db_views_chat",
  "lemmy_utils",
  "phoenix_channels_client",
  "serde",

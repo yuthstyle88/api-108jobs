@@ -6,7 +6,7 @@ use crate::{
 use actix::{Actor, ActorContext, Addr, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
 use lemmy_utils::crypto::xchange_decrypt_data;
 use serde::Deserialize;
 
@@ -90,14 +90,11 @@ pub struct MessageRequest {
   pub content: String,
   // New cursor-based pagination (preferred)
   #[serde(default)]
-  pub after_id: Option<i32>,
+  pub page_cursor: Option<PaginationCursor>,
+  #[serde(default)]
+  pub page_back: Option<bool>,
   #[serde(default)]
   pub limit: Option<i64>,
-  // Legacy pagination (kept for backward compatibility)
-  #[serde(default)]
-  pub page: Option<i64>,
-  #[serde(default)]
-  pub page_size: Option<i64>,
 }
 
 
@@ -109,12 +106,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-          // For fetch_history, forward cursor parameters instead of content (fallback to legacy if absent)
+          // For fetch_history, forward only cursor pagination parameters
           let messages = if matches!(value.op, MessageOp::FetchHistory) {
             #[derive(serde::Serialize)]
-            struct Pager { after_id: Option<i32>, limit: Option<i64>, page: Option<i64>, page_size: Option<i64> }
-            serde_json::to_string(&Pager { after_id: value.after_id, limit: value.limit, page: value.page, page_size: value.page_size })
-              .unwrap_or_else(|_| "{}".to_string())
+            struct Pager {
+              page_cursor: Option<PaginationCursor>,
+              page_back: Option<bool>,
+              limit: Option<i64>,
+            }
+            serde_json::to_string(&Pager {
+              page_cursor: value.page_cursor.clone(),
+              page_back: value.page_back,
+              limit: value.limit,
+            })
+            .unwrap_or_else(|_| "{}".to_string())
           } else {
             let maybe_decrypted = if !self.shared_key.is_empty() && !self.session_id.is_empty() {
               match xchange_decrypt_data(&value.content, &self.shared_key, &self.session_id) {

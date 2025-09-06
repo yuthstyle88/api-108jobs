@@ -17,6 +17,7 @@ workspace = true
 lemmy_utils = { workspace = true, features = ["full"] }
 lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
+lemmy_db_views_chat = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }

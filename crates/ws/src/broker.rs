@@ -5,20 +5,22 @@ use crate::{
 use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use chrono::Utc;
+use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId},
+  newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{
     chat_message::{ChatMessage, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
   },
-  traits::Crud,
+  traits::{Crud, PaginationCursorBuilder},
   utils::{ActualDbPool, DbPool},
 };
+use lemmy_db_views_chat::api::ChatMessagesResponse;
+use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::FastJobResult;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
-use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -195,6 +197,39 @@ impl PhoenixManager {
       });
     }
   }
+
+  /// List chat messages using cursor pagination (new default pagination)
+  pub async fn list_chat_messages(
+    pool: ActualDbPool,
+    room_id: ChatRoomId,
+    page_cursor: Option<PaginationCursor>,
+    limit: Option<i64>,
+    page_back: Option<bool>,
+  ) -> FastJobResult<ChatMessagesResponse> {
+    let mut db_pool = DbPool::Pool(&pool);
+
+    // Decode cursor data if provided
+    let cursor_data = if let Some(ref cursor) = page_cursor {
+      Some(ChatMessageView::from_cursor(cursor, &mut db_pool).await?)
+    } else {
+      None
+    };
+
+    // Default to 20 if not provided
+    let lim = Some(limit.unwrap_or(20));
+
+    let results =
+      ChatMessageView::list_for_room(&mut db_pool, room_id, lim, cursor_data, page_back).await?;
+
+    let next_page = results.last().map(PaginationCursorBuilder::to_cursor);
+    let prev_page = results.first().map(PaginationCursorBuilder::to_cursor);
+
+    Ok(ChatMessagesResponse {
+      results,
+      next_page,
+      prev_page,
+    })
+  }
 }
 
 impl Actor for PhoenixManager {
@@ -245,36 +280,63 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let user_id = msg.user_id.clone();
     let event = msg.event.clone();
 
-    // Special case: fetch_history should query DB with pagination and emit history, no storage, no phoenix send
+    // Special case: fetch_history should query DB with cursor pagination and emit a page payload
     if event == "fetch_history" {
       let pool = self.pool.clone();
       let room_id = ChatRoomId::from_channel_name(channel_name.as_str());
       let addr = ctx.address();
 
       #[derive(serde::Deserialize)]
-      struct Pager { after_id: Option<i32>, limit: Option<i64>, page: Option<i64>, page_size: Option<i64> }
+      struct Pager {
+        page_cursor: Option<PaginationCursor>,
+        limit: Option<i64>,
+        page_back: Option<bool>,
+      }
+
+      // Parse new-style cursor pagination payload
       let parsed = serde_json::from_str::<Pager>(&msg.messages).ok();
-      let after_id = parsed.as_ref().and_then(|p| p.after_id);
+
+      // Determine cursor and limit
+      let page_cursor = parsed.as_ref().and_then(|p| p.page_cursor.clone());
       let mut limit = parsed.as_ref().and_then(|p| p.limit).unwrap_or(20);
-      if limit <= 0 { limit = 20; }
-      if limit > 100 { limit = 100; }
+      if limit <= 0 {
+        limit = 20;
+      }
+      if limit > 100 {
+        limit = 100;
+      }
+      let page_back = parsed.as_ref().and_then(|p| p.page_back);
 
       tokio::spawn(async move {
-        let mut db_pool = DbPool::Pool(&pool);
-        let history = if after_id.is_some() {
-          ChatMessage::list_by_room_after_id(&mut db_pool, room_id.clone(), after_id.map(lemmy_db_schema::newtypes::ChatMessageId), limit)
-            .await
-            .unwrap_or_default()
-        } else {
-          // Fallback to old paging if clients still send page / page_size
-          let (page, page_size) = if let Some(p) = parsed {
-            (p.page.unwrap_or(1), p.page_size.unwrap_or(limit))
-          } else { (1, limit) };
-          ChatMessage::list_by_room_paged(&mut db_pool, room_id.clone(), page, page_size)
-            .await
-            .unwrap_or_default()
-        };
-        addr.do_send(HistoryFetched { room_id, user_id: Some(user_id), messages: history });
+        match PhoenixManager::list_chat_messages(
+          pool,
+          room_id.clone(),
+          page_cursor,
+          Some(limit),
+          page_back,
+        )
+        .await
+        {
+          Ok(resp) => {
+            addr.do_send(HistoryFetched {
+              room_id,
+              user_id: Some(user_id),
+              messages: resp.results,
+              next_page: resp.next_page,
+              prev_page: resp.prev_page,
+            });
+          }
+          Err(_e) => {
+            // On error, send empty page
+            addr.do_send(HistoryFetched {
+              room_id,
+              user_id: Some(user_id),
+              messages: Vec::new(),
+              next_page: None,
+              prev_page: None,
+            });
+          }
+        }
       });
 
       return Box::pin(async {});
@@ -388,13 +450,30 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
       });
     }
 
-    // Fetch and emit history asynchronously
+    // Fetch and emit initial history page asynchronously using cursor pagination (default 20)
     let pool = self.pool.clone();
     let addr = ctx.address();
     tokio::spawn(async move {
-      let mut db_pool = DbPool::Pool(&pool);
-      let history = ChatMessage::list_by_room(&mut db_pool, room_id.clone(), 10).await.unwrap_or_default();
-      addr.do_send(HistoryFetched { room_id, user_id, messages: history });
+      match PhoenixManager::list_chat_messages(pool, room_id.clone(), None, Some(20), None).await {
+        Ok(resp) => {
+          addr.do_send(HistoryFetched {
+            room_id,
+            user_id,
+            messages: resp.results,
+            next_page: resp.next_page,
+            prev_page: resp.prev_page,
+          });
+        }
+        Err(_) => {
+          addr.do_send(HistoryFetched {
+            room_id,
+            user_id,
+            messages: Vec::new(),
+            next_page: None,
+            prev_page: None,
+          });
+        }
+      }
     });
   }
 }
@@ -404,7 +483,9 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
 struct HistoryFetched {
   room_id: ChatRoomId,
   user_id: Option<LocalUserId>,
-  messages: Vec<ChatMessage>,
+  messages: Vec<ChatMessageView>,
+  next_page: Option<PaginationCursor>,
+  prev_page: Option<PaginationCursor>,
 }
 
 impl Handler<HistoryFetched> for PhoenixManager {
@@ -414,30 +495,22 @@ impl Handler<HistoryFetched> for PhoenixManager {
     let channel_name = format!("room:{}", msg.room_id);
     let user_id = msg.user_id.unwrap_or(LocalUserId(0));
 
-    // Emit history as a stream of individual messages (oldest -> newest)
-    for m in msg.messages {
-      // For compatibility, forward the original stored content field
-      // m.content is already a JSON string (e.g., {"Text":{...}}) or plaintext depending on producer.
-      // Send the full ChatMessage JSON instead of only the content string
-      let full_msg_json = match serde_json::to_string(&m) {
-        Ok(s) => s,
-        Err(_) => {
-          // Fallback to original content in case of serialization error
-          m.content.clone()
-        }
-      };
-      self.issue_async::<SystemBroker, _>(BridgeMessage {
-        source: MessageSource::Phoenix,
-        channel: ChatRoomId::from(channel_name.clone()),
-        user_id,
-        event: "history_item".to_string(),
-        messages: full_msg_json,
-        security_config: false,
-      });
-    }
+    let payload = ChatMessagesResponse {
+      results: msg.messages,
+      next_page: msg.next_page.clone(),
+      prev_page: msg.prev_page.clone(),
+    };
 
-    // Do not emit an extra history_end message; clients should infer end by stream completion
-    // (Removed previously sent empty/status payload to avoid confusing consumers)
+    let json = serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string());
+
+    self.issue_async::<SystemBroker, _>(BridgeMessage {
+      source: MessageSource::Phoenix,
+      channel: ChatRoomId::from(channel_name),
+      user_id,
+      event: "history_page".to_string(),
+      messages: json,
+      security_config: false,
+    });
   }
 }
 

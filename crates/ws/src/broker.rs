@@ -495,13 +495,32 @@ impl Handler<HistoryFetched> for PhoenixManager {
     let channel_name = format!("room:{}", msg.room_id);
     let user_id = msg.user_id.unwrap_or(LocalUserId(0));
 
-    let payload = ChatMessagesResponse {
-      results: msg.messages,
-      next_page: msg.next_page.clone(),
-      prev_page: msg.prev_page.clone(),
-    };
+    // Broadcast each message item individually
+    for item in msg.messages.into_iter() {
+      let json = serde_json::to_string(&item).unwrap_or_else(|_| "{}".to_string());
+      self.issue_async::<SystemBroker, _>(BridgeMessage {
+        source: MessageSource::Phoenix,
+        channel: ChatRoomId::from(channel_name.clone()),
+        user_id,
+        event: "history_item".to_string(),
+        messages: json,
+        security_config: false,
+      });
+    }
 
-    let json = serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string());
+    // After streaming items, send cursors only
+    #[derive(serde::Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct HistoryPageCursors {
+      next_page: Option<PaginationCursor>,
+      prev_page: Option<PaginationCursor>,
+    }
+
+    let cursors = HistoryPageCursors {
+      next_page: msg.next_page,
+      prev_page: msg.prev_page,
+    };
+    let json = serde_json::to_string(&cursors).unwrap_or_else(|_| "{}".to_string());
 
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       source: MessageSource::Phoenix,

@@ -2,12 +2,11 @@ use crate::api::{GetChatRoomRequest, ListUserChatRooms};
 use crate::{ChatMessageView, ChatRoomView};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom},
   traits::{Crud, PaginationCursorBuilder},
-  utils::{get_conn, limit_fetch, paginate, DbPool},
+  utils::{get_conn, limit_fetch, DbPool},
 };
 use lemmy_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user};
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};

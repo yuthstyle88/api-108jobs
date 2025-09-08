@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
 use lemmy_db_schema::source::chat_room::ChatRoom;
 use serde::{Deserialize, Serialize};
@@ -64,4 +64,12 @@ pub struct ChatMessagesResponse {
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
+}
+
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateChatRoomRequest {
+  pub partner_person_id: PersonId,
+  pub room_id: Option<ChatRoomId>,
 }

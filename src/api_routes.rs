@@ -1,6 +1,7 @@
 use actix_web::{guard, web::*};
 use lemmy_api::admin::bank_account::list_bank_accounts;
 use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
+use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account,
@@ -10,8 +11,8 @@ use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
-  approve_quotation, approve_work, create_quotation, submit_work, update_budget_plan_status,
-  request_revision,
+  approve_quotation, approve_work, create_quotation, request_revision, submit_work,
+  update_budget_plan_status,
 };
 use lemmy_api::{
   comment::{
@@ -79,8 +80,9 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api_crud::chat::create::create_chat_room;
+use lemmy_api_crud::chat::read::get_chat_room;
 use lemmy_api_crud::community::list::list_communities;
-use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -108,7 +110,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_api_crud::chat::read::get_chat_room;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -368,8 +369,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )
-        .route("/chat/rooms", get().to(list_chat_rooms))
-        .route("/chat/rooms/{id}", get().to(get_chat_room))
+        .service(
+          scope("/chat")
+            .route("/rooms", get().to(list_chat_rooms))
+            .route("/rooms", post().to(create_chat_room))
+            .route("/rooms/{id}", get().to(get_chat_room)),
+        )
         .service(
           scope("/custom-emoji")
             .route("", post().to(create_custom_emoji))

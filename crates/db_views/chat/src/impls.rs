@@ -2,19 +2,15 @@ use crate::api::{GetChatRoomRequest, ListUserChatRooms};
 use crate::{ChatMessageView, ChatRoomView};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{
-    chat_message::ChatMessage,
-    chat_participant::ChatParticipant,
-    chat_room::ChatRoom,
-  },
+  source::{chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom},
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user};
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
-use i_love_jesus::SortDirection;
 
 impl PaginationCursorBuilder for ChatMessageView {
   type CursorData = ChatMessage;
@@ -63,14 +59,26 @@ impl ChatMessageView {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
-    let base = Self::joins()
+    let mut query = Self::joins()
       .filter(chat_message::room_id.eq(room_id))
       .select(Self::as_select())
-      .limit(limit)
       .into_boxed();
 
-    let q = paginate(base, SortDirection::Desc, cursor_data, None, page_back);
-    let res = q.load::<Self>(conn).await?;
+    if let Some(cursor) = cursor_data {
+      if page_back.unwrap_or(false) {
+        // going back in time (older messages), fetch IDs less than cursor
+        query = query.filter(chat_message::id.lt(cursor.id));
+      } else {
+        // going forward (newer messages), fetch IDs greater than cursor
+        query = query.filter(chat_message::id.gt(cursor.id));
+      }
+    }
+
+    let res = query
+      .order_by(chat_message::id.desc())
+      .limit(limit)
+      .load::<Self>(conn)
+      .await?;
     Ok(res)
   }
 }
@@ -89,7 +97,10 @@ impl ChatRoomView {
       .load::<ChatParticipant>(conn)
       .await?;
 
-    Ok(ChatRoomView { room, participants: parts })
+    Ok(ChatRoomView {
+      room,
+      participants: parts,
+    })
   }
 
   /// List rooms for a user with participants bundled

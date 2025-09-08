@@ -58,35 +58,36 @@ impl Handler<BridgeMessage> for WsSession {
       return;
     }
 
-    // Default outbound payload
-    let mut outbound = msg.messages.clone();
-
-    // For history items, keep content encrypted per session
-    if msg.event == "history_item" && !self.shared_key.is_empty() && !self.session_id.is_empty() {
-      if let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&msg.messages) {
-        // Navigate to message.content and encrypt it if it's a string
-        let maybe_content = value
-          .get_mut("message")
-          .and_then(|m| m.get_mut("content"));
-        if let Some(content_val) = maybe_content {
-          if let Some(content_str) = content_val.as_str() {
-            match xchange_encrypt_data(content_str, &self.shared_key, &self.session_id) {
-              Ok(enc) => {
-                *content_val = serde_json::Value::String(enc);
-                if let Ok(s) = serde_json::to_string(&value) {
-                  outbound = s;
-                }
-              }
-              Err(err) => {
-                eprintln!("Encrypt history content failed: {:?}", err);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    ctx.text(outbound);
+    // // Default outbound payload
+    // let mut outbound = msg.messages.clone();
+    // 
+    // // For history items, keep content encrypted per session
+    // if msg.event == "history_item" && !self.shared_key.is_empty() && !self.session_id.is_empty() {
+    //   if let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&msg.messages) {
+    //     // Navigate to message.content and encrypt it if it's a string
+    //     let maybe_content = value
+    //       .get_mut("message")
+    //       .and_then(|m| m.get_mut("content"));
+    //     if let Some(content_val) = maybe_content {
+    //       if let Some(content_str) = content_val.as_str() {
+    //         match xchange_encrypt_data(content_str, &self.shared_key, &self.session_id) {
+    //           Ok(enc) => {
+    //             *content_val = serde_json::Value::String(enc);
+    //             if let Ok(s) = serde_json::to_string(&value) {
+    //               outbound = s;
+    //             }
+    //           }
+    //           Err(err) => {
+    //             eprintln!("Encrypt history content failed: {:?}", err);
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // 
+    // ctx.text(outbound);
+    ctx.text(msg.messages);
   }
 }
 #[derive(Deserialize, Debug)]

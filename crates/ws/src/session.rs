@@ -60,7 +60,7 @@ impl Handler<BridgeMessage> for WsSession {
 
     // // Default outbound payload
     // let mut outbound = msg.messages.clone();
-    // 
+    //
     // // For history items, keep content encrypted per session
     // if msg.event == "history_item" && !self.shared_key.is_empty() && !self.session_id.is_empty() {
     //   if let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&msg.messages) {
@@ -85,7 +85,7 @@ impl Handler<BridgeMessage> for WsSession {
     //     }
     //   }
     // }
-    // 
+    //
     // ctx.text(outbound);
     ctx.text(msg.messages);
   }
@@ -113,7 +113,6 @@ impl std::fmt::Display for MessageOp {
 pub struct MessageRequest {
   pub op: MessageOp,
   pub sender_id: LocalUserId,
-  pub receiver_id: LocalUserId,
   pub room_id: ChatRoomId,
   pub content: String,
   // New cursor-based pagination (preferred)

@@ -22,6 +22,11 @@ use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
+// Timeouts and intervals (in seconds) for Phoenix socket/channel operations
+const CONNECT_TIMEOUT_SECS: u64 = 10;
+const JOIN_TIMEOUT_SECS: u64 = 5;
+const FLUSH_INTERVAL_SECS: u64 = 10;
+
 #[derive(Message)]
 #[rtype(result = "()")]
 struct ConnectNow;
@@ -32,17 +37,17 @@ struct FlushDone;
 
 async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
-  match socket.connect(Duration::from_secs(10)).await {
+  match socket.connect(Duration::from_secs(CONNECT_TIMEOUT_SECS)).await {
     Ok(_) => Ok(socket),
     Err(e) => {
-      eprintln!("Failed to connect to socket: {}", e);
+      tracing::error!("Failed to connect to socket: {}", e);
       Err(e.into())
     }
   }
 }
 async fn send_event_to_channel(channel: Arc<Channel>, event: Event, payload: Payload) {
   if let Err(e) = channel.cast(event, payload).await {
-    eprintln!("Failed to cast message: {}", e);
+    tracing::error!("Failed to cast message: {}", e);
   }
 }
 async fn get_or_create_channel(
@@ -58,8 +63,8 @@ async fn get_or_create_channel(
           tracing::info!("Using existing channel: {}", name);
           return Ok(channel);
         }
-        // ถ้าไม่ได้ joined ลอง rejoin
-        if let Ok(_) = channel.join(Duration::from_secs(5)).await {
+        // Not joined; attempt to rejoin
+        if let Ok(_) = channel.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await {
           tracing::info!("Successfully rejoined channel: {}", name);
           return Ok(channel);
         }
@@ -80,7 +85,7 @@ async fn get_or_create_channel(
 
   // Join channel
   channel
-    .join(Duration::from_secs(5))
+    .join(Duration::from_secs(JOIN_TIMEOUT_SECS))
     .await
     .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
 
@@ -103,9 +108,9 @@ impl Handler<ConnectNow> for PhoenixManager {
       let _fut_connect = match connect(socket).await {
         Ok(sock) => {
           addr.do_send(InitSocket(sock.clone()));
-          eprintln!("connect to url: {}", endpoint);
+          tracing::info!("Connected to url: {}", endpoint);
         }
-        Err(e) => eprintln!("connected failed: {e}"),
+        Err(e) => tracing::error!("Connection failed: {}", e),
       };
     });
   }
@@ -192,7 +197,7 @@ impl PhoenixManager {
       let pool = self.pool.clone();
       tokio::spawn(async move {
         if let Err(e) = validate_or_create_room_db(pool, room_id, room_name).await {
-          eprintln!("Failed to validate/create room in DB: {}", e);
+          tracing::error!("Failed to validate/create room in DB: {}", e);
         }
       });
     }
@@ -230,6 +235,71 @@ impl PhoenixManager {
       prev_page,
     })
   }
+
+  fn handle_fetch_history(
+    &self,
+    channel_name: &str,
+    user_id: LocalUserId,
+    raw_messages: &str,
+    ctx: &mut Context<Self>,
+  ) {
+    let pool = self.pool.clone();
+    let room_id = ChatRoomId::from_channel_name(channel_name);
+    let addr = ctx.address();
+
+    #[derive(serde::Deserialize)]
+    struct Pager {
+      page_cursor: Option<PaginationCursor>,
+      limit: Option<i64>,
+      page_back: Option<bool>,
+    }
+
+    // Parse new-style cursor pagination payload
+    let parsed = serde_json::from_str::<Pager>(raw_messages).ok();
+
+    // Determine cursor and limit
+    let page_cursor = parsed.as_ref().and_then(|p| p.page_cursor.clone());
+    let mut limit = parsed.as_ref().and_then(|p| p.limit).unwrap_or(20);
+    if limit <= 0 {
+      limit = 20;
+    }
+    if limit > 100 {
+      limit = 100;
+    }
+    let page_back = parsed.as_ref().and_then(|p| p.page_back);
+
+    tokio::spawn(async move {
+      match PhoenixManager::list_chat_messages(
+        pool,
+        room_id.clone(),
+        page_cursor,
+        Some(limit),
+        page_back,
+      )
+      .await
+      {
+        Ok(resp) => {
+          addr.do_send(HistoryFetched {
+            room_id,
+            user_id: Some(user_id),
+            messages: resp.results,
+            next_page: resp.next_page,
+            prev_page: resp.prev_page,
+          });
+        }
+        Err(_e) => {
+          // On error, send empty page
+          addr.do_send(HistoryFetched {
+            room_id,
+            user_id: Some(user_id),
+            messages: Vec::new(),
+            next_page: None,
+            prev_page: None,
+          });
+        }
+      }
+    });
+  }
 }
 
 impl Actor for PhoenixManager {
@@ -238,7 +308,7 @@ impl Actor for PhoenixManager {
   fn started(&mut self, ctx: &mut Self::Context) {
     ctx.notify(ConnectNow);
     self.subscribe_system_async::<BridgeMessage>(ctx);
-    ctx.run_interval(Duration::from_secs(10), |actor, ctx| {
+    ctx.run_interval(Duration::from_secs(FLUSH_INTERVAL_SECS), |actor, ctx| {
       if actor.is_flushing {
         // Skip this tick if a previous flush is still running
         return;
@@ -257,7 +327,7 @@ impl Actor for PhoenixManager {
           tracing::info!("Flushing {} messages from room {}", messages.len(), room_id);
           let mut db_pool = DbPool::Pool(&pool);
           if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &messages).await {
-            println!("Failed to flush messages: {}", e);
+            tracing::error!("Failed to flush messages: {}", e);
           }
         }
         addr.do_send(FlushDone);
@@ -282,63 +352,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     // Special case: fetch_history should query DB with cursor pagination and emit a page payload
     if event == "fetch_history" {
-      let pool = self.pool.clone();
-      let room_id = ChatRoomId::from_channel_name(channel_name.as_str());
-      let addr = ctx.address();
-
-      #[derive(serde::Deserialize)]
-      struct Pager {
-        page_cursor: Option<PaginationCursor>,
-        limit: Option<i64>,
-        page_back: Option<bool>,
-      }
-
-      // Parse new-style cursor pagination payload
-      let parsed = serde_json::from_str::<Pager>(&msg.messages).ok();
-
-      // Determine cursor and limit
-      let page_cursor = parsed.as_ref().and_then(|p| p.page_cursor.clone());
-      let mut limit = parsed.as_ref().and_then(|p| p.limit).unwrap_or(20);
-      if limit <= 0 {
-        limit = 20;
-      }
-      if limit > 100 {
-        limit = 100;
-      }
-      let page_back = parsed.as_ref().and_then(|p| p.page_back);
-
-      tokio::spawn(async move {
-        match PhoenixManager::list_chat_messages(
-          pool,
-          room_id.clone(),
-          page_cursor,
-          Some(limit),
-          page_back,
-        )
-        .await
-        {
-          Ok(resp) => {
-            addr.do_send(HistoryFetched {
-              room_id,
-              user_id: Some(user_id),
-              messages: resp.results,
-              next_page: resp.next_page,
-              prev_page: resp.prev_page,
-            });
-          }
-          Err(_e) => {
-            // On error, send empty page
-            addr.do_send(HistoryFetched {
-              room_id,
-              user_id: Some(user_id),
-              messages: Vec::new(),
-              next_page: None,
-              prev_page: None,
-            });
-          }
-        }
-      });
-
+      self.handle_fetch_history(&channel_name, user_id.clone(), &msg.messages, ctx);
       return Box::pin(async {});
     }
 
@@ -382,7 +396,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
             if status == ChannelStatus::Joined {
               send_event_to_channel(arc_chan, phoenix_event, payload).await;
             } else {
-              let _ = arc_chan.join(Duration::from_secs(5)).await;
+              let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
               send_event_to_channel(arc_chan, phoenix_event, payload).await;
             }
           }
@@ -402,7 +416,7 @@ impl Handler<InitSocket> for PhoenixManager {
 
   fn handle(&mut self, msg: InitSocket, _ctx: &mut Context<Self>) {
     self.socket = msg.0;
-    eprintln!("Connect status : {:?}", self.socket.status());
+    tracing::info!("Connect status: {:?}", self.socket.status());
   }
 }
 

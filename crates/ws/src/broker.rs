@@ -165,14 +165,12 @@ impl PhoenixManager {
     Ok(())
   }
 
-  pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_message: ChatMessageInsertForm) {
-    let messages = self.chat_store.entry(room_id).or_default();
-    let exists = messages.iter().any(|m| m.sender_id == new_message.sender_id
-      && m.content == new_message.content
-      && m.created_at == new_message.created_at);
-    if !exists {
-      messages.push(new_message);
-    }
+  pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
+    self
+      .chat_store
+      .entry(room_id)
+      .or_default()
+      .push(new_messages);
   }
 
   // Update a message in the chat store for a specific room
@@ -322,21 +320,12 @@ impl Actor for PhoenixManager {
       let addr = ctx.address();
 
       actix::spawn(async move {
-        for (room_id, mut messages) in drained.into_iter() {
-          if messages.is_empty() {
-            continue;
-          }
-          let mut db_pool = DbPool::Pool(&pool);
-          // Only insert messages newer than the last stored one
-          if let Ok(last_opt) = ChatMessage::last_by_room(&mut db_pool, room_id.clone()).await {
-            if let Some(last_msg) = last_opt {
-              messages.retain(|m| m.created_at > last_msg.created_at);
-            }
-          }
+        for (room_id, messages) in drained.into_iter() {
           if messages.is_empty() {
             continue;
           }
           tracing::info!("Flushing {} messages from room {}", messages.len(), room_id);
+          let mut db_pool = DbPool::Pool(&pool);
           if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &messages).await {
             tracing::error!("Failed to flush messages: {}", e);
           }
@@ -383,9 +372,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     let content = serde_json::to_string(&store_msg).unwrap_or_default();
 
-    // First store the message in chat_store, then broadcast (broadcast only from chat_store)
-    self.add_messages_to_room(chatroom_id, store_msg);
-
+    // Immediately issue a reply back onto the SystemBroker so connected WsSessions can forward to clients
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       source: MessageSource::Phoenix,
       channel: ChatRoomId::from(channel_name.clone()),
@@ -395,6 +382,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       security_config: false,
     });
 
+    self.add_messages_to_room(chatroom_id, store_msg);
     Box::pin(async move {
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;
 
@@ -521,18 +509,8 @@ impl Handler<HistoryFetched> for PhoenixManager {
     let channel_name = format!("room:{}", msg.room_id);
     let user_id = msg.user_id.unwrap_or(LocalUserId(0));
 
-    // Put all fetched messages into chat_store first, then broadcast each message item
-    let room_id_for_store = msg.room_id.clone();
+    // Broadcast each message item individually
     for item in msg.messages.into_iter() {
-      let ins = ChatMessageInsertForm {
-        room_id: room_id_for_store.clone(),
-        sender_id: item.message.sender_id,
-        content: item.message.content.clone(),
-        status: item.message.status,
-        created_at: item.message.created_at,
-        updated_at: item.message.updated_at,
-      };
-      self.add_messages_to_room(room_id_for_store.clone(), ins);
       let json = serde_json::to_string(&item).unwrap_or_else(|_| "{}".to_string());
       self.issue_async::<SystemBroker, _>(BridgeMessage {
         source: MessageSource::Phoenix,

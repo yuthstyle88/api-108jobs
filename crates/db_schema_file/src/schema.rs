@@ -243,8 +243,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    chat_message (message_id, room_id) {
-        message_id -> Varchar,
+    chat_message (id) {
+        id -> Int4,
         room_id -> Varchar,
         sender_id -> Int4,
         content -> Text,

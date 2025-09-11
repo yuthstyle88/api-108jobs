@@ -302,6 +302,7 @@ pub fn xchange_encrypt_data(
     Err(_err) => Err(FastJobErrorType::EncryptingError.into()),
   }
 }
+
 fn derive_iv_from_session(session: &str) -> Vec<u8> {
   // Ensure at least 21 characters by right-padding with '0'
   let mut s = session.to_string();

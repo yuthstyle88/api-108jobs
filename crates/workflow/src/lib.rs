@@ -14,10 +14,15 @@ pub use crate::impls::WorkflowService;
 // consume the current state and return the next state's struct + a domain transition payload.
 
 // Domain transitions used by apply_transition()
+#[allow(dead_code)]
 struct FundEscrowTransition { pub form: WorkflowUpdateForm }
+#[allow(dead_code)]
 struct ReleaseToFreelancerTransition { pub form: WorkflowUpdateForm }
+#[allow(dead_code)]
 struct ReleaseRemainingTransition { pub form: WorkflowUpdateForm }
+#[allow(dead_code)]
 struct SubmitWorkTransition { pub form: WorkflowUpdateForm }
+#[allow(dead_code)]
 struct CancelTransition { pub form: WorkflowUpdateForm }
 // NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

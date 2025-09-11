@@ -8,7 +8,8 @@ use actix::ActorContext;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
-use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
+// NOTE: CBC-based helpers are legacy/test-only and must not be used in chat path.
+// use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
 use serde::Deserialize;
 
 pub struct WsSession {
@@ -35,86 +36,27 @@ impl WsSession {
 
   #[inline]
   fn has_security(&self) -> bool {
-    !self.shared_key.is_empty() && !self.session_id.is_empty()
+    // Security is handled client-side (AES-GCM). Server does not encrypt/decrypt chat payloads.
+    false
   }
 
   fn encrypt_content_fields(
     &self,
-    value: &mut serde_json::Value,
+    _value: &mut serde_json::Value,
   ) -> bool {
-    let mut changed = false;
-
-    // Try nested message.content first
-    if let Some(content_val) = value
-      .get_mut("message")
-      .and_then(|m| m.get_mut("content"))
-    {
-      if let Some(content_str) = content_val.as_str() {
-        match xchange_encrypt_data(content_str, &self.shared_key, &self.session_id) {
-          Ok(enc) => {
-            *content_val = serde_json::Value::String(enc);
-            changed = true;
-          }
-          Err(err) => {
-            tracing::error!("Encrypt content (message.content) failed: {:?}", err);
-          }
-        }
-      }
-    }
-
-    // Fallback to root-level content when nested not found/changed
-    if !changed {
-      if let Some(root_content_val) = value.get_mut("content") {
-        if let Some(content_str) = root_content_val.as_str() {
-          match xchange_encrypt_data(content_str, &self.shared_key, &self.session_id) {
-            Ok(enc) => {
-              *root_content_val = serde_json::Value::String(enc);
-              changed = true;
-            }
-            Err(err) => {
-              tracing::error!("Encrypt content (root content) failed: {:?}", err);
-            }
-          }
-        }
-      }
-    }
-
-    changed
+    // No-op: backend no longer encrypts content fields.
+    false
   }
 
-  fn maybe_encrypt_outbound<'a>(&'a self, event: &str, messages: &'a str) -> std::borrow::Cow<'a, str> {
+  fn maybe_encrypt_outbound<'a>(&'a self, _event: &str, messages: &'a str) -> std::borrow::Cow<'a, str> {
     use std::borrow::Cow;
-
-    if !(event == "history_item" || event == "send_message") || !self.has_security() {
-      return Cow::Borrowed(messages);
-    }
-
-    match serde_json::from_str::<serde_json::Value>(messages) {
-      Ok(mut value) => {
-        if self.encrypt_content_fields(&mut value) {
-          match serde_json::to_string(&value) {
-            Ok(s) => Cow::Owned(s),
-            Err(_) => Cow::Borrowed(messages),
-          }
-        } else {
-          Cow::Borrowed(messages)
-        }
-      }
-      Err(_) => Cow::Borrowed(messages),
-    }
+    // Pass-through: deliver messages as-is; clients handle any encryption.
+    Cow::Borrowed(messages)
   }
 
-  fn maybe_decrypt_incoming(&self, content: &str) -> Option<String> {
-    if !self.has_security() {
-      return None;
-    }
-    match xchange_decrypt_data(content, &self.shared_key, &self.session_id) {
-      Ok(messages) => Some(messages),
-      Err(err) => {
-        tracing::warn!("Decryption error: {:?}. Falling back to plaintext content.", err);
-        None
-      }
-    }
+  fn maybe_decrypt_incoming(&self, _content: &str) -> Option<String> {
+    // Do not attempt to decrypt on the server. Treat incoming as plaintext.
+    None
   }
 }
 impl Actor for WsSession{

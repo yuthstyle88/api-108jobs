@@ -44,6 +44,7 @@ pub struct CompletedTS {
   pub data: FlowData,
 }
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct CancelledTS {
   pub data: FlowData,
 }
@@ -75,7 +76,9 @@ impl WorkSubmittedTS {
     CompletedTS { data: self.data }
   }
 }
+
 // ยกเลิก workflow ให้ทุก ๆ typestate ที่มี FlowData ใช้ร่วมกัน
+#[allow(dead_code)]
 pub trait CancelableTS: Sized {
   fn workflow_id(&self) -> WorkflowId;
   fn into_flow_data(self) -> FlowData;
@@ -162,6 +165,7 @@ async fn set_status_from(
   Ok(())
 }
 
+#[allow(dead_code)]
 async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJobResult<()> {
   let conn = &mut get_conn(pool).await?;
   conn
@@ -197,6 +201,7 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
 // ================= Reusable helpers =================
 
 // สร้างฟอร์ม WorkflowInsertForm แบบ reuse ได้
+#[allow(dead_code)]
 #[inline]
 fn build_workflow_insert(post_id: PostId, seq_number: i16) -> WorkflowInsertForm {
   WorkflowInsertForm {
@@ -232,6 +237,7 @@ async fn create_new_workflow_for_post(
   Workflow::create(pool, &insert).await
 }
 
+#[allow(dead_code)]
 async fn load_billing_and_check_employer(
   pool: &mut DbPool<'_>,
   billing_id: BillingId,
@@ -247,6 +253,7 @@ async fn load_billing_and_check_employer(
   Ok(billing)
 }
 
+#[allow(dead_code)]
 async fn reserve_to_escrow(
   pool: &mut DbPool<'_>,
   from_wallet_id: WalletId,
@@ -273,6 +280,7 @@ async fn reserve_to_escrow(
   Ok(())
 }
 
+#[allow(dead_code)]
 async fn release_from_escrow_to_freelancer(
   pool: &mut DbPool<'_>,
   billing: &Billing,
@@ -300,6 +308,7 @@ async fn release_from_escrow_to_freelancer(
   Ok(())
 }
 
+#[allow(dead_code)]
 async fn do_transition(
   pool: &mut DbPool<'_>,
   workflow_id: WorkflowId,

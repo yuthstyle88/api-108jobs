@@ -237,7 +237,7 @@ impl PhoenixManager {
   }
 
   fn handle_fetch_history(
-    &self,
+    &mut self,
     channel_name: &str,
     user_id: LocalUserId,
     raw_messages: &str,
@@ -246,6 +246,21 @@ impl PhoenixManager {
     let pool = self.pool.clone();
     let room_id = ChatRoomId::from_channel_name(channel_name);
     let addr = ctx.address();
+
+    // Flush any buffered messages for this room before fetching history
+    if let Some(buffer) = self.chat_store.get_mut(&room_id) {
+      // Drain to an owned Vec so it can be moved into the async task safely
+      let to_flush: Vec<ChatMessageInsertForm> = buffer.drain(..).collect();
+      if !to_flush.is_empty() {
+        let pool_clone = pool.clone();
+        actix::spawn(async move {
+          let mut db_pool = DbPool::Pool(&pool_clone);
+          if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &to_flush).await {
+            tracing::error!("Failed to flush messages: {}", e);
+          }
+        });
+      }
+    }
 
     #[derive(serde::Deserialize)]
     struct Pager {

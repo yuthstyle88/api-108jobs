@@ -17,7 +17,9 @@ use lemmy_db_schema_file::schema::{person, wallet, wallet_transaction};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 enum WalletOp {
+  #[allow(dead_code)]
   Deposit,
+  #[allow(dead_code)]
   Withdraw,
   TransferOut, // available -= amount; total -= amount (direct transfer out)
   TransferIn,  // available += amount; total += amount (direct transfer in)

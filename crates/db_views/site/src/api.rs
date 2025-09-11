@@ -468,6 +468,16 @@ pub struct ExchangeKey {
 pub struct ExchangeKeyResponse {
   pub public_key: SensitiveString,
 }
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct UserKeysResponse {
+  pub public_keys: Vec<String>,
+}
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

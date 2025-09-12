@@ -7,7 +7,7 @@ use actix::{Actor, Addr, Handler, StreamHandler};
 use actix::ActorContext;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 // NOTE: CBC-based helpers are legacy/test-only and must not be used in chat path.
 // use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
 use serde::Deserialize;
@@ -94,7 +94,6 @@ pub enum MessageOp {
   SendMessage,
   LeaveRoom,
   JoinRoom,
-  FetchHistory,
 }
 
 impl std::fmt::Display for MessageOp {
@@ -103,7 +102,6 @@ impl std::fmt::Display for MessageOp {
       MessageOp::SendMessage => write!(f, "send_message"),
       MessageOp::LeaveRoom => write!(f, "leave_room"),
       MessageOp::JoinRoom => write!(f, "join_room"),
-      MessageOp::FetchHistory => write!(f, "fetch_history"),
     }
   }
 }
@@ -114,13 +112,6 @@ pub struct MessageRequest {
   pub sender_id: LocalUserId,
   pub room_id: ChatRoomId,
   pub content: String,
-  // New cursor-based pagination (preferred)
-  #[serde(default)]
-  pub page_cursor: Option<PaginationCursor>,
-  #[serde(default)]
-  pub page_back: Option<bool>,
-  #[serde(default)]
-  pub limit: Option<i64>,
 }
 
 
@@ -132,24 +123,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {
-          // For fetch_history, forward only cursor pagination parameters
-          let messages = if matches!(value.op, MessageOp::FetchHistory) {
-            #[derive(serde::Serialize)]
-            struct Pager {
-              page_cursor: Option<PaginationCursor>,
-              page_back: Option<bool>,
-              limit: Option<i64>,
-            }
-            serde_json::to_string(&Pager {
-              page_cursor: value.page_cursor.clone(),
-              page_back: value.page_back,
-              limit: value.limit,
-            })
-            .unwrap_or_else(|_| "{}".to_string())
-          } else {
-            self.maybe_decrypt_incoming(&value.content)
-              .unwrap_or_else(|| value.content.clone())
-          };
+          let messages = self
+            .maybe_decrypt_incoming(&value.content)
+            .unwrap_or_else(|| value.content.clone());
 
           let bridge_msg = BridgeMessage {
             source: MessageSource::WebSocket,
@@ -177,4 +153,3 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
     }
   }
 }
-

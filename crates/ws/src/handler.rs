@@ -1,16 +1,40 @@
 use crate::message::RegisterClientMsg;
-use crate::{broker::PhoenixManager, session::WsSession};
+use crate::{broker::{PhoenixManager, FetchHistoryDirect}, session::WsSession};
 use actix::Addr;
-use actix_web::web::Query;
-use actix_web::{
-  web::{Data, Payload},
-  Error, HttpRequest, Responder,
-};
+use actix_web::{get, web::{Data, Payload, Path, Query}, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
 use serde::Deserialize;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use lemmy_db_schema::newtypes::{ChatRoomId, PaginationCursor};
+
+#[derive(Debug, Deserialize)]
+pub struct HistoryQuery {
+  pub room_id: ChatRoomId,
+  pub cursor: Option<PaginationCursor>,
+  pub limit: Option<i64>,
+  pub back: Option<bool>,
+}
+
+/// Direct history API: query DB without routing through chat/broker
+
+pub async fn get_history(
+  phoenix: Data<Addr<PhoenixManager>>,
+  q: Query<HistoryQuery>,
+) -> actix_web::Result<HttpResponse> {
+  let resp = phoenix
+    .send(FetchHistoryDirect {
+      room_id: q.room_id.clone(),
+      page_cursor: q.cursor.clone(),
+      limit: q.limit.or(Some(20)),
+      page_back: q.back,
+    })
+    .await
+    .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
+
+  Ok(HttpResponse::Ok().json(resp))
+}
 
 #[derive(Debug, Deserialize)]
 pub struct JoinRoomQuery {

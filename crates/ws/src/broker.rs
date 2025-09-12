@@ -35,6 +35,15 @@ struct ConnectNow;
 #[rtype(result = "()")]
 struct FlushDone;
 
+#[derive(Message)]
+#[rtype(result = "FastJobResult<ChatMessagesResponse>")]
+pub struct FetchHistoryDirect {
+  pub room_id: ChatRoomId,
+  pub page_cursor: Option<PaginationCursor>,
+  pub limit: Option<i64>,
+  pub page_back: Option<bool>,
+}
+
 async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
   match socket.connect(Duration::from_secs(CONNECT_TIMEOUT_SECS)).await {
@@ -97,23 +106,48 @@ async fn get_or_create_channel(
   tracing::info!("Created new channel: {}", name);
   Ok(channel)
 }
-impl Handler<ConnectNow> for PhoenixManager {
-  type Result = ();
 
-  fn handle(&mut self, _msg: ConnectNow, ctx: &mut Context<Self>) {
-    let socket = self.socket.clone();
-    let endpoint = self.endpoint.clone();
-    let addr = ctx.address();
-    tokio::spawn(async move {
-      let _fut_connect = match connect(socket).await {
-        Ok(sock) => {
-          addr.do_send(InitSocket(sock.clone()));
-          tracing::info!("Connected to url: {}", endpoint);
-        }
-        Err(e) => tracing::error!("Connection failed: {}", e),
-      };
-    });
-  }
+/// List chat messages using cursor pagination (module-level function; no coupling to PhoenixManager)
+pub async fn list_chat_messages(
+  pool: ActualDbPool,
+  room_id: ChatRoomId,
+  page_cursor: Option<PaginationCursor>,
+  limit: Option<i64>,
+  page_back: Option<bool>,
+) -> FastJobResult<ChatMessagesResponse> {
+  let mut db_pool = DbPool::Pool(&pool);
+
+  // Decode cursor data if provided
+  let cursor_data = if let Some(ref cursor) = page_cursor {
+    Some(ChatMessageView::from_cursor(cursor, &mut db_pool).await?)
+  } else {
+    None
+  };
+
+  // Sanitize limit: default 20, clamp to 1..=100
+  let mut lim = limit.unwrap_or(20);
+  if lim <= 0 { lim = 20; }
+  if lim > 100 { lim = 100; }
+  let lim = Some(lim);
+
+  // If a cursor exists and direction not specified, default to paging backward (older)
+  let effective_page_back = match (cursor_data.as_ref(), page_back) {
+    (Some(_), None) => Some(true),
+    _ => page_back,
+  };
+
+  let results = ChatMessageView::list_for_room(
+    &mut db_pool,
+    room_id,
+    lim,
+    cursor_data,
+    effective_page_back,
+  ).await?;
+
+  let next_page = results.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = results.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(ChatMessagesResponse { results, next_page, prev_page })
 }
 
 pub struct PhoenixManager {
@@ -173,6 +207,15 @@ impl PhoenixManager {
       .push(new_messages);
   }
 
+  /// Drain buffered messages for a room and return them for persistence (non-blocking on the actor)
+  fn drain_room_buffer(&mut self, room_id: &ChatRoomId) -> Vec<ChatMessageInsertForm> {
+    if let Some(buffer) = self.chat_store.get_mut(room_id) {
+      buffer.drain(..).collect()
+    } else {
+      Vec::new()
+    }
+  }
+
   // Update a message in the chat store for a specific room
   #[allow(dead_code)] // used in upcoming WebSocket message sync logic
   fn update_chat_message(
@@ -203,118 +246,6 @@ impl PhoenixManager {
     }
   }
 
-  /// List chat messages using cursor pagination (new default pagination)
-  pub async fn list_chat_messages(
-    pool: ActualDbPool,
-    room_id: ChatRoomId,
-    page_cursor: Option<PaginationCursor>,
-    limit: Option<i64>,
-    page_back: Option<bool>,
-  ) -> FastJobResult<ChatMessagesResponse> {
-    let mut db_pool = DbPool::Pool(&pool);
-
-    // Decode cursor data if provided
-    let cursor_data = if let Some(ref cursor) = page_cursor {
-      Some(ChatMessageView::from_cursor(cursor, &mut db_pool).await?)
-    } else {
-      None
-    };
-
-    // Default to 20 if not provided
-    let lim = Some(limit.unwrap_or(20));
-
-    let results =
-      ChatMessageView::list_for_room(&mut db_pool, room_id, lim, cursor_data, page_back).await?;
-
-    let next_page = results.last().map(PaginationCursorBuilder::to_cursor);
-    let prev_page = results.first().map(PaginationCursorBuilder::to_cursor);
-
-    Ok(ChatMessagesResponse {
-      results,
-      next_page,
-      prev_page,
-    })
-  }
-
-  fn handle_fetch_history(
-    &mut self,
-    channel_name: &str,
-    user_id: LocalUserId,
-    raw_messages: &str,
-    ctx: &mut Context<Self>,
-  ) {
-    let pool = self.pool.clone();
-    let room_id = ChatRoomId::from_channel_name(channel_name);
-    let addr = ctx.address();
-
-    // Flush any buffered messages for this room before fetching history
-    if let Some(buffer) = self.chat_store.get_mut(&room_id) {
-      // Drain to an owned Vec so it can be moved into the async task safely
-      let to_flush: Vec<ChatMessageInsertForm> = buffer.drain(..).collect();
-      if !to_flush.is_empty() {
-        let pool_clone = pool.clone();
-        actix::spawn(async move {
-          let mut db_pool = DbPool::Pool(&pool_clone);
-          if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &to_flush).await {
-            tracing::error!("Failed to flush messages: {}", e);
-          }
-        });
-      }
-    }
-
-    #[derive(serde::Deserialize)]
-    struct Pager {
-      page_cursor: Option<PaginationCursor>,
-      limit: Option<i64>,
-      page_back: Option<bool>,
-    }
-
-    // Parse new-style cursor pagination payload
-    let parsed = serde_json::from_str::<Pager>(raw_messages).ok();
-
-    // Determine cursor and limit
-    let page_cursor = parsed.as_ref().and_then(|p| p.page_cursor.clone());
-    let mut limit = parsed.as_ref().and_then(|p| p.limit).unwrap_or(20);
-    if limit <= 0 {
-      limit = 20;
-    }
-    if limit > 100 {
-      limit = 100;
-    }
-    let page_back = parsed.as_ref().and_then(|p| p.page_back);
-
-    tokio::spawn(async move {
-      match PhoenixManager::list_chat_messages(
-        pool,
-        room_id.clone(),
-        page_cursor,
-        Some(limit),
-        page_back,
-      )
-      .await
-      {
-        Ok(resp) => {
-          addr.do_send(HistoryFetched {
-            room_id,
-            user_id: Some(user_id),
-            messages: resp.results,
-            next_page: resp.next_page,
-            prev_page: resp.prev_page,
-          });
-        }
-        Err(_e) => {
-          // On error, send empty page
-          addr.do_send(HistoryFetched {
-            room_id,
-            user_id: Some(user_id),
-            messages: Vec::new(),
-            next_page: None,
-            prev_page: None,
-          });
-        }
-      }
-    });
-  }
 }
 
 impl Actor for PhoenixManager {
@@ -351,6 +282,25 @@ impl Actor for PhoenixManager {
   }
 }
 
+impl Handler<ConnectNow> for PhoenixManager {
+  type Result = ();
+
+  fn handle(&mut self, _msg: ConnectNow, ctx: &mut Context<Self>) -> Self::Result {
+    let socket = self.socket.clone();
+    let addr = ctx.address();
+    actix::spawn(async move {
+      match connect(socket).await {
+        Ok(sock) => {
+          addr.do_send(InitSocket(sock));
+        }
+        Err(e) => {
+          tracing::error!("Failed to connect Phoenix socket: {}", e);
+        }
+      }
+    });
+  }
+}
+
 // Handler for BridgeMessage
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
@@ -364,12 +314,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channel_name = msg.channel.to_string();
     let user_id = msg.user_id.clone();
     let event = msg.event.clone();
-
-    // Special case: fetch_history should query DB with cursor pagination and emit a page payload
-    if event == "fetch_history" {
-      self.handle_fetch_history(&channel_name, user_id.clone(), &msg.messages, ctx);
-      return Box::pin(async {});
-    }
 
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
@@ -478,87 +422,31 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
         let _ = ChatParticipant::ensure_participant(&mut db_pool, &chat_participant_form).await;
       });
     }
-
-    // Fetch and emit initial history page asynchronously using cursor pagination (default 20)
-    let pool = self.pool.clone();
-    let addr = ctx.address();
-    tokio::spawn(async move {
-      match PhoenixManager::list_chat_messages(pool, room_id.clone(), None, Some(20), None).await {
-        Ok(resp) => {
-          addr.do_send(HistoryFetched {
-            room_id,
-            user_id,
-            messages: resp.results,
-            next_page: resp.next_page,
-            prev_page: resp.prev_page,
-          });
-        }
-        Err(_) => {
-          addr.do_send(HistoryFetched {
-            room_id,
-            user_id,
-            messages: Vec::new(),
-            next_page: None,
-            prev_page: None,
-          });
-        }
-      }
-    });
   }
 }
 
-#[derive(Message)]
-#[rtype(result = "()")]
-struct HistoryFetched {
-  room_id: ChatRoomId,
-  user_id: Option<LocalUserId>,
-  messages: Vec<ChatMessageView>,
-  next_page: Option<PaginationCursor>,
-  prev_page: Option<PaginationCursor>,
-}
 
-impl Handler<HistoryFetched> for PhoenixManager {
-  type Result = ();
+impl Handler<FetchHistoryDirect> for PhoenixManager {
+  type Result = ResponseFuture<FastJobResult<ChatMessagesResponse>>;
 
-  fn handle(&mut self, msg: HistoryFetched, _ctx: &mut Context<Self>) -> Self::Result {
-    let channel_name = format!("room:{}", msg.room_id);
-    let user_id = msg.user_id.unwrap_or(LocalUserId(0));
+  fn handle(&mut self, msg: FetchHistoryDirect, _ctx: &mut Context<Self>) -> Self::Result {
+    // Drain buffered messages synchronously while we still have &mut self
+    let to_flush = self.drain_room_buffer(&msg.room_id);
 
-    // Broadcast each message item individually
-    for item in msg.messages.into_iter() {
-      let json = serde_json::to_string(&item).unwrap_or_else(|_| "{}".to_string());
-      self.issue_async::<SystemBroker, _>(BridgeMessage {
-        source: MessageSource::Phoenix,
-        channel: ChatRoomId::from(channel_name.clone()),
-        user_id,
-        event: "history_item".to_string(),
-        messages: json,
-        security_config: false,
-      });
-    }
+    let pool = self.pool.clone();
+    let room_id = msg.room_id.clone();
+    let page_cursor = msg.page_cursor.clone();
+    let limit = msg.limit;
+    let page_back = msg.page_back;
 
-    // After streaming items, send cursors only
-    #[derive(serde::Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct HistoryPageCursors {
-      next_page: Option<PaginationCursor>,
-      prev_page: Option<PaginationCursor>,
-    }
-
-    let cursors = HistoryPageCursors {
-      next_page: msg.next_page,
-      prev_page: msg.prev_page,
-    };
-    let json = serde_json::to_string(&cursors).unwrap_or_else(|_| "{}".to_string());
-
-    self.issue_async::<SystemBroker, _>(BridgeMessage {
-      source: MessageSource::Phoenix,
-      channel: ChatRoomId::from(channel_name),
-      user_id,
-      event: "history_page".to_string(),
-      messages: json,
-      security_config: false,
-    });
+    Box::pin(async move {
+      // Persist drained messages, if any, then query
+      if !to_flush.is_empty() {
+        let mut db_pool = DbPool::Pool(&pool);
+        ChatMessage::bulk_insert(&mut db_pool, &to_flush).await?;
+      }
+      list_chat_messages(pool, room_id, page_cursor, limit, page_back).await
+    })
   }
 }
 

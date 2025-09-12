@@ -8,44 +8,22 @@ use actix::ActorContext;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-// NOTE: CBC-based helpers are legacy/test-only and must not be used in chat path.
-// use lemmy_utils::crypto::{xchange_decrypt_data, xchange_encrypt_data};
 use serde::Deserialize;
 
 pub struct WsSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) client_msg: RegisterClientMsg,
-  pub(crate) session_id: String,
-  pub(crate) shared_key: String,
 }
 
 impl WsSession {
   pub fn new(
     phoenix_manager: Addr<PhoenixManager>,
     client_msg: RegisterClientMsg,
-    session_id: String,
-    shared_key: String,
   ) -> Self {
     Self {
       phoenix_manager,
       client_msg,
-      session_id,
-      shared_key,
     }
-  }
-
-  #[inline]
-  fn has_security(&self) -> bool {
-    // Security is handled client-side (AES-GCM). Server does not encrypt/decrypt chat payloads.
-    false
-  }
-
-  fn encrypt_content_fields(
-    &self,
-    _value: &mut serde_json::Value,
-  ) -> bool {
-    // No-op: backend no longer encrypts content fields.
-    false
   }
 
   fn maybe_encrypt_outbound<'a>(&'a self, _event: &str, messages: &'a str) -> std::borrow::Cow<'a, str> {
@@ -119,7 +97,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
   fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match msg {
       Ok(ws::Message::Text(text)) => {
-        tracing::debug!("Received: {}", text);
+        tracing::info!("Received: {}", text);
 
         // First, try to parse as the original backend format
         if let Ok(value) = serde_json::from_str::<MessageRequest>(&text) {

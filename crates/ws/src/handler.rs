@@ -1,15 +1,17 @@
 use crate::message::RegisterClientMsg;
-use crate::{broker::{PhoenixManager, FetchHistoryDirect}, session::WsSession};
+use crate::{broker::{FetchHistoryDirect, PhoenixManager}, session::WsSession};
 use actix::Addr;
-use actix_web::{get, web::{Data, Payload, Path, Query}, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{web::{Data, Payload, Query}, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
-use serde::Deserialize;
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use lemmy_db_schema::newtypes::{ChatRoomId, PaginationCursor};
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use serde::Deserialize;
+use lemmy_db_views_local_user::LocalUserView;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HistoryQuery {
   pub room_id: ChatRoomId,
   pub cursor: Option<PaginationCursor>,
@@ -22,9 +24,11 @@ pub struct HistoryQuery {
 pub async fn get_history(
   phoenix: Data<Addr<PhoenixManager>>,
   q: Query<HistoryQuery>,
+  local_user_view: LocalUserView,
 ) -> actix_web::Result<HttpResponse> {
   let resp = phoenix
     .send(FetchHistoryDirect {
+      user_id: local_user_view.local_user.id,
       room_id: q.room_id.clone(),
       page_cursor: q.cursor.clone(),
       limit: q.limit.or(Some(20)),
@@ -64,21 +68,13 @@ pub async fn chat_ws(
     .into();
 
   // Initialize authentication data
-  let mut shared_key = "".to_string();
   let mut user_id = None;
-  let mut session_id = "".to_string();
 
   // Handle authentication if token exists
   if let Some(jwt_token) = auth_token {
     match local_user_view_from_jwt(&jwt_token, &context).await {
       Ok((local_user, _session)) => {
-        // Align IV derivation with frontend: use the JWT token as sessionId
-        // Frontend encrypts with AES-CBC using IV derived from the JWT string.
-        // Using the same here ensures decrypt/encrypt symmetry.
-        session_id = jwt_token.clone();
         user_id = Some(local_user.local_user.id);
-        // Get encryption key if user has public key (this actually stores the shared secret in DB)
-        shared_key = local_user.person.public_key
       }
       Err(_) => {
         return Err(Error::from(FastJobError::from(FastJobErrorType::IncorrectLogin)));
@@ -101,9 +97,7 @@ pub async fn chat_ws(
       user_id,
       room_id,
       room_name,
-    },
-    session_id,
-    shared_key,
+    }
   );
 
   // Start websocket connection

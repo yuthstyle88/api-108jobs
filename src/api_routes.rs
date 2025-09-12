@@ -126,7 +126,7 @@ use lemmy_routes::images::{
   },
 };
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::chat_ws;
+use lemmy_ws::handler::{chat_ws, get_history};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
@@ -371,6 +371,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .service(
           scope("/chat")
+            .route("/history", get().to(get_history))
             .route("/rooms", get().to(list_chat_rooms))
             .route("/rooms", post().to(create_chat_room))
             .route("/rooms/{id}", get().to(get_chat_room)),

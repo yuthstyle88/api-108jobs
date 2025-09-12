@@ -7,7 +7,7 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
+  newtypes::{ChatRoomId, PaginationCursor, LocalUserId},
   source::{
     chat_message::{ChatMessage, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomInsertForm},
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 use lemmy_db_views_chat::ChatMessageView;
-use lemmy_utils::error::FastJobResult;
+use lemmy_utils::error::{FastJobResult, FastJobErrorType};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
@@ -38,6 +38,7 @@ struct FlushDone;
 #[derive(Message)]
 #[rtype(result = "FastJobResult<ChatMessagesResponse>")]
 pub struct FetchHistoryDirect {
+  pub user_id: LocalUserId,
   pub room_id: ChatRoomId,
   pub page_cursor: Option<PaginationCursor>,
   pub limit: Option<i64>,
@@ -153,7 +154,6 @@ pub async fn list_chat_messages(
 pub struct PhoenixManager {
   socket: Arc<Socket>,
   channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
-  endpoint: Url,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pool: ActualDbPool,
   is_flushing: bool,
@@ -171,7 +171,6 @@ impl PhoenixManager {
     Self {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
-      endpoint: endpoint.clone().unwrap(),
       chat_store: HashMap::new(),
       pool,
       is_flushing: false,
@@ -305,7 +304,7 @@ impl Handler<ConnectNow> for PhoenixManager {
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
     // Process only messages coming from WebSocket to avoid rebroadcast loops
     if !matches!(msg.source, MessageSource::WebSocket) {
       return Box::pin(async {});
@@ -401,7 +400,7 @@ impl Handler<StoreChatMessage> for PhoenixManager {
 impl Handler<RegisterClientMsg> for PhoenixManager {
   type Result = ();
 
-  fn handle(&mut self, msg: RegisterClientMsg, ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: RegisterClientMsg, _ctx: &mut Context<Self>) -> Self::Result {
     let room_id = msg.room_id.clone();
     let room_name = msg.room_name.clone();
     let user_id = msg.user_id;
@@ -435,11 +434,15 @@ impl Handler<FetchHistoryDirect> for PhoenixManager {
 
     let pool = self.pool.clone();
     let room_id = msg.room_id.clone();
+    let user_id = msg.user_id.clone();
     let page_cursor = msg.page_cursor.clone();
     let limit = msg.limit;
     let page_back = msg.page_back;
 
     Box::pin(async move {
+      // Check membership via helper
+      ensure_room_membership(pool.clone(), room_id.clone(), user_id.clone()).await?;
+
       // Persist drained messages, if any, then query
       if !to_flush.is_empty() {
         let mut db_pool = DbPool::Pool(&pool);
@@ -470,5 +473,21 @@ async fn validate_or_create_room_db(
     ChatRoom::create(&mut db_pool, &form).await?;
   }
 
+  Ok(())
+}
+
+
+// Helper to ensure a user is a member of a room before accessing resources like history
+async fn ensure_room_membership(
+  pool: ActualDbPool,
+  room_id: ChatRoomId,
+  user_id: LocalUserId,
+) -> FastJobResult<()> {
+  let mut db_pool = DbPool::Pool(&pool);
+  let participants = ChatParticipant::list_participants_for_rooms(&mut db_pool, &[room_id.clone()]).await?;
+  let is_member = participants.iter().any(|p| p.member_id == user_id);
+  if !is_member {
+    return Err(FastJobErrorType::NotAllowed.into());
+  }
   Ok(())
 }

@@ -195,7 +195,7 @@ impl Crypto {
 
     let subject_public_key = point.0.as_bytes();
     let alg_id =
-      <p256::NistP256 as p256::elliptic_curve::AlgorithmParameters>::algorithm_identifier();
+      <p256::NistP256 as elliptic_curve::AlgorithmParameters>::algorithm_identifier();
 
     // the SPKI structure
     let key_info = spki::SubjectPublicKeyInfo {

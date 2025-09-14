@@ -8,7 +8,7 @@ CREATE TABLE chat_message
     content    text        NOT NULL,
     status     smallint    NOT NULL DEFAULT 1,
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz,
+    updated_at timestamptz
 );
 
 CREATE INDEX idx_chat_message_id ON chat_message (id);

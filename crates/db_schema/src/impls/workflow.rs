@@ -1,4 +1,4 @@
-use crate::newtypes::{PostId, WorkflowId};
+use crate::newtypes::{PostId, WorkflowId, ChatRoomId};
 #[cfg(feature = "full")]
 use crate::{
   source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
@@ -13,6 +13,7 @@ use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::workflow;
 use lemmy_db_schema_file::schema::workflow::dsl as wf;
+use lemmy_db_schema_file::enums::WorkFlowStatus;
 #[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -62,11 +63,30 @@ impl Workflow {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn upsert_default(pool: &mut DbPool<'_>, post_id: PostId, seq_number: i16) -> FastJobResult<Self> {
+  pub async fn upsert_default(
+    pool: &mut DbPool<'_>,
+    post_id: PostId,
+    seq_number: i16,
+    room_id: crate::newtypes::ChatRoomId,
+  ) -> FastJobResult<Self> {
     if let Some(w) = Self::get_by_post_id(pool, post_id, seq_number).await? {
       return Ok(w);
     }
-    let form = WorkflowInsertForm::new(post_id, seq_number);
+    let form = WorkflowInsertForm {
+      post_id,
+      seq_number,
+      status: None,
+      revision_required: None,
+      revision_count: None,
+      revision_reason: None,
+      deliverable_version: None,
+      deliverable_submitted_at: None,
+      deliverable_accepted: None,
+      accepted_at: None,
+      created_at: None,
+      updated_at: None,
+      room_id,
+    };
     Self::create(pool, &form).await
   }
   pub async fn delete_by_post(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<()> {
@@ -77,5 +97,21 @@ impl Workflow {
       .execute(conn)
       .await?;
     Ok(())
+  }
+
+  pub async fn get_current_by_room_id(
+    pool: &mut DbPool<'_>,
+    room_id: ChatRoomId,
+  ) -> FastJobResult<Option<Workflow>> {
+    let conn = &mut get_conn(pool).await?;
+    wf::workflow
+      .filter(wf::room_id.eq(room_id))
+      .filter(wf::status.ne(WorkFlowStatus::Completed))
+      .filter(wf::status.ne(WorkFlowStatus::Cancelled))
+      .order(wf::seq_number.desc())
+      .first::<Workflow>(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }

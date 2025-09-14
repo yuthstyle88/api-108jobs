@@ -1,7 +1,5 @@
 use chrono::NaiveDate;
-use lemmy_db_schema::newtypes::{
-    BillingId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId,
-};
+use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_utils::error::FastJobErrorType;
@@ -60,6 +58,17 @@ pub struct ApproveQuotation {
     pub billing_id: BillingId,
     pub wallet_id: WalletId,
     pub workflow_id: WorkflowId,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Start or init a workflow for a post/sequence in a chat room.
+pub struct StartWorkflow {
+    pub post_id: PostId,
+    pub seq_number: i16,
+    pub room_id: ChatRoomId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

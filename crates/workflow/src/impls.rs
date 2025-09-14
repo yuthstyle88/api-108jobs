@@ -1,7 +1,7 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema::newtypes::{
-  BillingId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId, PostId,
+  BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId, PostId,
 };
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
@@ -203,11 +203,11 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
 // สร้างฟอร์ม WorkflowInsertForm แบบ reuse ได้
 #[allow(dead_code)]
 #[inline]
-fn build_workflow_insert(post_id: PostId, seq_number: i16) -> WorkflowInsertForm {
+fn build_workflow_insert(post_id: PostId, seq_number: i16, room_id: lemmy_db_schema::newtypes::ChatRoomId) -> WorkflowInsertForm {
   WorkflowInsertForm {
     post_id,
-    status: Some(WorkFlowStatus::QuotationPending),
     seq_number,
+    status: Some(WorkFlowStatus::QuotationPending),
     revision_required: None,
     revision_count: None,
     revision_reason: None,
@@ -217,6 +217,7 @@ fn build_workflow_insert(post_id: PostId, seq_number: i16) -> WorkflowInsertForm
     accepted_at: None,
     created_at: Some(Utc::now()),
     updated_at: None,
+    room_id,
   }
 }
 
@@ -227,12 +228,22 @@ async fn create_new_workflow_for_post(
   pool: &mut DbPool<'_>,
   post_id: PostId,
   seq_number: i16,
+  room_id: ChatRoomId,
 ) -> FastJobResult<Workflow> {
   let insert = WorkflowInsertForm {
     post_id,
     seq_number,
-    status: None, // ให้ DB ใส่ DEFAULT เอง
-    ..WorkflowInsertForm::new(post_id, seq_number)
+    status: None,
+    revision_required: None,
+    revision_count: None,
+    revision_reason: None,
+    deliverable_version: None,
+    deliverable_submitted_at: None,
+    deliverable_accepted: None,
+    accepted_at: None,
+    created_at: None,
+    updated_at: None,
+    room_id,
   };
   Workflow::create(pool, &insert).await
 }
@@ -404,18 +415,16 @@ impl InProgressTS {
 }
 
 impl WorkSubmittedTS {
-  pub async fn request_revision_on(self, pool: &mut DbPool<'_>) -> FastJobResult<InProgressTS> {
+  pub async fn request_revision_on(self, pool: &mut DbPool<'_>, reason: Option<String>) -> FastJobResult<InProgressTS> {
     set_status_from(
       pool,
       self.data.workflow_id,
       WorkFlowStatus::PendingEmployerReview,
       WorkFlowStatus::InProgress,
       |cur, form| {
-        let _ = cur;
-        let _ = form;
-        // ตัวอย่าง: form.revision_required = Some(true);
-        // form.revision_count   = Some(cur.revision_count.saturating_add(1));
-        // form.revision_reason  = Some(Some("revision requested".to_string()));
+        form.revision_required = Some(true);
+        form.revision_count   = Some(cur.revision_count.saturating_add(1));
+        form.revision_reason  = Some(reason);
       },
     )
     .await?;
@@ -473,59 +482,44 @@ impl WorkSubmittedTS {
 pub struct WorkflowService;
 
 impl WorkflowService {
+  pub async fn start_workflow(
+    pool: &mut DbPool<'_>,
+    post_id: PostId,
+    seq_number: i16,
+    room_id: ChatRoomId,
+  ) -> FastJobResult<Workflow> {
+    create_new_workflow_for_post(pool, post_id, seq_number, room_id).await
+  }
+
   pub async fn create_quotation(
     pool: &mut DbPool<'_>,
     freelancer_id: LocalUserId,
     form: ValidCreateInvoice,
-  ) -> FastJobResult<(Billing, QuotationPendingTS)> {
+  ) -> FastJobResult<Billing> {
     let data = form.0.clone();
-    let conn = &mut get_conn(pool).await?;
 
-    let (billing, wf_id) = conn
-      .run_transaction(|conn| {
-        async move {
-          // 1) สร้าง Billing
-          let insert_billing = BillingInsertForm {
-            freelancer_id,
-            employer_id: data.employer_id,
-            post_id: data.post_id,
-            comment_id: data.comment_id,
-            amount: data.amount,
-            description: if !data.project_details.is_empty() {
-              data.project_details.clone()
-            } else {
-              data.proposal.clone()
-            },
-            status: None,
-            work_description: None,
-            deliverable_url: None,
-            created_at: Some(Utc::now()),
-          };
-          let billing = <Billing as Crud>::create(&mut conn.into(), &insert_billing)
-            .await
-            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    // Create Billing only (no transaction)
+    let insert_billing = BillingInsertForm {
+      freelancer_id,
+      employer_id: data.employer_id,
+      post_id: data.post_id,
+      comment_id: data.comment_id,
+      amount: data.amount,
+      description: if !data.project_details.is_empty() {
+        data.project_details.clone()
+      } else {
+        data.proposal.clone()
+      },
+      status: None,
+      work_description: None,
+      deliverable_url: None,
+      created_at: Some(Utc::now()),
+    };
 
-          // 2) สร้าง Workflow ใหม่ภายใต้กติกา "ต้องยกเลิกของเก่าก่อน"
-          let wf = create_new_workflow_for_post(
-            &mut conn.into(),
-            data.post_id,
-            data.seq_number,
-          ).await?;
-
-          Ok::<_, lemmy_utils::error::FastJobError>((billing, wf.id))
-        }
-        .scope_boxed()
-      })
+    let billing = <Billing as Crud>::create(pool, &insert_billing)
       .await?;
 
-    let ts = QuotationPendingTS {
-      data: FlowData {
-        workflow_id: wf_id,
-        billing_id: Default::default(),
-        amount: Default::default(),
-      },
-    };
-    Ok((billing, ts))
+    Ok(billing)
   }
   pub async fn load_quotation_pending(
     pool: &mut DbPool<'_>,

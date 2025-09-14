@@ -1254,6 +1254,7 @@ diesel::table! {
         accepted_at -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        room_id -> Varchar,
     }
 }
 
@@ -1299,6 +1300,7 @@ diesel::joinable!(chat_participant -> local_user (member_id));
 diesel::joinable!(chat_message -> chat_room (room_id));
 diesel::joinable!(chat_message -> local_user (sender_id));
 diesel::joinable!(workflow -> post (post_id));
+diesel::joinable!(workflow -> chat_room (room_id));
 diesel::joinable!(job_budget_plan -> post (post_id));
 diesel::joinable!(community_actions -> community (community_id));
 diesel::joinable!(community_language -> community (community_id));

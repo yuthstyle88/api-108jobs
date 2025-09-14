@@ -1,4 +1,4 @@
-use crate::newtypes::{PostId, WorkflowId};
+use crate::newtypes::{ChatRoomId, PostId, WorkflowId};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,7 @@ pub struct Workflow {
   pub accepted_at: Option<DateTime<Utc>>,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -56,6 +57,7 @@ pub struct WorkflowInsertForm {
   pub created_at: Option<DateTime<Utc>>,
   #[new(default)]
   pub updated_at: Option<Option<DateTime<Utc>>>,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Clone, Default)]
@@ -71,6 +73,7 @@ pub struct WorkflowUpdateForm {
   pub deliverable_accepted: Option<bool>,
   pub accepted_at: Option<Option<DateTime<Utc>>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
+  pub room_id: Option<ChatRoomId>,
 }
 
 

@@ -1,13 +1,13 @@
-use crate::newtypes::{BillingId, LocalUserId, CommentId, PostId, Coin, DbUrl, PersonId};
+use crate::newtypes::{
+  BillingId, Coin, CommentId, DbUrl, LocalUserId, PersonId, PostId,
+};
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
+#[cfg(feature = "full")]
+use lemmy_db_schema_file::schema::billing;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::billing;
-#[cfg(feature = "full")]
-
-
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
@@ -113,7 +113,7 @@ impl From<BillingFromQuotation> for BillingInsertForm {
 pub struct WorkStep {
   pub seq: i32,
   pub description: String,
-  pub amount: Coin,         // ใช้ Coin ให้สอดคล้องกับระบบเงินทั้งหมด
+  pub amount: Coin, // ใช้ Coin ให้สอดคล้องกับระบบเงินทั้งหมด
   pub working_days: i32,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub status: WorkFlowStatus,

@@ -84,8 +84,6 @@ pub async fn get_post(
   let cross_posts = if let Some(url) = &post_view.post.url {
     SearchCombinedQuery {
       search_term: Some(url.inner().as_str().into()),
-      post_url_only: Some(true),
-      type_: Some(SearchType::Posts),
       ..Default::default()
     }
     .list(&mut context.pool(), &local_user_view, &site_view.site)

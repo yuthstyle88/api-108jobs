@@ -1,21 +1,10 @@
 use crate::{
-  CommentView,
-  CommunityView,
-  LocalUserView,
-  PersonView,
-  PostView,
-  SearchCombinedView,
+  CommentView, CommunityView, LocalUserView, PersonView, PostView, SearchCombinedView,
   SearchCombinedViewInternal,
 };
 use diesel::{
-  dsl::not,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgTextExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgTextExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -28,46 +17,27 @@ use lemmy_db_schema::{
   },
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    fuzzy_search,
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    fuzzy_search, get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      filter_is_subscribed,
-      filter_not_unlisted_or_is_subscribed,
-      image_details_join,
-      my_comment_actions_join,
-      my_community_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      creator_community_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, filter_is_subscribed,
+      filter_not_unlisted_or_is_subscribed, image_details_join, my_comment_actions_join,
+      my_community_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join,
     },
-    seconds_to_pg_interval,
-    DbPool,
+    seconds_to_pg_interval, DbPool,
   },
   SearchSortType::{self, *},
   SearchType,
 };
+use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_db_schema_file::{
   enums::ListingType,
   schema::{
-    comment,
-    comment_actions,
-    community,
-    community_actions,
-    person,
-    post,
-    post_actions,
+    comment, comment_actions, community, community_actions, person, post, post_actions,
     search_combined,
   },
 };
-use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
@@ -114,9 +84,6 @@ impl SearchCombinedViewInternal {
         .and(not(community::local_removed))
         .and(not(community::deleted)),
     );
-
-
-
 
     let my_community_actions_join: my_community_actions_join =
       my_community_actions_join(my_person_id);
@@ -205,15 +172,8 @@ pub struct SearchCombinedQuery {
   pub search_term: Option<String>,
   pub community_id: Option<CommunityId>,
   pub creator_id: Option<PersonId>,
-  pub type_: Option<SearchType>,
   pub sort: Option<SearchSortType>,
   pub time_range_seconds: Option<i32>,
-  pub listing_type: Option<ListingType>,
-  pub title_only: Option<bool>,
-  pub post_url_only: Option<bool>,
-  pub liked_only: Option<bool>,
-  pub disliked_only: Option<bool>,
-  pub self_promotion: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
   pub budget_min: Option<i64>,
@@ -241,33 +201,17 @@ impl SearchCombinedQuery {
       .select(SearchCombinedViewInternal::as_select())
       .limit(limit)
       .into_boxed();
-
-    // The filters
-
     // The search term
     if let Some(search_term) = &self.search_term {
-      if self.post_url_only.unwrap_or_default() {
-        query = query.filter(post::url.eq(search_term));
-      } else {
+
         let searcher = fuzzy_search(search_term);
 
         let name_or_title_filter = post::name
-          .ilike(searcher.clone())
-          .or(comment::content.ilike(searcher.clone()))
-          .or(community::name.ilike(searcher.clone()))
-          .or(community::title.ilike(searcher.clone()))
-          .or(person::name.ilike(searcher.clone()))
-          .or(person::display_name.ilike(searcher.clone()));
-
-        query = if self.title_only.unwrap_or_default() {
-          query.filter(name_or_title_filter)
-        } else {
-          let body_or_description_filter = post::body
-            .ilike(searcher.clone())
-            .or(community::description.ilike(searcher.clone()));
-          query.filter(name_or_title_filter.or(body_or_description_filter))
-        }
-      }
+            .ilike(searcher.clone());
+        let body_or_description_filter = post::body
+              .ilike(searcher.clone())
+              .or(community::description.ilike(searcher.clone()));
+        query = query.filter(name_or_title_filter.or(body_or_description_filter));
     }
 
     // Community id
@@ -275,8 +219,8 @@ impl SearchCombinedQuery {
       query = query.filter(community::id.eq(community_id));
     }
 
-    if let Some(true) = self.requires_english {
-      query = query.filter(post::is_english_required);
+    if let Some(req) = self.requires_english {
+      query = query.filter(post::is_english_required.eq(req));
     }
 
     if let Some(min) = self.budget_min {
@@ -313,74 +257,14 @@ impl SearchCombinedQuery {
               .and(comment_actions::like_score.eq(score)),
           )
       };
-
-      if self.liked_only.unwrap_or_default() {
-        query = query
-          .filter(not_creator_filter)
-          .filter(liked_disliked_filter(1));
-      } else if self.disliked_only.unwrap_or_default() {
-        query = query
-          .filter(not_creator_filter)
-          .filter(liked_disliked_filter(-1));
-      }
     };
 
-    // Type
-    query = match self.type_.unwrap_or_default() {
-      SearchType::All => query,
-      SearchType::Posts => query.filter(search_combined::post_id.is_not_null()),
-      SearchType::Comments => query.filter(search_combined::comment_id.is_not_null()),
-      SearchType::Communities => query.filter(search_combined::community_id.is_not_null()),
-      SearchType::Users => query.filter(search_combined::person_id.is_not_null()),
-    };
-
-    // Listing type
-    query = match self.listing_type.unwrap_or_default() {
-      ListingType::Subscribed => query.filter(filter_is_subscribed()),
-      ListingType::Local => query.filter(
-        community::local
-          .eq(true)
-          .and(filter_not_unlisted_or_is_subscribed())
-          .or(search_combined::person_id.is_not_null().and(person::local)),
-      ),
-      ListingType::All => query.filter(
-        filter_not_unlisted_or_is_subscribed()
-          .or(search_combined::person_id.is_not_null()),
-      ),
-      ListingType::ModeratorView => {
-        query.filter(community_actions::became_moderator_at.is_not_null())
-      }
-    };
     // Filter by the time range
     if let Some(time_range_seconds) = self.time_range_seconds {
       query = query.filter(
         search_combined::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)),
       );
     }
-
-    // NSFW
-    let user_and_site_self_promotion = user.as_ref().map(|u| &u.local_user).self_promotion(site_local);
-    if !self.self_promotion.unwrap_or(user_and_site_self_promotion) {
-      let safe_community = community::self_promotion.eq(false);
-      let safe_post_and_community = post::self_promotion.eq(false).and(safe_community);
-
-      query = query.filter(
-        search_combined::community_id
-          .is_not_null()
-          .and(safe_community)
-          .or(
-            search_combined::post_id
-              .is_not_null()
-              .and(safe_post_and_community),
-          )
-          .or(
-            search_combined::comment_id
-              .is_not_null()
-              .and(safe_post_and_community),
-          )
-          .or(search_combined::person_id.is_not_null()),
-      );
-    };
 
     // Only sort by asc if old
     let sort = self.sort.unwrap_or_default();
@@ -488,6 +372,7 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::SearchCombinedQuery, LocalUserView, SearchCombinedView};
+  use lemmy_db_schema::newtypes::DbUrl;
   use lemmy_db_schema::{
     assert_length,
     source::{
@@ -501,14 +386,12 @@ mod tests {
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
-    SearchSortType,
-    SearchType,
+    SearchSortType, SearchType,
   };
   use lemmy_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
-  use lemmy_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -584,25 +467,38 @@ mod tests {
     };
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
-    let timmy_comment_form =
-     CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form,).await?;
+    let timmy_comment_form = CommentInsertForm::new(
+      timmy.id,
+      timmy_post.id,
+      "timmy comment prv gold".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+    );
+    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
-    let sara_comment_form =
-     CommentInsertForm::new(sara.id, sara_post.id, "sara comment prv gold".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
-    let sara_comment = Comment::create(pool, &sara_comment_form,).await?;
+    let sara_comment_form = CommentInsertForm::new(
+      sara.id,
+      sara_post.id,
+      "sara comment prv gold".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+    );
+    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
-    let sara_comment_form_2 =
-     CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into(), DbUrl::try_from("https://example.com/comment-site").unwrap() );
+    let sara_comment_form_2 = CommentInsertForm::new(
+      sara.id,
+      timmy_post_2.id,
+      "sara comment prv 2".into(),
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+    );
     let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     let comment_in_self_promotion_post_form = CommentInsertForm::new(
       sara.id,
       self_promotion_post.id,
       "sara comment in self_promotion post prv 2".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap()
+      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
-    let comment_in_self_promotion_post = Comment::create(pool, &comment_in_self_promotion_post_form).await?;
+    let comment_in_self_promotion_post =
+      Comment::create(pool, &comment_in_self_promotion_post_form).await?;
 
     // Timmy likes and dislikes a few things
     let timmy_like_post_form = PostLikeForm::new(timmy_post.id, timmy.id, 1);
@@ -657,8 +553,8 @@ mod tests {
 
     // search
     let search = SearchCombinedQuery::default()
-     .list(pool, &None, &data.site)
-     .await?;
+      .list(pool, &None, &data.site)
+      .await?;
     assert_length!(10, search);
 
     // Make sure the types are correct
@@ -736,8 +632,8 @@ mod tests {
       community_id: Some(data.community.id),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(5, search_by_community);
 
     // Filtered by creator_id
@@ -745,8 +641,8 @@ mod tests {
       creator_id: Some(data.timmy.id),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(4, search_by_creator);
 
     // Using a term
@@ -754,8 +650,8 @@ mod tests {
       search_term: Some("gold".into()),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(2, search_by_name);
 
@@ -764,8 +660,8 @@ mod tests {
       liked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     assert_length!(2, search_liked_only);
 
@@ -773,8 +669,8 @@ mod tests {
       disliked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     assert_length!(1, search_disliked_only);
 
@@ -784,8 +680,8 @@ mod tests {
       sort: Some(SearchSortType::Old),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
     if let SearchCombinedView::Person(v) = &search_old_sort[0] {
       assert_eq!(data.sara.id, v.person.id);
     } else {
@@ -802,7 +698,7 @@ mod tests {
         ..Default::default()
       },
     )
-     .await?;
+    .await?;
 
     Comment::update(
       pool,
@@ -812,12 +708,12 @@ mod tests {
         ..Default::default()
       },
     )
-     .await?;
+    .await?;
 
     // 2 things got removed, but the post also has another comment which got removed
     let search = SearchCombinedQuery::default()
-     .list(pool, &None, &data.site)
-     .await?;
+      .list(pool, &None, &data.site)
+      .await?;
     assert_length!(7, search);
 
     cleanup(data, pool).await?;
@@ -837,8 +733,8 @@ mod tests {
       type_: Some(SearchType::Communities),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(2, community_search);
 
     // Make sure the types are correct
@@ -860,8 +756,8 @@ mod tests {
       type_: Some(SearchType::Communities),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(1, community_search_by_id);
 
     // Using a term
@@ -870,8 +766,8 @@ mod tests {
       type_: Some(SearchType::Communities),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(1, community_search_by_name);
     if let SearchCombinedView::Community(v) = &community_search_by_name[0] {
@@ -889,8 +785,8 @@ mod tests {
       title_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert!(community_search_title_only.is_empty());
 
@@ -911,8 +807,8 @@ mod tests {
       type_: Some(SearchType::Users),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(2, person_search);
 
     // Make sure the types are correct
@@ -934,8 +830,8 @@ mod tests {
       type_: Some(SearchType::Users),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(1, person_search_by_id);
     if let SearchCombinedView::Person(v) = &person_search_by_id[0] {
       assert_eq!(data.sara.id, v.person.id);
@@ -949,8 +845,8 @@ mod tests {
       type_: Some(SearchType::Users),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(1, person_search_by_name);
     if let SearchCombinedView::Person(v) = &person_search_by_name[0] {
@@ -965,8 +861,8 @@ mod tests {
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(2, person_search_sort_top);
 
     // Sara should be first, as she has a higher score
@@ -993,8 +889,8 @@ mod tests {
       type_: Some(SearchType::Posts),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(3, post_search);
 
     // Make sure the types are correct
@@ -1025,8 +921,8 @@ mod tests {
       type_: Some(SearchType::Posts),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(2, post_search_by_community);
 
     // Using a term
@@ -1035,8 +931,8 @@ mod tests {
       type_: Some(SearchType::Posts),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(1, post_search_by_name);
 
@@ -1048,8 +944,8 @@ mod tests {
       title_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert!(post_search_title_only.is_empty());
 
@@ -1061,8 +957,8 @@ mod tests {
       post_url_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(1, post_search_url_only);
 
@@ -1072,8 +968,8 @@ mod tests {
       liked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     // Should only be 1 not 2, because liked only ignores your own content
     assert_length!(1, post_search_liked_only);
@@ -1083,8 +979,8 @@ mod tests {
       disliked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     // Should be zero because you disliked your own post
     assert_length!(0, post_search_disliked_only);
@@ -1095,8 +991,8 @@ mod tests {
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(3, post_search_sort_top);
 
     // Timmy_post_2 has a dislike, so it should be last
@@ -1124,8 +1020,8 @@ mod tests {
       self_promotion: Some(true),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(4, self_promotion_post_search);
 
     // Make sure the first is the self_promotion
@@ -1153,8 +1049,8 @@ mod tests {
       self_promotion: Some(true),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(4, self_promotion_comment_search);
 
     // Make sure the first is the self_promotion
@@ -1183,8 +1079,8 @@ mod tests {
       type_: Some(SearchType::Comments),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(3, comment_search);
 
     // Make sure the types are correct
@@ -1218,8 +1114,8 @@ mod tests {
       type_: Some(SearchType::Comments),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(2, comment_search_by_community);
 
     // Using a term
@@ -1228,8 +1124,8 @@ mod tests {
       type_: Some(SearchType::Comments),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
 
     assert_length!(2, comment_search_by_name);
 
@@ -1239,8 +1135,8 @@ mod tests {
       liked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     assert_length!(1, comment_search_liked_only);
 
@@ -1249,8 +1145,8 @@ mod tests {
       disliked_only: Some(true),
       ..Default::default()
     }
-     .list(pool, &Some(data.timmy_view.clone()), &data.site)
-     .await?;
+    .list(pool, &Some(data.timmy_view.clone()), &data.site)
+    .await?;
 
     assert_length!(1, comment_search_disliked_only);
 
@@ -1260,8 +1156,8 @@ mod tests {
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }
-     .list(pool, &None, &data.site)
-     .await?;
+    .list(pool, &None, &data.site)
+    .await?;
     assert_length!(3, comment_search_sort_top);
 
     // Sara comment 2 is disliked, so should be last

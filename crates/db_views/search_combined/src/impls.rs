@@ -9,7 +9,6 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
-  impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId},
   source::{
     combined::search::{search_combined_keys as key, SearchCombined},
@@ -20,23 +19,20 @@ use lemmy_db_schema::{
     fuzzy_search, get_conn, limit_fetch, now, paginate,
     queries::{
       creator_community_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, filter_is_subscribed,
-      filter_not_unlisted_or_is_subscribed, image_details_join, my_comment_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join
+      , image_details_join, my_comment_actions_join,
       my_community_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
       my_person_actions_join, my_post_actions_join,
     },
     seconds_to_pg_interval, DbPool,
   },
-  SearchSortType::{self, *},
-  SearchType,
+  SearchSortType::{self, *}
+  ,
 };
 use lemmy_db_schema_file::enums::{IntendedUse, JobType};
-use lemmy_db_schema_file::{
-  enums::ListingType,
-  schema::{
-    comment, comment_actions, community, community_actions, person, post, post_actions,
-    search_combined,
-  },
+use lemmy_db_schema_file::schema::{
+  comment, community, person, post,
+  search_combined,
 };
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -246,17 +242,9 @@ impl SearchCombinedQuery {
 
     // Liked / disliked filter
     if let Some(my_id) = my_person_id {
-      let not_creator_filter = item_creator.ne(my_id);
-      let liked_disliked_filter = |score: i16| {
-        search_combined::post_id
-          .is_not_null()
-          .and(post_actions::like_score.eq(score))
-          .or(
-            search_combined::comment_id
-              .is_not_null()
-              .and(comment_actions::like_score.eq(score)),
-          )
-      };
+      // TODO: implement like/dislike filtering based on user preferences.
+      // The previous closure here was unused and triggered a compiler warning.
+      let _ = item_creator.ne(my_id);
     };
 
     // Filter by the time range
@@ -471,7 +459,6 @@ mod tests {
       timmy.id,
       timmy_post.id,
       "timmy comment prv gold".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 

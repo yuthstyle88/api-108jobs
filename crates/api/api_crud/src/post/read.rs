@@ -8,8 +8,8 @@ use lemmy_db_schema::{
     comment::Comment,
     post::{Post, PostActions, PostReadForm},
   },
-  traits::{Crud, Readable},
-  SearchType,
+  traits::{Crud, Readable}
+  ,
 };
 use lemmy_db_views_community::CommunityView;
 use lemmy_db_views_local_user::LocalUserView;

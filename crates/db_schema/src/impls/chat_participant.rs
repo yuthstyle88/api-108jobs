@@ -61,12 +61,7 @@ impl ChatParticipant {
       .inner_join(chat_room::table.on(chat_room::id.eq(chat_participant::room_id)))
       .filter(chat_participant::member_id.eq(user_id))
       .order(chat_participant::joined_at.desc())
-      .select((
-        chat_room::id,
-        chat_room::room_name,
-        chat_room::created_at,
-        chat_room::updated_at,
-      ))
+      .select(ChatRoom::as_select())
       .limit(size)
       .load::<ChatRoom>(conn)
       .await

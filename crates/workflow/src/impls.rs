@@ -498,7 +498,6 @@ impl WorkflowService {
   ) -> FastJobResult<Billing> {
     let data = form.0.clone();
 
-    // Create Billing only (no transaction)
     let insert_billing = BillingInsertForm {
       freelancer_id,
       employer_id: data.employer_id,
@@ -538,9 +537,7 @@ impl WorkflowService {
         .into(),
       );
     }
-
-    // ถ้าคุณมีวิธีหา billing_id จาก workflow (เช่น mapping ด้วย post_id หรือส่งมาจาก request)
-    // ที่ขั้นต่ำ เราให้ billing_id/amount เป็น None แล้วไปโหลดใน approve_on
+    
     let data = FlowData {
       workflow_id: wf.id,
       billing_id: None,

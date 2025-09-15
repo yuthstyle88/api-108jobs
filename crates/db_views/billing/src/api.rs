@@ -53,11 +53,24 @@ impl TryFrom<CreateInvoiceForm> for ValidCreateInvoice {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Approve quotation and convert to order (employer approves freelancer's quotation).
-pub struct ApproveQuotation {
+pub struct ApproveQuotationForm {
     pub seq_number: i16,
     pub billing_id: BillingId,
     pub wallet_id: WalletId,
     pub workflow_id: WorkflowId,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidApproveQuotation(pub ApproveQuotationForm);
+
+impl TryFrom<ApproveQuotationForm> for ValidApproveQuotation {
+    type Error = String;
+    fn try_from(value: ApproveQuotationForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        Ok(ValidApproveQuotation(value))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -65,10 +78,23 @@ pub struct ApproveQuotation {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Start or init a workflow for a post/sequence in a chat room.
-pub struct StartWorkflow {
+pub struct StartWorkflowForm {
     pub post_id: PostId,
     pub seq_number: i16,
     pub room_id: ChatRoomId,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidStartWorkflow(pub StartWorkflowForm);
+
+impl TryFrom<StartWorkflowForm> for ValidStartWorkflow {
+    type Error = String;
+    fn try_from(value: StartWorkflowForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        Ok(ValidStartWorkflow(value))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -76,11 +102,27 @@ pub struct StartWorkflow {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Submit completed work (freelancer starts work).
-pub struct SubmitStartWork {
+pub struct SubmitStartWorkForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
     pub work_description: String,
     pub deliverable_url: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidSubmitStartWork(pub SubmitStartWorkForm);
+
+impl TryFrom<SubmitStartWorkForm> for ValidSubmitStartWork {
+    type Error = String;
+    fn try_from(value: SubmitStartWorkForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        if value.work_description.trim().is_empty() {
+            return Err("Work description is required".into());
+        }
+        Ok(ValidSubmitStartWork(value))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -88,9 +130,22 @@ pub struct SubmitStartWork {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Approve work and release payment (employer approves).
-pub struct ApproveWork {
+pub struct ApproveWorkForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidApproveWork(pub ApproveWorkForm);
+
+impl TryFrom<ApproveWorkForm> for ValidApproveWork {
+    type Error = String;
+    fn try_from(value: ApproveWorkForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        Ok(ValidApproveWork(value))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -98,10 +153,23 @@ pub struct ApproveWork {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Request revision on a submitted work (employer requests changes from freelancer).
-pub struct RequestRevision {
+pub struct RequestRevisionForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
     pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidRequestRevision(pub RequestRevisionForm);
+
+impl TryFrom<RequestRevisionForm> for ValidRequestRevision {
+    type Error = String;
+    fn try_from(value: RequestRevisionForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        Ok(ValidRequestRevision(value))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

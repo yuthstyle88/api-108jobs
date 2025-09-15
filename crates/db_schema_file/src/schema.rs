@@ -231,6 +231,7 @@ diesel::table! {
         room_name -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        post_id -> Nullable<Int4>,
     }
 }
 
@@ -1272,6 +1273,20 @@ diesel::table! {
     }
 }
 
+// User review table schema
+diesel::table! {
+    user_review (id) {
+        id -> Int4,
+        reviewer_id -> Int4,
+        reviewee_id -> Int4,
+        workflow_id -> Int4,
+        rating -> Int2,
+        comment -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
 diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
@@ -1397,6 +1412,7 @@ diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(tag -> community (community_id));
 diesel::joinable!(skills -> person (person_id));
 diesel::joinable!(certificates -> person (person_id));
+diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1477,4 +1493,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   user_bank_accounts,
   coin,
   job_budget_plan,
+  user_review,
 );
+
+

@@ -48,6 +48,7 @@ pub mod coin;
 pub mod workflow;
 pub mod job_budget_plan;
 pub mod chat_participant;
+pub mod user_review;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

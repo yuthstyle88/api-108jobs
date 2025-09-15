@@ -190,6 +190,39 @@ impl PostView {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
+  /// List all posts created by your person, ordered by newest first (published date).
+  pub async fn list_created(
+    pool: &mut DbPool<'_>,
+    my_person: &Person,
+    cursor_data: Option<Post>,
+    page_back: Option<bool>,
+    limit: Option<i64>,
+    no_limit: Option<bool>,
+  ) -> FastJobResult<Vec<PostView>> {
+    let conn = &mut get_conn(pool).await?;
+
+    let mut query = PostView::joins(Some(my_person.id), my_person.instance_id)
+      .filter(post::creator_id.eq(my_person.id))
+      .filter(filter_blocked())
+      .select(PostView::as_select())
+      .into_boxed();
+
+    if !no_limit.unwrap_or_default() {
+      let limit = limit_fetch(limit)?;
+      query = query.limit(limit);
+    }
+
+    // Sorting by published_at (newest to oldest), tie-breaker by id
+    let paginated_query = paginate(query, SortDirection::Desc, cursor_data, None, page_back)
+      .then_order_by(key::published_at)
+      .then_order_by(key::id);
+
+    paginated_query
+      .load::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
   pub fn to_post_actions_cursor(&self) -> PaginationCursor {
     // This needs a person and post
     let prefixes_and_ids = [('P', self.creator.id.0), ('O', self.post.id.0)];

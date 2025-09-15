@@ -8,6 +8,7 @@ use lemmy_api::local_user::bank_account::{
 };
 use lemmy_api::local_user::exchange::{exchange_key, get_user_keys};
 use lemmy_api::local_user::profile::visit_profile;
+use lemmy_api::local_user::review::{submit_user_review, list_user_reviews};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
@@ -38,6 +39,7 @@ use lemmy_api::{
     list_media::list_media,
     list_read::list_person_read,
     list_saved::list_person_saved,
+    list_created::list_person_created,
     login::login,
     logout::logout,
     note_person::user_note_person,
@@ -293,10 +295,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", post().to(upload_user_banner))
             .route("/banner", delete().to(delete_user_banner))
             .route("/saved", get().to(list_person_saved))
+            .route("/created", get().to(list_person_created))
             .route("/read", get().to(list_person_read))
             .route("/hidden", get().to(list_person_hidden))
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
+            .route("/reviews", post().to(submit_user_review))
             // Wallet service scope
             .service(scope("/wallet").route("", get().to(get_wallet)))
             // Bank account management scope
@@ -380,7 +384,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .service(
           scope("/users")
-            .route("/{id}/keys", get().to(get_user_keys)),
+            .route("/{id}/keys", get().to(get_user_keys))
+            .route("/{id}/reviews", get().to(list_user_reviews)),
         )
         .service(
           scope("/custom-emoji")

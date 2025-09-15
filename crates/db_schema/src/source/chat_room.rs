@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::chat_room;
-use crate::newtypes::ChatRoomId;
+use crate::newtypes::{ChatRoomId, PostId};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -17,6 +17,7 @@ pub struct ChatRoom {
     pub room_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
+    pub post_id: Option<PostId>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
@@ -30,6 +31,7 @@ pub struct ChatRoomInsertForm {
     pub room_name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
+    pub post_id: Option<PostId>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -38,4 +40,5 @@ pub struct ChatRoomInsertForm {
 pub struct ChatRoomUpdateForm {
     pub room_name: Option<String>,
     pub updated_at: Option<DateTime<Utc>>,
+    pub post_id: Option<Option<PostId>>,
 }

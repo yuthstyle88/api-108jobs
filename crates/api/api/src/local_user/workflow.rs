@@ -6,10 +6,11 @@ use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdat
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_billing::api::{
-  ApproveQuotation, ApproveWork, CreateInvoiceForm,
-  CreateInvoiceResponse, RequestRevision, SubmitStartWork,
+  ApproveQuotationForm, ApproveWorkForm, CreateInvoiceForm,
+  CreateInvoiceResponse, RequestRevisionForm, SubmitStartWorkForm,
   UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidCreateInvoice,
-  ValidUpdateBudgetPlanInstallments, StartWorkflow,
+  ValidUpdateBudgetPlanInstallments, StartWorkflowForm,
+  ValidApproveQuotation, ValidApproveWork, ValidRequestRevision, ValidSubmitStartWork, ValidStartWorkflow,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -102,17 +103,21 @@ pub async fn create_quotation(
 }
 
 pub async fn approve_quotation(
-  data: Json<ApproveQuotation>,
+  data: Json<ApproveQuotationForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let employer_id = local_user_view.local_user.person_id;
-  let workflow_id = data.workflow_id.into();
-  let wallet_id = data.wallet_id.into();
-  let billing_id = data.billing_id.into();
-  let wf = WorkflowService::load_quotation_pending(&mut context.pool(), workflow_id)
+
+  // Validate
+  let validated: ValidApproveQuotation = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
-    .approve_on(&mut context.pool(), employer_id, wallet_id, billing_id)
+    .approve_on(&mut context.pool(), employer_id, form.wallet_id, form.billing_id)
     .await?;
   // Approve the quotation and convert to order
 
@@ -124,13 +129,21 @@ pub async fn approve_quotation(
 }
 
 pub async fn submit_start_work(
-  data: Json<SubmitStartWork>,
+  data: Json<SubmitStartWorkForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let _worker_id = local_user_view.local_user.id;
-  let workflow_id = data.workflow_id.into();
-  let seq_number = data.seq_number; // use provided seq for plan update
+
+  // Validate input
+  let validated: ValidSubmitStartWork = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let workflow_id = form.workflow_id;
+  let seq_number = form.seq_number; // use provided seq for plan update
+
   let wf = WorkflowService::load_order_approve(&mut context.pool(), workflow_id)
     .await?
     .start_work_on(&mut context.pool())
@@ -153,11 +166,17 @@ pub async fn submit_start_work(
 }
 
 pub async fn submit_work(
-  data: Json<ApproveWork>,
+  data: Json<ApproveWorkForm>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let workflow_id = data.workflow_id.into();
-  let seq_number = data.seq_number;
+  // Validate input
+  let validated: ValidApproveWork = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let workflow_id = form.workflow_id;
+  let seq_number = form.seq_number;
   let wf = WorkflowService::load_in_progress(&mut context.pool(), workflow_id)
     .await?
     .submit_work_on(&mut context.pool())
@@ -180,11 +199,17 @@ pub async fn submit_work(
 }
 
 pub async fn approve_work(
-  data: Json<ApproveWork>,
+  data: Json<ApproveWorkForm>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let workflow_id = data.workflow_id.into();
-  let seq_number = data.seq_number;
+  // Validate input
+  let validated: ValidApproveWork = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let workflow_id = form.workflow_id;
+  let seq_number = form.seq_number;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -225,16 +250,21 @@ pub async fn approve_work(
 }
 
 pub async fn request_revision(
-  data: Json<RequestRevision>,
+  data: Json<RequestRevisionForm>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let workflow_id = data.workflow_id.into();
-  let seq_number = data.seq_number;
-  let _reason = data.reason.clone();
+  // Validate input
+  let validated: ValidRequestRevision = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let workflow_id = form.workflow_id;
+  let seq_number = form.seq_number;
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
-    .request_revision_on(&mut context.pool(), data.reason.clone())
+    .request_revision_on(&mut context.pool(), form.reason.clone())
     .await?;
 
   // Update JobBudgetPlan step status -> InProgress for this seq
@@ -294,15 +324,19 @@ pub async fn update_budget_plan_status(
 
 
 pub async fn start_workflow(
-  data: Json<StartWorkflow>,
+  data: Json<StartWorkflowForm>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let _requester = local_user_view.local_user.id;
-  let post_id = data.post_id.clone().into();
-  let seq_number = data.seq_number;
-  let room_id = data.room_id.clone().into();
-  let wf = WorkflowService::start_workflow(&mut context.pool(), post_id, seq_number, room_id).await?;
+
+  // Validate input
+  let validated: ValidStartWorkflow = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+  let wf = WorkflowService::start_workflow(&mut context.pool(), form.post_id, form.seq_number, form.room_id).await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.id.into(),

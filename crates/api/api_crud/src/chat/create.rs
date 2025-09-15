@@ -4,7 +4,7 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::chat_message::ChatMessage;
 use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
-use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomInsertForm};
+use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_chat::api::{ChatRoomResponse, CreateChatRoomRequest, LastMessage};
 use lemmy_db_views_local_user::LocalUserView;
@@ -20,14 +20,15 @@ pub async fn create_chat_room(
 ) -> FastJobResult<Json<ChatRoomResponse>> {
   let mut pool = context.pool();
   let req = data.into_inner();
+  let CreateChatRoomRequest { partner_person_id, room_id, post_id } = req;
 
   // current and partner local user ids
   let current_luid = local_user_view.local_user.id;
-  let partner_luv = LocalUserView::read_person(&mut pool, req.partner_person_id).await?;
+  let partner_luv = LocalUserView::read_person(&mut pool, partner_person_id).await?;
   let partner_luid = partner_luv.local_user.id;
 
   // resolve room id: prefer provided room_id, otherwise build from current then partner
-  let room_id = req.room_id.unwrap_or_else(|| ChatRoomId(format!("dm:{}:{}", current_luid.0, partner_luid.0)));
+  let room_id = room_id.unwrap_or_else(|| ChatRoomId(format!("dm:{}:{}", current_luid.0, partner_luid.0)));
   let room_name = room_id.0.clone();
 
   // create room if not exists
@@ -37,8 +38,13 @@ pub async fn create_chat_room(
       room_name: room_name.clone(),
       created_at: Utc::now(),
       updated_at: None,
+      post_id: post_id.clone(),
     };
     let _ = ChatRoom::create(&mut pool, &form).await?;
+  } else if let Some(pid) = post_id.clone() {
+    // update existing room with provided post_id
+    let upd = ChatRoomUpdateForm { room_name: None, updated_at: Some(Utc::now()), post_id: Some(Some(pid)) };
+    let _ = ChatRoom::update(&mut pool, room_id.clone(), &upd).await?;
   }
 
   // ensure participants: current user and partner
@@ -61,5 +67,5 @@ pub async fn create_chat_room(
     sender_id: m.sender_id,
   });
 
-  Ok(Json(ChatRoomResponse { room, participants: parts, last_message, workflow_status: None }))
+  Ok(Json(ChatRoomResponse { room, participants: parts, last_message, workflow_status: None, post_id }))
 }

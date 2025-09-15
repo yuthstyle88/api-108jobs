@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId, PostId};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
 use lemmy_db_schema::source::chat_room::ChatRoom;
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,8 @@ pub struct ChatRoomResponse {
   pub room: ChatRoom,
   pub participants: Vec<ChatParticipant>,
   pub last_message: Option<LastMessage>,
-  pub workflow_status: Option<WorkFlowStatus>
+  pub workflow_status: Option<WorkFlowStatus>,
+  pub post_id: Option<PostId>,
 }
 
 #[derive(Debug, Serialize)]
@@ -72,4 +73,5 @@ pub struct ChatMessagesResponse {
 pub struct CreateChatRoomRequest {
   pub partner_person_id: PersonId,
   pub room_id: Option<ChatRoomId>,
+  pub post_id: Option<PostId>,
 }

@@ -727,6 +727,31 @@ pub struct ListPersonReadResponse {
   pub prev_page: Option<PaginationCursor>,
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Gets your created posts.
+#[serde(rename_all = "camelCase")]
+pub struct ListPersonCreated {
+  pub page_cursor: Option<PaginationCursor>,
+  pub page_back: Option<bool>,
+  pub limit: Option<i64>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Your created posts response.
+#[serde(rename_all = "camelCase")]
+pub struct ListPersonCreatedResponse {
+  pub created: Vec<PostView>,
+  /// the pagination cursor to use to fetch the next page
+  pub next_page: Option<PaginationCursor>,
+  pub prev_page: Option<PaginationCursor>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

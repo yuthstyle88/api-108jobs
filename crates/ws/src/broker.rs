@@ -191,6 +191,7 @@ impl PhoenixManager {
         room_name,
         created_at: now,
         updated_at: None,
+        post_id: None,
       };
       ChatRoom::create(&mut db_pool, &form).await?;
     }
@@ -469,6 +470,7 @@ async fn validate_or_create_room_db(
       room_name,
       created_at: now,
       updated_at: None,
+      post_id: None,
     };
     ChatRoom::create(&mut db_pool, &form).await?;
   }

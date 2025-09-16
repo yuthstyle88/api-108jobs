@@ -460,7 +460,6 @@ mod tests {
       timmy.id,
       timmy_post.id,
       "timmy comment prv gold".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
@@ -468,7 +467,6 @@ mod tests {
       sara.id,
       sara_post.id,
       "sara comment prv gold".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
@@ -476,7 +474,6 @@ mod tests {
       sara.id,
       timmy_post_2.id,
       "sara comment prv 2".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
@@ -484,7 +481,6 @@ mod tests {
       sara.id,
       self_promotion_post.id,
       "sara comment in self_promotion post prv 2".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let comment_in_self_promotion_post =
       Comment::create(pool, &comment_in_self_promotion_post_form).await?;

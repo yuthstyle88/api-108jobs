@@ -470,32 +470,28 @@ mod tests {
     let timmy_comment_form = CommentInsertForm::new(
       timmy.id,
       timmy_post.id,
-      "timmy comment prv gold".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+      "timmy comment prv gold".into()
     );
     let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form = CommentInsertForm::new(
       sara.id,
       sara_post.id,
-      "sara comment prv gold".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+      "sara comment prv gold".into()
     );
     let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
     let sara_comment_form_2 = CommentInsertForm::new(
       sara.id,
       timmy_post_2.id,
-      "sara comment prv 2".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+      "sara comment prv 2".into()
     );
     let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     let comment_in_self_promotion_post_form = CommentInsertForm::new(
       sara.id,
       self_promotion_post.id,
-      "sara comment in self_promotion post prv 2".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
+      "sara comment in self_promotion post prv 2".into()
     );
     let comment_in_self_promotion_post =
       Comment::create(pool, &comment_in_self_promotion_post_form).await?;
@@ -657,7 +653,6 @@ mod tests {
 
     // Liked / disliked only
     let search_liked_only = SearchCombinedQuery {
-      liked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -666,7 +661,6 @@ mod tests {
     assert_length!(2, search_liked_only);
 
     let search_disliked_only = SearchCombinedQuery {
-      disliked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -730,7 +724,6 @@ mod tests {
 
     // Community search
     let community_search = SearchCombinedQuery {
-      type_: Some(SearchType::Communities),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -753,7 +746,6 @@ mod tests {
     // Filtered by id
     let community_search_by_id = SearchCombinedQuery {
       community_id: Some(data.community.id),
-      type_: Some(SearchType::Communities),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -763,7 +755,6 @@ mod tests {
     // Using a term
     let community_search_by_name = SearchCombinedQuery {
       search_term: Some("things".into()),
-      type_: Some(SearchType::Communities),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -781,8 +772,6 @@ mod tests {
     // Using a term
     let community_search_title_only = SearchCombinedQuery {
       search_term: Some("things".into()),
-      type_: Some(SearchType::Communities),
-      title_only: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -804,7 +793,6 @@ mod tests {
 
     // Person search
     let person_search = SearchCombinedQuery {
-      type_: Some(SearchType::Users),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -827,7 +815,6 @@ mod tests {
     // Filtered by creator_id
     let person_search_by_id = SearchCombinedQuery {
       creator_id: Some(data.sara.id),
-      type_: Some(SearchType::Users),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -842,7 +829,6 @@ mod tests {
     // Using a term
     let person_search_by_name = SearchCombinedQuery {
       search_term: Some("tim".into()),
-      type_: Some(SearchType::Users),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -857,7 +843,6 @@ mod tests {
 
     // Test Top sorting (uses post score)
     let person_search_sort_top = SearchCombinedQuery {
-      type_: Some(SearchType::Users),
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }
@@ -886,7 +871,6 @@ mod tests {
 
     // post search
     let post_search = SearchCombinedQuery {
-      type_: Some(SearchType::Posts),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -918,7 +902,6 @@ mod tests {
     // Filtered by id
     let post_search_by_community = SearchCombinedQuery {
       community_id: Some(data.community.id),
-      type_: Some(SearchType::Posts),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -928,7 +911,6 @@ mod tests {
     // Using a term
     let post_search_by_name = SearchCombinedQuery {
       search_term: Some("sara".into()),
-      type_: Some(SearchType::Posts),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -940,8 +922,6 @@ mod tests {
     // Using a term
     let post_search_title_only = SearchCombinedQuery {
       search_term: Some("postbody".into()),
-      type_: Some(SearchType::Posts),
-      title_only: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -953,8 +933,6 @@ mod tests {
     // Using a term
     let post_search_url_only = SearchCombinedQuery {
       search_term: data.timmy_post.url.as_ref().map(ToString::to_string),
-      type_: Some(SearchType::Posts),
-      post_url_only: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -964,8 +942,6 @@ mod tests {
 
     // Liked / disliked only
     let post_search_liked_only = SearchCombinedQuery {
-      type_: Some(SearchType::Posts),
-      liked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -975,8 +951,6 @@ mod tests {
     assert_length!(1, post_search_liked_only);
 
     let post_search_disliked_only = SearchCombinedQuery {
-      type_: Some(SearchType::Posts),
-      disliked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -987,7 +961,6 @@ mod tests {
 
     // Test top sort
     let post_search_sort_top = SearchCombinedQuery {
-      type_: Some(SearchType::Posts),
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }
@@ -1016,8 +989,6 @@ mod tests {
     let data = init_data(pool).await?;
 
     let self_promotion_post_search = SearchCombinedQuery {
-      type_: Some(SearchType::Posts),
-      self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1045,8 +1016,6 @@ mod tests {
     let data = init_data(pool).await?;
 
     let self_promotion_comment_search = SearchCombinedQuery {
-      type_: Some(SearchType::Comments),
-      self_promotion: Some(true),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1076,7 +1045,6 @@ mod tests {
 
     // comment search
     let comment_search = SearchCombinedQuery {
-      type_: Some(SearchType::Comments),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1111,7 +1079,6 @@ mod tests {
     // Filtered by id
     let comment_search_by_community = SearchCombinedQuery {
       community_id: Some(data.community.id),
-      type_: Some(SearchType::Comments),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1121,7 +1088,6 @@ mod tests {
     // Using a term
     let comment_search_by_name = SearchCombinedQuery {
       search_term: Some("gold".into()),
-      type_: Some(SearchType::Comments),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
@@ -1131,8 +1097,6 @@ mod tests {
 
     // Liked / disliked only
     let comment_search_liked_only = SearchCombinedQuery {
-      type_: Some(SearchType::Comments),
-      liked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -1141,8 +1105,6 @@ mod tests {
     assert_length!(1, comment_search_liked_only);
 
     let comment_search_disliked_only = SearchCombinedQuery {
-      type_: Some(SearchType::Comments),
-      disliked_only: Some(true),
       ..Default::default()
     }
     .list(pool, &Some(data.timmy_view.clone()), &data.site)
@@ -1152,7 +1114,6 @@ mod tests {
 
     // Test top sort
     let comment_search_sort_top = SearchCombinedQuery {
-      type_: Some(SearchType::Comments),
       sort: Some(SearchSortType::Top),
       ..Default::default()
     }

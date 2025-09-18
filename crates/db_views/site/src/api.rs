@@ -623,9 +623,11 @@ pub struct SaveUserSettings {
   /// Your skills
   pub skills: Option<String>,
   /// Your portfolio pictures to prove your quality
-  pub portfolio_pics: Vec<PortfolioPic>,
+  pub portfolio_pics: Option<Vec<PortfolioPic>>,
   /// Your work samples to prove your quality
-  pub work_samples: Vec<WorkSample>,
+  pub work_samples: Option<Vec<WorkSample>>,
+  /// Whether you are available for new chats/search
+  pub available: Option<bool>,
 }
 
 

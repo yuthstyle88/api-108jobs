@@ -9,7 +9,6 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
-  impls::local_user::LocalUserOptionHelper,
   newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId},
   source::{
     combined::search::{search_combined_keys as key, SearchCombined},

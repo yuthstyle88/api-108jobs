@@ -7,17 +7,17 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 use lemmy_db_schema::{
-  newtypes::{ChatRoomId, PaginationCursor, LocalUserId},
+  newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{
     chat_message::{ChatMessage, ChatMessageInsertForm},
-    chat_room::{ChatRoom, ChatRoomInsertForm},
+    chat_room::ChatRoom,
   },
-  traits::{Crud, PaginationCursorBuilder},
+  traits::PaginationCursorBuilder,
   utils::{ActualDbPool, DbPool},
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 use lemmy_db_views_chat::ChatMessageView;
-use lemmy_utils::error::{FastJobResult, FastJobErrorType};
+use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
@@ -47,7 +47,10 @@ pub struct FetchHistoryDirect {
 
 async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
-  match socket.connect(Duration::from_secs(CONNECT_TIMEOUT_SECS)).await {
+  match socket
+    .connect(Duration::from_secs(CONNECT_TIMEOUT_SECS))
+    .await
+  {
     Ok(_) => Ok(socket),
     Err(e) => {
       tracing::error!("Failed to connect to socket: {}", e);
@@ -127,8 +130,12 @@ pub async fn list_chat_messages(
 
   // Sanitize limit: default 20, clamp to 1..=100
   let mut lim = limit.unwrap_or(20);
-  if lim <= 0 { lim = 20; }
-  if lim > 100 { lim = 100; }
+  if lim <= 0 {
+    lim = 20;
+  }
+  if lim > 100 {
+    lim = 100;
+  }
   let lim = Some(lim);
 
   // If a cursor exists and direction not specified, default to paging backward (older)
@@ -137,18 +144,18 @@ pub async fn list_chat_messages(
     _ => page_back,
   };
 
-  let results = ChatMessageView::list_for_room(
-    &mut db_pool,
-    room_id,
-    lim,
-    cursor_data,
-    effective_page_back,
-  ).await?;
+  let results =
+    ChatMessageView::list_for_room(&mut db_pool, room_id, lim, cursor_data, effective_page_back)
+      .await?;
 
   let next_page = results.last().map(PaginationCursorBuilder::to_cursor);
   let prev_page = results.first().map(PaginationCursorBuilder::to_cursor);
 
-  Ok(ChatMessagesResponse { results, next_page, prev_page })
+  Ok(ChatMessagesResponse {
+    results,
+    next_page,
+    prev_page,
+  })
 }
 
 pub struct PhoenixManager {
@@ -180,22 +187,13 @@ impl PhoenixManager {
   pub async fn validate_or_create_room(
     &mut self,
     room_id: ChatRoomId,
-    room_name: String,
+    _room_name: String,
   ) -> FastJobResult<()> {
-    let room_id = room_id.to_string();
+    let room_id_str = room_id.to_string();
     let mut db_pool = DbPool::Pool(&self.pool);
-    if !ChatRoom::exists(&mut db_pool, room_id.clone().into()).await? {
-      let now = Utc::now();
-      let form = ChatRoomInsertForm {
-        id: ChatRoomId(room_id),
-        room_name,
-        created_at: now,
-        updated_at: None,
-        post_id: None,
-      };
-      ChatRoom::create(&mut db_pool, &form).await?;
+    if !ChatRoom::exists(&mut db_pool, room_id_str.clone().into()).await? {
+      return Err(FastJobErrorType::NotFound.into());
     }
-
     Ok(())
   }
 
@@ -231,21 +229,12 @@ impl PhoenixManager {
     }
   }
 
-  fn ensure_room_initialized(&mut self, room_id: ChatRoomId, room_name: String) {
+  fn ensure_room_initialized(&mut self, room_id: ChatRoomId, _room_name: String) {
     if !self.chat_store.contains_key(&room_id) {
-      // ensure in-memory buffer for this room exists
+      // ensure in-memory buffer for this room exists, but do NOT create DB room here
       self.chat_store.insert(room_id.clone(), Vec::new());
-
-      // asynchronously validate or create the room in DB without blocking the actor
-      let pool = self.pool.clone();
-      tokio::spawn(async move {
-        if let Err(e) = validate_or_create_room_db(pool, room_id, room_name).await {
-          tracing::error!("Failed to validate/create room in DB: {}", e);
-        }
-      });
     }
   }
-
 }
 
 impl Actor for PhoenixManager {
@@ -425,7 +414,6 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
   }
 }
 
-
 impl Handler<FetchHistoryDirect> for PhoenixManager {
   type Result = ResponseFuture<FastJobResult<ChatMessagesResponse>>;
 
@@ -454,31 +442,6 @@ impl Handler<FetchHistoryDirect> for PhoenixManager {
   }
 }
 
-// Helper function to validate or create a chat room in the DB without borrowing PhoenixManager
-async fn validate_or_create_room_db(
-  pool: ActualDbPool,
-  room_id: ChatRoomId,
-  room_name: String,
-) -> FastJobResult<()> {
-  let room_id_str = room_id.to_string();
-  let mut db_pool = DbPool::Pool(&pool);
-
-  if !ChatRoom::exists(&mut db_pool, room_id_str.clone().into()).await? {
-    let now = Utc::now();
-    let form = ChatRoomInsertForm {
-      id: ChatRoomId(room_id_str.clone()),
-      room_name,
-      created_at: now,
-      updated_at: None,
-      post_id: None,
-    };
-    ChatRoom::create(&mut db_pool, &form).await?;
-  }
-
-  Ok(())
-}
-
-
 // Helper to ensure a user is a member of a room before accessing resources like history
 async fn ensure_room_membership(
   pool: ActualDbPool,
@@ -486,7 +449,8 @@ async fn ensure_room_membership(
   user_id: LocalUserId,
 ) -> FastJobResult<()> {
   let mut db_pool = DbPool::Pool(&pool);
-  let participants = ChatParticipant::list_participants_for_rooms(&mut db_pool, &[room_id.clone()]).await?;
+  let participants =
+    ChatParticipant::list_participants_for_rooms(&mut db_pool, &[room_id.clone()]).await?;
   let is_member = participants.iter().any(|p| p.member_id == user_id);
   if !is_member {
     return Err(FastJobErrorType::NotAllowed.into());

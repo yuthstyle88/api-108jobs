@@ -1,12 +1,13 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema::newtypes::{
-  BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PersonId, WalletId, WorkflowId, PostId,
+  BillingId, ChatRoomId, Coin, CoinId, PersonId, WalletId, WorkflowId, PostId,
 };
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
+use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::utils::{get_conn, DbPool};
 use lemmy_db_schema_file::enums::WorkFlowStatus;
@@ -157,6 +158,20 @@ async fn set_status_from(
         let _ = Workflow::update(&mut conn.into(), workflow_id, &form)
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+        // If workflow finalized, clear the current_comment_id in the related chat room
+        if matches!(desired, WorkFlowStatus::Completed | WorkFlowStatus::Cancelled) {
+          let clr = ChatRoomUpdateForm {
+            room_name: None,
+            updated_at: Some(Utc::now()),
+            post_id: None,
+            current_comment_id: Some(None),
+          };
+          let _ = ChatRoom::update(&mut conn.into(), current.room_id.clone(), &clr)
+            .await
+            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+        }
+
         Ok::<_, lemmy_utils::error::FastJobError>(())
       }
       .scope_boxed()
@@ -190,6 +205,18 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
         let _ = Workflow::update(&mut conn.into(), workflow_id, &form)
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+        // Clear current_comment_id on room when cancelling
+        let clr = ChatRoomUpdateForm {
+          room_name: None,
+          updated_at: Some(Utc::now()),
+          post_id: None,
+          current_comment_id: Some(None),
+        };
+        let _ = ChatRoom::update(&mut conn.into(), cur.room_id.clone(), &clr)
+          .await
+          .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
         Ok::<_, lemmy_utils::error::FastJobError>(())
       }
       .scope_boxed()
@@ -493,7 +520,7 @@ impl WorkflowService {
 
   pub async fn create_quotation(
     pool: &mut DbPool<'_>,
-    freelancer_id: LocalUserId,
+    freelancer_id: PersonId,
     form: ValidCreateInvoice,
   ) -> FastJobResult<Billing> {
     let data = form.0.clone();

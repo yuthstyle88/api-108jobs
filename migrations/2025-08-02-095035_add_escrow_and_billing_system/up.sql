@@ -8,8 +8,8 @@ CREATE TYPE billing_status AS ENUM (
 -- Create billing table for escrow jobs (money in NUMERIC)
 CREATE TABLE billing (
     id SERIAL PRIMARY KEY,
-    freelancer_id INTEGER NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    employer_id   INTEGER NOT NULL REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    freelancer_id INTEGER NOT NULL REFERENCES person(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    employer_id   INTEGER NOT NULL REFERENCES person(id) ON UPDATE CASCADE ON DELETE CASCADE,
     post_id       INTEGER NOT NULL REFERENCES post(id)        ON UPDATE CASCADE ON DELETE CASCADE,
     comment_id    INTEGER REFERENCES comment(id)              ON UPDATE CASCADE ON DELETE SET NULL,
 

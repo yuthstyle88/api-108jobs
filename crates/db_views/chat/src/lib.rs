@@ -1,14 +1,10 @@
+#[cfg(feature = "full")]
+use diesel::{Queryable, Selectable};
 use lemmy_db_schema::source::{
-  chat_message::ChatMessage,
-  chat_participant::ChatParticipant,
-  chat_room::ChatRoom,
-  local_user::LocalUser,
+  chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom,
+  local_user::LocalUser, post::Post, comment::Comment,
 };
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "full")]
-use {
-  diesel::{Queryable, Selectable},
-};
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -39,4 +35,6 @@ pub struct ChatRoomView {
   pub room: ChatRoom,
   // Not selectable by Diesel; assembled separately via additional query
   pub participants: Vec<ChatParticipant>,
+  pub post: Option<Post>,
+  pub current_comment: Option<Comment>,
 }

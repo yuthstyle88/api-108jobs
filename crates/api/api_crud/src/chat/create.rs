@@ -7,6 +7,7 @@ use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipant
 use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_chat::api::{ChatRoomResponse, CreateChatRoomRequest, LastMessage};
+use lemmy_db_views_chat::ChatRoomView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 
@@ -20,7 +21,7 @@ pub async fn create_chat_room(
 ) -> FastJobResult<Json<ChatRoomResponse>> {
   let mut pool = context.pool();
   let req = data.into_inner();
-  let CreateChatRoomRequest { partner_person_id, room_id, post_id } = req;
+  let CreateChatRoomRequest { partner_person_id, room_id, post_id, current_comment_id } = req;
 
   // current and partner local user ids
   let current_luid = local_user_view.local_user.id;
@@ -39,12 +40,21 @@ pub async fn create_chat_room(
       created_at: Utc::now(),
       updated_at: None,
       post_id: post_id.clone(),
+      current_comment_id: current_comment_id.clone(),
     };
     let _ = ChatRoom::create(&mut pool, &form).await?;
-  } else if let Some(pid) = post_id.clone() {
-    // update existing room with provided post_id
-    let upd = ChatRoomUpdateForm { room_name: None, updated_at: Some(Utc::now()), post_id: Some(Some(pid)) };
-    let _ = ChatRoom::update(&mut pool, room_id.clone(), &upd).await?;
+  } else {
+    // update existing room with any provided optional fields
+    let upd = ChatRoomUpdateForm {
+      room_name: None,
+      updated_at: Some(Utc::now()),
+      post_id: post_id.clone().map(Some),
+      current_comment_id: current_comment_id.clone().map(Some),
+    };
+    // Only call update if at least one optional is provided
+    if upd.post_id.is_some() || upd.current_comment_id.is_some() {
+      let _ = ChatRoom::update(&mut pool, room_id.clone(), &upd).await?;
+    }
   }
 
   // ensure participants: current user and partner
@@ -55,9 +65,8 @@ pub async fn create_chat_room(
     ChatParticipant::ensure_participant(&mut pool, &form2).await?;
   }
 
-  // fetch room and participants for response
-  let room = ChatRoom::read(&mut pool, room_id.clone()).await?;
-  let parts = ChatParticipant::list_participants_for_rooms(&mut pool, &[room_id.clone()]).await?;
+  // build full view
+  let view = ChatRoomView::read(&mut pool, room_id.clone()).await?;
 
   // last message
   let last_message_opt = ChatMessage::last_by_room(&mut pool, room_id).await?;
@@ -67,5 +76,5 @@ pub async fn create_chat_room(
     sender_id: m.sender_id,
   });
 
-  Ok(Json(ChatRoomResponse { room, participants: parts, last_message, workflow_status: None, post_id }))
+  Ok(Json(ChatRoomResponse { room: view, last_message, workflow: None }))
 }

@@ -4,7 +4,7 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom},
+  source::{chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom, post::Post, comment::Comment},
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
@@ -86,6 +86,18 @@ impl ChatRoomView {
   pub async fn read(pool: &mut DbPool<'_>, id: ChatRoomId) -> FastJobResult<Self> {
     // read room first, before borrowing a connection
     let room = ChatRoom::read(pool, id).await?;
+
+    // read optional post without holding a borrowed connection
+    let post = match room.post_id.clone() {
+      Some(pid) => Some(Post::read(pool, pid).await?),
+      None => None,
+    };
+    // read optional current comment
+    let current_comment = match room.current_comment_id.clone() {
+      Some(cid) => Some(Comment::read(pool, cid).await?),
+      None => None,
+    };
+
     let conn = &mut get_conn(pool).await?;
 
     // read participants
@@ -99,6 +111,8 @@ impl ChatRoomView {
     Ok(ChatRoomView {
       room,
       participants: parts,
+      post,
+      current_comment,
     })
   }
 
@@ -141,6 +155,8 @@ impl ChatRoomView {
         .map(|room| ChatRoomView {
           participants: grouped.remove(&room.id).unwrap_or_default(),
           room,
+          post: None,
+          current_comment: None,
         })
         .collect(),
     )

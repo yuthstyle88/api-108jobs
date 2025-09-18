@@ -1,9 +1,9 @@
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId, PostId};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId, PostId, CommentId};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
 use lemmy_db_schema::source::chat_room::ChatRoom;
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema_file::enums::WorkFlowStatus;
-use crate::ChatMessageView;
+use lemmy_db_schema::source::workflow::Workflow;
+use crate::{ChatMessageView, ChatRoomView};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -30,11 +30,9 @@ pub struct ChatRoomWithParticipants {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatRoomResponse {
-  pub room: ChatRoom,
-  pub participants: Vec<ChatParticipant>,
+  pub room: ChatRoomView,
   pub last_message: Option<LastMessage>,
-  pub workflow_status: Option<WorkFlowStatus>,
-  pub post_id: Option<PostId>,
+  pub workflow: Option<Workflow>,
 }
 
 #[derive(Debug, Serialize)]
@@ -46,7 +44,7 @@ pub struct ListUserChatRoomsResponse {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetChatRoomResponse {
-  pub room: ChatRoom,
+  pub room: ChatRoomView,
 }
 
 #[derive(Debug, Deserialize)]
@@ -74,4 +72,5 @@ pub struct CreateChatRoomRequest {
   pub partner_person_id: PersonId,
   pub room_id: Option<ChatRoomId>,
   pub post_id: Option<PostId>,
+  pub current_comment_id: Option<CommentId>,
 }

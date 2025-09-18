@@ -43,3 +43,29 @@ impl Crud for Billing {
     .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 }
+
+#[cfg(feature = "full")]
+impl Billing {
+  pub async fn get_by_comment_and_status(
+    pool: &mut DbPool<'_>,
+    comment_id: crate::newtypes::CommentId,
+    status: lemmy_db_schema_file::enums::BillingStatus,
+  ) -> FastJobResult<Option<Self>> {
+    use diesel::ExpressionMethods;
+    let conn = &mut get_conn(pool).await?;
+    let res = billing::table
+      .filter(billing::comment_id.eq(comment_id))
+      .filter(billing::status.eq(status))
+      .first::<Self>(conn)
+      .await;
+
+    match res {
+      Ok(model) => Ok(Some(model)),
+      Err(diesel::result::Error::NotFound) => Ok(None),
+      Err(_e) => Err(
+        lemmy_utils::error::FastJobErrorType::DatabaseError
+          .into(),
+      ),
+    }
+  }
+}

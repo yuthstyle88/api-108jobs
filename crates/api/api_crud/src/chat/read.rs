@@ -18,7 +18,6 @@ pub async fn get_chat_room(
 
   // fetch room with participants
   let view = ChatRoomView::read(&mut pool, room_id.clone()).await?;
-  let room_post_id = view.room.post_id.clone();
 
   // fetch last message for this room
   let last_message_opt = ChatMessage::last_by_room(&mut pool, view.room.id.clone()).await?;
@@ -28,16 +27,12 @@ pub async fn get_chat_room(
     sender_id: m.sender_id,
   });
 
-  // fetch current workflow status for this room (exclude completed/cancelled)
-  let wf_opt = Workflow::get_current_by_room_id(&mut pool, view.room.id.clone()).await?;
-  let workflow_status = wf_opt.as_ref().map(|w| w.status);
-  let post_id = room_post_id;
+  // fetch current workflow for this room (exclude completed/cancelled)
+  let workflow = Workflow::get_current_by_room_id(&mut pool, view.room.id.clone()).await?;
 
   Ok(Json(ChatRoomResponse {
-    room: view.room,
-    participants: view.participants,
+    room: view,
     last_message,
-    workflow_status,
-    post_id,
+    workflow,
   }))
 }

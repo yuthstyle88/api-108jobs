@@ -232,6 +232,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         post_id -> Nullable<Int4>,
+        current_comment_id -> Nullable<Int4>,
     }
 }
 

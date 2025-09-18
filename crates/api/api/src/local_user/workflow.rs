@@ -1,6 +1,9 @@
-use actix_web::web::{Data, Json};
+use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
+use serde::Deserialize;
+use lemmy_db_schema::newtypes::CommentId;
+use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::workflow::Workflow;
@@ -74,8 +77,6 @@ pub async fn create_quotation(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CreateInvoiceResponse>> {
-  let local_user_id = local_user_view.local_user.id;
-
   // Validate via TryFrom into a validated wrapper
   let validated: ValidCreateInvoice = match data.into_inner().try_into() {
     Ok(v) => v,
@@ -87,11 +88,11 @@ pub async fn create_quotation(
 
   // Create the invoice/billing record with detailed quotation fields
   let billing =
-    WorkflowService::create_quotation(&mut context.pool(), local_user_id, validated).await?;
+    WorkflowService::create_quotation(&mut context.pool(), local_user_view.person.id, validated).await?;
 
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
-    issuer_id: local_user_id,
+    issuer_id: local_user_view.person.id,
     recipient_id: data.employer_id,
     post_id: data.post_id,
     amount: data.amount,
@@ -131,30 +132,30 @@ pub async fn approve_quotation(
 pub async fn submit_start_work(
   data: Json<SubmitStartWorkForm>,
   context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let _worker_id = local_user_view.local_user.id;
-
   // Validate input
   let validated: ValidSubmitStartWork = match data.into_inner().try_into() {
     Ok(v) => v,
     Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
   };
   let form = validated.0;
-  let workflow_id = form.workflow_id;
-  let seq_number = form.seq_number; // use provided seq for plan update
 
-  let wf = WorkflowService::load_order_approve(&mut context.pool(), workflow_id)
+  // Apply transition: OrderApproved -> InProgress
+  let wf = WorkflowService::load_order_approve(&mut context.pool(), form.workflow_id)
     .await?
     .start_work_on(&mut context.pool())
     .await?;
 
-  // Update JobBudgetPlan step status -> InProgress for this seq
-  update_job_plan_step_status(
+  // Save submitted work content
+  let _ = Workflow::update(
     &mut context.pool(),
-    workflow_id,
-    seq_number,
-    WorkFlowStatus::InProgress,
+    form.workflow_id,
+    &lemmy_db_schema::source::workflow::WorkflowUpdateForm {
+      deliverable_accepted: Some(false),
+      deliverable_submitted_at: Some(Some(Utc::now())),
+      updated_at: Some(Some(Utc::now())),
+      ..Default::default()
+    },
   )
   .await?;
 
@@ -166,27 +167,27 @@ pub async fn submit_start_work(
 }
 
 pub async fn submit_work(
-  data: Json<ApproveWorkForm>,
+  data: Json<SubmitStartWorkForm>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidApproveWork = match data.into_inner().try_into() {
+  let validated: ValidSubmitStartWork = match data.into_inner().try_into() {
     Ok(v) => v,
     Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
   };
   let form = validated.0;
-  let workflow_id = form.workflow_id;
-  let seq_number = form.seq_number;
-  let wf = WorkflowService::load_in_progress(&mut context.pool(), workflow_id)
+
+  // Apply transition: InProgress -> PendingEmployerReview
+  let wf = lemmy_workflow::WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
     .await?
     .submit_work_on(&mut context.pool())
     .await?;
 
-  // Update JobBudgetPlan step status -> PendingEmployerReview for this seq
+  // Update JobBudgetPlan step status -> Pending review for this seq
   update_job_plan_step_status(
     &mut context.pool(),
-    workflow_id,
-    seq_number,
+    form.workflow_id,
+    form.seq_number,
     WorkFlowStatus::PendingEmployerReview,
   )
   .await?;
@@ -343,4 +344,38 @@ pub async fn start_workflow(
     status: WorkFlowStatus::QuotationPending,
     success: true,
   }))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetBillingByCommentQuery {
+  pub comment_id: CommentId,
+}
+
+/// GET billing by comment id where status is QuotePendingReview
+pub async fn get_billing_by_comment(
+  query: Query<GetBillingByCommentQuery>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<Billing>> {
+  let mut pool = context.pool();
+  let comment_id = query.comment_id;
+  let bill_opt = Billing::get_by_comment_and_status(
+    &mut pool,
+    comment_id,
+    BillingStatus::QuotePendingReview,
+  )
+  .await?;
+
+  match bill_opt {
+    Some(b) => {
+      let pid = local_user_view.local_user.person_id;
+      if b.freelancer_id == pid || b.employer_id == pid {
+        Ok(Json(b))
+      } else {
+        Err(FastJobErrorType::NotAllowed.into())
+      }
+    }
+    None => Err(FastJobErrorType::NotFound.into()),
+  }
 }

@@ -34,7 +34,3 @@ ALTER TABLE workflow
 
 CREATE INDEX IF NOT EXISTS idx_workflow_post ON workflow(post_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_post_status ON workflow(post_id, status);
-
-CREATE UNIQUE INDEX IF NOT EXISTS one_active_workflow_per_post_seq
-    ON workflow(post_id, seq_number)
-    WHERE status <> 'Cancelled';

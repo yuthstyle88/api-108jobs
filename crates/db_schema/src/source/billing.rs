@@ -1,5 +1,5 @@
 use crate::newtypes::{
-  BillingId, Coin, CommentId, DbUrl, LocalUserId, PersonId, PostId,
+  BillingId, Coin, CommentId, DbUrl, PersonId, PostId,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
@@ -50,8 +50,8 @@ pub struct Billing {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = billing))]
 pub struct BillingInsertForm {
-  pub freelancer_id: LocalUserId,
-  pub employer_id: LocalUserId,
+  pub freelancer_id: PersonId,
+  pub employer_id: PersonId,
   pub post_id: PostId,
   pub comment_id: CommentId,
   pub amount: Coin,
@@ -81,8 +81,8 @@ pub struct BillingUpdateForm {
 /// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule issues.
 #[derive(Clone, Default)]
 pub struct BillingFromQuotation {
-  pub freelancer_id: LocalUserId,
-  pub employer_id: LocalUserId,
+  pub freelancer_id: PersonId,
+  pub employer_id: PersonId,
   pub post_id: PostId,
   pub comment_id: CommentId,
   pub amount: Coin,

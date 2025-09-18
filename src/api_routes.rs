@@ -6,6 +6,9 @@ use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account,
 };
+use lemmy_api::local_user::identity_card::{
+  create_identity_card, update_identity_card,
+};
 use lemmy_api::local_user::exchange::{exchange_key, get_user_keys};
 use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::review::{submit_user_review, list_user_reviews};
@@ -127,6 +130,7 @@ use lemmy_routes::images::{
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
+use lemmy_routes::files::{download::get_file as get_uploaded_file, upload::upload_file};
 use lemmy_utils::rate_limit::RateLimit;
 use lemmy_ws::handler::{chat_ws, get_history};
 
@@ -264,8 +268,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/profile/{username}", get().to(visit_profile))
             .service(
               scope("/media")
+                .route("", post().to(upload_image))
                 .route("", delete().to(delete_image))
                 .route("/list", get().to(list_media)),
+            )
+            .service(
+              scope("/files")
+                .route("", post().to(upload_file))
             )
             .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
@@ -275,6 +284,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", get().to(list_user_bank_accounts))
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
+            )
+            .service(
+              scope("/identity-card")
+                .route("", post().to(create_identity_card))
+                .route("", put().to(update_identity_card))
             )
             .service(
               scope("/mention")
@@ -418,6 +432,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/health", get().to(pictrs_health))
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
-        ),
+        )
+        .service(
+          scope("/files")
+            .route("/{user_id}/{filename}", get().to(get_uploaded_file))
+        )
     );
 }

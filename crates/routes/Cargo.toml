@@ -33,6 +33,7 @@ lemmy_db_schema = { workspace = true }
 lemmy_api_utils = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
 actix-web = { workspace = true, features = ["cookies"] }
+actix-multipart = "0.7"
 anyhow = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }

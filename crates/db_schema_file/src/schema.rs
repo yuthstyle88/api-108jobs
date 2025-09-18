@@ -1200,6 +1200,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    identity_cards (id) {
+        id -> Int4,
+        address_id -> Nullable<Int4>,
+        id_number -> Varchar,
+        issued_date -> Date,
+        expiry_date -> Date,
+        full_name -> Varchar,
+        date_of_birth -> Date,
+        nationality -> Varchar,
+        is_verified -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     skills (id) {
         id -> Int4,
         person_id -> Int4,
@@ -1496,6 +1512,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   coin,
   job_budget_plan,
   user_review,
+  identity_cards,
 );
 
 

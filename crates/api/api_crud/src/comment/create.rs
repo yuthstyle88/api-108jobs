@@ -15,6 +15,8 @@ use lemmy_db_schema::{
   traits::Likeable,
   utils::DbPool,
 };
+use lemmy_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
+use lemmy_db_schema_file::schema::comment::dsl::comment;
 use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::PostView;
@@ -37,15 +39,12 @@ pub async fn create_comment(
   let content = process_markdown(&data.content, &slur_regex, &url_blocklist, &context).await?;
   is_valid_body_field(&content, false)?;
 
-  // Check for a community ban
-  let post_id = data.post_id;
-
   let local_instance_id = local_user_view.person.instance_id;
 
   // Read the full post view in order to get the comments count.
   let post_view = PostView::read(
     &mut context.pool(),
-    post_id,
+    data.post_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )
@@ -75,7 +74,7 @@ pub async fn create_comment(
   }
 
   // Check if user has already commented on this post
-  check_user_already_commented(&mut context.pool(), local_user_view.person.id, post_id).await?;
+  check_user_already_commented(&mut context.pool(), local_user_view.person.id, data.post_id.clone()).await?;
 
   let comment_form = CommentInsertForm {
     language_id: Some(language_id),
@@ -106,7 +105,7 @@ pub async fn create_comment(
   // Update the read comments, so your own new comment doesn't appear as a +1 unread
   update_read_comments(
     local_user_view.person.id,
-    post_id,
+    data.post_id.clone(),
     post.comments + 1,
     &mut context.pool(),
   )
@@ -131,18 +130,17 @@ pub async fn create_comment(
 async fn check_user_already_commented(
   pool: &mut DbPool<'_>,
   person_id: PersonId,
-  _post_id: PostId,
+  current_post_id: PostId,
 ) -> FastJobResult<()> {
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
   use lemmy_db_schema::utils::get_conn;
-  use lemmy_db_schema_file::schema::comment::dsl::*;
 
   let conn = &mut get_conn(pool).await?;
 
   let existing_comment = comment
     .filter(creator_id.eq(person_id))
-    .filter(post_id.eq(post_id))
+    .filter(post_id.eq(current_post_id))
     .filter(deleted.eq(false))
     .filter(removed.eq(false))
     .first::<Comment>(conn)

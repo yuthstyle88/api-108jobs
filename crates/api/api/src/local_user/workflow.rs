@@ -24,7 +24,7 @@ use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_workflow::{WorkFlowOperationResponse, WorkflowService};
 
 // Helper: update JobBudgetPlan.installments' status for a given workflow and seq
-async fn update_job_plan_step_status(
+async fn _update_job_plan_step_status(
   pool: &mut lemmy_db_schema::utils::DbPool<'_>,
   workflow_id: lemmy_db_schema::newtypes::WorkflowId,
   seq_number: i16,
@@ -208,7 +208,6 @@ pub async fn approve_work(
   };
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  let seq_number = form.seq_number;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -226,15 +225,6 @@ pub async fn approve_work(
     .await?
     .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id)
     .await?;
-
-  // Update JobBudgetPlan step status -> Completed for this seq
-  update_job_plan_step_status(
-    &mut context.pool(),
-    workflow_id,
-    seq_number,
-    WorkFlowStatus::Completed,
-  )
-  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),

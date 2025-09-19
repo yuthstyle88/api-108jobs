@@ -1,8 +1,6 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{
-  BillingId, ChatRoomId, Coin, CoinId, PersonId, WalletId, WorkflowId, PostId,
-};
+use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CoinId, PersonId, WalletId, WorkflowId, PostId, CommentId};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
@@ -15,6 +13,8 @@ use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use uuid::Uuid;
+use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
+
 // ---------- Typestate payload ----------
 #[derive(Clone, Copy, Debug)]
 pub struct FlowData {
@@ -465,16 +465,20 @@ impl WorkSubmittedTS {
     pool: &mut DbPool<'_>,
     coin_id: CoinId,
     platform_wallet_id: WalletId,
+    comment_id: CommentId,
   ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
-    let billing_id = self
-      .data
-      .billing_id
-      .ok_or_else(|| FastJobErrorType::InvalidField("missing billing_id".into()))?;
-    let billing = Billing::read(&mut conn.into(), billing_id)
+    let billing_opt = Billing::get_by_comment_and_status(&mut conn.into(), comment_id, QuotePendingReview)
       .await
       .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+    let billing = match billing_opt {
+      Some(b) => b,
+      None => {
+        return Err(FastJobErrorType::InvalidField("No matching billing found for comment in QuotePendingReview".to_string()).into());
+      }
+    };
 
     // 2) ปล่อยเงินจาก escrow ไปยัง freelancer (platform -> freelancer)
     // สมมติว่าคุณมีวิธีหา wallet ของ freelancer เช่น WalletModel::get_by_user
@@ -482,7 +486,7 @@ impl WorkSubmittedTS {
     let tx_form = WalletTransactionInsertForm {
       wallet_id: freelancer_wallet.id,
       reference_type: "billing".to_string(),
-      reference_id: billing_id.0,
+      reference_id: billing.id.0,
       kind: TxKind::Transfer, // ใช้ Transfer สำหรับปล่อยเงิน
       amount: billing.amount,
       description: "escrow release to freelancer".to_string(),

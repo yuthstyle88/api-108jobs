@@ -245,6 +245,8 @@ fn build_workflow_insert(post_id: PostId, seq_number: i16, room_id: lemmy_db_sch
     created_at: Some(Utc::now()),
     updated_at: None,
     room_id,
+    deliverable_url: None,
+    active: Some(true),
   }
 }
 
@@ -271,6 +273,8 @@ async fn create_new_workflow_for_post(
     created_at: None,
     updated_at: None,
     room_id,
+    deliverable_url: None,
+    active: Some(true),
   };
   Workflow::create(pool, &insert).await
 }
@@ -431,9 +435,7 @@ impl InProgressTS {
       self.data.workflow_id,
       WorkFlowStatus::InProgress,
       WorkFlowStatus::PendingEmployerReview,
-      |_c, _f| {
-        // ตัวอย่าง: ตั้ง submitted_at / version ได้ที่นี่
-      },
+      |_c, _f| {},
     )
     .await?;
 
@@ -516,6 +518,13 @@ impl WorkflowService {
     room_id: ChatRoomId,
   ) -> FastJobResult<Workflow> {
     create_new_workflow_for_post(pool, post_id, seq_number, room_id).await
+  }
+
+  pub async fn cancel(
+    pool: &mut DbPool<'_>,
+    workflow_id: WorkflowId,
+  ) -> FastJobResult<()> {
+    cancel_any_on(pool, workflow_id).await
   }
 
   pub async fn create_quotation(

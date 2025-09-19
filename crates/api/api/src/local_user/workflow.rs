@@ -1,22 +1,22 @@
 use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
-use serde::Deserialize;
 use lemmy_db_schema::newtypes::CommentId;
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
-use lemmy_db_schema::source::workflow::Workflow;
+use lemmy_db_schema::source::workflow::{Workflow, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_billing::api::{
-  ApproveQuotationForm, ApproveWorkForm, CreateInvoiceForm,
-  CreateInvoiceResponse, RequestRevisionForm, SubmitStartWorkForm,
-  UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidCreateInvoice,
-  ValidUpdateBudgetPlanInstallments, StartWorkflowForm,
-  ValidApproveQuotation, ValidApproveWork, ValidRequestRevision, ValidSubmitStartWork, ValidStartWorkflow,
+  ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse,
+  RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments,
+  UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob,
+  ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork,
+  ValidUpdateBudgetPlanInstallments,
 };
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use serde::Deserialize;
 use serde_json::json;
 
 use lemmy_db_schema_file::enums::BillingStatus;
@@ -88,7 +88,8 @@ pub async fn create_quotation(
 
   // Create the invoice/billing record with detailed quotation fields
   let billing =
-    WorkflowService::create_quotation(&mut context.pool(), local_user_view.person.id, validated).await?;
+    WorkflowService::create_quotation(&mut context.pool(), local_user_view.person.id, validated)
+      .await?;
 
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
@@ -118,7 +119,12 @@ pub async fn approve_quotation(
   let form = validated.0;
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
-    .approve_on(&mut context.pool(), employer_id, form.wallet_id, form.billing_id)
+    .approve_on(
+      &mut context.pool(),
+      employer_id,
+      form.wallet_id,
+      form.billing_id,
+    )
     .await?;
   // Approve the quotation and convert to order
 
@@ -146,19 +152,6 @@ pub async fn submit_start_work(
     .start_work_on(&mut context.pool())
     .await?;
 
-  // Save submitted work content
-  let _ = Workflow::update(
-    &mut context.pool(),
-    form.workflow_id,
-    &lemmy_db_schema::source::workflow::WorkflowUpdateForm {
-      deliverable_accepted: Some(false),
-      deliverable_submitted_at: Some(Some(Utc::now())),
-      updated_at: Some(Some(Utc::now())),
-      ..Default::default()
-    },
-  )
-  .await?;
-
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
     status: WorkFlowStatus::InProgress,
@@ -178,17 +171,22 @@ pub async fn submit_work(
   let form = validated.0;
 
   // Apply transition: InProgress -> PendingEmployerReview
-  let wf = lemmy_workflow::WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
+  let wf = WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
     .await?
     .submit_work_on(&mut context.pool())
     .await?;
 
-  // Update JobBudgetPlan step status -> Pending review for this seq
-  update_job_plan_step_status(
+  // Save submitted work content
+  let _ = Workflow::update(
     &mut context.pool(),
     form.workflow_id,
-    form.seq_number,
-    WorkFlowStatus::PendingEmployerReview,
+    &WorkflowUpdateForm {
+      deliverable_accepted: Some(false),
+      deliverable_submitted_at: Some(Some(Utc::now())),
+      deliverable_url: Some(form.deliverable_url),
+      updated_at: Some(Some(Utc::now())),
+      ..Default::default()
+    },
   )
   .await?;
 
@@ -217,17 +215,12 @@ pub async fn approve_work(
     .local_site
     .coin_id
     .ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-  let platform_wallet_id = match context
-    .site_config()
-    .get()
-    .await?
-    .admins
-    .first() {
-      Some(a) => a.person.wallet_id,
-      None => {
-        return Err(FastJobErrorType::InvalidField("No platform admin configured".into()).into());
-      }
-    };
+  let platform_wallet_id = match context.site_config().get().await?.admins.first() {
+    Some(a) => a.person.wallet_id,
+    None => {
+      return Err(FastJobErrorType::InvalidField("No platform admin configured".into()).into());
+    }
+  };
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
@@ -323,7 +316,6 @@ pub async fn update_budget_plan_status(
   }))
 }
 
-
 pub async fn start_workflow(
   data: Json<StartWorkflowForm>,
   context: Data<FastJobContext>,
@@ -337,11 +329,38 @@ pub async fn start_workflow(
     Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
   };
   let form = validated.0;
-  let wf = WorkflowService::start_workflow(&mut context.pool(), form.post_id, form.seq_number, form.room_id).await?;
+  let wf = WorkflowService::start_workflow(
+    &mut context.pool(),
+    form.post_id,
+    form.seq_number,
+    form.room_id,
+  )
+  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.id.into(),
     status: WorkFlowStatus::QuotationPending,
+    success: true,
+  }))
+}
+
+pub async fn cancel_job(
+  data: Json<CancelJobForm>,
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<WorkFlowOperationResponse>> {
+  // Validate input
+  let validated: ValidCancelJob = match data.into_inner().try_into() {
+    Ok(v) => v,
+    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
+  };
+  let form = validated.0;
+
+  // Perform cancellation (allowed for any non-finalized status)
+  WorkflowService::cancel(&mut context.pool(), form.workflow_id).await?;
+
+  Ok(Json(WorkFlowOperationResponse {
+    workflow_id: form.workflow_id.into(),
+    status: WorkFlowStatus::Cancelled,
     success: true,
   }))
 }
@@ -360,12 +379,9 @@ pub async fn get_billing_by_comment(
 ) -> FastJobResult<Json<Billing>> {
   let mut pool = context.pool();
   let comment_id = query.comment_id;
-  let bill_opt = Billing::get_by_comment_and_status(
-    &mut pool,
-    comment_id,
-    BillingStatus::QuotePendingReview,
-  )
-  .await?;
+  let bill_opt =
+    Billing::get_by_comment_and_status(&mut pool, comment_id, BillingStatus::QuotePendingReview)
+      .await?;
 
   match bill_opt {
     Some(b) => {

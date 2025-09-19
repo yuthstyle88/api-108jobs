@@ -1274,6 +1274,8 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         room_id -> Varchar,
+        deliverable_url -> Nullable<Text>,
+        active -> Bool,
     }
 }
 

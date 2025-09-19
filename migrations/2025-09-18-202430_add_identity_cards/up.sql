@@ -14,6 +14,4 @@ CREATE TABLE identity_cards (
 );
 
 -- Helpful indexes and constraints
-CREATE INDEX idx_identity_cards_user ON identity_cards (local_user_id);
 CREATE INDEX idx_identity_cards_verified ON identity_cards (is_verified);
-CREATE UNIQUE INDEX uniq_identity_card_per_user ON identity_cards (local_user_id, id_number);

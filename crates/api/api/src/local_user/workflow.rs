@@ -254,21 +254,11 @@ pub async fn request_revision(
   };
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  let seq_number = form.seq_number;
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
     .request_revision_on(&mut context.pool(), form.reason.clone())
     .await?;
-
-  // Update JobBudgetPlan step status -> InProgress for this seq
-  update_job_plan_step_status(
-    &mut context.pool(),
-    workflow_id,
-    seq_number,
-    WorkFlowStatus::InProgress,
-  )
-  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),

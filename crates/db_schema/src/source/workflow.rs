@@ -29,6 +29,8 @@ pub struct Workflow {
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
   pub room_id: ChatRoomId,
+  pub deliverable_url: Option<String>,
+  pub active: bool,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -58,6 +60,10 @@ pub struct WorkflowInsertForm {
   #[new(default)]
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub room_id: ChatRoomId,
+  #[new(default)]
+  pub deliverable_url: Option<Option<String>>,
+  #[new(default)]
+  pub active: Option<bool>,
 }
 
 #[derive(Clone, Default)]
@@ -74,6 +80,8 @@ pub struct WorkflowUpdateForm {
   pub accepted_at: Option<Option<DateTime<Utc>>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub room_id: Option<ChatRoomId>,
+  pub deliverable_url: Option<Option<String>>,
+  pub active: Option<bool>,
 }
 
 

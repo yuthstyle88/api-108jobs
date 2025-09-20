@@ -36,3 +36,5 @@ bindings
 .DS_Store
 
 config/config.hjson
+
+uploads/

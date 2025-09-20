@@ -31,7 +31,14 @@ pub async fn deposit_wallet(
   let person_id = local_user_view.local_user.person_id;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view.clone().local_site.coin_id.ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-  let platform_wallet_id = context.site_config().get().await?.admins.first().unwrap().person.wallet_id;
+  let platform_wallet_id = context
+    .site_config()
+    .get()
+    .await?
+    .admins
+    .first()
+    .map(|a| a.person.wallet_id)
+    .ok_or_else(|| anyhow::anyhow!("Platform admin wallet not configured"))?;
   // Load user's wallet (must exist per NOT NULL constraint)
   let wallet = WalletModel::get_by_user(&mut context.pool(), person_id).await?;
 

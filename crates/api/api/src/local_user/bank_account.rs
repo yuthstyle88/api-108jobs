@@ -105,7 +105,7 @@ pub async fn delete_bank_account(
 
 pub async fn list_banks(
   context: Data<FastJobContext>,
-
+  _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BanksResponse>> {
 
   let bank_accounts = Bank::query_with_order_by( &mut context.pool() ,None).await?;

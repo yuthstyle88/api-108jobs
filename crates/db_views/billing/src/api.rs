@@ -133,6 +133,7 @@ impl TryFrom<SubmitStartWorkForm> for ValidSubmitStartWork {
 pub struct ApproveWorkForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
+    pub comment_id: CommentId,
 }
 
 #[derive(Debug, Clone)]
@@ -237,4 +238,34 @@ impl TryFrom<UpdateBudgetPlanInstallments> for ValidUpdateBudgetPlanInstallments
 pub struct UpdateBudgetPlanInstallmentsResponse {
     pub budget_plan: JobBudgetPlan,
     pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Cancel a workflow job
+pub struct CancelJobForm {
+    pub seq_number: i16,
+    pub workflow_id: WorkflowId,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidCancelJob(pub CancelJobForm);
+
+impl TryFrom<CancelJobForm> for ValidCancelJob {
+    type Error = String;
+    fn try_from(value: CancelJobForm) -> Result<Self, Self::Error> {
+        if value.seq_number <= 0 {
+            return Err("Invalid sequent number".into());
+        }
+        Ok(ValidCancelJob(value))
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetBillingByCommentQuery {
+    pub comment_id: CommentId,
 }

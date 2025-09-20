@@ -73,4 +73,5 @@ pub struct CreateChatRoomRequest {
   pub room_id: Option<ChatRoomId>,
   pub post_id: Option<PostId>,
   pub current_comment_id: Option<CommentId>,
+  pub room_name: Option<String>,
 }

@@ -1,4 +1,4 @@
-use crate::newtypes::{PostId, WorkflowId, ChatRoomId};
+use crate::newtypes::{ChatRoomId, PostId, WorkflowId};
 #[cfg(feature = "full")]
 use crate::{
   source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
@@ -13,7 +13,6 @@ use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::workflow;
 use lemmy_db_schema_file::schema::workflow::dsl as wf;
-use lemmy_db_schema_file::enums::WorkFlowStatus;
 #[cfg(feature = "full")]
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -86,6 +85,8 @@ impl Workflow {
       created_at: None,
       updated_at: None,
       room_id,
+      deliverable_url: None,
+      active: Some(true),
     };
     Self::create(pool, &form).await
   }
@@ -106,8 +107,7 @@ impl Workflow {
     let conn = &mut get_conn(pool).await?;
     wf::workflow
       .filter(wf::room_id.eq(room_id))
-      .filter(wf::status.ne(WorkFlowStatus::Completed))
-      .filter(wf::status.ne(WorkFlowStatus::Cancelled))
+      .filter(wf::active.eq(true))
       .order(wf::seq_number.desc())
       .first::<Workflow>(conn)
       .await

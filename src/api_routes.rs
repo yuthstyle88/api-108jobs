@@ -7,13 +7,14 @@ use lemmy_api::local_user::bank_account::{
   set_default_bank_account,
 };
 use lemmy_api::local_user::exchange::{exchange_key, get_user_keys};
+use lemmy_api::local_user::identity_card::{create_identity_card, update_identity_card};
 use lemmy_api::local_user::profile::visit_profile;
-use lemmy_api::local_user::review::{submit_user_review, list_user_reviews};
+use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
-  approve_quotation, approve_work, create_quotation, request_revision, submit_work, submit_start_work,
-  update_budget_plan_status, start_workflow, get_billing_by_comment,
+  approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_comment,
+  request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
 use lemmy_api::{
   comment::{
@@ -128,11 +129,10 @@ use lemmy_routes::images::{
   },
 };
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{chat_ws, get_history, phoenix_ws};
+use lemmy_ws::handler::{chat_ws, get_history};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
-    .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
     .service(resource("/ws").route(get().to(chat_ws)))
     .service(
       scope("/api/v4")

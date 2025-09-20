@@ -10,6 +10,7 @@ use crate::{
 use diesel::QueryDsl;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
+use lemmy_db_schema_file::enums::BillingStatus;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::billing;
 #[cfg(feature = "full")]
@@ -49,7 +50,7 @@ impl Billing {
   pub async fn get_by_comment_and_status(
     pool: &mut DbPool<'_>,
     comment_id: crate::newtypes::CommentId,
-    status: lemmy_db_schema_file::enums::BillingStatus,
+    status: BillingStatus,
   ) -> FastJobResult<Option<Self>> {
     use diesel::ExpressionMethods;
     let conn = &mut get_conn(pool).await?;
@@ -63,7 +64,7 @@ impl Billing {
       Ok(model) => Ok(Some(model)),
       Err(diesel::result::Error::NotFound) => Ok(None),
       Err(_e) => Err(
-        lemmy_utils::error::FastJobErrorType::DatabaseError
+        FastJobErrorType::DatabaseError
           .into(),
       ),
     }

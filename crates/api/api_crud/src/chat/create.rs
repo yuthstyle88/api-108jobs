@@ -21,7 +21,13 @@ pub async fn create_chat_room(
 ) -> FastJobResult<Json<ChatRoomResponse>> {
   let mut pool = context.pool();
   let req = data.into_inner();
-  let CreateChatRoomRequest { partner_person_id, room_id, post_id, current_comment_id } = req;
+  let CreateChatRoomRequest {
+    partner_person_id,
+    room_id,
+    post_id,
+    current_comment_id,
+    room_name,
+  } = req;
 
   // current and partner local user ids
   let current_luid = local_user_view.local_user.id;
@@ -30,7 +36,9 @@ pub async fn create_chat_room(
 
   // resolve room id: prefer provided room_id, otherwise build from current then partner
   let room_id = room_id.unwrap_or_else(|| ChatRoomId(format!("dm:{}:{}", current_luid.0, partner_luid.0)));
-  let room_name = room_id.0.clone();
+
+  // resolve room name: prefer provided, otherwise fallback to room_id string
+  let room_name = room_name.unwrap_or_else(|| room_id.0.clone());
 
   // create room if not exists
   if !ChatRoom::exists(&mut pool, room_id.clone()).await? {
@@ -46,13 +54,13 @@ pub async fn create_chat_room(
   } else {
     // update existing room with any provided optional fields
     let upd = ChatRoomUpdateForm {
-      room_name: None,
+      room_name: room_name.clone().into(),
       updated_at: Some(Utc::now()),
       post_id: post_id.clone().map(Some),
       current_comment_id: current_comment_id.clone().map(Some),
     };
     // Only call update if at least one optional is provided
-    if upd.post_id.is_some() || upd.current_comment_id.is_some() {
+    if upd.room_name.is_some() || upd.post_id.is_some() || upd.current_comment_id.is_some() {
       let _ = ChatRoom::update(&mut pool, room_id.clone(), &upd).await?;
     }
   }
@@ -78,3 +86,4 @@ pub async fn create_chat_room(
 
   Ok(Json(ChatRoomResponse { room: view, last_message, workflow: None }))
 }
+

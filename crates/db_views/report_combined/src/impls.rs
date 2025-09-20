@@ -510,7 +510,6 @@ mod tests {
       inserted_timmy.id,
       inserted_post.id,
       "A test comment rv".into(),
-      DbUrl::try_from("https://example.com/comment-site").unwrap(),
     );
     let inserted_comment = Comment::create(pool, &comment_form).await?;
 

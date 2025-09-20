@@ -778,7 +778,6 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment").unwrap(),
     );
     let inserted_comment = Comment::create(pool, &comment_form).await?;
 
@@ -786,7 +785,6 @@ mod tests {
       inserted_person.id,
       inserted_post.id,
       "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-child").unwrap(),
     );
     let inserted_child_comment =
       Comment::create(pool, &child_comment_form).await?;

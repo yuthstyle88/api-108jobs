@@ -139,7 +139,6 @@ pub async fn save_user_settings(
     contacts,
     matrix_user_id,
     bot_account: data.bot_account,
-    available: data.available,
     avatar: avatar_url,
     portfolio_pics: Some(Some(portfolio_pics_json)),
     work_samples: Some(Some(work_samples_json)),

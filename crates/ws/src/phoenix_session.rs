@@ -5,10 +5,11 @@ use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde_json::Value;
 
 use crate::{
-  bridge_message::{BridgeMessage, MessageSource},
+  bridge_message::{BridgeMessage},
   broker::PhoenixManager,
   message::RegisterClientMsg,
 };
+use crate::handler::JoinRoomQuery;
 
 // ===== helpers =====
 fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String, Value)> {
@@ -42,11 +43,20 @@ fn phx_push(topic: &str, event: &str, payload: Value) -> String {
 // ===== actor =====
 pub struct PhoenixSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
+  pub(crate) params: JoinRoomQuery,
   pub(crate) client_msg: RegisterClientMsg,
 }
 impl PhoenixSession {
-  pub(crate) fn new(phoenix_manager: Addr<PhoenixManager>, client_msg: RegisterClientMsg) -> Self {
-    Self { phoenix_manager, client_msg }
+  pub fn new(
+    phoenix_manager: Addr<PhoenixManager>,
+    params: JoinRoomQuery,
+    client_msg: RegisterClientMsg,
+  ) -> Self {
+    Self {
+      phoenix_manager,
+      params,
+      client_msg,
+    }
   }
 
   fn maybe_encrypt_outbound<'a>(&'a self, _event: &str, messages: &'a str) -> std::borrow::Cow<'a, str> {
@@ -67,8 +77,7 @@ impl Actor for PhoenixSession {
     // Register this client/room with the manager (similar to WsSession)
     let user_id = self.client_msg.user_id;
     let room_id = self.client_msg.room_id.clone();
-    let room_name = self.client_msg.room_name.clone();
-    self.phoenix_manager.do_send(RegisterClientMsg { user_id, room_id, room_name });
+    self.phoenix_manager.do_send(RegisterClientMsg { user_id,  room_id });
   }
 }
 
@@ -77,20 +86,17 @@ impl Handler<BridgeMessage> for PhoenixSession {
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
     // Forward only Phoenix-sourced messages destined for our room to the Phoenix client
-    if !matches!(msg.source, MessageSource::Phoenix) {
-      return;
-    }
     if ChatRoomId::from_channel_name(msg.channel.as_ref()) != self.client_msg.room_id {
       return;
     }
 
     // Convert stored JSON string to Value for Phoenix push payload
-    let payload_val: Value = serde_json::from_str(&msg.messages).unwrap_or_else(|_| serde_json::json!({"messages": msg.messages}));
+    let payload_val: Value = serde_json::from_str(&msg.messages).unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
     let topic = msg.channel.to_string();
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible
-    let payload = serde_json::from_str::<Value>(outbound_payload.as_ref()).unwrap_or_else(|_| serde_json::json!({"messages": outbound_payload.as_ref()}));
+    let payload = serde_json::from_str::<Value>(outbound_payload.as_ref()).unwrap_or_else(|_| serde_json::json!({"message": outbound_payload.as_ref()}));
     ctx.text(phx_push(&topic, &msg.event, payload));
   }
 }
@@ -103,6 +109,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
           match event.as_str() {
             "heartbeat" => ctx.text(phx_reply(&jr, &mr, "phoenix", "ok", serde_json::json!({}))),
             "phx_join" => {
+              let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
+              if let Some(room) = room_opt {
+                self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str());
+              }
               ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({})));
               ctx.text(phx_push(&topic, "system:welcome", serde_json::json!({"joined": topic})));
             }
@@ -125,7 +135,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               };
 
               let bridge_msg = BridgeMessage {
-                source: MessageSource::Phoenix,
+                // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
                 channel,
                 user_id,
                 event: event.clone(),

@@ -814,7 +814,6 @@ diesel::table! {
         inbox_url -> Varchar,
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
-        available -> Bool,
         instance_id -> Int4,
         post_count -> Int8,
         post_score -> Int8,

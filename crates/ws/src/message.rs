@@ -21,5 +21,4 @@ pub struct StoreChatMessage {
 pub struct RegisterClientMsg {
     pub user_id: Option<LocalUserId>,
     pub room_id: ChatRoomId,
-    pub room_name: String,
 }

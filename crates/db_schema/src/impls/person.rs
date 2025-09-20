@@ -94,7 +94,7 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-      .set(person::public_key.eq(new_public_key))
+      .set(person::public_key.eq::<String>(new_public_key.to_owned()))
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)

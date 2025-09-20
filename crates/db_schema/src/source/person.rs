@@ -58,8 +58,6 @@ pub struct Person {
   pub matrix_user_id: Option<String>,
   /// Whether the person is a bot account.
   pub bot_account: bool,
-  /// Whether the person is available for new chats/search
-  pub available: bool,
   pub instance_id: InstanceId,
   pub post_count: i64,
   #[serde(skip)]
@@ -138,7 +136,6 @@ pub struct PersonUpdateForm {
   pub inbox_url: Option<DbUrl>,
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
-  pub available: Option<bool>,
   pub contacts: Option<Option<String>>,
   pub skills: Option<Option<String>>,
   pub portfolio_pics: Option<Option<JsonValue>>,

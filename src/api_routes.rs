@@ -6,17 +6,15 @@ use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account,
 };
-use lemmy_api::local_user::identity_card::{
-  create_identity_card, update_identity_card,
-};
 use lemmy_api::local_user::exchange::{exchange_key, get_user_keys};
+use lemmy_api::local_user::identity_card::{create_identity_card, update_identity_card};
 use lemmy_api::local_user::profile::visit_profile;
-use lemmy_api::local_user::review::{submit_user_review, list_user_reviews};
+use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
-  approve_quotation, approve_work, create_quotation, request_revision, submit_work, submit_start_work,
-  update_budget_plan_status, start_workflow, get_billing_by_comment, cancel_job,
+  approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_comment,
+  request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
 use lemmy_api::{
   comment::{
@@ -36,13 +34,13 @@ use lemmy_api::{
     export_data::export_data,
     generate_totp_secret::generate_totp_secret,
     get_captcha::get_captcha,
+    list_created::list_person_created,
     list_hidden::list_person_hidden,
     list_liked::list_person_liked,
     list_logins::list_logins,
     list_media::list_media,
     list_read::list_person_read,
     list_saved::list_person_saved,
-    list_created::list_person_created,
     login::login,
     logout::logout,
     note_person::user_note_person,
@@ -118,6 +116,7 @@ use lemmy_api_crud::{
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
+use lemmy_routes::files::{download::get_file as get_uploaded_file, upload::upload_file};
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -130,13 +129,12 @@ use lemmy_routes::images::{
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
-use lemmy_routes::files::{download::get_file as get_uploaded_file, upload::upload_file};
 use lemmy_utils::rate_limit::RateLimit;
 use lemmy_ws::handler::{chat_ws, get_history};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
-    .service(resource("/ws").route(get().to(chat_ws)))
+    .service(resource("/socket/websocket").route(get().to(chat_ws)))
     .service(
       scope("/api/v4")
         // .wrap(rate_limit.message())
@@ -272,12 +270,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", delete().to(delete_image))
                 .route("/list", get().to(list_media)),
             )
-            .service(
-              scope("/files")
-                .route("", post().to(upload_file))
-            )
+            // upload file per account
+            .service(scope("/files").route("", post().to(upload_file)))
             .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
+            // bank account management
             .service(
               scope("/bank-account")
                 .route("", post().to(create_bank_account))
@@ -288,7 +285,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/identity-card")
                 .route("", post().to(create_identity_card))
-                .route("", put().to(update_identity_card))
+                .route("", put().to(update_identity_card)),
             )
             .service(
               scope("/mention")
@@ -317,7 +314,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/reviews", post().to(submit_user_review))
             // Wallet service scope
             .service(scope("/wallet").route("", get().to(get_wallet)))
-            // Bank account management scope
+            // List banks VI and TH
             .service(scope("/banks").route("", get().to(list_banks)))
             // Services scope for freelancer service delivery
             .service(
@@ -434,9 +431,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
         )
-        .service(
-          scope("/files")
-            .route("/{user_id}/{filename}", get().to(get_uploaded_file))
-        )
+        .service(scope("/files").route("/{user_id}/{filename}", get().to(get_uploaded_file))),
     );
 }

@@ -728,12 +728,12 @@ mod tests {
     let post_2 = Post::create(pool, &new_post_2).await?;
 
     // Timmy creates a comment
-    let comment_form = CommentInsertForm::new(timmy.id, post.id, "A test comment rv".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
+    let comment_form = CommentInsertForm::new(timmy.id, post.id, "A test comment rv".into());
     let comment = Comment::create(pool, &comment_form, ).await?;
 
     // jessica creates a comment
     let comment_form_2 =
-      CommentInsertForm::new(jessica.id, post_2.id, "A test comment rv 2".into(),  DbUrl::try_from("https://example.com/comment-site").unwrap());
+      CommentInsertForm::new(jessica.id, post_2.id, "A test comment rv 2".into());
     let comment_2 = Comment::create(pool, &comment_form_2, ).await?;
 
     Ok(Data {

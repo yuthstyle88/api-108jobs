@@ -1,17 +1,7 @@
 use actix_web::{web::{Data, Path}, HttpResponse};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use std::path::PathBuf;
-
-fn user_files_dir(user_id: i32) -> PathBuf {
-  PathBuf::from("uploads").join("files").join(user_id.to_string())
-}
-
-#[derive(Debug)]
-pub struct FilePath {
-  pub user_id: i32,
-  pub filename: String,
-}
+use crate::utils::user_files_dir;
 
 pub async fn get_file(path: Path<(i32, String)>, _context: Data<FastJobContext>) -> FastJobResult<HttpResponse> {
   let (user_id, filename) = path.into_inner();

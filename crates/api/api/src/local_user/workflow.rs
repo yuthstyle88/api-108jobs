@@ -1,24 +1,15 @@
 use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::CommentId;
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_billing::api::{
-  ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse,
-  RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments,
-  UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob,
-  ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork,
-  ValidUpdateBudgetPlanInstallments,
-};
+use lemmy_db_views_billing::api::{ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse, GetBillingByCommentQuery, RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob, ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork, ValidUpdateBudgetPlanInstallments};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use serde::Deserialize;
 use serde_json::json;
-
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_workflow::{WorkFlowOperationResponse, WorkflowService};
@@ -344,12 +335,6 @@ pub async fn cancel_job(
     status: WorkFlowStatus::Cancelled,
     success: true,
   }))
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetBillingByCommentQuery {
-  pub comment_id: CommentId,
 }
 
 /// GET billing by comment id where status is QuotePendingReview

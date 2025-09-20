@@ -1603,7 +1603,7 @@ mod tests {
 
         for _ in 0..comments {
           let comment_form =
-            CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned(),DbUrl::try_from("https://example.com/comment-site").unwrap());
+            CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
           let inserted_comment = Comment::create(pool, &comment_form,).await?;
           inserted_comment_ids.push(inserted_comment.id);
         }

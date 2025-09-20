@@ -110,19 +110,6 @@ pub fn check_local_user_deleted(local_user_view: &LocalUserView) -> FastJobResul
   }
 }
 
-pub fn check_person_valid(person_view: &PersonView) -> FastJobResult<()> {
-  // Check for a site ban
-  if person_view.creator_banned {
-    Err(FastJobErrorType::SiteBan)?
-  }
-  // check for account deletion
-  else if person_view.person.deleted {
-    Err(FastJobErrorType::Deleted)?
-  } else {
-    Ok(())
-  }
-}
-
 /// Check if the user's multilang is verified if multilang verification is turned on
 /// However, skip checking verification if the user is an admin
 pub fn check_email_verified(

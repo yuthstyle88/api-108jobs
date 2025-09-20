@@ -128,10 +128,11 @@ use lemmy_routes::images::{
   },
 };
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{chat_ws, get_history};
+use lemmy_ws::handler::{chat_ws, get_history, phoenix_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
+    .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
     .service(resource("/ws").route(get().to(chat_ws)))
     .service(
       scope("/api/v4")

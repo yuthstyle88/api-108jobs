@@ -1,7 +1,7 @@
 use crate::message::RegisterClientMsg;
 use crate::{broker::{FetchHistoryDirect, PhoenixManager}, session::WsSession};
 use actix::Addr;
-use actix_web::{web::{Data, Payload, Query}, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, web::{Data, Payload, Query}, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
@@ -9,6 +9,7 @@ use lemmy_db_schema::newtypes::{ChatRoomId, PaginationCursor};
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use serde::Deserialize;
 use lemmy_db_views_local_user::LocalUserView;
+use crate::phoenix_session::PhoenixSession;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -102,4 +103,50 @@ pub async fn chat_ws(
 
   // Start websocket connection
   ws::start(ws_session, &req, stream)
+}
+
+pub async fn phoenix_ws(
+  req: HttpRequest,
+  query: Query<JoinRoomQuery>,
+  stream: web::Payload,
+  phoenix: Data<Addr<PhoenixManager>>,
+  context: Data<FastJobContext>,
+) -> Result<HttpResponse, Error> {
+  // Extract query parameters similar to chat_ws
+  let auth_token = query.token.clone();
+  let room_id = query.room_id.clone().into();
+  let room_name = query
+    .room_name
+    .clone()
+    .unwrap_or_else(|| query.room_id.clone())
+    .into();
+
+  // Initialize authentication data
+  let mut user_id = None;
+
+  // Handle authentication if token exists
+  if let Some(jwt_token) = auth_token {
+    match local_user_view_from_jwt(&jwt_token, &context).await {
+      Ok((local_user, _session)) => {
+        user_id = Some(local_user.local_user.id);
+      }
+      Err(_) => {
+        return Err(Error::from(FastJobError::from(FastJobErrorType::IncorrectLogin)));
+      }
+    }
+  }
+
+  // Fallback: if user_id is still None, use query.user_id (if supplied)
+  if user_id.is_none() {
+    if let Some(uid) = query.user_id {
+      use lemmy_db_schema::newtypes::LocalUserId;
+      user_id = Some(LocalUserId(uid));
+    }
+  }
+
+  let session = PhoenixSession::new(
+    phoenix.get_ref().clone(),
+    RegisterClientMsg { user_id, room_id, room_name },
+  );
+  ws::start(session, &req, stream)
 }

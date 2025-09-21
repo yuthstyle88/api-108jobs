@@ -79,16 +79,16 @@ pub async fn create_quotation(
 
   // Create the invoice/billing record with detailed quotation fields
   let billing =
-    WorkflowService::create_quotation(&mut context.pool(), local_user_view.person.id, validated)
+    WorkflowService::create_quotation(&mut context.pool(), local_user_view.local_user.id, validated)
       .await?;
 
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
-    issuer_id: local_user_view.person.id,
+    issuer_id: local_user_view.local_user.id,
     recipient_id: data.employer_id,
     post_id: data.post_id,
     amount: data.amount,
-    status: BillingStatus::QuotePendingReview,
+    status: billing.status,
     delivery_timeframe_days: data.working_days,
     created_at: billing.created_at.to_rfc3339(),
     success: true,
@@ -100,7 +100,7 @@ pub async fn approve_quotation(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let employer_id = local_user_view.local_user.person_id;
+  let employer_id = local_user_view.local_user.id;
 
   // Validate
   let validated: ValidApproveQuotation = match data.into_inner().try_into() {
@@ -351,7 +351,7 @@ pub async fn get_billing_by_comment(
 
   match bill_opt {
     Some(b) => {
-      let pid = local_user_view.local_user.person_id;
+      let pid = local_user_view.local_user.id;
       if b.freelancer_id == pid || b.employer_id == pid {
         Ok(Json(b))
       } else {

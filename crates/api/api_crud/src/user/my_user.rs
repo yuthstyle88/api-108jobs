@@ -37,7 +37,7 @@ pub async fn get_my_user(
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),
     |pool| LocalUserLanguage::read(pool, local_user_id),
-    |pool| WalletView::read_by_user(pool, person_id)
+    |pool| WalletView::read_by_user(pool, local_user_id)
   ))?;
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),

@@ -6,15 +6,16 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 
-use crate::newtypes::{Coin, CoinId, PersonId};
+use crate::newtypes::{Coin, CoinId, LocalUserId};
 use crate::source::coin::CoinModel;
 use crate::source::wallet::{TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{person, wallet, wallet_transaction};
+use lemmy_db_schema_file::schema::{person,local_user, wallet, wallet_transaction};
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+
 
 enum WalletOp {
   #[allow(dead_code)]
@@ -134,12 +135,13 @@ impl WalletModel {
   }
 
   /// Get a wallet by user ID
-  pub async fn get_by_user(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Wallet> {
+  pub async fn get_by_user(pool: &mut DbPool<'_>, local_user_id: LocalUserId) -> FastJobResult<Wallet> {
     let conn = &mut get_conn(pool).await?;
 
     let wallet = person::table
       .inner_join(wallet::table.on(person::wallet_id.eq(wallet::id)))
-      .filter(person::id.eq(person_id))
+      .inner_join(local_user::table.on(person::id.eq(local_user::id)))
+      .filter(local_user::id.eq(local_user_id))
       .select(wallet::all_columns)
       .first::<Wallet>(conn)
       .await

@@ -1,7 +1,7 @@
 use crate::WalletView;
 use diesel::{result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::newtypes::PersonId;
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::wallet::Wallet;
 use lemmy_db_schema::{
   newtypes::WalletId,
@@ -19,8 +19,8 @@ impl WalletView {
     Ok(WalletView { wallet })
   }
 
-  pub async fn read_by_user(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<Wallet> {
-    WalletModel::get_by_user(pool, person_id).await
+  pub async fn read_by_user(pool: &mut DbPool<'_>, local_user_id: LocalUserId) -> FastJobResult<Wallet> {
+    WalletModel::get_by_user(pool, local_user_id).await
   }
 
 }

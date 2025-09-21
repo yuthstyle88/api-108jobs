@@ -1,4 +1,4 @@
-use crate::newtypes::{Coin, LocalUserId, PersonId, WalletId};
+use crate::newtypes::{Coin, LocalUserId, WalletId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -92,7 +92,7 @@ pub struct WalletTransactionInsertForm {
   pub kind: TxKind,
   pub amount: Coin,
   pub description: String,
-  pub counter_user_id: Option<PersonId>,
+  pub counter_user_id: Option<LocalUserId>,
   pub idempotency_key: String,
 }
 
@@ -106,7 +106,7 @@ pub struct WalletTransactionForm {
   pub kind: TxKind,
   pub amount: Coin,
   pub description: String,
-  pub counter_user_id: Option<PersonId>,
+  pub counter_user_id: Option<LocalUserId>,
   pub idempotency_key: String,
 }
 

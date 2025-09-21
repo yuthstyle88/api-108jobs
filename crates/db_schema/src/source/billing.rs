@@ -1,6 +1,4 @@
-use crate::newtypes::{
-  BillingId, Coin, CommentId, DbUrl, PersonId, PostId,
-};
+use crate::newtypes::{BillingId, Coin, CommentId, DbUrl, LocalUserId, PostId};
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 #[cfg(feature = "full")]
@@ -20,9 +18,9 @@ use serde_with::skip_serializing_none;
 pub struct Billing {
   pub id: BillingId,
   /// The freelancer who created this billing
-  pub freelancer_id: PersonId,
+  pub freelancer_id: LocalUserId,
   /// The employer who needs to pay this billing
-  pub employer_id: PersonId,
+  pub employer_id: LocalUserId,
   /// The job post this billing is for
   pub post_id: PostId,
   /// The comment/proposal this billing relates to
@@ -50,8 +48,8 @@ pub struct Billing {
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = billing))]
 pub struct BillingInsertForm {
-  pub freelancer_id: PersonId,
-  pub employer_id: PersonId,
+  pub freelancer_id: LocalUserId,
+  pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: CommentId,
   pub amount: Coin,
@@ -81,8 +79,8 @@ pub struct BillingUpdateForm {
 /// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule issues.
 #[derive(Clone, Default)]
 pub struct BillingFromQuotation {
-  pub freelancer_id: PersonId,
-  pub employer_id: PersonId,
+  pub freelancer_id: LocalUserId,
+  pub employer_id: LocalUserId,
   pub post_id: PostId,
   pub comment_id: CommentId,
   pub amount: Coin,
@@ -102,7 +100,7 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       status: Some(BillingStatus::QuotePendingReview),
       work_description: None,
       deliverable_url: None,
-      created_at: None,
+      created_at: Some(Utc::now()),
     }
   }
 }

@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, PersonId, PostId, WalletId, WorkflowId};
+use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema_file::enums::BillingStatus;
 use lemmy_utils::error::FastJobErrorType;
@@ -12,13 +12,14 @@ use lemmy_db_schema::source::job_budget_plan::JobBudgetPlan;
 #[serde(rename_all = "camelCase")]
 /// Create invoice/quotation for job (freelancer creates detailed proposal).
 pub struct CreateInvoiceForm {
-    pub employer_id: PersonId,
+    pub employer_id: LocalUserId,
     pub post_id: PostId,
     pub comment_id: CommentId,
     pub seq_number: i16,
     pub amount: Coin,
     pub proposal: String,
     pub project_name: String,
+    pub status: BillingStatus,
     #[serde(default)]
     pub project_details: String,
     pub working_days: i32,
@@ -180,8 +181,8 @@ impl TryFrom<RequestRevisionForm> for ValidRequestRevision {
 /// Response for creating an invoice.
 pub struct CreateInvoiceResponse {
     pub billing_id: BillingId,
-    pub issuer_id: PersonId,
-    pub recipient_id: PersonId,
+    pub issuer_id: LocalUserId,
+    pub recipient_id: LocalUserId,
     pub post_id: PostId,
     pub amount: Coin,
     pub status: BillingStatus,

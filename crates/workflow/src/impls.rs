@@ -1,19 +1,19 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CoinId, PersonId, WalletId, WorkflowId, PostId, CommentId};
+use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CoinId, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
+use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
-use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::utils::{get_conn, DbPool};
+use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
 use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use uuid::Uuid;
-use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
 
 // ---------- Typestate payload ----------
 #[derive(Clone, Copy, Debug)]
@@ -283,7 +283,7 @@ async fn create_new_workflow_for_post(
 async fn load_billing_and_check_employer(
   pool: &mut DbPool<'_>,
   billing_id: BillingId,
-  employer_id: PersonId,
+  employer_id: LocalUserId,
 ) -> FastJobResult<Billing> {
   let conn = &mut get_conn(pool).await?;
   let billing = Billing::read(&mut conn.into(), billing_id)
@@ -301,7 +301,7 @@ async fn reserve_to_escrow(
   from_wallet_id: WalletId,
   billing_id: BillingId,
   amount: Coin,
-  employer_id: PersonId,
+  employer_id: LocalUserId,
   reference_type: &str,
   description: String,
 ) -> FastJobResult<()> {
@@ -323,34 +323,6 @@ async fn reserve_to_escrow(
 }
 
 #[allow(dead_code)]
-async fn release_from_escrow_to_freelancer(
-  pool: &mut DbPool<'_>,
-  billing: &Billing,
-  amount: Coin,
-  coin_id: CoinId,
-  reference_type: &str,
-  description: String,
-  platform_wallet_id: WalletId,
-) -> FastJobResult<()> {
-  if amount <= Coin(0) {
-    return Err(FastJobErrorType::InvalidField("amount must be positive".into()).into());
-  }
-  let freelancer_wallet = WalletModel::get_by_user(pool, billing.freelancer_id).await?;
-  let tx_form = WalletTransactionInsertForm {
-    wallet_id: freelancer_wallet.id,
-    reference_type: reference_type.to_string(),
-    reference_id: billing.id.0,
-    kind: TxKind::Transfer, // ใช้ deposit_from_platform ด้านล่าง (escrow -> freelancer)
-    amount,
-    description,
-    counter_user_id: Some(billing.freelancer_id),
-    idempotency_key: Uuid::new_v4().to_string(),
-  };
-  let _ = WalletModel::deposit_from_platform(pool, &tx_form, coin_id, platform_wallet_id).await?;
-  Ok(())
-}
-
-#[allow(dead_code)]
 async fn do_transition(
   pool: &mut DbPool<'_>,
   workflow_id: WorkflowId,
@@ -367,7 +339,7 @@ impl QuotationPendingTS {
   pub async fn approve_on(
     self,
     pool: &mut DbPool<'_>,
-    employer_id: PersonId,
+    employer_id: LocalUserId,
     wallet_id: WalletId,
     billing_id: BillingId,
   ) -> FastJobResult<OrderApprovedTS> {
@@ -533,7 +505,7 @@ impl WorkflowService {
 
   pub async fn create_quotation(
     pool: &mut DbPool<'_>,
-    freelancer_id: PersonId,
+    freelancer_id: LocalUserId,
     form: ValidCreateInvoice,
   ) -> FastJobResult<Billing> {
     let data = form.0.clone();
@@ -549,7 +521,7 @@ impl WorkflowService {
       } else {
         data.proposal.clone()
       },
-      status: None,
+      status: Some(data.status),
       work_description: None,
       deliverable_url: None,
       created_at: Some(Utc::now()),

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::message::RegisterClientMsg;
 use crate::{broker::{FetchHistoryDirect, PhoenixManager}};
 use actix::Addr;
-use actix_web::{web, web::{Data, Query}, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, web::{Data, Query}, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;

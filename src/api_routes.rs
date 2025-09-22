@@ -12,8 +12,8 @@ use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
-  approve_quotation, approve_work, create_quotation, get_billing_by_comment,
-  request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
+  approve_quotation, approve_work, create_quotation, get_billing_by_comment, request_revision,
+  start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
 use lemmy_api::{
   comment::{
@@ -115,6 +115,9 @@ use lemmy_api_crud::{
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
+use lemmy_routes::files::delete::delete_file;
+use lemmy_routes::files::download::get_file;
+use lemmy_routes::files::upload::upload_file;
 use lemmy_routes::images::{
   delete::{
     delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
@@ -270,6 +273,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
+            // upload file
+            .service(
+              scope("/files")
+                .route("", post().to(upload_file))
+                .route("", get().to(get_file))
+                .route("{filename}", delete().to(delete_file)),
+            )
             .service(
               scope("/bank-account")
                 .route("", post().to(create_bank_account))

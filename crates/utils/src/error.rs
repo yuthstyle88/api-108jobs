@@ -313,6 +313,7 @@ pub enum FastJobErrorType {
   CouldntUpdateChatParticipant,
   CouldntListRoomForUser,
   CouldntEnsureParticipant,
+  CouldntDeleteFile,
 }
 
 cfg_if! {

@@ -109,7 +109,6 @@ pub fn check_local_user_deleted(local_user_view: &LocalUserView) -> FastJobResul
     Ok(())
   }
 }
-
 /// Check if the user's multilang is verified if multilang verification is turned on
 /// However, skip checking verification if the user is an admin
 pub fn check_email_verified(

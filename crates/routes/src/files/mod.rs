@@ -2,6 +2,7 @@ use serde::Serialize;
 
 pub mod upload;
 pub mod download;
+pub mod delete;
 
 #[derive(Debug, Serialize)]
 pub struct FileUploadResponse {
@@ -13,5 +14,11 @@ pub struct FileUploadResponse {
 #[derive(Debug)]
 pub struct FilePath {
     pub user_id: i32,
+    pub filename: String,
+}
+
+
+#[derive(serde::Deserialize)]
+pub struct DeleteFileRequest {
     pub filename: String,
 }

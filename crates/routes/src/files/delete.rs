@@ -17,7 +17,7 @@ pub async fn delete_file(
         return Err(FastJobErrorType::InvalidBodyField.into());
     }
 
-    let dir = user_files_dir(local_user_view.person.id.0);
+    let dir = user_files_dir(local_user_view.local_user.id.0);
     let target = dir.join(&filename);
 
     if !target.exists() {

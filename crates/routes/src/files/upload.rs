@@ -36,7 +36,7 @@ pub async fn upload_file(
     let filename = sanitize_filename(&filename);
     let filename = unique_target_filename(&filename);
 
-    let dir = user_files_dir(local_user_view.person.id.0);
+    let dir = user_files_dir(local_user_view.local_user.id.0);
     fs::create_dir_all(&dir).await?;
     let target = dir.join(&filename);
     let mut f = fs::File::create(&target).await?;
@@ -53,7 +53,7 @@ pub async fn upload_file(
       f.write_all(&chunk).await?;
     }
 
-    let url = format!("/api/v4/files/{}/{}", local_user_view.person.id.0, filename);
+    let url = format!("/api/v4/files/{}/{}", local_user_view.local_user.id.0, filename);
     saved = Some(FileUploadResponse {
       filename,
       size,

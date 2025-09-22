@@ -278,7 +278,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/files")
                 .route("", post().to(upload_file))
                 .route("", get().to(get_file))
-                .route("{filename}", delete().to(delete_file)),
+                .route("/{filename}", delete().to(delete_file)),
             )
             .service(
               scope("/bank-account")

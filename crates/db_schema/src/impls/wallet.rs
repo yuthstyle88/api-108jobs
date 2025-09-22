@@ -140,7 +140,7 @@ impl WalletModel {
 
     let wallet = person::table
       .inner_join(wallet::table.on(person::wallet_id.eq(wallet::id)))
-      .inner_join(local_user::table.on(person::id.eq(local_user::id)))
+      .inner_join(local_user::table.on(person::id.eq(local_user::person_id)))
       .filter(local_user::id.eq(local_user_id))
       .select(wallet::all_columns)
       .first::<Wallet>(conn)

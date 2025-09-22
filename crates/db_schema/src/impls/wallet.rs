@@ -67,7 +67,7 @@ impl WalletModel {
       WalletOp::Withdraw => {
         // External debit out of this wallet
         if a < amount || t < amount {
-          return Err(FastJobErrorType::InvalidField("Insufficient balance for withdraw".into()).into());
+          return Err(FastJobErrorType::InsufficientBalanceForWithdraw.into());
         }
         t -= amount;
         a -= amount;
@@ -76,7 +76,7 @@ impl WalletModel {
       WalletOp::TransferOut => {
         // Direct transfer out to another wallet
         if a < amount || t < amount {
-          return Err(FastJobErrorType::InvalidField("Insufficient balance for transfer".into()).into());
+          return Err(FastJobErrorType::InsufficientBalanceForTransfer.into());
         }
         a -= amount;
         t -= amount;
@@ -91,7 +91,7 @@ impl WalletModel {
     }
     // invariants
     if a < 0 || o < 0 || a + o != t {
-      return Err(FastJobErrorType::InvalidField("Wallet invariant violated".into()).into());
+      return Err(FastJobErrorType::WalletInvariantViolated.into());
     }
     Ok((t, a, o))
   }

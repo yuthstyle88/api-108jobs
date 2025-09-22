@@ -314,6 +314,9 @@ pub enum FastJobErrorType {
   CouldntListRoomForUser,
   CouldntEnsureParticipant,
   CouldntDeleteFile,
+    InsufficientBalanceForTransfer,
+  InsufficientBalanceForWithdraw,
+  WalletInvariantViolated,
 }
 
 cfg_if! {

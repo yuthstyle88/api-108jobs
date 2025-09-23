@@ -372,6 +372,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
     tracing::debug!("PHX bridge: outbound_payload={}", content);
 
     tracing::debug!("PHX bridge: issue_async -> WebSocket event={} channel={}", outbound_event, outbound_channel);
+    if event.eq("typing") || event.eq("typing:start") || event.eq("typing:stop") {
+      self.issue_async::<SystemBroker, _>(BridgeMessage {
+        channel: outbound_channel,
+        user_id: msg.user_id.clone(),
+        event: outbound_event.clone(),
+        messages: content.clone(),
+        security_config: false,
+      });
+      return Box::pin(async move {
+        tracing::debug!("PHX bridge: typing event ignored");
+      });
+    }
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       channel: outbound_channel,
       user_id: msg.user_id.clone(),

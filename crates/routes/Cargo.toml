@@ -55,6 +55,8 @@ actix-cors = "0.7.1"
 rand = "0.9.1"
 percent-encoding = "2.3.1"
 moka = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+serde_json = "1.0.140"
 [dev-dependencies]
 pretty_assertions.workspace = true
 serial_test.workspace = true

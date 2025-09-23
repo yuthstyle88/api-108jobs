@@ -8,6 +8,7 @@ use actix_web::{
   App, HttpResponse, HttpServer,
 };
 use clap::{Parser, Subcommand};
+use lemmy_api_utils::site_snapshot::CachedSiteConfigProvider;
 use lemmy_api_utils::{
   context::FastJobContext, request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
@@ -26,6 +27,7 @@ use lemmy_routes::{
     setup_local_site::setup_local_site,
   },
 };
+use lemmy_utils::redis::RedisClient;
 use lemmy_utils::{
   error::FastJobResult,
   rate_limit::RateLimit,
@@ -40,8 +42,6 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use lemmy_api_utils::site_snapshot::CachedSiteConfigProvider;
-use lemmy_utils::redis::RedisClient;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -146,7 +146,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   // Make sure the local site is set up.
   let site_snapshot = setup_local_site(&mut (&pool).into(), &SETTINGS).await?;
 
-  let site_config = CachedSiteConfigProvider::new(pool.clone(), site_snapshot.clone(), SETTINGS.clone());
+  let site_config =
+    CachedSiteConfigProvider::new(pool.clone(), site_snapshot.clone(), SETTINGS.clone());
   // site_config.clone().start_background_refresh(60);
 
   // Set up the rate limiter
@@ -166,7 +167,10 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     .with(TracingMiddleware::default())
     .build();
   let redis_client = RedisClient::new(SETTINGS.redis.clone()).await?;
-  
+  let scb_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
+    .with(TracingMiddleware::default())
+    .build();
+
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -175,6 +179,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     rate_limit_cell,
     redis_client,
     Box::new(site_config),
+    scb_client,
   );
 
   let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone())
@@ -253,7 +258,7 @@ fn create_http_server(
     let rate_limit = context.rate_limit_cell().clone();
 
     let cors_config = cors_config(&settings);
-    
+
     // Create a more efficient middleware stack with optimized ordering
     // - Put frequently used middleware first (compression, CORS)
     // - Group related middleware together
@@ -290,13 +295,14 @@ fn create_http_server(
       .configure(|cfg| api_routes::config(cfg, &rate_limit))
       .configure(feeds::config)
       .configure(nodeinfo::config)
-      .service(
-        scope("/sitemap.xml")
-          .wrap(rate_limit.message()),
-      )
+      .service(scope("/sitemap.xml").wrap(rate_limit.message()))
   })
   // Use number of available CPU cores for optimal performance
-  .workers(std::thread::available_parallelism().map(|p| p.get()).unwrap_or(2))
+  .workers(
+    std::thread::available_parallelism()
+      .map(|p| p.get())
+      .unwrap_or(2),
+  )
   .disable_signals()
   // Limit the number of concurrent connections to prevent too many open files
   // Increased from 1000 to 2000 for better handling of high traffic

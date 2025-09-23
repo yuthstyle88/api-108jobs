@@ -25,6 +25,7 @@ pub struct FastJobContext {
   rate_limit_cell: Arc<RateLimit>,
   redis: Arc<RedisClient>,
   site_config: Arc<dyn SiteConfigProvider + Send + Sync>,
+  scb: Arc<ClientWithMiddleware>
 }
 
 impl FastJobContext {
@@ -36,6 +37,7 @@ impl FastJobContext {
     rate_limit_cell: RateLimit,
     redis: RedisClient,
     site_config: Box<dyn SiteConfigProvider + Send + Sync>,
+    scb: ClientWithMiddleware,
   ) -> FastJobContext {
     FastJobContext {
       // Wrap all fields in Arc to reduce cloning overhead
@@ -46,6 +48,7 @@ impl FastJobContext {
       rate_limit_cell: Arc::new(rate_limit_cell),
       redis: Arc::new(redis),
       site_config: Arc::from(site_config),
+      scb: Arc::new(scb)
     }
   }
   
@@ -93,6 +96,11 @@ impl FastJobContext {
   pub fn site_config(&self) -> &(dyn SiteConfigProvider + Send + Sync) {
     // Return a reference to the SiteView inside the Arc
     self.site_config.as_ref()
+  }
+
+  pub fn scb(&self) -> &ClientWithMiddleware {
+    // Return a reference to the scb inside the Arc
+    &self.scb
   }
 
   #[allow(clippy::expect_used)]

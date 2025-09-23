@@ -130,12 +130,13 @@ use lemmy_routes::images::{
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
+use lemmy_routes::payments::create_qrcode::create_qrcode;
+use lemmy_routes::payments::get_token::generate_scb_token;
 use lemmy_utils::rate_limit::RateLimit;
 use lemmy_ws::handler::{get_history, phoenix_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
-    // .service(resource("/ws").route(get().to(chat_ws)))
     .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
     .service(
       scope("/api/v4")
@@ -430,6 +431,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/health", get().to(pictrs_health))
             .route("/list", get().to(list_all_media))
             .route("/{filename}", get().to(get_image)),
+        )
+        //scb payment
+        .service(
+          scope("/scb")
+            .route("/token", post().to(generate_scb_token))
+            .route("/qrcode/create", post().to(create_qrcode)),
         ),
     );
 }

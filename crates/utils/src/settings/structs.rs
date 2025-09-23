@@ -56,6 +56,7 @@ pub struct Settings {
   pub redis: RedisConfig,
   #[default(1_000_000_000)]
   pub supply_minted_total: i32,
+  pub scb: SCBConfig,
 }
 
 impl Settings {
@@ -198,8 +199,6 @@ pub struct RedisConfig {
   pub redirect_url: String,
 }
 
-
-
 #[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
 #[serde(default, deny_unknown_fields)]
 pub struct SetupConfig {
@@ -228,4 +227,14 @@ pub struct PrometheusConfig {
   #[default(10002)]
   #[doku(example = "10002")]
   pub port: u16,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[serde(default, deny_unknown_fields)]
+pub struct SCBConfig {
+  pub url: String,
+  pub api_key: String,
+  pub api_secret: String,
+  pub merchant_id: String,
+  pub terminal_id: String,
 }

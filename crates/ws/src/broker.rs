@@ -1,5 +1,5 @@
 use crate::{
-  bridge_message::{BridgeMessage},
+  bridge_message::BridgeMessage,
   message::{RegisterClientMsg, StoreChatMessage},
 };
 use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
@@ -308,33 +308,61 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str());
 
     // Parse incoming JSON payload (may be object/array/string). We expect an object for send_message.
-    let incoming_val: serde_json::Value = serde_json::from_str(&message).unwrap_or_else(|_| serde_json::Value::Null);
+    let incoming_val: serde_json::Value =
+      serde_json::from_str(&message).unwrap_or_else(|_| serde_json::Value::Null);
     let obj = match incoming_val {
       serde_json::Value::Object(map) => map,
       _ => serde_json::Map::new(),
     };
 
     // Extract fields with sensible fallbacks
-    let content_text = obj.get("content").and_then(|v| v.as_str()).unwrap_or_else(|| message.as_str());
+    let content_text = obj
+      .get("content")
+      .and_then(|v| v.as_str())
+      .unwrap_or_else(|| message.as_str());
     let room_id_str: String = obj
-      .get("room_id").and_then(|v| v.as_str().map(|s| s.to_string()))
-      .or_else(|| obj.get("roomId").and_then(|v| v.as_str().map(|s| s.to_string())))
+      .get("room_id")
+      .and_then(|v| v.as_str().map(|s| s.to_string()))
+      .or_else(|| {
+        obj
+          .get("roomId")
+          .and_then(|v| v.as_str().map(|s| s.to_string()))
+      })
       .unwrap_or_else(|| chatroom_id.to_string());
     let sender_id_val = obj
-      .get("sender_id").and_then(|v| v.as_i64())
+      .get("sender_id")
+      .and_then(|v| v.as_i64())
       .or_else(|| obj.get("senderId").and_then(|v| v.as_i64()))
       .unwrap_or(user_id.0 as i64);
 
     // Build a flat outbound payload for clients
     let mut outbound_obj = serde_json::Map::new();
-    outbound_obj.insert("content".to_string(), serde_json::Value::String(content_text.to_string()));
-    outbound_obj.insert("room_id".to_string(), serde_json::Value::String(room_id_str.to_string()));
-    outbound_obj.insert("sender_id".to_string(), serde_json::Value::Number(sender_id_val.into()));
-    if let Some(idv) = obj.get("id").cloned() { outbound_obj.insert("id".to_string(), idv); }
-    if let Some(ts) = obj.get("createdAt").cloned().or_else(|| obj.get("created_at").cloned()) {
+    outbound_obj.insert(
+      "content".to_string(),
+      serde_json::Value::String(content_text.to_string()),
+    );
+    outbound_obj.insert(
+      "room_id".to_string(),
+      serde_json::Value::String(room_id_str.to_string()),
+    );
+    outbound_obj.insert(
+      "sender_id".to_string(),
+      serde_json::Value::Number(sender_id_val.into()),
+    );
+    if let Some(idv) = obj.get("id").cloned() {
+      outbound_obj.insert("id".to_string(), idv);
+    }
+    if let Some(ts) = obj
+      .get("createdAt")
+      .cloned()
+      .or_else(|| obj.get("created_at").cloned())
+    {
       outbound_obj.insert("createdAt".to_string(), ts);
     } else {
-      outbound_obj.insert("createdAt".to_string(), serde_json::Value::String(Utc::now().to_rfc3339()));
+      outbound_obj.insert(
+        "createdAt".to_string(),
+        serde_json::Value::String(Utc::now().to_rfc3339()),
+      );
     }
     let outbound_payload = serde_json::Value::Object(outbound_obj);
     let outbound_payload_str = outbound_payload.to_string();
@@ -360,7 +388,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       "history_page" => "history_page",
       // default to chat:message for other app events
       _ => "chat:message",
-    }.to_string();
+    }
+    .to_string();
 
     tracing::debug!(
       "PHX bridge: inbound_event={}, outbound_event={}, channel_name={}, outbound_channel={}",
@@ -371,8 +400,16 @@ impl Handler<BridgeMessage> for PhoenixManager {
     );
     tracing::debug!("PHX bridge: outbound_payload={}", content);
 
-    tracing::debug!("PHX bridge: issue_async -> WebSocket event={} channel={}", outbound_event, outbound_channel);
-    if event.eq("typing") || event.eq("typing:start") || event.eq("typing:stop") {
+    tracing::debug!(
+      "PHX bridge: issue_async -> WebSocket event={} channel={}",
+      outbound_event,
+      outbound_channel
+    );
+    if event.eq("typing")
+      || event.eq("typing:start")
+      || event.eq("typing:stop")
+      || event.eq("phx_leave")
+    {
       self.issue_async::<SystemBroker, _>(BridgeMessage {
         channel: outbound_channel,
         user_id: msg.user_id.clone(),
@@ -405,7 +442,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let phoenix_event = Event::from_string(outbound_event_for_cast.clone());
             let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
 
-            tracing::debug!("PHX cast: event={} status={:?} channel={}", outbound_event_for_cast, status, channel_name);
+            tracing::debug!(
+              "PHX cast: event={} status={:?} channel={}",
+              outbound_event_for_cast,
+              status,
+              channel_name
+            );
 
             if status == ChannelStatus::Joined {
               send_event_to_channel(arc_chan, phoenix_event, payload).await;

@@ -132,6 +132,7 @@ use lemmy_routes::images::{
 };
 use lemmy_routes::payments::create_qrcode::create_qrcode;
 use lemmy_routes::payments::get_token::generate_scb_token;
+use lemmy_routes::payments::inquire::inquire_qrcode;
 use lemmy_utils::rate_limit::RateLimit;
 use lemmy_ws::handler::{get_history, phoenix_ws};
 
@@ -436,7 +437,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/scb")
             .route("/token", post().to(generate_scb_token))
-            .route("/qrcode/create", post().to(create_qrcode)),
+            .route("/qrcode/create", post().to(create_qrcode))
+            .route("/inquire", post().to(inquire_qrcode)),
         ),
     );
 }

@@ -317,6 +317,8 @@ pub enum FastJobErrorType {
     InsufficientBalanceForTransfer,
   InsufficientBalanceForWithdraw,
   WalletInvariantViolated,
+  StillDoNotPayYet,
+  ReturnedNonJSONResponse,
 }
 
 cfg_if! {

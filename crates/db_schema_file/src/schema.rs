@@ -1157,7 +1157,7 @@ diesel::table! {
         freelancer_id -> Int4,
         employer_id -> Int4,
         post_id -> Int4,
-        comment_id -> Int4,
+        comment_id -> Nullable<Int4>,
         amount -> Int4,
         description -> Text,
         status -> BillingStatus,
@@ -1166,6 +1166,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         paid_at -> Nullable<Timestamptz>,
+        room_id -> Varchar,
     }
 }
 
@@ -1276,6 +1277,7 @@ diesel::table! {
         deliverable_url -> Nullable<Text>,
         active -> Bool,
         has_proposed_quote -> Bool,
+        status_before_cancel -> Nullable<WorkFlowStatus>,
     }
 }
 

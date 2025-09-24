@@ -88,6 +88,7 @@ impl Workflow {
       deliverable_url: None,
       active: Some(true),
       has_proposed_quote: None,
+      status_before_cancel: None,
     };
     Self::create(pool, &form).await
   }

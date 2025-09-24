@@ -75,7 +75,6 @@ pub async fn create_quotation(
       return Err(FastJobErrorType::InvalidField(msg).into());
     }
   };
-  let data = validated.0.clone();
 
   // Create the invoice/billing record with detailed quotation fields
   let billing =
@@ -85,11 +84,10 @@ pub async fn create_quotation(
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
     issuer_id: local_user_view.local_user.id,
-    recipient_id: data.employer_id,
-    post_id: data.post_id,
-    amount: data.amount,
+    recipient_id: billing.employer_id,
+    post_id: billing.post_id,
+    amount: billing.amount,
     status: billing.status,
-    delivery_timeframe_days: data.working_days,
     created_at: billing.created_at.to_rfc3339(),
     success: true,
   }))
@@ -326,7 +324,7 @@ pub async fn cancel_job(
   let form = validated.0;
 
   // Perform cancellation (allowed for any non-finalized status)
-  WorkflowService::cancel(&mut context.pool(), form.workflow_id).await?;
+  WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: form.workflow_id.into(),

@@ -32,6 +32,7 @@ pub struct Workflow {
   pub deliverable_url: Option<String>,
   pub active: bool,
   pub has_proposed_quote: bool,
+  pub status_before_cancel: Option<WorkFlowStatus>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -67,6 +68,8 @@ pub struct WorkflowInsertForm {
   pub active: Option<bool>,
   #[new(default)]
   pub has_proposed_quote: Option<bool>,
+  #[new(default)]
+  pub status_before_cancel: Option<Option<WorkFlowStatus>>,
 }
 
 #[derive(Clone, Default)]
@@ -86,6 +89,7 @@ pub struct WorkflowUpdateForm {
   pub deliverable_url: Option<Option<String>>,
   pub active: Option<bool>,
   pub has_proposed_quote: Option<bool>,
+  pub status_before_cancel: Option<Option<WorkFlowStatus>>,
 }
 
 

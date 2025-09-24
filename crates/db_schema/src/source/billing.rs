@@ -1,4 +1,4 @@
-use crate::newtypes::{BillingId, Coin, CommentId, DbUrl, LocalUserId, PostId};
+use crate::newtypes::{BillingId, ChatRoomId, Coin, CommentId, DbUrl, LocalUserId, PostId};
 use chrono::{DateTime, NaiveDate, Utc};
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 #[cfg(feature = "full")]
@@ -24,7 +24,7 @@ pub struct Billing {
   /// The job post this billing is for
   pub post_id: PostId,
   /// The comment/proposal this billing relates to
-  pub comment_id: CommentId,
+  pub comment_id: Option<CommentId>,
   /// Amount to be paid
   pub amount: Coin,
   /// Description of work to be done
@@ -42,6 +42,7 @@ pub struct Billing {
   pub updated_at: Option<DateTime<Utc>>,
   /// When the billing was paid (if paid)
   pub paid_at: Option<DateTime<Utc>>,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -51,7 +52,8 @@ pub struct BillingInsertForm {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: CommentId,
+  #[new(default)]
+  pub comment_id: Option<CommentId>,
   pub amount: Coin,
   pub description: String,
   #[new(default)]
@@ -62,6 +64,7 @@ pub struct BillingInsertForm {
   pub deliverable_url: Option<DbUrl>,
   #[new(default)]
   pub created_at: Option<DateTime<Utc>>,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Clone, Default)]
@@ -82,10 +85,11 @@ pub struct BillingFromQuotation {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: CommentId,
+  pub comment_id: Option<CommentId>,
   pub amount: Coin,
   pub description: String,
   pub delivery_day: NaiveDate,
+  pub room_id: ChatRoomId,
 }
 
 impl From<BillingFromQuotation> for BillingInsertForm {
@@ -101,6 +105,7 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       work_description: None,
       deliverable_url: None,
       created_at: Some(Utc::now()),
+      room_id: v.room_id,
     }
   }
 }

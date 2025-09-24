@@ -89,7 +89,7 @@ pub trait CancelableTS: Sized {
   // Use a boxed Future to avoid mismatched lifetime parameters with ScopedBoxFuture
   async fn cancel_on(self, pool: &mut DbPool<'_>) -> FastJobResult<CancelledTS> {
     // เรียก helper ที่เขียนไว้
-    cancel_any_on(pool, self.workflow_id()).await?;
+    cancel_any_on(pool, self.workflow_id(), Default::default()).await?;
     Ok(CancelledTS {
       data: self.into_flow_data(),
     })
@@ -186,7 +186,7 @@ async fn set_status_from(
 }
 
 #[allow(dead_code)]
-async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJobResult<()> {
+async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_status: WorkFlowStatus) -> FastJobResult<()> {
   let conn = &mut get_conn(pool).await?;
   conn
     .run_transaction(|conn| {
@@ -205,6 +205,7 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
         let form = WorkflowUpdateForm {
           status: Some(WorkFlowStatus::Cancelled),
           updated_at: Some(Some(Utc::now())),
+          status_before_cancel: Some(Some(current_status)),
           ..Default::default()
         };
         let _ = Workflow::update(&mut conn.into(), workflow_id, &form)
@@ -257,6 +258,7 @@ fn build_workflow_insert(
     deliverable_url: None,
     active: Some(true),
     has_proposed_quote: None,
+    status_before_cancel: None,
   }
 }
 
@@ -509,8 +511,8 @@ impl WorkflowService {
     create_new_workflow_for_post(pool, post_id, seq_number, room_id).await
   }
 
-  pub async fn cancel(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJobResult<()> {
-    cancel_any_on(pool, workflow_id).await
+  pub async fn cancel(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_status: WorkFlowStatus) -> FastJobResult<()> {
+    cancel_any_on(pool, workflow_id, current_status).await
   }
 
   pub async fn create_quotation(
@@ -525,6 +527,7 @@ impl WorkflowService {
       employer_id: data.employer_id,
       post_id: data.post_id,
       comment_id: data.comment_id,
+      room_id: data.room_id.clone(),
       amount: data.amount,
       description: if !data.project_details.is_empty() {
         data.project_details.clone()
@@ -538,7 +541,6 @@ impl WorkflowService {
     };
 
     let billing = <Billing as Crud>::create(pool, &insert_billing).await?;
-
     if let Some(current_wf) = Workflow::get_current_by_room_id(pool, data.room_id).await? {
       Workflow::update(
         pool,

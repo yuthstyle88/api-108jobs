@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
 use lemmy_db_schema::source::billing::WorkStep;
-use lemmy_db_schema_file::enums::BillingStatus;
+use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use lemmy_utils::error::FastJobErrorType;
 use serde::{Deserialize, Serialize};
 use lemmy_db_schema::source::job_budget_plan::JobBudgetPlan;
@@ -14,7 +14,7 @@ use lemmy_db_schema::source::job_budget_plan::JobBudgetPlan;
 pub struct CreateInvoiceForm {
     pub employer_id: LocalUserId,
     pub post_id: PostId,
-    pub comment_id: CommentId,
+    pub comment_id: Option<CommentId>,
     pub seq_number: i16,
     pub amount: Coin,
     pub proposal: String,
@@ -187,7 +187,6 @@ pub struct CreateInvoiceResponse {
     pub post_id: PostId,
     pub amount: Coin,
     pub status: BillingStatus,
-    pub delivery_timeframe_days: i32,
     pub created_at: String,
     pub success: bool,
 }
@@ -251,6 +250,7 @@ pub struct CancelJobForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
     pub reason: Option<String>,
+    pub current_status: WorkFlowStatus,
 }
 
 #[derive(Debug, Clone)]

@@ -330,7 +330,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/approve-work", post().to(approve_work))
                 .route("/budget-plan", put().to(update_budget_plan_status))
                 .route("/billing/by-comment", get().to(get_billing_by_comment))
-                .route("cancel-job", post().to(cancel_job)),
+                .route("/cancel-job", post().to(cancel_job)),
             )
             // Account settings import / export have a strict rate limit
             .service(scope("/settings").wrap(rate_limit.import_user_settings()))

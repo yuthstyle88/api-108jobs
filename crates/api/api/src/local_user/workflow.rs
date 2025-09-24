@@ -291,10 +291,8 @@ pub async fn update_budget_plan_status(
 pub async fn start_workflow(
   data: Json<StartWorkflowForm>,
   context: Data<FastJobContext>,
-  local_user_view: LocalUserView,
+  _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
-  let _requester = local_user_view.local_user.id;
-
   // Validate input
   let validated: ValidStartWorkflow = match data.into_inner().try_into() {
     Ok(v) => v,

@@ -31,6 +31,7 @@ pub struct Workflow {
   pub room_id: ChatRoomId,
   pub deliverable_url: Option<String>,
   pub active: bool,
+  pub has_proposed_quote: bool,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -64,6 +65,8 @@ pub struct WorkflowInsertForm {
   pub deliverable_url: Option<Option<String>>,
   #[new(default)]
   pub active: Option<bool>,
+  #[new(default)]
+  pub has_proposed_quote: Option<bool>,
 }
 
 #[derive(Clone, Default)]
@@ -82,6 +85,7 @@ pub struct WorkflowUpdateForm {
   pub room_id: Option<ChatRoomId>,
   pub deliverable_url: Option<Option<String>>,
   pub active: Option<bool>,
+  pub has_proposed_quote: Option<bool>,
 }
 
 

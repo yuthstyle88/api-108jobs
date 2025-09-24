@@ -264,6 +264,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               post().to(resend_verification_email),
             ),
         )
+        .route("/files/{user_id}/{filename}", get().to(get_file))
         .service(
           scope("/account")
             .route("", get().to(get_my_user))
@@ -279,7 +280,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/files")
                 .route("", post().to(upload_file))
-                .route("", get().to(get_file))
                 .route("/{filename}", delete().to(delete_file)),
             )
             .service(

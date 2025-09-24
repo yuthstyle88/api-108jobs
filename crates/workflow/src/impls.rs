@@ -1,6 +1,8 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CoinId, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
+use lemmy_db_schema::newtypes::{
+  BillingId, ChatRoomId, Coin, CoinId, CommentId, LocalUserId, PostId, WalletId, WorkflowId,
+};
 use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
 use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
@@ -160,7 +162,10 @@ async fn set_status_from(
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
         // If workflow finalized, clear the current_comment_id in the related chat room
-        if matches!(desired, WorkFlowStatus::Completed | WorkFlowStatus::Cancelled) {
+        if matches!(
+          desired,
+          WorkFlowStatus::Completed | WorkFlowStatus::Cancelled
+        ) {
           let clr = ChatRoomUpdateForm {
             room_name: None,
             updated_at: Some(Utc::now()),
@@ -230,7 +235,11 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJo
 // สร้างฟอร์ม WorkflowInsertForm แบบ reuse ได้
 #[allow(dead_code)]
 #[inline]
-fn build_workflow_insert(post_id: PostId, seq_number: i16, room_id: lemmy_db_schema::newtypes::ChatRoomId) -> WorkflowInsertForm {
+fn build_workflow_insert(
+  post_id: PostId,
+  seq_number: i16,
+  room_id: ChatRoomId,
+) -> WorkflowInsertForm {
   WorkflowInsertForm {
     post_id,
     seq_number,
@@ -247,6 +256,7 @@ fn build_workflow_insert(post_id: PostId, seq_number: i16, room_id: lemmy_db_sch
     room_id,
     deliverable_url: None,
     active: Some(true),
+    has_proposed_quote: None,
   }
 }
 
@@ -259,23 +269,7 @@ async fn create_new_workflow_for_post(
   seq_number: i16,
   room_id: ChatRoomId,
 ) -> FastJobResult<Workflow> {
-  let insert = WorkflowInsertForm {
-    post_id,
-    seq_number,
-    status: None,
-    revision_required: None,
-    revision_count: None,
-    revision_reason: None,
-    deliverable_version: None,
-    deliverable_submitted_at: None,
-    deliverable_accepted: None,
-    accepted_at: None,
-    created_at: None,
-    updated_at: None,
-    room_id,
-    deliverable_url: None,
-    active: Some(true),
-  };
+  let insert = build_workflow_insert(post_id, seq_number, room_id);
   Workflow::create(pool, &insert).await
 }
 
@@ -416,7 +410,11 @@ impl InProgressTS {
 }
 
 impl WorkSubmittedTS {
-  pub async fn request_revision_on(self, pool: &mut DbPool<'_>, reason: Option<String>) -> FastJobResult<InProgressTS> {
+  pub async fn request_revision_on(
+    self,
+    pool: &mut DbPool<'_>,
+    reason: Option<String>,
+  ) -> FastJobResult<InProgressTS> {
     set_status_from(
       pool,
       self.data.workflow_id,
@@ -424,8 +422,8 @@ impl WorkSubmittedTS {
       WorkFlowStatus::InProgress,
       |cur, form| {
         form.revision_required = Some(true);
-        form.revision_count   = Some(cur.revision_count.saturating_add(1));
-        form.revision_reason  = Some(reason);
+        form.revision_count = Some(cur.revision_count.saturating_add(1));
+        form.revision_reason = Some(reason);
       },
     )
     .await?;
@@ -441,14 +439,20 @@ impl WorkSubmittedTS {
   ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
-    let billing_opt = Billing::get_by_comment_and_status(&mut conn.into(), comment_id, QuotePendingReview)
-      .await
-      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    let billing_opt =
+      Billing::get_by_comment_and_status(&mut conn.into(), comment_id, QuotePendingReview)
+        .await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
     let billing = match billing_opt {
       Some(b) => b,
       None => {
-        return Err(FastJobErrorType::InvalidField("No matching billing found for comment in QuotePendingReview".to_string()).into());
+        return Err(
+          FastJobErrorType::InvalidField(
+            "No matching billing found for comment in QuotePendingReview".to_string(),
+          )
+          .into(),
+        );
       }
     };
 
@@ -493,13 +497,19 @@ impl WorkflowService {
     seq_number: i16,
     room_id: ChatRoomId,
   ) -> FastJobResult<Workflow> {
+    if let Some(current) = Workflow::get_current_by_room_id(pool, room_id.clone()).await? {
+      let update_form = WorkflowUpdateForm {
+        active: Some(false),
+        updated_at: Some(Some(Utc::now())),
+        ..Default::default()
+      };
+      Workflow::update(pool, current.id, &update_form).await?;
+    }
+
     create_new_workflow_for_post(pool, post_id, seq_number, room_id).await
   }
 
-  pub async fn cancel(
-    pool: &mut DbPool<'_>,
-    workflow_id: WorkflowId,
-  ) -> FastJobResult<()> {
+  pub async fn cancel(pool: &mut DbPool<'_>, workflow_id: WorkflowId) -> FastJobResult<()> {
     cancel_any_on(pool, workflow_id).await
   }
 
@@ -527,11 +537,24 @@ impl WorkflowService {
       created_at: Some(Utc::now()),
     };
 
-    let billing = <Billing as Crud>::create(pool, &insert_billing)
+    let billing = <Billing as Crud>::create(pool, &insert_billing).await?;
+
+    if let Some(current_wf) = Workflow::get_current_by_room_id(pool, data.room_id).await? {
+      Workflow::update(
+        pool,
+        current_wf.id,
+        &WorkflowUpdateForm {
+          has_proposed_quote: Some(true),
+          updated_at: Some(Some(Utc::now())),
+          ..Default::default()
+        },
+      )
       .await?;
+    }
 
     Ok(billing)
   }
+
   pub async fn load_quotation_pending(
     pool: &mut DbPool<'_>,
     workflow_id: WorkflowId,
@@ -549,7 +572,7 @@ impl WorkflowService {
         .into(),
       );
     }
-    
+
     let data = FlowData {
       workflow_id: wf.id,
       billing_id: None,

@@ -66,7 +66,7 @@ impl Workflow {
     pool: &mut DbPool<'_>,
     post_id: PostId,
     seq_number: i16,
-    room_id: crate::newtypes::ChatRoomId,
+    room_id: ChatRoomId,
   ) -> FastJobResult<Self> {
     if let Some(w) = Self::get_by_post_id(pool, post_id, seq_number).await? {
       return Ok(w);
@@ -87,6 +87,7 @@ impl Workflow {
       room_id,
       deliverable_url: None,
       active: Some(true),
+      has_proposed_quote: None,
     };
     Self::create(pool, &form).await
   }

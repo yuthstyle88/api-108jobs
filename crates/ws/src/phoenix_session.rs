@@ -107,13 +107,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, topic, event, payload)) = parse_phx(&txt) {
           match event.as_str() {
-            "heartbeat" => ctx.text(phx_reply(&jr, &mr, "phoenix", "ok", serde_json::json!({}))),
+            "heartbeat" => ctx.text(phx_reply(&jr, &mr, "phoenix", "ok", serde_json::json!({"status": "alive"}))),
             "phx_join" => {
               let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
               if let Some(room) = room_opt {
                 self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str());
               }
-              ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({})));
+              ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({"status": "joined", "room": topic})));
               ctx.text(phx_push(&topic, "system:welcome", serde_json::json!({"joined": topic})));
             }
             _ => {

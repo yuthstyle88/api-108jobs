@@ -1275,6 +1275,7 @@ diesel::table! {
         room_id -> Varchar,
         deliverable_url -> Nullable<Text>,
         active -> Bool,
+        has_proposed_quote -> Bool,
     }
 }
 

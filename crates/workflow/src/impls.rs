@@ -10,7 +10,7 @@ use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInse
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::utils::{get_conn, DbPool};
-use lemmy_db_schema_file::enums::BillingStatus::{OrderApproved, QuotePendingReview};
+use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
@@ -266,7 +266,7 @@ fn build_workflow_insert(
   WorkflowInsertForm {
     post_id,
     seq_number,
-    status: Some(WorkFlowStatus::QuotationPending),
+    status: Some(WorkFlowStatus::WaitForFreelancerQuotation),
     revision_required: None,
     revision_count: None,
     revision_reason: None,
@@ -279,7 +279,6 @@ fn build_workflow_insert(
     room_id,
     deliverable_url: None,
     active: Some(true),
-    has_proposed_quote: None,
     status_before_cancel: None,
     billing_id: None,
   }
@@ -583,7 +582,7 @@ impl WorkflowService {
         pool,
         current_wf.id,
         &WorkflowUpdateForm {
-          has_proposed_quote: Some(true),
+          status: Some(WorkFlowStatus::QuotationPending),
           updated_at: Some(Some(Utc::now())),
           ..Default::default()
         },

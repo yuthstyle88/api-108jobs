@@ -75,7 +75,6 @@ impl Workflow {
       room_id: None,
       deliverable_url: None,
       active: None,
-      has_proposed_quote: None,
       status_before_cancel: None,
       billing_id: Some(Some(billing_id)),
     };
@@ -106,7 +105,6 @@ impl Workflow {
       room_id,
       deliverable_url: None,
       active: Some(true),
-      has_proposed_quote: None,
       status_before_cancel: None,
       billing_id: None,
     };

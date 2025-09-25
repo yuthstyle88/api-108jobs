@@ -31,7 +31,6 @@ pub struct Workflow {
   pub room_id: ChatRoomId,
   pub deliverable_url: Option<String>,
   pub active: bool,
-  pub has_proposed_quote: bool,
   pub status_before_cancel: Option<WorkFlowStatus>,
   pub billing_id: Option<BillingId>,
 }
@@ -68,8 +67,6 @@ pub struct WorkflowInsertForm {
   #[new(default)]
   pub active: Option<bool>,
   #[new(default)]
-  pub has_proposed_quote: Option<bool>,
-  #[new(default)]
   pub status_before_cancel: Option<Option<WorkFlowStatus>>,
   #[new(default)]
   pub billing_id: Option<Option<BillingId>>,
@@ -91,7 +88,6 @@ pub struct WorkflowUpdateForm {
   pub room_id: Option<ChatRoomId>,
   pub deliverable_url: Option<Option<String>>,
   pub active: Option<bool>,
-  pub has_proposed_quote: Option<bool>,
   pub status_before_cancel: Option<Option<WorkFlowStatus>>,
   pub billing_id: Option<Option<BillingId>>,
 }

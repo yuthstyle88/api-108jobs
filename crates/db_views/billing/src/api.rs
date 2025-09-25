@@ -31,6 +31,7 @@ pub struct CreateInvoiceForm {
     #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
     pub delivery_day: NaiveDate, // ISO date string (YYYY-MM-DD)
     pub room_id: ChatRoomId,
+    pub workflow_id: WorkflowId,
 }
 
 /// Strongly-typed validated wrapper for CreateInvoice

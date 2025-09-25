@@ -1,1 +1,0 @@
-ALTER TABLE workflow ADD COLUMN IF NOT EXISTS has_proposed_quote boolean NOT NULL DEFAULT false;

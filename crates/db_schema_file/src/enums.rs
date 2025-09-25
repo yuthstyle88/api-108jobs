@@ -292,8 +292,9 @@ pub enum BillingStatus {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 /// The billing status for escrow workflow
 pub enum WorkFlowStatus {
-  /// Quotation created by freelancer, waiting for employer review
   #[default]
+  WaitForFreelancerQuotation,
+  /// Quotation created by freelancer, waiting for employer review
   QuotationPending,
   /// Employer approved quotation, became an order, ready for invoice payment
   OrderApproved,

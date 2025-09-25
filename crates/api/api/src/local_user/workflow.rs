@@ -76,12 +76,12 @@ pub async fn create_quotation(
       return Err(FastJobErrorType::InvalidField(msg).into());
     }
   };
-
+  let workflow_id = validated.0.workflow_id;
   // Create the invoice/billing record with detailed quotation fields
   let billing =
     WorkflowService::create_quotation(&mut context.pool(), local_user_view.local_user.id, validated)
       .await?;
-
+  let _ = Workflow::update_billing(&mut context.pool(), workflow_id, billing.id).await?;
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
     issuer_id: local_user_view.local_user.id,
@@ -108,7 +108,6 @@ pub async fn approve_quotation(
   };
 
   let form = validated.0;
-  let _ = Workflow::update_billing(&mut context.pool(), form.workflow_id, form.billing_id).await?;
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
     .approve_on(
@@ -314,7 +313,7 @@ pub async fn start_workflow(
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.id.into(),
-    status: WorkFlowStatus::QuotationPending,
+    status: WorkFlowStatus::WaitForFreelancerQuotation,
     success: true,
   }))
 }

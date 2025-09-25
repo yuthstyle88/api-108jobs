@@ -1,6 +1,7 @@
 -- Create workflow_status enum with states used by WorkFlowService
 DO $$ BEGIN
   CREATE TYPE workflow_status AS ENUM (
+    'WaitForFreelancerQuotation',
     'QuotationPending',
     'OrderApproved',
     'InProgress',
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS workflow (
   id              SERIAL PRIMARY KEY,
   post_id                   INTEGER NOT NULL REFERENCES post(id) ON DELETE CASCADE,
   seq_number                SMALLINT NOT NULL DEFAULT 1,
-  status                    workflow_status NOT NULL DEFAULT 'QuotationPending',
+  status                    workflow_status NOT NULL DEFAULT 'WaitForFreelancerQuotation',
   revision_required         BOOLEAN NOT NULL DEFAULT FALSE,
   revision_count            SMALLINT NOT NULL DEFAULT 0,
   revision_reason           TEXT NULL,

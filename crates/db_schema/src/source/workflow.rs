@@ -1,4 +1,4 @@
-use crate::newtypes::{ChatRoomId, PostId, WorkflowId};
+use crate::newtypes::{BillingId, ChatRoomId, PostId, WorkflowId};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
@@ -33,6 +33,7 @@ pub struct Workflow {
   pub active: bool,
   pub has_proposed_quote: bool,
   pub status_before_cancel: Option<WorkFlowStatus>,
+  pub billing_id: Option<BillingId>,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -70,6 +71,8 @@ pub struct WorkflowInsertForm {
   pub has_proposed_quote: Option<bool>,
   #[new(default)]
   pub status_before_cancel: Option<Option<WorkFlowStatus>>,
+  #[new(default)]
+  pub billing_id: Option<Option<BillingId>>,
 }
 
 #[derive(Clone, Default)]
@@ -90,6 +93,7 @@ pub struct WorkflowUpdateForm {
   pub active: Option<bool>,
   pub has_proposed_quote: Option<bool>,
   pub status_before_cancel: Option<Option<WorkFlowStatus>>,
+  pub billing_id: Option<Option<BillingId>>,
 }
 
 

@@ -136,6 +136,7 @@ pub struct ApproveWorkForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
     pub room_id: ChatRoomId,
+    pub billing_id: BillingId,
 }
 
 #[derive(Debug, Clone)]

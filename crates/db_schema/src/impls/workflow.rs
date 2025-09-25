@@ -1,4 +1,4 @@
-use crate::newtypes::{ChatRoomId, PostId, WorkflowId};
+use crate::newtypes::{BillingId, ChatRoomId, PostId, WorkflowId};
 #[cfg(feature = "full")]
 use crate::{
   source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
@@ -61,7 +61,26 @@ impl Workflow {
       .optional()
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-
+  pub async fn update_billing(pool: &mut DbPool<'_>, id: WorkflowId, billing_id: BillingId) -> FastJobResult<Self> {
+    let form = WorkflowUpdateForm{
+      status: None,
+      revision_required: None,
+      revision_count: None,
+      revision_reason: None,
+      deliverable_version: None,
+      deliverable_submitted_at: None,
+      deliverable_accepted: None,
+      accepted_at: None,
+      updated_at: None,
+      room_id: None,
+      deliverable_url: None,
+      active: None,
+      has_proposed_quote: None,
+      status_before_cancel: None,
+      billing_id: Some(Some(billing_id)),
+    };
+    Self::update(pool, id, &form).await
+  }
   pub async fn upsert_default(
     pool: &mut DbPool<'_>,
     post_id: PostId,
@@ -89,6 +108,7 @@ impl Workflow {
       active: Some(true),
       has_proposed_quote: None,
       status_before_cancel: None,
+      billing_id: None,
     };
     Self::create(pool, &form).await
   }

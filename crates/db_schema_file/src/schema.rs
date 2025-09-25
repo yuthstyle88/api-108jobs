@@ -1278,6 +1278,7 @@ diesel::table! {
         active -> Bool,
         has_proposed_quote -> Bool,
         status_before_cancel -> Nullable<WorkFlowStatus>,
+        billing_id -> Nullable<Int4>,
     }
 }
 

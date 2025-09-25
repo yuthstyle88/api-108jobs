@@ -106,7 +106,9 @@ pub async fn approve_quotation(
     Ok(v) => v,
     Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
   };
+
   let form = validated.0;
+  let _ = Workflow::update_billing(&mut context.pool(), form.workflow_id, form.billing_id).await?;
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
     .approve_on(
@@ -200,6 +202,7 @@ pub async fn approve_work(
   let workflow_id = form.workflow_id;
   let room_id = ChatRoomId::try_from(form.room_id)
     .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+  let billing_id = form.billing_id;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -215,7 +218,7 @@ pub async fn approve_work(
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
-    .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id, room_id)
+    .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id, billing_id)
     .await?;
 
   Ok(Json(WorkFlowOperationResponse {

@@ -281,6 +281,7 @@ fn build_workflow_insert(
     active: Some(true),
     has_proposed_quote: None,
     status_before_cancel: None,
+    billing_id: None,
   }
 }
 
@@ -459,19 +460,18 @@ impl WorkSubmittedTS {
     pool: &mut DbPool<'_>,
     coin_id: CoinId,
     platform_wallet_id: WalletId,
-    room_id: ChatRoomId,
+    billing_id: BillingId,
   ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
-    let billing_opt =
-      Billing::get_by_room_and_status(&mut conn.into(), room_id, OrderApproved).await?;
+    let billing_opt = Billing::read(&mut conn.into(), billing_id).await;
 
     let billing = match billing_opt {
-      Some(b) => b,
-      None => {
+      Ok(b) => b,
+      Err(_) => {
         return Err(
           FastJobErrorType::InvalidField(
-            "No matching billing found for comment in OrderApproved".to_string(),
+            "No matching billing found ".to_string(),
           )
           .into(),
         );

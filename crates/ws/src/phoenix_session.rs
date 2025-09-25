@@ -4,12 +4,8 @@ use actix_web_actors::ws;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde_json::Value;
 
-use crate::{
-  bridge_message::{BridgeMessage},
-  broker::PhoenixManager,
-  message::RegisterClientMsg,
-};
 use crate::handler::JoinRoomQuery;
+use crate::{bridge_message::BridgeMessage, broker::PhoenixManager, message::RegisterClientMsg};
 
 // ===== helpers =====
 fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String, Value)> {
@@ -26,7 +22,13 @@ fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String,
     a[4].clone(),
   ))
 }
-fn phx_reply(jr: &Option<String>, mr: &Option<String>, topic: &str, status: &str, resp: Value) -> String {
+fn phx_reply(
+  jr: &Option<String>,
+  mr: &Option<String>,
+  topic: &str,
+  status: &str,
+  resp: Value,
+) -> String {
   serde_json::json!([
     jr.clone().unwrap_or_default(),
     mr.clone().unwrap_or_default(),
@@ -59,7 +61,11 @@ impl PhoenixSession {
     }
   }
 
-  fn maybe_encrypt_outbound<'a>(&'a self, _event: &str, messages: &'a str) -> std::borrow::Cow<'a, str> {
+  fn maybe_encrypt_outbound<'a>(
+    &'a self,
+    _event: &str,
+    messages: &'a str,
+  ) -> std::borrow::Cow<'a, str> {
     use std::borrow::Cow;
     Cow::Borrowed(messages)
   }
@@ -77,7 +83,9 @@ impl Actor for PhoenixSession {
     // Register this client/room with the manager (similar to WsSession)
     let user_id = self.client_msg.user_id;
     let room_id = self.client_msg.room_id.clone();
-    self.phoenix_manager.do_send(RegisterClientMsg { user_id,  room_id });
+    self
+      .phoenix_manager
+      .do_send(RegisterClientMsg { user_id, room_id });
   }
 }
 
@@ -91,12 +99,14 @@ impl Handler<BridgeMessage> for PhoenixSession {
     }
 
     // Convert stored JSON string to Value for Phoenix push payload
-    let payload_val: Value = serde_json::from_str(&msg.messages).unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
+    let payload_val: Value = serde_json::from_str(&msg.messages)
+      .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
     let topic = msg.channel.to_string();
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible
-    let payload = serde_json::from_str::<Value>(outbound_payload.as_ref()).unwrap_or_else(|_| serde_json::json!({"message": outbound_payload.as_ref()}));
+    let payload = serde_json::from_str::<Value>(outbound_payload.as_ref())
+      .unwrap_or_else(|_| serde_json::json!({"message": outbound_payload.as_ref()}));
     ctx.text(phx_push(&topic, &msg.event, payload));
   }
 }
@@ -107,15 +117,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, topic, event, payload)) = parse_phx(&txt) {
           match event.as_str() {
-            "heartbeat" => ctx.text(phx_reply(&jr, &mr, "phoenix", "ok", serde_json::json!({"status": "alive"}))),
+            "heartbeat" => ctx.text(phx_reply(
+              &jr,
+              &mr,
+              "phoenix",
+              "ok",
+              serde_json::json!({"status": "alive"}),
+            )),
             "phx_join" => {
               let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
               if let Some(room) = room_opt {
                 self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str())
                   .unwrap_or_else(|_| ChatRoomId(room));
               }
-              ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({"status": "joined", "room": topic})));
-              ctx.text(phx_push(&topic, "system:welcome", serde_json::json!({"joined": topic})));
+              ctx.text(phx_reply(
+                &jr,
+                &mr,
+                &topic,
+                "ok",
+                serde_json::json!({"status": "joined", "room": topic}),
+              ));
+              ctx.text(phx_push(
+                &topic,
+                "system:welcome",
+                serde_json::json!({"joined": topic}),
+              ));
             }
             _ => {
               // Treat any other event as an application event to forward to broker
@@ -131,7 +157,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
                 Some(uid) => uid,
                 None => {
                   // If user_id is missing, reject with error reply and do not forward
-                  ctx.text(phx_reply(&jr, &mr, &topic, "error", serde_json::json!({"reason": "unauthorized"})));
+                  ctx.text(phx_reply(
+                    &jr,
+                    &mr,
+                    &topic,
+                    "error",
+                    serde_json::json!({"reason": "unauthorized"}),
+                  ));
                   return;
                 }
               };

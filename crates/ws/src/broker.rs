@@ -305,8 +305,14 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channels = Arc::clone(&self.channels);
     let message = msg.messages.clone();
 
-    let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str())
-      .unwrap_or_else(|_| ChatRoomId(channel_name.strip_prefix("room:").unwrap_or(&channel_name).to_string()));
+    let chatroom_id = ChatRoomId::from_channel_name(channel_name.as_str()).unwrap_or_else(|_| {
+      ChatRoomId(
+        channel_name
+          .strip_prefix("room:")
+          .unwrap_or(&channel_name)
+          .to_string(),
+      )
+    });
 
     // Parse incoming JSON payload (may be object/array/string). We expect an object for send_message.
     let incoming_val: serde_json::Value =
@@ -382,8 +388,14 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let content = outbound_payload_str.clone();
 
     // Normalize channel from topic ("room:<id>") and map outbound event for clients
-    let outbound_channel = ChatRoomId::from_channel_name(&channel_name)
-      .unwrap_or_else(|_| ChatRoomId(channel_name.strip_prefix("room:").unwrap_or(&channel_name).to_string()));
+    let outbound_channel = ChatRoomId::from_channel_name(&channel_name).unwrap_or_else(|_| {
+      ChatRoomId(
+        channel_name
+          .strip_prefix("room:")
+          .unwrap_or(&channel_name)
+          .to_string(),
+      )
+    });
     let outbound_event = match event.as_str() {
       "send_message" | "SendMessage" => "chat:message",
       // pass through known page events (history flushes)
@@ -411,6 +423,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       || event.eq("typing:start")
       || event.eq("typing:stop")
       || event.eq("phx_leave")
+      || event.eq("update")
+      || event.eq("room:update")
     {
       self.issue_async::<SystemBroker, _>(BridgeMessage {
         channel: outbound_channel,

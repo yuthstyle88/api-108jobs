@@ -215,9 +215,73 @@ impl Display for ChatRoomId {
   }
 }
 
-impl  From<String> for ChatRoomId {
-  fn from(value: String) -> Self {
-    ChatRoomId{ 0: value }
+impl ChatRoomId {
+  /// Remove control and zero-width characters and trim whitespace.
+  fn clean(s: &str) -> String {
+    s.chars()
+      .filter(|&c| {
+        // Remove control chars (U+0000..U+001F, U+007F), and common zero-width (U+200B..U+200F, U+FEFF)
+        !(c.is_control() ||
+          matches!(c,
+            '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{200E}' | '\u{200F}' | '\u{FEFF}'
+          )
+        )
+      })
+      .collect::<String>()
+      .trim()
+      .to_string()
+  }
+
+  /// Extract a `ChatRoomId` from a Phoenix channel name (`room:...`).
+  /// Returns error if not a valid hex or UUID.
+  pub fn from_channel_name(channel: &str) -> Result<Self, &'static str> {
+    let rest = channel.strip_prefix("room:").unwrap_or(channel);
+    let cleaned = Self::clean(rest);
+    if Self::is_valid_id(&cleaned) {
+      Ok(ChatRoomId(cleaned))
+    } else {
+      Err("invalid room id format")
+    }
+  }
+
+  fn is_valid_id(s: &str) -> bool {
+    // Accept hex string of length 16 or UUID
+    let is_hex = s.len() == 16 && s.chars().all(|c| matches!(c, 'a'..='f' | '0'..='9'));
+    let is_uuid = {
+      let parts: Vec<&str> = s.split('-').collect();
+      parts.len() == 5 &&
+        parts[0].len() == 8 &&
+        parts[1].len() == 4 &&
+        parts[2].len() == 4 &&
+        parts[3].len() == 4 &&
+        parts[4].len() == 12 &&
+        s.chars().all(|c| c == '-' || c.is_ascii_hexdigit())
+    };
+    is_hex || is_uuid
+  }
+}
+
+impl std::convert::TryFrom<String> for ChatRoomId {
+  type Error = &'static str;
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    let cleaned = ChatRoomId::clean(&value);
+    if ChatRoomId::is_valid_id(&cleaned) {
+      Ok(ChatRoomId(cleaned))
+    } else {
+      Err("invalid room id format")
+    }
+  }
+}
+
+impl std::convert::TryFrom<&str> for ChatRoomId {
+  type Error = &'static str;
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    let cleaned = ChatRoomId::clean(value);
+    if ChatRoomId::is_valid_id(&cleaned) {
+      Ok(ChatRoomId(cleaned))
+    } else {
+      Err("invalid room id format")
+    }
   }
 }
 
@@ -226,14 +290,6 @@ impl Deref for ChatRoomId {
 
   fn deref(&self) -> &str {
     &self.0
-  }
-}
-
-impl ChatRoomId {
-  /// Extract a `ChatRoomId` from a Phoenix channel name (`room:123`, `room:2:3`, etc).
-  pub fn from_channel_name(channel: &str) -> Self {
-    let rest = channel.strip_prefix("room:").unwrap_or(channel);
-    ChatRoomId(rest.to_string())
   }
 }
 

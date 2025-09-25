@@ -86,7 +86,7 @@ impl Handler<BridgeMessage> for PhoenixSession {
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
     // Forward only Phoenix-sourced messages destined for our room to the Phoenix client
-    if ChatRoomId::from_channel_name(msg.channel.as_ref()) != self.client_msg.room_id {
+    if msg.channel != self.client_msg.room_id {
       return;
     }
 
@@ -111,7 +111,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
             "phx_join" => {
               let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
               if let Some(room) = room_opt {
-                self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str());
+                self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str())
+                  .unwrap_or_else(|_| ChatRoomId(room));
               }
               ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({"status": "joined", "room": topic})));
               ctx.text(phx_push(&topic, "system:welcome", serde_json::json!({"joined": topic})));
@@ -124,7 +125,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               };
 
               // Derive channel from topic (e.g., "room:123")
-              let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str());
+              let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
+                .unwrap_or_else(|_| ChatRoomId(topic.clone()));
               let user_id: LocalUserId = match self.client_msg.user_id {
                 Some(uid) => uid,
                 None => {

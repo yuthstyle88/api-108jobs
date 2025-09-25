@@ -270,4 +270,5 @@ impl TryFrom<CancelJobForm> for ValidCancelJob {
 #[serde(rename_all = "camelCase")]
 pub struct GetBillingByRoomQuery {
     pub room_id: ChatRoomId,
+    pub billing_status: Option<BillingStatus>,
 }

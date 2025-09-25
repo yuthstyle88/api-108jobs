@@ -111,10 +111,11 @@ pub async fn phoenix_ws(
   }
 
   // Try to resolve initial room id from query (topic will refine it on phx_join)
-  let initial_room = params
-    .resolve_room_from_query_or_topic(None)
-    .map(|r| ChatRoomId::from_channel_name(r.as_str()))
-    .unwrap_or_else(|| ChatRoomId("".to_string()));
+  let initial_room = match params.resolve_room_from_query_or_topic(None) {
+    Some(r) => ChatRoomId::from_channel_name(r.as_str())
+      .unwrap_or_else(|_| ChatRoomId(r)),
+    None => ChatRoomId(String::new()),
+  };
 
   let ph_session = PhoenixSession::new(
     phoenix.get_ref().clone(),

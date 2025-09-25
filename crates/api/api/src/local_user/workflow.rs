@@ -2,6 +2,7 @@ use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::billing::Billing;
+use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowUpdateForm};
@@ -197,7 +198,8 @@ pub async fn approve_work(
   };
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  let room_id = form.room_id;
+  let room_id = ChatRoomId::try_from(form.room_id)
+    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -297,11 +299,13 @@ pub async fn start_workflow(
     Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
   };
   let form = validated.0;
+  let room_id = ChatRoomId::try_from(form.room_id)
+    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
   let wf = WorkflowService::start_workflow(
     &mut context.pool(),
     form.post_id,
     form.seq_number,
-    form.room_id,
+    room_id,
   )
   .await?;
 
@@ -340,9 +344,11 @@ pub async fn get_billing_by_room(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Billing>> {
   let mut pool = context.pool();
-  let room_id = query.room_id.clone();
+  let room_id = ChatRoomId::try_from(query.room_id.clone())
+    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+  let billing_status =  query.billing_status.unwrap_or(BillingStatus::QuotePendingReview);
   let bill_opt =
-    Billing::get_by_room_and_status(&mut pool, room_id, BillingStatus::QuotePendingReview)
+    Billing::get_by_room_and_status(&mut pool, room_id, billing_status)
       .await?;
 
   match bill_opt {

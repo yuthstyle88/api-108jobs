@@ -10,7 +10,7 @@ use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInse
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::utils::{get_conn, DbPool};
-use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
+use lemmy_db_schema_file::enums::BillingStatus::{OrderApproved, QuotePendingReview};
 use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
@@ -464,14 +464,14 @@ impl WorkSubmittedTS {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
     let billing_opt =
-      Billing::get_by_room_and_status(&mut conn.into(), room_id, QuotePendingReview).await?;
+      Billing::get_by_room_and_status(&mut conn.into(), room_id, OrderApproved).await?;
 
     let billing = match billing_opt {
       Some(b) => b,
       None => {
         return Err(
           FastJobErrorType::InvalidField(
-            "No matching billing found for comment in QuotePendingReview".to_string(),
+            "No matching billing found for comment in OrderApproved".to_string(),
           )
           .into(),
         );
@@ -532,7 +532,7 @@ impl WorkflowService {
     seq_number: i16,
     room_id: ChatRoomId,
   ) -> FastJobResult<Workflow> {
-    if let Some(current) = Workflow::get_current_by_room_id(pool, room_id.clone()).await? {
+    if let Some(current) = Workflow::get_current_by_room_id(pool, room_id.clone()).await.unwrap_or(None) {
       let update_form = WorkflowUpdateForm {
         active: Some(false),
         updated_at: Some(Some(Utc::now())),

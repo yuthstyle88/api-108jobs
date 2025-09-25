@@ -28,7 +28,7 @@ pub async fn get_chat_room(
   });
 
   // fetch current workflow for this room (exclude completed/cancelled)
-  let workflow = Workflow::get_current_by_room_id(&mut pool, view.room.id.clone()).await?;
+  let workflow = Workflow::get_current_by_room_id(&mut pool, view.room.id.clone()).await.unwrap_or(None);
 
   Ok(Json(ChatRoomResponse {
     room: view,

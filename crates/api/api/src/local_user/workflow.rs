@@ -6,7 +6,7 @@ use lemmy_db_schema::source::billing::WorkStep;
 use lemmy_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_billing::api::{ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse, GetBillingByCommentQuery, RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob, ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork, ValidUpdateBudgetPlanInstallments};
+use lemmy_db_views_billing::api::{ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse, GetBillingByRoomQuery, RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob, ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork, ValidUpdateBudgetPlanInstallments};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use serde_json::json;
@@ -333,16 +333,16 @@ pub async fn cancel_job(
   }))
 }
 
-/// GET billing by comment id where status is QuotePendingReview
-pub async fn get_billing_by_comment(
-  query: Query<GetBillingByCommentQuery>,
+/// GET billing by room id where status is QuotePendingReview
+pub async fn get_billing_by_room(
+  query: Query<GetBillingByRoomQuery>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Billing>> {
   let mut pool = context.pool();
-  let comment_id = query.comment_id;
+  let room_id = query.room_id.clone();
   let bill_opt =
-    Billing::get_by_comment_and_status(&mut pool, comment_id, BillingStatus::QuotePendingReview)
+    Billing::get_by_room_and_status(&mut pool, room_id, BillingStatus::QuotePendingReview)
       .await?;
 
   match bill_opt {

@@ -12,7 +12,7 @@ use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
 use lemmy_api::local_user::workflow::{
-  approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_comment,
+  approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
 use lemmy_api::{
@@ -329,7 +329,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/request-revision", post().to(request_revision))
                 .route("/approve-work", post().to(approve_work))
                 .route("/budget-plan", put().to(update_budget_plan_status))
-                .route("/billing/by-comment", get().to(get_billing_by_comment))
+                .route("/billing/by-room", get().to(get_billing_by_room))
                 .route("/cancel-job", post().to(cancel_job)),
             )
             // Account settings import / export have a strict rate limit

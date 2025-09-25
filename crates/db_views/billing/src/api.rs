@@ -268,6 +268,6 @@ impl TryFrom<CancelJobForm> for ValidCancelJob {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GetBillingByCommentQuery {
-    pub comment_id: CommentId,
+pub struct GetBillingByRoomQuery {
+    pub room_id: ChatRoomId,
 }

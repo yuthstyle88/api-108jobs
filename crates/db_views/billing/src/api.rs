@@ -135,7 +135,7 @@ impl TryFrom<SubmitStartWorkForm> for ValidSubmitStartWork {
 pub struct ApproveWorkForm {
     pub seq_number: i16,
     pub workflow_id: WorkflowId,
-    pub comment_id: CommentId,
+    pub room_id: ChatRoomId,
 }
 
 #[derive(Debug, Clone)]

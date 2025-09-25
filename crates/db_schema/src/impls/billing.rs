@@ -1,3 +1,4 @@
+use diesel::OptionalExtension;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::BillingId,
@@ -54,19 +55,29 @@ impl Billing {
   ) -> FastJobResult<Option<Self>> {
     use diesel::ExpressionMethods;
     let conn = &mut get_conn(pool).await?;
-    let res = billing::table
-      .filter(billing::comment_id.eq(comment_id))
-      .filter(billing::status.eq(status))
-      .first::<Self>(conn)
-      .await;
+    billing::table
+        .filter(billing::comment_id.eq(comment_id))
+        .filter(billing::status.eq(status))
+        .first::<Self>(conn)
+        .await
+        .optional()
+        .with_fastjob_type(FastJobErrorType::DatabaseError)
+  }
 
-    match res {
-      Ok(model) => Ok(Some(model)),
-      Err(diesel::result::Error::NotFound) => Ok(None),
-      Err(_e) => Err(
-        FastJobErrorType::DatabaseError
-          .into(),
-      ),
-    }
+  pub async fn get_by_room_and_status(
+    pool: &mut DbPool<'_>,
+    room_id: crate::newtypes::ChatRoomId,
+    status: BillingStatus,
+  ) -> FastJobResult<Option<Self>> {
+    use diesel::ExpressionMethods;
+    let conn = &mut get_conn(pool).await?;
+    billing::table
+        .filter(billing::room_id.eq(room_id))
+        .filter(billing::status.eq(status))
+        .first::<Self>(conn)
+        .await
+        .optional()
+        .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 }
+

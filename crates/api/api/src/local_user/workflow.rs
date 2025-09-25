@@ -197,7 +197,7 @@ pub async fn approve_work(
   };
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  let comment_id = form.comment_id;
+  let room_id = form.room_id;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
     .clone()
@@ -213,7 +213,7 @@ pub async fn approve_work(
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
-    .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id, comment_id)
+    .approve_work_on(&mut context.pool(), coin_id, platform_wallet_id, room_id)
     .await?;
 
   Ok(Json(WorkFlowOperationResponse {

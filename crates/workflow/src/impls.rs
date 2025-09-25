@@ -1,17 +1,17 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 use lemmy_db_schema::newtypes::{
-  BillingId, ChatRoomId, Coin, CoinId, CommentId, LocalUserId, PostId, WalletId, WorkflowId,
+  BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId,
 };
-use lemmy_db_schema::source::billing::Billing;
 use lemmy_db_schema::source::billing::BillingInsertForm;
+use lemmy_db_schema::source::billing::{Billing, BillingUpdateForm};
 use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_schema::utils::{get_conn, DbPool};
 use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
-use lemmy_db_schema_file::enums::WorkFlowStatus;
+use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use lemmy_db_views_billing::api::ValidCreateInvoice;
 use lemmy_utils::error::FastJobErrorExt2;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -186,7 +186,11 @@ async fn set_status_from(
 }
 
 #[allow(dead_code)]
-async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_status: WorkFlowStatus) -> FastJobResult<()> {
+async fn cancel_any_on(
+  pool: &mut DbPool<'_>,
+  workflow_id: WorkflowId,
+  current_status: WorkFlowStatus,
+) -> FastJobResult<()> {
   let conn = &mut get_conn(pool).await?;
   conn
     .run_transaction(|conn| {
@@ -212,6 +216,24 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_s
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
+        if let Some(billing) = Billing::get_by_room_and_status(
+          &mut conn.into(),
+          cur.room_id.clone(),
+          QuotePendingReview,
+        ).await? {
+          Billing::update(
+            &mut conn.into(),
+            billing.id,
+            &BillingUpdateForm {
+              status: Some(BillingStatus::Canceled),
+              work_description: None,
+              deliverable_url: None,
+              updated_at: None,
+              paid_at: None,
+            },
+          ).await?;
+        }
+
         // Clear current_comment_id on room when cancelling
         let clr = ChatRoomUpdateForm {
           room_name: None,
@@ -219,7 +241,7 @@ async fn cancel_any_on(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_s
           post_id: None,
           current_comment_id: Some(None),
         };
-        let _ = ChatRoom::update(&mut conn.into(), cur.room_id.clone(), &clr)
+        let _ = ChatRoom::update(&mut conn.into(), cur.room_id, &clr)
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
@@ -437,14 +459,12 @@ impl WorkSubmittedTS {
     pool: &mut DbPool<'_>,
     coin_id: CoinId,
     platform_wallet_id: WalletId,
-    comment_id: CommentId,
+    room_id: ChatRoomId,
   ) -> FastJobResult<CompletedTS> {
     // 1) โหลด Billing เพื่อทราบจำนวนเงินและผู้รับ (freelancer)
     let conn = &mut get_conn(pool).await?;
     let billing_opt =
-      Billing::get_by_comment_and_status(&mut conn.into(), comment_id, QuotePendingReview)
-        .await
-        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      Billing::get_by_room_and_status(&mut conn.into(), room_id, QuotePendingReview).await?;
 
     let billing = match billing_opt {
       Some(b) => b,
@@ -457,6 +477,19 @@ impl WorkSubmittedTS {
         );
       }
     };
+
+    Billing::update(
+      &mut conn.into(),
+      billing.id,
+      &BillingUpdateForm {
+        status: Some(BillingStatus::OrderApproved),
+        work_description: None,
+        deliverable_url: None,
+        updated_at: None,
+        paid_at: None,
+      },
+    )
+    .await?;
 
     // 2) ปล่อยเงินจาก escrow ไปยัง freelancer (platform -> freelancer)
     // สมมติว่าคุณมีวิธีหา wallet ของ freelancer เช่น WalletModel::get_by_user
@@ -511,7 +544,11 @@ impl WorkflowService {
     create_new_workflow_for_post(pool, post_id, seq_number, room_id).await
   }
 
-  pub async fn cancel(pool: &mut DbPool<'_>, workflow_id: WorkflowId, current_status: WorkFlowStatus) -> FastJobResult<()> {
+  pub async fn cancel(
+    pool: &mut DbPool<'_>,
+    workflow_id: WorkflowId,
+    current_status: WorkFlowStatus,
+  ) -> FastJobResult<()> {
     cancel_any_on(pool, workflow_id, current_status).await
   }
 

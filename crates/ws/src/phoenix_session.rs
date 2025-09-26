@@ -94,14 +94,14 @@ impl Handler<BridgeMessage> for PhoenixSession {
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
     // Forward only Phoenix-sourced messages destined for our room to the Phoenix client
-    if msg.channel != self.client_msg.room_id {
-      return;
-    }
+    // if msg.channel != self.client_msg.room_id {
+    //   return;
+    // }
 
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val: Value = serde_json::from_str(&msg.messages)
       .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
-    let topic = msg.channel.to_string();
+    let topic = format!("room:{}", msg.channel);
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible
@@ -126,6 +126,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
             )),
             "phx_join" => {
               let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
+              // Normalize reply topic to `room:<id>` for clients
+              let reply_topic = if topic.starts_with("room:") {
+                topic.clone()
+              } else {
+                format!("room:{}", topic)
+              };
               if let Some(room) = room_opt {
                 self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str())
                   .unwrap_or_else(|_| ChatRoomId(room));
@@ -133,14 +139,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               ctx.text(phx_reply(
                 &jr,
                 &mr,
-                &topic,
+                &reply_topic,
                 "ok",
-                serde_json::json!({"status": "joined", "room": topic}),
+                serde_json::json!({"status": "joined", "room": reply_topic}),
               ));
               ctx.text(phx_push(
-                &topic,
+                &reply_topic,
                 "system:welcome",
-                serde_json::json!({"joined": topic}),
+                serde_json::json!({"joined": reply_topic}),
               ));
             }
             _ => {

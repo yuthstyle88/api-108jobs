@@ -330,7 +330,7 @@ async fn reserve_to_escrow(
     wallet_id: from_wallet_id,
     reference_type: reference_type.to_string(),
     reference_id: billing_id.0,
-    kind: TxKind::Transfer, // hold: move user -> platform (escrow)
+    kind: TxKind::Transfer,
     amount,
     description,
     counter_user_id: Some(employer_id),

@@ -199,8 +199,8 @@ pub async fn approve_work(
   };
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  let room_id = ChatRoomId::try_from(form.room_id)
-    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+  ChatRoomId::try_from(form.room_id)
+      .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
   let billing_id = form.billing_id;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view

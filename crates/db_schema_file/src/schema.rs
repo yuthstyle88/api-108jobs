@@ -257,6 +257,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    last_reads (user_id, room_id) {
+        user_id -> Int4,
+        room_id -> Varchar,
+        last_read_msg_id -> Int4,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::CommunityVisibility;
     use diesel_ltree::sql_types::Ltree;
@@ -1435,6 +1444,9 @@ diesel::joinable!(tag -> community (community_id));
 diesel::joinable!(skills -> person (person_id));
 diesel::joinable!(certificates -> person (person_id));
 diesel::joinable!(user_review -> workflow (workflow_id));
+diesel::joinable!(last_reads -> local_user (user_id));
+diesel::joinable!(last_reads -> chat_room (room_id));
+diesel::joinable!(last_reads -> chat_message (last_read_msg_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,

@@ -43,3 +43,4 @@ pub mod workflow;
 pub mod job_budget_plan;
 pub mod chat_participant;
 pub mod user_review;
+pub mod last_read;

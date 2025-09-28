@@ -17,13 +17,13 @@ use lemmy_db_schema_file::schema::{person,local_user, wallet, wallet_transaction
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 
-enum WalletOp {
-  #[allow(dead_code)]
-  Deposit,
-  #[allow(dead_code)]
-  Withdraw,
+/// Internal enum for modeling balance mutations only (not transaction kinds).
+enum BalanceOp {
   TransferOut, // available -= amount; total -= amount (direct transfer out)
   TransferIn,  // available += amount; total += amount (direct transfer in)
+  Reserve,     // available -= amount; outstanding += amount
+  Release,     // outstanding -= amount; available += amount
+  Capture,     // outstanding -= amount; total -= amount
 }
 
 impl WalletModel {
@@ -50,30 +50,14 @@ impl WalletModel {
     Ok(w)
   }
 
-  /// Compute new balances for an operation. Returns (total, available, outstanding)
-  fn compute_new_balances(w: &Wallet, op: &WalletOp, amount: Coin) -> FastJobResult<(Coin, Coin, Coin)> {
+  /// Compute new balances for a balance operation. Returns (total, available, outstanding)
+  fn compute_new_balances(w: &Wallet, op: &BalanceOp, amount: Coin) -> FastJobResult<(Coin, Coin, Coin)> {
     if amount <= 0 {
       return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into());
     }
-    let (mut t, mut a, o) = (w.balance_total, w.balance_available, w.balance_outstanding);
+    let (mut t, mut a, mut o) = (w.balance_total, w.balance_available, w.balance_outstanding);
     match op {
-      WalletOp::Deposit => {
-        // External credit into this wallet (used only by legacy paths). For platform-backed
-        // flows we use `deposit_from_platform`, which pairs two journals and moves funds.
-        t += amount;
-        a += amount;
-        // outstanding unchanged
-      }
-      WalletOp::Withdraw => {
-        // External debit out of this wallet
-        if a < amount || t < amount {
-          return Err(FastJobErrorType::InsufficientBalanceForWithdraw.into());
-        }
-        t -= amount;
-        a -= amount;
-        // outstanding unchanged
-      }
-      WalletOp::TransferOut => {
+      BalanceOp::TransferOut => {
         // Direct transfer out to another wallet
         if a < amount || t < amount {
           return Err(FastJobErrorType::InsufficientBalanceForTransfer.into());
@@ -82,11 +66,35 @@ impl WalletModel {
         t -= amount;
         // outstanding unchanged
       }
-      WalletOp::TransferIn => {
+      BalanceOp::TransferIn => {
         // Direct transfer in from another wallet
         a += amount;
         t += amount;
         // outstanding unchanged
+      }
+      BalanceOp::Reserve => {
+        // Hold funds: available -= amount; outstanding += amount; total unchanged
+        if a < amount {
+          return Err(FastJobErrorType::InsufficientBalanceForTransfer.into());
+        }
+        a -= amount;
+        o += amount;
+      }
+      BalanceOp::Release => {
+        // Cancel hold: outstanding -= amount; available += amount; total unchanged
+        if o < amount {
+          return Err(FastJobErrorType::InvalidField("Release exceeds outstanding".into()).into());
+        }
+        o -= amount;
+        a += amount;
+      }
+      BalanceOp::Capture => {
+        // Finalize hold: outstanding -= amount; total -= amount; available unchanged
+        if o < amount || t < amount {
+          return Err(FastJobErrorType::InvalidField("Capture exceeds outstanding/total".into()).into());
+        }
+        o -= amount;
+        t -= amount;
       }
     }
     // invariants
@@ -96,19 +104,17 @@ impl WalletModel {
     Ok((t, a, o))
   }
 
-  /// Apply an operation using WalletUpdateForm as the single source of truth
+  /// Apply a balance operation using WalletUpdateForm as the single source of truth
   async fn apply_op_on(
     conn: &mut diesel_async::AsyncPgConnection,
     id: WalletId,
-    op: WalletOp,
+    op: BalanceOp,
     amount: Coin,
   ) -> FastJobResult<Wallet> {
     // 1) Lock current row
     let current = Self::load_for_update(conn, id).await?;
-
     // 2) Compute next balances for this op
     let (t, a, o) = Self::compute_new_balances(&current, &op, amount)?;
-
     // 3) Persist
     let form = WalletUpdateForm {
       balance_total: Some(t),
@@ -117,12 +123,10 @@ impl WalletModel {
       is_platform: None,
       updated_at: Some(Utc::now()),
     };
-
     let w = diesel::update(wallet::table.find(id))
       .set(&form)
       .get_result::<Wallet>(conn)
       .await?;
-
     Ok(w)
   }
 
@@ -161,15 +165,33 @@ impl WalletModel {
     // Façade kept for compatibility; forwards to appropriate handler and returns the updated user wallet.
     let w = match form.kind {
       TxKind::Deposit => {
+        // Credit user wallet using platform escrow (mirrored journals)
         Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Withdraw => {
+        // Debit user wallet to platform escrow (mirrored journals)
         Self::withdraw_to_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Transfer => {
         return Err(FastJobErrorType::InvalidField(
           "Transfer requires two forms; use transfer_between_wallets with outgoing and incoming entries sharing the same idempotency_key".into(),
         ).into());
+      }
+      TxKind::Reserve => {
+        // Move available -> outstanding within the same wallet
+        Self::reserve(pool, form).await?
+      }
+      TxKind::Release => {
+        // Move outstanding -> available within the same wallet
+        Self::release(pool, form).await?
+      }
+      TxKind::Capture => {
+        // Finalize: outstanding -> settled (total decreases)
+        Self::capture(pool, form).await?
+      }
+      TxKind::Refund => {
+        // Refund back to user: treat as a credit from platform escrow
+        Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await?
       }
     };
     Ok(w)
@@ -274,6 +296,79 @@ impl WalletModel {
     let conn = &mut get_conn(pool).await?;
     let updated = Self::load_for_update(conn, form_out.wallet_id).await?;
     Ok(updated)
+  }
+
+  /// Reserve funds inside the same wallet (three-balance model): a -= amt; o += amt
+  /// Journal with the provided form (e.g., kind=Transfer + your description/idempotency).
+  pub async fn reserve(
+    pool: &mut DbPool<'_>,
+    form: &WalletTransactionInsertForm,
+  ) -> FastJobResult<Wallet> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+
+    let conn = &mut get_conn(pool).await?;
+    let w = conn
+      .run_transaction(|conn| {
+        async move {
+          // apply state change
+          let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Reserve, amount).await?;
+          // journal single-side entry
+          let _ = Self::insert_wallet_tx(conn, form).await?;
+          // return updated wallet
+          let w = Self::load_for_update(conn, form.wallet_id).await?;
+          Ok::<_, lemmy_utils::error::FastJobError>(w)
+        }
+        .scope_boxed()
+      })
+      .await?;
+    Ok(w)
+  }
+
+  /// Release previously reserved funds: o -= amt; a += amt
+  pub async fn release(
+    pool: &mut DbPool<'_>,
+    form: &WalletTransactionInsertForm,
+  ) -> FastJobResult<Wallet> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+
+    let conn = &mut get_conn(pool).await?;
+    let w = conn
+      .run_transaction(|conn| {
+        async move {
+          let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Release, amount).await?;
+          let _ = Self::insert_wallet_tx(conn, form).await?;
+          let w = Self::load_for_update(conn, form.wallet_id).await?;
+          Ok::<_, lemmy_utils::error::FastJobError>(w)
+        }
+        .scope_boxed()
+      })
+      .await?;
+    Ok(w)
+  }
+
+  /// Capture part/all of the reserved funds: o -= amt; t -= amt (final debit)
+  pub async fn capture(
+    pool: &mut DbPool<'_>,
+    form: &WalletTransactionInsertForm,
+  ) -> FastJobResult<Wallet> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+
+    let conn = &mut get_conn(pool).await?;
+    let w = conn
+      .run_transaction(|conn| {
+        async move {
+          let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Capture, amount).await?;
+          let _ = Self::insert_wallet_tx(conn, form).await?;
+          let w = Self::load_for_update(conn, form.wallet_id).await?;
+          Ok::<_, lemmy_utils::error::FastJobError>(w)
+        }
+        .scope_boxed()
+      })
+      .await?;
+    Ok(w)
   }
 
   /// Insert a wallet transaction row, pair-friendly, reference-based.
@@ -418,8 +513,8 @@ impl WalletModel {
     }
 
     // Direct transfer: decrease from.available & from.total; increase to.available & to.total
-    let _ = Self::apply_op_on(conn, from_wallet, WalletOp::TransferOut, amount).await?;
-    let _ = Self::apply_op_on(conn, to_wallet,   WalletOp::TransferIn,  amount).await?;
+    let _ = Self::apply_op_on(conn, from_wallet, BalanceOp::TransferOut, amount).await?;
+    let _ = Self::apply_op_on(conn, to_wallet,   BalanceOp::TransferIn,  amount).await?;
     Ok(())
   }
 }

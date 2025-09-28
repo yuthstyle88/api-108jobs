@@ -323,4 +323,8 @@ pub enum TxKind {
   Deposit,
   Withdraw,
   Transfer,
+  Reserve,  // move funds from available -> outstanding (hold)
+  Release,  // move funds from outstanding -> available (cancel hold)
+  Capture,  // finalize: outstanding -> settled (total decreases)
+  Refund,   // return funds to payer after cancellation/adjustment
 }

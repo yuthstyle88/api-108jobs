@@ -20,7 +20,7 @@ pub async fn get_chat_room(
   let view = ChatRoomView::read(&mut pool, room_id.clone()).await?;
 
   // fetch last message for this room
-  let last_message_opt = ChatMessage::last_by_room(&mut pool, view.room.id.clone()).await?;
+  let last_message_opt = ChatMessage::last_by_room(&mut pool, view.room.id.clone()).await.unwrap_or(None);
   let last_message = last_message_opt.map(|m| LastMessage {
     content: m.content,
     timestamp: m.created_at.to_rfc3339(),

@@ -319,6 +319,7 @@ pub enum FastJobErrorType {
   WalletInvariantViolated,
   StillDoNotPayYet,
   ReturnedNonJSONResponse,
+    CouldntSaveLastRead,
 }
 
 cfg_if! {

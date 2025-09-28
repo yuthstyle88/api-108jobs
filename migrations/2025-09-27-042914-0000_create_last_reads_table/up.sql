@@ -1,11 +1,14 @@
 CREATE TABLE last_reads
 (
-    user_id          int         NOT NULL REFERENCES local_user
+    local_user_id    int     NOT NULL REFERENCES local_user
         ON UPDATE CASCADE ON DELETE CASCADE,
-    room_id          varchar     NOT NULL REFERENCES chat_room
+    room_id          varchar NOT NULL REFERENCES chat_room
         ON UPDATE CASCADE ON DELETE CASCADE,
-    last_read_msg_id int         NOT NULL REFERENCES local_user
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    updated_at       timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (user_id, room_id)
+    last_read_msg_id varchar NOT NULL CHECK (char_length(last_read_msg_id) > 0),
+    updated_at       timestamptz,
+    PRIMARY KEY (local_user_id, room_id)
 );
+
+-- Optional: index for faster lookups by last_read_msg_id
+CREATE INDEX IF NOT EXISTS idx_last_reads_last_read_msg_id
+  ON last_reads (last_read_msg_id);

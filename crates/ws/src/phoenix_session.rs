@@ -173,7 +173,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
                   return;
                 }
               };
-
               let bridge_msg = BridgeMessage {
                 // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
                 channel,

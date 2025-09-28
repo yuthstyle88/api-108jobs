@@ -13,6 +13,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct ChatMessage {
   pub id: ChatMessageId,
+  pub msg_ref_id: String,
   pub room_id: ChatRoomId,
   pub sender_id: LocalUserId,
   pub content: String,
@@ -28,6 +29,7 @@ pub struct ChatMessage {
 )]
 #[cfg_attr(feature = "full", diesel(table_name = chat_message))]
 pub struct ChatMessageInsertForm {
+  pub msg_ref_id: String,
   pub room_id: ChatRoomId,
   pub sender_id: LocalUserId,
   pub content: String,

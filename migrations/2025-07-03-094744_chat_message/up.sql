@@ -1,6 +1,7 @@
 CREATE TABLE chat_message
 (
     id         serial PRIMARY KEY,
+    msg_ref_id varchar     NOT NULL,
     room_id    varchar     NOT NULL REFERENCES chat_room
         ON UPDATE CASCADE ON DELETE CASCADE,
     sender_id  int         NOT NULL REFERENCES local_user
@@ -11,5 +12,8 @@ CREATE TABLE chat_message
     updated_at timestamptz
 );
 
-CREATE INDEX idx_chat_message_id ON chat_message (id);
+-- ไม่ต้องสร้าง index ซ้ำกับ UNIQUE
+ALTER TABLE chat_message
+    ADD CONSTRAINT chat_message_msg_ref_id_unique UNIQUE (msg_ref_id);
+
 CREATE INDEX idx_chat_message_room_id ON chat_message (room_id);

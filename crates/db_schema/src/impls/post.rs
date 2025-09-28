@@ -876,8 +876,7 @@ mod tests {
     let comment_form = CommentInsertForm::new(
       inserted_person.id,
       inserted_post.id,
-      "A test comment".into(),
-      DbUrl::try_from("https://example.com/comment-soft").unwrap(),
+      "A test comment".into()
     );
 
     let inserted_comment = Comment::create(pool, &comment_form).await?;

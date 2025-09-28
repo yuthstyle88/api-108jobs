@@ -247,6 +247,7 @@ diesel::table! {
 diesel::table! {
     chat_message (id) {
         id -> Int4,
+        msg_ref_id -> Varchar,
         room_id -> Varchar,
         sender_id -> Int4,
         content -> Text,
@@ -257,11 +258,11 @@ diesel::table! {
 }
 
 diesel::table! {
-    last_reads (user_id, room_id) {
-        user_id -> Int4,
+    last_reads (local_user_id, room_id) {
+        local_user_id -> Int4,
         room_id -> Varchar,
-        last_read_msg_id -> Int4,
-        updated_at -> Timestamptz,
+        last_read_msg_id -> Varchar,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1444,9 +1445,8 @@ diesel::joinable!(tag -> community (community_id));
 diesel::joinable!(skills -> person (person_id));
 diesel::joinable!(certificates -> person (person_id));
 diesel::joinable!(user_review -> workflow (workflow_id));
-diesel::joinable!(last_reads -> local_user (user_id));
+diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
-diesel::joinable!(last_reads -> chat_message (last_read_msg_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,

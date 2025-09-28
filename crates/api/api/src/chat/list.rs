@@ -43,7 +43,7 @@ pub async fn list_chat_rooms(
   for room in rooms {
     let parts = grouped.remove(&room.id.to_string()).unwrap_or_default();
 
-    let last_message_opt = ChatMessage::last_by_room(&mut pool, room.id.clone()).await?;
+    let last_message_opt = ChatMessage::last_by_room(&mut pool, room.id.clone()).await.unwrap_or(None);
     let last_message = last_message_opt.map(|m| LastMessage {
       content: m.content,
       timestamp: m.created_at.to_rfc3339(),

@@ -1,5 +1,5 @@
 use crate::message::StoreChatMessage;
-use actix::{Actor, AsyncContext, Context, Handler, Message};
+use actix::{Actor, AsyncContext, Context, Handler, Message, Arbiter};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
   newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId, PaginationCursor},
@@ -193,7 +193,7 @@ impl PhoenixManager {
     let channels = Arc::clone(&self.channels);
     let channel_name = format!("room:{}", outbound_channel);
     let outbound_event_for_cast = outbound_event.clone();
-    actix::spawn(async move {
+    Arbiter::current().spawn(async move {
       if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
         if let Ok(status) = arc_chan.statuses().status().await {
           let phoenix_event = Event::from_string(outbound_event_for_cast);

@@ -29,7 +29,7 @@ pub struct ChatMessage {
 )]
 #[cfg_attr(feature = "full", diesel(table_name = chat_message))]
 pub struct ChatMessageInsertForm {
-  pub msg_ref_id: String,
+  pub msg_ref_id: Option<String>,
   pub room_id: ChatRoomId,
   pub sender_id: LocalUserId,
   pub content: String,

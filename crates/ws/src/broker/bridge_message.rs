@@ -1,15 +1,28 @@
 use crate::bridge_message::BridgeMessage;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use actix::{Context, Handler, ResponseFuture};
+use actix::{AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::newtypes::ChatRoomId;
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
 use crate::broker::presence::GetOnlineUsers;
+
+#[derive(Message, Clone)]
+#[rtype(result = "()")]
+struct DoEphemeralBroadcast {
+  outbound_channel: ChatRoomId,
+  local_user_id: LocalUserId,
+  event: String,
+  content: String,
+  chatroom_id: ChatRoomId,
+  store_msg: ChatMessageInsertForm,
+}
+
 impl PhoenixManager {
   #[inline]
   pub(crate) async fn has_other_online(&self, sender_local_user_id: i32) -> bool {
@@ -20,10 +33,32 @@ impl PhoenixManager {
     }
 }
 
+impl Handler<DoEphemeralBroadcast> for PhoenixManager {
+  type Result = ();
+  fn handle(&mut self, msg: DoEphemeralBroadcast, _ctx: &mut Context<Self>) -> Self::Result {
+    // Re-broadcast over broker / websocket
+    self.issue_async::<SystemBroker, _>(BridgeMessage {
+      channel: msg.outbound_channel,
+      local_user_id: msg.local_user_id,
+      event: msg.event.clone(),
+      messages: msg.content,
+      security_config: false,
+    });
+    // Persist if the event is a message-type (already mapped before call if needed)
+    //
+    if matches!(msg.event.as_str(), "chat:message") {
+      let msg_ref_id = msg.store_msg.msg_ref_id.clone();
+      if let Some(_) = msg_ref_id {
+        self.add_messages_to_room(msg.chatroom_id, msg.store_msg);
+      }
+    }
+  }
+}
+
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
     // Process only messages coming from Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
 
     let channel_name = msg.channel.to_string();
@@ -64,8 +99,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
     // Extract fields with sensible fallbacks
     let msg_ref_id = obj
       .get("id")
-      .and_then(|v| v.as_str())
-      .unwrap_or_else(|| message.as_str());
+      .and_then(|v| Option::from(v.to_string()));
     let content_text = obj
       .get("content")
       .and_then(|v| v.as_str())
@@ -119,7 +153,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
     // Store only plain text content to DB
     let store_msg = ChatMessageInsertForm {
-      msg_ref_id: msg_ref_id.to_string(),
+      msg_ref_id,
       room_id: chatroom_id.clone(),
       sender_id: user_id,
       content: content_text.to_string(),
@@ -172,12 +206,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
       || event.eq("SendMessage")
       || event.eq("room:update")
     {
-      // Run the presence check asynchronously since has_other_online is async.
+      // Run the presence check asynchronously; then hand off work back to the actor context
       let outbound_event_cloned = outbound_event.clone();
       let outbound_channel_cloned = outbound_channel.clone();
       let content_cloned = content.clone();
       let local_user_id_cloned = msg.local_user_id.clone();
-      let mut this = self.clone();
+      let chatroom_id_cloned = chatroom_id.clone();
+      let store_msg_moved = store_msg; // move into async block
+      let addr = ctx.address();
+      let this = self.clone();
 
       return Box::pin(async move {
         let others_online = this.has_other_online(local_user_id_cloned.0).await;
@@ -189,17 +226,14 @@ impl Handler<BridgeMessage> for PhoenixManager {
           tracing::debug!("PHX bridge: skipped due to no online counterpart");
           return;
         }
-        this.issue_async::<SystemBroker, _>(BridgeMessage {
-          channel: outbound_channel_cloned,
+        addr.do_send(DoEphemeralBroadcast {
+          outbound_channel: outbound_channel_cloned,
           local_user_id: local_user_id_cloned,
-          event: outbound_event_cloned.clone(),
-          messages: content_cloned,
-          security_config: false,
+          event: outbound_event_cloned,
+          content: content_cloned,
+          chatroom_id: chatroom_id_cloned,
+          store_msg: store_msg_moved,
         });
-        if matches!(event.as_str(), "send_message" | "SendMessage") {
-          this.add_messages_to_room(chatroom_id.clone(), store_msg);
-        }
-        tracing::debug!("PHX bridge: typing event ignored");
       });
     }
     // // Clone mapped event for async move block

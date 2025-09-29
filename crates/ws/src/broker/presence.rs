@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineJoin {
     /// Unique user identifier.
-    pub user_id: i32,
+    pub local_user_id: i32,
     /// When we detected they came online (server time).
     pub started_at: DateTime<Utc>,
 }
@@ -207,8 +207,8 @@ impl Handler<OnlineJoin> for PresenceManager {
     type Result = ();
 
     fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Self::Context) -> Self::Result {
-        self.mark_online(msg.user_id);
-        self.last_seen.insert(msg.user_id, msg.started_at);
+        self.mark_online(msg.local_user_id);
+        self.last_seen.insert(msg.local_user_id, msg.started_at);
         self.publish("presence", "online_join", &msg);
     }
 }
@@ -243,7 +243,7 @@ impl Handler<Heartbeat> for PresenceManager {
         if !self.online_users.contains(&msg.local_user_id) {
             self.mark_online(msg.local_user_id);
             let join = OnlineJoin {
-                user_id: msg.local_user_id,
+                local_user_id: msg.local_user_id,
                 started_at: now,
             };
             self.publish("presence", "online_join", &join);

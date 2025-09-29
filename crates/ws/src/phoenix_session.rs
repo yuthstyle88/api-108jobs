@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::handler::JoinRoomQuery;
 use crate::{bridge_message::BridgeMessage, message::RegisterClientMsg};
-use crate::broker::presence::{PresenceManager, OnlineJoin, OnlineLeave};
+use crate::broker::presence::{PresenceManager, OnlineJoin, OnlineLeave, Heartbeat};
 use crate::broker::phoenix_manager::PhoenixManager;
 
 // ===== helpers =====
@@ -95,7 +95,7 @@ impl Actor for PhoenixSession {
     // Notify presence directly (method #1): only if we know user_id
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineJoin {
-        user_id: uid.0,
+        local_user_id: uid.0,
         started_at: Utc::now(),
       });
     }
@@ -103,7 +103,7 @@ impl Actor for PhoenixSession {
 
   fn stopped(&mut self, _ctx: &mut Self::Context) {
     let local_user_id = self.client_msg.local_user_id;
-  
+
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineLeave {
         local_user_id: uid.0,
@@ -141,13 +141,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, topic, event, payload)) = parse_phx(&txt) {
           match event.as_str() {
-            "heartbeat" => ctx.text(phx_reply(
-              &jr,
-              &mr,
-              "phoenix",
-              "ok",
-              serde_json::json!({"status": "alive"}),
-            )),
+            "heartbeat" => {
+              // Forward heartbeat to Presence so last_seen is refreshed
+              if let Some(uid) = self.client_msg.local_user_id {
+                tracing::debug!("Received heartbeat from user {}", uid.0);
+                self.presence_manager.do_send(Heartbeat {
+                  local_user_id: uid.0,
+                  client_time: Some(Utc::now()),
+                });
+              }
+              ctx.text(phx_reply(
+                &jr,
+                &mr,
+                "phoenix",
+                "ok",
+                serde_json::json!({"status": "alive"}),
+              ));
+            }
             "phx_join" => {
               let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
               // Normalize reply topic to `room:<id>` for clients

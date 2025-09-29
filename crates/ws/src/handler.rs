@@ -10,7 +10,7 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use serde::Deserialize;
 use lemmy_db_views_local_user::LocalUserView;
 use crate::broker::phoenix_manager::{FetchHistoryDirect, PhoenixManager};
-use crate::broker::presence::PresenceManager;
+use crate::broker::presence_manager::PresenceManager;
 use crate::phoenix_session::PhoenixSession;
 
 #[derive(Debug, Deserialize)]

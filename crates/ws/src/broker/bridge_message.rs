@@ -10,7 +10,7 @@ use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
-use crate::broker::presence::GetOnlineUsers;
+use crate::broker::presence_manager::GetOnlineUsers;
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]

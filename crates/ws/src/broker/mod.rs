@@ -5,5 +5,6 @@ mod get_last_read;
 mod helper;
 mod init_socket;
 pub mod phoenix_manager;
-pub mod presence;
+// pub mod presence;
 mod register_client_msg;
+pub mod presence_manager;

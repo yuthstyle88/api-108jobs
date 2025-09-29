@@ -1,8 +1,9 @@
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::settings::structs::RedisConfig;
 use redis::aio::MultiplexedConnection;
-use redis::AsyncCommands;
+pub use redis::AsyncCommands;
 
+#[derive(Clone)]
 pub struct RedisClient {
   connection: MultiplexedConnection,
 }
@@ -18,15 +19,13 @@ impl RedisClient {
       .await
       .with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
     let _: String = redis::cmd("PING")
-        .query_async(&mut conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
+      .query_async(&mut conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
 
     println!("Connected to Redis at {}", config.connection);
 
-    Ok(Self {
-      connection: conn,
-    })
+    Ok(Self { connection: conn })
   }
 
   /// Set a JSON-serialized value with expiration (unit second)
@@ -36,6 +35,8 @@ impl RedisClient {
     value: T,
     expiry: usize,
   ) -> FastJobResult<()> {
+    // ป้องกัน config ผิด (ทางเลือก)
+    debug_assert!(expiry > 0, "expiry should be > 0");
     let value_str =
       serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
 
@@ -51,7 +52,8 @@ impl RedisClient {
     &mut self,
     key: &str,
   ) -> FastJobResult<Option<T>> {
-    let value: Option<String> = self.connection
+    let value: Option<String> = self
+      .connection
       .get(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
@@ -62,7 +64,8 @@ impl RedisClient {
 
   /// Delete a key
   pub async fn delete_key(&mut self, key: &str) -> FastJobResult<()> {
-    let deleted: i64 = self.connection
+    let deleted: i64 = self
+      .connection
       .del(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisDeleteFailed)?;

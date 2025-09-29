@@ -43,8 +43,7 @@ use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use lemmy_ws::broker::{phoenix_manager::PhoenixManager,presence::PresenceManager};
-use lemmy_ws::broker::presence::SystemBroker;
+use lemmy_ws::broker::{phoenix_manager::PhoenixManager,presence_manager::PresenceManager};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -173,7 +172,11 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let scb_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-
+  // Presence manager: timeout & sweep configuration
+  let heartbeat_ttl = Duration::from_secs(45);
+  // Start a lightweight system broker for broadcasting presence events
+  let presence_manager = PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()))
+      .start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -185,13 +188,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     scb_client,
   );
 
-  // Presence manager: timeout & sweep configuration
-  let heartbeat_ttl = Duration::from_secs(45);
-  let sweep_interval = Duration::from_secs(10);
-  // Start a lightweight system broker for broadcasting presence events
-  let broker = Some(SystemBroker.start());
-  let presence_manager = PresenceManager::new(heartbeat_ttl, sweep_interval, broker)
-    .start();
+
 
   // Phoenix manager needs presence address for online_users sync
   let phoenix_manager = PhoenixManager::new(

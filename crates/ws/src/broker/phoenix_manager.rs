@@ -15,7 +15,7 @@ use lemmy_db_views_chat::api::ChatMessagesResponse;
 use crate::bridge_message::BridgeMessage;
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
-use crate::broker::presence::PresenceManager;
+use crate::broker::presence_manager::PresenceManager;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};

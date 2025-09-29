@@ -1,8 +1,10 @@
 use crate::broker::phoenix_manager::PhoenixManager;
 use crate::message::RegisterClientMsg;
 use actix::{Context, Handler};
+use chrono::Utc;
 use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 use lemmy_db_schema::utils::DbPool;
+use crate::broker::presence_manager::OnlineJoin;
 
 impl Handler<RegisterClientMsg> for PhoenixManager {
   type Result = ();
@@ -11,6 +13,12 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
     let room_id = msg.room_id.clone();
     // let room_name = msg.room_name.clone();
     let local_user_id = msg.local_user_id;
+
+    // Immediately register this user as online in Presence
+    if let Some(uid) = local_user_id {
+      // LocalUserId -> i32
+      self.presence.do_send(OnlineJoin { local_user_id: uid.0, started_at: Utc::now() });
+    }
 
     let _ = self.ensure_room_initialized(room_id.clone(), room_id.to_string());
 

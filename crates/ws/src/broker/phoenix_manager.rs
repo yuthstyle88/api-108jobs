@@ -139,7 +139,7 @@ impl PhoenixManager {
     let last_read_id_cloned = last_read_id.clone();
     let msg_cloned = msg.clone();
     tokio::spawn(async move {
-      this.broadcast_read_event(&chatroom_id_cloned, reader_id_val, &last_read_id_cloned, &msg_cloned).await;
+      this.broadcast_read_event(&chatroom_id_cloned, reader_id_val as i32, &last_read_id_cloned, &msg_cloned).await;
     });
   }
 
@@ -147,7 +147,7 @@ impl PhoenixManager {
   async fn broadcast_read_event(
     &self,
     chatroom_id: &ChatRoomId,
-    reader_id_val: i64,
+    reader_id_val: i32,
     last_read_id: &str,
     msg: &BridgeMessage,
   ) {
@@ -168,7 +168,7 @@ impl PhoenixManager {
     let content = serde_json::Value::Object(read_payload).to_string();
 
     // Guard: broadcast only if reader is currently online (authoritative from Presence)
-    let others_online = self.has_other_online(msg.local_user_id.0).await;
+    let others_online = self.has_participant_online(Some(reader_id_val)).await;
     if !others_online {
       tracing::debug!(
         "Skip broadcast: reader {} appears offline (presence)",

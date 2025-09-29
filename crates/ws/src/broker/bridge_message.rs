@@ -10,7 +10,7 @@ use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
-use crate::broker::presence_manager::GetOnlineUsers;
+use crate::broker::presence_manager::IsUserOnline;
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
@@ -25,12 +25,16 @@ struct DoEphemeralBroadcast {
 
 impl PhoenixManager {
   #[inline]
-  pub(crate) async fn has_other_online(&self, sender_local_user_id: i32) -> bool {
-      match self.presence.send(GetOnlineUsers).await {
-        Ok(users) => users.iter().any(|uid| *uid != sender_local_user_id),
-        Err(_) => false,
-      }
-    }
+  pub(crate) async fn has_participant_online(
+    &self,
+    peer_local_user_id: Option<i32>,
+  ) -> bool {
+     if let Some(peer_local_user_id) = peer_local_user_id {
+       self.presence.send(IsUserOnline { local_user_id: peer_local_user_id }).await.unwrap_or_else(|_| false)
+     }else{
+       false
+     }
+  }
 }
 
 impl Handler<DoEphemeralBroadcast> for PhoenixManager {
@@ -118,6 +122,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
       .and_then(|v| v.as_i64())
       .or_else(|| obj.get("senderId").and_then(|v| v.as_i64()))
       .unwrap_or(user_id.0 as i64);
+
+    // Try to detect an explicit receiver/peer id, if provided in payload
+    let receiver_id_val = obj
+      .get("receiver_id")
+      .and_then(|v| v.as_i64())
+      .or_else(|| obj.get("receiverId").and_then(|v| v.as_i64()));
 
     // Build a flat outbound payload for clients
     let mut outbound_obj = serde_json::Map::new();
@@ -217,7 +227,10 @@ impl Handler<BridgeMessage> for PhoenixManager {
       let this = self.clone();
 
       return Box::pin(async move {
-        let others_online = this.has_other_online(local_user_id_cloned.0).await;
+        let peer_opt = receiver_id_val.map(|v| v as i32);
+        let others_online = this
+          .has_participant_online(peer_opt)
+          .await;
         if !others_online {
           tracing::debug!(
             "Skip {}: no other online users (presence)",

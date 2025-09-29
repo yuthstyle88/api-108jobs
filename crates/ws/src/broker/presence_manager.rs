@@ -43,8 +43,9 @@ pub struct Heartbeat { pub local_user_id: i32, pub client_time: Option<DateTime<
 pub struct IsUserOnline { pub local_user_id: i32 }
 
 #[derive(Message, Clone, Debug)]
-#[rtype(result = "Vec<i32>")]
-pub struct GetOnlineUsers;
+#[rtype(result = "usize")]
+pub struct OnlineCount;
+
 impl PresenceManager {
     pub fn new(
         heartbeat_ttl: Duration,
@@ -250,19 +251,19 @@ impl Handler<IsUserOnline> for PresenceManager {
     }
 }
 
-impl Handler<GetOnlineUsers> for PresenceManager {
-    type Result = ResponseFuture<Vec<i32>>;
-    fn handle(&mut self, _msg: GetOnlineUsers, _ctx: &mut Context<Self>) -> Self::Result {
+impl Handler<OnlineCount> for PresenceManager {
+    type Result = ResponseFuture<usize>;
+    fn handle(&mut self, _msg: OnlineCount, _ctx: &mut Context<Self>) -> Self::Result {
         let client = self.redis.clone();
         Box::pin(async move {
             if let Some(client) = client {
                 let mut client = client; // RedisClient
                 let list_key = "presence:online:users".to_string();
                 if let Ok(Some(ids)) = client.get_value::<Vec<i32>>(&list_key).await {
-                    return ids;
+                    return ids.len();
                 }
             }
-            Vec::new()
+            0
         })
     }
 }

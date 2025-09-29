@@ -147,13 +147,28 @@ impl Handler<BridgeMessage> for PhoenixManager {
       channel_name,
       outbound_channel
     );
-        tracing::debug!("PHX bridge: outbound_payload={}", content);
-
         tracing::debug!(
       "PHX bridge: issue_async -> WebSocket event={} channel={}",
       outbound_event,
       outbound_channel
     );
+
+        // Guard: only broadcast if there is at least one online counterpart in this room (not the sender)
+        let has_counterparty_online = self
+            .online_counts
+            .iter()
+            .any(|((room, uid), count)| room == &outbound_channel && *count > 0 && *uid != msg.local_user_id);
+
+        if !has_counterparty_online {
+            tracing::debug!(
+                "Skip broadcast: no online counterpart for sender {} in room {}",
+                msg.local_user_id.0,
+                outbound_channel
+            );
+            // We still stored the message above; just skip broadcasts and casting.
+            return Box::pin(async move { () });
+        }
+
         if event.eq("typing")
             || event.eq("typing:start")
             || event.eq("typing:stop")

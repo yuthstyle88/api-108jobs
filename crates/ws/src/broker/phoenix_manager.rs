@@ -1,11 +1,6 @@
-use crate::{
-  bridge_message::{BridgeMessage, OnlineJoin, OnlineLeave},
-  message::{RegisterClientMsg, StoreChatMessage},
-};
-use actix::{Actor, AsyncContext, Context, Handler, Message, ResponseFuture};
+use crate::message::StoreChatMessage;
+use actix::{Actor, AsyncContext, Context, Handler, Message};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
-use chrono::Utc;
-use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
 use lemmy_db_schema::{
   newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId, PaginationCursor},
   source::{
@@ -13,16 +8,15 @@ use lemmy_db_schema::{
     chat_room::ChatRoom,
     last_read::LastRead,
   },
-  traits::PaginationCursorBuilder,
   utils::{ActualDbPool, DbPool},
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 
+use crate::bridge_message::BridgeMessage;
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
-use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket, Topic};
+use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
@@ -164,6 +158,14 @@ impl PhoenixManager {
     );
     let content = serde_json::Value::Object(read_payload).to_string();
 
+    // Only broadcast if counterpart is online
+    if let Some(count) = self.online_counts.get(&(chatroom_id.clone(), LocalUserId(reader_id_val as i32))) {
+      if *count == 0 {
+        tracing::debug!("Skip broadcast: user {} in room {} is offline", reader_id_val, chatroom_id);
+        return;
+      }
+    }
+
     // Local broker broadcast (to other clients on this node)
     let outbound_channel = chatroom_id.clone();
     let outbound_event = "chat:read".to_string();
@@ -304,4 +306,3 @@ impl Handler<StoreChatMessage> for PhoenixManager {
       .push(msg);
   }
 }
-

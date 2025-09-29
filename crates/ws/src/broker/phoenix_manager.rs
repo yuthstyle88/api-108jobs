@@ -15,10 +15,12 @@ use lemmy_db_views_chat::api::ChatMessagesResponse;
 use crate::bridge_message::BridgeMessage;
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
+use crate::broker::presence::PresenceManager;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
+
 
 // Timeouts and intervals (in seconds) for Phoenix socket/channel operations
 pub const CONNECT_TIMEOUT_SECS: u64 = 10;
@@ -46,18 +48,19 @@ pub struct FetchHistoryDirect {
   pub page_back: Option<bool>,
 }
 
+#[derive(Clone)]
 pub struct PhoenixManager {
   pub(crate) socket: Arc<Socket>,
   pub(crate) channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
+  pub(crate) presence: actix::Addr<PresenceManager>,
   chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pub(crate) pool: ActualDbPool,
   is_flushing: bool,
   pub(crate) last_read: HashMap<(ChatRoomId, LocalUserId), String>,
-  pub(crate) online_counts: HashMap<(ChatRoomId, LocalUserId), usize>,
 }
 
 impl PhoenixManager {
-  pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool) -> Self {
+  pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool, presence: actix::Addr<PresenceManager>) -> Self {
     let sock = Socket::spawn(
       endpoint.clone().expect("Phoenix url is require"),
       None,
@@ -68,11 +71,11 @@ impl PhoenixManager {
     Self {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
+      presence,
       chat_store: HashMap::new(),
       pool,
       is_flushing: false,
       last_read: HashMap::new(),
-      online_counts: Default::default(),
     }
   }
 
@@ -130,11 +133,18 @@ impl PhoenixManager {
       reader_id_val,
       last_read_id
     );
-    self.broadcast_read_event(&chatroom_id, reader_id_val, &last_read_id, msg);
+
+    let this = self.clone();
+    let chatroom_id_cloned = chatroom_id.clone();
+    let last_read_id_cloned = last_read_id.clone();
+    let msg_cloned = msg.clone();
+    tokio::spawn(async move {
+      this.broadcast_read_event(&chatroom_id_cloned, reader_id_val, &last_read_id_cloned, &msg_cloned).await;
+    });
   }
 
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
-  fn broadcast_read_event(
+  async fn broadcast_read_event(
     &self,
     chatroom_id: &ChatRoomId,
     reader_id_val: i64,
@@ -157,19 +167,14 @@ impl PhoenixManager {
     );
     let content = serde_json::Value::Object(read_payload).to_string();
 
-    // Only broadcast if counterpart is online
-    if let Some(count) = self
-      .online_counts
-      .get(&(chatroom_id.clone(), LocalUserId(reader_id_val as i32)))
-    {
-      if *count == 0 {
-        tracing::debug!(
-          "Skip broadcast: user {} in room {} is offline",
-          reader_id_val,
-          chatroom_id
-        );
-        return;
-      }
+    // Guard: broadcast only if reader is currently online (authoritative from Presence)
+    let others_online = self.has_other_online(msg.local_user_id.0).await;
+    if !others_online {
+      tracing::debug!(
+        "Skip broadcast: reader {} appears offline (presence)",
+        reader_id_val
+      );
+      return;
     }
 
     // Local broker broadcast (to other clients on this node)

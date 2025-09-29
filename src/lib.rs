@@ -185,10 +185,6 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     scb_client,
   );
 
-  let phoenix_manager = PhoenixManager::new(SETTINGS.get_phoenix_url(), pool.clone())
-    .await
-    .start();
-
   // Presence manager: timeout & sweep configuration
   let heartbeat_ttl = Duration::from_secs(45);
   let sweep_interval = Duration::from_secs(10);
@@ -196,6 +192,15 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let broker = Some(SystemBroker.start());
   let presence_manager = PresenceManager::new(heartbeat_ttl, sweep_interval, broker)
     .start();
+
+  // Phoenix manager needs presence address for online_users sync
+  let phoenix_manager = PhoenixManager::new(
+    SETTINGS.get_phoenix_url(),
+    pool.clone(),
+    presence_manager.clone(),
+  )
+  .await
+  .start();
 
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;

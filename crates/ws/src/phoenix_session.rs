@@ -95,7 +95,7 @@ impl Actor for PhoenixSession {
     // Notify presence directly (method #1): only if we know user_id
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineJoin {
-        local_user_id: uid.0,
+        local_user_id: Some(uid),
         started_at: Utc::now(),
       });
     }
@@ -106,7 +106,7 @@ impl Actor for PhoenixSession {
 
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineLeave {
-        local_user_id: uid.0,
+        local_user_id: Some(uid),
         left_at: Utc::now(),
       });
     }
@@ -146,7 +146,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               if let Some(uid) = self.client_msg.local_user_id {
                 tracing::debug!("Received heartbeat from user {}", uid.0);
                 self.presence_manager.do_send(Heartbeat {
-                  local_user_id: uid.0,
+                  local_user_id: Some(uid),
                   client_time: Some(Utc::now()),
                 });
               }

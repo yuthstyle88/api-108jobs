@@ -4,13 +4,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime};
+use lemmy_db_schema::newtypes::LocalUserId;
 
 /// ===== Messages / Events =====
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineJoin {
   /// Unique user identifier.
-  pub local_user_id: i32,
+  pub local_user_id: Option<LocalUserId>,
   /// When we detected they came online (server time).
   pub started_at: DateTime<Utc>,
 }
@@ -22,7 +23,7 @@ impl Message for OnlineJoin {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineLeave {
   /// Explicit/normal leave (user closed session, logged out, etc.)
-  pub local_user_id: i32,
+  pub local_user_id: Option<LocalUserId>,
   /// When we detected they left (server time).
   pub left_at: DateTime<Utc>,
 }
@@ -34,7 +35,7 @@ impl Message for OnlineLeave {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineStopped {
   /// Abnormal stop detected by heartbeat timeout (no signal).
-  pub local_user_id: i32,
+  pub local_user_id: Option<LocalUserId>,
   /// When we detected the stop (server time).
   pub stopped_at: DateTime<Utc>,
 }
@@ -46,7 +47,7 @@ impl Message for OnlineStopped {
 /// Heartbeat ping from client (or edge gateway).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Heartbeat {
-  pub local_user_id: i32,
+  pub local_user_id: Option<LocalUserId>,
   /// Optional client-reported time; server will still record server time.
   pub client_time: Option<DateTime<Utc>>,
 }
@@ -142,14 +143,14 @@ impl PresenceManager {
   }
 
   /// Helper: mark user offline internally and remove last_seen.
-  fn mark_offline(&mut self, user_id: i32) {
-    self.online_users.remove(&user_id);
-    self.last_seen.remove(&user_id);
+  fn mark_offline(&mut self, local_user_id: LocalUserId) {
+    self.online_users.remove(&local_user_id.0);
+    self.last_seen.remove(&local_user_id.0);
   }
 
   /// Helper: mark user online internally.
-  fn mark_online(&mut self, user_id: i32) {
-    self.online_users.insert(user_id);
+  fn mark_online(&mut self, local_user_id: LocalUserId) {
+    self.online_users.insert(local_user_id.0);
   }
 
   /// Sweeper that detects timeouts and emits OnlineStopped.
@@ -172,14 +173,14 @@ impl PresenceManager {
       })
       .collect();
 
-    for user_id in offenders {
+    for uid in offenders {
       let stopped = OnlineStopped {
-        local_user_id: user_id,
+        local_user_id: Some(LocalUserId(uid)),
         stopped_at: now,
       };
 
       // Update state
-      self.mark_offline(user_id);
+      self.mark_offline(LocalUserId(uid));
 
       // Publish/broadcast
       self.publish("presence", "online_stopped", &stopped);
@@ -208,8 +209,12 @@ impl Handler<OnlineJoin> for PresenceManager {
   type Result = ();
 
   fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Self::Context) -> Self::Result {
-    self.mark_online(msg.local_user_id);
-    self.last_seen.insert(msg.local_user_id, msg.started_at);
+    let local_user_id = msg.local_user_id;
+    if let Some(uid) = local_user_id{
+      self.mark_online(uid);
+      let uid = uid.0;
+      self.last_seen.insert(uid, msg.started_at);
+    }
     self.publish("presence", "online_join", &msg);
   }
 }
@@ -218,7 +223,11 @@ impl Handler<OnlineLeave> for PresenceManager {
   type Result = ();
 
   fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Self::Context) -> Self::Result {
-    self.mark_offline(msg.local_user_id);
+    if let Some(uid) = msg.local_user_id {
+      // Authoritatively mark the user offline in Presence only
+      self.mark_offline(uid);
+    }
+    // Publish presence event (idempotent)
     self.publish("presence", "online_leave", &msg);
   }
 }
@@ -228,7 +237,10 @@ impl Handler<OnlineStopped> for PresenceManager {
 
   fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Self::Context) -> Self::Result {
     // Idempotent: ensure offline
-    self.mark_offline(msg.local_user_id);
+    let local_user_id = msg.local_user_id;
+    if let Some(uid) = local_user_id {
+      self.mark_offline(uid);
+    }
     self.publish("presence", "online_stopped", &msg);
   }
 }
@@ -237,17 +249,19 @@ impl Handler<Heartbeat> for PresenceManager {
   type Result = ();
 
   fn handle(&mut self, msg: Heartbeat, _ctx: &mut Self::Context) -> Self::Result {
-    // Record server-side last_seen regardless of client_time
-    let now = self.touch(msg.local_user_id);
+    if let Some(uid) = msg.local_user_id {
+      // Record server-side last_seen regardless of client_time
+      let now = self.touch(uid.0);
 
-    // Optional: If user was not in online set (e.g., missed join), promote to online on first heartbeat.
-    if !self.online_users.contains(&msg.local_user_id) {
-      self.mark_online(msg.local_user_id);
-      let join = OnlineJoin {
-        local_user_id: msg.local_user_id,
-        started_at: now,
-      };
-      self.publish("presence", "online_join", &join);
+      // If user not already in the authoritative online set, promote on first heartbeat
+      if !self.online_users.contains(&uid.0) {
+        self.mark_online(uid);
+        let join = OnlineJoin {
+          local_user_id: Some(uid),
+          started_at: now,
+        };
+        self.publish("presence", "online_join", &join);
+      }
     }
   }
 }

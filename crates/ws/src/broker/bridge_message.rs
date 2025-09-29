@@ -9,6 +9,16 @@ use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
+use crate::broker::presence::GetOnlineUsers;
+impl PhoenixManager {
+  #[inline]
+  pub(crate) async fn has_other_online(&self, sender_local_user_id: i32) -> bool {
+      match self.presence.send(GetOnlineUsers).await {
+        Ok(users) => users.iter().any(|uid| *uid != sender_local_user_id),
+        Err(_) => false,
+      }
+    }
+}
 
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
@@ -153,52 +163,46 @@ impl Handler<BridgeMessage> for PhoenixManager {
       outbound_channel
     );
 
-    // Guard: only broadcast if there is at least one online counterpart in this room (not the sender)
-    let has_counterparty_online = self.online_counts.iter().any(|((room, uid), count)| {
-      room == &outbound_channel && *count > 0 && *uid != msg.local_user_id
-    });
-
-    if !has_counterparty_online {
-      tracing::debug!(
-        "Skip broadcast: no online counterpart for sender {} in room {}",
-        msg.local_user_id.0,
-        outbound_channel
-      );
-      // We still stored the message above; just skip broadcasts and casting.
-      return Box::pin(async move { () });
-    }
-
     if event.eq("typing")
       || event.eq("typing:start")
       || event.eq("typing:stop")
       || event.eq("phx_leave")
       || event.eq("update")
+      || event.eq("send_message")
+      || event.eq("SendMessage")
       || event.eq("room:update")
     {
-      self.issue_async::<SystemBroker, _>(BridgeMessage {
-        channel: outbound_channel,
-        local_user_id: msg.local_user_id.clone(),
-        event: outbound_event.clone(),
-        messages: content.clone(),
-        security_config: false,
-      });
+      // Run the presence check asynchronously since has_other_online is async.
+      let outbound_event_cloned = outbound_event.clone();
+      let outbound_channel_cloned = outbound_channel.clone();
+      let content_cloned = content.clone();
+      let local_user_id_cloned = msg.local_user_id.clone();
+      let mut this = self.clone();
+
       return Box::pin(async move {
+        let others_online = this.has_other_online(local_user_id_cloned.0).await;
+        if !others_online {
+          tracing::debug!(
+            "Skip {}: no other online users (presence)",
+            outbound_event_cloned
+          );
+          tracing::debug!("PHX bridge: skipped due to no online counterpart");
+          return;
+        }
+        this.issue_async::<SystemBroker, _>(BridgeMessage {
+          channel: outbound_channel_cloned,
+          local_user_id: local_user_id_cloned,
+          event: outbound_event_cloned.clone(),
+          messages: content_cloned,
+          security_config: false,
+        });
+        if matches!(event.as_str(), "send_message" | "SendMessage") {
+          this.add_messages_to_room(chatroom_id.clone(), store_msg);
+        }
         tracing::debug!("PHX bridge: typing event ignored");
       });
     }
-    self.issue_async::<SystemBroker, _>(BridgeMessage {
-      channel: outbound_channel,
-      local_user_id: msg.local_user_id.clone(),
-      event: outbound_event.clone(),
-      messages: content.clone(),
-      security_config: false,
-    });
-
-    // Store only real chat messages (ignore read/typing/system events)
-    if matches!(event.as_str(), "send_message" | "SendMessage") {
-      self.add_messages_to_room(chatroom_id.clone(), store_msg);
-    }
-    // Clone mapped event for async move block
+    // // Clone mapped event for async move block
     let outbound_event_for_cast = outbound_event.clone();
     Box::pin(async move {
       let arc_chan = get_or_create_channel(channels, socket, &channel_name).await;

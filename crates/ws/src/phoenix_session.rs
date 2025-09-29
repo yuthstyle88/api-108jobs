@@ -1,11 +1,14 @@
 use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
+use chrono::Utc;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use serde_json::Value;
 
 use crate::handler::JoinRoomQuery;
-use crate::{bridge_message::BridgeMessage, broker::PhoenixManager, message::RegisterClientMsg};
+use crate::{bridge_message::BridgeMessage, message::RegisterClientMsg};
+use crate::broker::presence::{PresenceManager, OnlineJoin, OnlineLeave};
+use crate::broker::phoenix_manager::PhoenixManager;
 
 // ===== helpers =====
 fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String, Value)> {
@@ -45,17 +48,20 @@ fn phx_push(topic: &str, event: &str, payload: Value) -> String {
 // ===== actor =====
 pub struct PhoenixSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
+  pub(crate) presence_manager: Addr<PresenceManager>,
   pub(crate) params: JoinRoomQuery,
   pub(crate) client_msg: RegisterClientMsg,
 }
 impl PhoenixSession {
   pub fn new(
     phoenix_manager: Addr<PhoenixManager>,
+    presence_manager: Addr<PresenceManager>,
     params: JoinRoomQuery,
     client_msg: RegisterClientMsg,
   ) -> Self {
     Self {
       phoenix_manager,
+      presence_manager,
       params,
       client_msg,
     }
@@ -81,11 +87,29 @@ impl Actor for PhoenixSession {
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<BridgeMessage>(ctx);
     // Register this client/room with the manager (similar to WsSession)
-    let user_id = self.client_msg.user_id;
+    let local_user_id = self.client_msg.local_user_id;
     let room_id = self.client_msg.room_id.clone();
     self
       .phoenix_manager
-      .do_send(RegisterClientMsg { user_id, room_id });
+      .do_send(RegisterClientMsg { local_user_id, room_id: room_id.clone() });
+    // Notify presence directly (method #1): only if we know user_id
+    if let Some(uid) = local_user_id {
+      self.presence_manager.do_send(OnlineJoin {
+        user_id: uid.0,
+        started_at: Utc::now(),
+      });
+    }
+  }
+
+  fn stopped(&mut self, _ctx: &mut Self::Context) {
+    let local_user_id = self.client_msg.local_user_id;
+  
+    if let Some(uid) = local_user_id {
+      self.presence_manager.do_send(OnlineLeave {
+        local_user_id: uid.0,
+        left_at: Utc::now(),
+      });
+    }
   }
 }
 
@@ -159,7 +183,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               // Derive channel from topic (e.g., "room:123")
               let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
                 .unwrap_or_else(|_| ChatRoomId(topic.clone()));
-              let user_id: LocalUserId = match self.client_msg.user_id {
+              let user_id: LocalUserId = match self.client_msg.local_user_id {
                 Some(uid) => uid,
                 None => {
                   // If user_id is missing, reject with error reply and do not forward
@@ -176,7 +200,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               let bridge_msg = BridgeMessage {
                 // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
                 channel,
-                user_id,
+                local_user_id: user_id,
                 event: event.clone(),
                 messages,
                 security_config: false,

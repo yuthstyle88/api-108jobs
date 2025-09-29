@@ -1,5 +1,6 @@
 pub mod api_routes;
 
+use std::time::Duration;
 use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
@@ -35,13 +36,15 @@ use lemmy_utils::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
-use lemmy_ws::broker::PhoenixManager;
+
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_ws::broker::{phoenix_manager::PhoenixManager,presence::PresenceManager};
+use lemmy_ws::broker::presence::SystemBroker;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -186,6 +189,14 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     .await
     .start();
 
+  // Presence manager: timeout & sweep configuration
+  let heartbeat_ttl = Duration::from_secs(45);
+  let sweep_interval = Duration::from_secs(10);
+  // Start a lightweight system broker for broadcasting presence events
+  let broker = Some(SystemBroker.start());
+  let presence_manager = PresenceManager::new(heartbeat_ttl, sweep_interval, broker)
+    .start();
+
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;
   }
@@ -197,6 +208,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     Some(create_http_server(
       context.clone(),
       phoenix_manager,
+      presence_manager,
       SETTINGS.clone(),
     )?)
   } else {
@@ -247,6 +259,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
 fn create_http_server(
   context: FastJobContext,
   phoenix_manager: Addr<PhoenixManager>,
+  presence_manager: Addr<PresenceManager>,
   settings: Settings,
 ) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
@@ -289,6 +302,7 @@ fn create_http_server(
       ))
       // Application data - these don't affect middleware order
       .app_data(Data::new(context.clone()))
+      .app_data(Data::new(presence_manager.clone()))
       .app_data(Data::new(phoenix_manager.clone()));
 
     app

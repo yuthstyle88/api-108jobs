@@ -19,6 +19,6 @@ pub struct StoreChatMessage {
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct RegisterClientMsg {
-    pub user_id: Option<LocalUserId>,
+    pub local_user_id: Option<LocalUserId>,
     pub room_id: ChatRoomId,
 }

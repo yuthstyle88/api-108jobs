@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use crate::message::RegisterClientMsg;
-use crate::{broker::{FetchHistoryDirect, PhoenixManager}};
 use actix::Addr;
 use actix_web::{web, web::{Data, Query}, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -10,6 +9,8 @@ use lemmy_db_schema::newtypes::{ChatRoomId, PaginationCursor, LocalUserId};
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use serde::Deserialize;
 use lemmy_db_views_local_user::LocalUserView;
+use crate::broker::phoenix_manager::{FetchHistoryDirect, PhoenixManager};
+use crate::broker::presence::PresenceManager;
 use crate::phoenix_session::PhoenixSession;
 
 #[derive(Debug, Deserialize)]
@@ -30,7 +31,7 @@ pub async fn get_history(
 ) -> actix_web::Result<HttpResponse> {
   let resp = phoenix
     .send(FetchHistoryDirect {
-      user_id: local_user_view.local_user.id,
+      local_user_id: local_user_view.local_user.id,
       room_id: q.room_id.clone(),
       page_cursor: q.cursor.clone(),
       limit: q.limit.or(Some(20)),
@@ -56,7 +57,7 @@ pub struct JoinRoomQuery {
   pub room_name: Option<String>,
 
   #[serde(alias = "userId", alias = "user_id", default)]
-  pub user_id: Option<i32>,
+  pub local_user_id: Option<i32>,
 
   /// เก็บพารามิเตอร์อื่น ๆ (เช่น vsn) ป้องกัน deserialize error
   #[serde(flatten)]
@@ -81,34 +82,24 @@ pub async fn phoenix_ws(
   query: Query<JoinRoomQuery>,
   stream: web::Payload,
   phoenix: Data<Addr<PhoenixManager>>,
+  presence: Data<Addr<PresenceManager>>,
   context: Data<FastJobContext>,
 ) -> Result<HttpResponse, Error> {
   // Extract query parameters similar to chat_ws
   let auth_token = query.token.clone();
   let params = query.into_inner();
 
-
-  // Initialize authentication data
-  let mut user_id = None;
-
-  // Handle authentication if token exists
-  if let Some(jwt_token) = auth_token {
+  // Always initialize as Option<LocalUserId>
+  let local_user_id: Option<LocalUserId> = if let Some(jwt_token) = auth_token {
     match local_user_view_from_jwt(&jwt_token, &context).await {
-      Ok((local_user, _session)) => {
-        user_id = Some(local_user.local_user.id);
-      }
+      Ok((local_user, _session)) => Some(local_user.local_user.id),
       Err(_) => {
         return Err(Error::from(FastJobError::from(FastJobErrorType::IncorrectLogin)));
       }
     }
-  }
-
-  // Fallback: allow user_id from query when JWT is absent
-  if user_id.is_none() {
-    if let Some(uid) = params.user_id {
-      user_id = Some(LocalUserId(uid));
-    }
-  }
+  } else {
+    None
+  };
 
   // Try to resolve initial room id from query (topic will refine it on phx_join)
   let initial_room = match params.resolve_room_from_query_or_topic(None) {
@@ -119,9 +110,10 @@ pub async fn phoenix_ws(
 
   let ph_session = PhoenixSession::new(
     phoenix.get_ref().clone(),
+    presence.get_ref().clone(),
     params,
     RegisterClientMsg {
-      user_id,
+      local_user_id,
       room_id: initial_room,
     }
   );

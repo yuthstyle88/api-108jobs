@@ -330,7 +330,9 @@ pub async fn cancel_job(
   let form = validated.0;
 
   // Perform cancellation (allowed for any non-finalized status)
-  WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
+  let _ = WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
+  // Refund any reserved/outstanding funds back to payer (idempotent inside service)
+  let _ = WorkflowService::refund_on_cancel(&mut context.pool(), form.workflow_id).await;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: form.workflow_id.into(),

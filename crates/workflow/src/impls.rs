@@ -550,7 +550,64 @@ impl WorkflowService {
   ) -> FastJobResult<()> {
     cancel_any_on(pool, workflow_id, current_status).await
   }
+  pub async fn refund_on_cancel(
+    pool: &mut DbPool<'_>,
+    workflow_id: WorkflowId,
+  ) -> FastJobResult<()> {
+    // Load workflow to get room/billing context
+    let conn = &mut get_conn(pool).await?;
+    let wf = Workflow::read(&mut conn.into(), workflow_id)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
+    // Prefer an approved/active billing for this room; extend statuses if needed
+    let billing_opt = Billing::get_by_room_and_status(
+        &mut (&mut get_conn(pool).await?).into(),
+        wf.room_id.clone(),
+        BillingStatus::OrderApproved,
+      )
+      .await
+      .ok()
+      .flatten();
+
+    let Some(billing) = billing_opt else {
+      // No billing to refund — idempotent no-op
+      return Ok(());
+    };
+
+    // Load employer's wallet (payer) fresh
+    let employer_wallet = WalletModel::get_by_user(pool, billing.employer_id)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+    // If there is any outstanding, release up to the billing amount (handle partial holds)
+    if employer_wallet.balance_outstanding > Coin(0) {
+      let to_refund = if employer_wallet.balance_outstanding >= billing.amount {
+        billing.amount
+      } else {
+        employer_wallet.balance_outstanding
+      };
+
+      if to_refund > Coin(0) {
+        let form = WalletTransactionInsertForm {
+          wallet_id: employer_wallet.id,
+          reference_type: "billing".to_string(),
+          reference_id: billing.id.0,
+          kind: TxKind::Release,
+          amount: to_refund,
+          description: "cancel hold (release outstanding) due to cancellation".to_string(),
+          counter_user_id: Some(billing.employer_id),
+          idempotency_key: format!("refund:release:{}:{}", billing.id.0, to_refund.0),
+        };
+        let _ = WalletModel::release(pool, &form).await; // ignore duplicate/idempotent errors
+      }
+
+      return Ok(());
+    }
+
+    // No outstanding in user wallet — likely escrow-based hold. Refund should be handled by escrow flow.
+    Ok(())
+  }
   pub async fn create_quotation(
     pool: &mut DbPool<'_>,
     freelancer_id: LocalUserId,

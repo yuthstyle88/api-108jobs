@@ -25,7 +25,6 @@ pub const CONNECT_TIMEOUT_SECS: u64 = 10;
 pub const JOIN_TIMEOUT_SECS: u64 = 5;
 pub const FLUSH_INTERVAL_SECS: u64 = 10;
 
-
 #[derive(Message)]
 #[rtype(result = "()")]
 struct FlushDone;
@@ -159,9 +158,16 @@ impl PhoenixManager {
     let content = serde_json::Value::Object(read_payload).to_string();
 
     // Only broadcast if counterpart is online
-    if let Some(count) = self.online_counts.get(&(chatroom_id.clone(), LocalUserId(reader_id_val as i32))) {
+    if let Some(count) = self
+      .online_counts
+      .get(&(chatroom_id.clone(), LocalUserId(reader_id_val as i32)))
+    {
       if *count == 0 {
-        tracing::debug!("Skip broadcast: user {} in room {} is offline", reader_id_val, chatroom_id);
+        tracing::debug!(
+          "Skip broadcast: user {} in room {} is offline",
+          reader_id_val,
+          chatroom_id
+        );
         return;
       }
     }
@@ -284,8 +290,6 @@ impl Actor for PhoenixManager {
     });
   }
 }
-
-
 
 impl Handler<FlushDone> for PhoenixManager {
   type Result = ();

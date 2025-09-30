@@ -40,7 +40,8 @@ impl RedisClient {
     let value_str =
       serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
 
-    let result: redis::RedisResult<()> = self.connection.set_ex(key, value_str, expiry as u64).await;
+    let result: redis::RedisResult<()> =
+      self.connection.set_ex(key, value_str, expiry as u64).await;
 
     result.map_err(|_| FastJobErrorType::RedisSetFailed)?;
 
@@ -75,5 +76,96 @@ impl RedisClient {
     } else {
       Ok(())
     }
+  }
+
+  /// Append a JSON-serialized value to a Redis list
+  pub async fn rpush<T: serde::Serialize>(
+    &mut self,
+    key: &str,
+    value: T,
+  ) -> FastJobResult<()> {
+    let value_str =
+        serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
+    let _: () = self
+        .connection
+        .rpush(key, value_str)
+        .await
+        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+    Ok(())
+  }
+
+  /// Retrieve a range of values from a Redis list and deserialize them
+  pub async fn lrange<T: serde::de::DeserializeOwned>(
+    &mut self,
+    key: &str,
+    start: i64,
+    stop: i64,
+  ) -> FastJobResult<Vec<T>> {
+    let start_isize = start.try_into().map_err(|_| {
+      FastJobErrorType::InvalidInput("start index out of range for isize".to_string())
+    })?;
+    let stop_isize = stop.try_into().map_err(|_| {
+      FastJobErrorType::InvalidInput("stop index out of range for isize".to_string())
+    })?;
+    let value_strs: Vec<String> = self
+      .connection
+      .lrange(key, start_isize, stop_isize)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+    let mut values = Vec::new();
+    for value_str in value_strs {
+      let value = serde_json::from_str(&value_str)
+        .with_fastjob_type(FastJobErrorType::DeserializationFailed)?;
+      values.push(value);
+    }
+    Ok(values)
+  }
+
+  /// Add a value to a Redis set
+  pub async fn sadd<T: ToString>(
+    &mut self,
+    key: &str,
+    value: T,
+  ) -> FastJobResult<()> {
+    let _: () = self
+        .connection
+        .sadd(key, value.to_string())
+        .await
+        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+    Ok(())
+  }
+
+  /// Remove a value from a Redis set
+  pub async fn srem<T: ToString>(&mut self, key: &str, value: T) -> FastJobResult<()> {
+    let removed: i64 = self
+      .connection
+      .srem(key, value.to_string())
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisDeleteFailed)?;
+    if removed == 0 {
+      Err(FastJobErrorType::RedisKeyNotFound.into())
+    } else {
+      Ok(())
+    }
+  }
+
+  /// Retrieve all members of a Redis set
+  pub async fn smembers(&mut self, key: &str) -> FastJobResult<Vec<String>> {
+    let value_strs: Vec<String> = self
+        .connection
+        .smembers(key)
+        .await
+        .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+    Ok(value_strs)
+  }
+
+  /// Set expiration time on a key
+  pub async fn expire(&mut self, key: &str, seconds: usize) -> FastJobResult<()> {
+    let _: () = self
+        .connection
+        .expire(key, seconds as i64)
+        .await
+        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+    Ok(())
   }
 }

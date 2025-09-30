@@ -39,6 +39,7 @@ impl PhoenixManager {
 
 impl Handler<DoEphemeralBroadcast> for PhoenixManager {
   type Result = ();
+
   fn handle(&mut self, msg: DoEphemeralBroadcast, _ctx: &mut Context<Self>) -> Self::Result {
     // Re-broadcast over broker / websocket
     self.issue_async::<SystemBroker, _>(BridgeMessage {
@@ -48,12 +49,19 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
       messages: msg.content,
       security_config: false,
     });
+
     // Persist if the event is a message-type (already mapped before call if needed)
-    //
     if matches!(msg.event.as_str(), "chat:message") {
       let msg_ref_id = msg.store_msg.msg_ref_id.clone();
-      if let Some(_) = msg_ref_id {
-        self.add_messages_to_room(msg.chatroom_id, msg.store_msg);
+      if msg_ref_id.is_some() {
+        let mut this = self.clone();
+        let room_id = msg.chatroom_id;
+        let store_msg = msg.store_msg;
+        actix::spawn(async move {
+          if let Err(e) = this.add_messages_to_room(room_id, store_msg).await {
+            tracing::error!("Failed to store message in Redis: {}", e);
+          }
+        });
       }
     }
   }

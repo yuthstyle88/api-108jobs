@@ -183,18 +183,17 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     pictrs_client,
     secret.clone(),
     rate_limit_cell,
-    redis_client,
+    redis_client.clone(),
     Box::new(site_config),
     scb_client,
   );
-
-
 
   // Phoenix manager needs presence address for online_users sync
   let phoenix_manager = PhoenixManager::new(
     SETTINGS.get_phoenix_url(),
     pool.clone(),
     presence_manager.clone(),
+    redis_client.clone()
   )
   .await
   .start();

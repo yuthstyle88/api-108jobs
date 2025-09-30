@@ -320,6 +320,7 @@ pub enum FastJobErrorType {
   StillDoNotPayYet,
   ReturnedNonJSONResponse,
     CouldntSaveLastRead,
+  InvalidInput(String)
 }
 
 cfg_if! {

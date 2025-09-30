@@ -11,6 +11,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "full", diesel(table_name = chat_message))]
 #[cfg_attr(feature = "full", diesel(primary_key(id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
+#[serde(rename_all = "camelCase")]
 pub struct ChatMessage {
   pub id: ChatMessageId,
   pub msg_ref_id: String,

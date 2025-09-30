@@ -106,8 +106,8 @@ pub async fn setup_local_site(
           // Create default platform coin
           let total_supply = Coin(supply_minted_total);
           let coin_form = CoinModelInsertForm::new(
-            "FJC".to_string(),
-            "FastJob Coin".to_string(),
+            "108JC".to_string(),
+            "108Jobs Coin".to_string(),
             Some(total_supply),
             Some(total_supply), // Set minted equal to total initially
           );

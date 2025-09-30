@@ -20,8 +20,6 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
       self.presence.do_send(OnlineJoin { local_user_id: uid.0, started_at: Utc::now() });
     }
 
-    let _ = self.ensure_room_initialized(room_id.clone(), room_id.to_string());
-
     // Ensure participant exists for this user in this room (create if missing)
     let participant_user_id = local_user_id;
     if let Some(uid) = participant_user_id {

@@ -1,5 +1,5 @@
 use crate::message::StoreChatMessage;
-use actix::{Actor, AsyncContext, Context, Handler, Message, Arbiter};
+use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
   newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId, PaginationCursor},
@@ -17,15 +17,16 @@ use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::presence_manager::PresenceManager;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
-
 
 // Timeouts and intervals (in seconds) for Phoenix socket/channel operations
 pub const CONNECT_TIMEOUT_SECS: u64 = 10;
 pub const JOIN_TIMEOUT_SECS: u64 = 5;
 pub const FLUSH_INTERVAL_SECS: u64 = 10;
+pub const MESSAGE_EXPIRY_SECS: usize = 3600;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -53,14 +54,19 @@ pub struct PhoenixManager {
   pub(crate) socket: Arc<Socket>,
   pub(crate) channels: Arc<RwLock<HashMap<String, Arc<Channel>>>>,
   pub(crate) presence: actix::Addr<PresenceManager>,
-  chat_store: HashMap<ChatRoomId, Vec<ChatMessageInsertForm>>,
   pub(crate) pool: ActualDbPool,
   is_flushing: bool,
   pub(crate) last_read: HashMap<(ChatRoomId, LocalUserId), String>,
+  pub(crate) redis_client: Arc<RedisClient>,
 }
 
 impl PhoenixManager {
-  pub async fn new(endpoint: &Option<Url>, pool: ActualDbPool, presence: actix::Addr<PresenceManager>) -> Self {
+  pub async fn new(
+    endpoint: &Option<Url>,
+    pool: ActualDbPool,
+    presence: actix::Addr<PresenceManager>,
+    redis_client: RedisClient,
+  ) -> Self {
     let sock = Socket::spawn(
       endpoint.clone().expect("Phoenix url is require"),
       None,
@@ -72,10 +78,10 @@ impl PhoenixManager {
       socket: sock,
       channels: Arc::new(RwLock::new(HashMap::new())),
       presence,
-      chat_store: HashMap::new(),
       pool,
       is_flushing: false,
       last_read: HashMap::new(),
+      redis_client: Arc::new(redis_client),
     }
   }
 
@@ -139,7 +145,14 @@ impl PhoenixManager {
     let last_read_id_cloned = last_read_id.clone();
     let msg_cloned = msg.clone();
     tokio::spawn(async move {
-      this.broadcast_read_event(&chatroom_id_cloned, reader_id_val as i32, &last_read_id_cloned, &msg_cloned).await;
+      this
+        .broadcast_read_event(
+          &chatroom_id_cloned,
+          reader_id_val as i32,
+          &last_read_id_cloned,
+          &msg_cloned,
+        )
+        .await;
     });
   }
 
@@ -222,43 +235,91 @@ impl PhoenixManager {
     Ok(())
   }
 
-  pub fn add_messages_to_room(&mut self, room_id: ChatRoomId, new_messages: ChatMessageInsertForm) {
-    self
-      .chat_store
-      .entry(room_id)
-      .or_default()
-      .push(new_messages);
+  /// Add a message to a room's message list in Redis
+  pub async fn add_messages_to_room(
+    &mut self,
+    room_id: ChatRoomId,
+    new_message: ChatMessageInsertForm,
+  ) -> FastJobResult<()> {
+    let key = format!("chat:room:{}:messages", room_id);
+    let active_rooms_key = "chat:active_rooms";
+    let mut redis = self.redis_client.as_ref().clone();
+
+    // Append message to the Redis list
+    redis.rpush(&key, &new_message).await?;
+
+    // Set expiration for the room's message list
+    redis.expire(&key, MESSAGE_EXPIRY_SECS).await?;
+
+    // Add room to active rooms set
+    redis.sadd(active_rooms_key, room_id.to_string()).await?;
+
+    // Set expiration for the active rooms set
+    redis.expire(active_rooms_key, MESSAGE_EXPIRY_SECS).await?;
+
+    tracing::debug!("Added message to room {} in Redis", room_id);
+    Ok(())
   }
 
-  /// Drain buffered messages for a room and return them for persistence (non-blocking on the actor)
-  pub(crate) fn drain_room_buffer(&mut self, room_id: &ChatRoomId) -> Vec<ChatMessageInsertForm> {
-    if let Some(buffer) = self.chat_store.get_mut(room_id) {
-      buffer.drain(..).collect()
-    } else {
-      Vec::new()
+  /// Drain buffered messages for a room from Redis and return them for persistence
+  pub async fn drain_room_buffer(&mut self, room_id: &ChatRoomId) -> FastJobResult<Vec<ChatMessageInsertForm>> {
+    let key = format!("chat:room:{}:messages", room_id);
+    let mut redis = self.redis_client.as_ref().clone();
+
+    // Fetch all messages from the Redis list
+    let messages: Vec<ChatMessageInsertForm> = redis.lrange(&key, 0, -1).await?;
+
+    // Delete the key (ignore RedisKeyNotFound error)
+    if !messages.is_empty() {
+      if let Err(e) = redis.delete_key(&key).await {
+        if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
+          tracing::error!("Failed to delete Redis key for room {}: {}", room_id, e);
+        }
+      }
+      tracing::info!("Drained {} messages from room {} in Redis", messages.len(), room_id);
     }
+
+    Ok(messages)
   }
 
-  // Update a message in the chat store for a specific room
-  #[allow(dead_code)] // used in upcoming WebSocket message sync logic
-  fn update_chat_message(
+  /// Update a message in the Redis store for a specific room
+  #[allow(dead_code)]
+  async fn update_chat_message(
     &mut self,
     room_id: &ChatRoomId,
     predicate: impl Fn(&ChatMessageInsertForm) -> bool,
     update_fn: impl FnOnce(&mut ChatMessageInsertForm),
-  ) {
-    if let Some(messages) = self.chat_store.get_mut(room_id) {
-      if let Some(message) = messages.iter_mut().find(|msg| predicate(msg)) {
-        update_fn(message);
-      }
-    }
-  }
+  ) -> FastJobResult<()> {
+    let key = format!("chat:room:{}:messages", room_id);
+    let mut redis = self.redis_client.as_ref().clone();
 
-  pub(crate) fn ensure_room_initialized(&mut self, room_id: ChatRoomId, _room_name: String) {
-    if !self.chat_store.contains_key(&room_id) {
-      // ensure in-memory buffer for this room exists, but do NOT create DB room here
-      self.chat_store.insert(room_id.clone(), Vec::new());
+    // Fetch all messages
+    let mut messages: Vec<ChatMessageInsertForm> = redis.lrange(&key, 0, -1).await?;
+
+    // Update matching message
+    let found = messages.iter_mut().find(|msg| predicate(msg));
+    if let Some(message) = found {
+      update_fn(message);
+
+      // Clear the existing list
+      if let Err(e) = redis.delete_key(&key).await {
+        if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
+          tracing::error!("Failed to delete Redis key for room {}: {}", room_id, e);
+        }
+      }
+
+      // Re-push updated messages
+      for message in messages {
+        redis.rpush(&key, &message).await?;
+      }
+
+      // Reset expiration
+      redis.expire(&key, MESSAGE_EXPIRY_SECS).await?;
+
+      tracing::debug!("Updated message in room {} in Redis", room_id);
     }
+
+    Ok(())
   }
 }
 
@@ -270,26 +331,77 @@ impl Actor for PhoenixManager {
     self.subscribe_system_async::<BridgeMessage>(ctx);
     ctx.run_interval(Duration::from_secs(FLUSH_INTERVAL_SECS), |actor, ctx| {
       if actor.is_flushing {
-        // Skip this tick if a previous flush is still running
         return;
       }
       actor.is_flushing = true;
 
-      let drained = std::mem::take(&mut actor.chat_store);
       let pool = actor.pool.clone();
+      let redis_client = Arc::clone(&actor.redis_client);
       let addr = ctx.address();
 
       actix::spawn(async move {
-        for (room_id, messages) in drained.into_iter() {
+        let mut redis = redis_client.as_ref().clone();
+        let active_rooms_key = "chat:active_rooms";
+
+        // Fetch active rooms
+        let raw_room_ids: Vec<String> = match redis.smembers(active_rooms_key).await {
+          Ok(rooms) => rooms,
+          Err(e) => {
+            tracing::error!("Failed to fetch active rooms: {}", e);
+            addr.do_send(FlushDone);
+            return;
+          }
+        };
+
+        let mut db_pool = DbPool::Pool(&pool);
+        for room_id_str in raw_room_ids {
+          let room_id = match room_id_str.parse::<ChatRoomId>() {
+            Ok(id) => id,
+            Err(e) => {
+              tracing::error!("Invalid room ID {}: {}", room_id_str, e);
+              continue;
+            }
+          };
+
+          let key = format!("chat:room:{}:messages", room_id);
+          let messages: Vec<ChatMessageInsertForm> = match redis.lrange(&key, 0, -1).await {
+            Ok(messages) => messages,
+            Err(e) => {
+              tracing::error!("Failed to fetch messages for room {}: {}", room_id, e);
+              continue;
+            }
+          };
+
           if messages.is_empty() {
             continue;
           }
+
           tracing::info!("Flushing {} messages from room {}", messages.len(), room_id);
-          let mut db_pool = DbPool::Pool(&pool);
           if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &messages).await {
-            tracing::error!("Failed to flush messages: {}", e);
+            tracing::error!("Failed to flush messages for room {}: {}", room_id, e);
+            continue;
+          }
+
+          // Delete the room's messages and remove from active rooms
+          if let Err(e) = redis.delete_key(&key).await {
+            if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
+              tracing::error!("Failed to delete Redis key for room {}: {}", room_id, e);
+            }
+          }
+          if let Err(e) = redis.srem(active_rooms_key, room_id.to_string()).await {
+            if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
+              tracing::error!("Failed to remove room {} from active rooms: {}", room_id, e);
+            }
           }
         }
+
+        // Set expiration for the active rooms set
+        if let Err(e) = redis.expire(active_rooms_key, MESSAGE_EXPIRY_SECS).await {
+          if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
+            tracing::error!("Failed to set expiration for active rooms: {}", e);
+          }
+        }
+
         addr.do_send(FlushDone);
       });
     });
@@ -307,11 +419,14 @@ impl Handler<StoreChatMessage> for PhoenixManager {
   type Result = ();
 
   fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
-    let msg = msg.message;
-    self
-      .chat_store
-      .entry(msg.room_id.clone())
-      .or_default()
-      .push(msg);
+    let message = msg.message;
+    let room_id = message.room_id.clone();
+    let mut this = self.clone();
+
+    actix::spawn(async move {
+      if let Err(e) = this.add_messages_to_room(room_id, message).await {
+        tracing::error!("Failed to store message in Redis: {}", e);
+      }
+    });
   }
 }

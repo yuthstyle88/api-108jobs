@@ -117,11 +117,6 @@ impl Handler<BridgeMessage> for PhoenixSession {
   type Result = ();
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
-    // Forward only Phoenix-sourced messages destined for our room to the Phoenix client
-    // if msg.channel != self.client_msg.room_id {
-    //   return;
-    // }
-
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val: Value = serde_json::from_str(&msg.messages)
       .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));

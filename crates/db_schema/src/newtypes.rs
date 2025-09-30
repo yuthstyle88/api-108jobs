@@ -275,7 +275,15 @@ impl ChatRoomId {
   }
 }
 
-impl std::convert::TryFrom<String> for ChatRoomId {
+impl FromStr for ChatRoomId {
+  type Err = &'static str;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    ChatRoomId::try_from(s)
+  }
+}
+
+impl TryFrom<String> for ChatRoomId {
   type Error = &'static str;
   fn try_from(value: String) -> Result<Self, Self::Error> {
     let cleaned = ChatRoomId::clean(&value);
@@ -287,7 +295,7 @@ impl std::convert::TryFrom<String> for ChatRoomId {
   }
 }
 
-impl std::convert::TryFrom<&str> for ChatRoomId {
+impl TryFrom<&str> for ChatRoomId {
   type Error = &'static str;
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let cleaned = ChatRoomId::clean(value);

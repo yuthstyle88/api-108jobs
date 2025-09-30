@@ -7,7 +7,7 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::read_auth_token;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::source::person::Person;
-use lemmy_db_schema::newtypes::PersonId;
+use lemmy_db_schema::newtypes::{LocalUserId, PersonId};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse, UserKeysResponse};
@@ -58,11 +58,11 @@ pub async fn get_user_keys(
   path: Path<i32>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UserKeysResponse>> {
-  let person_id = PersonId(path.into_inner());
-  let person = Person::read(&mut context.pool(), person_id).await?;
+  let local_user_id = LocalUserId(path.into_inner());
+  let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
   let mut keys = Vec::new();
-  if !person.public_key.is_empty() {
-    keys.push(person.public_key);
+  if !local_user_view.person.public_key.is_empty() {
+    keys.push(local_user_view.person.public_key);
   }
   Ok(Json(UserKeysResponse { public_keys: keys }))
 }

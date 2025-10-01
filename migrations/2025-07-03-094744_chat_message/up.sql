@@ -4,8 +4,10 @@ CREATE TABLE chat_message
     msg_ref_id varchar     NOT NULL,
     room_id    varchar     NOT NULL REFERENCES chat_room
         ON UPDATE CASCADE ON DELETE CASCADE,
-    sender_id  int         NOT NULL REFERENCES local_user
-        ON UPDATE CASCADE ON DELETE CASCADE,
+   sender_id   int REFERENCES local_user
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    receiver_id int REFERENCES local_user
+        ON UPDATE CASCADE ON DELETE SET NULL,
     content    text        NOT NULL,
     status     smallint    NOT NULL DEFAULT 1,
     created_at timestamptz NOT NULL DEFAULT now(),

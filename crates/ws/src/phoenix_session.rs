@@ -2,7 +2,7 @@ use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalPairUserId, LocalUserId};
 use serde_json::Value;
 
 use crate::handler::JoinRoomQuery;
@@ -188,24 +188,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               // Derive channel from topic (e.g., "room:123")
               let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
                 .unwrap_or_else(|_| ChatRoomId(topic.clone()));
-              let user_id: LocalUserId = match self.client_msg.local_user_id {
-                Some(uid) => uid,
-                None => {
-                  // If user_id is missing, reject with error reply and do not forward
-                  ctx.text(phx_reply(
-                    &jr,
-                    &mr,
-                    &topic,
-                    "error",
-                    serde_json::json!({"reason": "unauthorized"}),
-                  ));
-                  return;
-                }
-              };
+
+              let local_pair_user_id: LocalPairUserId =  topic.clone().try_into().unwrap_or_default();
               let bridge_msg = BridgeMessage {
                 // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
                 channel,
-                local_user_id: user_id,
+                sender_id: LocalUserId(local_pair_user_id.0),
+                receiver_id: LocalUserId(local_pair_user_id.1),
                 event: event.clone(),
                 messages,
                 security_config: false,

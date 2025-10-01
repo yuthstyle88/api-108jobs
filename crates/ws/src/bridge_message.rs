@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 #[rtype(result = "()")]
 pub struct BridgeMessage {
     pub channel: ChatRoomId,
-    pub local_user_id: LocalUserId,
+    pub sender_id: LocalUserId,
+    pub receiver_id: LocalUserId,
     pub event: String,
     pub messages: String,
     pub security_config: bool,

@@ -16,7 +16,8 @@ use crate::broker::presence_manager::IsUserOnline;
 #[rtype(result = "()")]
 struct DoEphemeralBroadcast {
   outbound_channel: ChatRoomId,
-  local_user_id: LocalUserId,
+  sender_id: LocalUserId,
+  receiver_id: LocalUserId,
   event: String,
   content: String,
   chatroom_id: ChatRoomId,
@@ -44,7 +45,8 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     // Re-broadcast over broker / websocket
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       channel: msg.outbound_channel,
-      local_user_id: msg.local_user_id,
+      sender_id: msg.sender_id,
+      receiver_id: msg.receiver_id,
       event: msg.event.clone(),
       messages: msg.content,
       security_config: false,
@@ -74,7 +76,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
     // Process only messages coming from Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
 
     let channel_name = msg.channel.to_string();
-    let user_id = msg.local_user_id.clone();
+    let sender_id = msg.sender_id;
+    let receiver_id = msg.receiver_id;
     let event = msg.event.clone();
 
     let socket = self.socket.clone();
@@ -125,17 +128,10 @@ impl Handler<BridgeMessage> for PhoenixManager {
           .and_then(|v| v.as_str().map(|s| s.to_string()))
       })
       .unwrap_or_else(|| chatroom_id.to_string());
-    let sender_id_val = obj
-      .get("sender_id")
-      .and_then(|v| v.as_i64())
-      .or_else(|| obj.get("senderId").and_then(|v| v.as_i64()))
-      .unwrap_or(user_id.0 as i64);
+    let sender_id_val =  sender_id;
 
     // Try to detect an explicit receiver/peer id, if provided in payload
-    let receiver_id_val = obj
-      .get("receiver_id")
-      .and_then(|v| v.as_i64())
-      .or_else(|| obj.get("receiverId").and_then(|v| v.as_i64()));
+    let receiver_id_val = receiver_id;
 
     // Build a flat outbound payload for clients
     let mut outbound_obj = serde_json::Map::new();
@@ -150,6 +146,10 @@ impl Handler<BridgeMessage> for PhoenixManager {
     outbound_obj.insert(
       "sender_id".to_string(),
       serde_json::Value::Number(sender_id_val.into()),
+    );    
+    outbound_obj.insert(
+      "sender_id".to_string(),
+      serde_json::Value::Number(receiver_id_val.into()),
     );
     if let Some(idv) = obj.get("id").cloned() {
       outbound_obj.insert("id".to_string(), idv);
@@ -173,7 +173,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let store_msg = ChatMessageInsertForm {
       msg_ref_id,
       room_id: chatroom_id.clone(),
-      sender_id: user_id,
+      sender_id: sender_id_val,
+      receiver_id: receiver_id_val,
       content: content_text.to_string(),
       status: 1,
       created_at: Utc::now(),

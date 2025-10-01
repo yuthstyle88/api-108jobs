@@ -4,7 +4,11 @@ CREATE TABLE last_reads
         ON UPDATE CASCADE ON DELETE CASCADE,
     room_id          varchar NOT NULL REFERENCES chat_room
         ON UPDATE CASCADE ON DELETE CASCADE,
-    last_read_msg_id varchar NOT NULL CHECK (char_length(last_read_msg_id) > 0),
+    last_read_msg_id varchar
+        REFERENCES chat_message (msg_ref_id)
+            ON UPDATE CASCADE ON DELETE SET NULL
+            DEFERRABLE INITIALLY DEFERRED
+        CHECK (last_read_msg_id IS NULL OR char_length(last_read_msg_id) > 0),
     updated_at       timestamptz,
     PRIMARY KEY (local_user_id, room_id)
 );

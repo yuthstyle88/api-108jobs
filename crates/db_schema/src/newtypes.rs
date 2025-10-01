@@ -95,6 +95,33 @@ pub struct CommunityId(pub i32);
 pub struct LocalUserId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The local user id.
+pub struct LocalPairUserId(pub i32, pub i32);
+
+impl TryFrom<String> for LocalPairUserId {
+  type Error = &'static str;
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    LocalPairUserId::try_from(value.as_str())
+  }
+}
+
+impl TryFrom<&str> for LocalPairUserId {
+  type Error = &'static str;
+  fn try_from(topic: &str) -> Result<Self, Self::Error> {
+    // Accept both "room:<roomId>:<senderId>:<receiverId>" and "<roomId>:<senderId>:<receiverId>"
+    let cleaned = topic.strip_prefix("room:").unwrap_or(topic);
+    let parts: Vec<&str> = cleaned.split(':').collect();
+    if parts.len() != 3 {
+      return Err("invalid channel format");
+    }
+    let sender_id = parts[1].parse::<i32>().map_err(|_| "invalid sender id")?;
+    let receiver_id = parts[2].parse::<i32>().map_err(|_| "invalid receiver id")?;
+    Ok(LocalPairUserId(sender_id, receiver_id))
+  }
+}
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
@@ -247,12 +274,25 @@ impl ChatRoomId {
   }
 
   /// Extract a `ChatRoomId` from a Phoenix channel name (`room:...`).
-  /// Returns error if not a valid hex or UUID.
+  /// Supports multiple formats and validates the room id.
   pub fn from_channel_name(channel: &str) -> Result<Self, &'static str> {
-    let rest = channel.strip_prefix("room:").unwrap_or(channel);
-    let cleaned = Self::clean(rest);
-    if Self::is_valid_id(&cleaned) {
-      Ok(ChatRoomId(cleaned))
+    // Accept formats:
+    // 1) "room:<roomId>:<senderId>:<receiverId>"
+    // 2) "<roomId>:<senderId>:<receiverId>"
+    // 3) legacy: "room:<roomId>" or "<roomId>"
+    // 4) legacy: "<roomId>:<receiverId>"
+    let cleaned = channel.strip_prefix("room:").unwrap_or(channel);
+    let parts: Vec<&str> = cleaned.split(':').collect();
+
+    let room_id = match parts.len() {
+      3 => parts[0], // <roomId>:<senderId>:<receiverId>
+      2 => parts[0], // legacy <roomId>:<receiverId>
+      1 => parts[0], // legacy <roomId>
+      _ => return Err("invalid channel format"),
+    };
+
+    if Self::is_valid_id(room_id) {
+      Ok(ChatRoomId(room_id.to_string()))
     } else {
       Err("invalid room id format")
     }

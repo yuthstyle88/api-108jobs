@@ -250,6 +250,7 @@ diesel::table! {
         msg_ref_id -> Varchar,
         room_id -> Varchar,
         sender_id -> Int4,
+        receiver_id -> Int4,
         content -> Text,
         status -> Int2,
         created_at -> Timestamptz,

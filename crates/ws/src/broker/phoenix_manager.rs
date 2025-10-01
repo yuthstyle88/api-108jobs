@@ -195,7 +195,8 @@ impl PhoenixManager {
     let outbound_event = "chat:read".to_string();
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       channel: outbound_channel.clone(),
-      local_user_id: msg.local_user_id.clone(),
+      sender_id: msg.sender_id,
+      receiver_id: msg.receiver_id,
       event: outbound_event.clone(),
       messages: content.clone(),
       security_config: false,

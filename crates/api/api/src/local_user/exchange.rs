@@ -5,9 +5,9 @@ use actix_web::{
 use lemmy_api_utils::claims::Claims;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::read_auth_token;
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::source::person::Person;
-use lemmy_db_schema::newtypes::{LocalUserId, PersonId};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse, UserKeysResponse};

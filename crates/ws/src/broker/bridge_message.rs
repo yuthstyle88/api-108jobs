@@ -145,11 +145,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
     );
     outbound_obj.insert(
       "sender_id".to_string(),
-      serde_json::Value::Number(sender_id_val.into()),
+      serde_json::Value::Number(sender_id_val.0.into()),
     );    
     outbound_obj.insert(
       "sender_id".to_string(),
-      serde_json::Value::Number(receiver_id_val.into()),
+      serde_json::Value::Number(receiver_id_val.0.into()),
     );
     if let Some(idv) = obj.get("id").cloned() {
       outbound_obj.insert("id".to_string(), idv);
@@ -229,14 +229,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
       let outbound_event_cloned = outbound_event.clone();
       let outbound_channel_cloned = outbound_channel.clone();
       let content_cloned = content.clone();
-      let local_user_id_cloned = msg.local_user_id.clone();
+      let sender_id_cloned = msg.sender_id;
+      let receiver_id_cloned = msg.receiver_id;
       let chatroom_id_cloned = chatroom_id.clone();
       let store_msg_moved = store_msg; // move into async block
       let addr = ctx.address();
       let this = self.clone();
 
       return Box::pin(async move {
-        let peer_opt = receiver_id_val.map(|v| v as i32);
+        let peer_opt = Some(receiver_id_cloned.0);
         let others_online = this
           .has_participant_online(peer_opt)
           .await;
@@ -250,7 +251,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
         }
         addr.do_send(DoEphemeralBroadcast {
           outbound_channel: outbound_channel_cloned,
-          local_user_id: local_user_id_cloned,
+          sender_id: sender_id_cloned,
+          receiver_id: receiver_id_cloned,
           event: outbound_event_cloned,
           content: content_cloned,
           chatroom_id: chatroom_id_cloned,

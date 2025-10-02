@@ -97,9 +97,19 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let incoming_val: serde_json::Value =
       serde_json::from_str(&message).unwrap_or_else(|_| serde_json::Value::Null);
     let obj = match incoming_val {
-      serde_json::Value::Object(map) => map,
+      serde_json::Value::Object(mut map) => {
+        if let Some(payload) = map.remove("payload") {
+          match payload {
+            serde_json::Value::Object(payload_map) => payload_map,
+            _ => serde_json::Map::new(),
+          }
+        } else {
+          map
+        }
+      }
       _ => serde_json::Map::new(),
     };
+
     tracing::info!("READ EVT inbound: event={} payload={}", event, message);
     // Handle read-receipt style events early (do not treat as chat content)
     let is_read_evt = matches!(
@@ -112,9 +122,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
     }
 
     // Extract fields with sensible fallbacks
-    let msg_ref_id = obj
-      .get("id")
-      .and_then(|v| Option::from(v.to_string()));
     let content_text = obj
       .get("content")
       .and_then(|v| v.as_str())
@@ -151,6 +158,9 @@ impl Handler<BridgeMessage> for PhoenixManager {
       "sender_id".to_string(),
       serde_json::Value::Number(receiver_id_val.0.into()),
     );
+    let msg_ref_id = obj
+        .get("id")
+        .and_then(|v| Option::from(v.to_string()));
     if let Some(idv) = obj.get("id").cloned() {
       outbound_obj.insert("id".to_string(), idv);
     }
@@ -237,18 +247,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
       let this = self.clone();
 
       return Box::pin(async move {
-        let peer_opt = Some(receiver_id_cloned.0);
-        let others_online = this
-          .has_participant_online(peer_opt)
-          .await;
-        if !others_online {
-          tracing::debug!(
-            "Skip {}: no other online users (presence)",
-            outbound_event_cloned
-          );
-          tracing::debug!("PHX bridge: skipped due to no online counterpart");
-          return;
-        }
+        // let peer_opt = Some(receiver_id_cloned.0);
+        // let others_online = this
+        //   .has_participant_online(peer_opt)
+        //   .await;
+        // if !others_online {
+        //   tracing::debug!(
+        //     "Skip {}: no other online users (presence)",
+        //     outbound_event_cloned
+        //   );
+        //   tracing::debug!("PHX bridge: skipped due to no online counterpart");
+        //   return;
+        // }
         addr.do_send(DoEphemeralBroadcast {
           outbound_channel: outbound_channel_cloned,
           sender_id: sender_id_cloned,

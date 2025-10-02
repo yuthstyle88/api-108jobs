@@ -121,7 +121,7 @@ impl Handler<OutboundMessage> for PhoenixSession {
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val: Value = serde_json::from_str(&msg.messages)
       .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
-    let topic = format!("room:{}", msg.channel);
+    let topic = format!("room:{}:{}:{}", msg.channel.0,  msg.receiver_id.0, msg.sender_id.0);
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible

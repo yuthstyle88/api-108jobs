@@ -1,4 +1,4 @@
-use crate::bridge_message::BridgeMessage;
+use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use actix::{AsyncContext, Context, Handler, Message, ResponseFuture};
@@ -10,32 +10,16 @@ use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
-use crate::broker::presence_manager::IsUserOnline;
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
 struct DoEphemeralBroadcast {
   outbound_channel: ChatRoomId,
-  sender_id: LocalUserId,
-  receiver_id: LocalUserId,
+  sender_id: Option<i32>,
   event: String,
   content: String,
   chatroom_id: ChatRoomId,
-  store_msg: ChatMessageInsertForm,
-}
-
-impl PhoenixManager {
-  #[inline]
-  pub(crate) async fn has_participant_online(
-    &self,
-    peer_local_user_id: Option<i32>,
-  ) -> bool {
-     if let Some(peer_local_user_id) = peer_local_user_id {
-       self.presence.send(IsUserOnline { local_user_id: peer_local_user_id }).await.unwrap_or_else(|_| false)
-     }else{
-       false
-     }
-  }
+  store_msg: Option<ChatMessageInsertForm>,
 }
 
 impl Handler<DoEphemeralBroadcast> for PhoenixManager {
@@ -43,10 +27,10 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
 
   fn handle(&mut self, msg: DoEphemeralBroadcast, _ctx: &mut Context<Self>) -> Self::Result {
     // Re-broadcast over broker / websocket
-    self.issue_async::<SystemBroker, _>(BridgeMessage {
+    self.issue_async::<SystemBroker, _>(OutboundMessage {
       channel: msg.outbound_channel,
       sender_id: msg.sender_id,
-      receiver_id: msg.receiver_id,
+      status: "sent".to_string(),
       event: msg.event.clone(),
       messages: msg.content,
       security_config: false,
@@ -54,16 +38,17 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
 
     // Persist if the event is a message-type (already mapped before call if needed)
     if matches!(msg.event.as_str(), "chat:message") {
-      let msg_ref_id = msg.store_msg.msg_ref_id.clone();
-      if msg_ref_id.is_some() {
-        let mut this = self.clone();
-        let room_id = msg.chatroom_id;
-        let store_msg = msg.store_msg;
-        actix::spawn(async move {
-          if let Err(e) = this.add_messages_to_room(room_id, store_msg).await {
-            tracing::error!("Failed to store message in Redis: {}", e);
-          }
-        });
+      if let Some(store_msg) = msg.store_msg {
+        let msg_ref_id = store_msg.msg_ref_id.clone();
+        if msg_ref_id.is_some() {
+          let mut this = self.clone();
+          let room_id = store_msg.room_id.clone();
+          actix::spawn(async move {
+            if let Err(e) = this.add_messages_to_room(room_id, store_msg).await {
+              tracing::error!("Failed to store message in Redis: {}", e);
+            }
+          });
+        }
       }
     }
   }
@@ -76,9 +61,9 @@ impl Handler<BridgeMessage> for PhoenixManager {
     // Process only messages coming from Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
 
     let channel_name = msg.channel.to_string();
-    let sender_id = msg.sender_id;
-    let receiver_id = msg.receiver_id;
     let event = msg.event.clone();
+
+    let is_typing_evt = matches!(event.as_str(), "chat:typing" | "typing:start" | "typing:stop");
 
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
@@ -101,6 +86,20 @@ impl Handler<BridgeMessage> for PhoenixManager {
       _ => serde_json::Map::new(),
     };
     tracing::info!("READ EVT inbound: event={} payload={}", event, message);
+
+    let typing_flag = if is_typing_evt {
+      // Prefer explicit boolean field
+      obj.get("typing").and_then(|v| v.as_bool())
+        // or inside stringified content: {"typing":true|false}
+        .or_else(|| {
+          obj.get("content").and_then(|v| v.as_str()).and_then(|s| {
+            serde_json::from_str::<serde_json::Value>(s).ok()
+              .and_then(|vv| vv.get("typing").and_then(|t| t.as_bool()))
+          })
+        })
+        .unwrap_or(false)
+    } else { false };
+
     // Handle read-receipt style events early (do not treat as chat content)
     let is_read_evt = matches!(
       event.as_str(),
@@ -128,10 +127,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
           .and_then(|v| v.as_str().map(|s| s.to_string()))
       })
       .unwrap_or_else(|| chatroom_id.to_string());
-    let sender_id_val =  sender_id;
+   let sender_id_val = obj
+      .get("senderId")
+      .and_then(|v| v.as_str())
+      .and_then(|s| s.parse::<i32>().ok());
 
-    // Try to detect an explicit receiver/peer id, if provided in payload
-    let receiver_id_val = receiver_id;
 
     // Build a flat outbound payload for clients
     let mut outbound_obj = serde_json::Map::new();
@@ -143,14 +143,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
       "room_id".to_string(),
       serde_json::Value::String(room_id_str.to_string()),
     );
-    outbound_obj.insert(
-      "sender_id".to_string(),
-      serde_json::Value::Number(sender_id_val.0.into()),
-    );    
-    outbound_obj.insert(
-      "sender_id".to_string(),
-      serde_json::Value::Number(receiver_id_val.0.into()),
-    );
+    if let Some(sid) = sender_id_val.filter(|v| *v > 0) {
+      outbound_obj.insert(
+        "sender_id".to_string(),
+        serde_json::Value::Number(sid.into()),
+      );
+    }
+    if is_typing_evt {
+      outbound_obj.insert("typing".to_string(), serde_json::Value::Bool(typing_flag));
+    }
     if let Some(idv) = obj.get("id").cloned() {
       outbound_obj.insert("id".to_string(), idv);
     }
@@ -168,18 +169,22 @@ impl Handler<BridgeMessage> for PhoenixManager {
     }
     let outbound_payload = serde_json::Value::Object(outbound_obj);
     let outbound_payload_str = outbound_payload.to_string();
+    let store_msg = if let Some(sender_id) = sender_id_val {
+        // Store only plain text content to DB
+        let store_msg = ChatMessageInsertForm {
+          msg_ref_id,
+          room_id: chatroom_id.clone(),
+          sender_id: LocalUserId(sender_id),
+          content: content_text.to_string(),
+          status: 1,
+          created_at: Utc::now(),
+          updated_at: None,
+        };
+        Some(store_msg)
+      } else {
+        None
+      };
 
-    // Store only plain text content to DB
-    let store_msg = ChatMessageInsertForm {
-      msg_ref_id,
-      room_id: chatroom_id.clone(),
-      sender_id: sender_id_val,
-      receiver_id: receiver_id_val,
-      content: content_text.to_string(),
-      status: 1,
-      created_at: Utc::now(),
-      updated_at: None,
-    };
 
     // Serialize once for casting to Phoenix channel & for broker rebroadcast
     let content = outbound_payload_str.clone();
@@ -194,10 +199,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
       )
     });
     let outbound_event = match event.as_str() {
-      "send_message" | "SendMessage" => "chat:message",
+      "send_message" | "new_message" => "chat:message",
       "chat:read" | "message:read" | "read" => "chat:read",
       // pass through known page events (history flushes)
       "history_page" => "history_page",
+      "chat:typing" => "chat:typing",
       // default to chat:message for other app events
       _ => "chat:message",
     }
@@ -216,7 +222,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       outbound_channel
     );
 
-    if event.eq("typing")
+    if event.eq("chat:typing")
       || event.eq("typing:start")
       || event.eq("typing:stop")
       || event.eq("phx_leave")
@@ -224,35 +230,22 @@ impl Handler<BridgeMessage> for PhoenixManager {
       || event.eq("send_message")
       || event.eq("SendMessage")
       || event.eq("room:update")
+      || event.eq("new_message")
     {
       // Run the presence check asynchronously; then hand off work back to the actor context
       let outbound_event_cloned = outbound_event.clone();
       let outbound_channel_cloned = outbound_channel.clone();
       let content_cloned = content.clone();
-      let sender_id_cloned = msg.sender_id;
-      let receiver_id_cloned = msg.receiver_id;
+      let sender_id_cloned = sender_id_val;
       let chatroom_id_cloned = chatroom_id.clone();
       let store_msg_moved = store_msg; // move into async block
       let addr = ctx.address();
-      let this = self.clone();
 
       return Box::pin(async move {
-        let peer_opt = Some(receiver_id_cloned.0);
-        let others_online = this
-          .has_participant_online(peer_opt)
-          .await;
-        if !others_online {
-          tracing::debug!(
-            "Skip {}: no other online users (presence)",
-            outbound_event_cloned
-          );
-          tracing::debug!("PHX bridge: skipped due to no online counterpart");
-          return;
-        }
+
         addr.do_send(DoEphemeralBroadcast {
           outbound_channel: outbound_channel_cloned,
           sender_id: sender_id_cloned,
-          receiver_id: receiver_id_cloned,
           event: outbound_event_cloned,
           content: content_cloned,
           chatroom_id: chatroom_id_cloned,

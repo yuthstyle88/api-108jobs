@@ -31,3 +31,4 @@ phoenix_channels_client = { git = "https://github.com/liveview-native/phoenix-ch
 tracing =  { workspace = true }
 anyhow =  { workspace = true }
 chrono = { workspace = true }
+serde_with = { workspace = true }

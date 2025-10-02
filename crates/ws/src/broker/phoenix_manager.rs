@@ -180,23 +180,12 @@ impl PhoenixManager {
     );
     let content = serde_json::Value::Object(read_payload).to_string();
 
-    // Guard: broadcast only if reader is currently online (authoritative from Presence)
-    let others_online = self.has_participant_online(Some(reader_id_val)).await;
-    if !others_online {
-      tracing::debug!(
-        "Skip broadcast: reader {} appears offline (presence)",
-        reader_id_val
-      );
-      return;
-    }
 
     // Local broker broadcast (to other clients on this node)
     let outbound_channel = chatroom_id.clone();
     let outbound_event = "chat:read".to_string();
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       channel: outbound_channel.clone(),
-      sender_id: msg.sender_id,
-      receiver_id: msg.receiver_id,
       event: outbound_event.clone(),
       messages: content.clone(),
       security_config: false,

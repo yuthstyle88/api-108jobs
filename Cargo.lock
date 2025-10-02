@@ -4323,6 +4323,7 @@ dependencies = [
  "phoenix_channels_client",
  "serde",
  "serde_json",
+ "serde_with",
  "tokio",
  "tracing",
  "url",

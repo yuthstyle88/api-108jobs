@@ -7,6 +7,7 @@ use serde_json::Value;
 
 use crate::handler::JoinRoomQuery;
 use crate::{bridge_message::BridgeMessage, message::RegisterClientMsg};
+use crate::bridge_message::OutboundMessage;
 use crate::broker::presence_manager::{PresenceManager, OnlineJoin, OnlineLeave, Heartbeat};
 use crate::broker::phoenix_manager::PhoenixManager;
 
@@ -85,7 +86,7 @@ impl Actor for PhoenixSession {
   type Context = ws::WebsocketContext<Self>;
 
   fn started(&mut self, ctx: &mut Self::Context) {
-    self.subscribe_system_sync::<BridgeMessage>(ctx);
+    self.subscribe_system_sync::<OutboundMessage>(ctx);
     // Register this client/room with the manager (similar to WsSession)
     let local_user_id = self.client_msg.local_user_id;
     let room_id = self.client_msg.room_id.clone();
@@ -113,10 +114,10 @@ impl Actor for PhoenixSession {
   }
 }
 
-impl Handler<BridgeMessage> for PhoenixSession {
+impl Handler<OutboundMessage> for PhoenixSession {
   type Result = ();
 
-  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Self::Context) {
+  fn handle(&mut self, msg: OutboundMessage, ctx: &mut Self::Context) {
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val: Value = serde_json::from_str(&msg.messages)
       .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
@@ -189,12 +190,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
               let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
                 .unwrap_or_else(|_| ChatRoomId(topic.clone()));
 
-              let local_pair_user_id: LocalPairUserId =  topic.clone().try_into().unwrap_or_default();
               let bridge_msg = BridgeMessage {
                 // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
                 channel,
-                sender_id: LocalUserId(local_pair_user_id.0),
-                receiver_id: LocalUserId(local_pair_user_id.1),
                 event: event.clone(),
                 messages,
                 security_config: false,

@@ -13,13 +13,12 @@ use std::time::Duration;
 
 /// List of event types that trigger an ephemeral broadcast.
 /// These events are typically related to real-time chat interactions or presence updates.
-const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave", "message"];
+const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave", "new_message"];
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
 struct DoEphemeralBroadcast {
   outbound_channel: ChatRoomId,
-  sender_id: Option<LocalUserId>,
   event: String,
   content: String,
   chatroom_id: ChatRoomId,
@@ -33,8 +32,6 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     // Re-broadcast over broker / websocket
     self.issue_async::<SystemBroker, _>(OutboundMessage {
       channel: msg.outbound_channel,
-      sender_id: msg.sender_id,
-      status: "sent".to_string(),
       event: msg.event.clone(),
       messages: msg.content,
       security_config: false,
@@ -95,15 +92,17 @@ impl Handler<BridgeMessage> for PhoenixManager {
     tracing::info!("READ EVT inbound: event={} payload={}", event, message);
 
     let typing_flag = if is_typing_evt {
+      // Prefer explicit boolean field
       obj
         .get("typing")
         .and_then(|v| v.as_bool())
+        // or inside stringified content: {"typing":true|false}
         .or_else(|| {
-          obj
-            .get("content")
-            .and_then(|v| v.as_str())
-            .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok())
-            .and_then(|vv| vv.get("typing").and_then(|t| t.as_bool()))
+          obj.get("content").and_then(|v| v.as_str()).and_then(|s| {
+            serde_json::from_str::<serde_json::Value>(s)
+              .ok()
+              .and_then(|vv| vv.get("typing").and_then(|t| t.as_bool()))
+          })
         })
         .unwrap_or(false)
     } else {
@@ -121,12 +120,21 @@ impl Handler<BridgeMessage> for PhoenixManager {
     }
 
     // Extract fields with sensible fallbacks
-    let msg_ref_id = obj.get("id").and_then(|v| v.as_str().map(|s| s.to_owned()));
+    let msg_ref_id = obj.get("id").and_then(|v| Option::from(v.to_string()));
     let content_text = obj
       .get("content")
       .and_then(|v| v.as_str())
       .unwrap_or_else(|| message.as_str());
-    let sender_id_val: Option<LocalUserId> = obj
+    let room_id_str: String = obj
+      .get("room_id")
+      .and_then(|v| v.as_str().map(|s| s.to_string()))
+      .or_else(|| {
+        obj
+          .get("roomId")
+          .and_then(|v| v.as_str().map(|s| s.to_string()))
+      })
+      .unwrap_or_else(|| chatroom_id.to_string());
+    let sender_id_val = obj
       .get("senderId")
       .and_then(|v| v.as_i64())
       .map(|n| LocalUserId(n as i32));
@@ -139,16 +147,16 @@ impl Handler<BridgeMessage> for PhoenixManager {
     );
     outbound_obj.insert(
       "room_id".to_string(),
-      serde_json::Value::String(chatroom_id.0.clone()),
+      serde_json::Value::String(room_id_str.to_string()),
     );
-    if let Some(sid) = sender_id_val
-      .as_ref()
-      .and_then(|v| Some(v.0))
-      .filter(|&v| v > 0)
-    {
+    if let Some(sid) = sender_id_val.filter(|v| v.0 > 0) {
       outbound_obj.insert(
         "sender_id".to_string(),
-        serde_json::Value::Number(serde_json::Number::from(sid)),
+        serde_json::Value::Number(sid.0.into()),
+      );
+      outbound_obj.insert(
+        "status".to_string(),
+        serde_json::Value::String("sent".to_string()),
       );
     }
     if is_typing_evt {
@@ -157,8 +165,17 @@ impl Handler<BridgeMessage> for PhoenixManager {
     if let Some(idv) = obj.get("id").cloned() {
       outbound_obj.insert("id".to_string(), idv);
     }
-    if let Some(ts) = obj.get("createdAt").cloned() {
-      outbound_obj.insert("created_at".to_string(), ts);
+    if let Some(ts) = obj
+      .get("createdAt")
+      .cloned()
+      .or_else(|| obj.get("created_at").cloned())
+    {
+      outbound_obj.insert("createdAt".to_string(), ts);
+    } else {
+      outbound_obj.insert(
+        "createdAt".to_string(),
+        serde_json::Value::String(Utc::now().to_rfc3339()),
+      );
     }
     let outbound_payload = serde_json::Value::Object(outbound_obj);
     let outbound_payload_str = outbound_payload.to_string();
@@ -191,6 +208,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       )
     });
     let outbound_event = match event.as_str() {
+      "send_message" | "new_message" => "new_message",
       "chat:read" | "message:read" | "read" => "chat:read",
       // pass through known page events (history flushes)
       "history_page" => "history_page",
@@ -213,16 +231,31 @@ impl Handler<BridgeMessage> for PhoenixManager {
       outbound_channel
     );
 
-    if EPHEMERAL_EVENTS.contains(&event.as_str()) {
+    if event.eq("chat:typing")
+      || event.eq("typing:start")
+      || event.eq("typing:stop")
+      || event.eq("phx_leave")
+      || event.eq("update")
+      || event.eq("send_message")
+      || event.eq("SendMessage")
+      || event.eq("room:update")
+      || event.eq("new_message")
+    {
+      // Run the presence check asynchronously; then hand off work back to the actor context
+      let outbound_event_cloned = outbound_event.clone();
+      let outbound_channel_cloned = outbound_channel.clone();
+      let content_cloned = content.clone();
+      let chatroom_id_cloned = chatroom_id.clone();
+      let store_msg_moved = store_msg; // move into async block
       let addr = ctx.address();
+
       return Box::pin(async move {
         addr.do_send(DoEphemeralBroadcast {
-          outbound_channel,
-          sender_id: sender_id_val,
-          event: outbound_event,
-          content: outbound_payload_str,
-          chatroom_id,
-          store_msg,
+          outbound_channel: outbound_channel_cloned,
+          event: outbound_event_cloned,
+          content: content_cloned,
+          chatroom_id: chatroom_id_cloned,
+          store_msg: store_msg_moved,
         });
       });
     }

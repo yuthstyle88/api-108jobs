@@ -16,7 +16,7 @@ pub struct BridgeMessage {
 #[rtype(result = "()")]
 pub struct OutboundMessage {
     pub channel: ChatRoomId,
-    pub sender_id: Option<i32>,
+    pub sender_id: Option<LocalUserId>,
     pub event: String,
     pub status: String,
     pub messages: String,

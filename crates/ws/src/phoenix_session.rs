@@ -2,14 +2,14 @@ use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalPairUserId, LocalUserId};
+use lemmy_db_schema::newtypes::ChatRoomId;
 use serde_json::Value;
 
+use crate::bridge_message::OutboundMessage;
+use crate::broker::phoenix_manager::PhoenixManager;
+use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave, PresenceManager};
 use crate::handler::JoinRoomQuery;
 use crate::{bridge_message::BridgeMessage, message::RegisterClientMsg};
-use crate::bridge_message::OutboundMessage;
-use crate::broker::presence_manager::{PresenceManager, OnlineJoin, OnlineLeave, Heartbeat};
-use crate::broker::phoenix_manager::PhoenixManager;
 
 // ===== helpers =====
 fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String, Value)> {
@@ -90,9 +90,10 @@ impl Actor for PhoenixSession {
     // Register this client/room with the manager (similar to WsSession)
     let local_user_id = self.client_msg.local_user_id;
     let room_id = self.client_msg.room_id.clone();
-    self
-      .phoenix_manager
-      .do_send(RegisterClientMsg { local_user_id, room_id: room_id.clone() });
+    self.phoenix_manager.do_send(RegisterClientMsg {
+      local_user_id,
+      room_id: room_id.clone(),
+    });
     // Notify presence directly (method #1): only if we know user_id
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineJoin {
@@ -121,7 +122,7 @@ impl Handler<OutboundMessage> for PhoenixSession {
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val: Value = serde_json::from_str(&msg.messages)
       .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
-    let topic = format!("room:{}:{}:{}", msg.channel.0,  msg.receiver_id.0, msg.sender_id.0);
+    let topic = format!("room:{}", msg.channel.0);
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible
@@ -163,8 +164,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
                 format!("room:{}", topic)
               };
               if let Some(room) = room_opt {
-                self.client_msg.room_id = ChatRoomId::from_channel_name(room.as_str())
-                  .unwrap_or_else(|_| ChatRoomId(room));
+                self.client_msg.room_id =
+                  ChatRoomId::from_channel_name(room.as_str()).unwrap_or_else(|_| ChatRoomId(room));
               }
               ctx.text(phx_reply(
                 &jr,

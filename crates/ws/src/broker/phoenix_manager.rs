@@ -162,7 +162,7 @@ impl PhoenixManager {
     chatroom_id: &ChatRoomId,
     reader_id_val: i32,
     last_read_id: &str,
-    msg: &BridgeMessage,
+    _msg: &BridgeMessage,
   ) {
     // Build flat payload
     let mut read_payload = serde_json::Map::new();

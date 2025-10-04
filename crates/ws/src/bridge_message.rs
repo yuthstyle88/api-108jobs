@@ -8,7 +8,7 @@ use serde_with::skip_serializing_none;
 pub struct BridgeMessage {
     pub channel: ChatRoomId,
     pub event: String,
-    pub messages: String,
+    pub messages: Option<String>,
     pub security_config: bool,
 }
 #[skip_serializing_none]
@@ -17,6 +17,6 @@ pub struct BridgeMessage {
 pub struct OutboundMessage {
     pub channel: ChatRoomId,
     pub event: String,
-    pub messages: String,
+    pub messages: Option<String>,
     pub security_config: bool,
 }

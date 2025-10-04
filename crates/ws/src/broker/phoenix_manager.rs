@@ -187,7 +187,7 @@ impl PhoenixManager {
     self.issue_async::<SystemBroker, _>(BridgeMessage {
       channel: outbound_channel.clone(),
       event: outbound_event.clone(),
-      messages: content.clone(),
+      messages: Some(content.clone()),
       security_config: false,
     });
 

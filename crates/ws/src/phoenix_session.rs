@@ -120,12 +120,18 @@ impl Handler<OutboundMessage> for PhoenixSession {
 
   fn handle(&mut self, msg: OutboundMessage, ctx: &mut Self::Context) {
     // Convert stored JSON string to Value for Phoenix push payload
-    let payload_val: Value = serde_json::from_str(&msg.messages)
-      .unwrap_or_else(|_| serde_json::json!({"message": msg.messages}));
+    let payload_val: Value = match &msg.messages {
+      Some(s) if !s.trim().is_empty() => {
+        serde_json::from_str::<Value>(s)
+          .unwrap_or_else(|_| serde_json::json!({ "message": s }))
+      }
+      _ => serde_json::json!({}),
+    };
     let topic = format!("room:{}", msg.channel.0);
     let payload_str = payload_val.to_string();
     let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
     // Try to keep payload as JSON when possible
+    tracing::info!("Outbound Phoenix push: topic={} event={} payload={}", topic, msg.event, outbound_payload);
     let payload = serde_json::from_str::<Value>(outbound_payload.as_ref())
       .unwrap_or_else(|_| serde_json::json!({"message": outbound_payload.as_ref()}));
     ctx.text(phx_push(&topic, &msg.event, payload));
@@ -138,53 +144,53 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, topic, event, payload)) = parse_phx(&txt) {
           match event.as_str() {
-            "heartbeat" => {
-              // Forward heartbeat to Presence so last_seen is refreshed
-              if let Some(uid) = self.client_msg.local_user_id {
-                tracing::debug!("Received heartbeat from user {}", uid.0);
-                self.presence_manager.do_send(Heartbeat {
-                  local_user_id: uid.0,
-                  client_time: Some(Utc::now()),
-                });
-              }
-              ctx.text(phx_reply(
-                &jr,
-                &mr,
-                "phoenix",
-                "ok",
-                serde_json::json!({"status": "alive"}),
-              ));
-            }
-            "phx_join" => {
-              let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
-              // Normalize reply topic to `room:<id>` for clients
-              let reply_topic = if topic.starts_with("room:") {
-                topic.clone()
-              } else {
-                format!("room:{}", topic)
-              };
-              if let Some(room) = room_opt {
-                self.client_msg.room_id =
-                  ChatRoomId::from_channel_name(room.as_str()).unwrap_or_else(|_| ChatRoomId(room));
-              }
-              ctx.text(phx_reply(
-                &jr,
-                &mr,
-                &reply_topic,
-                "ok",
-                serde_json::json!({"status": "joined", "room": reply_topic}),
-              ));
-              ctx.text(phx_push(
-                &reply_topic,
-                "system:welcome",
-                serde_json::json!({"joined": reply_topic}),
-              ));
-            }
+            // "heartbeat" => {
+            //   // Forward heartbeat to Presence so last_seen is refreshed
+            //   if let Some(uid) = self.client_msg.local_user_id {
+            //     tracing::debug!("Received heartbeat from user {}", uid.0);
+            //     self.presence_manager.do_send(Heartbeat {
+            //       local_user_id: uid.0,
+            //       client_time: Some(Utc::now()),
+            //     });
+            //   }
+            //   ctx.text(phx_reply(
+            //     &jr,
+            //     &mr,
+            //     "phoenix",
+            //     "ok",
+            //     serde_json::json!({"status": "alive"}),
+            //   ));
+            // }
+            // "phx_join" => {
+            //   let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
+            //   // Normalize reply topic to `room:<id>` for clients
+            //   let reply_topic = if topic.starts_with("room:") {
+            //     topic.clone()
+            //   } else {
+            //     format!("room:{}", topic)
+            //   };
+            //   if let Some(room) = room_opt {
+            //     self.client_msg.room_id =
+            //       ChatRoomId::from_channel_name(room.as_str()).unwrap_or_else(|_| ChatRoomId(room));
+            //   }
+            //   ctx.text(phx_reply(
+            //     &jr,
+            //     &mr,
+            //     &reply_topic,
+            //     "ok",
+            //     serde_json::json!({"status": "joined", "room": reply_topic}),
+            //   ));
+            //   ctx.text(phx_push(
+            //     &reply_topic,
+            //     "system:welcome",
+            //     serde_json::json!({"joined": reply_topic}),
+            //   ));
+            // }
             _ => {
               // Treat any other event as an application event to forward to broker
               let messages = match payload {
-                Value::String(s) => self.maybe_decrypt_incoming(&s).unwrap_or(s),
-                _ => payload.to_string(),
+                Value::String(s) => self.maybe_decrypt_incoming(&s),
+                _ => Some(payload.to_string()),
               };
 
               // Derive channel from topic (e.g., "room:123")

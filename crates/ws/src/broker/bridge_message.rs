@@ -13,7 +13,7 @@ use std::time::Duration;
 
 /// List of event types that trigger an ephemeral broadcast.
 /// These events are typically related to real-time chat interactions or presence updates.
-const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave", "new_message"];
+const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave"];
 
 #[derive(Message, Clone)]
 #[rtype(result = "()")]
@@ -110,10 +110,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
     };
 
     // Handle read-receipt style events early (do not treat as chat content)
-    let is_read_evt = matches!(
-      event.as_str(),
-      "chat:read" | "chat:read-receipt" | "read" | "message:read"
-    );
+    // Canonical read receipt event only
+    let is_read_evt = matches!(event.as_str(), "chat:read");
     if is_read_evt {
       self.handle_read_event(&msg, chatroom_id.clone(), &obj);
       return Box::pin(async move { () });
@@ -126,13 +124,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       .and_then(|v| v.as_str())
       .unwrap_or_else(|| message.as_str());
     let room_id_str: String = obj
-      .get("room_id")
+      .get("roomId")
       .and_then(|v| v.as_str().map(|s| s.to_string()))
-      .or_else(|| {
-        obj
-          .get("roomId")
-          .and_then(|v| v.as_str().map(|s| s.to_string()))
-      })
       .unwrap_or_else(|| chatroom_id.to_string());
     let sender_id_val = obj
       .get("senderId")
@@ -146,12 +139,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
       serde_json::Value::String(content_text.to_string()),
     );
     outbound_obj.insert(
-      "room_id".to_string(),
+      "roomId".to_string(),
       serde_json::Value::String(room_id_str.to_string()),
     );
     if let Some(sid) = sender_id_val.filter(|v| v.0 > 0) {
       outbound_obj.insert(
-        "sender_id".to_string(),
+        "senderId".to_string(),
         serde_json::Value::Number(sid.0.into()),
       );
       outbound_obj.insert(
@@ -208,8 +201,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       )
     });
     let outbound_event = match event.as_str() {
-      "send_message" | "new_message" => "new_message",
-      "chat:read" | "message:read" | "read" => "chat:read",
+      "chat:message" => "chat:message",
+      "chat:read"  => "chat:read",
       // pass through known page events (history flushes)
       "history_page" => "history_page",
       "chat:typing" => "chat:typing",
@@ -236,10 +229,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       || event.eq("typing:stop")
       || event.eq("phx_leave")
       || event.eq("update")
-      || event.eq("send_message")
-      || event.eq("SendMessage")
       || event.eq("room:update")
-      || event.eq("new_message")
+      || event.eq("chat:message")
     {
       // Run the presence check asynchronously; then hand off work back to the actor context
       let outbound_event_cloned = outbound_event.clone();

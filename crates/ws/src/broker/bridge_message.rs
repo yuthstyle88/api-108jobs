@@ -82,8 +82,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       ChatEvent::PhxLeave => (None, None),
       ChatEvent::Heartbeat => (None, None),
       ChatEvent::Message => {
-        let chat_model: Result<MessageModel, _> =
-          serde_json::from_value(msg.incoming_event.payload.clone());
+        let chat_model: Result<MessageModel, _> = msg.incoming_event.payload.try_into();
         match chat_model {
           Ok(m) => {
             let insert_data = ChatMessageInsertForm {

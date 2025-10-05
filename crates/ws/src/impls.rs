@@ -101,3 +101,11 @@ impl TryFrom<Value> for MessageModel {
         })
     }
 }
+
+impl MessageModel {
+    /// Serialize the message to JSON bytes (camelCase keys) for wire transport.
+    /// Falls back to an empty JSON object on serialization error.
+    pub fn into_bytes(&self) -> Vec<u8> {
+        serde_json::to_vec(self).unwrap_or_else(|_| b"{}".to_vec())
+    }
+}

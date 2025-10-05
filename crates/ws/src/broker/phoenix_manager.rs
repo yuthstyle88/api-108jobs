@@ -149,7 +149,7 @@ impl PhoenixManager {
   ) -> Result<(),FastJobError>{
     let payload: MessageModel = msg.incoming_event.payload.clone().try_into()?;
 
-    let content = serde_json::to_value(payload)?;
+    let content = payload;
     // Local broker broadcast (to other clients on this node)
     let outbound_channel = msg.incoming_event.room_id.clone();
     let outbound_event = ChatEvent::Read.to_string_value();
@@ -164,7 +164,7 @@ impl PhoenixManager {
       if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
         if let Ok(status) = arc_chan.statuses().status().await {
           let phoenix_event = Event::from_string(outbound_event_for_cast);
-          let payload: Payload = Payload::binary_from_bytes(content.to_string().into_bytes());
+          let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
           if status == ChannelStatus::Joined {
             send_event_to_channel(arc_chan, phoenix_event, payload).await;
           } else {

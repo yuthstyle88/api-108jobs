@@ -3,28 +3,36 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
 use lemmy_db_schema::newtypes::ChatRoomId;
+use phoenix_channels_client::EventPayload;
 use serde_json::Value;
-
+use std::str::FromStr;
+use lemmy_utils::error::FastJobError;
+use crate::api::{ChatEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, StatusPayload, TypingPayload};
 use crate::bridge_message::OutboundMessage;
 use crate::broker::phoenix_manager::PhoenixManager;
 use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave, PresenceManager};
 use crate::handler::JoinRoomQuery;
-use crate::{bridge_message::BridgeMessage, message::RegisterClientMsg};
+use crate::{api::RegisterClientMsg, bridge_message::BridgeMessage};
 
 // ===== helpers =====
-fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, String, String, Value)> {
+fn parse_phx(s: &str) -> Option<IncomingEvent> {
   let v: Value = serde_json::from_str(s).ok()?;
   let a = v.as_array()?;
   if a.len() < 5 {
     return None;
   }
-  Some((
-    a[0].as_str().map(|x| x.to_string()),
-    a[1].as_str().map(|x| x.to_string()),
-    a[2].as_str()?.to_string(),
-    a[3].as_str()?.to_string(),
-    a[4].clone(),
-  ))
+  let topic = a.get(2)?.as_str()?.to_string();
+  let event_str = a.get(3)?.as_str().unwrap_or("");
+  let event = ChatEvent::from_str(event_str).unwrap_or(ChatEvent::Unknown);
+  let payload = a.get(4)?.clone();
+  let room_id: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
+      .unwrap_or_else(|_| ChatRoomId(topic.clone()));
+  Some(IncomingEvent{
+    event,
+    topic,
+    payload,
+    room_id: Some(room_id),
+  })
 }
 fn phx_reply(
   jr: &Option<String>,
@@ -42,7 +50,7 @@ fn phx_reply(
   ])
   .to_string()
 }
-fn phx_push(topic: &str, event: &str, payload: Value) -> String {
+fn phx_push(topic: &str, event: &ChatEvent, payload: Value) -> String {
   serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()
 }
 
@@ -52,6 +60,7 @@ pub struct PhoenixSession {
   pub(crate) presence_manager: Addr<PresenceManager>,
   pub(crate) params: JoinRoomQuery,
   pub(crate) client_msg: RegisterClientMsg,
+  pub(crate) secure: bool,
 }
 impl PhoenixSession {
   pub fn new(
@@ -65,20 +74,24 @@ impl PhoenixSession {
       presence_manager,
       params,
       client_msg,
+      secure: false,
     }
   }
 
   fn maybe_encrypt_outbound<'a>(
     &'a self,
-    _event: &str,
     messages: &'a str,
   ) -> std::borrow::Cow<'a, str> {
     use std::borrow::Cow;
     Cow::Borrowed(messages)
   }
 
-  fn maybe_decrypt_incoming(&self, _content: &str) -> Option<String> {
-    None
+  fn maybe_decrypt_incoming(&self, content: &str) -> serde_json::error::Result<Value> {
+    if self.secure {
+      serde_json::from_str(content)
+    }else {
+      serde_json::from_str(content)
+    }
   }
 }
 
@@ -120,21 +133,15 @@ impl Handler<OutboundMessage> for PhoenixSession {
 
   fn handle(&mut self, msg: OutboundMessage, ctx: &mut Self::Context) {
     // Convert stored JSON string to Value for Phoenix push payload
-    let payload_val: Value = match &msg.messages {
-      Some(s) if !s.trim().is_empty() => {
-        serde_json::from_str::<Value>(s)
-          .unwrap_or_else(|_| serde_json::json!({ "message": s }))
-      }
-      _ => serde_json::json!({}),
-    };
-    let topic = format!("room:{}", msg.channel.0);
+    let payload_val: Value = msg.out_event.payload;
+    let topic = format!("room:{}", msg.out_event.topic);
     let payload_str = payload_val.to_string();
-    let outbound_payload = self.maybe_encrypt_outbound(&msg.event, &payload_str);
+    let outbound_payload = self.maybe_encrypt_outbound(&payload_str);
     // Try to keep payload as JSON when possible
-    tracing::info!("Outbound Phoenix push: topic={} event={} payload={}", topic, msg.event, outbound_payload);
+    tracing::info!("Outbound Phoenix push: topic={} event={} payload={}", topic, msg.out_event.event.to_string_value(), outbound_payload);
     let payload = serde_json::from_str::<Value>(outbound_payload.as_ref())
       .unwrap_or_else(|_| serde_json::json!({"message": outbound_payload.as_ref()}));
-    ctx.text(phx_push(&topic, &msg.event, payload));
+    ctx.text(phx_push(&topic, &msg.out_event.event, payload));
   }
 }
 
@@ -142,72 +149,29 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
   fn handle(&mut self, m: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match m {
       Ok(ws::Message::Text(txt)) => {
-        if let Some((jr, mr, topic, event, payload)) = parse_phx(&txt) {
-          match event.as_str() {
-            // "heartbeat" => {
-            //   // Forward heartbeat to Presence so last_seen is refreshed
-            //   if let Some(uid) = self.client_msg.local_user_id {
-            //     tracing::debug!("Received heartbeat from user {}", uid.0);
-            //     self.presence_manager.do_send(Heartbeat {
-            //       local_user_id: uid.0,
-            //       client_time: Some(Utc::now()),
-            //     });
-            //   }
-            //   ctx.text(phx_reply(
-            //     &jr,
-            //     &mr,
-            //     "phoenix",
-            //     "ok",
-            //     serde_json::json!({"status": "alive"}),
-            //   ));
-            // }
-            // "phx_join" => {
-            //   let room_opt = self.params.resolve_room_from_query_or_topic(Some(&topic));
-            //   // Normalize reply topic to `room:<id>` for clients
-            //   let reply_topic = if topic.starts_with("room:") {
-            //     topic.clone()
-            //   } else {
-            //     format!("room:{}", topic)
-            //   };
-            //   if let Some(room) = room_opt {
-            //     self.client_msg.room_id =
-            //       ChatRoomId::from_channel_name(room.as_str()).unwrap_or_else(|_| ChatRoomId(room));
-            //   }
-            //   ctx.text(phx_reply(
-            //     &jr,
-            //     &mr,
-            //     &reply_topic,
-            //     "ok",
-            //     serde_json::json!({"status": "joined", "room": reply_topic}),
-            //   ));
-            //   ctx.text(phx_push(
-            //     &reply_topic,
-            //     "system:welcome",
-            //     serde_json::json!({"joined": reply_topic}),
-            //   ));
-            // }
-            _ => {
-              // Treat any other event as an application event to forward to broker
-              let messages = match payload {
-                Value::String(s) => self.maybe_decrypt_incoming(&s),
-                _ => Some(payload.to_string()),
+        if let Some(incoming) = parse_phx(&txt) {
+              // Normalize payload into a concrete JSON Value
+              let payload_value: Value = match &incoming.payload {
+                // String payload (possibly encrypted/JSON-encoded) → try decrypt/parse, fallback to raw string
+                Value::String(s) => self
+                  .maybe_decrypt_incoming(s)
+                  .unwrap_or_else(|_| Value::String(s.clone())),
+                // Already a JSON object/array/number/etc → clone as-is
+                other => other.clone(),
               };
-
-              // Derive channel from topic (e.g., "room:123")
-              let channel: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
-                .unwrap_or_else(|_| ChatRoomId(topic.clone()));
+              
+              let parse_data = IncomingEvent {
+                event: incoming.event.clone(),
+                room_id: incoming.room_id.clone(),
+                topic: incoming.topic.clone(),
+                payload: payload_value,
+              };
 
               let bridge_msg = BridgeMessage {
-                // Treat inbound Phoenix client messages as WebSocket-originated for broker processing
-                channel,
-                event: event.clone(),
-                messages,
-                security_config: false,
+                incoming_event: parse_data
               };
               self.issue_async::<SystemBroker, _>(bridge_msg);
-              ctx.text(phx_reply(&jr, &mr, &topic, "ok", serde_json::json!({})));
-            }
-          }
+              ctx.text(phx_reply(&None, &None, &incoming.room_id.unwrap().0, "ok", serde_json::json!({})));
         }
       }
       Ok(ws::Message::Ping(b)) => ctx.pong(&b),

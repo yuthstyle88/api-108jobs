@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::message::RegisterClientMsg;
+use crate::api::RegisterClientMsg;
 use actix::Addr;
 use actix_web::{web, web::{Data, Query}, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;

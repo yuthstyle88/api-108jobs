@@ -1,4 +1,4 @@
-use crate::message::StoreChatMessage;
+use crate::api::{ChatEvent, MessageModel, StoreChatMessage};
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
@@ -16,9 +16,10 @@ use crate::bridge_message::BridgeMessage;
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::presence_manager::PresenceManager;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
+use std::str::FromStr;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
@@ -89,26 +90,16 @@ impl PhoenixManager {
   pub(crate) fn handle_read_event(
     &mut self,
     msg: &BridgeMessage,
-    chatroom_id: ChatRoomId,
-    obj: &serde_json::Map<String, serde_json::Value>,
   ) {
+    let chatroom_id = msg.incoming_event.room_id.clone().unwrap();
     // reader_id: รับได้ทั้ง number หรือ string
-    let reader_id_val = obj
-      .get("reader_id")
-      .and_then(|v| {
-        v.as_i64()
-          .or_else(|| v.as_str().and_then(|s| s.parse::<i64>().ok()))
-      })
-      .unwrap_or_else(|| {
-        tracing::warn!("chat:read missing/invalid reader_id");
-        0
-      });
+    let reader_id_val =  msg.incoming_event.payload.get("readerId").and_then(|v| v.as_i64()).unwrap_or(0);
     if reader_id_val == 0 {
       return;
     }
 
     // last_read_message_id: str เท่านั้น
-    let last_read_id = match obj.get("last_read_message_id").and_then(|v| v.as_str()) {
+    let last_read_id = match msg.incoming_event.payload.get("lastReadMessageId").and_then(|v| v.as_str()) {
       Some(s) if !s.is_empty() => s.to_string(),
       _ => {
         tracing::warn!("chat:read missing last_read_message_id");
@@ -141,16 +132,11 @@ impl PhoenixManager {
     );
 
     let this = self.clone();
-    let chatroom_id_cloned = chatroom_id.clone();
-    let last_read_id_cloned = last_read_id.clone();
     let msg_cloned = msg.clone();
     tokio::spawn(async move {
-      this
+      let _ = this
         .broadcast_read_event(
-          &chatroom_id_cloned,
-          reader_id_val as i32,
-          &last_read_id_cloned,
-          &msg_cloned,
+          msg_cloned,
         )
         .await;
     });
@@ -159,48 +145,26 @@ impl PhoenixManager {
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
   async fn broadcast_read_event(
     &self,
-    chatroom_id: &ChatRoomId,
-    reader_id_val: i32,
-    last_read_id: &str,
-    _msg: &BridgeMessage,
-  ) {
-    // Build flat payload
-    let mut read_payload = serde_json::Map::new();
-    read_payload.insert(
-      "room_id".to_string(),
-      serde_json::Value::String(chatroom_id.to_string()),
-    );
-    read_payload.insert(
-      "reader_id".to_string(),
-      serde_json::Value::Number(reader_id_val.into()),
-    );
-    read_payload.insert(
-      "last_read_message_id".to_string(),
-      serde_json::Value::String(last_read_id.to_string()),
-    );
-    let content = serde_json::Value::Object(read_payload).to_string();
+    msg: BridgeMessage,
+  ) -> Result<(),FastJobError>{
+    let payload: MessageModel = msg.incoming_event.payload.clone().try_into()?;
 
-
+    let content = serde_json::to_value(payload)?;
     // Local broker broadcast (to other clients on this node)
-    let outbound_channel = chatroom_id.clone();
-    let outbound_event = "chat:read".to_string();
-    self.issue_async::<SystemBroker, _>(BridgeMessage {
-      channel: outbound_channel.clone(),
-      event: outbound_event.clone(),
-      messages: Some(content.clone()),
-      security_config: false,
-    });
+    let outbound_channel = msg.incoming_event.room_id.clone();
+    let outbound_event = ChatEvent::Read.to_string_value();
+    self.issue_async::<SystemBroker, _>(msg);
 
     // Phoenix channel cast (for cross-node subscribers)
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
-    let channel_name = format!("room:{}", outbound_channel);
+    let channel_name = format!("room:{}", outbound_channel.unwrap());
     let outbound_event_for_cast = outbound_event.clone();
     Arbiter::current().spawn(async move {
       if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
         if let Ok(status) = arc_chan.statuses().status().await {
           let phoenix_event = Event::from_string(outbound_event_for_cast);
-          let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
+          let payload: Payload = Payload::binary_from_bytes(content.to_string().into_bytes());
           if status == ChannelStatus::Joined {
             send_event_to_channel(arc_chan, phoenix_event, payload).await;
           } else {
@@ -210,6 +174,7 @@ impl PhoenixManager {
         }
       }
     });
+   Ok(())
   }
 
   pub async fn validate_or_create_room(
@@ -228,9 +193,9 @@ impl PhoenixManager {
   /// Add a message to a room's message list in Redis
   pub async fn add_messages_to_room(
     &mut self,
-    room_id: ChatRoomId,
-    new_message: ChatMessageInsertForm,
+    new_message: Option<ChatMessageInsertForm>,
   ) -> FastJobResult<()> {
+    let room_id = new_message.clone().unwrap().room_id;
     let key = format!("chat:room:{}:messages", room_id);
     let active_rooms_key = "chat:active_rooms";
     let mut redis = self.redis_client.as_ref().clone();
@@ -331,10 +296,10 @@ impl Actor for PhoenixManager {
 
       actix::spawn(async move {
         let mut redis = redis_client.as_ref().clone();
-        let active_rooms_key = "chat:active_rooms";
+        let active_rooms_key = ChatEvent::ActiveRooms.to_string_value();
 
         // Fetch active rooms
-        let raw_room_ids: Vec<String> = match redis.smembers(active_rooms_key).await {
+        let raw_room_ids: Vec<String> = match redis.smembers(&active_rooms_key).await {
           Ok(rooms) => rooms,
           Err(e) => {
             tracing::error!("Failed to fetch active rooms: {}", e);
@@ -378,7 +343,7 @@ impl Actor for PhoenixManager {
               tracing::error!("Failed to delete Redis key for room {}: {}", room_id, e);
             }
           }
-          if let Err(e) = redis.srem(active_rooms_key, room_id.to_string()).await {
+          if let Err(e) = redis.srem(&active_rooms_key, room_id.to_string()).await {
             if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
               tracing::error!("Failed to remove room {} from active rooms: {}", room_id, e);
             }
@@ -386,7 +351,7 @@ impl Actor for PhoenixManager {
         }
 
         // Set expiration for the active rooms set
-        if let Err(e) = redis.expire(active_rooms_key, MESSAGE_EXPIRY_SECS).await {
+        if let Err(e) = redis.expire(&active_rooms_key, MESSAGE_EXPIRY_SECS).await {
           if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
             tracing::error!("Failed to set expiration for active rooms: {}", e);
           }
@@ -409,12 +374,11 @@ impl Handler<StoreChatMessage> for PhoenixManager {
   type Result = ();
 
   fn handle(&mut self, msg: StoreChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
-    let message = msg.message;
-    let room_id = message.room_id.clone();
+    let message = msg.message.unwrap();
     let mut this = self.clone();
 
     actix::spawn(async move {
-      if let Err(e) = this.add_messages_to_room(room_id, message).await {
+      if let Err(e) = this.add_messages_to_room(Some(message)).await {
         tracing::error!("Failed to store message in Redis: {}", e);
       }
     });

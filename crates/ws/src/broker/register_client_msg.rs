@@ -1,5 +1,5 @@
 use crate::broker::phoenix_manager::PhoenixManager;
-use crate::message::RegisterClientMsg;
+use crate::api::RegisterClientMsg;
 use actix::{Context, Handler};
 use chrono::Utc;
 use lemmy_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};

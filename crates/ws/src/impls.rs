@@ -77,18 +77,21 @@ impl TryFrom<Value> for MessageModel {
                 None
             );
 
-        let status: MessageStatus = value
+        let status: Option<MessageStatus> = value
             .get("status")
             .and_then(|v| v.as_str())
             .unwrap_or("pending")
-            .parse::<MessageStatus>()
-            .unwrap_or(MessageStatus::Pending);
+            .parse::<MessageStatus>().map(|v| Some(v))
+            .unwrap_or(
+                None
+            );;
 
         // Parse createdAt (RFC3339) into DateTime<Utc>
         let created_at: Option<DateTime<Utc>> = value
             .get("createdAt")
             .and_then(|v| v.as_str())
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|dt| dt.with_timezone(&Utc)));
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|dt| dt.with_timezone(&Utc));
 
         Ok(MessageModel {
             id,

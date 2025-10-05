@@ -2,6 +2,7 @@ use actix::prelude::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use serde_with::skip_serializing_none;
 use thiserror::Error;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
@@ -48,6 +49,7 @@ pub enum ChatEvent {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum MessageStatus {
     #[default]
     Pending,
@@ -76,14 +78,14 @@ pub struct ReadPayload {
 pub struct ActiveRoomPayload {
     pub room_id: String,
 }
-
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageModel {
     pub id: Option<String>,
     pub sender_id: i32,
     pub content: Option<String>,
-    pub status: MessageStatus,
+    pub status: Option<MessageStatus>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -101,11 +103,13 @@ pub struct StatusPayload {
 }
 
 // ================= IncomingEvent =================
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncomingEvent {
     pub event: ChatEvent,
     pub room_id: Option<ChatRoomId>,
     pub topic: String,
+    #[serde(skip_serializing_if = "Value::is_null")]
     pub payload: Value,
 }
 

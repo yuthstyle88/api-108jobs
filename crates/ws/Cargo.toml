@@ -32,3 +32,5 @@ tracing =  { workspace = true }
 anyhow =  { workspace = true }
 chrono = { workspace = true }
 serde_with = { workspace = true }
+uuid = { workspace = true }
+thiserror = "1.0.69"

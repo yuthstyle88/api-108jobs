@@ -33,7 +33,7 @@ pub struct ChatMessageInsertForm {
   pub msg_ref_id: Option<String>,
   pub room_id: ChatRoomId,
   pub sender_id: LocalUserId,
-  pub content: String,
+  pub content: Option<String>,
   pub status: i16,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,

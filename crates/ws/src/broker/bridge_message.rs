@@ -18,12 +18,12 @@ use std::time::Duration;
 /// These events are typically related to real-time chat interactions or presence updates.
 const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave"];
 
-#[derive(Message, Clone)]
+#[derive(Message, Clone, Default)]
 #[rtype(result = "()")]
 struct DoEphemeralBroadcast {
   room_id: ChatRoomId,
   event: ChatEvent,
-  out_event: MessageModel,
+  out_data: MessageModel,
   store_msg: Option<ChatMessageInsertForm>,
 }
 
@@ -32,10 +32,27 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
 
   fn handle(&mut self, msg: DoEphemeralBroadcast, _ctx: &mut Context<Self>) -> Self::Result {
     // Re-broadcast over broker / websocket
-    let message = msg.out_event.clone();
+    let message = msg.out_data;
+    let created_at = if message.clone().created_at.is_some() {
+      message.clone().created_at
+    } else {
+      Some(Utc::now())
+    };
+
+    let content = message.clone().content;
+    let sender_id = message.clone().sender_id;
+    let id = if message.clone().id.is_some() {
+      message.clone().id
+    } else {
+      Some(uuid::Uuid::new_v4().to_string())
+    };
+
     let message = MessageModel {
+      id,
       status: MessageStatus::Sent,
-      ..message
+      content,
+      created_at,
+      sender_id,
     };
     let payload = serde_json::to_value(message).unwrap();
     let out_event = IncomingEvent {
@@ -77,8 +94,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let chatroom_id = msg.incoming_event.room_id.clone().unwrap();
     let outbound_event_cloned = msg.incoming_event.event.clone();
     let content_cloned = msg.incoming_event.payload.clone();
+
     let event_msg: (Option<ChatMessageInsertForm>, Option<DoEphemeralBroadcast>) = match event {
-      ChatEvent::PhxJoin => (None, None),
       ChatEvent::PhxLeave => (None, None),
       ChatEvent::Heartbeat => (None, None),
       ChatEvent::Message => {
@@ -86,7 +103,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         match chat_model {
           Ok(m) => {
             let insert_data = ChatMessageInsertForm {
-              msg_ref_id: Some(m.id.to_string()),
+              msg_ref_id: m.id.clone(),
               room_id: chatroom_id.clone(),
               sender_id: LocalUserId(m.sender_id),
               content: Option::from(m.clone().content.unwrap().to_string()),
@@ -97,7 +114,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let broadcast = DoEphemeralBroadcast {
               room_id: chatroom_id,
               event: outbound_event_cloned.clone(),
-              out_event: m.clone(),
+              out_data: m.clone(),
               store_msg: Some(insert_data.clone()),
             };
             (Some(insert_data), Some(broadcast))
@@ -107,9 +124,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }
       ChatEvent::Read => (None, None),
       ChatEvent::ActiveRooms => (None, None),
-      ChatEvent::Typing => (None, None),
-      ChatEvent::TypingStart => (None, None),
-      ChatEvent::TypingStop => (None, None),
+      ChatEvent::PhxJoin | ChatEvent::Typing | ChatEvent::TypingStop | ChatEvent::TypingStart => {
+        let broadcast = DoEphemeralBroadcast {
+          room_id: chatroom_id,
+          event: outbound_event_cloned.clone(),
+          out_data: Default::default(),
+          store_msg: None,
+        };
+        (None, Some(broadcast))
+      }
       ChatEvent::StatusUpdate => (None, None),
       ChatEvent::Unknown => (None, None),
     };

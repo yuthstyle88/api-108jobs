@@ -59,10 +59,9 @@ impl TryFrom<Value> for MessageModel {
     type Error = FastJobError;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let id: String = value
+        let id = value
             .get("id")
-            .and_then(|v| v.as_str()).and_then(|v| v.parse::<String>().ok())
-            .unwrap_or("".to_string());
+            .and_then(|v| v.as_str()).and_then(|v| v.parse::<String>().ok());
 
         let sender_id: i32 = value
             .get("senderId")
@@ -86,11 +85,10 @@ impl TryFrom<Value> for MessageModel {
             .unwrap_or(MessageStatus::Pending);
 
         // Parse createdAt (RFC3339) into DateTime<Utc>
-        let created_at: DateTime<Utc> = value
+        let created_at: Option<DateTime<Utc>> = value
             .get("createdAt")
             .and_then(|v| v.as_str())
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|dt| dt.with_timezone(&Utc)))
-            .unwrap_or_else(|| Utc::now());
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|dt| dt.with_timezone(&Utc)));
 
         Ok(MessageModel {
             id,

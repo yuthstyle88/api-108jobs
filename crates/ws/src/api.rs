@@ -20,9 +20,10 @@ pub struct RegisterClientMsg {
     pub room_id: ChatRoomId,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ChatEvent {
     #[serde(rename = "phx_join")]
+    #[default]
     PhxJoin,
     #[serde(rename = "phx_leave")]
     PhxLeave,
@@ -46,8 +47,9 @@ pub enum ChatEvent {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum MessageStatus {
+    #[default]
     Pending,
     Sent,
     Failed,
@@ -75,14 +77,14 @@ pub struct ActiveRoomPayload {
     pub room_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageModel {
-    pub id: String,
+    pub id: Option<String>,
     pub sender_id: i32,
     pub content: Option<String>,
     pub status: MessageStatus,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

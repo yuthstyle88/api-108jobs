@@ -35,7 +35,7 @@ pub struct ChatMessageInsertForm {
   pub sender_id: LocalUserId,
   pub content: Option<String>,
   pub status: i16,
-  pub created_at: DateTime<Utc>,
+  pub created_at: Option<DateTime<Utc>>,
   pub updated_at: Option<DateTime<Utc>>,
 }
 #[derive(Debug, Clone, Serialize)]

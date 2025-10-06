@@ -43,24 +43,22 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     let sender_id = message.sender_id;
     let id = message.clone().id;
 
-    let message = MessageModel {
-      id: id.clone(),
-      status: Some(MessageStatus::Sent),
-      content,
-      created_at,
-      sender_id,
-    };
-    let payload = if let Some(_) = id {
+    // When we have a message id, emit the full message payload.
+    // Otherwise (ephemeral/system events like phx_join), avoid leaking a default sender_id.
+    let payload = if id.is_some() {
+      let message = MessageModel {
+        id,
+        status: Some(MessageStatus::Sent),
+        content,
+        created_at,
+        sender_id,
+      };
       serde_json::to_value(message).unwrap()
     } else {
-      let payload = MessageModel {
-        id: None,
-        status: None,
-        sender_id,
-        content: Some(msg.event.clone().to_string_value()),
-        created_at,
-      };
-      serde_json::to_value(payload).unwrap()
+      // Emit a minimal payload for system events. Do NOT include senderId.
+      serde_json::json!({
+        "content": msg.event.clone().to_string_value()
+      })
     };
 
     let out_event = IncomingEvent {

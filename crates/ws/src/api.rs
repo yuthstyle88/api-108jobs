@@ -32,6 +32,8 @@ pub enum ChatEvent {
     Heartbeat,
     #[serde(rename = "chat:message")]
     Message,
+    #[serde(rename = "chat:update")]
+    Update,
     #[serde(rename = "chat:read")]
     Read,
     #[serde(rename = "chat:active_rooms")]
@@ -42,8 +44,6 @@ pub enum ChatEvent {
     TypingStart,
     #[serde(rename = "typing:stop")]
     TypingStop,
-    #[serde(rename = "statusUpdate")]
-    StatusUpdate,
     #[serde(other)]
     Unknown,
 }

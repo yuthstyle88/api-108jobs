@@ -28,7 +28,7 @@ fn from_str(s: &str) -> Result<Self, Self::Err> {
         "chat:typing" => ChatEvent::Typing,
         "typing:start" => ChatEvent::TypingStart,
         "chat:stop" => ChatEvent::TypingStop,
-        "statusUpdate" => ChatEvent::StatusUpdate,
+        "chat:update" => ChatEvent::Update,
         _ => ChatEvent::Unknown,
     })
  }
@@ -46,7 +46,7 @@ impl ChatEvent {
             ChatEvent::Typing => "chat:typing",
             ChatEvent::TypingStart => "typing:start",
             ChatEvent::TypingStop => "typing:stop",
-            ChatEvent::StatusUpdate => "statusUpdate",
+            ChatEvent::Update => "chat:update",
             ChatEvent::Unknown => "unknown",
         }
     }

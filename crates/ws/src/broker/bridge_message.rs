@@ -8,6 +8,7 @@ use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
+use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -18,6 +19,7 @@ struct DoEphemeralBroadcast {
   event: ChatEvent,
   out_data: Option<MessageModel>,
   store_msg: Option<ChatMessageInsertForm>,
+  extra: Option<Value>,
 }
 
 impl Handler<DoEphemeralBroadcast> for PhoenixManager {
@@ -36,7 +38,6 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     let sender_id = message.sender_id;
     let id = message.clone().id;
 
-
     // When we have a message id, emit the full message payload.
     // Otherwise (ephemeral/system events like phx_join), avoid leaking a default sender_id.
     let payload = if id.is_some() {
@@ -49,11 +50,15 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
       };
       serde_json::to_value(message).unwrap()
     } else {
-      // Emit a minimal payload for system events. Do NOT include senderId.
-      serde_json::json!({
-        "content": msg.event.clone().to_string_value(),
-        "senderId": sender_id
-      })
+      if msg.event == ChatEvent::Update {
+        msg.extra.unwrap()
+      } else {
+        // Emit a minimal payload for system events. Do NOT include senderId.
+        serde_json::json!({
+          "content": msg.event.clone().to_string_value(),
+          "senderId": sender_id
+        })
+      }
     };
 
     let out_event = IncomingEvent {
@@ -68,11 +73,16 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     match msg.event.as_str() {
       "chat:message" => {
         let mut this = self.clone();
-        actix::spawn(async move {
-          if let Err(e) = this.add_messages_to_room(msg.store_msg).await {
-            tracing::error!("Failed to store message in Redis: {}", e);
+        if let Some(store_msg) = msg.store_msg {
+          if store_msg.msg_ref_id.is_some() {
+            let store_msg_owned = store_msg.clone();
+            actix::spawn(async move {
+              if let Err(e) = this.add_messages_to_room(Some(store_msg_owned)).await {
+                tracing::error!("Failed to store message in Redis: {}", e);
+              }
+            });
           }
-        });
+        }
       }
       _ => {}
     }
@@ -85,7 +95,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
   fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
-    // Process only messages coming from Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
+    // Process only messages coming from a Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
     let channel_name = msg.incoming_event.topic.to_string();
     let event = msg.incoming_event.event.clone();
     let socket = self.socket.clone();
@@ -116,6 +126,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
               event: outbound_event_cloned.clone(),
               out_data: Some(m.clone()),
               store_msg: Some(insert_data.clone()),
+              extra: None,
             };
             (Some(insert_data), Some(broadcast))
           }
@@ -133,6 +144,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
               event: outbound_event_cloned.clone(),
               out_data: m.clone().into(),
               store_msg: None,
+              extra: None,
             };
             (None, Some(broadcast))
           }
@@ -145,10 +157,27 @@ impl Handler<BridgeMessage> for PhoenixManager {
           event: outbound_event_cloned.clone(),
           out_data: None,
           store_msg: None,
+          extra: None,
         };
         (None, Some(broadcast))
       }
-      ChatEvent::StatusUpdate => (None, None),
+      ChatEvent::Update => {
+        let room_update_model: Result<MessageModel, _> =
+          msg.incoming_event.payload.clone().try_into();
+        match room_update_model {
+          Ok(m) => {
+            let broadcast = DoEphemeralBroadcast {
+              room_id: chatroom_id,
+              event: outbound_event_cloned.clone(),
+              out_data: m.clone().into(),
+              store_msg: None,
+              extra: Some(msg.incoming_event.payload),
+            };
+            (None, Some(broadcast))
+          }
+          Err(_) => (None, None),
+        }
+      }
       ChatEvent::Unknown => (None, None),
     };
 

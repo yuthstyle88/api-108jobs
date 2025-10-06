@@ -50,18 +50,18 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
           reader_id: None,
           read_last_id: None,
         };
-        message
+        Some(message)
       }
       None => match msg.event {
-        ChatEvent::Update => MessageModel{
+        ChatEvent::Update => Some(MessageModel{
           ..Default::default()
-        },
+        }),
         _ =>
-         MessageModel{
+         Some(MessageModel{
             id,
             content: Some(msg.event.to_string_value()),
             ..Default::default()
-          }
+          })
       },
     };
 
@@ -69,7 +69,7 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
       room_id: msg.room_id.clone(),
       event: msg.event.clone(),
       topic: format!("room:{}", msg.room_id),
-      payload: payload.try_into().unwrap_or_default(),
+      payload,
     };
     self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
 
@@ -120,7 +120,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
               msg_ref_id: m.id.clone(),
               room_id: chatroom_id.clone(),
               sender_id: m.sender_id,
-              content: Option::from(m.clone().content.unwrap().to_string()),
+              content: m.clone().content,
               status: 1,
               created_at: m.created_at.clone(),
               updated_at: None,

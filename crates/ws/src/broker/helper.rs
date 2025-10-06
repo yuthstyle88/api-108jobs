@@ -1,3 +1,4 @@
+use crate::api::{ChatEvent, IncomingEvent, MessageModel};
 use crate::broker::phoenix_manager::{CONNECT_TIMEOUT_SECS, JOIN_TIMEOUT_SECS};
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
@@ -7,13 +8,12 @@ use lemmy_db_views_chat::api::ChatMessagesResponse;
 use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use serde_json::Value;
 use tokio::sync::RwLock;
-use crate::api::{ChatEvent, IncomingEvent, MessageModel};
 
 pub async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
@@ -155,15 +155,29 @@ pub fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEve
   let event = ChatEvent::from_str(event_str).unwrap_or(ChatEvent::Unknown);
   let payload = a.get(4)?.clone();
   let room_id: ChatRoomId =
-      ChatRoomId::from_channel_name(topic.as_str()).unwrap_or_else(|_| ChatRoomId(topic.clone()));
-  let payload: MessageModel = payload.try_into().ok()?;
+    ChatRoomId::from_channel_name(topic.as_str()).unwrap_or_else(|_| ChatRoomId(topic.clone()));
+  let m: MessageModel = payload.try_into().ok()?;
+
+  let all_none = m.id.is_none()
+    && m.sender_id.is_none()
+    && m.reader_id.is_none()
+    && m.read_last_id.is_none()
+    && m.content.is_none()
+    && m.status.is_none()
+    && m.created_at.is_none();
+  let payload = if all_none {
+    None
+  } else {
+    Some(m)
+  };
+
   Some((
     jr,
     mr,
     IncomingEvent {
       event,
       topic,
-      payload: Some(payload),
+      payload,
       room_id,
     },
   ))
@@ -183,7 +197,7 @@ pub fn phx_reply(
     "phx_reply",
     {"status": status, "response": resp}
   ])
-      .to_string()
+  .to_string()
 }
 pub fn phx_push(topic: &str, event: &ChatEvent, payload: Value) -> String {
   serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()

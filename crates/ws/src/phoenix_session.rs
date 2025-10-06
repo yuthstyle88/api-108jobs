@@ -10,6 +10,7 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
 use serde_json::Value;
+use std::borrow::Cow;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -41,11 +42,12 @@ impl PhoenixSession {
     Cow::Borrowed(messages)
   }
 
-  fn maybe_decrypt_incoming(&self, content: &str) -> serde_json::error::Result<Value> {
+  fn maybe_decrypt_incoming<'a>(&'a self, messages: &'a str) -> std::borrow::Cow<'a, str> {
+    use std::borrow::Cow;
     if self.secure {
-      serde_json::from_str(content)
+      Cow::Borrowed(messages)
     } else {
-      serde_json::from_str(content)
+      Cow::Borrowed(messages)
     }
   }
 }
@@ -90,32 +92,23 @@ impl Handler<OutboundMessage> for PhoenixSession {
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val = msg.out_event.payload;
     let topic = msg.out_event.topic;
-    let payload = match payload_val {
-      None => {
-        serde_json::json!({"content": Value::Null})
-      }
-      Some(val) => {
-        // Hold the owned content so the reference lives long enough
-        let content_owned: String = val.content.clone().unwrap_or_default();
-        // Encrypt (may return Cow); take ownership to avoid lifetime issues
-        let encrypted_owned: String = self
-          .maybe_encrypt_outbound(&content_owned)
+    let payload = payload_val
+      .as_ref()
+      .map(|val| {
+        let content = self
+          .maybe_encrypt_outbound(val.content.as_deref().unwrap_or(""))
           .into_owned();
-
-        let payload = MessageModel {
-          content: Some(encrypted_owned),
-          ..val.clone()
-        };
-        serde_json::to_value(payload).unwrap_or_else(|_| Value::Null)
-      }
-    };
+        serde_json::to_value(MessageModel { content: Some(content), ..val.clone() })
+          .unwrap_or(Value::Null)
+      })
+      .unwrap_or_else(|| serde_json::json!({ "content": Value::Null }));
     // Try to keep payload as JSON when possible
-    tracing::info!(
-      "Outbound Phoenix push: topic={} event={} payload={}",
-      topic,
-      msg.out_event.event.to_string_value(),
-      payload
-    );
+    // tracing::info!(
+    //   "Outbound Phoenix push: topic={} event={} payload={}",
+    //   topic,
+    //   msg.out_event.event.to_string_value(),
+    //   payload
+    // );
     ctx.text(phx_push(&topic, &msg.out_event.event, payload));
   }
 }
@@ -126,24 +119,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
           // Build Option<MessageModel> safely (no mutation of borrowed data)
-          let payload_model: Option<MessageModel> = if let Some(msg) = &incoming.payload {
-            let raw = msg.content.as_deref().unwrap_or("");
-            let decrypted = self.maybe_decrypt_incoming(raw);
-            let decrypted_str = match decrypted {
-              Ok(v) => v.to_string(),
-              Err(e) => {
-                tracing::error!("Error decrypting message: {:?}", e);
-                "".to_string()
-              }
-            };
-            Some(MessageModel {
-              content: Some(decrypted_str),
-              ..msg.clone()
-            })
-          } else {
-            None
-          };
-
+          let payload_model = incoming
+            .payload
+            .as_ref()
+            .and_then(|m| m.content.as_deref().map(|raw| {
+              let content = self.maybe_decrypt_incoming(raw).into_owned();
+              MessageModel { content: Some(content), ..m.clone() }
+            }));
+          tracing::info!(
+            "INBOUND payload_model{:?} event {:?}",
+            payload_model,
+            incoming.event.clone()
+          );
           let parse_data = IncomingEvent {
             event: incoming.event.clone(),
             room_id: incoming.room_id.clone(),

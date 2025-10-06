@@ -4,19 +4,12 @@ use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use actix::{Addr, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use chrono::Utc;
 use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
-use phoenix_channels_client::{ChannelStatus, Event, Payload, StatusesError};
-use serde_json::Value;
-use std::str::FromStr;
+use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use std::sync::Arc;
 use std::time::Duration;
-
-/// List of event types that trigger an ephemeral broadcast.
-/// These events are typically related to real-time chat interactions or presence updates.
-const EPHEMERAL_EVENTS: &[&str] = &["chat:typing", "phx_leave"];
 
 #[derive(Message, Clone, Default)]
 #[rtype(result = "()")]
@@ -43,6 +36,7 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     let sender_id = message.sender_id;
     let id = message.clone().id;
 
+
     // When we have a message id, emit the full message payload.
     // Otherwise (ephemeral/system events like phx_join), avoid leaking a default sender_id.
     let payload = if id.is_some() {
@@ -57,7 +51,8 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     } else {
       // Emit a minimal payload for system events. Do NOT include senderId.
       serde_json::json!({
-        "content": msg.event.clone().to_string_value()
+        "content": msg.event.clone().to_string_value(),
+        "senderId": sender_id
       })
     };
 
@@ -73,7 +68,6 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
     match msg.event.as_str() {
       "chat:message" => {
         let mut this = self.clone();
-        let room_id = msg.room_id.clone();
         actix::spawn(async move {
           if let Err(e) = this.add_messages_to_room(msg.store_msg).await {
             tracing::error!("Failed to store message in Redis: {}", e);

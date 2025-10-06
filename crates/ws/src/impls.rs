@@ -84,7 +84,7 @@ impl TryFrom<Value> for MessageModel {
             .parse::<MessageStatus>().map(|v| Some(v))
             .unwrap_or(
                 None
-            );;
+            );
 
         // Parse createdAt (RFC3339) into DateTime<Utc>
         let created_at: Option<DateTime<Utc>> = value

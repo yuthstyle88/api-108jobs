@@ -19,7 +19,6 @@ use crate::broker::presence_manager::PresenceManager;
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
-use std::str::FromStr;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
@@ -87,6 +86,7 @@ impl PhoenixManager {
   }
 
   /// Persist (async) and broadcast a normalized read event; updates in-memory pointer as well.
+  #[allow(dead_code)]
   pub(crate) fn handle_read_event(
     &mut self,
     msg: &BridgeMessage,
@@ -143,6 +143,7 @@ impl PhoenixManager {
   }
 
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
+  #[allow(dead_code)]
   async fn broadcast_read_event(
     &self,
     msg: BridgeMessage,

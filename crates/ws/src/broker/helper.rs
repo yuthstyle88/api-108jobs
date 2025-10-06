@@ -8,9 +8,12 @@ use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use serde_json::Value;
 use tokio::sync::RwLock;
+use crate::api::{ChatEvent, IncomingEvent};
 
 pub async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
@@ -137,4 +140,51 @@ pub async fn ensure_room_membership(
     return Err(FastJobErrorType::NotAllowed.into());
   }
   Ok(())
+}
+
+pub fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEvent)> {
+  let v: Value = serde_json::from_str(s).ok()?;
+  let a = v.as_array()?;
+  if a.len() < 5 {
+    return None;
+  }
+  let jr = a.get(0).and_then(|x| x.as_str()).map(|x| x.to_string());
+  let mr = a.get(1).and_then(|x| x.as_str()).map(|x| x.to_string());
+  let topic = a.get(2)?.as_str()?.to_string();
+  let event_str = a.get(3)?.as_str().unwrap_or("");
+  let event = ChatEvent::from_str(event_str).unwrap_or(ChatEvent::Unknown);
+  let payload = a.get(4)?.clone();
+  let room_id: ChatRoomId =
+      ChatRoomId::from_channel_name(topic.as_str()).unwrap_or_else(|_| ChatRoomId(topic.clone()));
+
+  Some((
+    jr,
+    mr,
+    IncomingEvent {
+      event,
+      topic,
+      payload,
+      room_id: Some(room_id),
+    },
+  ))
+}
+
+pub fn phx_reply(
+  jr: &Option<String>,
+  mr: &Option<String>,
+  topic: &str,
+  status: &str,
+  resp: Value,
+) -> String {
+  serde_json::json!([
+    jr.clone().unwrap_or_default(),
+    mr.clone().unwrap_or_default(),
+    topic,
+    "phx_reply",
+    {"status": status, "response": resp}
+  ])
+      .to_string()
+}
+pub fn phx_push(topic: &str, event: &ChatEvent, payload: Value) -> String {
+  serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()
 }

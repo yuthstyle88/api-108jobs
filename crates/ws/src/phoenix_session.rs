@@ -1,94 +1,21 @@
-use crate::api::{
-  ChatEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, StatusPayload,
-  TypingPayload,
-};
+use crate::api::{IncomingEvent};
 use crate::bridge_message::OutboundMessage;
 use crate::broker::phoenix_manager::PhoenixManager;
-use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave, PresenceManager};
+use crate::broker::presence_manager::{OnlineJoin, OnlineLeave, PresenceManager};
 use crate::handler::JoinRoomQuery;
 use crate::{api::RegisterClientMsg, bridge_message::BridgeMessage};
 use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
-use lemmy_db_schema::newtypes::ChatRoomId;
-use lemmy_utils::error::FastJobError;
-use phoenix_channels_client::EventPayload;
 use serde_json::Value;
-use std::str::FromStr;
-
-// ===== helpers =====
-// fn parse_phx(s: &str) -> Option<IncomingEvent> {
-//   let v: Value = serde_json::from_str(s).ok()?;
-//   let a = v.as_array()?;
-//   if a.len() < 5 {
-//     return None;
-//   }
-//   let topic = a.get(2)?.as_str()?.to_string();
-//   let event_str = a.get(3)?.as_str().unwrap_or("");
-//   let event = ChatEvent::from_str(event_str).unwrap_or(ChatEvent::Unknown);
-//   let payload = a.get(4)?.clone();
-//   let room_id: ChatRoomId = ChatRoomId::from_channel_name(topic.as_str())
-//       .unwrap_or_else(|_| ChatRoomId(topic.clone()));
-//   Some(IncomingEvent{
-//     event,
-//     topic,
-//     payload,
-//     room_id: Some(room_id),
-//   })
-// }
-
-fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEvent)> {
-  let v: Value = serde_json::from_str(s).ok()?;
-  let a = v.as_array()?;
-  if a.len() < 5 {
-    return None;
-  }
-  let jr = a.get(0).and_then(|x| x.as_str()).map(|x| x.to_string());
-  let mr = a.get(1).and_then(|x| x.as_str()).map(|x| x.to_string());
-  let topic = a.get(2)?.as_str()?.to_string();
-  let event_str = a.get(3)?.as_str().unwrap_or("");
-  let event = ChatEvent::from_str(event_str).unwrap_or(ChatEvent::Unknown);
-  let payload = a.get(4)?.clone();
-  let room_id: ChatRoomId =
-    ChatRoomId::from_channel_name(topic.as_str()).unwrap_or_else(|_| ChatRoomId(topic.clone()));
-
-  Some((
-    jr,
-    mr,
-    IncomingEvent {
-      event,
-      topic,
-      payload,
-      room_id: Some(room_id),
-    },
-  ))
-}
-
-fn phx_reply(
-  jr: &Option<String>,
-  mr: &Option<String>,
-  topic: &str,
-  status: &str,
-  resp: Value,
-) -> String {
-  serde_json::json!([
-    jr.clone().unwrap_or_default(),
-    mr.clone().unwrap_or_default(),
-    topic,
-    "phx_reply",
-    {"status": status, "response": resp}
-  ])
-  .to_string()
-}
-fn phx_push(topic: &str, event: &ChatEvent, payload: Value) -> String {
-  serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()
-}
+use crate::broker::helper::{parse_phx, phx_push, phx_reply};
 
 // ===== actor =====
 pub struct PhoenixSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) presence_manager: Addr<PresenceManager>,
+  #[allow(dead_code)]
   pub(crate) params: JoinRoomQuery,
   pub(crate) client_msg: RegisterClientMsg,
   pub(crate) secure: bool,

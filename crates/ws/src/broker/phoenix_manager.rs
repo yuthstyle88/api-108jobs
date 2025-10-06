@@ -91,15 +91,15 @@ impl PhoenixManager {
     &mut self,
     msg: &BridgeMessage,
   ) {
-    let chatroom_id = msg.incoming_event.room_id.clone().unwrap();
+    let chatroom_id = msg.incoming_event.room_id.clone();
     // reader_id: รับได้ทั้ง number หรือ string
-    let reader_id_val =  msg.incoming_event.payload.get("readerId").and_then(|v| v.as_i64()).unwrap_or(0);
-    if reader_id_val == 0 {
+    let reader_id_val =  msg.incoming_event.payload.clone().unwrap().reader_id.unwrap_or(LocalUserId(0));
+    if reader_id_val.0 == 0 {
       return;
     }
 
     // last_read_message_id: str เท่านั้น
-    let last_read_id = match msg.incoming_event.payload.get("lastReadMessageId").and_then(|v| v.as_str()) {
+    let last_read_id = match msg.incoming_event.payload.clone().unwrap().read_last_id {
       Some(s) if !s.is_empty() => s.to_string(),
       _ => {
         tracing::warn!("chat:read missing last_read_message_id");
@@ -108,14 +108,14 @@ impl PhoenixManager {
     };
 
     self.last_read.insert(
-      (chatroom_id.clone(), LocalUserId(reader_id_val as i32)),
+      (chatroom_id.clone(), reader_id_val),
       last_read_id.clone(),
     );
 
     // upsert async (ไม่บล็อกเส้นทาง broadcast)
     let pool_for_last = self.pool.clone();
     let room_for_last = chatroom_id.clone();
-    let reader_local = LocalUserId(reader_id_val as i32);
+    let reader_local = reader_id_val;
     let msg_id_wrap = ChatMessageRefId(last_read_id.clone());
     tokio::spawn(async move {
       let mut db = DbPool::Pool(&pool_for_last);
@@ -125,7 +125,7 @@ impl PhoenixManager {
     });
 
     tracing::debug!(
-      "READ-ACK recv room={} reader={} last_id={}",
+      "READ-ACK recv room={} reader={:?} last_id={}",
       chatroom_id,
       reader_id_val,
       last_read_id
@@ -148,7 +148,13 @@ impl PhoenixManager {
     &self,
     msg: BridgeMessage,
   ) -> Result<(),FastJobError>{
-    let payload: MessageModel = msg.incoming_event.payload.clone().try_into()?;
+    let payload: MessageModel = match msg.incoming_event.payload.clone() {
+      Some(m) => m,
+      None => {
+        tracing::warn!("broadcast_read_event: missing MessageModel payload");
+        return Ok(());
+      }
+    };
 
     let content = payload;
     // Local broker broadcast (to other clients on this node)
@@ -159,7 +165,7 @@ impl PhoenixManager {
     // Phoenix channel cast (for cross-node subscribers)
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
-    let channel_name = format!("room:{}", outbound_channel.unwrap());
+    let channel_name = format!("room:{}", outbound_channel);
     let outbound_event_for_cast = outbound_event.clone();
     Arbiter::current().spawn(async move {
       if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {

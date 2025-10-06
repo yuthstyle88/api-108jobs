@@ -2,6 +2,7 @@ use crate::api::{ChatEvent, ConvertError, MessageModel, MessageStatus};
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::str::FromStr;
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_utils::error::FastJobError;
 
 impl FromStr for MessageStatus {
@@ -59,34 +60,42 @@ impl TryFrom<Value> for MessageModel {
     type Error = FastJobError;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
-        let id = value
+        // id as Option<String>
+        let id: Option<String> = value
             .get("id")
-            .and_then(|v| v.as_str()).and_then(|v| v.parse::<String>().ok());
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
 
-        let sender_id: i32 = value
+        // senderId as Option<LocalUserId>
+        let sender_id: Option<LocalUserId> = value
             .get("senderId")
             .and_then(|v| v.as_i64())
-            .map(|v| v as i32)
-            .unwrap_or(0);
-
+            .and_then(|n| i32::try_from(n).ok())
+            .map(LocalUserId);
+        let reader_id: Option<LocalUserId> = value
+            .get("readerId")
+            .and_then(|v| v.as_i64())
+            .and_then(|n| i32::try_from(n).ok())
+            .map(LocalUserId);
+        
         let content: Option<String> = value
             .get("content")
-            .and_then(|v| v.as_str()).and_then(|v| v.parse::<String>().ok())
-            .map(|v| Some(v))
-            .unwrap_or(
-                None
-            );
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+        
+        // content as Option<String>
+        let read_last_id: Option<String> = value
+            .get("readLastId")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
 
+        // status as Option<MessageStatus>; if missing or invalid -> None
         let status: Option<MessageStatus> = value
             .get("status")
             .and_then(|v| v.as_str())
-            .unwrap_or("pending")
-            .parse::<MessageStatus>().map(|v| Some(v))
-            .unwrap_or(
-                None
-            );
+            .and_then(|s| s.parse::<MessageStatus>().ok());
 
-        // Parse createdAt (RFC3339) into DateTime<Utc>
+        // createdAt (RFC3339) into DateTime<Utc>
         let created_at: Option<DateTime<Utc>> = value
             .get("createdAt")
             .and_then(|v| v.as_str())
@@ -96,6 +105,8 @@ impl TryFrom<Value> for MessageModel {
         Ok(MessageModel {
             id,
             sender_id,
+            reader_id,
+            read_last_id,
             content,
             status,
             created_at,

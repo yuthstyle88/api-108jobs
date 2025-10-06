@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use serde_json::Value;
 use tokio::sync::RwLock;
-use crate::api::{ChatEvent, IncomingEvent};
+use crate::api::{ChatEvent, IncomingEvent, MessageModel};
 
 pub async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {
   // Try to connect
@@ -156,15 +156,15 @@ pub fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEve
   let payload = a.get(4)?.clone();
   let room_id: ChatRoomId =
       ChatRoomId::from_channel_name(topic.as_str()).unwrap_or_else(|_| ChatRoomId(topic.clone()));
-
+  let payload: MessageModel = payload.try_into().ok()?;
   Some((
     jr,
     mr,
     IncomingEvent {
       event,
       topic,
-      payload,
-      room_id: Some(room_id),
+      payload: Some(payload),
+      room_id,
     },
   ))
 }

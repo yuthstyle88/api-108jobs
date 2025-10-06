@@ -61,29 +61,31 @@ pub enum MessageStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JoinPayload {
-    pub sender_id: i32,
+    pub sender_id: LocalUserId,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HeartbeatPayload {
-    pub sender_id: i32,
+    pub sender_id: LocalUserId,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadPayload {
-    pub sender_id: i32,
+    pub sender_id: LocalUserId,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveRoomPayload {
-    pub room_id: String,
+    pub room_id: ChatRoomId,
 }
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageModel {
     pub id: Option<String>,
-    pub sender_id: i32,
+    pub sender_id: Option<LocalUserId>,
+    pub reader_id: Option<LocalUserId>,
+    pub read_last_id: Option<String>,
     pub content: Option<String>,
     pub status: Option<MessageStatus>,
     pub created_at: Option<DateTime<Utc>>,
@@ -92,13 +94,13 @@ pub struct MessageModel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypingPayload {
-    pub sender_id: i32,
+    pub sender_id: LocalUserId,
     pub typing: bool,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusPayload {
-    pub sender_id: i32,
+    pub sender_id: LocalUserId,
     pub room_id: String,
 }
 
@@ -107,10 +109,9 @@ pub struct StatusPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncomingEvent {
     pub event: ChatEvent,
-    pub room_id: Option<ChatRoomId>,
+    pub room_id: ChatRoomId,
     pub topic: String,
-    #[serde(skip_serializing_if = "Value::is_null")]
-    pub payload: Value,
+    pub payload: Option<MessageModel>,
 }
 
 // ================= AppEvent (normalized for server) =================

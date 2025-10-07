@@ -160,7 +160,7 @@ pub enum IncomingEnvelope {
     Read {
         room_id: ChatRoomId,
         topic: String,
-        payload: ReadPayload,
+        payload: Option<ReadPayload>,
     },
     #[serde(rename = "chat:active_rooms")]
     ActiveRooms {

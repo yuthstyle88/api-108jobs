@@ -163,14 +163,17 @@ pub fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEve
         && m.reader_id.is_none()
         && m.read_last_id.is_none()
         && m.content.is_none()
+        && m.typing.is_none()
         && m.status.is_none()
+        && m.update_type.is_none()
+        && m.status_target.is_none()
+        && m.prev_status.is_none()
         && m.created_at.is_none();
     let payload = if all_none {
         None
     } else {
         Some(m)
     };
-
     Some((
         jr,
         mr,

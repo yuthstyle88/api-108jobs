@@ -126,7 +126,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
                     .map(|raw| self.maybe_decrypt_incoming(raw).into_owned());
                 MessageModel { content, ..m.clone() }
               });
-          tracing::info!(
+          tracing::debug!(
             "INBOUND payload_model{:?} event {:?}",
             payload_model,
             incoming.event.clone()

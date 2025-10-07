@@ -178,7 +178,9 @@ impl From<IncomingEvent> for IncomingEnvelope {
       ChatEvent::Read => IncomingEnvelope::Read {
         room_id: ev.room_id,
         topic: ev.topic,
-        payload: ReadPayload {  sender_id: ev.payload.unwrap().sender_id.unwrap_or(LocalUserId(0))},
+        payload: ev.payload
+            .and_then(|p| p.sender_id)
+            .map(|sid| ReadPayload { sender_id: sid }),
       },
       ChatEvent::ActiveRooms => IncomingEnvelope::ActiveRooms {
         room_id: ev.room_id,

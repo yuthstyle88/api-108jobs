@@ -1,4 +1,4 @@
-use crate::api::{ChatEvent, ConvertError, MessageModel, MessageStatus};
+use crate::api::{ChatEvent, ConvertError, IncomingEnvelope, IncomingEvent, MessageModel, MessageStatus, ReadPayload, TypingPayload};
 use chrono::{DateTime, Utc};
 use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
@@ -145,5 +145,63 @@ impl MessageModel {
   /// Falls back to an empty JSON object on serialization error.
   pub fn into_bytes(&self) -> Vec<u8> {
     serde_json::to_vec(self).unwrap_or_else(|_| b"{}".to_vec())
+  }
+}
+
+impl From<IncomingEvent> for IncomingEnvelope {
+  fn from(ev: IncomingEvent) -> Self {
+    match ev.event {
+      ChatEvent::PhxJoin => IncomingEnvelope::PhxJoin {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: None, // phx_join ไม่มี payload
+      },
+      ChatEvent::PhxLeave => IncomingEnvelope::PhxLeave {
+        room_id: ev.room_id,
+        topic: ev.topic,
+      },
+      ChatEvent::Heartbeat => IncomingEnvelope::Heartbeat {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: None,
+      },
+      ChatEvent::Message => IncomingEnvelope::Message {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: ev.payload.unwrap_or_default(), // เดิมคือ Option<MessageModel>
+      },
+      ChatEvent::Update => IncomingEnvelope::Update {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: ev.payload.unwrap_or_default(),
+      },
+      ChatEvent::Read => IncomingEnvelope::Read {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: ReadPayload {  sender_id: ev.payload.unwrap().sender_id.unwrap_or(LocalUserId(0))},
+      },
+      ChatEvent::ActiveRooms => IncomingEnvelope::ActiveRooms {
+        room_id: ev.room_id,
+        topic: ev.topic,
+        payload: None,
+      },
+      ChatEvent::Typing | ChatEvent::TypingStart | ChatEvent::TypingStop => {
+        IncomingEnvelope::Typing {
+          room_id: ev.room_id,
+          topic: ev.topic,
+          payload: ev.payload
+              .map(|m| TypingPayload {
+                sender_id: m.sender_id.unwrap_or_default(),
+                typing: m.typing.unwrap_or(false),
+                timestamp: m.created_at,
+              })
+              .unwrap_or_default()
+        }
+      }
+      ChatEvent::Unknown => IncomingEnvelope::PhxLeave { // หรือทำ variant Unknown แยก
+        room_id: ev.room_id,
+        topic: ev.topic,
+      },
+    }
   }
 }

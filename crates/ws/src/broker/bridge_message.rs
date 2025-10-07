@@ -1,193 +1,98 @@
-use crate::api::{ChatEvent, IncomingEvent, MessageModel, MessageStatus};
+use crate::api::{ChatEvent, IncomingEnvelope, IncomingEvent, MessageModel};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use actix::{Addr, AsyncContext, Context, Handler, Message, ResponseFuture};
+use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
 
-#[derive(Message, Clone, Default)]
-#[rtype(result = "()")]
-struct DoEphemeralBroadcast {
-  room_id: ChatRoomId,
-  event: ChatEvent,
-  out_data: Option<MessageModel>,
-  store_msg: Option<ChatMessageInsertForm>,
-}
-
-impl Handler<DoEphemeralBroadcast> for PhoenixManager {
-  type Result = ();
-
-  fn handle(&mut self, msg: DoEphemeralBroadcast, _ctx: &mut Context<Self>) -> Self::Result {
-    // Re-broadcast over broker / websocket
-    let message = msg.out_data.unwrap_or_default();
-    let created_at = if message.clone().created_at.is_some() {
-      message.clone().created_at
-    } else {
-      None
-    };
-
-    let content = message.clone().content;
-    let sender_id = message.sender_id;
-    let id = message.clone().id;
-
-    // When we have a message id, emit the full message payload.
-    // Otherwise (ephemeral/system events like phx_join), avoid leaking a default sender_id.
-    let payload = match id {
-      Some(_) => {
-        let message = MessageModel {
-          id,
-          status: Some(MessageStatus::Sent),
-          content,
-          created_at,
-          sender_id,
-          ..Default::default()
-        };
-        Some(message)
-      }
-      None => match msg.event {
-        ChatEvent::TypingStart | ChatEvent::TypingStop | ChatEvent::Typing => Some(MessageModel {
-          id,
-          content: Some(msg.event.to_string_value()),
-          sender_id,
-          typing: message.typing,
-          ..Default::default()
-        }),
-        ChatEvent::Update => Some(MessageModel {
-          id,
-          content: Some(msg.event.to_string_value()),
-          sender_id,
-          update_type: message.update_type,
-          prev_status: message.prev_status,
-          status_target: message.status_target,
-          ..Default::default()
-        }),
-        _ => Some(MessageModel {
-          id,
-          content: Some(msg.event.to_string_value()),
-          ..Default::default()
-        }),
-      },
-    };
-
-    let out_event = IncomingEvent {
-      room_id: msg.room_id.clone(),
-      event: msg.event.clone(),
-      topic: format!("room:{}", msg.room_id),
-      payload,
-    };
-    self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
-
-    // Persist if the event is a message-type (already mapped before call if needed)
-    match msg.event.as_str() {
-      "chat:message" => {
-        let mut this = self.clone();
-        if let Some(store_msg) = msg.store_msg {
-          if store_msg.msg_ref_id.is_some() {
-            let store_msg_owned = store_msg.clone();
-            actix::spawn(async move {
-              if let Err(e) = this.add_messages_to_room(Some(store_msg_owned)).await {
-                tracing::error!("Failed to store message in Redis: {}", e);
-              }
-            });
-          }
-        }
-      }
-      _ => {}
-    }
-  }
-}
-async fn do_send_message(addr: Addr<PhoenixManager>, msg: DoEphemeralBroadcast) -> () {
-  addr.do_send(msg)
-}
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
     // Process only messages coming from a Phoenix client; ignore ones we ourselves rebroadcast to avoid loops
     let channel_name = msg.incoming_event.topic.to_string();
-    let event = msg.incoming_event.event.clone();
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
 
-    let chatroom_id = msg.incoming_event.room_id.clone();
     let outbound_event_cloned = msg.incoming_event.event.clone();
     let content_cloned = msg.incoming_event.payload.clone();
-    let chat_model: Option<MessageModel> = msg.incoming_event.payload.clone();
-    let event_msg: (Option<ChatMessageInsertForm>, Option<DoEphemeralBroadcast>) = match event {
-      ChatEvent::PhxLeave => (None, None),
-      ChatEvent::Heartbeat => (None, None),
-      ChatEvent::Message => match chat_model {
-        Some(m) => {
+
+    let env: IncomingEnvelope = msg.incoming_event.clone().into();
+
+    // Single-pass handling: issue outbound + persist here, no extra hop
+    let mut early_return: bool = false;
+    match env {
+      IncomingEnvelope::Message { room_id, payload, .. } => {
+        // 1) issue outbound immediately
+        let out_event = IncomingEvent {
+          room_id: room_id.clone(),
+          event: ChatEvent::Message,
+          topic: format!("room:{}", room_id),
+          payload: Some(payload.clone()),
+        };
+        self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
+
+        // 2) persist
+        if payload.id.is_some() {
+          let mut this = self.clone();
           let insert_data = ChatMessageInsertForm {
-            msg_ref_id: m.id.clone(),
-            room_id: chatroom_id.clone(),
-            sender_id: m.sender_id,
-            content: m.clone().content,
+            msg_ref_id: payload.id.clone(),
+            room_id: room_id.clone(),
+            sender_id: payload.sender_id,
+            content: payload.content.clone(),
             status: 1,
-            created_at: m.created_at.clone(),
+            created_at: payload.created_at.clone(),
             updated_at: None,
           };
-          let broadcast = DoEphemeralBroadcast {
-            room_id: chatroom_id,
-            event: outbound_event_cloned.clone(),
-            out_data: Some(m.clone()),
-            store_msg: Some(insert_data.clone()),
-          };
-          (Some(insert_data), Some(broadcast))
+          actix::spawn(async move {
+            if let Err(e) = this.add_messages_to_room(Some(insert_data)).await {
+              tracing::error!("Failed to store message in Redis: {}", e);
+            }
+          });
         }
-        None => (None, None),
-      },
-      ChatEvent::Read => (None, None),
-      ChatEvent::ActiveRooms => (None, None),
-      ChatEvent::Typing | ChatEvent::TypingStop | ChatEvent::TypingStart => match chat_model {
-        Some(m) => {
-          let broadcast = DoEphemeralBroadcast {
-            room_id: chatroom_id,
-            event: outbound_event_cloned.clone(),
-            out_data: m.clone().into(),
-            store_msg: None,
-          };
-          (None, Some(broadcast))
-        }
-        None => (None, None),
-      },
-      ChatEvent::PhxJoin => {
-        let broadcast = DoEphemeralBroadcast {
-          room_id: chatroom_id,
-          event: outbound_event_cloned.clone(),
-          out_data: None,
-          store_msg: None,
-        };
-        (None, Some(broadcast))
+        early_return = true;
       }
-      ChatEvent::Update => match chat_model {
-        Some(m) => {
-          let broadcast = DoEphemeralBroadcast {
-            room_id: chatroom_id,
-            event: outbound_event_cloned.clone(),
-            out_data: m.clone().into(),
-            store_msg: None,
-          };
-          (None, Some(broadcast))
-        }
-        None => (None, None),
-      },
-      ChatEvent::Unknown => (None, None),
-    };
-
-    let content = serde_json::to_string(&content_cloned).unwrap_or_else(|_| "null".to_string());
-    if let Some(event_msg) = event_msg.1 {
-      // Hand off work back to the actor context
-      let addr = ctx.address();
-      return Box::pin(async move {
-        do_send_message(addr, event_msg).await;
-      });
+      IncomingEnvelope::Typing { room_id, payload, .. } => {
+        // Build minimal MessageModel for typing and issue outbound
+        let m = MessageModel {
+          sender_id: Some(payload.sender_id),
+          content: Some("chat:typing".to_string()),
+          typing: Some(payload.typing),
+          created_at: payload.timestamp,
+          ..Default::default()
+        };
+        let out_event = IncomingEvent {
+          room_id: room_id.clone(),
+          event: ChatEvent::Typing,
+          topic: format!("room:{}", room_id),
+          payload: Some(m),
+        };
+        self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
+        early_return = true;
+      }
+      IncomingEnvelope::Update { room_id, payload, .. } => {
+        let out_event = IncomingEvent {
+          room_id: room_id.clone(),
+          event: ChatEvent::Update,
+          topic: format!("room:{}", room_id),
+          payload: Some(payload.clone()),
+        };
+        self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
+        early_return = true;
+      }
+      IncomingEnvelope::PhxLeave { .. } => {
+        // no-op
+      }
+      _ => {}
+    }
+    if early_return {
+      // We already issued outbound (and persisted if needed). Skip channel cast path.
+      return Box::pin(async move {});
     }
 
     // Clone mapped event for async move block
@@ -201,7 +106,12 @@ impl Handler<BridgeMessage> for PhoenixManager {
         match status_res {
           Ok(status) => {
             let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-            let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
+            let payload_bytes = serde_json::to_vec(&content_cloned).unwrap_or_else(|e| {
+              tracing::error!("Failed to serialize payload to JSON: {}", e);
+              Vec::new()
+            });
+            let payload: Payload = Payload::binary_from_bytes(payload_bytes);
+
             tracing::debug!(
               "PHX cast: event={} status={:?} channel={}",
               outbound_event_for_cast.to_string_value(),

@@ -94,11 +94,14 @@ pub struct MessageModel {
     pub created_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TypingPayload {
     pub sender_id: LocalUserId,
+    #[serde(default)]
     pub typing: bool,
+    #[serde(default)]
+    pub timestamp: Option<DateTime<Utc>>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -115,6 +118,102 @@ pub struct IncomingEvent {
     pub room_id: ChatRoomId,
     pub topic: String,
     pub payload: Option<MessageModel>,
+}
+
+// ================= Strongly-typed dynamic envelope =================
+// Use a *tagged enum* so Serde picks the right payload type based on `event` automatically.
+// This removes the need for `payload: Option<MessageModel>` everywhere and avoids manual downcasts.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "event")]
+pub enum IncomingEnvelope {
+    #[serde(rename = "phx_join")]
+    PhxJoin {
+        room_id: ChatRoomId,
+        topic: String,
+        #[serde(default)]
+        payload: Option<JoinPayload>,
+    },
+    #[serde(rename = "phx_leave")]
+    PhxLeave {
+        room_id: ChatRoomId,
+        topic: String,
+    },
+    #[serde(rename = "heartbeat")]
+    Heartbeat {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: Option<HeartbeatPayload>,
+    },
+    #[serde(rename = "chat:message")]
+    Message {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: MessageModel,
+    },
+    #[serde(rename = "chat:update")]
+    Update {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: MessageModel,
+    },
+    #[serde(rename = "chat:read")]
+    Read {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: ReadPayload,
+    },
+    #[serde(rename = "chat:active_rooms")]
+    ActiveRooms {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: Option<ActiveRoomPayload>,
+    },
+    #[serde(rename = "chat:typing")]
+    Typing {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: TypingPayload,
+    },
+    #[serde(rename = "typing:start")]
+    TypingStart {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: TypingPayload,
+    },
+    #[serde(rename = "typing:stop")]
+    TypingStop {
+        room_id: ChatRoomId,
+        topic: String,
+        payload: TypingPayload,
+    },
+}
+
+impl IncomingEnvelope {
+    pub fn topic(&self) -> &str {
+        match self {
+            IncomingEnvelope::PhxJoin { topic, .. }
+            | IncomingEnvelope::PhxLeave { topic, .. }
+            | IncomingEnvelope::Heartbeat { topic, .. }
+            | IncomingEnvelope::Message { topic, .. }
+            | IncomingEnvelope::Update { topic, .. }
+            | IncomingEnvelope::Read { topic, .. }
+            | IncomingEnvelope::ActiveRooms { topic, .. }
+            | IncomingEnvelope::Typing { topic, .. }
+            | IncomingEnvelope::TypingStart { topic, .. }
+            | IncomingEnvelope::TypingStop { topic, .. } => topic.as_str(),
+        }
+    }
+}
+
+// Optional: a generic fall-back form if you still need a single struct with a generic payload.
+// This is useful when you want to parse first, then downcast payload by matching `event` yourself.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GenericIncomingEvent<T = serde_json::Value> {
+    pub event: ChatEvent,
+    pub room_id: ChatRoomId,
+    pub topic: String,
+    #[serde(default)]
+    pub payload: Option<T>,
 }
 
 // ================= AppEvent (normalized for server) =================

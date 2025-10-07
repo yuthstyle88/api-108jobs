@@ -131,6 +131,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
             payload_model,
             incoming.event.clone()
           );
+
           let parse_data = IncomingEvent {
             event: incoming.event.clone(),
             room_id: incoming.room_id.clone(),

@@ -1,4 +1,4 @@
-use crate::api::{ChatEvent, IncomingEnvelope, IncomingEvent, MessageModel};
+use crate::api::{ChatEvent, IncomingEnvelope, IncomingEvent, MessageModel, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
@@ -29,11 +29,15 @@ impl Handler<BridgeMessage> for PhoenixManager {
     match env {
       IncomingEnvelope::Message { room_id, payload, .. } => {
         // 1) issue outbound immediately
+        let payload_out = MessageModel{
+          status: Some(MessageStatus::Sent),
+          ..payload.clone()
+        };
         let out_event = IncomingEvent {
           room_id: room_id.clone(),
           event: ChatEvent::Message,
           topic: format!("room:{}", room_id),
-          payload: Some(payload.clone()),
+          payload: Some(payload_out),
         };
         self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
 

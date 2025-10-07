@@ -1,12 +1,11 @@
 use actix::prelude::*;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use serde_with::skip_serializing_none;
-use thiserror::Error;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
-
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
+use thiserror::Error;
+use lemmy_db_schema_file::enums::WorkFlowStatus;
 
 #[derive(Debug, Clone, Message)]
 #[rtype(result = "()")]
@@ -88,6 +87,10 @@ pub struct MessageModel {
     pub read_last_id: Option<String>,
     pub content: Option<String>,
     pub status: Option<MessageStatus>,
+    pub typing: Option<bool>,
+    pub update_type: Option<String>,
+    pub status_target: Option<WorkFlowStatus>,
+    pub prev_status: Option<WorkFlowStatus>,
     pub created_at: Option<DateTime<Utc>>,
 }
 

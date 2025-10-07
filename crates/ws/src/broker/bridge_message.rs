@@ -5,7 +5,6 @@ use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use actix::{Addr, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
 use lemmy_db_schema::newtypes::ChatRoomId;
-use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
@@ -47,21 +46,32 @@ impl Handler<DoEphemeralBroadcast> for PhoenixManager {
           content,
           created_at,
           sender_id,
-          reader_id: None,
-          read_last_id: None,
+          ..Default::default()
         };
         Some(message)
       }
       None => match msg.event {
-        ChatEvent::Update => Some(MessageModel{
+        ChatEvent::TypingStart | ChatEvent::TypingStop | ChatEvent::Typing => Some(MessageModel {
+          id,
+          content: Some(msg.event.to_string_value()),
+          sender_id,
+          typing: message.typing,
           ..Default::default()
         }),
-        _ =>
-         Some(MessageModel{
-            id,
-            content: Some(msg.event.to_string_value()),
-            ..Default::default()
-          })
+        ChatEvent::Update => Some(MessageModel {
+          id,
+          content: Some(msg.event.to_string_value()),
+          sender_id,
+          update_type: message.update_type,
+          prev_status: message.prev_status,
+          status_target: message.status_target,
+          ..Default::default()
+        }),
+        _ => Some(MessageModel {
+          id,
+          content: Some(msg.event.to_string_value()),
+          ..Default::default()
+        }),
       },
     };
 
@@ -112,46 +122,41 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let event_msg: (Option<ChatMessageInsertForm>, Option<DoEphemeralBroadcast>) = match event {
       ChatEvent::PhxLeave => (None, None),
       ChatEvent::Heartbeat => (None, None),
-      ChatEvent::Message => {
-
-        match chat_model {
-          Some(m) => {
-            let insert_data = ChatMessageInsertForm {
-              msg_ref_id: m.id.clone(),
-              room_id: chatroom_id.clone(),
-              sender_id: m.sender_id,
-              content: m.clone().content,
-              status: 1,
-              created_at: m.created_at.clone(),
-              updated_at: None,
-            };
-            let broadcast = DoEphemeralBroadcast {
-              room_id: chatroom_id,
-              event: outbound_event_cloned.clone(),
-              out_data: Some(m.clone()),
-              store_msg: Some(insert_data.clone()),
-            };
-            (Some(insert_data), Some(broadcast))
-          }
-          None => (None, None),
+      ChatEvent::Message => match chat_model {
+        Some(m) => {
+          let insert_data = ChatMessageInsertForm {
+            msg_ref_id: m.id.clone(),
+            room_id: chatroom_id.clone(),
+            sender_id: m.sender_id,
+            content: m.clone().content,
+            status: 1,
+            created_at: m.created_at.clone(),
+            updated_at: None,
+          };
+          let broadcast = DoEphemeralBroadcast {
+            room_id: chatroom_id,
+            event: outbound_event_cloned.clone(),
+            out_data: Some(m.clone()),
+            store_msg: Some(insert_data.clone()),
+          };
+          (Some(insert_data), Some(broadcast))
         }
-      }
+        None => (None, None),
+      },
       ChatEvent::Read => (None, None),
       ChatEvent::ActiveRooms => (None, None),
-      ChatEvent::Typing | ChatEvent::TypingStop | ChatEvent::TypingStart => {
-        match chat_model {
-          Some(m) => {
-            let broadcast = DoEphemeralBroadcast {
-              room_id: chatroom_id,
-              event: outbound_event_cloned.clone(),
-              out_data: m.clone().into(),
-              store_msg: None,
-            };
-            (None, Some(broadcast))
-          }
-          None => (None, None),
+      ChatEvent::Typing | ChatEvent::TypingStop | ChatEvent::TypingStart => match chat_model {
+        Some(m) => {
+          let broadcast = DoEphemeralBroadcast {
+            room_id: chatroom_id,
+            event: outbound_event_cloned.clone(),
+            out_data: m.clone().into(),
+            store_msg: None,
+          };
+          (None, Some(broadcast))
         }
-      }
+        None => (None, None),
+      },
       ChatEvent::PhxJoin => {
         let broadcast = DoEphemeralBroadcast {
           room_id: chatroom_id,
@@ -161,20 +166,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
         };
         (None, Some(broadcast))
       }
-      ChatEvent::Update => {
-        match chat_model {
-          Some(m) => {
-            let broadcast = DoEphemeralBroadcast {
-              room_id: chatroom_id,
-              event: outbound_event_cloned.clone(),
-              out_data: m.clone().into(),
-              store_msg: None,
-            };
-            (None, Some(broadcast))
-          }
-          None => (None, None),
+      ChatEvent::Update => match chat_model {
+        Some(m) => {
+          let broadcast = DoEphemeralBroadcast {
+            room_id: chatroom_id,
+            event: outbound_event_cloned.clone(),
+            out_data: m.clone().into(),
+            store_msg: None,
+          };
+          (None, Some(broadcast))
         }
-      }
+        None => (None, None),
+      },
       ChatEvent::Unknown => (None, None),
     };
 

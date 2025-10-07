@@ -10,7 +10,6 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
 use serde_json::Value;
-use std::borrow::Cow;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -120,12 +119,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
           // Build Option<MessageModel> safely (no mutation of borrowed data)
           let payload_model = incoming
-            .payload
-            .as_ref()
-            .and_then(|m| m.content.as_deref().map(|raw| {
-              let content = self.maybe_decrypt_incoming(raw).into_owned();
-              MessageModel { content: Some(content), ..m.clone() }
-            }));
+              .payload
+              .as_ref()
+              .map(|m| {
+                let content = m.content.as_deref()
+                    .map(|raw| self.maybe_decrypt_incoming(raw).into_owned());
+                MessageModel { content, ..m.clone() }
+              });
           tracing::info!(
             "INBOUND payload_model{:?} event {:?}",
             payload_model,

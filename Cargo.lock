@@ -4317,6 +4317,7 @@ dependencies = [
  "chrono",
  "lemmy_api_utils",
  "lemmy_db_schema",
+ "lemmy_db_schema_file",
  "lemmy_db_views_chat",
  "lemmy_db_views_local_user",
  "lemmy_utils",

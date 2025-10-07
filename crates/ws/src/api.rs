@@ -57,22 +57,23 @@ pub enum MessageStatus {
 }
 
 // ================= Payload structs =================
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JoinPayload {
     pub sender_id: LocalUserId,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HeartbeatPayload {
     pub sender_id: LocalUserId,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadPayload {
     pub sender_id: LocalUserId,
+    pub read_last_id: String,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveRoomPayload {
     pub room_id: ChatRoomId,
@@ -103,7 +104,7 @@ pub struct TypingPayload {
     #[serde(default)]
     pub timestamp: Option<DateTime<Utc>>,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusPayload {
     pub sender_id: LocalUserId,
@@ -117,93 +118,11 @@ pub struct IncomingEvent {
     pub event: ChatEvent,
     pub room_id: ChatRoomId,
     pub topic: String,
-    pub payload: Option<MessageModel>,
+    pub payload: serde_json::Value,
 }
 
 // ================= Strongly-typed dynamic envelope =================
-// Use a *tagged enum* so Serde picks the right payload type based on `event` automatically.
-// This removes the need for `payload: Option<MessageModel>` everywhere and avoids manual downcasts.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "event")]
-pub enum IncomingEnvelope {
-    #[serde(rename = "phx_join")]
-    PhxJoin {
-        room_id: ChatRoomId,
-        topic: String,
-        #[serde(default)]
-        payload: Option<JoinPayload>,
-    },
-    #[serde(rename = "phx_leave")]
-    PhxLeave {
-        room_id: ChatRoomId,
-        topic: String,
-    },
-    #[serde(rename = "heartbeat")]
-    Heartbeat {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: Option<HeartbeatPayload>,
-    },
-    #[serde(rename = "chat:message")]
-    Message {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: MessageModel,
-    },
-    #[serde(rename = "chat:update")]
-    Update {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: MessageModel,
-    },
-    #[serde(rename = "chat:read")]
-    Read {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: Option<ReadPayload>,
-    },
-    #[serde(rename = "chat:active_rooms")]
-    ActiveRooms {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: Option<ActiveRoomPayload>,
-    },
-    #[serde(rename = "chat:typing")]
-    Typing {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: TypingPayload,
-    },
-    #[serde(rename = "typing:start")]
-    TypingStart {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: TypingPayload,
-    },
-    #[serde(rename = "typing:stop")]
-    TypingStop {
-        room_id: ChatRoomId,
-        topic: String,
-        payload: TypingPayload,
-    },
-}
-
-impl IncomingEnvelope {
-    pub fn topic(&self) -> &str {
-        match self {
-            IncomingEnvelope::PhxJoin { topic, .. }
-            | IncomingEnvelope::PhxLeave { topic, .. }
-            | IncomingEnvelope::Heartbeat { topic, .. }
-            | IncomingEnvelope::Message { topic, .. }
-            | IncomingEnvelope::Update { topic, .. }
-            | IncomingEnvelope::Read { topic, .. }
-            | IncomingEnvelope::ActiveRooms { topic, .. }
-            | IncomingEnvelope::Typing { topic, .. }
-            | IncomingEnvelope::TypingStart { topic, .. }
-            | IncomingEnvelope::TypingStop { topic, .. } => topic.as_str(),
-        }
-    }
-}
+// All usages of IncomingEnvelope should now use GenericIncomingEvent.
 
 // Optional: a generic fall-back form if you still need a single struct with a generic payload.
 // This is useful when you want to parse first, then downcast payload by matching `event` yourself.

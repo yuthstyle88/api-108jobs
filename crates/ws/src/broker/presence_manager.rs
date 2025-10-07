@@ -2,6 +2,7 @@ use actix::{Actor, AsyncContext, Context, Handler, Message};
 use actix::ResponseFuture;
 use chrono::{DateTime, Utc};
 use std::time::{Duration as StdDuration, Duration};
+use std::collections::HashSet;
 use tracing;
 use lemmy_utils::redis::RedisClient;
 
@@ -19,6 +20,7 @@ pub struct PresenceManager {
     /// How long we wait before declaring a user “stopped” (timeout).
     heartbeat_ttl: Duration,
     redis: Option<RedisClient>,
+    local_online: HashSet<i32>,
 }
 
 /// ===== Presence messages =====
@@ -54,6 +56,7 @@ impl PresenceManager {
         Self {
             heartbeat_ttl,
             redis,
+            local_online: HashSet::new(),
         }
     }
 
@@ -101,6 +104,7 @@ impl PresenceManager {
 
     #[inline]
     fn mark_offline(&mut self, local_user_id: i32) {
+        self.local_online.remove(&local_user_id);
         tracing::debug!(local_user_id, "presence: mark_offline");
         if let Some(client) = &self.redis {
             let online_key = format!("presence:user:{}:online", local_user_id);
@@ -170,6 +174,45 @@ impl Actor for PresenceManager {
 impl Handler<OnlineJoin> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Context<Self>) -> Self::Result {
+        // Local idempotency guard: `insert` returns false if already present
+        let already_local = !self.local_online.insert(msg.local_user_id);
+
+        // Make OnlineJoin idempotent to avoid duplicate INFO logs
+        if let Some(client) = &self.redis {
+            let ttl = self.heartbeat_ttl.as_secs() as usize;
+            let online_key = format!("presence:user:{}:online", msg.local_user_id);
+            let seen_key = format!("presence:user:{}:last_seen", msg.local_user_id);
+            let mut client = client.clone();
+            let started_at = msg.started_at;
+            let user_id = msg.local_user_id;
+            actix::spawn(async move {
+                let already_local = already_local; // captured from outer scope
+                // Check previous online flag BEFORE setting to avoid duplicate INFO logs
+                let was_online = matches!(client.get_value::<bool>(&online_key).await, Ok(Some(true)));
+
+                // Refresh online flag and last_seen with TTL (idempotent write)
+                let _ = client.set_value_with_expiry(&online_key, true, ttl).await;
+                let _ = client.set_value_with_expiry(&seen_key, started_at.to_rfc3339(), ttl).await;
+
+                // Maintain simple online list (best-effort)
+                let list_key = "presence:online:users".to_string();
+                let mut list: Vec<i32> = match client.get_value::<Vec<i32>>(&list_key).await {
+                    Ok(Some(v)) => v,
+                    _ => Vec::new(),
+                };
+                if !list.contains(&user_id) { list.push(user_id); }
+                let _ = client.set_value_with_expiry(&list_key, list, ttl).await;
+
+                if already_local || was_online {
+                    tracing::debug!(local_user_id = user_id, ts = %started_at, "presence: online_join (duplicate)");
+                } else {
+                    tracing::info!(local_user_id = user_id, ts = %started_at, "presence: online_join");
+                }
+            });
+            return;
+        }
+
+        // Fallback (no Redis): best-effort mark online & touch, then INFO log once
         self.mark_online(msg.local_user_id);
         self.touch(msg.local_user_id);
         tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");

@@ -1,4 +1,4 @@
-use crate::api::{ChatEvent, MessageModel, StoreChatMessage};
+use crate::api::{ChatEvent, ReadPayload, StoreChatMessage, GenericIncomingEvent, IncomingEvent};
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
@@ -12,7 +12,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 
-use crate::bridge_message::BridgeMessage;
+use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::presence_manager::PresenceManager;
@@ -21,6 +21,7 @@ use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
+use crate::impls::AnyIncomingEvent;
 
 // Timeouts and intervals (in seconds) for Phoenix socket/channel operations
 pub const CONNECT_TIMEOUT_SECS: u64 = 10;
@@ -87,32 +88,36 @@ impl PhoenixManager {
 
   /// Persist (async) and broadcast a normalized read event; updates in-memory pointer as well.
   #[allow(dead_code)]
-  pub(crate) fn handle_read_event(
-    &mut self,
-    msg: &BridgeMessage,
-  ) {
-    let chatroom_id = msg.incoming_event.room_id.clone();
-    // reader_id: รับได้ทั้ง number หรือ string
-    let reader_id_val =  msg.incoming_event.payload.clone().unwrap().reader_id.unwrap_or(LocalUserId(0));
-    if reader_id_val.0 == 0 {
-      return;
-    }
+  pub(crate) fn handle_read_event(&mut self, msg: &BridgeMessage) {
+    // Convert wire-level IncomingEvent (payload: Value) into typed AnyIncomingEvent for safe matching
+    let any = AnyIncomingEvent::from(msg.incoming_event.clone());
+    let (chatroom_id, payload_opt) = match any {
+      AnyIncomingEvent::Read(ev) => (ev.room_id, ev.payload),
+      _ => return,
+    };
 
-    // last_read_message_id: str เท่านั้น
-    let last_read_id = match msg.incoming_event.payload.clone().unwrap().read_last_id {
-      Some(s) if !s.is_empty() => s.to_string(),
-      _ => {
-        tracing::warn!("chat:read missing last_read_message_id");
+    let payload = match payload_opt {
+      Some(p) => p,
+      None => {
+        tracing::warn!("chat:read missing payload");
         return;
       }
     };
 
-    self.last_read.insert(
-      (chatroom_id.clone(), reader_id_val),
-      last_read_id.clone(),
-    );
+    let reader_id_val = payload.sender_id;
+    if reader_id_val.0 == 0 {
+      return;
+    }
 
-    // upsert async (ไม่บล็อกเส้นทาง broadcast)
+    let last_read_id = payload.read_last_id.clone();
+    if last_read_id.is_empty() {
+      tracing::warn!("chat:read missing last_read_message_id");
+      return;
+    }
+
+    self.last_read.insert((chatroom_id.clone(), reader_id_val), last_read_id.clone());
+
+    // upsert async (non-blocking)
     let pool_for_last = self.pool.clone();
     let room_for_last = chatroom_id.clone();
     let reader_local = reader_id_val;
@@ -132,13 +137,10 @@ impl PhoenixManager {
     );
 
     let this = self.clone();
-    let msg_cloned = msg.clone();
+    let room_for_broadcast = chatroom_id.clone();
+    let payload_for_broadcast = payload.clone();
     tokio::spawn(async move {
-      let _ = this
-        .broadcast_read_event(
-          msg_cloned,
-        )
-        .await;
+      let _ = this.broadcast_read_event(room_for_broadcast, payload_for_broadcast).await;
     });
   }
 
@@ -146,32 +148,43 @@ impl PhoenixManager {
   #[allow(dead_code)]
   async fn broadcast_read_event(
     &self,
-    msg: BridgeMessage,
-  ) -> Result<(),FastJobError>{
-    let payload: MessageModel = match msg.incoming_event.payload.clone() {
-      Some(m) => m,
-      None => {
-        tracing::warn!("broadcast_read_event: missing MessageModel payload");
-        return Ok(());
-      }
+    room_id: ChatRoomId,
+    payload: ReadPayload,
+  ) -> Result<(),FastJobError> {
+    // Local broker broadcast to other clients on this node via BridgeMessage(AnyIncomingEvent::Read)
+    let wrapped = GenericIncomingEvent::<ReadPayload> {
+      event: ChatEvent::Read,
+      room_id: room_id.clone(),
+      topic: format!("room:{}", room_id),
+      payload: Some(payload.clone()),
+    };
+    let json_payload = if let Some(m) = wrapped.payload {
+      serde_json::to_value(&m).unwrap_or(serde_json::Value::Null)
+    } else {
+      serde_json::Value::Null
     };
 
-    let content = payload;
-    // Local broker broadcast (to other clients on this node)
-    let outbound_channel = msg.incoming_event.room_id.clone();
-    let outbound_event = ChatEvent::Read.to_string_value();
-    self.issue_async::<SystemBroker, _>(msg);
+    let out_event = IncomingEvent {
+      room_id: room_id.clone(),
+      event: wrapped.event,
+      topic: format!("room:{}", room_id),
+      payload: json_payload,
+    };
+
+    let bridge = OutboundMessage { out_event };
+    self.issue_async::<SystemBroker, _>(bridge.clone());
 
     // Phoenix channel cast (for cross-node subscribers)
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
-    let channel_name = format!("room:{}", outbound_channel);
-    let outbound_event_for_cast = outbound_event.clone();
+    let channel_name = format!("room:{}", room_id);
+    let outbound_event_for_cast = ChatEvent::Read.to_string_value();
+    let content_json = serde_json::to_vec(&payload).unwrap_or_default();
     Arbiter::current().spawn(async move {
       if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
         if let Ok(status) = arc_chan.statuses().status().await {
           let phoenix_event = Event::from_string(outbound_event_for_cast);
-          let payload: Payload = Payload::binary_from_bytes(content.into_bytes());
+          let payload: Payload = Payload::binary_from_bytes(content_json);
           if status == ChannelStatus::Joined {
             send_event_to_channel(arc_chan, phoenix_event, payload).await;
           } else {
@@ -181,7 +194,7 @@ impl PhoenixManager {
         }
       }
     });
-   Ok(())
+    Ok(())
   }
 
   pub async fn validate_or_create_room(

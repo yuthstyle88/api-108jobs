@@ -1,4 +1,3 @@
-use crate::api::{IncomingEvent, MessageModel};
 use crate::bridge_message::OutboundMessage;
 use crate::broker::helper::{parse_phx, phx_push, phx_reply};
 use crate::broker::phoenix_manager::PhoenixManager;
@@ -9,7 +8,6 @@ use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
-use serde_json::Value;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -91,16 +89,15 @@ impl Handler<OutboundMessage> for PhoenixSession {
     // Convert stored JSON string to Value for Phoenix push payload
     let payload_val = msg.out_event.payload;
     let topic = msg.out_event.topic;
-    let payload = payload_val
-      .as_ref()
-      .map(|val| {
-        let content = self
-          .maybe_encrypt_outbound(val.content.as_deref().unwrap_or(""))
-          .into_owned();
-        serde_json::to_value(MessageModel { content: Some(content), ..val.clone() })
-          .unwrap_or(Value::Null)
-      })
-      .unwrap_or_else(|| serde_json::json!({ "content": Value::Null }));
+    // let payload = payload_val
+    //   .map(|val| {
+    //     let content = self
+    //       .maybe_encrypt_outbound(val.content.as_deref().unwrap_or(""))
+    //       .into_owned();
+    //     serde_json::to_value(MessageModel { content: Some(content), ..val.clone() })
+    //       .unwrap_or(Value::Null)
+    //   })
+    //   .unwrap_or_else(|| serde_json::json!({ "content": Value::Null }));
     // Try to keep payload as JSON when possible
     // tracing::info!(
     //   "Outbound Phoenix push: topic={} event={} payload={}",
@@ -108,7 +105,7 @@ impl Handler<OutboundMessage> for PhoenixSession {
     //   msg.out_event.event.to_string_value(),
     //   payload
     // );
-    ctx.text(phx_push(&topic, &msg.out_event.event, payload));
+    ctx.text(phx_push(&topic, &msg.out_event.event, payload_val));
   }
 }
 
@@ -117,30 +114,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
     match m {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
-          // Build Option<MessageModel> safely (no mutation of borrowed data)
-          let payload_model = incoming
-              .payload
-              .as_ref()
-              .map(|m| {
-                let content = m.content.as_deref()
-                    .map(|raw| self.maybe_decrypt_incoming(raw).into_owned());
-                MessageModel { content, ..m.clone() }
-              });
-          tracing::debug!(
-            "INBOUND payload_model{:?} event {:?}",
-            payload_model,
-            incoming.event.clone()
-          );
+          // Parse MessageModel from serde_json::Value, then decrypt content if needed
+          // let payload_model: Option<MessageModel> = serde_json::from_value::<MessageModel>(incoming.payload.clone())
+          //   .ok()
+          //   .map(|m| {
+          //     let content = m
+          //       .content
+          //       .as_deref()
+          //       .map(|raw| self.maybe_decrypt_incoming(raw).into_owned());
+          //     MessageModel { content, ..m }
+          //   });
+          // tracing::debug!(
+          //   "INBOUND payload_model={:?} event={:?}",
+          //   payload_model,
+          //   incoming.event.clone()
+          // );
 
-          let parse_data = IncomingEvent {
-            event: incoming.event.clone(),
-            room_id: incoming.room_id.clone(),
-            topic: incoming.topic.clone(),
-            payload: payload_model,
-          };
+          // let incoming_event = GenericIncomingEvent::<MessageModel> {
+          //   event: incoming.event.clone(),
+          //   room_id: incoming.room_id.clone(),
+          //   topic: incoming.topic.clone(),
+          //   payload: payload_model,
+          // };
 
           let bridge_msg = BridgeMessage {
-            incoming_event: parse_data,
+            incoming_event: incoming.clone(),
           };
           self.issue_async::<SystemBroker, _>(bridge_msg);
           ctx.text(phx_reply(

@@ -1,10 +1,8 @@
-use crate::api::{ChatEvent, ConvertError, IncomingEnvelope, IncomingEvent, MessageModel, MessageStatus, ReadPayload, TypingPayload};
-use chrono::{DateTime, Utc};
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_schema_file::enums::WorkFlowStatus;
+use crate::api::{ChatEvent, ConvertError, GenericIncomingEvent, IncomingEvent, MessageModel, MessageStatus, JoinPayload, HeartbeatPayload, ReadPayload, ActiveRoomPayload};
 use lemmy_utils::error::FastJobError;
-use serde_json::Value;
+
 use std::str::FromStr;
+use serde::{Deserialize, Serialize};
 
 impl FromStr for MessageStatus {
   type Err = ConvertError;
@@ -57,88 +55,7 @@ impl ChatEvent {
     self.as_str().to_string()
   }
 }
-impl TryFrom<Value> for MessageModel {
-  type Error = FastJobError;
 
-  fn try_from(value: Value) -> Result<Self, Self::Error> {
-    // id as Option<String>
-    let id: Option<String> = value
-      .get("id")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    // senderId as Option<LocalUserId>
-    let sender_id: Option<LocalUserId> = value
-      .get("senderId")
-      .and_then(|v| v.as_i64())
-      .and_then(|n| i32::try_from(n).ok())
-      .map(LocalUserId);
-
-    let reader_id: Option<LocalUserId> = value
-      .get("readerId")
-      .and_then(|v| v.as_i64())
-      .and_then(|n| i32::try_from(n).ok())
-      .map(LocalUserId);
-
-    let content: Option<String> = value
-      .get("content")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    // content as Option<String>
-    let read_last_id: Option<String> = value
-      .get("readLastId")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    // status as Option<MessageStatus>; if missing or invalid -> None
-    let status: Option<MessageStatus> = value
-      .get("status")
-      .and_then(|v| v.as_str())
-      .and_then(|s| s.parse::<MessageStatus>().ok());
-
-    // typing as Option<bool>; if missing or invalid -> None
-    let typing: Option<bool> = value.get("typing").and_then(|v| v.as_bool());
-
-    let update_type: Option<String> = value
-      .get("updateType")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    // statusTarget as Option<WorkFlowStatus>
-    let status_target: Option<WorkFlowStatus> = value
-      .get("statusTarget")
-      .and_then(|v| v.as_str())
-      .and_then(|s| s.parse::<WorkFlowStatus>().ok());
-
-    // prevStatus as Option<WorkFlowStatus>
-    let prev_status: Option<WorkFlowStatus> = value
-      .get("prevStatus")
-      .and_then(|v| v.as_str())
-      .and_then(|s| s.parse::<WorkFlowStatus>().ok());
-
-    // createdAt (RFC3339) into DateTime<Utc>
-    let created_at: Option<DateTime<Utc>> = value
-      .get("createdAt")
-      .and_then(|v| v.as_str())
-      .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-      .map(|dt| dt.with_timezone(&Utc));
-
-    Ok(MessageModel {
-      id,
-      sender_id,
-      reader_id,
-      read_last_id,
-      content,
-      status,
-      typing,
-      update_type,
-      status_target,
-      prev_status,
-      created_at,
-    })
-  }
-}
 
 impl MessageModel {
   /// Serialize the message to JSON bytes (camelCase keys) for wire transport.
@@ -148,62 +65,55 @@ impl MessageModel {
   }
 }
 
-impl From<IncomingEvent> for IncomingEnvelope {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "event")]
+pub enum AnyIncomingEvent {
+  #[serde(rename = "phx_join")]       Join(GenericIncomingEvent<JoinPayload>),
+  #[serde(rename = "phx_leave")]      Leave(GenericIncomingEvent<serde_json::Value>),
+  #[serde(rename = "heartbeat")]      Heartbeat(GenericIncomingEvent<HeartbeatPayload>),
+  #[serde(rename = "chat:message")]   Message(GenericIncomingEvent<MessageModel>),
+  #[serde(rename = "chat:read")]      Read(GenericIncomingEvent<ReadPayload>),
+  #[serde(rename = "chat:active_rooms")] ActiveRooms(GenericIncomingEvent<ActiveRoomPayload>),
+  #[serde(rename = "chat:typing")]    Typing(GenericIncomingEvent<MessageModel>),
+  #[serde(rename = "chat:update")]    Update(GenericIncomingEvent<MessageModel>),
+  #[serde(other)]                       Unknown,
+}
+
+impl From<IncomingEvent> for AnyIncomingEvent {
   fn from(ev: IncomingEvent) -> Self {
     match ev.event {
-      ChatEvent::PhxJoin => IncomingEnvelope::PhxJoin {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: None, // phx_join ไม่มี payload
-      },
-      ChatEvent::PhxLeave => IncomingEnvelope::PhxLeave {
-        room_id: ev.room_id,
-        topic: ev.topic,
-      },
-      ChatEvent::Heartbeat => IncomingEnvelope::Heartbeat {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: None,
-      },
-      ChatEvent::Message => IncomingEnvelope::Message {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: ev.payload.unwrap_or_default(), // เดิมคือ Option<MessageModel>
-      },
-      ChatEvent::Update => IncomingEnvelope::Update {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: ev.payload.unwrap_or_default(),
-      },
-      ChatEvent::Read => IncomingEnvelope::Read {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: ev.payload
-            .and_then(|p| p.sender_id)
-            .map(|sid| ReadPayload { sender_id: sid }),
-      },
-      ChatEvent::ActiveRooms => IncomingEnvelope::ActiveRooms {
-        room_id: ev.room_id,
-        topic: ev.topic,
-        payload: None,
-      },
-      ChatEvent::Typing | ChatEvent::TypingStart | ChatEvent::TypingStop => {
-        IncomingEnvelope::Typing {
-          room_id: ev.room_id,
-          topic: ev.topic,
-          payload: ev.payload
-              .map(|m| TypingPayload {
-                sender_id: m.sender_id.unwrap_or_default(),
-                typing: m.typing.unwrap_or(false),
-                timestamp: m.created_at,
-              })
-              .unwrap_or_default()
-        }
+      ChatEvent::PhxJoin => {
+        let payload: Option<JoinPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Join(GenericIncomingEvent { event: ChatEvent::PhxJoin, room_id: ev.room_id, topic: ev.topic, payload })
       }
-      ChatEvent::Unknown => IncomingEnvelope::PhxLeave { // หรือทำ variant Unknown แยก
-        room_id: ev.room_id,
-        topic: ev.topic,
-      },
+      ChatEvent::PhxLeave => {
+        AnyIncomingEvent::Leave(GenericIncomingEvent { event: ChatEvent::PhxLeave, room_id: ev.room_id, topic: ev.topic, payload: None })
+      }
+      ChatEvent::Heartbeat => {
+        let payload: Option<HeartbeatPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Heartbeat(GenericIncomingEvent { event: ChatEvent::Heartbeat, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::Message => {
+        let payload: Option<MessageModel> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Message(GenericIncomingEvent { event: ChatEvent::Message, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::Read => {
+        let payload: Option<ReadPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Read(GenericIncomingEvent { event: ChatEvent::Read, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::ActiveRooms => {
+        let payload: Option<ActiveRoomPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::ActiveRooms(GenericIncomingEvent { event: ChatEvent::ActiveRooms, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::Typing | ChatEvent::TypingStart | ChatEvent::TypingStop => {
+        let payload: Option<MessageModel> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Typing(GenericIncomingEvent { event: ChatEvent::Typing, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::Update => {
+        let payload: Option<MessageModel> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::Update(GenericIncomingEvent { event: ChatEvent::Update, room_id: ev.room_id, topic: ev.topic, payload })
+      }
+      ChatEvent::Unknown => AnyIncomingEvent::Unknown,
     }
   }
 }

@@ -17,7 +17,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
   fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
     // Convert wire-level IncomingEvent (payload: Value) to strongly-typed AnyIncomingEvent
-    let any_event: AnyIncomingEvent = AnyIncomingEvent::from(msg.incoming_event.clone());
+    let any_event: AnyIncomingEvent = msg.any_event.clone();
 
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);

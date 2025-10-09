@@ -8,6 +8,7 @@ use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
+use crate::impls::AnyIncomingEvent;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -114,40 +115,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
     match m {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
-          // Parse MessageModel from serde_json::Value, then decrypt content if needed
-          // let payload_model: Option<MessageModel> = serde_json::from_value::<MessageModel>(incoming.payload.clone())
-          //   .ok()
-          //   .map(|m| {
-          //     let content = m
-          //       .content
-          //       .as_deref()
-          //       .map(|raw| self.maybe_decrypt_incoming(raw).into_owned());
-          //     MessageModel { content, ..m }
-          //   });
-          // tracing::debug!(
-          //   "INBOUND payload_model={:?} event={:?}",
-          //   payload_model,
-          //   incoming.event.clone()
-          // );
+          let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
+          let payload_opt = match any_event.clone() {
+            AnyIncomingEvent::Message(ev) => ev.payload,
+            _ => None,
+          };
 
-          // let incoming_event = GenericIncomingEvent::<MessageModel> {
-          //   event: incoming.event.clone(),
-          //   room_id: incoming.room_id.clone(),
-          //   topic: incoming.topic.clone(),
-          //   payload: payload_model,
-          // };
+          let reply = match payload_opt {
+            Some(p) => serde_json::to_value(p).unwrap_or(serde_json::Value::Null),
+            None =>  serde_json::json!({}),
+          };
 
           let bridge_msg = BridgeMessage {
+            any_event,
             incoming_event: incoming.clone(),
           };
           self.issue_async::<SystemBroker, _>(bridge_msg);
-          ctx.text(phx_reply(
-            &jr,
-            &mr,
-            &incoming.topic,
-            "ok",
-            serde_json::json!({}),
-          ));
+          ctx.text(phx_reply(&jr, &mr, &incoming.topic, "ok", reply));
         }
       }
       Ok(ws::Message::Ping(b)) => ctx.pong(&b),

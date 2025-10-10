@@ -2,7 +2,7 @@
 DO $$ BEGIN
   CREATE TYPE workflow_status AS ENUM (
     'WaitForFreelancerQuotation',
-    'QuotationPending',
+    'QuotationPendingReview',
     'OrderApproved',
     'InProgress',
     'PendingEmployerReview',

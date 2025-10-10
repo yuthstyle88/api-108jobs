@@ -10,7 +10,7 @@ pub struct FlowData {
 // ===== States as structs =====
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct QuotationPendingTS {
+pub struct QuotationPendingReviewTS {
   pub(crate) data: FlowData,
 }
 #[derive(Debug)]

@@ -27,7 +27,7 @@ pub struct FlowData {
 
 // ---------- Typestate structs ----------
 #[derive(Debug)]
-pub struct QuotationPendingTS {
+pub struct QuotationPendingReviewTS {
   pub data: FlowData,
 }
 #[derive(Debug)]
@@ -53,7 +53,7 @@ pub struct CancelledTS {
 }
 
 // ---------- Pure transitions (NO DB) ----------
-impl QuotationPendingTS {
+impl QuotationPendingReviewTS {
   pub fn approve(self) -> OrderApprovedTS {
     OrderApprovedTS { data: self.data }
   }
@@ -353,7 +353,7 @@ async fn do_transition(
 
 // ================= Refactored public methods =================
 
-impl QuotationPendingTS {
+impl QuotationPendingReviewTS {
   pub async fn approve_on(
     self,
     pool: &mut DbPool<'_>,
@@ -383,11 +383,11 @@ impl QuotationPendingTS {
     };
     let _ = WalletModel::hold(pool, &tx_form).await?;
 
-    // 3) เปลี่ยนสถานะ QuotationPending -> OrderApproved
+    // 3) เปลี่ยนสถานะ QuotationPendingReview -> OrderApproved
     set_status_from(
       pool,
       self.data.workflow_id,
-      WorkFlowStatus::QuotationPending,
+      WorkFlowStatus::QuotationPendingReview,
       WorkFlowStatus::OrderApproved,
       |_current, form: &mut WorkflowUpdateForm| {
         form.updated_at = Some(Some(Utc::now()));
@@ -639,7 +639,7 @@ impl WorkflowService {
         pool,
         current_wf.id,
         &WorkflowUpdateForm {
-          status: Some(WorkFlowStatus::QuotationPending),
+          status: Some(WorkFlowStatus::QuotationPendingReview),
           updated_at: Some(Some(Utc::now())),
           ..Default::default()
         },
@@ -653,15 +653,15 @@ impl WorkflowService {
   pub async fn load_quotation_pending(
     pool: &mut DbPool<'_>,
     workflow_id: WorkflowId,
-  ) -> FastJobResult<QuotationPendingTS> {
+  ) -> FastJobResult<QuotationPendingReviewTS> {
     let wf = Workflow::read(pool, workflow_id)
       .await
       .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-    if wf.status != WorkFlowStatus::QuotationPending {
+    if wf.status != WorkFlowStatus::QuotationPendingReview {
       return Err(
         FastJobErrorType::InvalidField(format!(
-          "Illegal state: expected QuotationPending, found {:?}",
+          "Illegal state: expected QuotationPendingReview, found {:?}",
           wf.status
         ))
         .into(),
@@ -673,7 +673,7 @@ impl WorkflowService {
       billing_id: None,
       amount: None,
     };
-    Ok(QuotationPendingTS { data })
+    Ok(QuotationPendingReviewTS { data })
   }
 
   pub async fn load_order_approve(

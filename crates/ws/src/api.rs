@@ -1,6 +1,6 @@
 use actix::prelude::*;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use lemmy_db_schema::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -70,8 +70,8 @@ pub struct HeartbeatPayload {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadPayload {
-    pub sender_id: LocalUserId,
-    pub read_last_id: String,
+    pub reader_id: LocalUserId,
+    pub last_read_message_id: ChatMessageRefId,
 }
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -85,7 +85,7 @@ pub struct MessageModel {
     pub id: Option<String>,
     pub sender_id: Option<LocalUserId>,
     pub reader_id: Option<LocalUserId>,
-    pub read_last_id: Option<String>,
+    pub read_last_id: Option<ChatMessageRefId>,
     pub content: Option<String>,
     pub status: Option<MessageStatus>,
     pub typing: Option<bool>,
@@ -93,6 +93,16 @@ pub struct MessageModel {
     pub status_target: Option<WorkFlowStatus>,
     pub prev_status: Option<WorkFlowStatus>,
     pub created_at: Option<DateTime<Utc>>,
+}
+
+impl From<ReadPayload> for MessageModel {
+    fn from(rp: ReadPayload) -> Self {
+        Self {
+            reader_id: Some(rp.reader_id),
+            read_last_id: Some(rp.last_read_message_id),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]

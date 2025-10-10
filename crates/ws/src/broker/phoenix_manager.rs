@@ -1,8 +1,8 @@
-use crate::api::{ChatEvent, ReadPayload, StoreChatMessage, GenericIncomingEvent, IncomingEvent};
+use crate::api::{ChatEvent, GenericIncomingEvent, IncomingEvent, ReadPayload, StoreChatMessage};
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
-  newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId, PaginationCursor},
+  newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{
     chat_message::{ChatMessage, ChatMessageInsertForm},
     chat_room::ChatRoom,
@@ -21,7 +21,6 @@ use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
-use crate::impls::AnyIncomingEvent;
 
 // Timeouts and intervals (in seconds) for Phoenix socket/channel operations
 pub const CONNECT_TIMEOUT_SECS: u64 = 10;
@@ -87,70 +86,77 @@ impl PhoenixManager {
   }
 
   /// Persist (async) and broadcast a normalized read event; updates in-memory pointer as well.
-  #[allow(dead_code)]
-  pub(crate) fn handle_read_event(&mut self, msg: &BridgeMessage) {
-    // Convert wire-level IncomingEvent (payload: Value) into typed AnyIncomingEvent for safe matching
-    let any = AnyIncomingEvent::from(msg.incoming_event.clone());
-    let (chatroom_id, payload_opt) = match any {
-      AnyIncomingEvent::Read(ev) => (ev.room_id, ev.payload),
-      _ => return,
-    };
-
+  pub(crate) fn handle_read_event(
+    &mut self,
+    room_id: ChatRoomId,
+    payload_opt: Option<ReadPayload>,
+  ) -> FastJobResult<()> {
+    // ---- Validate payload ----
     let payload = match payload_opt {
       Some(p) => p,
       None => {
         tracing::warn!("chat:read missing payload");
-        return;
+        return Ok(());
       }
     };
 
-    let reader_id_val = payload.sender_id;
-    if reader_id_val.0 == 0 {
-      return;
+    let reader_id = payload.reader_id;
+    if reader_id.0 == 0 {
+      return Ok(()); // Ignore anonymous / invalid reader
     }
 
-    let last_read_id = payload.read_last_id.clone();
-    if last_read_id.is_empty() {
+    let last_read = payload.last_read_message_id.clone();
+    if last_read.0.is_empty() {
       tracing::warn!("chat:read missing last_read_message_id");
-      return;
+      return Ok(());
     }
 
-    self.last_read.insert((chatroom_id.clone(), reader_id_val), last_read_id.clone());
+    // ---- Update in-memory cache ----
+    self.last_read
+        .insert((room_id.clone(), reader_id), last_read.0.clone());
 
-    // upsert async (non-blocking)
-    let pool_for_last = self.pool.clone();
-    let room_for_last = chatroom_id.clone();
-    let reader_local = reader_id_val;
-    let msg_id_wrap = ChatMessageRefId(last_read_id.clone());
-    tokio::spawn(async move {
-      let mut db = DbPool::Pool(&pool_for_last);
-      if let Err(e) = LastRead::upsert(&mut db, reader_local, room_for_last, msg_id_wrap).await {
-        tracing::warn!("last_read upsert failed: {}", e);
-      }
-    });
+    // ---- Spawn async DB update ----
+    {
+      let pool = self.pool.clone();
+      let room = room_id.clone();
+      let last_read_for_db = last_read.clone();
+
+      tokio::spawn(async move {
+        let mut db = DbPool::Pool(&pool);
+        if let Err(e) = LastRead::upsert(&mut db, reader_id, room, last_read_for_db.clone()).await {
+          tracing::warn!("last_read upsert failed: {}", e);
+        }
+      });
+    }
 
     tracing::debug!(
-      "READ-ACK recv room={} reader={:?} last_id={}",
-      chatroom_id,
-      reader_id_val,
-      last_read_id
+        "READ-ACK recv room={} reader={:?} last_id={}",
+        room_id,
+        reader_id,
+        last_read.0
     );
 
-    let this = self.clone();
-    let room_for_broadcast = chatroom_id.clone();
-    let payload_for_broadcast = payload.clone();
-    tokio::spawn(async move {
-      let _ = this.broadcast_read_event(room_for_broadcast, payload_for_broadcast).await;
-    });
-  }
+    // ---- Broadcast to others (async) ----
+    {
+      let manager = self.clone();
+      let room = room_id.clone();
+      let payload_clone = payload.clone();
 
+      tokio::spawn(async move {
+        let _ = manager.broadcast_read_event(room, payload_clone).await;
+      });
+    }
+
+    Ok(())
+  }
+  
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
   #[allow(dead_code)]
   async fn broadcast_read_event(
     &self,
     room_id: ChatRoomId,
     payload: ReadPayload,
-  ) -> Result<(),FastJobError> {
+  ) -> Result<(), FastJobError> {
     // Local broker broadcast to other clients on this node via BridgeMessage(AnyIncomingEvent::Read)
     let wrapped = GenericIncomingEvent::<ReadPayload> {
       event: ChatEvent::Read,
@@ -237,7 +243,10 @@ impl PhoenixManager {
   }
 
   /// Drain buffered messages for a room from Redis and return them for persistence
-  pub async fn drain_room_buffer(&mut self, room_id: &ChatRoomId) -> FastJobResult<Vec<ChatMessageInsertForm>> {
+  pub async fn drain_room_buffer(
+    &mut self,
+    room_id: &ChatRoomId,
+  ) -> FastJobResult<Vec<ChatMessageInsertForm>> {
     let key = format!("chat:room:{}:messages", room_id);
     let mut redis = self.redis_client.as_ref().clone();
 
@@ -251,7 +260,11 @@ impl PhoenixManager {
           tracing::error!("Failed to delete Redis key for room {}: {}", room_id, e);
         }
       }
-      tracing::info!("Drained {} messages from room {} in Redis", messages.len(), room_id);
+      tracing::info!(
+        "Drained {} messages from room {} in Redis",
+        messages.len(),
+        room_id
+      );
     }
 
     Ok(messages)

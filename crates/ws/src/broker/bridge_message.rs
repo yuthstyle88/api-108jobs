@@ -2,15 +2,15 @@ use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
+use crate::impls::AnyIncomingEvent;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
+use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
-use lemmy_db_schema::newtypes::ChatRoomId;
-use crate::impls::AnyIncomingEvent;
 
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
@@ -23,15 +23,16 @@ impl Handler<BridgeMessage> for PhoenixManager {
     let channels = Arc::clone(&self.channels);
 
     // Helper to issue outbound (to internal broker) using JSON payload
-    let issue_outbound = |room_id: ChatRoomId, event: ChatEvent, json_payload: serde_json::Value| {
-      let out_event = IncomingEvent {
-        room_id: room_id.clone(),
-        event,
-        topic: format!("room:{}", room_id),
-        payload: json_payload,
+    let issue_outbound =
+      |room_id: ChatRoomId, event: ChatEvent, json_payload: serde_json::Value| {
+        let out_event = IncomingEvent {
+          room_id: room_id.clone(),
+          event,
+          topic: format!("room:{}", room_id),
+          payload: json_payload,
+        };
+        self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
       };
-      self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
-    };
 
     match any_event {
       // ---------------------- MESSAGE ----------------------
@@ -64,7 +65,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
           // still notify listeners to keep flow consistent
           issue_outbound(ev.room_id, ChatEvent::Message, serde_json::Value::Null);
         }
-         Box::pin(async move {})
+        Box::pin(async move {})
       }
 
       // ---------------------- TYPING ----------------------
@@ -92,19 +93,34 @@ impl Handler<BridgeMessage> for PhoenixManager {
       // ---------------------- READ ----------------------
       AnyIncomingEvent::Read(ev) => {
         let json = ev
-          .payload
-          .as_ref()
-          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-          .unwrap_or(serde_json::Value::Null);
-        issue_outbound(ev.room_id, ChatEvent::Read, json);
+            .payload
+            .as_ref()
+            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
+            .unwrap_or(serde_json::Value::Null);
+
+        let mut this = self.clone();
+        let room_id_clone = ev.room_id.clone();
+        let payload_clone = ev.payload.clone();
+
+        actix::spawn(async move {
+          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone) {
+            tracing::error!("Failed to handle read event: {}", e);
+          }
+        });
+
+        issue_outbound(ev.room_id, ChatEvent::Read, json); // now safe to use original
         Box::pin(async move {})
       }
+
 
       // ---------------------- JOIN / HEARTBEAT / ACTIVE_ROOMS / LEAVE ----------------------
       AnyIncomingEvent::Join(ev) => {
         let channel_name = ev.topic.clone();
         let outbound_event_for_cast = ev.event.clone();
-        let content_json = ev.payload.map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null)).unwrap_or(serde_json::Value::Null);
+        let content_json = ev
+          .payload
+          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
+          .unwrap_or(serde_json::Value::Null);
         Box::pin(async move {
           let arc_chan_res = get_or_create_channel(channels, socket, &channel_name).await;
           if let Ok(arc_chan) = arc_chan_res {
@@ -112,9 +128,16 @@ impl Handler<BridgeMessage> for PhoenixManager {
               let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
               let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
               let payload: Payload = Payload::binary_from_bytes(payload_bytes);
-              tracing::debug!("PHX cast: event={} status={:?} channel={}", outbound_event_for_cast.to_string_value(), status, channel_name);
+              tracing::debug!(
+                "PHX cast: event={} status={:?} channel={}",
+                outbound_event_for_cast.to_string_value(),
+                status,
+                channel_name
+              );
               match status {
-                ChannelStatus::Joined => send_event_to_channel(arc_chan, phoenix_event, payload).await,
+                ChannelStatus::Joined => {
+                  send_event_to_channel(arc_chan, phoenix_event, payload).await
+                }
                 _ => {
                   let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                   send_event_to_channel(arc_chan, phoenix_event, payload).await;
@@ -133,10 +156,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
           if let Ok(arc_chan) = arc_chan_res {
             if let Ok(status) = arc_chan.statuses().status().await {
               let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-              let payload: Payload = Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
-              tracing::debug!("PHX cast: event={} status={:?} channel={}", outbound_event_for_cast.to_string_value(), status, channel_name);
+              let payload: Payload =
+                Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
+              tracing::debug!(
+                "PHX cast: event={} status={:?} channel={}",
+                outbound_event_for_cast.to_string_value(),
+                status,
+                channel_name
+              );
               match status {
-                ChannelStatus::Joined => send_event_to_channel(arc_chan, phoenix_event, payload).await,
+                ChannelStatus::Joined => {
+                  send_event_to_channel(arc_chan, phoenix_event, payload).await
+                }
                 _ => {
                   let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                   send_event_to_channel(arc_chan, phoenix_event, payload).await;
@@ -155,10 +186,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
           if let Ok(arc_chan) = arc_chan_res {
             if let Ok(status) = arc_chan.statuses().status().await {
               let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-              let payload: Payload = Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
-              tracing::debug!("PHX cast: event={} status={:?} channel={}", outbound_event_for_cast.to_string_value(), status, channel_name);
+              let payload: Payload =
+                Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
+              tracing::debug!(
+                "PHX cast: event={} status={:?} channel={}",
+                outbound_event_for_cast.to_string_value(),
+                status,
+                channel_name
+              );
               match status {
-                ChannelStatus::Joined => send_event_to_channel(arc_chan, phoenix_event, payload).await,
+                ChannelStatus::Joined => {
+                  send_event_to_channel(arc_chan, phoenix_event, payload).await
+                }
                 _ => {
                   let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                   send_event_to_channel(arc_chan, phoenix_event, payload).await;
@@ -177,10 +216,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
           if let Ok(arc_chan) = arc_chan_res {
             if let Ok(status) = arc_chan.statuses().status().await {
               let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-              let payload: Payload = Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
-              tracing::debug!("PHX cast: event={} status={:?} channel={}", outbound_event_for_cast.to_string_value(), status, channel_name);
+              let payload: Payload =
+                Payload::binary_from_bytes(serde_json::to_vec(&content_json).unwrap_or_default());
+              tracing::debug!(
+                "PHX cast: event={} status={:?} channel={}",
+                outbound_event_for_cast.to_string_value(),
+                status,
+                channel_name
+              );
               match status {
-                ChannelStatus::Joined => send_event_to_channel(arc_chan, phoenix_event, payload).await,
+                ChannelStatus::Joined => {
+                  send_event_to_channel(arc_chan, phoenix_event, payload).await
+                }
                 _ => {
                   let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                   send_event_to_channel(arc_chan, phoenix_event, payload).await;
@@ -191,10 +238,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         })
       }
 
-      AnyIncomingEvent::Unknown => {
-            Box::pin(async move {})
-      }
-
+      AnyIncomingEvent::Unknown => Box::pin(async move {}),
     }
   }
 }

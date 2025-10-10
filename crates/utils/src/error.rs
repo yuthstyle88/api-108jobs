@@ -320,7 +320,14 @@ pub enum FastJobErrorType {
   StillDoNotPayYet,
   ReturnedNonJSONResponse,
     CouldntSaveLastRead,
-  InvalidInput(String)
+  InvalidInput(String),
+    CiphertextTooShort,
+  InvalidLength,
+  InvalidArgument,
+  EncodeError,
+  InvalidAlgorithm,
+  InvalidKeyLength,
+  InvalidIVLength,
 }
 
 cfg_if! {

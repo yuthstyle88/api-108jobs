@@ -1,14 +1,18 @@
+use crate::api::{ChatEvent, MessageModel};
 use crate::bridge_message::OutboundMessage;
-use crate::broker::helper::{parse_phx, phx_push, phx_reply};
+use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply, transform_content};
 use crate::broker::phoenix_manager::PhoenixManager;
 use crate::broker::presence_manager::{OnlineJoin, OnlineLeave, PresenceManager};
 use crate::handler::JoinRoomQuery;
+use crate::impls::AnyIncomingEvent;
 use crate::{api::RegisterClientMsg, bridge_message::BridgeMessage};
 use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use chrono::Utc;
-use crate::impls::AnyIncomingEvent;
+use lemmy_utils::crypto;
+use serde_json::Value;
+use std::borrow::Cow;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -18,7 +22,10 @@ pub struct PhoenixSession {
   pub(crate) params: JoinRoomQuery,
   pub(crate) client_msg: RegisterClientMsg,
   pub(crate) secure: bool,
+  pub(crate) shared_key_hex: Option<String>,
+  pub(crate) session_id: Option<String>,
 }
+
 impl PhoenixSession {
   pub fn new(
     phoenix_manager: Addr<PhoenixManager>,
@@ -31,22 +38,38 @@ impl PhoenixSession {
       presence_manager,
       params,
       client_msg,
-      secure: false,
+      secure: true,
+      shared_key_hex: None,
+      session_id: None,
     }
   }
 
-  fn maybe_encrypt_outbound<'a>(&'a self, messages: &'a str) -> std::borrow::Cow<'a, str> {
-    use std::borrow::Cow;
-    Cow::Borrowed(messages)
+  /// Try to encrypt only the payload.content field (if present and plaintext).
+  fn maybe_encrypt_outbound<'a>(&'a self, messages: &'a str) -> Cow<'a, str> {
+    let Some(shared) = self.secure.then(|| self.shared_key_hex.as_ref()).flatten() else {
+      return Cow::Borrowed(messages);
+    };
+    let session_id = self.session_id.as_deref().unwrap_or("");
+
+    transform_content(messages, |s| {
+      crypto::xchange_encrypt_data(s, shared, session_id).map_err(|_| ())
+    })
   }
 
-  fn maybe_decrypt_incoming<'a>(&'a self, messages: &'a str) -> std::borrow::Cow<'a, str> {
-    use std::borrow::Cow;
-    if self.secure {
-      Cow::Borrowed(messages)
-    } else {
-      Cow::Borrowed(messages)
-    }
+  /// Try to decrypt only the payload.content field (if present and looks like base64).
+  fn maybe_decrypt_incoming<'a>(&'a self, messages: &'a str) -> Cow<'a, str> {
+    let Some(shared) = self.secure.then(|| self.shared_key_hex.as_ref()).flatten() else {
+      return Cow::Borrowed(messages);
+    };
+    let session_id = self.session_id.as_deref().unwrap_or("");
+
+    transform_content(messages, |s| {
+      // Only attempt decrypt if it looks like base64
+      if !is_base64_like(s) {
+        return Err(());
+      }
+      crypto::xchange_decrypt_data(s, shared, session_id).map_err(|_| ())
+    })
   }
 }
 
@@ -87,26 +110,18 @@ impl Handler<OutboundMessage> for PhoenixSession {
   type Result = ();
 
   fn handle(&mut self, msg: OutboundMessage, ctx: &mut Self::Context) {
-    // Convert stored JSON string to Value for Phoenix push payload
     let payload_val = msg.out_event.payload;
-    let topic = msg.out_event.topic;
-    // let payload = payload_val
-    //   .map(|val| {
-    //     let content = self
-    //       .maybe_encrypt_outbound(val.content.as_deref().unwrap_or(""))
-    //       .into_owned();
-    //     serde_json::to_value(MessageModel { content: Some(content), ..val.clone() })
-    //       .unwrap_or(Value::Null)
-    //   })
-    //   .unwrap_or_else(|| serde_json::json!({ "content": Value::Null }));
-    // Try to keep payload as JSON when possible
-    // tracing::info!(
-    //   "Outbound Phoenix push: topic={} event={} payload={}",
-    //   topic,
-    //   msg.out_event.event.to_string_value(),
-    //   payload
-    // );
-    ctx.text(phx_push(&topic, &msg.out_event.event, payload_val));
+    let topic = msg.out_event.topic.clone();
+    let event = msg.out_event.event.clone();
+
+    let frame = phx_push(&topic, &event, payload_val);
+
+    let output = match event {
+      ChatEvent::Message => self.maybe_encrypt_outbound(&frame),
+      _ => Cow::Borrowed(frame.as_str()),
+    };
+
+    ctx.text(output.as_ref());
   }
 }
 
@@ -114,16 +129,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
   fn handle(&mut self, m: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match m {
       Ok(ws::Message::Text(txt)) => {
-        if let Some((jr, mr, incoming)) = parse_phx(&txt) {
+        let decrypted_txt = self.maybe_decrypt_incoming(&txt);
+        if let Some((jr, mr, incoming)) = parse_phx(&decrypted_txt) {
           let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
           let payload_opt = match any_event.clone() {
             AnyIncomingEvent::Message(ev) => ev.payload,
+            AnyIncomingEvent::Read(ev) => ev.payload.map(MessageModel::from),
             _ => None,
           };
 
           let reply = match payload_opt {
-            Some(p) => serde_json::to_value(p).unwrap_or(serde_json::Value::Null),
-            None =>  serde_json::json!({}),
+            Some(p) => serde_json::to_value(p).unwrap_or(Value::Null),
+            None => serde_json::json!({}),
           };
 
           let bridge_msg = BridgeMessage {

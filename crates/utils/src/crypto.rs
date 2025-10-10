@@ -1,30 +1,21 @@
-use crate::error::FastJobErrorType;
-#[cfg(feature = "full")]
-use crate::error::FastJobResult;
+use crate::error::{FastJobErrorType, FastJobResult};
+use aes_gcm::aead::generic_array::GenericArray;
+use aes_gcm::aead::Aead;
+use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 use anyhow::Error;
-use base64::prelude::BASE64_STANDARD;
+use base64::engine::general_purpose;
 use base64::Engine;
-use block_modes::BlockMode;
 use p256::elliptic_curve;
 use p256::elliptic_curve::sec1::FromEncodedPoint;
 use p256::pkcs8::FromPrivateKey;
 use p256::{ecdh::EphemeralSecret, EncodedPoint};
-use rand_core::OsRng;
+use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
-use spki::der::Decodable;
-use spki::der::Encodable;
+use spki::der::{Decodable, Encodable};
 use std::borrow::Cow;
 use std::convert::TryFrom;
-use std::fmt;
-use std::fmt::Debug;
-use std::fmt::Display;
-use std::fmt::Formatter;
+use std::fmt::{self, Debug, Display, Formatter};
 use tendril::fmt::Slice;
-#[derive(Debug, Clone, Default)]
-pub struct Crypto {
-  secret_key: Vec<u8>,
-  iv: Vec<u8>,
-}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -48,7 +39,6 @@ pub struct KeyData {
 #[serde(rename_all = "camelCase")]
 pub struct DeriveKeyArg {
   pub(crate) key: KeyData,
-  // ECDH
   pub(crate) public_key: Option<KeyData>,
 }
 
@@ -61,7 +51,6 @@ impl<'a> TryFrom<spki::der::asn1::Any<'a>> for ECParametersSpki {
 
   fn try_from(any: spki::der::asn1::Any<'a>) -> spki::der::Result<ECParametersSpki> {
     let x = any.oid()?;
-
     Ok(Self { named_curve_alg: x })
   }
 }
@@ -93,234 +82,143 @@ impl DataBuffer {
   }
 }
 
-impl From<(Vec<u8>, Vec<u8>)> for Crypto {
-  fn from((secret_key, iv): (Vec<u8>, Vec<u8>)) -> Self {
-    Crypto { secret_key, iv }
+/// Build Aes256Gcm from a hex key. Returns error if length != 32 bytes.
+pub fn aes256_from_hex_key(hex_key: &str) -> FastJobResult<Aes256Gcm> {
+  let key_bytes = hex::decode(hex_key).map_err(|_| FastJobErrorType::DecodeError)?;
+  if key_bytes.len() != 32 {
+    return Err(FastJobErrorType::InvalidLength.into());
   }
+  let key: Key<Aes256Gcm> = GenericArray::from_slice(&key_bytes).clone();
+  Ok(Aes256Gcm::new(&key))
 }
 
-impl Crypto {
-  pub fn new(secret_key: Vec<u8>, iv: Vec<u8>) -> Self {
-    Self { secret_key, iv }
+/// Encrypt plaintext bytes into base64(nonce12 || ciphertext)
+pub fn aes_gcm_encrypt_b64(aes: &Aes256Gcm, plaintext: &[u8]) -> FastJobResult<String> {
+  let mut nonce_bytes = [0u8; 12];
+  OsRng.fill_bytes(&mut nonce_bytes);
+  let nonce = Nonce::from_slice(&nonce_bytes);
+  let ciphertext = aes
+      .encrypt(nonce, plaintext)
+      .map_err(|_| FastJobErrorType::EncryptingError)?;
+  let mut combined = Vec::with_capacity(12 + ciphertext.len());
+  combined.extend_from_slice(&nonce_bytes);
+  combined.extend_from_slice(&ciphertext);
+  Ok(general_purpose::STANDARD.encode(&combined))
+}
+
+/// Decrypt base64(nonce12 || ciphertext) -> plaintext bytes
+pub fn aes_gcm_decrypt_b64(aes: &Aes256Gcm, b64: &str) -> FastJobResult<Vec<u8>> {
+  let combined = general_purpose::STANDARD
+      .decode(b64)
+      .map_err(|_| FastJobErrorType::DecodeError)?;
+  if combined.len() < 12 {
+    return Err(FastJobErrorType::CiphertextTooShort.into());
   }
+  let (nonce_bytes, ct) = combined.split_at(12);
+  let nonce = Nonce::from_slice(nonce_bytes);
+  let pt = aes
+      .decrypt(nonce, ct)
+      .map_err(|_| FastJobErrorType::DecryptingError)?;
+  Ok(pt)
+}
 
-  pub fn encrypt_aes_cbc(&self, length: usize, data: DataBuffer) -> Result<String, AnyError> {
-    let key = &self.secret_key;
-    let iv = &self.iv;
+pub fn xchange_encrypt_data_gcm(data: &str, hex_secret_key: &str) -> FastJobResult<String> {
+  let aes = aes256_from_hex_key(hex_secret_key)?;
+  let out = aes_gcm_encrypt_b64(&aes, data.as_bytes())?;
+  Ok(out)
+}
 
-    let ciphertext = match length {
-      128 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes128Cbc = block_modes::Cbc<aes::Aes128, block_modes::block_padding::Pkcs7>;
+pub fn xchange_decrypt_data_gcm(encrypted_data: &str, hex_secret_key: &str) -> FastJobResult<String> {
+  let aes = aes256_from_hex_key(hex_secret_key)?;
+  let plaintext_bytes = aes_gcm_decrypt_b64(&aes, encrypted_data)?;
+  let plaintext = String::from_utf8(plaintext_bytes)
+      .map_err(|_| FastJobErrorType::DecodeError)?;
+  Ok(plaintext)
+}
 
-        let cipher = Aes128Cbc::new_from_slices(&key, &iv)?;
-        cipher.encrypt_vec(&data.buf.0)
-      }
-      192 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes192Cbc = block_modes::Cbc<aes::Aes192, block_modes::block_padding::Pkcs7>;
-
-        let cipher = Aes192Cbc::new_from_slices(&key, &iv)?;
-        cipher.encrypt_vec(&data.buf.0)
-      }
-      256 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes256Cbc = block_modes::Cbc<aes::Aes256, block_modes::block_padding::Pkcs7>;
-
-        let cipher = Aes256Cbc::new_from_slices(&key, &iv)?;
-        cipher.encrypt_vec(&data.buf.0)
-      }
-      _ => return Err(type_error("invalid length")),
-    };
-    let res = BASE64_STANDARD.encode(ciphertext);
-    Ok(res)
+pub fn import_public_key(data: DataBuffer) -> FastJobResult<Vec<u8>> {
+  let pk_info = spki::SubjectPublicKeyInfo::from_der(&data.buf.0)
+      .map_err(|_| FastJobErrorType::DecodeError)?;
+  let alg = pk_info.algorithm.oid;
+  if alg != elliptic_curve::ALGORITHM_OID {
+    return Err(FastJobErrorType::InvalidAlgorithm.into());
   }
+  let pk = pk_info.subject_public_key;
+  let encoded_key = pk.to_vec();
+  Ok(encoded_key)
+}
 
-  pub fn decrypt_aes_cbc(&self, length: usize, data: DataBuffer) -> Result<Vec<u8>, AnyError> {
-    let key = &self.secret_key;
-    let iv = &self.iv;
-    let plaintext = match length {
-      128 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes128Cbc = block_modes::Cbc<aes::Aes128, block_modes::block_padding::Pkcs7>;
-        let cipher = Aes128Cbc::new_from_slices(&key, &iv)?;
+pub fn export_public_key(data_buf: DataBuffer) -> FastJobResult<Vec<u8>> {
+  let point = data_buf.buf;
+  let subject_public_key = point.0.as_bytes();
+  let alg_id = <p256::NistP256 as elliptic_curve::AlgorithmParameters>::algorithm_identifier();
 
-        cipher
-          .decrypt_vec(&data.buf.0)
-          .map_err(|_| data_error("invalid data"))?
-      }
-      192 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes192Cbc = block_modes::Cbc<aes::Aes192, block_modes::block_padding::Pkcs7>;
-        let cipher = Aes192Cbc::new_from_slices(&key, &iv)?;
-
-        cipher
-          .decrypt_vec(&data.buf.0)
-          .map_err(|_| data_error("invalid data"))?
-      }
-      256 => {
-        // Section 10.3 Step 2 of RFC 2315 https://www.rfc-editor.org/rfc/rfc2315
-        type Aes256Cbc = block_modes::Cbc<aes::Aes256, block_modes::block_padding::Pkcs7>;
-        let cipher = Aes256Cbc::new_from_slices(&key, &iv)?;
-
-        cipher
-          .decrypt_vec(&data.buf.0)
-          .map_err(|_| data_error("invalid data"))?
-      }
-      _ => unreachable!(),
-    };
-
-    // 6.
-    //info!("PLAINTEXT VEC {:?} ",&plaintext);
-    Ok(plaintext)
-  }
-
-  pub fn import_public_key(data: DataBuffer) -> Result<Vec<u8>, AnyError> {
-    // 2-3.
-    let pk_info =
-      spki::SubjectPublicKeyInfo::from_der(&data.buf.0).map_err(|e| data_error(e.to_string()))?;
-    // 4.
-    let alg = pk_info.algorithm.oid;
-    // id-ecPublicKey
-    if alg != elliptic_curve::ALGORITHM_OID {
-      return Err(data_error("unsupported algorithm"));
-    }
-    let pk = pk_info.subject_public_key;
-
-    let encoded_key = pk.to_vec();
-    Ok(encoded_key)
-  }
-  pub fn export_public_key(data_buf: DataBuffer) -> Result<Vec<u8>, AnyError> {
-    let point = data_buf.buf;
-
-    let subject_public_key = point.0.as_bytes();
-    let alg_id =
-      <p256::NistP256 as elliptic_curve::AlgorithmParameters>::algorithm_identifier();
-
-    // the SPKI structure
-    let key_info = spki::SubjectPublicKeyInfo {
-      algorithm: alg_id,
-      subject_public_key: &subject_public_key,
-    };
-    let spki_der = key_info
+  let key_info = spki::SubjectPublicKeyInfo {
+    algorithm: alg_id,
+    subject_public_key: &subject_public_key,
+  };
+  let spki_der = key_info
       .to_vec()
-      .map_err(|_| data_error("Failed to encode SPKI"))?;
+      .map_err(|_| FastJobErrorType::EncodeError)?;
+  Ok(spki_der.into())
+}
 
-    Ok(spki_der.into())
-  }
+#[cfg(feature = "full")]
+pub fn generate_key() -> FastJobResult<(EphemeralSecret, Vec<u8>)> {
+  let secret = EphemeralSecret::random(&mut OsRng);
+  let pk_bytes = EncodedPoint::from(secret.public_key());
+  Ok((secret, pk_bytes.as_ref().to_vec()))
+}
 
-  #[cfg(feature = "full")]
-  pub fn generate_key() -> FastJobResult<(EphemeralSecret, Vec<u8>)> {
-    let secret = EphemeralSecret::random(&mut OsRng);
-    let pk_bytes = EncodedPoint::from(secret.public_key());
-    Ok((secret, pk_bytes.as_ref().to_vec()))
-  }
-
-  #[cfg(feature = "full")]
-  pub fn derive_key(args: DeriveKeyArg) -> FastJobResult<Vec<u8>> {
-    let public_key = args
+#[cfg(feature = "full")]
+pub fn derive_key(args: DeriveKeyArg) -> FastJobResult<Vec<u8>> {
+  let public_key = args
       .public_key
-      .ok_or_else(|| type_error("Missing argument publicKey"))?;
-    let secret_key = p256::SecretKey::from_pkcs8_der(args.key.data.buf.0.as_bytes())
-      .map_err(|_| data_error("Unexpected error decoding private key"))?;
-    //info!("SSSS");
-    let public_key = match public_key.r#type {
-      KeyType::Private => p256::SecretKey::from_pkcs8_der(&public_key.data.buf.0)
-        .map_err(|_| type_error("Unexpected error decoding private key"))?
+      .ok_or_else(|| FastJobErrorType::InvalidArgument)?;
+  let secret_key = p256::SecretKey::from_pkcs8_der(args.key.data.buf.0.as_bytes())
+      .map_err(|_| FastJobErrorType::DecodeError)?;
+  let public_key = match public_key.r#type {
+    KeyType::Private => p256::SecretKey::from_pkcs8_der(&public_key.data.buf.0)
+        .map_err(|_| FastJobErrorType::DecodeError)?
         .public_key(),
-      KeyType::Public => {
-        let point = p256::EncodedPoint::from_bytes(public_key.data.buf.0)
-          .map_err(|_| type_error("Unexpected error decoding private key"))?;
+    KeyType::Public => {
+      let point = EncodedPoint::from_bytes(public_key.data.buf.0)
+          .map_err(|_| FastJobErrorType::DecodeError)?;
+      p256::PublicKey::from_encoded_point(&point)
+          .ok_or_else(|| FastJobErrorType::DecodeError)?
+    }
+    _ => return Err(FastJobErrorType::InvalidArgument.into()),
+  };
+  let shared_secret = p256::elliptic_curve::ecdh::diffie_hellman(
+    secret_key.to_secret_scalar(),
+    public_key.as_affine(),
+  );
+  Ok(shared_secret.as_bytes().to_vec().into())
+}
 
-        p256::PublicKey::from_encoded_point(&point)
-          .ok_or_else(|| type_error("Unexpected error decoding private key"))?
-      }
-      _ => unreachable!(),
-    };
-    let shared_secret = p256::elliptic_curve::ecdh::diffie_hellman(
-      secret_key.to_secret_scalar(),
-      public_key.as_affine(),
-    );
+#[cfg(feature = "full")]
+pub fn derive_secret_key(private_key: KeyData, public_key: Option<KeyData>) -> FastJobResult<String> {
+  let args = DeriveKeyArg {
+    key: private_key,
+    public_key,
+  };
+  let secure_key = derive_key(args)?;
+  let res = hex::encode(&secure_key);
+  Ok(res)
+}
 
-    Ok(shared_secret.as_bytes().to_vec().into())
-  }
-
-  #[cfg(feature = "full")]
-  pub fn derive_secret_key(
-    private_key: KeyData,
-    public_key: Option<KeyData>,
-  ) -> FastJobResult<String> {
-    let args = DeriveKeyArg {
-      key: private_key,
-      public_key,
-    };
-    let secure_key = Crypto::derive_key(args)?;
-    let res = hex::encode(&secure_key);
-    Ok(res)
-  }
+#[cfg(feature = "full")]
+pub fn xchange_encrypt_data(data: &str, hex_secret_key: &str, _session: &str) -> FastJobResult<String> {
+  xchange_encrypt_data_gcm(data, hex_secret_key)
 }
 
 #[cfg(feature = "full")]
 pub fn xchange_decrypt_data(
   encrypted_data: &str,
   hex_secret_key: &str,
-  session: &str,
+  _session: &str,
 ) -> FastJobResult<String> {
-  // Derive IV safely from session, mirroring frontend logic: pad to 21, take bytes [5..21), ensure 16 bytes
-  let iv = derive_iv_from_session(session);
-
-  let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::DecryptingError)?;
-  let crypto = Crypto::from((secret_key, iv));
-
-  let data = BASE64_STANDARD
-    .decode(&encrypted_data)
-    .map_err(|_| FastJobErrorType::DecodeError)?;
-
-  match crypto.decrypt_aes_cbc(256, DataBuffer::from_vec(&data)) {
-    Ok(decrypt_vec) => {
-      let decrypted_data = String::from_utf8(decrypt_vec.clone())?;
-      Ok(decrypted_data)
-    }
-    Err(_err) => Err(FastJobErrorType::DecryptingError.into()),
-  }
-}
-
-#[cfg(feature = "full")]
-pub fn xchange_encrypt_data(
-  data: &str,
-  hex_secret_key: &str,
-  session: &str,
-) -> FastJobResult<String> {
-  // Derive IV safely from session, mirroring frontend logic
-  let iv = derive_iv_from_session(session);
-
-  let secret_key = hex::decode(hex_secret_key).map_err(|_| FastJobErrorType::EncryptingError)?;
-  let crypto = Crypto::from((secret_key, iv));
-
-  match crypto.encrypt_aes_cbc(256, DataBuffer::from_vec(data.as_bytes())) {
-    Ok(encrypted_text) => Ok(encrypted_text),
-    Err(_err) => Err(FastJobErrorType::EncryptingError.into()),
-  }
-}
-
-fn derive_iv_from_session(session: &str) -> Vec<u8> {
-  // Ensure at least 21 characters by right-padding with '0'
-  let mut s = session.to_string();
-  if s.len() < 21 {
-    s.push_str(&"0".repeat(21 - s.len()));
-  }
-  let bytes = s.as_bytes();
-  // Take bytes [5..21) => 16 bytes ideally
-  let start = 5usize.min(bytes.len());
-  let end = 21usize.min(bytes.len());
-  let mut iv = bytes[start..end].to_vec();
-  // Ensure exactly 16 bytes: right-pad with '0' or truncate
-  if iv.len() < 16 {
-    iv.extend(std::iter::repeat(b'0').take(16 - iv.len()));
-  } else if iv.len() > 16 {
-    iv.truncate(16);
-  }
-  iv
+  xchange_decrypt_data_gcm(encrypted_data, hex_secret_key)
 }
 
 pub type AnyError = anyhow::Error;
@@ -342,7 +240,7 @@ pub fn custom_error(_class: &'static str, message: impl Into<Cow<'static, str>>)
   FastJobError {
     message: message.into(),
   }
-  .into()
+      .into()
 }
 
 pub fn data_error(message: impl Into<Cow<'static, str>>) -> Error {
@@ -358,45 +256,18 @@ mod tests {
   use super::*;
   use hex;
 
-  fn test_key_iv() -> (Vec<u8>, Vec<u8>) {
+  fn test_key() -> Vec<u8> {
     // 32-byte AES key for AES-256
-    let key = vec![0x11; 32];
-    let iv = vec![0x22; 16];
-    (key, iv)
-  }
-
-  #[test]
-  fn test_encrypt_decrypt_roundtrip() {
-    let (key, iv) = test_key_iv();
-    let crypto = Crypto::new(key.clone(), iv.clone());
-
-    let plaintext = "Hello, FastJob!";
-    let data = DataBuffer::from_str(plaintext);
-
-    let encrypted = crypto.encrypt_aes_cbc(256, data.clone()).unwrap();
-    let decoded = base64::engine::general_purpose::STANDARD
-      .decode(&encrypted)
-      .unwrap();
-
-    let decrypted = crypto
-      .decrypt_aes_cbc(256, DataBuffer::from_vec(&decoded))
-      .unwrap();
-    let decrypted_str = String::from_utf8(decrypted).unwrap();
-
-    assert_eq!(plaintext, decrypted_str);
+    vec![0x11; 32]
   }
 
   #[test]
   #[cfg(feature = "full")]
   fn test_export_import_public_key() {
-    // Generate ECDH key pair
-    let (_secret, pub_bytes) = Crypto::generate_key().unwrap();
+    let (_secret, pub_bytes) = generate_key().unwrap();
     let data_buf = DataBuffer::from_vec(&pub_bytes);
-
-    let spki_encoded = Crypto::export_public_key(data_buf.clone()).unwrap();
-    let imported = Crypto::import_public_key(DataBuffer::from_vec(&spki_encoded)).unwrap();
-
-    // Expect the imported key matches original public bytes
+    let spki_encoded = export_public_key(data_buf.clone()).unwrap();
+    let imported = import_public_key(DataBuffer::from_vec(&spki_encoded)).unwrap();
     assert_eq!(imported, pub_bytes);
   }
 
@@ -405,13 +276,11 @@ mod tests {
   fn test_xchange_encrypt_decrypt() {
     let session = "02258df649994da2aa35904745cd9532";
     let data = "Hello, I am a good boy!";
-
-    let (key, _iv) = test_key_iv();
+    let key = test_key();
     let hex_key = hex::encode(&key);
 
     let encrypted = xchange_encrypt_data(data, &hex_key, session).unwrap();
     let decrypted = xchange_decrypt_data(&encrypted, &hex_key, session).unwrap();
-
     assert_eq!(data, decrypted);
   }
 }

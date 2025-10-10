@@ -1,6 +1,6 @@
 use crate::api::{ChatEvent, MessageModel};
 use crate::bridge_message::OutboundMessage;
-use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply, transform_content};
+use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
 use crate::broker::phoenix_manager::PhoenixManager;
 use crate::broker::presence_manager::{OnlineJoin, OnlineLeave, PresenceManager};
 use crate::handler::JoinRoomQuery;
@@ -49,27 +49,40 @@ impl PhoenixSession {
     let Some(shared) = self.secure.then(|| self.shared_key_hex.as_ref()).flatten() else {
       return Cow::Borrowed(messages);
     };
-    let session_id = self.session_id.as_deref().unwrap_or("");
 
-    transform_content(messages, |s| {
-      crypto::xchange_encrypt_data(s, shared, session_id).map_err(|_| ())
-    })
+    // Avoid attempting decrypt on plaintext
+    if !is_base64_like(messages) {
+      return Cow::Borrowed(messages);
+    }
+
+    let session_id = self.session_id.as_deref().unwrap_or("");
+    match crypto::xchange_encrypt_data(messages, shared, session_id) {
+      Ok(s) => Cow::Owned(s),
+      Err(_) => Cow::Borrowed(messages),
+    }
   }
 
-  /// Try to decrypt only the payload.content field (if present and looks like base64).
+  /// Try to decrypt only when:
+  ///  - secure mode is on
+  ///  - shared key exists
+  ///  - payload looks like base64-like ciphertext
+  /// Returns borrowed `messages` when not applicable or decryption fails.
   fn maybe_decrypt_incoming<'a>(&'a self, messages: &'a str) -> Cow<'a, str> {
+    // Fast path: not in secure mode or no key → return as-is
     let Some(shared) = self.secure.then(|| self.shared_key_hex.as_ref()).flatten() else {
       return Cow::Borrowed(messages);
     };
-    let session_id = self.session_id.as_deref().unwrap_or("");
 
-    transform_content(messages, |s| {
-      // Only attempt decrypt if it looks like base64
-      if !is_base64_like(s) {
-        return Err(());
-      }
-      crypto::xchange_decrypt_data(s, shared, session_id).map_err(|_| ())
-    })
+    // Avoid attempting decrypt on plaintext
+    if !is_base64_like(messages) {
+      return Cow::Borrowed(messages);
+    }
+
+    let session_id = self.session_id.as_deref().unwrap_or("");
+    match crypto::xchange_decrypt_data(messages, shared, session_id) {
+      Ok(s) => Cow::Owned(s),
+      Err(_) => Cow::Borrowed(messages),
+    }
   }
 }
 
@@ -129,11 +142,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
   fn handle(&mut self, m: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match m {
       Ok(ws::Message::Text(txt)) => {
-        let decrypted_txt = self.maybe_decrypt_incoming(&txt);
-        if let Some((jr, mr, incoming)) = parse_phx(&decrypted_txt) {
+        if let Some((jr, mr, incoming)) = parse_phx(&txt) {
           let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
           let payload_opt = match any_event.clone() {
-            AnyIncomingEvent::Message(ev) => ev.payload,
+            AnyIncomingEvent::Message(mut ev) => {
+              // Take payload out to avoid double-unwrap and mutate safely
+              if let Some(mut p) = ev.payload.take() {
+                if let Some(ref mut content) = p.content {
+                    let decrypted = self.maybe_decrypt_incoming(content);
+                    *content = decrypted.into_owned();
+                }
+                Some(p)
+              } else {
+                None
+              }
+            }
             AnyIncomingEvent::Read(ev) => ev.payload.map(MessageModel::from),
             _ => None,
           };

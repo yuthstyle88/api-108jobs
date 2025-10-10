@@ -9,7 +9,6 @@ use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use serde_json::Value;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -165,45 +164,6 @@ pub fn parse_phx(s: &str) -> Option<(Option<String>, Option<String>, IncomingEve
       room_id,
     },
   ))
-}
-
-/// Transform the `payload.content` field inside a Phoenix frame using a custom closure.
-/// Returns a `Cow` so it avoids allocation if nothing changes.
-pub fn transform_content<F>(messages: &str, transform: F) -> Cow<'_, str>
-where
-  F: Fn(&str) -> Result<String, ()>,
-{
-  let mut v: Value = match serde_json::from_str(messages) {
-    Ok(v) => v,
-    Err(_) => return Cow::Borrowed(messages),
-  };
-
-  // v must be an array
-  let arr = match v.as_array_mut() {
-    Some(a) => a,
-    None => return Cow::Borrowed(messages),
-  };
-
-  // payload is at index 4
-  let obj = match arr.get_mut(4).and_then(|v| v.as_object_mut()) {
-    Some(o) => o,
-    None => return Cow::Borrowed(messages),
-  };
-
-  // get content
-  let content = match obj.get("content").and_then(|v| v.as_str()) {
-    Some(c) => c,
-    None => return Cow::Borrowed(messages),
-  };
-
-  let new_value = match transform(content) {
-    Ok(s) => s,
-    Err(_) => return Cow::Borrowed(messages),
-  };
-
-  obj.insert("content".to_string(), Value::String(new_value));
-
-  serde_json::to_string(&v).map_or(Cow::Borrowed(messages), Cow::Owned)
 }
 
 pub fn phx_reply(

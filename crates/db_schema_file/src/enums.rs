@@ -295,7 +295,7 @@ pub enum WorkFlowStatus {
   #[default]
   WaitForFreelancerQuotation,
   /// Quotation created by freelancer, waiting for employer review
-  QuotationPending,
+  QuotationPendingReview,
   /// Employer approved quotation, became an order, ready for invoice payment
   OrderApproved,
   /// Employer paid invoice, money in escrow, waiting for work submission

@@ -3,7 +3,6 @@ use crate::bridge_message::OutboundMessage;
 use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
 use crate::broker::phoenix_manager::PhoenixManager;
 use crate::broker::presence_manager::{OnlineJoin, OnlineLeave, PresenceManager};
-use crate::handler::JoinRoomQuery;
 use crate::impls::AnyIncomingEvent;
 use crate::{api::RegisterClientMsg, bridge_message::BridgeMessage};
 use actix::prelude::*;
@@ -13,6 +12,7 @@ use chrono::Utc;
 use lemmy_utils::crypto;
 use serde_json::Value;
 use std::borrow::Cow;
+use lemmy_db_views_chat::api::JoinRoomQuery;
 
 // ===== actor =====
 pub struct PhoenixSession {

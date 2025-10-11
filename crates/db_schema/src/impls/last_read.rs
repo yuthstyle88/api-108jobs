@@ -8,7 +8,7 @@ use crate::{
 
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
-use diesel::{ExpressionMethods, OptionalExtension};
+use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 
@@ -24,15 +24,14 @@ impl LastRead {
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
     room_id: ChatRoomId,
-  ) -> FastJobResult<Option<Self>> {
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     last_reads::table
         .filter(lr::local_user_id.eq(local_user_id))
         .filter(lr::room_id.eq(room_id))
         .first::<Self>(conn)
         .await
-        .optional()
-        .with_fastjob_type(FastJobErrorType::NotFound)
+        .with_fastjob_type(FastJobErrorType::LastReadNotFound)
   }
 
   pub async fn upsert(

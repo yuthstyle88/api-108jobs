@@ -1,13 +1,17 @@
+use crate::broker::helper::get_last_read;
 use crate::broker::phoenix_manager::{GetLastRead, PhoenixManager};
-use actix::{Context, Handler};
+use actix::{Context, Handler, ResponseFuture};
+use lemmy_db_views_chat::api::LastReadResponse;
+use lemmy_utils::error::FastJobResult;
 
 impl Handler<GetLastRead> for PhoenixManager {
-  type Result = Option<String>;
+  type Result = ResponseFuture<FastJobResult<LastReadResponse>>;
 
   fn handle(&mut self, msg: GetLastRead, _ctx: &mut Context<Self>) -> Self::Result {
-    self
-      .last_read
-      .get(&(msg.room_id.clone(), msg.local_user_id.clone()))
-      .cloned()
+    let pool = self.pool.clone();
+    let room_id = msg.room_id.clone();
+    let local_user_id = msg.local_user_id.clone();
+
+    Box::pin(async move { get_last_read(pool, room_id, local_user_id).await })
   }
 }

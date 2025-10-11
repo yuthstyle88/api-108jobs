@@ -2,9 +2,10 @@ use crate::api::{ChatEvent, IncomingEvent};
 use crate::broker::phoenix_manager::{CONNECT_TIMEOUT_SECS, JOIN_TIMEOUT_SECS};
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
+use lemmy_db_schema::source::last_read::LastRead;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::utils::{ActualDbPool, DbPool};
-use lemmy_db_views_chat::api::ChatMessagesResponse;
+use lemmy_db_views_chat::api::{ChatMessagesResponse, LastReadResponse};
 use lemmy_db_views_chat::ChatMessageView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
@@ -123,6 +124,18 @@ pub async fn list_chat_messages(
     prev_page,
   })
 }
+
+pub async fn get_last_read(
+  pool: ActualDbPool,
+  room_id: ChatRoomId,
+  local_user_id: LocalUserId,
+) -> FastJobResult<LastReadResponse> {
+  let mut db_pool = DbPool::Pool(&pool);
+  let last_read = LastRead::get_one(&mut db_pool, local_user_id, room_id).await?;
+
+  Ok(LastReadResponse { last_read })
+}
+
 pub async fn ensure_room_membership(
   pool: ActualDbPool,
   room_id: ChatRoomId,

@@ -1,14 +1,24 @@
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId, PostId, CommentId};
+use std::collections::HashMap;
+use crate::{ChatMessageView, ChatRoomView};
+use lemmy_db_schema::newtypes::{
+  ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
+};
 use lemmy_db_schema::source::chat_participant::ChatParticipant;
 use lemmy_db_schema::source::chat_room::ChatRoom;
-use serde::{Deserialize, Serialize};
+use lemmy_db_schema::source::last_read::LastRead;
 use lemmy_db_schema::source::workflow::Workflow;
-use crate::{ChatMessageView, ChatRoomView};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListUserChatRooms {
   pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LastReadQuery {
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Debug, Serialize)]
@@ -65,6 +75,14 @@ pub struct ChatMessagesResponse {
   pub prev_page: Option<PaginationCursor>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// The last read response,
+pub struct LastReadResponse {
+  pub last_read: LastRead,
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -74,4 +92,51 @@ pub struct CreateChatRoomRequest {
   pub post_id: Option<PostId>,
   pub current_comment_id: Option<CommentId>,
   pub room_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct JoinRoomQuery {
+  /// Phoenix Socket(..., { params: { token } }) → ?token=...
+  #[serde(default)]
+  pub token: Option<String>,
+
+  /// FE อาจไม่ส่ง room มาทาง query (จะได้จาก topic ตอน phx_join)
+  #[serde(alias = "roomId", alias = "room_id", alias = "room", default)]
+  pub room_id: Option<String>,
+
+  #[serde(alias = "roomName", alias = "room_name", default)]
+  pub room_name: Option<String>,
+
+  #[serde(alias = "userId", alias = "user_id", default)]
+  pub local_user_id: Option<i32>,
+
+  /// เก็บพารามิเตอร์อื่น ๆ (เช่น vsn) ป้องกัน deserialize error
+  #[serde(flatten)]
+  pub extra: HashMap<String, String>,
+}
+impl JoinRoomQuery {
+  /// คืน room id จาก query หรือ topic (เช่น "room:abc123")
+  pub fn resolve_room_from_query_or_topic(&self, topic: Option<&str>) -> Option<String> {
+    if let Some(r) = self.room_id.clone() {
+      return Some(r);
+    }
+    if let Some(n) = self.room_name.clone() {
+      return Some(n);
+    }
+    if let Some(t) = topic {
+      if let Some(id) = t.strip_prefix("room:") {
+        return Some(id.to_string());
+      }
+    }
+    None
+  }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryQuery {
+  pub room_id: ChatRoomId,
+  pub cursor: Option<PaginationCursor>,
+  pub limit: Option<i64>,
+  pub back: Option<bool>,
 }

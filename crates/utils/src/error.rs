@@ -328,6 +328,7 @@ pub enum FastJobErrorType {
   InvalidAlgorithm,
   InvalidKeyLength,
   InvalidIVLength,
+  LastReadNotFound,
 }
 
 cfg_if! {

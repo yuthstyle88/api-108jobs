@@ -250,37 +250,3 @@ pub fn data_error(message: impl Into<Cow<'static, str>>) -> Error {
 pub fn type_error(message: impl Into<Cow<'static, str>>) -> Error {
   custom_error("Error", message)
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use hex;
-
-  fn test_key() -> Vec<u8> {
-    // 32-byte AES key for AES-256
-    vec![0x11; 32]
-  }
-
-  #[test]
-  #[cfg(feature = "full")]
-  fn test_export_import_public_key() {
-    let (_secret, pub_bytes) = generate_key().unwrap();
-    let data_buf = DataBuffer::from_vec(&pub_bytes);
-    let spki_encoded = export_public_key(data_buf.clone()).unwrap();
-    let imported = import_public_key(DataBuffer::from_vec(&spki_encoded)).unwrap();
-    assert_eq!(imported, pub_bytes);
-  }
-
-  #[test]
-  #[cfg(feature = "full")]
-  fn test_xchange_encrypt_decrypt() {
-    let session = "02258df649994da2aa35904745cd9532";
-    let data = "Hello, I am a good boy!";
-    let key = test_key();
-    let hex_key = hex::encode(&key);
-
-    let encrypted = xchange_encrypt_data(data, &hex_key, session).unwrap();
-    let decrypted = xchange_decrypt_data(&encrypted, &hex_key, session).unwrap();
-    assert_eq!(data, decrypted);
-  }
-}

@@ -134,7 +134,7 @@ use lemmy_routes::payments::create_qrcode::create_qrcode;
 use lemmy_routes::payments::get_token::generate_scb_token;
 use lemmy_routes::payments::inquire::inquire_qrcode;
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{get_history, phoenix_ws};
+use lemmy_ws::handler::{get_history, get_last_read, phoenix_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
@@ -395,7 +395,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/history", get().to(get_history))
             .route("/rooms", get().to(list_chat_rooms))
             .route("/rooms", post().to(create_chat_room))
-            .route("/rooms/{id}", get().to(get_chat_room)),
+            .route("/rooms/{id}", get().to(get_chat_room))
+            .route("/last-read", get().to(get_last_read)),
         )
         .service(
           scope("/users")

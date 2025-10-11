@@ -11,6 +11,7 @@ use lemmy_db_schema::{
   utils::{ActualDbPool, DbPool},
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
+use lemmy_db_views_chat::api::LastReadResponse;
 
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
@@ -33,7 +34,7 @@ pub const MESSAGE_EXPIRY_SECS: usize = 3600;
 struct FlushDone;
 
 #[derive(Message)]
-#[rtype(result = "Option<String>")]
+#[rtype(result = "FastJobResult<LastReadResponse>")]
 pub struct GetLastRead {
   pub room_id: ChatRoomId,
   pub local_user_id: LocalUserId,
@@ -112,8 +113,9 @@ impl PhoenixManager {
     }
 
     // ---- Update in-memory cache ----
-    self.last_read
-        .insert((room_id.clone(), reader_id), last_read.0.clone());
+    self
+      .last_read
+      .insert((room_id.clone(), reader_id), last_read.0.clone());
 
     // ---- Spawn async DB update ----
     {
@@ -130,10 +132,10 @@ impl PhoenixManager {
     }
 
     tracing::debug!(
-        "READ-ACK recv room={} reader={:?} last_id={}",
-        room_id,
-        reader_id,
-        last_read.0
+      "READ-ACK recv room={} reader={:?} last_id={}",
+      room_id,
+      reader_id,
+      last_read.0
     );
 
     // ---- Broadcast to others (async) ----
@@ -149,7 +151,7 @@ impl PhoenixManager {
 
     Ok(())
   }
-  
+
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
   #[allow(dead_code)]
   async fn broadcast_read_event(

@@ -86,15 +86,15 @@ impl Person {
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
   }
 
-  pub async fn update_public_key(
+  pub async fn update_share_key(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-    new_public_key: &str,
+    share_key: &str,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-      .set(person::public_key.eq::<String>(new_public_key.to_owned()))
+      .set(person::share_key.eq::<String>(share_key.to_owned()))
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)

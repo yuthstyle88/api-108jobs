@@ -1,69 +1,82 @@
 use actix_web::{
-  web::{Data, Json, Path},
+  web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::claims::Claims;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::read_auth_token;
-use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_schema::sensitive::SensitiveString;
 use lemmy_db_schema::source::person::Person;
-use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse, UserKeysResponse};
+use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use p256::PublicKey;
+use p256::{PublicKey, SecretKey};
+
+use lemmy_utils::crypto::{
+  normalize_pubkey_to_uncompressed_hex,
+  public_key_to_hex,
+  derive_aes256_from_ecdh,
+  export_private_pkcs8_der,
+};
+use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
+use rand::rngs::OsRng;
+use hex;
+
+// Per-process ephemeral ECDH secrets, keyed by local user id
+static SERVER_EPHEMERAL: OnceLock<Mutex<HashMap<i64, SecretKey>>> = OnceLock::new();
+
+// Per-process derived AES-256 session keys, keyed by local user id
+static SERVER_SESSION_KEYS: OnceLock<Mutex<HashMap<i64, [u8; 32]>>> = OnceLock::new();
 
 pub async fn exchange_key(
   data: Json<ExchangeKey>,
-  req: HttpRequest,
+  _req: HttpRequest,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView
 ) -> FastJobResult<Json<ExchangeKeyResponse>> {
-  // Validate token
-  let jwt = read_auth_token(&req)?;
+  // Read current person
+  // Accept both hex or base64, compressed or uncompressed SEC1, normalize to uncompressed-hex before storing
+  let raw_in = data.public_key.trim();
+  // Normalize any (hex/base64, compressed/uncompressed) input to uncompressed-hex for storage
+  let client_hex = normalize_pubkey_to_uncompressed_hex(raw_in)
+    .map_err(|_| FastJobErrorType::DecodeError)?;
 
-  let stored_key: String;
-  if let Ok((_user_id, _session)) = Claims::validate(jwt.as_ref().map(|s| s.as_str()).unwrap_or(""), context.get_ref()).await {
-    // Read current person and store client's public key only if not already set
-    let person = Person::read(&mut context.pool(), local_user_view.person.id).await?;
-    let is_placeholder = person.public_key.is_empty()
-      || person.public_key == "public_key"
-      || person.public_key == "pubkey";
-    if is_placeholder {
-      // Minimal validation: hex decode, SEC1 uncompressed length and prefix, parse via p256
-      let hex_str = data.public_key.trim();
-      let decoded = hex::decode(hex_str).map_err(|_| FastJobErrorType::DecodeError)?;
-      if decoded.len() != 65 || decoded[0] != 0x04 {
-        return Err(FastJobErrorType::DecodeError.into());
-      }
-      // Validate using p256 SEC1 parser
-      let _ = PublicKey::from_sec1_bytes(&decoded).map_err(|_| FastJobErrorType::DecodeError)?;
-      // Store client's identity public key as-is; don't overwrite if already exists
-      let _ = Person::update_public_key(&mut context.pool(), local_user_view.person.id, hex_str).await;
-      stored_key = hex_str.to_string();
-    } else {
-      stored_key = person.public_key;
-    }
-  } else {
-    return Err(FastJobErrorType::NotLoggedIn.into());
+
+  // Get per-process ephemeral server secret for this user, or create one
+  let map = SERVER_EPHEMERAL.get_or_init(|| Mutex::new(HashMap::new()));
+  let user_id_i32: i32 = local_user_view.person.id.0;
+  let server_secret = {
+    let mut guard = map.lock().unwrap();
+    guard.entry(user_id_i32 as i64).or_insert_with(|| SecretKey::random(&mut OsRng)).clone()
+  };
+  // Derive the server's public key (uncompressed) first
+  let server_public: PublicKey = server_secret.public_key();
+  let server_public_hex = public_key_to_hex(&server_public);
+
+  // Derive and store an AES-256 session key for this user (per-process)
+  // 1) decode client pubkey (uncompressed hex -> raw bytes)
+  let client_pub_raw = hex::decode(&client_hex).map_err(|_| FastJobErrorType::DecodeError)?;
+
+  // 2) export server secret to DER and derive shared AES key
+  let server_sk_der = export_private_pkcs8_der(&server_secret);
+  let aes_key = derive_aes256_from_ecdh(&server_sk_der, &client_pub_raw)
+    .map_err(|_| FastJobErrorType::EncryptingError)?;
+
+  // Persist the derived session shared key (hex) for this user
+  let server_share_key = hex::encode(&aes_key);
+  let _ = Person::update_share_key(
+    &mut context.pool(),
+    local_user_view.person.id,
+    &server_share_key,
+  ).await;
+
+  // 3) store the derived key in memory keyed by user id (consider Redis for multi-instance)
+  let key_map = SERVER_SESSION_KEYS.get_or_init(|| Mutex::new(HashMap::new()));
+  {
+    let mut g = key_map.lock().unwrap();
+    g.insert(user_id_i32 as i64, aes_key);
   }
 
   Ok(Json(ExchangeKeyResponse {
-    public_key: SensitiveString::from(stored_key),
+    public_key: SensitiveString::from(server_public_hex),
   }))
 }
-
-pub async fn get_user_keys(
-  path: Path<i32>,
-  context: Data<FastJobContext>,
-) -> FastJobResult<Json<UserKeysResponse>> {
-  let local_user_id = LocalUserId(path.into_inner());
-  let local_user_view = LocalUserView::read(&mut context.pool(), local_user_id).await?;
-  let mut keys = Vec::new();
-  if !local_user_view.person.public_key.is_empty() {
-    keys.push(local_user_view.person.public_key);
-  }
-  Ok(Json(UserKeysResponse { public_keys: keys }))
-}
-

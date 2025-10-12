@@ -475,7 +475,7 @@ pub struct ExchangeKeyResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct UserKeysResponse {
-  pub public_keys: Vec<String>,
+  pub public_key: String,
 }
 
 #[skip_serializing_none]

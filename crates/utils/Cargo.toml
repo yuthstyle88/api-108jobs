@@ -88,13 +88,12 @@ actix-extensible-rate-limit = { git = "https://github.com/Nutomic/actix-extensib
 hex = { workspace = true }
 p256 = { workspace = true }
 rand_core = "0.6.3"
-spki = { version = "0.4.1", default-features = false, features = ["std"] }
-tendril = "0.4.3"
 base64 = { workspace = true }
 redis = { workspace = true }
 fastrand = "2.3.0"
 unic-langid = { workspace = true }
 aes-gcm = "0.10.3"
+thiserror =  { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

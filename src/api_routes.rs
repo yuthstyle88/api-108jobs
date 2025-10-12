@@ -6,7 +6,7 @@ use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account,
 };
-use lemmy_api::local_user::exchange::{exchange_key, get_user_keys};
+use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
@@ -400,7 +400,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .service(
           scope("/users")
-            .route("/{id}/keys", get().to(get_user_keys))
             .route("/{id}/reviews", get().to(list_user_reviews)),
         )
         .service(

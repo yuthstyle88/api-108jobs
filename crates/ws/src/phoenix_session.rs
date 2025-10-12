@@ -1,4 +1,4 @@
-use crate::api::{ChatEvent, MessageModel};
+use crate::api::ChatEvent;
 use crate::bridge_message::OutboundMessage;
 use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
 use crate::broker::phoenix_manager::PhoenixManager;
@@ -55,8 +55,7 @@ impl PhoenixSession {
       return Cow::Borrowed(messages);
     }
 
-    let session_id = self.session_id.as_deref().unwrap_or("");
-    match crypto::xchange_encrypt_data(messages, shared, session_id) {
+    match crypto::encrypt_string_b64(shared.as_bytes(), messages) {
       Ok(s) => Cow::Owned(s),
       Err(_) => Cow::Borrowed(messages),
     }
@@ -78,8 +77,7 @@ impl PhoenixSession {
       return Cow::Borrowed(messages);
     }
 
-    let session_id = self.session_id.as_deref().unwrap_or("");
-    match crypto::xchange_decrypt_data(messages, shared, session_id) {
+    match crypto::decrypt_string_b64(shared.as_bytes(), messages) {
       Ok(s) => Cow::Owned(s),
       Err(_) => Cow::Borrowed(messages),
     }
@@ -144,26 +142,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
           let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
-          let payload_opt = match any_event.clone() {
+
+          // Build the reply JSON directly per event type to avoid mismatched Option conversions
+          let reply: Value = match any_event.clone() {
             AnyIncomingEvent::Message(mut ev) => {
-              // Take payload out to avoid double-unwrap and mutate safely
               if let Some(mut p) = ev.payload.take() {
                 if let Some(ref mut content) = p.content {
-                    let decrypted = self.maybe_decrypt_incoming(content);
-                    *content = decrypted.into_owned();
+                  let decrypted = self.maybe_decrypt_incoming(content);
+                  *content = decrypted.into_owned();
                 }
-                Some(p)
+                serde_json::to_value(p).unwrap_or(Value::Null)
               } else {
-                None
+                Value::Null
               }
             }
-            AnyIncomingEvent::Read(ev) => ev.payload.map(MessageModel::from),
-            _ => None,
-          };
-
-          let reply = match payload_opt {
-            Some(p) => serde_json::to_value(p).unwrap_or(Value::Null),
-            None => serde_json::json!({}),
+            _ => Value::Null,
           };
 
           let bridge_msg = BridgeMessage {

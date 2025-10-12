@@ -70,6 +70,7 @@ pub struct HeartbeatPayload {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadPayload {
+    pub room_id: ChatRoomId,
     pub reader_id: LocalUserId,
     pub last_read_message_id: ChatMessageRefId,
 }

@@ -1,5 +1,7 @@
+#![cfg(feature = "full")] // ให้ทั้งไฟล์นี้ถูกคอมไพล์เฉพาะตอนเปิด feature full
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::settings::structs::RedisConfig;
+use crate::settings::structs::RedisConfig; // ใช้ได้เมื่อเปิด full เท่านั้น
+use serde_json;
 use redis::aio::MultiplexedConnection;
 pub use redis::AsyncCommands;
 

@@ -108,10 +108,30 @@ impl Handler<BridgeMessage> for PhoenixManager {
           }
         });
 
-        issue_outbound(ev.room_id, ChatEvent::Read, json); // now safe to use original
+        issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
+      // ---------------------- READ ----------------------
+      AnyIncomingEvent::ReadUpTo(ev) => {
+        let json = ev
+            .payload
+            .as_ref()
+            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
+            .unwrap_or(serde_json::Value::Null);
 
+        let mut this = self.clone();
+        let room_id_clone = ev.room_id.clone();
+        let payload_clone = ev.payload.clone();
+
+        actix::spawn(async move {
+          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone) {
+            tracing::error!("Failed to handle read up to event: {}", e);
+          }
+        });
+
+        issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
+        Box::pin(async move {})
+      }
 
       // ---------------------- JOIN / HEARTBEAT / ACTIVE_ROOMS / LEAVE ----------------------
       AnyIncomingEvent::Join(ev) => {

@@ -36,6 +36,8 @@ pub enum ChatEvent {
     #[serde(rename = "chat:read")]
     Read,
     #[serde(rename = "chat:active_rooms")]
+    ReadUpTo,
+    #[serde(rename = "chat:active_rooms")]
     ActiveRooms,
     #[serde(rename = "chat:typing")]
     Typing,

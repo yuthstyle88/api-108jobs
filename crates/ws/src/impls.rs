@@ -27,6 +27,7 @@ impl FromStr for ChatEvent {
       "heartbeat" => ChatEvent::Heartbeat,
       "chat:message" => ChatEvent::Message,
       "chat:read" => ChatEvent::Read,
+      "chat:read-up-to" => ChatEvent::ReadUpTo,
       "chat:active_rooms" => ChatEvent::ActiveRooms,
       "chat:typing" => ChatEvent::Typing,
       "typing:start" => ChatEvent::TypingStart,
@@ -45,6 +46,7 @@ impl ChatEvent {
       ChatEvent::Heartbeat => "heartbeat",
       ChatEvent::Message => "chat:message",
       ChatEvent::Read => "chat:read",
+      ChatEvent::ReadUpTo => "chat:read-up-to",
       ChatEvent::ActiveRooms => "chat:active_rooms",
       ChatEvent::Typing => "chat:typing",
       ChatEvent::TypingStart => "typing:start",
@@ -80,6 +82,8 @@ pub enum AnyIncomingEvent {
   Message(GenericIncomingEvent<MessageModel>),
   #[serde(rename = "chat:read")]
   Read(GenericIncomingEvent<ReadPayload>),
+  #[serde(rename = "chat:read")]
+  ReadUpTo(GenericIncomingEvent<ReadPayload>),
   #[serde(rename = "chat:active_rooms")]
   ActiveRooms(GenericIncomingEvent<ActiveRoomPayload>),
   #[serde(rename = "chat:typing")]
@@ -130,6 +134,15 @@ impl From<IncomingEvent> for AnyIncomingEvent {
         let payload: Option<ReadPayload> = serde_json::from_value(ev.payload.clone()).ok();
         AnyIncomingEvent::Read(GenericIncomingEvent {
           event: ChatEvent::Read,
+          room_id: ev.room_id,
+          topic: ev.topic,
+          payload,
+        })
+      }
+      ChatEvent::ReadUpTo => {
+        let payload: Option<ReadPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::ReadUpTo(GenericIncomingEvent {
+          event: ChatEvent::ReadUpTo,
           room_id: ev.room_id,
           topic: ev.topic,
           payload,

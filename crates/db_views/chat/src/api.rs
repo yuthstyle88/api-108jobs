@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::{ChatMessageView, ChatRoomView};
 use lemmy_db_schema::newtypes::{
   ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
@@ -8,6 +7,7 @@ use lemmy_db_schema::source::chat_room::ChatRoom;
 use lemmy_db_schema::source::last_read::LastRead;
 use lemmy_db_schema::source::workflow::Workflow;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +19,7 @@ pub struct ListUserChatRooms {
 #[serde(rename_all = "camelCase")]
 pub struct LastReadQuery {
   pub room_id: ChatRoomId,
+  pub peer_id: LocalUserId,
 }
 
 #[derive(Debug, Serialize)]

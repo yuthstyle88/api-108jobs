@@ -39,11 +39,11 @@ pub async fn get_history(
 pub async fn get_last_read(
   phoenix: Data<Addr<PhoenixManager>>,
   q: Query<LastReadQuery>,
-  local_user_view: LocalUserView,
+  _local_user_view: LocalUserView,
 ) -> actix_web::Result<HttpResponse> {
   let resp = phoenix
     .send(GetLastRead {
-      local_user_id: local_user_view.local_user.id,
+      local_user_id: q.peer_id.clone(),
       room_id: q.room_id.clone(),
     })
     .await

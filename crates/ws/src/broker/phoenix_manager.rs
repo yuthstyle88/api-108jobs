@@ -21,6 +21,7 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
+use chrono::{DateTime, Utc};
 use tokio::sync::RwLock;
 
 // Timeouts and intervals (in seconds) for Phoenix socket/channel operations
@@ -91,6 +92,7 @@ impl PhoenixManager {
     &mut self,
     room_id: ChatRoomId,
     payload_opt: Option<ReadPayload>,
+    read_at: Option<DateTime<Utc>>,
   ) -> FastJobResult<()> {
     // ---- Validate payload ----
     let payload = match payload_opt {
@@ -125,7 +127,7 @@ impl PhoenixManager {
 
       tokio::spawn(async move {
         let mut db = DbPool::Pool(&pool);
-        if let Err(e) = LastRead::upsert(&mut db, reader_id, room, last_read_for_db.clone()).await {
+        if let Err(e) = LastRead::upsert(&mut db, reader_id, room, last_read_for_db.clone(), read_at).await {
           tracing::warn!("last_read upsert failed: {}", e);
         }
       });

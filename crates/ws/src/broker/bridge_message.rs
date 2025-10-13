@@ -5,6 +5,7 @@ use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use crate::impls::AnyIncomingEvent;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
+use chrono::Utc;
 use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
@@ -92,42 +93,58 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
       // ---------------------- READ ----------------------
       AnyIncomingEvent::Read(ev) => {
-        let json = ev
-            .payload
-            .as_ref()
-            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-            .unwrap_or(serde_json::Value::Null);
+        let mut json = ev
+          .payload
+          .as_ref()
+          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
+          .unwrap_or(serde_json::Value::Null);
 
         let mut this = self.clone();
         let room_id_clone = ev.room_id.clone();
         let payload_clone = ev.payload.clone();
+        let read_at = Utc::now();
 
         actix::spawn(async move {
-          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone) {
-            tracing::error!("Failed to handle read event: {}", e);
+          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone, Some(read_at)) {
+            tracing::error!("Failed to handle read up to event: {}", e);
           }
         });
+        // Add timestamp to JSON response
+        if let Some(obj) = json.as_object_mut() {
+          obj.insert(
+            "updatedAt".to_string(),
+            serde_json::Value::String(read_at.to_rfc3339()),
+          );
+        }
 
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
       // ---------------------- READ ----------------------
       AnyIncomingEvent::ReadUpTo(ev) => {
-        let json = ev
-            .payload
-            .as_ref()
-            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-            .unwrap_or(serde_json::Value::Null);
+        let mut json = ev
+          .payload
+          .as_ref()
+          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
+          .unwrap_or(serde_json::Value::Null);
 
         let mut this = self.clone();
         let room_id_clone = ev.room_id.clone();
         let payload_clone = ev.payload.clone();
+        let read_at = Utc::now();
 
         actix::spawn(async move {
-          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone) {
+          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone, Some(read_at)) {
             tracing::error!("Failed to handle read up to event: {}", e);
           }
         });
+        // Add timestamp to JSON response
+        if let Some(obj) = json.as_object_mut() {
+          obj.insert(
+            "updatedAt".to_string(),
+            serde_json::Value::String(read_at.to_rfc3339()),
+          );
+        }
 
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})

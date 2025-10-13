@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use crate::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
 
 #[cfg(feature = "full")]
@@ -39,6 +40,7 @@ impl LastRead {
     local_user_id: LocalUserId,
     room_id: ChatRoomId,
     last_read_msg_id: ChatMessageRefId,
+    update_at: Option<DateTime<Utc>>,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
        diesel::insert_into(last_reads::table)
@@ -46,7 +48,7 @@ impl LastRead {
           local_user_id,
           room_id,
           last_read_msg_id: last_read_msg_id.clone(),
-          updated_at: None,
+          updated_at: update_at,
         })
         .on_conflict((lr::local_user_id, lr::room_id))
         .do_update()

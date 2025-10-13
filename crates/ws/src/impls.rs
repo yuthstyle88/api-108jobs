@@ -46,7 +46,7 @@ impl ChatEvent {
       ChatEvent::Heartbeat => "heartbeat",
       ChatEvent::Message => "chat:message",
       ChatEvent::Read => "chat:read",
-      ChatEvent::ReadUpTo => "chat:read-up-to",
+      ChatEvent::ReadUpTo => "chat:read_up_to",
       ChatEvent::ActiveRooms => "chat:active_rooms",
       ChatEvent::Typing => "chat:typing",
       ChatEvent::TypingStart => "typing:start",
@@ -82,7 +82,7 @@ pub enum AnyIncomingEvent {
   Message(GenericIncomingEvent<MessageModel>),
   #[serde(rename = "chat:read")]
   Read(GenericIncomingEvent<ReadPayload>),
-  #[serde(rename = "chat:read")]
+  #[serde(rename = "chat:read_up_to")]
   ReadUpTo(GenericIncomingEvent<ReadPayload>),
   #[serde(rename = "chat:active_rooms")]
   ActiveRooms(GenericIncomingEvent<ActiveRoomPayload>),

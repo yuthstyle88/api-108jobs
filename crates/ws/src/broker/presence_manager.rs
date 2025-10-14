@@ -39,7 +39,7 @@ pub struct OnlineStopped {pub room_id: ChatRoomId, pub local_user_id: LocalUserI
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct Heartbeat { pub local_user_id: i32, pub client_time: Option<DateTime<Utc>> }
+pub struct Heartbeat {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub client_time: Option<DateTime<Utc>> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "bool")]
@@ -239,7 +239,7 @@ impl Handler<OnlineStopped> for PresenceManager {
 impl Handler<Heartbeat> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: Heartbeat, _ctx: &mut Context<Self>) -> Self::Result {
-        let now = self.touch(LocalUserId(msg.local_user_id));
+        let now = self.touch(msg.local_user_id);
         // Decide online by Redis score vs ttl
         if let Some(client) = &self.redis {
             let client = client.clone();
@@ -251,14 +251,14 @@ impl Handler<Heartbeat> for PresenceManager {
                 // refresh keys
                 let _ = client
                     .set_value_with_expiry(
-                        &format!("presence:user:{}:online", local_user_id),
+                        &format!("presence:user:{}-{}:online",msg.room_id, local_user_id.0),
                         true,
                         ttl_secs,
                     )
                     .await;
                 let _ = client
                     .set_value_with_expiry(
-                        &format!("presence:user:{}:last_seen", local_user_id),
+                        &format!("presence:user:{}-{}:last_seen",msg.room_id, local_user_id.0),
                         now.to_rfc3339(),
                         ttl_secs,
                     )
@@ -269,7 +269,7 @@ impl Handler<Heartbeat> for PresenceManager {
                     Ok(Some(v)) => v,
                     _ => Vec::new(),
                 };
-                if !list.contains(&local_user_id) { list.push(local_user_id); }
+                if !list.contains(&local_user_id.0) { list.push(local_user_id.0); }
                 let _ = client
                     .set_value_with_expiry(&list_key, list, ttl_secs)
                     .await;

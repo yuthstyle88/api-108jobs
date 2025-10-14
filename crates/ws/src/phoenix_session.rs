@@ -105,6 +105,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
     match m {
       Ok(ws::Message::Text(txt)) => {
         if let Some((jr, mr, incoming)) = parse_phx(&txt) {
+          dbg!(&incoming);
           let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
 
           // Build the reply JSON directly per event type to avoid mismatched Option conversions

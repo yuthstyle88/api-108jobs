@@ -2,7 +2,7 @@ use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use crate::broker::presence_manager::{IsUserOnline, OnlineJoin};
+use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
 use crate::impls::AnyIncomingEvent;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
@@ -168,10 +168,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let arc_chan_res = get_or_create_channel(channels, socket, &channel_name).await;
             if let Ok(arc_chan) = arc_chan_res {
               // Guard against hanging here if the status stream isn't ready yet
-              let status: Option<ChannelStatus> = timeout(Duration::from_millis(300), arc_chan.statuses().status())
-                .await
-                .ok()               // timeout -> None
-                .and_then(|res| res.ok()); // Err -> None
+              let status: Option<ChannelStatus> =
+                timeout(Duration::from_millis(300), arc_chan.statuses().status())
+                  .await
+                  .ok() // timeout -> None
+                  .and_then(|res| res.ok()); // Err -> None
 
               if let Some(status) = status {
                 let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
@@ -185,19 +186,25 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 );
                 match status {
                   ChannelStatus::Joined => {
-                    let _ = this.presence.send(OnlineJoin {
-                      room_id,
-                      local_user_id: sender_id,
-                      started_at: Utc::now(),
-                    }).await;
+                    let _ = this
+                      .presence
+                      .send(OnlineJoin {
+                        room_id,
+                        local_user_id: sender_id,
+                        started_at: Utc::now(),
+                      })
+                      .await;
                     send_event_to_channel(arc_chan, phoenix_event, payload).await
                   }
                   _ => {
-                    let _ = this.presence.send(OnlineJoin {
-                      room_id,
-                      local_user_id: sender_id,
-                      started_at: Utc::now(),
-                    }).await;
+                    let _ = this
+                      .presence
+                      .send(OnlineJoin {
+                        room_id,
+                        local_user_id: sender_id,
+                        started_at: Utc::now(),
+                      })
+                      .await;
                     let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                     send_event_to_channel(arc_chan, phoenix_event, payload).await;
                   }
@@ -208,11 +215,14 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
                 let payload: Payload = Payload::binary_from_bytes(payload_bytes);
 
-                let _ = this.presence.send(OnlineJoin {
-                  room_id,
-                  local_user_id: sender_id,
-                  started_at: Utc::now(),
-                }).await;
+                let _ = this
+                  .presence
+                  .send(OnlineJoin {
+                    room_id,
+                    local_user_id: sender_id,
+                    started_at: Utc::now(),
+                  })
+                  .await;
                 let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
                 send_event_to_channel(arc_chan, phoenix_event, payload).await;
               }
@@ -222,21 +232,32 @@ impl Handler<BridgeMessage> for PhoenixManager {
           Box::pin(async move {})
         }
       }
-      AnyIncomingEvent::Heartbeat(_ev) => {
-        Box::pin(async move {
-          tracing::debug!("Heartbeat");
-        })
+      AnyIncomingEvent::Heartbeat(ev) => {
+        if let Some(payload) = ev.payload.clone() {
+          let room_id = ev.room_id.clone();
+          let sender_id = payload.sender_id;
+          let this = self.clone();
+          Box::pin(async move {
+            tracing::debug!("Heartbeat");
+            let _ = this
+              .presence
+              .send(Heartbeat {
+                room_id,
+                local_user_id: sender_id,
+                client_time: None,
+              })
+              .await;
+          })
+        } else {
+          Box::pin(async move {})
+        }
       }
-      AnyIncomingEvent::ActiveRooms(_ev) => {
-        Box::pin(async move {
-          tracing::debug!("ActiveRooms");
-        })
-      }
-      AnyIncomingEvent::Leave(_ev) => {
-        Box::pin(async move {
-          tracing::debug!("Leave");
-        })
-      }
+      AnyIncomingEvent::ActiveRooms(_ev) => Box::pin(async move {
+        tracing::debug!("ActiveRooms");
+      }),
+      AnyIncomingEvent::Leave(_ev) => Box::pin(async move {
+        tracing::debug!("Leave");
+      }),
 
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
     }

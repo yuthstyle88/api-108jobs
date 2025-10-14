@@ -65,8 +65,6 @@ pub async fn get_peer_status(
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
   Ok(HttpResponse::Ok().json(serde_json::json!({
-    "userId": q.peer_id,
-    "roomId": q.room_id,
     "online": online,
   })))
 }

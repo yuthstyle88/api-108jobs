@@ -2,25 +2,20 @@ use crate::api::ChatEvent;
 use crate::bridge_message::OutboundMessage;
 use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
 use crate::broker::phoenix_manager::PhoenixManager;
-use crate::broker::presence_manager::{OnlineJoin, OnlineLeave, PresenceManager};
+use crate::broker::presence_manager::PresenceManager;
 use crate::impls::AnyIncomingEvent;
-use crate::{api::RegisterClientMsg, bridge_message::BridgeMessage};
+use crate::bridge_message::BridgeMessage;
 use actix::prelude::*;
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use chrono::Utc;
 use lemmy_utils::crypto;
 use serde_json::Value;
 use std::borrow::Cow;
-use lemmy_db_views_chat::api::JoinRoomQuery;
 
 // ===== actor =====
 pub struct PhoenixSession {
   pub(crate) phoenix_manager: Addr<PhoenixManager>,
   pub(crate) presence_manager: Addr<PresenceManager>,
-  #[allow(dead_code)]
-  pub(crate) params: JoinRoomQuery,
-  pub(crate) client_msg: RegisterClientMsg,
   pub(crate) secure: bool,
   pub(crate) shared_key_hex: Option<String>,
 }
@@ -29,14 +24,10 @@ impl PhoenixSession {
   pub fn new(
     phoenix_manager: Addr<PhoenixManager>,
     presence_manager: Addr<PresenceManager>,
-    params: JoinRoomQuery,
-    client_msg: RegisterClientMsg,
   ) -> Self {
     Self {
       phoenix_manager,
       presence_manager,
-      params,
-      client_msg,
       secure: true,
       shared_key_hex: None,
     }
@@ -87,34 +78,6 @@ impl Actor for PhoenixSession {
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<OutboundMessage>(ctx);
-    // Register this client/room with the manager (similar to WsSession)
-    let local_user_id = self.client_msg.local_user_id;
-    let room_id = self.client_msg.room_id.clone();
-    self.phoenix_manager.do_send(RegisterClientMsg {
-      local_user_id,
-      room_id: room_id.clone(),
-    });
-    // Notify presence directly (method #1): only if we know user_id
-    if let Some(uid) = local_user_id {
-      self.presence_manager.do_send(OnlineJoin {
-        room_id,
-        local_user_id: uid,
-        started_at: Utc::now(),
-      });
-    }
-  }
-
-  fn stopped(&mut self, _ctx: &mut Self::Context) {
-    let local_user_id = self.client_msg.local_user_id;
-    let room_id = self.client_msg.room_id.clone();
-
-    if let Some(uid) = local_user_id {
-      self.presence_manager.do_send(OnlineLeave {
-        room_id,
-        local_user_id: uid,
-        left_at: Utc::now(),
-      });
-    }
   }
 }
 

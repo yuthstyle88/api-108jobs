@@ -1,4 +1,3 @@
-use crate::api::RegisterClientMsg;
 use crate::broker::phoenix_manager::{FetchHistoryDirect, GetLastRead, PhoenixManager};
 use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
 use crate::phoenix_session::PhoenixSession;
@@ -11,7 +10,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use lemmy_db_schema::newtypes::LocalUserId;
 use lemmy_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
@@ -54,16 +53,16 @@ pub async fn get_last_read(
 pub async fn get_peer_status(
   presence: Data<Addr<PresenceManager>>, // query presence actor instead of phoenix
   q: Query<PeerReadQuery>,
-  _local_user_view: LocalUserView,
 ) -> actix_web::Result<HttpResponse> {
+  let room_id = q.room_id.clone().into();
   let online = presence
     .send(IsUserOnline {
-      local_user_id: q.peer_id.clone(),
-      room_id: q.room_id.clone(),
+      local_user_id: q.peer_id,
+      room_id,
     })
     .await
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-
+  println!("get_peer_status: online={:?}", online);
   Ok(HttpResponse::Ok().json(serde_json::json!({
     "online": online,
   })))
@@ -79,10 +78,9 @@ pub async fn phoenix_ws(
 ) -> Result<HttpResponse, Error> {
   // Extract query parameters similar to chat_ws
   let auth_token = query.token.clone();
-  let params = query.into_inner();
 
   // Always initialize as Option<LocalUserId>
-  let local_user_id: Option<LocalUserId> = if let Some(jwt_token) = auth_token {
+  let _local_user_id: Option<LocalUserId> = if let Some(jwt_token) = auth_token {
     match local_user_view_from_jwt(&jwt_token, &context).await {
       Ok((local_user, _session)) => Some(local_user.local_user.id),
       Err(_) => {
@@ -95,20 +93,9 @@ pub async fn phoenix_ws(
     None
   };
 
-  // Try to resolve initial room id from query (topic will refine it on phx_join)
-  let initial_room = match params.resolve_room_from_query_or_topic(None) {
-    Some(r) => ChatRoomId::from_channel_name(r.as_str()).unwrap_or_else(|_| ChatRoomId(r)),
-    None => ChatRoomId(String::new()),
-  };
-
   let ph_session = PhoenixSession::new(
     phoenix.get_ref().clone(),
     presence.get_ref().clone(),
-    params,
-    RegisterClientMsg {
-      local_user_id,
-      room_id: initial_room,
-    },
   );
   ws::start(ph_session, &req, stream)
 }

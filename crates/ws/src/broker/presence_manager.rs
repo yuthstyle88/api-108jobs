@@ -286,6 +286,7 @@ impl Handler<IsUserOnline> for PresenceManager {
             if let Some(client) = client {
                 let mut client = client; // RedisClient
                 let key = format!("presence:user:{}-{}:online", msg.room_id, msg.local_user_id.0);
+                dbg!(&key);
                 if let Ok(Some(flag)) = client.get_value::<bool>(&key).await {
                     if flag { return true; }
                 }

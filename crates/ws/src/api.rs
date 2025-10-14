@@ -62,6 +62,7 @@ pub enum MessageStatus {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JoinPayload {
+    pub topic: String,
     pub sender_id: LocalUserId,
 }
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

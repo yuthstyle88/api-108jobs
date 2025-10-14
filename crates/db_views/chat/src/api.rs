@@ -117,7 +117,7 @@ pub struct JoinRoomQuery {
 
   /// FE อาจไม่ส่ง room มาทาง query (จะได้จาก topic ตอน phx_join)
   #[serde(alias = "roomId", alias = "room_id", alias = "room", default)]
-  pub room_id: Option<String>,
+  pub room_id: String,
 
   #[serde(alias = "roomName", alias = "room_name", default)]
   pub room_name: Option<String>,
@@ -128,23 +128,6 @@ pub struct JoinRoomQuery {
   /// เก็บพารามิเตอร์อื่น ๆ (เช่น vsn) ป้องกัน deserialize error
   #[serde(flatten)]
   pub extra: HashMap<String, String>,
-}
-impl JoinRoomQuery {
-  /// คืน room id จาก query หรือ topic (เช่น "room:abc123")
-  pub fn resolve_room_from_query_or_topic(&self, topic: Option<&str>) -> Option<String> {
-    if let Some(r) = self.room_id.clone() {
-      return Some(r);
-    }
-    if let Some(n) = self.room_name.clone() {
-      return Some(n);
-    }
-    if let Some(t) = topic {
-      if let Some(id) = t.strip_prefix("room:") {
-        return Some(id.to_string());
-      }
-    }
-    None
-  }
 }
 
 #[derive(Debug, Deserialize)]

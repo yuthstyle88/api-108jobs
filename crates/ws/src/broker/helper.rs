@@ -51,7 +51,6 @@ pub async fn get_or_create_channel(
       }
     }
   }
-
   // acquire write lock exclusively (block others)
   let mut channels_write = channels.write().await;
 
@@ -74,7 +73,7 @@ pub async fn get_or_create_channel(
     .map_err(|e| anyhow::anyhow!("Failed to join channel {}: {}", name, e))?;
 
   channels_write.insert(name.to_string(), channel.clone());
-  tracing::info!("Created new channel: {}", name);
+  tracing::debug!("Created new channel: {}", name);
   Ok(channel)
 }
 

@@ -23,7 +23,6 @@ pub struct PhoenixSession {
   pub(crate) client_msg: RegisterClientMsg,
   pub(crate) secure: bool,
   pub(crate) shared_key_hex: Option<String>,
-  pub(crate) session_id: Option<String>,
 }
 
 impl PhoenixSession {
@@ -40,7 +39,6 @@ impl PhoenixSession {
       client_msg,
       secure: true,
       shared_key_hex: None,
-      session_id: None,
     }
   }
 
@@ -99,7 +97,8 @@ impl Actor for PhoenixSession {
     // Notify presence directly (method #1): only if we know user_id
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineJoin {
-        local_user_id: uid.0,
+        room_id,
+        local_user_id: uid,
         started_at: Utc::now(),
       });
     }
@@ -107,10 +106,12 @@ impl Actor for PhoenixSession {
 
   fn stopped(&mut self, _ctx: &mut Self::Context) {
     let local_user_id = self.client_msg.local_user_id;
+    let room_id = self.client_msg.room_id.clone();
 
     if let Some(uid) = local_user_id {
       self.presence_manager.do_send(OnlineLeave {
-        local_user_id: uid.0,
+        room_id,
+        local_user_id: uid,
         left_at: Utc::now(),
       });
     }

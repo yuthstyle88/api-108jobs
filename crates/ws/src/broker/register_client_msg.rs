@@ -17,7 +17,7 @@ impl Handler<RegisterClientMsg> for PhoenixManager {
     // Immediately register this user as online in Presence
     if let Some(uid) = local_user_id {
       // LocalUserId -> i32
-      self.presence.do_send(OnlineJoin { local_user_id: uid.0, started_at: Utc::now() });
+      self.presence.do_send(OnlineJoin { room_id: room_id.clone(), local_user_id: uid, started_at: Utc::now() });
     }
 
     // Ensure participant exists for this user in this room (create if missing)

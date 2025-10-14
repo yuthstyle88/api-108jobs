@@ -21,6 +21,12 @@ pub struct LastReadQuery {
   pub room_id: ChatRoomId,
   pub peer_id: LocalUserId,
 }
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PeerReadQuery {
+  pub room_id: ChatRoomId,
+  pub peer_id: LocalUserId,
+}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -83,6 +89,14 @@ pub struct ChatMessagesResponse {
 /// The last read response,
 pub struct LastReadResponse {
   pub last_read: LastRead,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// The last read response,
+pub struct PeerReadResponse {
+  pub peer_read: LastRead,
 }
 
 #[derive(Debug, Deserialize)]

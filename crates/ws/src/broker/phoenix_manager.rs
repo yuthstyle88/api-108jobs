@@ -12,6 +12,7 @@ use lemmy_db_schema::{
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 use lemmy_db_views_chat::api::LastReadResponse;
+use lemmy_db_views_chat::api::PeerReadResponse;
 
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
@@ -37,6 +38,12 @@ struct FlushDone;
 #[derive(Message)]
 #[rtype(result = "FastJobResult<LastReadResponse>")]
 pub struct GetLastRead {
+  pub room_id: ChatRoomId,
+  pub local_user_id: LocalUserId,
+}
+#[derive(Message)]
+#[rtype(result = "FastJobResult<PeerReadResponse>")]
+pub struct GetPeerRead {
   pub room_id: ChatRoomId,
   pub local_user_id: LocalUserId,
 }

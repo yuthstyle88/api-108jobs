@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use std::time::{Duration as StdDuration, Duration};
 use std::collections::HashSet;
 use tracing;
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_utils::redis::RedisClient;
 
 pub struct SystemBroker;
@@ -26,15 +27,15 @@ pub struct PresenceManager {
 /// ===== Presence messages =====
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineJoin { pub local_user_id: i32, pub started_at: DateTime<Utc> }
+pub struct OnlineJoin { pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub started_at: DateTime<Utc> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineLeave { pub local_user_id: i32, pub left_at: DateTime<Utc> }
+pub struct OnlineLeave {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub left_at: DateTime<Utc> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineStopped { pub local_user_id: i32, pub stopped_at: DateTime<Utc> }
+pub struct OnlineStopped {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub stopped_at: DateTime<Utc> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
@@ -42,7 +43,7 @@ pub struct Heartbeat { pub local_user_id: i32, pub client_time: Option<DateTime<
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "bool")]
-pub struct IsUserOnline { pub local_user_id: i32 }
+pub struct IsUserOnline {pub room_id: ChatRoomId, pub local_user_id: LocalUserId }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "usize")]
@@ -61,11 +62,11 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn touch(&mut self, local_user_id: i32) -> DateTime<Utc> {
+    fn touch(&mut self, local_user_id: LocalUserId) -> DateTime<Utc> {
         let now = Utc::now();
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let seen_key = format!("presence:user:{}:last_seen", local_user_id);
+            let seen_key = format!("presence:user:{}:last_seen", local_user_id.0);
             let mut client = client.clone();
             actix::spawn(async move {
                 // update last_seen with TTL
@@ -82,12 +83,12 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn mark_online(&mut self, local_user_id: i32) {
-        tracing::debug!(local_user_id, "presence: mark_online");
+    fn mark_online(&mut self, room_id: ChatRoomId, local_user_id: LocalUserId) {
+        //tracing::debug!(local_user_id, "presence: mark_online");
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}:online", local_user_id);
-            let seen_key = format!("presence:user:{}:last_seen", local_user_id);
+            let online_key = format!("presence:user:{}-{}:online", room_id.clone(), local_user_id.0);
+            let seen_key = format!("presence:user:{}-{}:last_seen",room_id.0, local_user_id.0);
             let now = Utc::now();
             let mut client = client.clone();
             actix::spawn(async move {
@@ -103,12 +104,12 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn mark_offline(&mut self, local_user_id: i32) {
-        self.local_online.remove(&local_user_id);
-        tracing::debug!(local_user_id, "presence: mark_offline");
+    fn mark_offline(&mut self, room_id: ChatRoomId, local_user_id: LocalUserId) {
+        self.local_online.remove(&local_user_id.0);
+        //tracing::debug!(local_user_id, "presence: mark_offline");
         if let Some(client) = &self.redis {
-            let online_key = format!("presence:user:{}:online", local_user_id);
-            let seen_key = format!("presence:user:{}:last_seen", local_user_id);
+            let online_key = format!("presence:user:{}-{}:online",room_id.clone(), local_user_id.0);
+            let seen_key = format!("presence:user:{}-{}:last_seen",room_id, local_user_id.0);
             let client = client.clone();
             let mut client = client; // owned clone above
             actix::spawn(async move {
@@ -175,20 +176,20 @@ impl Handler<OnlineJoin> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Context<Self>) -> Self::Result {
         // Local idempotency guard: `insert` returns false if already present
-        let already_local = !self.local_online.insert(msg.local_user_id);
+        // let already_local = !self.local_online.insert(msg.local_user_id.0);
 
         // Make OnlineJoin idempotent to avoid duplicate INFO logs
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}:online", msg.local_user_id);
-            let seen_key = format!("presence:user:{}:last_seen", msg.local_user_id);
+            let online_key = format!("presence:user:{}-{}:online",&msg.room_id, msg.local_user_id.0);
+            let seen_key = format!("presence:user:{}-{}:last_seen",msg.room_id, msg.local_user_id.0);
             let mut client = client.clone();
             let started_at = msg.started_at;
             let user_id = msg.local_user_id;
             actix::spawn(async move {
-                let already_local = already_local; // captured from outer scope
-                // Check previous online flag BEFORE setting to avoid duplicate INFO logs
-                let was_online = matches!(client.get_value::<bool>(&online_key).await, Ok(Some(true)));
+                // let already_local = already_local; // captured from outer scope
+                // // Check previous online flag BEFORE setting to avoid duplicate INFO logs
+                // let was_online = matches!(client.get_value::<bool>(&online_key).await, Ok(Some(true)));
 
                 // Refresh online flag and last_seen with TTL (idempotent write)
                 let _ = client.set_value_with_expiry(&online_key, true, ttl).await;
@@ -200,45 +201,45 @@ impl Handler<OnlineJoin> for PresenceManager {
                     Ok(Some(v)) => v,
                     _ => Vec::new(),
                 };
-                if !list.contains(&user_id) { list.push(user_id); }
+                if !list.contains(&user_id.0) { list.push(user_id.0); }
                 let _ = client.set_value_with_expiry(&list_key, list, ttl).await;
 
-                if already_local || was_online {
-                    tracing::debug!(local_user_id = user_id, ts = %started_at, "presence: online_join (duplicate)");
-                } else {
-                    tracing::info!(local_user_id = user_id, ts = %started_at, "presence: online_join");
-                }
+                // if already_local || was_online {
+                //     tracing::debug!(local_user_id = user_id, ts = %started_at, "presence: online_join (duplicate)");
+                // } else {
+                //     tracing::info!(local_user_id = user_id, ts = %started_at, "presence: online_join");
+                // }
             });
             return;
         }
 
         // Fallback (no Redis): best-effort mark online & touch, then INFO log once
-        self.mark_online(msg.local_user_id);
+        self.mark_online(msg.room_id, msg.local_user_id);
         self.touch(msg.local_user_id);
-        tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");
+        // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");
     }
 }
 
 impl Handler<OnlineLeave> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Context<Self>) -> Self::Result {
-        self.mark_offline(msg.local_user_id);
-        tracing::info!(local_user_id = msg.local_user_id, ts = %msg.left_at, "presence: online_leave");
+        self.mark_offline(msg.room_id, msg.local_user_id);
+        // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.left_at, "presence: online_leave");
     }
 }
 
 impl Handler<OnlineStopped> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Context<Self>) -> Self::Result {
-        self.mark_offline(msg.local_user_id);
-        tracing::info!(local_user_id = msg.local_user_id, ts = %msg.stopped_at, "presence: online_stopped(event)");
+        self.mark_offline(msg.room_id, msg.local_user_id);
+        // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.stopped_at, "presence: online_stopped(event)");
     }
 }
 
 impl Handler<Heartbeat> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: Heartbeat, _ctx: &mut Context<Self>) -> Self::Result {
-        let now = self.touch(msg.local_user_id);
+        let now = self.touch(LocalUserId(msg.local_user_id));
         // Decide online by Redis score vs ttl
         if let Some(client) = &self.redis {
             let client = client.clone();
@@ -284,7 +285,7 @@ impl Handler<IsUserOnline> for PresenceManager {
         Box::pin(async move {
             if let Some(client) = client {
                 let mut client = client; // RedisClient
-                let key = format!("presence:user:{}:online", msg.local_user_id);
+                let key = format!("presence:user:{}:online", msg.local_user_id.0);
                 if let Ok(Some(flag)) = client.get_value::<bool>(&key).await {
                     if flag { return true; }
                 }

@@ -1,6 +1,6 @@
 use crate::api::RegisterClientMsg;
 use crate::broker::phoenix_manager::{FetchHistoryDirect, GetLastRead, PhoenixManager};
-use crate::broker::presence_manager::PresenceManager;
+use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
 use crate::phoenix_session::PhoenixSession;
 use actix::Addr;
 use actix_web::{
@@ -12,7 +12,7 @@ use actix_web_actors::ws;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::local_user_view_from_jwt;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use lemmy_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery};
+use lemmy_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
@@ -50,6 +50,25 @@ pub async fn get_last_read(
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
 
   Ok(HttpResponse::Ok().json(resp))
+}
+pub async fn get_peer_status(
+  presence: Data<Addr<PresenceManager>>, // query presence actor instead of phoenix
+  q: Query<PeerReadQuery>,
+  _local_user_view: LocalUserView,
+) -> actix_web::Result<HttpResponse> {
+  let online = presence
+    .send(IsUserOnline {
+      local_user_id: q.peer_id.clone(),
+      room_id: q.room_id.clone(),
+    })
+    .await
+    .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+  Ok(HttpResponse::Ok().json(serde_json::json!({
+    "userId": q.peer_id,
+    "roomId": q.room_id,
+    "online": online,
+  })))
 }
 
 pub async fn phoenix_ws(

@@ -72,8 +72,6 @@ pub async fn phoenix_ws(
   req: HttpRequest,
   query: Query<JoinRoomQuery>,
   stream: web::Payload,
-  phoenix: Data<Addr<PhoenixManager>>,
-  presence: Data<Addr<PresenceManager>>,
   context: Data<FastJobContext>,
 ) -> Result<HttpResponse, Error> {
   // Extract query parameters similar to chat_ws
@@ -94,8 +92,6 @@ pub async fn phoenix_ws(
   };
 
   let ph_session = PhoenixSession::new(
-    phoenix.get_ref().clone(),
-    presence.get_ref().clone(),
   );
   ws::start(ph_session, &req, stream)
 }

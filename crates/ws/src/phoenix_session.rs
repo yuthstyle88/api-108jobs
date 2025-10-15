@@ -1,8 +1,6 @@
 use crate::api::ChatEvent;
 use crate::bridge_message::OutboundMessage;
 use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
-use crate::broker::phoenix_manager::PhoenixManager;
-use crate::broker::presence_manager::PresenceManager;
 use crate::impls::AnyIncomingEvent;
 use crate::bridge_message::BridgeMessage;
 use actix::prelude::*;
@@ -14,20 +12,14 @@ use std::borrow::Cow;
 
 // ===== actor =====
 pub struct PhoenixSession {
-  pub(crate) phoenix_manager: Addr<PhoenixManager>,
-  pub(crate) presence_manager: Addr<PresenceManager>,
   pub(crate) secure: bool,
   pub(crate) shared_key_hex: Option<String>,
 }
 
 impl PhoenixSession {
   pub fn new(
-    phoenix_manager: Addr<PhoenixManager>,
-    presence_manager: Addr<PresenceManager>,
   ) -> Self {
     Self {
-      phoenix_manager,
-      presence_manager,
       secure: true,
       shared_key_hex: None,
     }

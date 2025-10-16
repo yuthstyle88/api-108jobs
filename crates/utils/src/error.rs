@@ -329,6 +329,7 @@ pub enum FastJobErrorType {
   InvalidKeyLength,
   InvalidIVLength,
   LastReadNotFound,
+    WorkflowDoesNotExist,
 }
 
 cfg_if! {

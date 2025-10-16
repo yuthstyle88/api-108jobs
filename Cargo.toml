@@ -80,6 +80,7 @@ members = [
     "crates/db_views/billing",
     "crates/db_views/bank_account",
     "crates/db_views/chat",
+    "crates/db_views/user_review",
     "crates/routes",
     "crates/ws",
     "crates/email",
@@ -148,6 +149,7 @@ lemmy_db_views_vote = { version = "=1.0.0-alpha.5", path = "./crates/db_views/vo
 lemmy_db_views_wallet = { version = "=1.0.0-alpha.5", path = "./crates/db_views/wallet" }
 lemmy_db_views_billing = { version = "=1.0.0-alpha.5", path = "./crates/db_views/billing" }
 lemmy_db_views_bank_account = { version = "=1.0.0-alpha.5", path = "./crates/db_views/bank_account" }
+lemmy_db_views_user_review = {version = "=1.0.0-alpha.5", path = "./crates/db_views/user_review"}
 lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 lemmy_workflow = { version = "=1.0.0-alpha.5", path = "./crates/workflow" }
 lemmy_db_views_chat = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat" }

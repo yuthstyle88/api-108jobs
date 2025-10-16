@@ -50,7 +50,7 @@ impl Workflow {
   pub async fn get_by_post_id(
     pool: &mut DbPool<'_>,
     post_id: PostId,
-    seq_number: i16
+    seq_number: i16,
   ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
     wf::workflow
@@ -61,8 +61,12 @@ impl Workflow {
       .optional()
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub async fn update_billing(pool: &mut DbPool<'_>, id: WorkflowId, billing_id: BillingId) -> FastJobResult<Self> {
-    let form = WorkflowUpdateForm{
+  pub async fn update_billing(
+    pool: &mut DbPool<'_>,
+    id: WorkflowId,
+    billing_id: BillingId,
+  ) -> FastJobResult<Self> {
+    let form = WorkflowUpdateForm {
       status: None,
       revision_required: None,
       revision_count: None,
@@ -133,5 +137,15 @@ impl Workflow {
       .await
       .optional()
       .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  /// Check if a workflow exists by ID (returns Ok(true/false) instead of raising NotFound)
+  pub async fn exists(pool: &mut DbPool<'_>, id: WorkflowId) -> FastJobResult<bool> {
+    let conn = &mut get_conn(pool).await?;
+    let exists = diesel::dsl::select(diesel::dsl::exists(wf::workflow.filter(wf::id.eq(id))))
+      .get_result::<bool>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    Ok(exists)
   }
 }

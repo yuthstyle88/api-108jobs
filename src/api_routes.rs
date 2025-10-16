@@ -400,8 +400,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/get-peer-status", get().to(get_peer_status)),
         )
         .service(
-          scope("/users")
-            .route("/{id}/reviews", get().to(list_user_reviews)),
+          scope("/reviews")
+            .route("", post().to(submit_user_review))
+            .route("", get().to(list_user_reviews)),
         )
         .service(
           scope("/custom-emoji")

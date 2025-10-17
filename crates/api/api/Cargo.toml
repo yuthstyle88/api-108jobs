@@ -32,6 +32,7 @@ lemmy_db_views_inbox_combined = { workspace = true, features = ["full"] }
 lemmy_db_views_modlog_combined = { workspace = true, features = ["full"] }
 lemmy_db_views_person_saved_combined = { workspace = true, features = ["full"] }
 lemmy_db_views_person_liked_combined = { workspace = true, features = ["full"] }
+lemmy_db_views_user_review = { workspace = true, features = ["full"] }
 lemmy_db_views_person_content_combined = { workspace = true, features = [
     "full",
 ] }

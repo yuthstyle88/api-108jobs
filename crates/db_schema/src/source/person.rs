@@ -237,7 +237,7 @@ pub struct SaveUserProfileForm {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct PortfolioPic {
-  pub id: i32,
+  pub id: String,
   pub image_url: DbUrl,
   pub title: String,
 }
@@ -248,7 +248,7 @@ pub struct PortfolioPic {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct WorkSample {
-  pub id: i32,
+  pub id: String,
   pub title: String,
   pub sample_url: DbUrl,
   pub description: String,

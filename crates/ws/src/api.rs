@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use thiserror::Error;
 use lemmy_db_schema_file::enums::WorkFlowStatus;
+use lemmy_db_schema_file::schema::billing::room_id;
 
 #[derive(Debug, Clone, Message)]
 #[rtype(result = "()")]
@@ -87,11 +88,13 @@ pub struct ActiveRoomPayload {
 #[serde(rename_all = "camelCase")]
 pub struct MessageModel {
     pub id: Option<String>,
+    pub room_id: Option<ChatRoomId>,
     pub sender_id: Option<LocalUserId>,
     pub reader_id: Option<LocalUserId>,
     pub read_last_id: Option<ChatMessageRefId>,
     pub content: Option<String>,
     pub status: Option<MessageStatus>,
+    pub secure: Option<bool>,
     pub typing: Option<bool>,
     pub update_type: Option<String>,
     pub status_target: Option<WorkFlowStatus>,

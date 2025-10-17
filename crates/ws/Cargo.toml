@@ -35,3 +35,4 @@ chrono = { workspace = true }
 serde_with = { workspace = true }
 uuid = { workspace = true }
 thiserror = "1.0.69"
+hex = { workspace = true }

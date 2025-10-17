@@ -44,7 +44,7 @@ pub struct Person {
   #[serde(skip)]
   pub private_key: Option<SensitiveString>,
   #[serde(skip)]
-  pub share_key: String,
+  pub shared_key: Option<String>,
   #[serde(skip)]
   pub last_refreshed_at: DateTime<Utc>,
   /// A URL for a banner.
@@ -77,7 +77,7 @@ pub struct Person {
 #[cfg_attr(feature = "full", diesel(table_name = person))]
 pub struct PersonInsertForm {
   pub name: String,
-  pub share_key: String,
+  pub shared_key: Option<String>,
   pub instance_id: InstanceId,
   #[new(default)]
   pub display_name: Option<String>,
@@ -128,7 +128,7 @@ pub struct PersonUpdateForm {
   pub ap_id: Option<DbUrl>,
   pub bio: Option<Option<String>>,
   pub local: Option<bool>,
-  pub share_key: Option<String>,
+  pub shared_key: Option<String>,
   pub private_key: Option<Option<String>>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub banner: Option<Option<DbUrl>>,

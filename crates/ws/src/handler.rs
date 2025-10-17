@@ -1,19 +1,15 @@
 use crate::broker::phoenix_manager::{FetchHistoryDirect, GetLastRead, PhoenixManager};
-use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
+use crate::broker::presence_manager::IsUserOnline;
 use crate::phoenix_session::PhoenixSession;
 use actix::Addr;
 use actix_web::{
-  web,
-  web::{Data, Query},
-  Error, HttpRequest, HttpResponse,
+    web,
+    web::{Data, Query},
+    Error, HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::local_user_view_from_jwt;
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
+use lemmy_db_views_chat::api::{HistoryQuery, LastReadQuery, PeerReadQuery};
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
 
 /// Direct history API: query DB without routing through chat/broker
 pub async fn get_history(
@@ -51,11 +47,11 @@ pub async fn get_last_read(
   Ok(HttpResponse::Ok().json(resp))
 }
 pub async fn get_peer_status(
-  presence: Data<Addr<PresenceManager>>, // query presence actor instead of phoenix
+  phoenix: Data<Addr<PhoenixManager>>,
   q: Query<PeerReadQuery>,
 ) -> actix_web::Result<HttpResponse> {
   let room_id = q.room_id.clone().into();
-  let online = presence
+  let online = phoenix
     .send(IsUserOnline {
       local_user_id: q.peer_id,
       room_id,
@@ -70,28 +66,10 @@ pub async fn get_peer_status(
 
 pub async fn phoenix_ws(
   req: HttpRequest,
-  query: Query<JoinRoomQuery>,
   stream: web::Payload,
-  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> Result<HttpResponse, Error> {
-  // Extract query parameters similar to chat_ws
-  let auth_token = query.token.clone();
-
-  // Always initialize as Option<LocalUserId>
-  let _local_user_id: Option<LocalUserId> = if let Some(jwt_token) = auth_token {
-    match local_user_view_from_jwt(&jwt_token, &context).await {
-      Ok((local_user, _session)) => Some(local_user.local_user.id),
-      Err(_) => {
-        return Err(Error::from(FastJobError::from(
-          FastJobErrorType::IncorrectLogin,
-        )));
-      }
-    }
-  } else {
-    None
-  };
-
-  let ph_session = PhoenixSession::new(
-  );
+  let shared_key = local_user_view.person.shared_key;
+  let ph_session = PhoenixSession::new(shared_key);
   ws::start(ph_session, &req, stream)
 }

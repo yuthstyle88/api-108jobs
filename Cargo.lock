@@ -4304,6 +4304,7 @@ dependencies = [
  "actix-web-actors",
  "anyhow",
  "chrono",
+ "hex",
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",

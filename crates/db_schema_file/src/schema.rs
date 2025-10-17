@@ -816,7 +816,7 @@ diesel::table! {
         bio -> Nullable<Text>,
         local -> Bool,
         private_key -> Nullable<Text>,
-        share_key -> Text,
+        shared_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,
         banner -> Nullable<Text>,
         deleted -> Bool,

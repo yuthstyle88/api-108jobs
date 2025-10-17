@@ -62,7 +62,7 @@ pub async fn setup_local_site(
 
           if let Some(setup) = &settings.setup {
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
-            let public_key = "public_key".to_string();
+            let public_key = Some("public_key".to_string());
             let private_key = Some("private_key".to_string());
             let wallet = WalletModel::create_for_platform(conn).await?;
             let wallet_id = Some(wallet.id);

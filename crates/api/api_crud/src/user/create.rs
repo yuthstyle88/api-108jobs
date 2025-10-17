@@ -682,7 +682,7 @@ async fn create_person(
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
   let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
 
-  let public_key = "public_key".to_string();
+  let public_key = Some("public_key".to_string());
   // Create a new wallet for this user
   let wallet = WalletModel::create_for_user(conn).await?;
   // Attach the wallet to the local user form

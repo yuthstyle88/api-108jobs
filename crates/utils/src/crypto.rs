@@ -127,7 +127,7 @@ pub fn derive_aes256_from_ecdh(my_sk_der: &[u8], peer_pub_raw: &[u8]) -> Result<
 
 /// ====== AES-GCM-256 helpers ======
 
-/// Build Aes256Gcm from a 32-byte key.
+/// Build Aes256Gcm from a 32-byte key (AES-256).
 pub fn aes256_from_key_bytes(key: &[u8]) -> Result<Aes256Gcm, CryptoError> {
   if key.len() != 32 { return Err(CryptoError::InvalidLength); }
   let k = GenericArray::from_slice(key).clone();
@@ -198,7 +198,8 @@ pub fn encrypt_string_b64(key: &[u8], s: &str) -> Result<String, CryptoError> {
 /// Convenience: decrypt base64 payload to UTF-8 string.
 pub fn decrypt_string_b64(key: &[u8], b64: &str) -> Result<String, CryptoError> {
   let pt = aes_gcm_decrypt_b64(key, b64)?;
-  String::from_utf8(pt).map_err(|_| CryptoError::Decode)
+  let decrypted = String::from_utf8(pt).map_err(|_| CryptoError::Decode)?;
+  Ok(decrypted)
 }
 
 /// ====== Hex helpers (optional) ======

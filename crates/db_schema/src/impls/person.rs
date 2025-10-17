@@ -94,7 +94,7 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
 
     diesel::update(person::table.find(person_id))
-      .set(person::share_key.eq::<String>(share_key.to_owned()))
+      .set(person::shared_key.eq::<String>(share_key.to_owned()))
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateUser)
@@ -201,7 +201,7 @@ impl Person {
 
 impl PersonInsertForm {
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
-    Self::new(name.to_owned(), "pubkey".to_string(), instance_id)
+    Self::new(name.to_owned(), Some("pubkey".to_string()), instance_id)
   }
 }
 

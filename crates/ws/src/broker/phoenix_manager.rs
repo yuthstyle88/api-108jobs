@@ -1,5 +1,5 @@
 use crate::api::{ChatEvent, GenericIncomingEvent, IncomingEvent, ReadPayload, StoreChatMessage};
-use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message};
+use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
@@ -17,7 +17,7 @@ use lemmy_db_views_chat::api::PeerReadResponse;
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
-use crate::broker::presence_manager::PresenceManager;
+use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
@@ -426,5 +426,19 @@ impl Handler<StoreChatMessage> for PhoenixManager {
         tracing::error!("Failed to store message in Redis: {}", e);
       }
     });
+  }
+}
+
+impl Handler<IsUserOnline> for PhoenixManager {
+  type Result = ResponseFuture<bool>;
+
+  fn handle(&mut self, msg: IsUserOnline, _ctx: &mut Context<Self>) -> Self::Result {
+    let presence = self.presence.clone();
+    Box::pin(async move {
+      if let Ok(result) = presence.send(msg).await {
+        return result;
+      }
+      false
+    })
   }
 }

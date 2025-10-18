@@ -2,11 +2,10 @@ use actix::prelude::*;
 use chrono::{DateTime, Utc};
 use lemmy_db_schema::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
+use lemmy_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use thiserror::Error;
-use lemmy_db_schema_file::enums::WorkFlowStatus;
-use lemmy_db_schema_file::schema::billing::room_id;
 
 #[derive(Debug, Clone, Message)]
 #[rtype(result = "()")]

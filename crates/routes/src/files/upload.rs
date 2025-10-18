@@ -1,3 +1,4 @@
+use crate::files::{file_url, FileUploadResponse};
 use crate::utils::{sanitize_filename, unique_target_filename, user_files_dir};
 use actix_multipart::Multipart;
 use actix_web::web::{Data, Json};
@@ -6,14 +7,13 @@ use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use tokio::{fs, io::AsyncWriteExt};
-use crate::files::FileUploadResponse;
 
 const MAX_FILE_SIZE_BYTES: u64 = 25 * 1024 * 1024;
 
 pub async fn upload_file(
   mut payload: Multipart,
   local_user_view: LocalUserView,
-  _context: Data<FastJobContext>,
+  context: Data<FastJobContext>,
 ) -> FastJobResult<Json<FileUploadResponse>> {
   // Only the first file field is considered
   let mut saved: Option<FileUploadResponse> = None;
@@ -53,7 +53,8 @@ pub async fn upload_file(
       f.write_all(&chunk).await?;
     }
 
-    let url = format!("/api/v4/files/{}/{}", local_user_view.local_user.id.0, filename);
+    let protocol_and_hostname = context.settings().get_protocol_and_hostname();
+    let url = file_url(local_user_view.local_user.id, &filename, &protocol_and_hostname)?;
     saved = Some(FileUploadResponse {
       filename,
       size,

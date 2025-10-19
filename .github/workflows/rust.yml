@@ -40,13 +40,6 @@ jobs:
           cp target/release/${{ env.BASE_NAME }} bin/${{ env.APP_NAME }}
           chmod +x bin/${{ env.APP_NAME }}
 
-      - name: 📄 Create .env file
-        run: |
-          cat << EOF > .env
-          APP_PORT=${{ env.APP_PORT }}
-          ENVIRONMENT="${{ inputs.environment }}"
-          EOF
-
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:
@@ -63,23 +56,24 @@ jobs:
           echo "Start Deploy to Server" 
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -e; \
-             mkdir -p '${{ env.APP_PATH }}'; \
+             mkdir -p '${{ env.APP_PATH }}/config'; \
              if sudo -n -v 2>/dev/null && sudo -n systemctl is-active --quiet ${{ env.BASE_NAME }}.service; then \
                sudo -n systemctl stop ${{ env.BASE_NAME }}.service; \
              fi; \
-             rm -f '${{ env.APP_PATH }}/.env' '${{ env.APP_PATH }}/${{ env.APP_NAME }}' || true"
+             rm -f '${{ env.APP_PATH }}/config/config.hjson' '${{ env.APP_PATH }}/${{ env.APP_NAME }}' || true"
 
           echo "Copy file to Server Deploy"
           scp -P ${{ secrets.SSH_PORT }} \
-            .env \
+            config/config.hjson \
             bin/${{ env.APP_NAME }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:"${{ env.APP_PATH }}/"
-          
-          echo "Start app on Server Deploy"
+
+          # ย้าย config ไปไว้ในโฟลเดอร์ config/ ให้ถูกตำแหน่ง
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -e; \
+             mv -f '${{ env.APP_PATH }}/config.hjson' '${{ env.APP_PATH }}/config/config.hjson' || true; \
              cd '${{ env.APP_PATH }}'; \
-             chmod 664 .env || true; \
+             chmod 664 config/config.hjson || true; \
              chmod 775 '${{ env.APP_NAME }}' || true; \
              if sudo -n -v 2>/dev/null; then \
                sudo -n systemctl daemon-reload; \

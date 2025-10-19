@@ -64,19 +64,6 @@ jobs:
               git checkout main;
               git pull --ff-only origin main;
             fi
-
-            echo 'Sync translate subrepository into crates/email/src/translations';
-            rm -rf crates/email/src/translations;
-            if git ls-remote git@github.com:yuthstyle88/translate.git >/dev/null 2>&1; then
-              git clone git@github.com:yuthstyle88/translate.git /tmp/translate
-            else
-              echo 'SSH to translate denied; trying HTTPS with token...';
-              GH_PAT='${{ secrets.GH_PAT_DEPLOY }}';
-              git clone "https://${GH_PAT}@github.com/yuthstyle88/translate.git" /tmp/translate
-            fi
-            mkdir -p crates/email/src/translations;
-            cp -r /tmp/translate/email/* crates/email/src/translations/ || true;
-
             echo 'Build release binary';
             cargo build --release --bin ${{ env.BASE_NAME }};
 

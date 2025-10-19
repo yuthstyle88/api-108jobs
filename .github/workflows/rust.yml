@@ -50,6 +50,7 @@ jobs:
             '  Port 22' \
             '  StrictHostKeyChecking accept-new' \
             '  IdentityFile ~/.ssh/id_ed25519' \
+            '  IdentityFile ~/.ssh/id_ed25519_translate' \
             '  IdentitiesOnly yes' > ~/.ssh/config;
             chmod 600 ~/.ssh/config;
             ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true;
@@ -66,12 +67,20 @@ jobs:
 
             echo 'Sync translate subrepository into crates/email/src/translations';
             rm -rf crates/email/src/translations;
-            git clone git@github.com:yuthstyle88/translate.git /tmp/translate;
+            /usr/bin/env bash -c '
+              set -e
+              if git ls-remote git@github.com:yuthstyle88/translate.git >/dev/null 2>&1; then
+                git clone git@github.com:yuthstyle88/translate.git /tmp/translate
+              else
+                echo "SSH to translate denied; trying HTTPS with token..."
+                git clone "https://${{ secrets.GH_PAT_DEPLOY }}@github.com/yuthstyle88/translate.git" /tmp/translate
+              fi
+            '
             mkdir -p crates/email/src/translations;
             cp -r /tmp/translate/email/* crates/email/src/translations/ || true;
 
             echo 'Build release binary';
-            cargo build --release --bin ${BASE_NAME};
+            cargo build --release --bin ${{ env.BASE_NAME }};
 
             echo 'Prepare config path and permissions';
             mkdir -p config;
@@ -81,8 +90,8 @@ jobs:
             echo 'Restart systemd service';
             if sudo -n -v 2>/dev/null; then
               sudo -n systemctl daemon-reload;
-              sudo -n systemctl restart ${BASE_NAME}.service;
-              sudo -n systemctl --no-pager -l status ${BASE_NAME}.service | head -n 40;
+              sudo -n systemctl restart ${{ env.BASE_NAME }}.service;
+              sudo -n systemctl --no-pager -l status ${{ env.BASE_NAME }}.service | head -n 40;
             else
               echo 'skip restart (no sudo NOPASSWD)';
             fi

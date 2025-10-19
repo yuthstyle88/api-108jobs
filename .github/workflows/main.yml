@@ -36,7 +36,6 @@ jobs:
           APP_PORT=${{ env.APP_PORT }}
           ENVIRONMENT="${{ inputs.environment }}"
           EOF
-
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:

@@ -2,7 +2,7 @@ name: Build & Deploy Rust App
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch: {}
 
 jobs:
@@ -23,6 +23,12 @@ jobs:
 
       - name: 🦀 Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      # ⬇⬇ สำคัญ: บังคับใช้ lld และ clang สำหรับ target linux ⬇⬇
+      - name: Force lld linker (override project config)
+        run: |
+          echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang' >> $GITHUB_ENV
+          echo 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=lld' >> $GITHUB_ENV
 
       - name: Set APP_NAME
         run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV

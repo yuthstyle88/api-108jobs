@@ -544,6 +544,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "app-108jobs-api-server"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix",
+ "actix-web",
+ "clap",
+ "lemmy_api",
+ "lemmy_api_crud",
+ "lemmy_api_utils",
+ "lemmy_apub",
+ "lemmy_db_schema",
+ "lemmy_db_schema_setup",
+ "lemmy_db_views_site",
+ "lemmy_routes",
+ "lemmy_utils",
+ "lemmy_ws",
+ "mimalloc",
+ "reqwest-middleware",
+ "reqwest-tracing",
+ "rustls 0.23.27",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-actix-web",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "arbitrary"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4215,34 +4243,6 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
-]
-
-[[package]]
-name = "lemmy_server"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix",
- "actix-web",
- "clap",
- "lemmy_api",
- "lemmy_api_crud",
- "lemmy_api_utils",
- "lemmy_apub",
- "lemmy_db_schema",
- "lemmy_db_schema_setup",
- "lemmy_db_views_site",
- "lemmy_routes",
- "lemmy_utils",
- "lemmy_ws",
- "mimalloc",
- "reqwest-middleware",
- "reqwest-tracing",
- "rustls 0.23.27",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-actix-web",
- "tracing-subscriber",
 ]
 
 [[package]]

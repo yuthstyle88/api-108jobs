@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BASE_NAME: 108jobs-api-server
+      BASE_NAME: app-108jobs-api-server
       APP_PORT: 8100
       APP_PATH: ${{ vars.APP_PATH }}
 

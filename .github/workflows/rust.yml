@@ -33,6 +33,13 @@ jobs:
       - name: Set APP_NAME
         run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV
 
+      - name: 📦 Clone translate subrepository
+        run: |
+          rm -rf crates/email/src/translations
+          git clone https://github.com/yuthstyle88/translate.git /tmp/translate
+          mkdir -p crates/email/src/translations
+          cp -r /tmp/translate/email/* crates/email/src/translations/
+
       - name: 🛠️ Build app and define APP_NAME
         run: |
           mkdir -p bin

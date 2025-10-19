@@ -1,0 +1,80 @@
+name: Build & Deploy Rust App
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      BASE_NAME: 108jobs-api-server
+      APP_PORT: 8100
+      APP_PATH: ${{ vars.APP_PATH }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🦀 Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set APP_NAME
+        run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV
+
+      - name: 🛠️ Build app and define APP_NAME
+        run: |
+          mkdir -p bin
+          cargo build --release --bin ${{ env.BASE_NAME }}
+          cp target/release/${{ env.BASE_NAME }} bin/${{ env.APP_NAME }}
+          chmod +x bin/${{ env.APP_NAME }}
+
+      - name: 📄 Create .env file
+        run: |
+          cat << EOF > .env
+          APP_PORT=${{ env.APP_PORT }}
+          ENVIRONMENT="${{ inputs.environment }}"
+          EOF
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🗝️ Add SSH host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Restart app on server (Rust)
+        run: |
+          set -e
+          echo "Start Deploy to Server" 
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "set -e; \
+             mkdir -p '${{ env.APP_PATH }}'; \
+             if sudo -n -v 2>/dev/null && sudo -n systemctl is-active --quiet ${{ env.BASE_NAME }}.service; then \
+               sudo -n systemctl stop ${{ env.BASE_NAME }}.service; \
+             fi; \
+             rm -f '${{ env.APP_PATH }}/.env' '${{ env.APP_PATH }}/${{ env.APP_NAME }}' || true"
+
+          echo "Copy file to Server Deploy"
+          scp -P ${{ secrets.SSH_PORT }} \
+            .env \
+            bin/${{ env.APP_NAME }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:"${{ env.APP_PATH }}/"
+          
+          echo "Start app on Server Deploy"
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "set -e; \
+             cd '${{ env.APP_PATH }}'; \
+             chmod 664 .env || true; \
+             chmod 775 '${{ env.APP_NAME }}' || true; \
+             if sudo -n -v 2>/dev/null; then \
+               sudo -n systemctl daemon-reload; \
+               sudo -n systemctl restart ${{ env.BASE_NAME }}.service; \
+               sudo -n systemctl --no-pager -l status ${{ env.BASE_NAME }}.service | head -n 20; \
+             else \
+               echo 'skip restart (no sudo NOPASSWD)'; \
+             fi"

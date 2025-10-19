@@ -40,18 +40,34 @@ jobs:
             echo 'Ensure app path exists';
             mkdir -p '${{ env.APP_PATH }}';
             cd '${{ env.APP_PATH }}';
+            echo 'Configure SSH for GitHub on server';
+            mkdir -p ~/.ssh;
+            chmod 700 ~/.ssh;
+            cat > ~/.ssh/config <<'CFG'
+            Host github.com
+              HostName github.com
+              User git
+              Port 22
+              StrictHostKeyChecking accept-new
+              IdentityFile ~/.ssh/id_ed25519
+              IdentitiesOnly yes
+            CFG
+            chmod 600 ~/.ssh/config;
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true;
 
-            echo 'Fetch latest source';
+            echo 'Fetch latest source (SSH)';
             if [ ! -d .git ]; then
-              git clone https://github.com/yuthstyle88/fast-work-new.git .;
+              git clone git@github.com:yuthstyle88/fast-work-new.git .;
+            else
+              git remote set-url origin git@github.com:yuthstyle88/fast-work-new.git || true;
+              git fetch --all --prune;
+              git checkout main;
+              git pull --ff-only origin main;
             fi
-            git fetch --all --prune;
-            git checkout main;
-            git pull --ff-only origin main;
 
             echo 'Sync translate subrepository into crates/email/src/translations';
             rm -rf crates/email/src/translations;
-            git clone https://github.com/yuthstyle88/translate.git /tmp/translate;
+            git clone git@github.com:yuthstyle88/translate.git /tmp/translate;
             mkdir -p crates/email/src/translations;
             cp -r /tmp/translate/email/* crates/email/src/translations/ || true;
 

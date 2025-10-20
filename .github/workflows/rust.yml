@@ -60,7 +60,7 @@ jobs:
             chmod 775 \"${{ env.APP_PATH }}/$TARGET_NAME\";
 
             echo 'Restart systemd service if main branch';
-            if [ \"$BRANCH\" = \"main\" ]; then
+            if [ \"$BRANCH\" = \"prod\" ]; then
               sudo -n systemctl daemon-reload;
               sudo -n systemctl restart ${{ env.SERVICE_NAME }}.service;
               sudo -n systemctl --no-pager -l status ${{ env.SERVICE_NAME }}.service | head -n 40;

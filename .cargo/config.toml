@@ -1,3 +1,4 @@
 [target.x86_64-unknown-linux-gnu]
 linker = "clang"
-rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+# Use LLVM lld instead of mold on CI runners to avoid "invalid linker name" errors.
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]

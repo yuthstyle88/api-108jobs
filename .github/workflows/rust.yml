@@ -74,6 +74,8 @@ jobs:
             git pull --ff-only origin "$BRANCH"
           fi
 
+          REMOTE
+
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
 

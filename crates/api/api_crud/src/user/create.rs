@@ -108,7 +108,18 @@ pub async fn register(
       //when accept application is true
       Some((_, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
       //when accept application is false
-      Some(_) => Err(FastJobErrorType::RequireVerification)?,
+      Some((local_user_id, false)) => {
+        // 1. resend verification email
+        let user = LocalUserView::read(pool,local_user_id).await?;
+        send_verification_email_if_required(
+          &local_site,
+          &user,
+          &mut context.pool(),
+          context.settings(),
+        ).await?;
+        // 2. แจ้งฝั่ง client ให้รู้ว่า "ต้องยืนยันอีเมลก่อน"
+        return Err(FastJobErrorType::RequireVerification.into());
+      }
       //when an email doesn't exist
       None => (),
     }

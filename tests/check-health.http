@@ -2,3 +2,14 @@
 GET {{host}}/api/v4/site/health
 Accept: application/json
 ###
+
+### POST request to register user
+POST {{host}}/api/v4/account/auth/register
+Accept: application/json
+
+{
+  "email": "yuth_style88@hotmail.com",
+  "answer": "staging.108jobs.com"
+}
+
+###

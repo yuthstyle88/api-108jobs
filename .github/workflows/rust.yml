@@ -2,7 +2,7 @@ name: Build & Deploy Rust App
 
 on:
   push:
-    branches: [ "prod", "dev" ]  # 👈 เพิ่ม dev branch
+    branches: ["prod", "dev"]
   workflow_dispatch: {}
 
 jobs:
@@ -10,17 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BASE_NAME: app_108jobs_api_server
-      SERVICE_NAME: app-108jobs-api-server
-      APP_PORT: 8100
-      APP_PATH: ${{ vars.APP_PATH }}
+      # Constant Rust binary name (as defined in Cargo.toml [[bin]])
+      BIN_NAME: app_108jobs_api_server
+      # Current branch name (prod/dev)
       BRANCH: ${{ github.ref_name }}
+      # Service name per-branch (adjust if you use a single prod service)
+      SERVICE_NAME: ${{ github.ref_name == 'prod' && 'app-108jobs-api-server' || 'app-108jobs-api-server-dev' }}
+      # Target app path on remote (one path for both branches; change if you want per-branch paths)
+      APP_PATH: ${{ vars.APP_PATH }}
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-
-      - name: Set APP_NAME
-        run: echo "APP_NAME=${{ env.BASE_NAME }}_${{ env.BRANCH }}" >> $GITHUB_ENV
 
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
@@ -29,40 +30,72 @@ jobs:
 
       - name: 🗝️ Add SSH host key to known_hosts
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: 🚀 Build & Deploy directly on server
+      - name: 🚀 Build & Deploy (branch-aware, safe quoting)
+        shell: bash
         run: |
           set -euo pipefail
-          echo "Build and Deploy on remote server..."
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -euo pipefail;
-            echo 'Ensure app path exists';
-            mkdir -p '${{ env.APP_PATH }}';
-            cd '${{ env.APP_PATH }}';
+          BRANCH="${{ env.BRANCH }}"
+          BIN_NAME="${{ env.BIN_NAME }}"
+          OUT_NAME="${BIN_NAME}_${BRANCH}"
+          APP_PATH="${{ env.APP_PATH }}"
+          SERVICE_NAME="${{ env.SERVICE_NAME }}"
 
-            echo 'Fetch source (branch ${{ env.BRANCH }})';
-            if [ ! -d .git ]; then
-              git clone -b ${{ env.BRANCH }} git@github.com:yuthstyle88/fast-work-new.git .;
+          echo "Local → BRANCH=${BRANCH}, BIN_NAME=${BIN_NAME}, OUT_NAME=${OUT_NAME}"
+          echo "Remote → ${APP_PATH}, service=${SERVICE_NAME}"
+
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s -- "$BRANCH" "$BIN_NAME" "$OUT_NAME" "$APP_PATH" "$SERVICE_NAME" <<'REMOTE'
+          set -euo pipefail
+          BRANCH="$1"
+          BIN_NAME="$2"
+          OUT_NAME="$3"
+          APP_PATH="$4"
+          SERVICE_NAME="$5"
+
+          echo "Remote: BRANCH=${BRANCH}, BIN=${BIN_NAME}, OUT=${OUT_NAME}, APP_PATH=${APP_PATH}"
+
+          # Ensure app path and git repo
+          mkdir -p "$APP_PATH"
+          cd "$APP_PATH"
+
+          # Mitigate 'safe.directory' issues if repo owner != current user
+          git config --global --add safe.directory "$APP_PATH" || true
+
+          if [ ! -d .git ]; then
+            echo "Clone fresh: branch ${BRANCH}"
+            git clone -b "$BRANCH" git@github.com:yuthstyle88/fast-work-new.git .
+          else
+            echo "Fetch & checkout ${BRANCH}"
+            git fetch --all --prune
+            git checkout "$BRANCH"
+            git pull --ff-only origin "$BRANCH"
+          fi
+
+          REMOTE
+
+          echo "Build release binary: ${BIN_NAME}"
+          cargo build --release --bin "$BIN_NAME"
+
+          echo "Install binary → ${APP_PATH}/${OUT_NAME}"
+          cp "target/release/${BIN_NAME}" "${APP_PATH}/${OUT_NAME}"
+          chmod 775 "${APP_PATH}/${OUT_NAME}"
+
+          # Prepare .env files
+          [ -f .env ] || install -m 640 /dev/null .env || true
+
+          # Restart service only for prod branch
+          if [ "$BRANCH" = "prod" ]; then
+            echo "Restarting systemd service: ${SERVICE_NAME}"
+            if sudo -n -v 2>/dev/null; then
+              sudo -n systemctl daemon-reload
+              sudo -n systemctl restart "${SERVICE_NAME}.service"
+              sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | head -n 50
             else
-              git fetch --all --prune;
-              git checkout ${{ env.BRANCH }};
-              git pull --ff-only origin ${{ env.BRANCH }};
+              echo "Skip restart (sudo NOPASSWD not available)"
             fi
-
-            echo 'Build binary for branch: ${{ env.BRANCH }}';
-            cargo build --release --bin ${{ env.BASE_NAME }};
-
-            cp target/release/${{ env.BASE_NAME }} \"${{ env.APP_PATH }}/${{ env.BASE_NAME }}_${{ env.BRANCH }}\";
-            chmod 775 \"${{ env.APP_PATH }}/${{ env.BASE_NAME }}_${{ env.BRANCH }}\";
-
-            echo 'Restart systemd service if prod branch';
-            if [ \"${{ env.BRANCH }}\" = \"prod\" ]; then
-              sudo -n systemctl daemon-reload;
-              sudo -n systemctl restart ${{ env.SERVICE_NAME }}.service;
-              sudo -n systemctl --no-pager -l status ${{ env.SERVICE_NAME }}.service | head -n 40;
-            else
-              echo 'Skip restart (dev branch)';
-            fi
-          "
+          else
+            echo "Dev branch: skip systemd restart"
+          fi

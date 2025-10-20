@@ -9,7 +9,7 @@ repository = "https://github.com/LemmyNet/lemmy"
 rust-version = "1.81"
 
 [package]
-name = "app-108jobs-api-server"
+name = "app_108jobs_api_server"
 version.workspace = true
 edition.workspace = true
 description.workspace = true

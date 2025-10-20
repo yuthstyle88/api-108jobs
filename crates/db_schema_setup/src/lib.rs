@@ -416,7 +416,7 @@ mod tests {
     conn.batch_execute("DROP OWNED BY CURRENT_USER;")?;
     assert!(matches!(
       conn.run_pending_migrations(migrations()),
-      Err(e) if e.to_string().contains("lemmy_server")
+      Err(e) if e.to_string().contains("app_108jobs_api_server")
     ));
 
     // Diesel CLI's way of running migrations shouldn't break the custom migration runner

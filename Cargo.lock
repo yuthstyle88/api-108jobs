@@ -544,7 +544,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "app-108jobs-api-server"
+name = "app_108jobs_api_server"
 version = "1.0.0-alpha.5"
 dependencies = [
  "actix",

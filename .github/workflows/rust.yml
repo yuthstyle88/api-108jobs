@@ -2,7 +2,7 @@ name: Build & Deploy Rust App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]  # 👈 เพิ่ม dev branch
   workflow_dispatch: {}
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set APP_NAME
-        run: echo "APP_NAME=${{ env.BASE_NAME }}_prod" >> $GITHUB_ENV
+        run: echo "APP_NAME=${{ env.BASE_NAME }}_${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
@@ -38,52 +38,33 @@ jobs:
           echo "Build and Deploy on remote server..."
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             set -e;
+            BRANCH='${{ github.ref_name }}';
             echo 'Ensure app path exists';
             mkdir -p '${{ env.APP_PATH }}';
             cd '${{ env.APP_PATH }}';
-            echo 'Configure SSH for GitHub on server';
-            mkdir -p ~/.ssh;
-            chmod 700 ~/.ssh;
-            printf '%s\n' \
-            'Host github.com' \
-            '  HostName github.com' \
-            '  User git' \
-            '  Port 22' \
-            '  StrictHostKeyChecking accept-new' \
-            '  IdentityFile ~/.ssh/id_ed25519' \
-            '  IdentityFile ~/.ssh/id_ed25519_translate' \
-            '  IdentitiesOnly yes' > ~/.ssh/config;
-            chmod 600 ~/.ssh/config;
-            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true;
 
-            echo 'Fetch latest source (SSH)';
+            echo 'Fetch source (branch $BRANCH)';
             if [ ! -d .git ]; then
-              git clone git@github.com:yuthstyle88/fast-work-new.git .;
+              git clone -b $BRANCH git@github.com:yuthstyle88/fast-work-new.git .;
             else
-              git remote set-url origin git@github.com:yuthstyle88/fast-work-new.git || true;
               git fetch --all --prune;
-              git checkout main;
-              git pull --ff-only origin main;
+              git checkout $BRANCH;
+              git pull --ff-only origin $BRANCH;
             fi
-            echo 'Build release binary';
+
+            echo 'Build binary for branch: $BRANCH';
             cargo build --release --bin ${{ env.BASE_NAME }};
-            echo 'Install release binary';
-            cp target/release/${{ env.BASE_NAME }} '${{ env.APP_PATH }}/app_108jobs_api_server_prod';
-            chmod 775 '${{ env.APP_PATH }}/app_108jobs_api_server_prod';
 
-            echo 'Prepare config path and permissions';
-            mkdir -p config;
-            [ -f config/config.hjson ] || echo '{}' > config/config.hjson;
-            chmod 664 config/config.hjson || true;
-            echo 'Ensure .env exists (if required)';
-            [ -f .env ] || install -o "$USER" -g "$USER" -m 640 /dev/null .env;
+            TARGET_NAME='${{ env.BASE_NAME }}_${BRANCH}';
+            cp target/release/${{ env.BASE_NAME }} \"${{ env.APP_PATH }}/$TARGET_NAME\";
+            chmod 775 \"${{ env.APP_PATH }}/$TARGET_NAME\";
 
-            echo 'Restart systemd service';
-            if sudo -n -v 2>/dev/null; then
+            echo 'Restart systemd service if main branch';
+            if [ \"$BRANCH\" = \"main\" ]; then
               sudo -n systemctl daemon-reload;
               sudo -n systemctl restart ${{ env.SERVICE_NAME }}.service;
               sudo -n systemctl --no-pager -l status ${{ env.SERVICE_NAME }}.service | head -n 40;
             else
-              echo 'skip restart (no sudo NOPASSWD)';
+              echo 'Skip restart (dev branch)';
             fi
           "

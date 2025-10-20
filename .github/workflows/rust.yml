@@ -17,7 +17,7 @@ jobs:
       # Service name per-branch (adjust if you use a single prod service)
       SERVICE_NAME: ${{ github.ref_name == 'prod' && 'app-108jobs-api-server' || 'app-108jobs-api-server-dev' }}
       # Target app path on remote (one path for both branches; change if you want per-branch paths)
-      APP_PATH: ${{ vars.APP_PATH }}
+      APP_PATH: ${{ github.ref_name == 'prod' && '/var/www/apps/108jobs-api-server' || '/var/www/apps/108jobs-api-server-dev' }}
 
     steps:
       - name: 📥 Checkout code
@@ -74,8 +74,6 @@ jobs:
             git pull --ff-only origin "$BRANCH"
           fi
 
-          REMOTE
-
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
 
@@ -99,3 +97,4 @@ jobs:
           else
             echo "Dev branch: skip systemd restart"
           fi
+          REMOTE

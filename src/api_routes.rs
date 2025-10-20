@@ -112,6 +112,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::site::read::health;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -146,6 +147,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/site")
             .route("", get().to(get_site))
+            .route("/health", get().to(health))
             .route("", post().to(create_site))
             .route("", put().to(update_site))
             .route("/icon", post().to(upload_site_icon))

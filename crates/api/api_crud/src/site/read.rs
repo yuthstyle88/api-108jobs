@@ -1,8 +1,9 @@
+use actix_web::Responder;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{GetSiteResponse};
+use lemmy_db_views_site::api::{GetSiteResponse, SuccessResponse};
 use lemmy_utils::error::FastJobResult;
 
 pub async fn get_site(
@@ -26,4 +27,8 @@ pub async fn get_site(
   }
 
   Ok(Json(site_response))
+}
+
+pub async fn health() -> FastJobResult<Json<SuccessResponse>> {
+  Ok(Json(SuccessResponse{success: true}))
 }

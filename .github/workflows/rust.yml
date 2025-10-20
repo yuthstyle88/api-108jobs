@@ -100,4 +100,3 @@ jobs:
           else
             echo "Dev branch: skip systemd restart"
           fi
-REMOTE

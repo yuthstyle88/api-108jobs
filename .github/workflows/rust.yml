@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set APP_NAME
-        run: echo "APP_NAME=${{ env.BASE_NAME }}-prod" >> $GITHUB_ENV
+        run: echo "APP_NAME=${{ env.BASE_NAME }}_prod" >> $GITHUB_ENV
 
       - name: 🔐 Setup SSH
         uses: webfactory/ssh-agent@v0.9.1

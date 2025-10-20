@@ -2,7 +2,7 @@ name: Build & Deploy Rust App
 
 on:
   push:
-    branches: [ "main", "dev" ]  # 👈 เพิ่ม dev branch
+    branches: [ "prod", "dev" ]  # 👈 เพิ่ม dev branch
   workflow_dispatch: {}
 
 jobs:

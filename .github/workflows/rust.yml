@@ -83,10 +83,7 @@ jobs:
           cp "target/release/${BIN_NAME}" "${APP_PATH}/${OUT_NAME}"
           chmod 775 "${APP_PATH}/${OUT_NAME}"
 
-          # Prepare config files
-          mkdir -p config
-          [ -f config/config.hjson ] || echo '{}' > config/config.hjson
-          chmod 664 config/config.hjson || true
+          # Prepare .env files
           [ -f .env ] || install -m 640 /dev/null .env || true
 
           # Restart service only for prod branch

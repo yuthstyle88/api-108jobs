@@ -1,4 +1,3 @@
-use actix_web::Responder;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use lemmy_api_utils::context::FastJobContext;

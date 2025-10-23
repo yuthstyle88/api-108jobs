@@ -56,6 +56,6 @@ pub async fn change_password(
     ),
     verify_email_sent: false,
     registration_created: false,
-    application_pending: false,
+    accepted_application: false,
   }))
 }

@@ -54,7 +54,7 @@ pub async fn update_term(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_application: false,
   };
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required

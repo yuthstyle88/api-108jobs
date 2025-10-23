@@ -500,7 +500,7 @@ pub struct LoginResponse {
   pub registration_created: bool,
   /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
-  pub application_pending: bool,
+  pub accepted_application: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

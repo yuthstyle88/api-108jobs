@@ -204,7 +204,7 @@ pub async fn register(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_application: false,
   };
 
   // Log the user in directly if the site is not setup, or email verification and application aren't
@@ -297,7 +297,7 @@ pub async fn register_with_oauth(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_application: false,
   };
 
   // Lookup user by provider_account_id
@@ -495,9 +495,9 @@ pub async fn authenticate_with_oauth(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_application: false,
   };
-  let application_pending = false;
+  let accepted_application = false;
   // Lookup user by oauth_user_id
   let mut local_user_view =
     LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &oauth_user_id).await;
@@ -511,7 +511,7 @@ pub async fn authenticate_with_oauth(
     //application is pending
     let res = check_registration_application(&user_view, &site_view.local_site, pool).await;
     if res.is_err() {
-      login_response.application_pending = true;
+      login_response.accepted_application = true;
     }
     local_user
   } else {
@@ -665,7 +665,7 @@ pub async fn authenticate_with_oauth(
   };
 
   if (!login_response.registration_created && !login_response.verify_email_sent)
-    || application_pending
+    || accepted_application
   {
     let lang = local_user.interface_language;
     let accepted_application = local_user.accepted_application;

@@ -66,6 +66,6 @@ pub async fn login(
     jwt: Some(jwt.clone()),
     verify_email_sent: false,
     registration_created: false,
-    application_pending: false,
+    accepted_application: false,
   }))
 }

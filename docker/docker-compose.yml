@@ -37,6 +37,8 @@ services:
       - PICTRS__MEDIA__GIF__MAX_HEIGHT=256
       - PICTRS__MEDIA__GIF__MAX_AREA=65536
       - PICTRS__MEDIA__GIF__MAX_FRAME_COUNT=400
+    ports:
+      - "8080:8080"
     volumes:
       - ./volumes/pictrs:/mnt
     restart: unless-stopped

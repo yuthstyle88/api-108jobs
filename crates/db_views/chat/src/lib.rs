@@ -20,8 +20,10 @@ pub mod impls;
 pub struct ChatMessageView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub message: ChatMessage,
+  #[serde(skip_serializing)]
   #[cfg_attr(feature = "full", diesel(embed))]
   pub sender: LocalUser,
+  #[serde(skip_serializing)]
   #[cfg_attr(feature = "full", diesel(embed))]
   pub room: ChatRoom,
 }

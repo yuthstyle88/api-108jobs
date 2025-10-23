@@ -76,7 +76,7 @@ pub struct GetChatRoomRequest {
 #[serde(rename_all = "camelCase")]
 /// The chat messages response, mirroring SearchResponse shape
 pub struct ChatMessagesResponse {
-  pub results: Vec<ChatMessageView>,
+  pub results: Vec<ChatMessageView>, // only return messages for this
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,

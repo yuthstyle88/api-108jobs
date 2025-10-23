@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 pub struct Claims {
   /// local_user_id, standard claim by RFC 7519.
   pub sub: String,

@@ -3,7 +3,7 @@ ALTER TABLE local_site
     ADD COLUMN open_registration boolean NOT NULL DEFAULT TRUE;
 
 ALTER TABLE local_site
-    ADD COLUMN require_accept_terms boolean NOT NULL DEFAULT TRUE;
+    ADD COLUMN require_application boolean NOT NULL DEFAULT TRUE;
 
 -- regenerate their values
 WITH subquery AS (
@@ -36,7 +36,7 @@ WITH subquery AS (
 UPDATE
     local_site
 SET
-    require_accept_terms = subquery.case
+    require_application = subquery.case
 FROM
     subquery;
 

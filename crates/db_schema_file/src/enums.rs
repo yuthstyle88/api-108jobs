@@ -90,7 +90,7 @@ pub enum RegistrationMode {
   /// Closed to public.
   Closed,
   /// Open, but pending approval of a registration application.
-  RequireAcceptTerms,
+  RequireApplication,
   /// Open to all.
   #[default]
   Open,

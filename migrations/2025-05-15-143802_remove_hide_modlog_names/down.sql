@@ -13,7 +13,7 @@ ALTER TABLE local_site
     ADD COLUMN captcha_difficulty_new character varying(255) DEFAULT 'medium'::character varying NOT NULL,
     ADD COLUMN published_new timestamp with time zone DEFAULT now() NOT NULL,
     ADD COLUMN updated_new timestamp with time zone,
-    ADD COLUMN registration_mode_new public.registration_mode_enum DEFAULT 'RequireAcceptTerms'::public.registration_mode_enum NOT NULL,
+    ADD COLUMN registration_mode_new public.registration_mode_enum DEFAULT 'RequireApplication'::public.registration_mode_enum NOT NULL,
     ADD COLUMN reports_email_admins_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN default_post_listing_mode_new public.post_listing_mode_enum DEFAULT 'List'::public.post_listing_mode_enum NOT NULL,
     ADD COLUMN default_post_sort_type_new public.post_sort_type_enum DEFAULT 'Active'::public.post_sort_type_enum NOT NULL,

@@ -1,6 +1,6 @@
 -- Add columns to site table
 ALTER TABLE site
-    DROP COLUMN require_accept_terms;
+    DROP COLUMN require_application;
 
 ALTER TABLE site
     DROP COLUMN application_question;

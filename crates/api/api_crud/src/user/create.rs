@@ -70,7 +70,7 @@ pub async fn register(
   let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
   let require_registration_terms =
-    local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
+    local_site.registration_mode == RegistrationMode::RequireApplication;
 
   if local_site.registration_mode == RegistrationMode::Closed {
     Err(FastJobErrorType::RegistrationClosed)?
@@ -323,7 +323,7 @@ pub async fn register_with_oauth(
     let email = data.email;
 
     let require_registration_application =
-      local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
+      local_site.registration_mode == RegistrationMode::RequireApplication;
     let slur_regex = slur_regex(&context).await?;
 
     // Wrap the insert person, insert local user, and create registration,
@@ -533,7 +533,7 @@ pub async fn authenticate_with_oauth(
     let email = read_user_info(&user_info, "email")?;
 
     let require_registration_application =
-      local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
+      local_site.registration_mode == RegistrationMode::RequireApplication;
 
     // Lookup user by OAUTH email and link accounts
     local_user_view = LocalUserView::find_by_email(pool, &email).await;

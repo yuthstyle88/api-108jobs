@@ -259,7 +259,7 @@ mod tests {
         },
         &CreateSite {
           name: String::from("site_name"),
-          registration_mode: Some(RegistrationMode::RequireAcceptTerms),
+          registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()
         },
       ),
@@ -358,7 +358,7 @@ mod tests {
         },
         &CreateSite {
           name: String::from("site_name"),
-          registration_mode: Some(RegistrationMode::RequireAcceptTerms),
+          registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()
         },
       ),

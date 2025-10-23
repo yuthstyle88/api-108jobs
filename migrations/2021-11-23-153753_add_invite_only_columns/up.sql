@@ -1,6 +1,6 @@
 -- Add columns to site table
 ALTER TABLE site
-    ADD COLUMN require_accept_terms boolean NOT NULL DEFAULT FALSE;
+    ADD COLUMN require_application boolean NOT NULL DEFAULT FALSE;
 
 ALTER TABLE site
     ADD COLUMN application_question text;

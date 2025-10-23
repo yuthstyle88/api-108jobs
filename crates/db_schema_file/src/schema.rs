@@ -562,6 +562,7 @@ diesel::table! {
         send_notifications_to_email -> Bool,
         show_bot_accounts -> Bool,
         show_read_posts -> Bool,
+        accepted_terms -> Bool,
         email_verified -> Bool,
         accepted_application -> Bool,
         totp_2fa_secret -> Nullable<Text>,

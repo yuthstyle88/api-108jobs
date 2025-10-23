@@ -97,12 +97,12 @@ impl LocalUser {
     #[derive(AsChangeset)]
     #[diesel(table_name = local_user)]
     struct UpdateForm {
-      accepted_application: bool,
+      accepted_terms: bool,
       password_encrypted: String,
     }
     let password_hash = hash(password, DEFAULT_COST)?;
     let form = UpdateForm {
-      accepted_application: terms_accepted,
+      accepted_terms: terms_accepted,
       password_encrypted: String::from(password_hash),
     };
     let conn = &mut get_conn(pool).await?;
@@ -164,16 +164,16 @@ impl LocalUser {
   pub async fn check_is_email_taken(
     pool: &mut DbPool<'_>,
     email: &str,
-  ) -> FastJobResult<Option<(LocalUserId, bool)>> {
+  ) -> FastJobResult<Option<(LocalUserId, bool, bool)>> {
     let conn = &mut get_conn(pool).await?;
     let local_user = local_user::table
       .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
-      .select((local_user::id, local_user::accepted_application))
-      .first::<(LocalUserId, bool)>(conn)
+      .select((local_user::id, local_user::accepted_terms, local_user::email_verified))
+      .first::<(LocalUserId, bool, bool)>(conn)
       .await;
 
     match local_user {
-      Ok((id, accepted)) => Ok(Some((id, accepted))),
+      Ok((id, accepted, verified)) => Ok(Some((id, accepted, verified))),
       Err(_) => Ok(None),
     }
   }

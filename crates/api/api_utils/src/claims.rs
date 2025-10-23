@@ -23,7 +23,7 @@ pub struct Claims {
   pub session: String,
   pub email: Option<SensitiveString>,
   pub lang: String,
-  pub accepted_application: bool,
+  pub accepted_terms: bool,
 }
 
 impl Claims {
@@ -46,7 +46,7 @@ impl Claims {
     user_id: LocalUserId,
     email: Option<SensitiveString>,
     lang: String,
-    accepted_application: bool,
+    accepted_terms: bool,
     req: HttpRequest,
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {
@@ -59,7 +59,7 @@ impl Claims {
       session: generate_session(),
       email,
       lang,
-      accepted_application
+      accepted_terms
     };
 
     let secret = &context.secret().jwt_secret;

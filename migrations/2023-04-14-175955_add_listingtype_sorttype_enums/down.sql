@@ -47,7 +47,7 @@ ALTER TABLE LANGUAGE
 -- Fix the registration mode enums
 ALTER TYPE registration_mode_enum RENAME VALUE 'Closed' TO 'closed';
 
-ALTER TYPE registration_mode_enum RENAME VALUE 'RequireApplication' TO 'require_application';
+ALTER TYPE registration_mode_enum RENAME VALUE 'RequireAcceptTerms' TO 'require_accept_terms';
 
 ALTER TYPE registration_mode_enum RENAME VALUE 'Open' TO 'open';
 

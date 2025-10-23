@@ -129,7 +129,7 @@ pub async fn check_registration_application(
   local_site: &LocalSite,
   pool: &mut DbPool<'_>,
 ) -> FastJobResult<()> {
-  if (local_site.registration_mode == RegistrationMode::RequireApplication
+  if (local_site.registration_mode == RegistrationMode::RequireAcceptTerms
     || local_site.registration_mode == RegistrationMode::Closed)
     && !local_user_view.local_user.accepted_application
     && !local_user_view.local_user.admin

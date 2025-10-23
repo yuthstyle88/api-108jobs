@@ -31,7 +31,7 @@ pub fn application_question_check(
     current_application_question.is_none() && new_application_question.is_none();
   let is_nullifying_question: bool = new_application_question == &Some(String::new());
 
-  if registration_mode == RegistrationMode::RequireApplication
+  if registration_mode == RegistrationMode::RequireAcceptTerms
     && (has_no_question || is_nullifying_question)
   {
     Err(FastJobErrorType::ApplicationQuestionRequired)?
@@ -63,13 +63,13 @@ mod tests {
   #[test]
   fn test_application_question_check() {
     assert!(
-      application_question_check(&Some(String::from("q")), &Some(String::new()), RegistrationMode::RequireApplication).is_err(),
+      application_question_check(&Some(String::from("q")), &Some(String::new()), RegistrationMode::RequireAcceptTerms).is_err(),
       "Expected application to be invalid because an application is required, current question: {:?}, new question: {:?}",
       "q",
       String::new(),
     );
     assert!(
-      application_question_check(&None, &None, RegistrationMode::RequireApplication).is_err(),
+      application_question_check(&None, &None, RegistrationMode::RequireAcceptTerms).is_err(),
       "Expected application to be invalid because an application is required, current question: {:?}, new question: {:?}",
       None::<String>,
       None::<String>
@@ -83,18 +83,18 @@ mod tests {
       RegistrationMode::Open
     );
     assert!(
-      application_question_check(&None, &Some(String::from("q")), RegistrationMode::RequireApplication).is_ok(),
+      application_question_check(&None, &Some(String::from("q")), RegistrationMode::RequireAcceptTerms).is_ok(),
       "Expected application to be valid because new application provided, current question: {:?}, new question: {:?}, mode: {:?}",
       None::<String>,
       Some(String::from("q")),
-      RegistrationMode::RequireApplication
+      RegistrationMode::RequireAcceptTerms
     );
     assert!(
-      application_question_check(&Some(String::from("q")), &None, RegistrationMode::RequireApplication).is_ok(),
+      application_question_check(&Some(String::from("q")), &None, RegistrationMode::RequireAcceptTerms).is_ok(),
       "Expected application to be valid because application existed, current question: {:?}, new question: {:?}, mode: {:?}",
       Some(String::from("q")),
       None::<String>,
-      RegistrationMode::RequireApplication
+      RegistrationMode::RequireAcceptTerms
     );
   }
 

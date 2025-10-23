@@ -56,7 +56,7 @@ pub async fn login(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
     local_user_view.local_user.interface_language,
-    local_user_view.local_user.accepted_application,
+    local_user_view.local_user.accepted_terms,
     req,
     &context,
   )
@@ -66,6 +66,6 @@ pub async fn login(
     jwt: Some(jwt.clone()),
     verify_email_sent: false,
     registration_created: false,
-    accepted_application: false,
+    accepted_terms: false,
   }))
 }

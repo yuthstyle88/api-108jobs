@@ -69,6 +69,7 @@ pub enum FastJobErrorType {
   EditPrivateMessageNotAllowed,
   SiteAlreadyExists,
   ApplicationQuestionRequired,
+  AcceptTermsRequired,
   InvalidDefaultPostListingType,
   RegistrationClosed,
   RegistrationApplicationAnswerRequired,

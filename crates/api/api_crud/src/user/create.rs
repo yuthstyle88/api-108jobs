@@ -69,8 +69,8 @@ pub async fn register(
   let pool = &mut context.pool();
   let site_view = context.site_config().get().await?.site_view;
   let local_site = site_view.local_site.clone();
-  let require_registration_application =
-    local_site.registration_mode == RegistrationMode::RequireApplication;
+  let require_registration_terms =
+    local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
 
   if local_site.registration_mode == RegistrationMode::Closed {
     Err(FastJobErrorType::RegistrationClosed)?
@@ -84,7 +84,7 @@ pub async fn register(
 
   // make sure the registration answer is provided when the registration application is required
   if local_site.site_setup {
-    validate_registration_answer(require_registration_application, &data.answer)?;
+    validate_registration_terms(require_registration_terms, &data.answer)?;
   }
 
   if local_site.site_setup && local_site.captcha_enabled {
@@ -106,9 +106,11 @@ pub async fn register(
   if let Some(email) = &data.email {
     match LocalUser::check_is_email_taken(pool, email).await? {
       //when accept application is true
-      Some((_, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
+      Some((_, true, _)) => Err(FastJobErrorType::EmailAlreadyExists)?,
+      //when accept terms is false
+      Some((_, false, true)) => Err(FastJobErrorType::AcceptTermsRequired)?,
       //when accept application is false
-      Some((local_user_id, false)) => {
+      Some((local_user_id, false, false)) => {
         // 1. resend verification email
         let user = LocalUserView::read(pool,local_user_id).await?;
         send_verification_email_if_required(
@@ -127,7 +129,7 @@ pub async fn register(
 
   // Automatically set their application as accepted, if they created this with open registration.
   // Also fixes a bug which allows users to log in when registrations are changed to closed.
-  let accepted_application = Some(!require_registration_application);
+  let accepted_application = Some(!require_registration_terms);
 
   // Show nsfw content if param is true, or if content_warning exists
   let self_promotion = data
@@ -173,7 +175,7 @@ pub async fn register(
         )
         .await?;
 
-        if site_view.local_site.site_setup && require_registration_application {
+        if site_view.local_site.site_setup && require_registration_terms {
           if let Some(answer) = tx_data.answer.clone() {
             // Create the registration application
             let form = RegistrationApplicationInsertForm {
@@ -204,13 +206,13 @@ pub async fn register(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    accepted_application: false,
+    accepted_terms: false,
   };
 
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
   if !local_site.site_setup
-    || (!require_registration_application && !local_site.require_email_verification)
+    || (!require_registration_terms && !local_site.require_email_verification)
   {
     let lang = user.local_user.interface_language;
     let accepted_application = user.local_user.accepted_application;
@@ -233,7 +235,7 @@ pub async fn register(
     )
     .await?;
 
-    if require_registration_application {
+    if require_registration_terms {
       login_response.registration_created = true;
     }
   }
@@ -297,7 +299,7 @@ pub async fn register_with_oauth(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    accepted_application: false,
+    accepted_terms: false,
   };
 
   // Lookup user by provider_account_id
@@ -321,7 +323,7 @@ pub async fn register_with_oauth(
     let email = data.email;
 
     let require_registration_application =
-      local_site.registration_mode == RegistrationMode::RequireApplication;
+      local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
     let slur_regex = slur_regex(&context).await?;
 
     // Wrap the insert person, insert local user, and create registration,
@@ -495,9 +497,9 @@ pub async fn authenticate_with_oauth(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    accepted_application: false,
+    accepted_terms: false,
   };
-  let accepted_application = false;
+  let accepted_terms = false;
   // Lookup user by oauth_user_id
   let mut local_user_view =
     LocalUserView::find_by_oauth_id(pool, oauth_provider.id, &oauth_user_id).await;
@@ -511,7 +513,7 @@ pub async fn authenticate_with_oauth(
     //application is pending
     let res = check_registration_application(&user_view, &site_view.local_site, pool).await;
     if res.is_err() {
-      login_response.accepted_application = true;
+      login_response.accepted_terms = true;
     }
     local_user
   } else {
@@ -531,7 +533,7 @@ pub async fn authenticate_with_oauth(
     let email = read_user_info(&user_info, "email")?;
 
     let require_registration_application =
-      local_site.registration_mode == RegistrationMode::RequireApplication;
+      local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
 
     // Lookup user by OAUTH email and link accounts
     local_user_view = LocalUserView::find_by_email(pool, &email).await;
@@ -565,7 +567,7 @@ pub async fn authenticate_with_oauth(
       // No user was found by email => Register as new user
 
       // make sure the registration answer is provided when the registration application is required
-      validate_registration_answer(require_registration_application, &data.answer)?;
+      validate_registration_terms(require_registration_application, &data.answer)?;
 
       let slur_regex = slur_regex(&context).await?;
 
@@ -602,7 +604,7 @@ pub async fn authenticate_with_oauth(
             let local_user_form = LocalUserInsertForm {
               email: Some(str::to_lowercase(&email)),
               self_promotion: Some(self_promotion),
-              accepted_application: Some(!require_registration_application),
+              accepted_terms: Some(!require_registration_application),
               email_verified: Some(oauth_provider.auto_verify_email),
               ..LocalUserInsertForm::new(person.id, None)
             };
@@ -665,15 +667,15 @@ pub async fn authenticate_with_oauth(
   };
 
   if (!login_response.registration_created && !login_response.verify_email_sent)
-    || accepted_application
+    || accepted_terms
   {
     let lang = local_user.interface_language;
-    let accepted_application = local_user.accepted_application;
+    let accepted_terms = local_user.accepted_terms;
     let jwt = Claims::generate(
       local_user.id,
       local_user.email,
       lang,
-      accepted_application,
+      accepted_terms,
       req,
       &context,
     )
@@ -748,12 +750,12 @@ async fn create_local_user(
   Ok(inserted_local_user)
 }
 
-fn validate_registration_answer(
+fn validate_registration_terms(
   require_registration_application: bool,
   answer: &Option<String>,
 ) -> FastJobResult<()> {
   if require_registration_application && answer.is_none() {
-    Err(FastJobErrorType::RegistrationApplicationAnswerRequired)?
+    Err(FastJobErrorType::AcceptTermsRequired)?
   }
 
   Ok(())

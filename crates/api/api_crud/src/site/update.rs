@@ -150,10 +150,10 @@ pub async fn update_site(
   // verified.
 
   let old_require_application =
-    local_site.registration_mode == RegistrationMode::RequireApplication;
+    local_site.registration_mode == RegistrationMode::RequireAcceptTerms;
   let new_require_application = update_local_site
     .as_ref()
-    .map(|ols| ols.registration_mode == RegistrationMode::RequireApplication)
+    .map(|ols| ols.registration_mode == RegistrationMode::RequireAcceptTerms)
     .unwrap_or(false);
   if !old_require_application && new_require_application {
     LocalUser::set_all_users_registration_applications_accepted(&mut context.pool()).await?;
@@ -277,7 +277,7 @@ mod tests {
         },
         &EditSite {
           name: Some(String::from("site_name")),
-          registration_mode: Some(RegistrationMode::RequireApplication),
+          registration_mode: Some(RegistrationMode::RequireAcceptTerms),
           ..Default::default()
         },
       ),
@@ -366,7 +366,7 @@ mod tests {
         },
         &EditSite {
           name: Some(String::from("site_name")),
-          registration_mode: Some(RegistrationMode::RequireApplication),
+          registration_mode: Some(RegistrationMode::RequireAcceptTerms),
           ..Default::default()
         },
       ),

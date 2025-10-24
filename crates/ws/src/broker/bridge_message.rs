@@ -156,76 +156,43 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::Join(ev) => {
         if let Some(payload) = ev.payload.clone() {
           let channel_name = ev.topic.clone();
-          let outbound_event_for_cast = ev.event.clone();
+          let outbound_event = ev.event.clone();
           let room_id = ev.room_id.clone();
           let sender_id = payload.sender_id;
-          let content_json = ev
-            .payload
-            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-            .unwrap_or(serde_json::Value::Null);
+          // keep original payload as JSON once
+          let content_json = serde_json::to_value(&payload).unwrap_or(serde_json::Value::Null);
           let this = self.clone();
+
           Box::pin(async move {
-            let arc_chan_res = get_or_create_channel(channels, socket, &channel_name).await;
-            if let Ok(arc_chan) = arc_chan_res {
-              // Guard against hanging here if the status stream isn't ready yet
-              let status: Option<ChannelStatus> =
-                timeout(Duration::from_millis(300), arc_chan.statuses().status())
-                  .await
-                  .ok() // timeout -> None
-                  .and_then(|res| res.ok()); // Err -> None
+            if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
+              // Build once
+              let phoenix_event = Event::from_string(outbound_event.to_string_value());
+              let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
+              let payload: Payload = Payload::binary_from_bytes(payload_bytes);
 
-              if let Some(status) = status {
-                let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-                let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
-                let payload: Payload = Payload::binary_from_bytes(payload_bytes);
-                tracing::debug!(
-                  "PHX cast: event={} status={:?} channel={}",
-                  outbound_event_for_cast.to_string_value(),
-                  status,
-                  channel_name
-                );
-                match status {
-                  ChannelStatus::Joined => {
-                    let _ = this
-                      .presence
-                      .send(OnlineJoin {
-                        room_id,
-                        local_user_id: sender_id,
-                        started_at: Utc::now(),
-                      })
-                      .await;
-                    send_event_to_channel(arc_chan, phoenix_event, payload).await
-                  }
-                  _ => {
-                    let _ = this
-                      .presence
-                      .send(OnlineJoin {
-                        room_id,
-                        local_user_id: sender_id,
-                        started_at: Utc::now(),
-                      })
-                      .await;
-                    let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
-                    send_event_to_channel(arc_chan, phoenix_event, payload).await;
-                  }
-                }
-              } else {
-                // No status available yet (timeout or error). Proceed with a safe join attempt.
-                let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-                let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
-                let payload: Payload = Payload::binary_from_bytes(payload_bytes);
+              // Try to read current status quickly (non-blocking semantics)
+              let status: Option<ChannelStatus> = timeout(Duration::from_millis(300), arc_chan.statuses().status())
+                .await
+                .ok()
+                .and_then(|res| res.ok());
 
-                let _ = this
-                  .presence
-                  .send(OnlineJoin {
-                    room_id,
-                    local_user_id: sender_id,
-                    started_at: Utc::now(),
-                  })
-                  .await;
+              // Mark presence (always)
+              let _ = this
+                .presence
+                .send(OnlineJoin {
+                  room_id,
+                  local_user_id: sender_id,
+                  started_at: Utc::now(),
+                })
+                .await;
+
+              // Join only if not already joined (or unknown status)
+              if !matches!(status, Some(ChannelStatus::Joined)) {
                 let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
-                send_event_to_channel(arc_chan, phoenix_event, payload).await;
               }
+
+              // Cast the event
+              send_event_to_channel(arc_chan, phoenix_event, payload).await;
             }
           })
         } else {
@@ -234,7 +201,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }
       AnyIncomingEvent::Heartbeat(ev) => {
         if let Some(payload) = ev.payload.clone() {
-          let room_id = ev.room_id.clone();
           let sender_id = payload.sender_id;
           let this = self.clone();
           Box::pin(async move {
@@ -242,7 +208,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let _ = this
               .presence
               .send(Heartbeat {
-                room_id,
                 local_user_id: sender_id,
                 client_time: None,
               })

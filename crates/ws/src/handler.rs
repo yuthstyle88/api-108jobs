@@ -53,11 +53,9 @@ pub async fn get_peer_status(
   phoenix: Data<Addr<PhoenixManager>>,
   q: Query<PeerReadQuery>,
 ) -> actix_web::Result<HttpResponse> {
-  let room_id = q.room_id.clone().into();
   let online = phoenix
     .send(IsUserOnline {
       local_user_id: q.peer_id,
-      room_id,
     })
     .await
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;

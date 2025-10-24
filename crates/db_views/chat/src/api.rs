@@ -24,7 +24,6 @@ pub struct LastReadQuery {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PeerReadQuery {
-  pub room_id: ChatRoomId,
   pub peer_id: LocalUserId,
 }
 

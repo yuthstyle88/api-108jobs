@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           BRANCH="${{ env.BRANCH }}"
           BIN_NAME="${{ env.BIN_NAME }}"
-          OUT_NAME="${BIN_NAME}_${BRANCH}"
+          OUT_NAME="${BIN_NAME}"
           APP_PATH="${{ env.APP_PATH }}"
           SERVICE_NAME="${{ env.SERVICE_NAME }}"
 

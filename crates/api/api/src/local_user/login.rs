@@ -55,7 +55,7 @@ pub async fn login(
   let jwt = Claims::generate(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
-    local_user_view.local_user.interface_language,
+    local_user_view.local_user.interface_language, // default to open
     local_user_view.local_user.accepted_terms,
     req,
     &context,

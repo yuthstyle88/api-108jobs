@@ -15,7 +15,7 @@ jobs:
       # Current branch name (prod/dev)
       BRANCH: ${{ github.ref_name }}
       # Service name per-branch (adjust if you use a single prod service)
-      SERVICE_NAME: ${{ github.ref_name == 'prod' && 'app-108jobs-api-server' || 'app-108jobs-api-server-dev' }}
+      SERVICE_NAME: ${{ github.ref_name == 'prod' && 'app-108jobs-api-server' || 'staging-app-108jobs-api-server' }}
       # Target app path on remote (one path for both branches; change if you want per-branch paths)
       APP_PATH: ${{ github.ref_name == 'prod' && '/var/www/apps/108jobs-api-server' || '/var/www/apps/108jobs-api-server-dev' }}
 
@@ -84,8 +84,8 @@ jobs:
           # Prepare .env files
           [ -f .env ] || install -m 640 /dev/null .env || true
 
-          # Restart service only for prod branch
-          if [ "$BRANCH" = "prod" ]; then
+          # Restart systemd service for prod and dev branches
+          if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Restarting systemd service: ${SERVICE_NAME}"
             if sudo -n -v 2>/dev/null; then
               sudo -n systemctl daemon-reload
@@ -95,6 +95,6 @@ jobs:
               echo "Skip restart (sudo NOPASSWD not available)"
             fi
           else
-            echo "Dev branch: skip systemd restart"
+            echo "Branch ${BRANCH}: skip systemd restart"
           fi
           REMOTE

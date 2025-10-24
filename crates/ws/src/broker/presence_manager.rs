@@ -83,12 +83,12 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn mark_online(&mut self, room_id: ChatRoomId, local_user_id: LocalUserId) {
+    fn mark_online(&mut self, local_user_id: LocalUserId) {
         //tracing::debug!(local_user_id, "presence: mark_online");
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}-{}:online", room_id.clone(), local_user_id.0);
-            let seen_key = format!("presence:user:{}-{}:last_seen",room_id.0, local_user_id.0);
+            let online_key = format!("presence:user:{}:online", local_user_id.0);
+            let seen_key = format!("presence:user:{}:last_seen", local_user_id.0);
             let now = Utc::now();
             let mut client = client.clone();
             actix::spawn(async move {
@@ -181,8 +181,8 @@ impl Handler<OnlineJoin> for PresenceManager {
         // Make OnlineJoin idempotent to avoid duplicate INFO logs
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}-{}:online",&msg.room_id, msg.local_user_id.0);
-            let seen_key = format!("presence:user:{}-{}:last_seen",msg.room_id, msg.local_user_id.0);
+            let online_key = format!("presence:user:{}:online", msg.local_user_id.0);
+            let seen_key = format!("presence:user:{}:last_seen", msg.local_user_id.0);
             let mut client = client.clone();
             let started_at = msg.started_at;
             let user_id = msg.local_user_id;
@@ -214,7 +214,7 @@ impl Handler<OnlineJoin> for PresenceManager {
         }
 
         // Fallback (no Redis): best-effort mark online & touch, then INFO log once
-        self.mark_online(msg.room_id, msg.local_user_id);
+        self.mark_online(msg.local_user_id);
         self.touch(msg.local_user_id);
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");
     }

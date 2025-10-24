@@ -77,6 +77,16 @@ jobs:
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
 
+          # Stop service before replacing binary to avoid in-use file issues
+          if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
+            echo "Stopping systemd service: ${SERVICE_NAME}"
+            if sudo -n -v 2>/dev/null; then
+              sudo -n systemctl stop "${SERVICE_NAME}.service" || true
+            else
+              echo "Skip stop (sudo NOPASSWD not available)"
+            fi
+          fi
+
           echo "Install binary → ${APP_PATH}/${OUT_NAME}"
           cp "target/release/${BIN_NAME}" "${APP_PATH}/${OUT_NAME}"
           chmod 775 "${APP_PATH}/${OUT_NAME}"
@@ -84,17 +94,17 @@ jobs:
           # Prepare .env files
           [ -f .env ] || install -m 640 /dev/null .env || true
 
-          # Restart systemd service for prod and dev branches
+          # Start systemd service for prod and dev branches
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
-            echo "Restarting systemd service: ${SERVICE_NAME}"
+            echo "Starting systemd service: ${SERVICE_NAME}"
             if sudo -n -v 2>/dev/null; then
               sudo -n systemctl daemon-reload
-              sudo -n systemctl restart "${SERVICE_NAME}.service"
+              sudo -n systemctl start "${SERVICE_NAME}.service"
               sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | head -n 50
             else
-              echo "Skip restart (sudo NOPASSWD not available)"
+              echo "Skip start (sudo NOPASSWD not available)"
             fi
           else
-            echo "Branch ${BRANCH}: skip systemd restart"
+            echo "Branch ${BRANCH}: skip systemd start"
           fi
           REMOTE

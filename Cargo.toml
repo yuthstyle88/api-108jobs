@@ -80,6 +80,7 @@ members = [
     "crates/db_views/billing",
     "crates/db_views/bank_account",
     "crates/db_views/chat",
+    "crates/db_views/chat_pending_ack",
     "crates/db_views/user_review",
     "crates/routes",
     "crates/ws",
@@ -153,6 +154,7 @@ lemmy_db_views_user_review = {version = "=1.0.0-alpha.5", path = "./crates/db_vi
 lemmy_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 lemmy_workflow = { version = "=1.0.0-alpha.5", path = "./crates/workflow" }
 lemmy_db_views_chat = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat" }
+lemmy_db_views_chat_pending_ack = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat_pending_ack" }
 diesel = { version = "2.2.10", features = [
     "chrono",
     "postgres",

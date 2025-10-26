@@ -3778,6 +3778,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lemmy_db_views_chat_pending_ack"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "serde",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
 name = "lemmy_db_views_comment"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -4329,6 +4345,7 @@ dependencies = [
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_chat",
+ "lemmy_db_views_chat_pending_ack",
  "lemmy_db_views_local_user",
  "lemmy_utils",
  "phoenix_channels_client",

@@ -39,7 +39,7 @@ impl fmt::Display for PostId {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat message id.
-pub struct ChatMessageId(pub i32);
+pub struct ChatMessageId(pub i64);
 
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]

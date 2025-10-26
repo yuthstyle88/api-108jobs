@@ -331,6 +331,8 @@ pub enum FastJobErrorType {
   InvalidIVLength,
   LastReadNotFound,
   WorkflowDoesNotExist,
+    CouldntCreatePendingSenderAck,
+  CouldntUpdatePendingSenderAck,
 }
 
 cfg_if! {

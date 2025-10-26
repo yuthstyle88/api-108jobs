@@ -1,6 +1,7 @@
 use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
+use crate::broker::helper::{get_or_create_channel, push_to_session, send_event_to_channel};
+use crate::broker::pending_ack_handler::handle_ack_event;
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
 use crate::impls::AnyIncomingEvent;
@@ -13,7 +14,10 @@ use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
+use serde_json::json;
 use tokio::time::timeout;
+use lemmy_db_schema::utils::DbPool;
+use lemmy_db_views_chat_pending_ack::AckReminderQuery;
 
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
@@ -63,6 +67,32 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 tracing::error!("Failed to store message in Redis: {}", e);
               }
             });
+
+            // --- NEW: Application-level ACK + enqueue pending ack ---
+            // 1) Issue messageAck to client
+            let client_id_json = serde_json::to_value(&payload.id).unwrap_or(serde_json::Value::Null);
+            issue_outbound(ev.room_id.clone(), ChatEvent::MessageAck, serde_json::json!({
+              "clientId": client_id_json
+            }));
+
+            // 2) Enqueue pending ack (idempotent)
+            let pool_owned = self.pool.clone();
+            let room_id_for_enqueue = ev.room_id.clone();
+            let sender_id_for_enqueue = payload.sender_id;
+            // Parse client_id as UUID string if necessary
+            let client_id_for_enqueue_opt = payload.id.as_ref().and_then(|v| Some(v.as_str())).and_then(|s| uuid::Uuid::parse_str(s).ok());
+
+            if let Some(client_id_for_enqueue) = client_id_for_enqueue_opt {
+              actix::spawn(async move {
+                let mut pool = DbPool::Pool(&pool_owned);
+                let _ = lemmy_db_views_chat_pending_ack::enqueue_pending(
+                  &mut pool,
+                  room_id_for_enqueue,
+                  sender_id_for_enqueue,
+                  Some(client_id_for_enqueue),
+                ).await;
+              });
+            }
           }
         } else {
           // still notify listeners to keep flow consistent
@@ -122,7 +152,46 @@ impl Handler<BridgeMessage> for PhoenixManager {
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
-      // ---------------------- READ ----------------------
+      AnyIncomingEvent::AckConfirm(ev) => {
+        // 2) NEW: run DB-side removal from pending_sender_ack (idempotent)
+        //    Use helper to parse camelCase payload and call chat_pending_ack::ack_confirm.
+        //    Fire-and-forget to avoid blocking the actor loop.
+        {
+          // Clone the pool to avoid borrowing `self` across the spawned task.
+          let pool_owned = self.pool.clone();
+          let any = AnyIncomingEvent::AckConfirm(ev.clone());
+          actix::spawn(async move {
+            let mut pool = DbPool::Pool(&pool_owned);
+            let _ = handle_ack_event(any, &mut pool).await;
+          });
+        }
+        Box::pin(async move {})
+      }
+      AnyIncomingEvent::SyncPending(ev) => {
+        if let Some(p) = ev.payload.clone() {
+          let pool_owned = self.pool.clone();
+          let topic = ev.topic.clone();
+          actix::spawn(async move {
+            let mut pool = DbPool::Pool(&pool_owned);
+            match lemmy_db_views_chat_pending_ack::ack_reminder(
+              &mut pool,
+              &AckReminderQuery { room_id: p.room_id, sender_id: p.sender_id, limit: Some(200) }
+            ).await {
+              Ok(reminder) => {
+                let _ = push_to_session(
+                  &topic, // assumed present in payload; otherwise derive from room_id
+                  &ChatEvent::SyncPending,
+                  json!({ "clientIds": reminder.client_ids })
+                );
+              }
+              Err(e) => {
+                tracing::error!("ack_reminder failed: {}", e);
+              }
+            }
+          });
+        }
+        Box::pin(async move {})
+      }
       AnyIncomingEvent::ReadUpTo(ev) => {
         let mut json = ev
           .payload
@@ -171,10 +240,11 @@ impl Handler<BridgeMessage> for PhoenixManager {
               let payload: Payload = Payload::binary_from_bytes(payload_bytes);
 
               // Try to read current status quickly (non-blocking semantics)
-              let status: Option<ChannelStatus> = timeout(Duration::from_millis(300), arc_chan.statuses().status())
-                .await
-                .ok()
-                .and_then(|res| res.ok());
+              let status: Option<ChannelStatus> =
+                timeout(Duration::from_millis(300), arc_chan.statuses().status())
+                  .await
+                  .ok()
+                  .and_then(|res| res.ok());
 
               // Mark presence (always)
               let _ = this
@@ -225,6 +295,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }),
 
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
+      _ => Box::pin(async move {})
     }
   }
 }

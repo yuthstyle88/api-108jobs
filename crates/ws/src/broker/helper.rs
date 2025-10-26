@@ -197,6 +197,9 @@ pub fn phx_reply(
 pub fn phx_push(topic: &str, event: &ChatEvent, payload: Value) -> String {
   serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()
 }
+pub fn push_to_session(topic: &str, event: &ChatEvent, payload: Value) -> String {
+  serde_json::json!([Value::Null, Value::Null, topic, event, payload]).to_string()
+}
 
 /// Simple heuristic: checks whether a string *looks* like base64 ciphertext.
 /// Conservative: require reasonable length and base64 characters.

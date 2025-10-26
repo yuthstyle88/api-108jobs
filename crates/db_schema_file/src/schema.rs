@@ -246,7 +246,7 @@ diesel::table! {
 
 diesel::table! {
     chat_message (id) {
-        id -> Int4,
+        id -> Int8,
         msg_ref_id -> Varchar,
         room_id -> Varchar,
         sender_id -> Int4,
@@ -254,6 +254,17 @@ diesel::table! {
         status -> Int2,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        sender_ack_confirmed_at ->  Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+     pending_sender_ack (id){
+        id -> Int8,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        client_id -> Uuid,
+        created_at -> Timestamptz,
     }
 }
 

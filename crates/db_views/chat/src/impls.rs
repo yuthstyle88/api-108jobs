@@ -14,7 +14,7 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 impl PaginationCursorBuilder for ChatMessageView {
   type CursorData = ChatMessage;
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('M', self.message.id.0)
+    PaginationCursor::new_single('M', self.message.id.0.try_into().unwrap())
   }
 
   async fn from_cursor(
@@ -22,7 +22,7 @@ impl PaginationCursorBuilder for ChatMessageView {
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
-    ChatMessage::read(pool, ChatMessageId(id)).await
+    ChatMessage::read(pool, ChatMessageId(id.into())).await
   }
 }
 

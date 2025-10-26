@@ -60,6 +60,7 @@ pub enum ChatEvent {
 pub enum MessageStatus {
     #[default]
     Pending,
+    Retrying,
     Sent,
     Failed,
 }

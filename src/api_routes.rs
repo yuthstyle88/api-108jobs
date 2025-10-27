@@ -315,7 +315,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/hidden", get().to(list_person_hidden))
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
-            .route("/reviews", post().to(submit_user_review))
             // Wallet service scope
             .service(scope("/wallet").route("", get().to(get_wallet)))
             // Bank account management scope

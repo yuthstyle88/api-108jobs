@@ -846,6 +846,7 @@ diesel::table! {
         skills -> Nullable<Text>,
         portfolio_pics -> Nullable<Jsonb>,
         work_samples -> Nullable<Jsonb>,
+        available -> Bool,
     }
 }
 

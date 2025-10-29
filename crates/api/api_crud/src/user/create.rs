@@ -106,22 +106,11 @@ pub async fn register(
   if let Some(email) = &data.email {
     match LocalUser::check_is_email_taken(pool, email).await? {
       //when accept application is true
-      Some((_, true, _)) => Err(FastJobErrorType::EmailAlreadyExists)?,
+      Some((_,_, true, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
       //when accept terms is false
-      Some((_, false, true)) => Err(FastJobErrorType::AcceptTermsRequired)?,
-      //when accept application is false
-      Some((local_user_id, false, false)) => {
-        // 1. resend verification email
-        let user = LocalUserView::read(pool,local_user_id).await?;
-        send_verification_email_if_required(
-          &local_site,
-          &user,
-          &mut context.pool(),
-          context.settings(),
-        ).await?;
-        // 2. แจ้งฝั่ง client ให้รู้ว่า "ต้องยืนยันอีเมลก่อน"
-        return Err(FastJobErrorType::RequireVerification.into());
-      }
+      Some((_,person_id, _ , _)) => {
+        Person::delete(pool, person_id).await?;
+      },
       //when an email doesn't exist
       None => (),
     }

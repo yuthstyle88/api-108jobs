@@ -164,16 +164,16 @@ impl LocalUser {
   pub async fn check_is_email_taken(
     pool: &mut DbPool<'_>,
     email: &str,
-  ) -> FastJobResult<Option<(LocalUserId, bool, bool)>> {
+  ) -> FastJobResult<Option<(LocalUserId, PersonId,  bool, bool)>> {
     let conn = &mut get_conn(pool).await?;
     let local_user = local_user::table
       .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
-      .select((local_user::id, local_user::accepted_terms, local_user::email_verified))
-      .first::<(LocalUserId, bool, bool)>(conn)
+      .select((local_user::id, local_user::person_id, local_user::accepted_terms, local_user::email_verified))
+      .first::<(LocalUserId, PersonId, bool, bool)>(conn)
       .await;
 
     match local_user {
-      Ok((id, accepted, verified)) => Ok(Some((id, accepted, verified))),
+      Ok((id, person_id, accepted, verified)) => Ok(Some((id, person_id, accepted, verified))),
       Err(_) => Ok(None),
     }
   }

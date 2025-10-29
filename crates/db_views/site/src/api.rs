@@ -626,6 +626,7 @@ pub struct SaveUserSettings {
   pub portfolio_pics: Option<Vec<PortfolioPic>>,
   /// Your work samples to prove your quality
   pub work_samples: Option<Vec<WorkSample>>,
+  pub available: Option<bool>,
 }
 
 

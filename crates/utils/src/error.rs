@@ -333,6 +333,7 @@ pub enum FastJobErrorType {
   WorkflowDoesNotExist,
     CouldntCreatePendingSenderAck,
   CouldntUpdatePendingSenderAck,
+    BankAccountAlreadyExistsForThisBank,
 }
 
 cfg_if! {

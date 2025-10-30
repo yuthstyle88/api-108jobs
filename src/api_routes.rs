@@ -4,7 +4,7 @@ use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
-  set_default_bank_account,
+  set_default_bank_account, update_bank_account,
 };
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::profile::visit_profile;
@@ -288,6 +288,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/bank-account")
                 .route("", post().to(create_bank_account))
                 .route("", get().to(list_user_bank_accounts))
+                .route("", put().to(update_bank_account))
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
             )

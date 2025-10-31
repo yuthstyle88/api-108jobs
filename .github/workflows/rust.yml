@@ -75,9 +75,7 @@ jobs:
 
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
-          echo "Remote whoami: $(whoami)"
-          id
-          groups
+    
           sudo -n -l | head -n 20 || true
           
           # Stop service before replacing binary to avoid in-use file issues (no fallbacks)
@@ -112,7 +110,7 @@ jobs:
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to become active…"
             STARTED=0
-            for i in {1..20}; do
+            for i in {1..3}; do
               if sudo -u deploy -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
                 echo "✅ ${SERVICE_NAME} started."
                 STARTED=1
@@ -120,7 +118,6 @@ jobs:
               fi
               sleep 1
             done
-
             if [ "$STARTED" -ne 1 ]; then
               echo "❌ Failed to start ${SERVICE_NAME} within 20s. Showing last logs…"
               sudo -u deploy -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true

@@ -115,6 +115,13 @@ jobs:
               sudo -n systemctl daemon-reload
               sudo -n systemctl start "${SERVICE_NAME}.service"
               sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | head -n 50
+              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
+                echo "✅ ${SERVICE_NAME} started successfully."
+              else
+                echo "❌ Failed to start ${SERVICE_NAME}. Check logs."
+                sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 20 || true
+                exit 1
+              fi
             else
               echo "Skip start (sudo NOPASSWD not available)"
             fi

@@ -105,7 +105,7 @@ jobs:
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
             # Reload units then start (run as deploy; NOPASSWD is guaranteed for this user)
-            sudo -u deploy -n systemctl daemon-reload
+        
             sudo -u deploy -n systemctl start "${SERVICE_NAME}.service" || true
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to become active…"

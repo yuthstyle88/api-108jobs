@@ -76,29 +76,20 @@ jobs:
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
 
-          # Stop service before replacing binary to avoid in-use file issues
+          # Stop service before replacing binary to avoid in-use file issues (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Stopping systemd service: ${SERVICE_NAME}"
-            if sudo -n -v 2>/dev/null; then
-              sudo -n systemctl stop "${SERVICE_NAME}.service" || true
-            else
-              echo "sudo NOPASSWD not available, attempting normal stop"
-              sudo systemctl stop "${SERVICE_NAME}.service" || true
-            fi
+            sudo -n systemctl stop "${SERVICE_NAME}.service" || true
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to stop..."
             for i in {1..20}; do
-              if sudo systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
+              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
                 sleep 1
               else
-                echo "${SERVICE_NAME} stopped successfully."
+                echo "${SERVICE_NAME} stopped."
                 break
               fi
             done
-
-            if sudo systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
-              echo "[WARN] ${SERVICE_NAME} did not stop within 20s."
-            fi
           fi
 
           echo "Install binary → ${APP_PATH}/${OUT_NAME}"
@@ -108,24 +99,26 @@ jobs:
           # Prepare .env files
           [ -f .env ] || install -m 640 /dev/null .env || true
 
-          # Start systemd service for prod and dev branches
+          # Start systemd service for prod and dev branches (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
-            # Start systemd service (support both NOPASSWD and normal sudo)
-            if sudo -n -v 2>/dev/null; then
-              sudo -n systemctl daemon-reload
-              sudo -n systemctl start "${SERVICE_NAME}.service"
-            else
-              echo "sudo NOPASSWD not available, attempting normal start"
-              sudo systemctl daemon-reload
-              sudo systemctl start "${SERVICE_NAME}.service"
-            fi
-            # Verify start
-            if sudo systemctl is-active --quiet "${SERVICE_NAME}.service"; then
-              echo "✅ ${SERVICE_NAME} started successfully."
-            else
-              echo "❌ Failed to start ${SERVICE_NAME}. Showing last logs..."
-              sudo systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true
+            sudo -n systemctl daemon-reload
+            sudo -n systemctl start "${SERVICE_NAME}.service" || true
+
+            echo "Waiting up to 20s for ${SERVICE_NAME} to become active…"
+            STARTED=0
+            for i in {1..20}; do
+              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
+                echo "✅ ${SERVICE_NAME} started."
+                STARTED=1
+                break
+              fi
+              sleep 1
+            done
+
+            if [ "$STARTED" -ne 1 ]; then
+              echo "❌ Failed to start ${SERVICE_NAME} within 20s. Showing last logs…"
+              sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true
               exit 1
             fi
           else

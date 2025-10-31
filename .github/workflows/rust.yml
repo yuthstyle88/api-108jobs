@@ -83,11 +83,11 @@ jobs:
           # Stop service before replacing binary to avoid in-use file issues (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Stopping systemd service: ${SERVICE_NAME}"
-            sudo -n systemctl stop "${SERVICE_NAME}.service" || true
+            sudo -u deploy -n systemctl stop "${SERVICE_NAME}.service" || true
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to stop..."
             for i in {1..20}; do
-              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
+              if sudo -u deploy -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
                 sleep 1
               else
                 echo "${SERVICE_NAME} stopped."
@@ -106,14 +106,14 @@ jobs:
           # Start systemd service for prod and dev branches (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
-            # Reload units then start (explicit)
-            sudo -n systemctl daemon-reload
-            sudo -n systemctl start "${SERVICE_NAME}.service" || true
+            # Reload units then start (run as deploy; NOPASSWD is guaranteed for this user)
+            sudo -u deploy -n systemctl daemon-reload
+            sudo -u deploy -n systemctl start "${SERVICE_NAME}.service" || true
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to become active…"
             STARTED=0
-            for i in {1..3}; do
-              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
+            for i in {1..20}; do
+              if sudo -u deploy -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
                 echo "✅ ${SERVICE_NAME} started."
                 STARTED=1
                 break
@@ -123,7 +123,7 @@ jobs:
 
             if [ "$STARTED" -ne 1 ]; then
               echo "❌ Failed to start ${SERVICE_NAME} within 20s. Showing last logs…"
-              sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true
+              sudo -u deploy -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true
               exit 1
             fi
           else

@@ -77,15 +77,40 @@ jobs:
           cargo build --release --bin "$BIN_NAME"
 
           # Stop service before replacing binary to avoid in-use file issues
-          if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
-            echo "Stopping systemd service: ${SERVICE_NAME}"
-            if sudo -n -v 2>/dev/null; then
-              sudo -n systemctl stop "${SERVICE_NAME}.service" || true
-            else
-              echo "Skip stop (sudo NOPASSWD not available)"
-            fi
-          fi
+          SYSCTL="$(command -v systemctl || echo /usr/bin/systemctl)"
+          if [ ! -x "$SYSCTL" ]; then
+            echo "[WARN] systemctl not found; skipping stop"
+          else
+            if sudo -n -v 2>/dev/null; then SUDO="sudo -n"; else SUDO=""; fi
 
+            echo "Stopping ${SERVICE_NAME}…"
+            $SUDO "$SYSCTL" stop --no-block "${SERVICE_NAME}" 2>/dev/null || true
+
+            # Wait up to 15s for clean stop
+            for i in {1..15}; do
+              if $SUDO "$SYSCTL" is-active --quiet "${SERVICE_NAME}" 2>/dev/null; then
+                sleep 1
+              else
+                echo "[${SERVICE_NAME}] stopped"
+                break
+              fi
+            done
+
+            # Still active? escalate: TERM then KILL the whole control group
+            if $SUDO "$SYSCTL" is-active --quiet "${SERVICE_NAME}" 2>/dev/null; then
+              echo "[${SERVICE_NAME}] forcing TERM…"
+              $SUDO "$SYSCTL" kill -s SIGTERM "${SERVICE_NAME}" 2>/dev/null || true
+              sleep 2
+              if $SUDO "$SYSCTL" is-active --quiet "${SERVICE_NAME}" 2>/dev/null; then
+                echo "[${SERVICE_NAME}] forcing KILL…"
+                $SUDO "$SYSCTL" kill -s SIGKILL "${SERVICE_NAME}" 2>/dev/null || true
+              fi
+            fi
+
+            # Clear failed state; ignore if unit not found
+            $SUDO "$SYSCTL" reset-failed "${SERVICE_NAME}" 2>/dev/null || true
+          fi
+          
           echo "Install binary → ${APP_PATH}/${OUT_NAME}"
           cp "target/release/${BIN_NAME}" "${APP_PATH}/${OUT_NAME}"
           chmod 775 "${APP_PATH}/${OUT_NAME}"

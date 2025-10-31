@@ -119,7 +119,7 @@ impl UserReviewView {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
-    let mut query = base_user_review_query!(user_review::reviewer_id.eq(person_id));
+    let mut query = base_user_review_query!(user_review::reviewee_id.eq(person_id));
 
     apply_cursor_pagination!(query, cursor_data, page_back);
 

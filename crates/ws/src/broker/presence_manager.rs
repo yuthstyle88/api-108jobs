@@ -35,15 +35,15 @@ pub struct OnlineLeave {pub room_id: ChatRoomId, pub local_user_id: LocalUserId,
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineStopped {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub stopped_at: DateTime<Utc> }
+pub struct OnlineStopped {pub local_user_id: LocalUserId, pub stopped_at: DateTime<Utc> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct Heartbeat {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub client_time: Option<DateTime<Utc>> }
+pub struct Heartbeat {pub local_user_id: LocalUserId, pub client_time: Option<DateTime<Utc>> }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "bool")]
-pub struct IsUserOnline {pub room_id: ChatRoomId, pub local_user_id: LocalUserId }
+pub struct IsUserOnline {pub local_user_id: LocalUserId }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "usize")]
@@ -83,12 +83,12 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn mark_online(&mut self, room_id: ChatRoomId, local_user_id: LocalUserId) {
+    fn mark_online(&mut self, local_user_id: LocalUserId) {
         //tracing::debug!(local_user_id, "presence: mark_online");
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}-{}:online", room_id.clone(), local_user_id.0);
-            let seen_key = format!("presence:user:{}-{}:last_seen",room_id.0, local_user_id.0);
+            let online_key = format!("presence:user:{}:online", local_user_id.0);
+            let seen_key = format!("presence:user:{}:last_seen", local_user_id.0);
             let now = Utc::now();
             let mut client = client.clone();
             actix::spawn(async move {
@@ -104,12 +104,12 @@ impl PresenceManager {
     }
 
     #[inline]
-    fn mark_offline(&mut self, room_id: ChatRoomId, local_user_id: LocalUserId) {
+    fn mark_offline(&mut self,local_user_id: LocalUserId) {
         self.local_online.remove(&local_user_id.0);
         //tracing::debug!(local_user_id, "presence: mark_offline");
         if let Some(client) = &self.redis {
-            let online_key = format!("presence:user:{}-{}:online",room_id.clone(), local_user_id.0);
-            let seen_key = format!("presence:user:{}-{}:last_seen",room_id, local_user_id.0);
+            let online_key = format!("presence:user:{}:online", local_user_id.0);
+            let seen_key = format!("presence:user:{}:last_seen", local_user_id.0);
             let client = client.clone();
             let mut client = client; // owned clone above
             actix::spawn(async move {
@@ -181,8 +181,8 @@ impl Handler<OnlineJoin> for PresenceManager {
         // Make OnlineJoin idempotent to avoid duplicate INFO logs
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let online_key = format!("presence:user:{}-{}:online",&msg.room_id, msg.local_user_id.0);
-            let seen_key = format!("presence:user:{}-{}:last_seen",msg.room_id, msg.local_user_id.0);
+            let online_key = format!("presence:user:{}:online", msg.local_user_id.0);
+            let seen_key = format!("presence:user:{}:last_seen", msg.local_user_id.0);
             let mut client = client.clone();
             let started_at = msg.started_at;
             let user_id = msg.local_user_id;
@@ -214,7 +214,7 @@ impl Handler<OnlineJoin> for PresenceManager {
         }
 
         // Fallback (no Redis): best-effort mark online & touch, then INFO log once
-        self.mark_online(msg.room_id, msg.local_user_id);
+        self.mark_online(msg.local_user_id);
         self.touch(msg.local_user_id);
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");
     }
@@ -223,7 +223,7 @@ impl Handler<OnlineJoin> for PresenceManager {
 impl Handler<OnlineLeave> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Context<Self>) -> Self::Result {
-        self.mark_offline(msg.room_id, msg.local_user_id);
+        self.mark_offline(msg.local_user_id);
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.left_at, "presence: online_leave");
     }
 }
@@ -231,7 +231,7 @@ impl Handler<OnlineLeave> for PresenceManager {
 impl Handler<OnlineStopped> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Context<Self>) -> Self::Result {
-        self.mark_offline(msg.room_id, msg.local_user_id);
+        self.mark_offline(msg.local_user_id);
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.stopped_at, "presence: online_stopped(event)");
     }
 }
@@ -251,14 +251,14 @@ impl Handler<Heartbeat> for PresenceManager {
                 // refresh keys
                 let _ = client
                     .set_value_with_expiry(
-                        &format!("presence:user:{}-{}:online",msg.room_id, local_user_id.0),
+                        &format!("presence:user:{}:online",local_user_id.0),
                         true,
                         ttl_secs,
                     )
                     .await;
                 let _ = client
                     .set_value_with_expiry(
-                        &format!("presence:user:{}-{}:last_seen",msg.room_id, local_user_id.0),
+                        &format!("presence:user:{}:last_seen", local_user_id.0),
                         now.to_rfc3339(),
                         ttl_secs,
                     )
@@ -285,7 +285,7 @@ impl Handler<IsUserOnline> for PresenceManager {
         Box::pin(async move {
             if let Some(client) = client {
                 let mut client = client; // RedisClient
-                let key = format!("presence:user:{}-{}:online", msg.room_id, msg.local_user_id.0);
+                let key = format!("presence:user:{}:online", msg.local_user_id.0);
                 dbg!(&key);
                 if let Ok(Some(flag)) = client.get_value::<bool>(&key).await {
                     if flag { return true; }

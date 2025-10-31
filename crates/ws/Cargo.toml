@@ -19,6 +19,7 @@ lemmy_api_utils = { workspace = true, features = ["full"] }
 lemmy_db_schema = { workspace = true, features = ["full"] }
 lemmy_db_schema_file = { workspace = true, features = ["full"] }
 lemmy_db_views_chat = { workspace = true, features = ["full"] }
+lemmy_db_views_chat_pending_ack = { workspace = true, features = ["full"] }
 lemmy_db_views_local_user = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 serde_json = { workspace = true }

@@ -25,7 +25,7 @@ pub async fn verify_email(
   let form = LocalUserUpdateForm {
     // necessary in case this is a new signup
     email_verified: Some(true),
-    accepted_application: Some(false),
+    accepted_terms: Some(false),
     // necessary in case multilang of an existing user was changed
     email: Some(Some(verification.email)),
     ..Default::default()
@@ -40,7 +40,7 @@ pub async fn verify_email(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
     local_user_view.local_user.interface_language,
-    local_user_view.local_user.accepted_application,
+    local_user_view.local_user.accepted_terms,
     req,
     &context,
   )

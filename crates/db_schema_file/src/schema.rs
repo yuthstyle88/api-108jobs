@@ -246,7 +246,7 @@ diesel::table! {
 
 diesel::table! {
     chat_message (id) {
-        id -> Int4,
+        id -> Int8,
         msg_ref_id -> Varchar,
         room_id -> Varchar,
         sender_id -> Int4,
@@ -254,6 +254,17 @@ diesel::table! {
         status -> Int2,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        sender_ack_confirmed_at ->  Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+     pending_sender_ack (id){
+        id -> Int8,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        client_id -> Uuid,
+        created_at -> Timestamptz,
     }
 }
 
@@ -562,6 +573,7 @@ diesel::table! {
         send_notifications_to_email -> Bool,
         show_bot_accounts -> Bool,
         show_read_posts -> Bool,
+        accepted_terms -> Bool,
         email_verified -> Bool,
         accepted_application -> Bool,
         totp_2fa_secret -> Nullable<Text>,
@@ -834,6 +846,7 @@ diesel::table! {
         skills -> Nullable<Text>,
         portfolio_pics -> Nullable<Jsonb>,
         work_samples -> Nullable<Jsonb>,
+        available -> Bool,
     }
 }
 

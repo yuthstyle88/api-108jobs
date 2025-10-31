@@ -70,6 +70,7 @@ pub struct Person {
   pub skills: Option<String>,
   pub portfolio_pics: Option<JsonValue>,
   pub work_samples: Option<JsonValue>,
+  pub available: bool,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -115,6 +116,8 @@ pub struct PersonInsertForm {
   pub portfolio_pics: Option<JsonValue>,
   #[new(default)]
   pub work_samples: Option<JsonValue>,
+  #[new(default)]
+  pub available: Option<bool>,
 }
 
 #[derive(Clone, Default)]
@@ -140,6 +143,7 @@ pub struct PersonUpdateForm {
   pub skills: Option<Option<String>>,
   pub portfolio_pics: Option<Option<JsonValue>>,
   pub work_samples: Option<Option<JsonValue>>,
+  pub available: Option<bool>,
 }
 
 #[skip_serializing_none]

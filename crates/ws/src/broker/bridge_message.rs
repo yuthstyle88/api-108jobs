@@ -1,6 +1,7 @@
 use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
+use crate::broker::helper::{get_or_create_channel, push_to_session, send_event_to_channel};
+use crate::broker::pending_ack_handler::handle_ack_event;
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
 use crate::impls::AnyIncomingEvent;
@@ -13,7 +14,10 @@ use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
+use serde_json::json;
 use tokio::time::timeout;
+use lemmy_db_schema::utils::DbPool;
+use lemmy_db_views_chat_pending_ack::AckReminderQuery;
 
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
@@ -63,6 +67,32 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 tracing::error!("Failed to store message in Redis: {}", e);
               }
             });
+
+            // --- NEW: Application-level ACK + enqueue pending ack ---
+            // 1) Issue messageAck to client
+            let client_id_json = serde_json::to_value(&payload.id).unwrap_or(serde_json::Value::Null);
+            issue_outbound(ev.room_id.clone(), ChatEvent::MessageAck, serde_json::json!({
+              "clientId": client_id_json
+            }));
+
+            // 2) Enqueue pending ack (idempotent)
+            let pool_owned = self.pool.clone();
+            let room_id_for_enqueue = ev.room_id.clone();
+            let sender_id_for_enqueue = payload.sender_id;
+            // Parse client_id as UUID string if necessary
+            let client_id_for_enqueue_opt = payload.id.as_ref().and_then(|v| Some(v.as_str())).and_then(|s| uuid::Uuid::parse_str(s).ok());
+
+            if let Some(client_id_for_enqueue) = client_id_for_enqueue_opt {
+              actix::spawn(async move {
+                let mut pool = DbPool::Pool(&pool_owned);
+                let _ = lemmy_db_views_chat_pending_ack::enqueue_pending(
+                  &mut pool,
+                  room_id_for_enqueue,
+                  sender_id_for_enqueue,
+                  Some(client_id_for_enqueue),
+                ).await;
+              });
+            }
           }
         } else {
           // still notify listeners to keep flow consistent
@@ -122,7 +152,46 @@ impl Handler<BridgeMessage> for PhoenixManager {
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
-      // ---------------------- READ ----------------------
+      AnyIncomingEvent::AckConfirm(ev) => {
+        // 2) NEW: run DB-side removal from pending_sender_ack (idempotent)
+        //    Use helper to parse camelCase payload and call chat_pending_ack::ack_confirm.
+        //    Fire-and-forget to avoid blocking the actor loop.
+        {
+          // Clone the pool to avoid borrowing `self` across the spawned task.
+          let pool_owned = self.pool.clone();
+          let any = AnyIncomingEvent::AckConfirm(ev.clone());
+          actix::spawn(async move {
+            let mut pool = DbPool::Pool(&pool_owned);
+            let _ = handle_ack_event(any, &mut pool).await;
+          });
+        }
+        Box::pin(async move {})
+      }
+      AnyIncomingEvent::SyncPending(ev) => {
+        if let Some(p) = ev.payload.clone() {
+          let pool_owned = self.pool.clone();
+          let topic = ev.topic.clone();
+          actix::spawn(async move {
+            let mut pool = DbPool::Pool(&pool_owned);
+            match lemmy_db_views_chat_pending_ack::ack_reminder(
+              &mut pool,
+              &AckReminderQuery { room_id: p.room_id, sender_id: p.sender_id, limit: Some(200) }
+            ).await {
+              Ok(reminder) => {
+                let _ = push_to_session(
+                  &topic, // assumed present in payload; otherwise derive from room_id
+                  &ChatEvent::SyncPending,
+                  json!({ "clientIds": reminder.client_ids })
+                );
+              }
+              Err(e) => {
+                tracing::error!("ack_reminder failed: {}", e);
+              }
+            }
+          });
+        }
+        Box::pin(async move {})
+      }
       AnyIncomingEvent::ReadUpTo(ev) => {
         let mut json = ev
           .payload
@@ -156,76 +225,44 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::Join(ev) => {
         if let Some(payload) = ev.payload.clone() {
           let channel_name = ev.topic.clone();
-          let outbound_event_for_cast = ev.event.clone();
+          let outbound_event = ev.event.clone();
           let room_id = ev.room_id.clone();
           let sender_id = payload.sender_id;
-          let content_json = ev
-            .payload
-            .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-            .unwrap_or(serde_json::Value::Null);
+          // keep original payload as JSON once
+          let content_json = serde_json::to_value(&payload).unwrap_or(serde_json::Value::Null);
           let this = self.clone();
+
           Box::pin(async move {
-            let arc_chan_res = get_or_create_channel(channels, socket, &channel_name).await;
-            if let Ok(arc_chan) = arc_chan_res {
-              // Guard against hanging here if the status stream isn't ready yet
+            if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
+              // Build once
+              let phoenix_event = Event::from_string(outbound_event.to_string_value());
+              let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
+              let payload: Payload = Payload::binary_from_bytes(payload_bytes);
+
+              // Try to read current status quickly (non-blocking semantics)
               let status: Option<ChannelStatus> =
                 timeout(Duration::from_millis(300), arc_chan.statuses().status())
                   .await
-                  .ok() // timeout -> None
-                  .and_then(|res| res.ok()); // Err -> None
+                  .ok()
+                  .and_then(|res| res.ok());
 
-              if let Some(status) = status {
-                let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-                let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
-                let payload: Payload = Payload::binary_from_bytes(payload_bytes);
-                tracing::debug!(
-                  "PHX cast: event={} status={:?} channel={}",
-                  outbound_event_for_cast.to_string_value(),
-                  status,
-                  channel_name
-                );
-                match status {
-                  ChannelStatus::Joined => {
-                    let _ = this
-                      .presence
-                      .send(OnlineJoin {
-                        room_id,
-                        local_user_id: sender_id,
-                        started_at: Utc::now(),
-                      })
-                      .await;
-                    send_event_to_channel(arc_chan, phoenix_event, payload).await
-                  }
-                  _ => {
-                    let _ = this
-                      .presence
-                      .send(OnlineJoin {
-                        room_id,
-                        local_user_id: sender_id,
-                        started_at: Utc::now(),
-                      })
-                      .await;
-                    let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
-                    send_event_to_channel(arc_chan, phoenix_event, payload).await;
-                  }
-                }
-              } else {
-                // No status available yet (timeout or error). Proceed with a safe join attempt.
-                let phoenix_event = Event::from_string(outbound_event_for_cast.to_string_value());
-                let payload_bytes = serde_json::to_vec(&content_json).unwrap_or_default();
-                let payload: Payload = Payload::binary_from_bytes(payload_bytes);
+              // Mark presence (always)
+              let _ = this
+                .presence
+                .send(OnlineJoin {
+                  room_id,
+                  local_user_id: sender_id,
+                  started_at: Utc::now(),
+                })
+                .await;
 
-                let _ = this
-                  .presence
-                  .send(OnlineJoin {
-                    room_id,
-                    local_user_id: sender_id,
-                    started_at: Utc::now(),
-                  })
-                  .await;
+              // Join only if not already joined (or unknown status)
+              if !matches!(status, Some(ChannelStatus::Joined)) {
                 let _ = arc_chan.join(Duration::from_secs(JOIN_TIMEOUT_SECS)).await;
-                send_event_to_channel(arc_chan, phoenix_event, payload).await;
               }
+
+              // Cast the event
+              send_event_to_channel(arc_chan, phoenix_event, payload).await;
             }
           })
         } else {
@@ -234,7 +271,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }
       AnyIncomingEvent::Heartbeat(ev) => {
         if let Some(payload) = ev.payload.clone() {
-          let room_id = ev.room_id.clone();
           let sender_id = payload.sender_id;
           let this = self.clone();
           Box::pin(async move {
@@ -242,7 +278,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let _ = this
               .presence
               .send(Heartbeat {
-                room_id,
                 local_user_id: sender_id,
                 client_time: None,
               })
@@ -260,6 +295,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       }),
 
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
+      _ => Box::pin(async move {})
     }
   }
 }

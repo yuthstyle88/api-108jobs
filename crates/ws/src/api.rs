@@ -22,22 +22,28 @@ pub struct RegisterClientMsg {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ChatEvent {
-    #[serde(rename = "phx_join")]
+    #[serde(rename = "phxJoin")]
     #[default]
     PhxJoin,
-    #[serde(rename = "phx_leave")]
+    #[serde(rename = "phxLeave")]
     PhxLeave,
     #[serde(rename = "heartbeat")]
     Heartbeat,
     #[serde(rename = "chat:message")]
     Message,
+    #[serde(rename = "chat:messageAck")]
+    MessageAck,
+    #[serde(rename = "chat:ack")]
+    AckConfirm,
+    #[serde(rename = "chat:sync")]
+    SyncPending,
     #[serde(rename = "chat:update")]
     Update,
     #[serde(rename = "chat:read")]
     Read,
-    #[serde(rename = "chat:read_up_to")]
+    #[serde(rename = "readUpTo")]
     ReadUpTo,
-    #[serde(rename = "chat:active_rooms")]
+    #[serde(rename = "chat:activeRooms")]
     ActiveRooms,
     #[serde(rename = "chat:typing")]
     Typing,
@@ -54,6 +60,7 @@ pub enum ChatEvent {
 pub enum MessageStatus {
     #[default]
     Pending,
+    Retrying,
     Sent,
     Failed,
 }
@@ -69,6 +76,18 @@ pub struct JoinPayload {
 #[serde(rename_all = "camelCase")]
 pub struct HeartbeatPayload {
     pub sender_id: LocalUserId,
+}#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AckConfirmPayload {
+    pub sender_id: LocalUserId,
+    pub room_id: ChatRoomId,
+    pub client_ids: Vec<LocalUserId>,
+}
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncPendingPayload {
+    pub sender_id: LocalUserId,
+    pub room_id: ChatRoomId,
 }
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -4,7 +4,7 @@ use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
 use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
-  set_default_bank_account,
+  set_default_bank_account, update_bank_account,
 };
 use lemmy_api::local_user::exchange::exchange_key;
 use lemmy_api::local_user::profile::visit_profile;
@@ -112,6 +112,7 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
+use lemmy_api_crud::site::read::health;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -146,6 +147,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/site")
             .route("", get().to(get_site))
+            .route("/health", get().to(health))
             .route("", post().to(create_site))
             .route("", put().to(update_site))
             .route("/icon", post().to(upload_site_icon))
@@ -286,6 +288,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/bank-account")
                 .route("", post().to(create_bank_account))
                 .route("", get().to(list_user_bank_accounts))
+                .route("", put().to(update_bank_account))
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
             )
@@ -313,7 +316,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/hidden", get().to(list_person_hidden))
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
-            .route("/reviews", post().to(submit_user_review))
             // Wallet service scope
             .service(scope("/wallet").route("", get().to(get_wallet)))
             // Bank account management scope

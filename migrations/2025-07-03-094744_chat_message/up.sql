@@ -1,6 +1,6 @@
 CREATE TABLE chat_message
 (
-    id         serial PRIMARY KEY,
+    id         BIGSERIAL PRIMARY KEY,
     msg_ref_id varchar     NOT NULL,
     room_id    varchar     NOT NULL REFERENCES chat_room
         ON UPDATE CASCADE ON DELETE CASCADE,

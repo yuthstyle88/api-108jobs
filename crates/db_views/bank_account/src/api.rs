@@ -2,6 +2,7 @@ use crate::BankAccountView;
 use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use lemmy_db_schema::source::user_bank_account::BankAccount;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -51,6 +52,20 @@ pub struct BankAccountForm {
   pub verification_image: Option<String>, // Base64 encoded image or image path
 }
 
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Update an existing bank account for user.
+pub struct UpdateBankAccount {
+  pub bank_account_id: BankAccountId,
+  pub bank_id: Option<BankId>,
+  pub account_number: Option<String>,
+  pub account_name: Option<String>,
+  pub is_default: Option<bool>,
+  pub verification_image: Option<String>, // Base64 encoded image or image path
+}
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -82,7 +97,7 @@ pub struct BankResponse {
 #[serde(rename_all = "camelCase")]
 /// Bank account operation response.
 pub struct BankAccountOperationResponse {
-  pub bank_account_id: BankAccountId,
+  pub bank_account: BankAccount,
   pub success: bool,
 }
 

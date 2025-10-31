@@ -142,6 +142,7 @@ pub async fn save_user_settings(
     avatar: avatar_url,
     portfolio_pics: Some(Some(portfolio_pics_json)),
     work_samples: Some(Some(work_samples_json)),
+    available: data.available,
     ..Default::default()
   };
 

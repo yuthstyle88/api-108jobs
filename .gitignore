@@ -24,6 +24,7 @@ api_tests/pict-rs
 
 # pictrs data
 pictrs/
+config/
 
 # The generated typescript bindings
 bindings

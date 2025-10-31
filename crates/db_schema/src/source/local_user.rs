@@ -42,6 +42,7 @@ pub struct LocalUser {
   /// Whether to show read posts.
   pub show_read_posts: bool,
   /// Whether their multilang has been verified.
+  pub accepted_terms: bool,
   pub email_verified: bool,
   /// Whether their registration application has been accepted.
   pub accepted_application: bool,
@@ -108,6 +109,8 @@ pub struct LocalUserInsertForm {
   #[new(default)]
   pub show_read_posts: Option<bool>,
   #[new(default)]
+  pub accepted_terms: Option<bool>,
+  #[new(default)]
   pub email_verified: Option<bool>,
   #[new(default)]
   pub accepted_application: Option<bool>,
@@ -168,6 +171,7 @@ pub struct LocalUserUpdateForm {
   pub send_notifications_to_email: Option<bool>,
   pub show_bot_accounts: Option<bool>,
   pub show_read_posts: Option<bool>,
+  pub accepted_terms: Option<bool>,
   pub email_verified: Option<bool>,
   pub accepted_application: Option<bool>,
   pub totp_2fa_secret: Option<Option<String>>,

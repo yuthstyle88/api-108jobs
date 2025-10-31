@@ -1,7 +1,4 @@
-use crate::api::{
-  ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload,
-  IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload,
-};
+use crate::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
 use lemmy_utils::error::FastJobError;
 
 use serde::{Deserialize, Serialize};
@@ -13,6 +10,7 @@ impl FromStr for MessageStatus {
     match s {
       "pending" => Ok(MessageStatus::Pending),
       "sent" => Ok(MessageStatus::Sent),
+      "retrying" => Ok(MessageStatus::Retrying),
       "failed" => Ok(MessageStatus::Failed),
       other => Err(ConvertError::UnknownStatus(other.to_string())),
     }
@@ -22,13 +20,19 @@ impl FromStr for ChatEvent {
   type Err = FastJobError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Ok(match s {
-      "phx_join" => ChatEvent::PhxJoin,
-      "phx_leave" => ChatEvent::PhxLeave,
+      // Phoenix system events: accept both snake_case and camelCase
+      "phxJoin" => ChatEvent::PhxJoin,
+      "phxLeave" => ChatEvent::PhxLeave,
       "heartbeat" => ChatEvent::Heartbeat,
+
+      // Chat app events (camelCase per FE)
       "chat:message" => ChatEvent::Message,
+      "messageAck" => ChatEvent::MessageAck,
+      "ackConfirm" => ChatEvent::AckConfirm,
+      "sync:pending" => ChatEvent::SyncPending,
       "chat:read" => ChatEvent::Read,
-      "chat:read-up-to" => ChatEvent::ReadUpTo,
-      "chat:active_rooms" => ChatEvent::ActiveRooms,
+      "readUpTo" => ChatEvent::ReadUpTo,
+      "chat:activeRooms" => ChatEvent::ActiveRooms,
       "chat:typing" => ChatEvent::Typing,
       "typing:start" => ChatEvent::TypingStart,
       "chat:stop" => ChatEvent::TypingStop,
@@ -41,13 +45,19 @@ impl FromStr for ChatEvent {
 impl ChatEvent {
   pub fn as_str(&self) -> &'static str {
     match self {
-      ChatEvent::PhxJoin => "phx_join",
-      ChatEvent::PhxLeave => "phx_leave",
+      // Phoenix system events (snake_case)
+      ChatEvent::PhxJoin => "phxJoin",
+      ChatEvent::PhxLeave => "phxLeave",
       ChatEvent::Heartbeat => "heartbeat",
+
+      // Chat app events
       ChatEvent::Message => "chat:message",
+      ChatEvent::MessageAck => "messageAck",
+      ChatEvent::AckConfirm => "ackConfirm",
+      ChatEvent::SyncPending => "sync:pending",
       ChatEvent::Read => "chat:read",
-      ChatEvent::ReadUpTo => "chat:read_up_to",
-      ChatEvent::ActiveRooms => "chat:active_rooms",
+      ChatEvent::ReadUpTo => "readUpTo",
+      ChatEvent::ActiveRooms => "chat:activeRooms",
       ChatEvent::Typing => "chat:typing",
       ChatEvent::TypingStart => "typing:start",
       ChatEvent::TypingStop => "typing:stop",
@@ -72,24 +82,43 @@ impl MessageModel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "event")]
 pub enum AnyIncomingEvent {
-  #[serde(rename = "phx_join")]
+  // --- Phoenix system events (keep first) ---
+  #[serde(rename = "phxJoin")]
   Join(GenericIncomingEvent<JoinPayload>),
-  #[serde(rename = "phx_leave")]
+  #[serde(rename = "phxLeave")]
   Leave(GenericIncomingEvent<serde_json::Value>),
   #[serde(rename = "heartbeat")]
   Heartbeat(GenericIncomingEvent<HeartbeatPayload>),
+
+  // --- Chat application events (grouped, camelCase as per FE) ---
   #[serde(rename = "chat:message")]
   Message(GenericIncomingEvent<MessageModel>),
+
+  #[serde(rename = "messageAck")]
+  MessageAck(GenericIncomingEvent<MessageModel>),
+
+  #[serde(rename = "ackConfirm")]
+  AckConfirm(GenericIncomingEvent<AckConfirmPayload>),
+
+  #[serde(rename = "sync:pending")]
+  SyncPending(GenericIncomingEvent<SyncPendingPayload>),
+
   #[serde(rename = "chat:read")]
   Read(GenericIncomingEvent<ReadPayload>),
-  #[serde(rename = "chat:read_up_to")]
+
+  #[serde(rename = "readUpTo")]
   ReadUpTo(GenericIncomingEvent<ReadPayload>),
-  #[serde(rename = "chat:active_rooms")]
+
+  #[serde(rename = "chat:activeRooms")]
   ActiveRooms(GenericIncomingEvent<ActiveRoomPayload>),
+
   #[serde(rename = "chat:typing")]
   Typing(GenericIncomingEvent<MessageModel>),
+
   #[serde(rename = "chat:update")]
   Update(GenericIncomingEvent<MessageModel>),
+
+  // --- Fallback ---
   #[serde(other)]
   Unknown,
 }
@@ -125,6 +154,24 @@ impl From<IncomingEvent> for AnyIncomingEvent {
         let payload: Option<MessageModel> = serde_json::from_value(ev.payload.clone()).ok();
         AnyIncomingEvent::Message(GenericIncomingEvent {
           event: ChatEvent::Message,
+          room_id: ev.room_id,
+          topic: ev.topic,
+          payload,
+        })
+      }
+      ChatEvent::AckConfirm => {
+        let payload: Option<AckConfirmPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::AckConfirm(GenericIncomingEvent {
+          event: ChatEvent::AckConfirm,
+          room_id: ev.room_id,
+          topic: ev.topic,
+          payload,
+        })
+      }
+      ChatEvent::SyncPending => {
+        let payload: Option<SyncPendingPayload> = serde_json::from_value(ev.payload.clone()).ok();
+        AnyIncomingEvent::SyncPending(GenericIncomingEvent {
+          event: ChatEvent::SyncPending,
           room_id: ev.room_id,
           topic: ev.topic,
           payload,
@@ -176,6 +223,7 @@ impl From<IncomingEvent> for AnyIncomingEvent {
         })
       }
       ChatEvent::Unknown => AnyIncomingEvent::Unknown,
+      _ => AnyIncomingEvent::Unknown,
     }
   }
 }

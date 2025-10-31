@@ -500,7 +500,7 @@ pub struct LoginResponse {
   pub registration_created: bool,
   /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
-  pub application_pending: bool,
+  pub accepted_terms: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -626,6 +626,7 @@ pub struct SaveUserSettings {
   pub portfolio_pics: Option<Vec<PortfolioPic>>,
   /// Your work samples to prove your quality
   pub work_samples: Option<Vec<WorkSample>>,
+  pub available: Option<bool>,
 }
 
 

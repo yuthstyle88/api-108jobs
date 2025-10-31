@@ -21,6 +21,7 @@ pub struct ChatMessage {
   pub status: i16,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  pub sender_ack_confirmed_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]

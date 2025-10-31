@@ -54,13 +54,13 @@ pub async fn update_term(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_terms: false,
   };
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
   if !local_site.site_setup
     || (local_user_view.local_user.email_verified
-      && !local_user_view.local_user.accepted_application)
+      && !local_user_view.local_user.accepted_terms)
   {
     if data.password != data.password_verify {
       Err(FastJobErrorType::PasswordsDoNotMatch)?
@@ -76,7 +76,7 @@ pub async fn update_term(
     )
     .await?;
 
-    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_application, req, &context).await?;
+    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_terms, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

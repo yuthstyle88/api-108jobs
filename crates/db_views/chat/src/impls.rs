@@ -1,14 +1,18 @@
 use crate::api::{GetChatRoomRequest, ListUserChatRooms};
-use crate::{ChatMessageView, ChatRoomView};
+use crate::{ChatMessageView, ChatParticipantView, ChatRoomView};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
+use lemmy_db_schema::source::person::Person;
 use lemmy_db_schema::{
-  newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom, post::Post, comment::Comment},
+  newtypes::{ChatMessageId, ChatRoomId, PaginationCursor},
+  source::{
+    chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom,
+    comment::Comment, post::Post,
+  },
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
-use lemmy_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user};
+use lemmy_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user, person};
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for ChatMessageView {
@@ -98,15 +102,9 @@ impl ChatRoomView {
       None => None,
     };
 
-    let conn = &mut get_conn(pool).await?;
-
     // read participants
     let rid = room.id.clone();
-    let parts = chat_participant::table
-      .filter(chat_participant::room_id.eq(rid))
-      .select(ChatParticipant::as_select())
-      .load::<ChatParticipant>(conn)
-      .await?;
+    let parts = ChatParticipantView::list_for_room(pool, rid).await?;
 
     Ok(ChatRoomView {
       room,
@@ -114,52 +112,6 @@ impl ChatRoomView {
       post,
       current_comment,
     })
-  }
-
-  /// List rooms for a user with participants bundled
-  pub async fn list_for_user(
-    pool: &mut DbPool<'_>,
-    user_id: LocalUserId,
-    limit: Option<i64>,
-  ) -> FastJobResult<Vec<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let limit = limit_fetch(limit)?;
-
-    // first get room ids where user participates
-    let rooms: Vec<ChatRoom> = chat_participant::table
-      .inner_join(chat_room::table.on(chat_participant::room_id.eq(chat_room::id)))
-      .filter(chat_participant::member_id.eq(user_id))
-      .select(ChatRoom::as_select())
-      .limit(limit)
-      .load(conn)
-      .await?;
-
-    // fetch all participants for these rooms
-    let room_ids: Vec<_> = rooms.iter().map(|r| r.id.clone()).collect();
-    let parts: Vec<ChatParticipant> = chat_participant::table
-      .filter(chat_participant::room_id.eq_any(&room_ids))
-      .select(ChatParticipant::as_select())
-      .load(conn)
-      .await?;
-
-    use std::collections::HashMap;
-    let mut grouped: HashMap<ChatRoomId, Vec<ChatParticipant>> = HashMap::new();
-    for p in parts {
-      let rid = p.room_id.clone();
-      grouped.entry(rid).or_default().push(p);
-    }
-
-    Ok(
-      rooms
-        .into_iter()
-        .map(|room| ChatRoomView {
-          participants: grouped.remove(&room.id).unwrap_or_default(),
-          room,
-          post: None,
-          current_comment: None,
-        })
-        .collect(),
-    )
   }
 }
 
@@ -180,5 +132,44 @@ impl TryFrom<GetChatRoomRequest> for ChatRoomId {
   fn try_from(req: GetChatRoomRequest) -> Result<Self, Self::Error> {
     // Currently only contains id; just pass through. Additional checks can be added later.
     Ok(req.id)
+  }
+}
+
+impl ChatParticipantView {
+  #[diesel::dsl::auto_type(no_type_alias)]
+  fn joins() -> _ {
+    use lemmy_db_schema_file::schema::{chat_participant, local_user, person};
+
+    // Join chat_participant -> local_user -> person
+    let local_user_join = local_user::table.on(chat_participant::member_id.eq(local_user::id));
+    let person_join = person::table.on(local_user::person_id.eq(person::id));
+
+    chat_participant::table
+      .inner_join(local_user_join)
+      .inner_join(person_join)
+  }
+
+  pub async fn list_for_room(
+    pool: &mut DbPool<'_>,
+    room_id: ChatRoomId,
+  ) -> FastJobResult<Vec<Self>> {
+    let conn = &mut get_conn(pool).await?;
+
+    use diesel::SelectableHelper;
+    let results = Self::joins()
+      .filter(chat_participant::room_id.eq(room_id))
+      .select((ChatParticipant::as_select(), Person::as_select()))
+      .load::<(ChatParticipant, Person)>(conn)
+      .await?;
+
+    Ok(
+      results
+        .into_iter()
+        .map(|(participant, member_person)| ChatParticipantView {
+          participant,
+          member_person,
+        })
+        .collect(),
+    )
   }
 }

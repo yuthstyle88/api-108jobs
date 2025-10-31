@@ -5,6 +5,7 @@ use lemmy_db_schema::source::{
   local_user::LocalUser, post::Post, comment::Comment,
 };
 use serde::{Deserialize, Serialize};
+use lemmy_db_schema::source::person::Person;
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -36,7 +37,17 @@ pub struct ChatMessageView {
 pub struct ChatRoomView {
   pub room: ChatRoom,
   // Not selectable by Diesel; assembled separately via additional query
-  pub participants: Vec<ChatParticipant>,
+  pub participants: Vec<ChatParticipantView>,
   pub post: Option<Post>,
   pub current_comment: Option<Comment>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// A chat participant view. Not a Diesel selectable struct; constructed manually.
+pub struct ChatParticipantView {
+  pub participant: ChatParticipant,
+  pub member_person: Person,
 }

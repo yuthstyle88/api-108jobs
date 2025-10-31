@@ -106,6 +106,8 @@ jobs:
           # Start systemd service for prod and dev branches (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
+            # Reload units then start (explicit)
+            sudo -n systemctl daemon-reload
             sudo -n systemctl start "${SERVICE_NAME}.service" || true
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to become active…"

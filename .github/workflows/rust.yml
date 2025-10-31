@@ -76,6 +76,8 @@ jobs:
           echo "Build release binary: ${BIN_NAME}"
           cargo build --release --bin "$BIN_NAME"
           echo "Remote whoami: $(whoami)"
+          id
+          groups
           sudo -n -l | head -n 20 || true
           
           # Stop service before replacing binary to avoid in-use file issues (no fallbacks)

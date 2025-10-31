@@ -111,19 +111,22 @@ jobs:
           # Start systemd service for prod and dev branches
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
+            # Start systemd service (support both NOPASSWD and normal sudo)
             if sudo -n -v 2>/dev/null; then
               sudo -n systemctl daemon-reload
               sudo -n systemctl start "${SERVICE_NAME}.service"
-              sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | head -n 50
-              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service"; then
-                echo "✅ ${SERVICE_NAME} started successfully."
-              else
-                echo "❌ Failed to start ${SERVICE_NAME}. Check logs."
-                sudo -n systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 20 || true
-                exit 1
-              fi
             else
-              echo "Skip start (sudo NOPASSWD not available)"
+              echo "sudo NOPASSWD not available, attempting normal start"
+              sudo systemctl daemon-reload
+              sudo systemctl start "${SERVICE_NAME}.service"
+            fi
+            # Verify start
+            if sudo systemctl is-active --quiet "${SERVICE_NAME}.service"; then
+              echo "✅ ${SERVICE_NAME} started successfully."
+            else
+              echo "❌ Failed to start ${SERVICE_NAME}. Showing last logs..."
+              sudo systemctl --no-pager -l status "${SERVICE_NAME}.service" | tail -n 50 || true
+              exit 1
             fi
           else
             echo "Branch ${BRANCH}: skip systemd start"

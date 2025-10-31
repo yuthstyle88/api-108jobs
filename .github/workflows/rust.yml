@@ -80,21 +80,24 @@ jobs:
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Stopping systemd service: ${SERVICE_NAME}"
             if sudo -n -v 2>/dev/null; then
-             sudo -n systemctl stop "${SERVICE_NAME}.service" || true
-             echo "Waiting up to 20s for ${SERVICE_NAME} to stop..."
-             for i in {1..20}; do
-               if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
-                 sleep 1
-               else
-                 echo "${SERVICE_NAME} stopped successfully."
-                 break
-               fi
-             done
-             if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
-               echo "[WARN] ${SERVICE_NAME} did not stop within 20s."
-             fi
+              sudo -n systemctl stop "${SERVICE_NAME}.service" || true
             else
-              echo "Skip stop (sudo NOPASSWD not available)"
+              echo "sudo NOPASSWD not available, attempting normal stop"
+              sudo systemctl stop "${SERVICE_NAME}.service" || true
+            fi
+
+            echo "Waiting up to 20s for ${SERVICE_NAME} to stop..."
+            for i in {1..20}; do
+              if sudo systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
+                sleep 1
+              else
+                echo "${SERVICE_NAME} stopped successfully."
+                break
+              fi
+            done
+
+            if sudo systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
+              echo "[WARN] ${SERVICE_NAME} did not stop within 20s."
             fi
           fi
 

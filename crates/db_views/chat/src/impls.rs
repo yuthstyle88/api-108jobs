@@ -176,12 +176,12 @@ impl ChatRoomView {
             .last_message
             .as_ref()
             .and_then(|m| Some(m.created_at))
-            .unwrap_or_default();
+            .unwrap_or(a.room.created_at);
           let b_time = b
             .last_message
             .as_ref()
             .and_then(|m| Some(m.created_at))
-            .unwrap_or_default();
+            .unwrap_or(b.room.created_at);
           b_time.cmp(&a_time)
         });
         Ok(collected.into_iter().map(|(_, room)| room).collect())
@@ -198,12 +198,12 @@ impl ChatRoomView {
             .last_message
             .as_ref()
             .and_then(|m| Some(m.created_at))
-            .unwrap_or_default();
+            .unwrap_or(a.room.created_at);
           let b_time = b
             .last_message
             .as_ref()
             .and_then(|m| Some(m.created_at))
-            .unwrap_or_default();
+            .unwrap_or(b.room.created_at);
           b_time.cmp(&a_time)
         });
         Ok(out)

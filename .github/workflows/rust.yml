@@ -43,7 +43,8 @@ jobs:
           OUT_NAME="${BIN_NAME}"
           APP_PATH="${{ env.APP_PATH }}"
           SERVICE_NAME="${{ env.SERVICE_NAME }}"
-
+          APP="${{ env.APP }}"
+          
           echo "Local → BRANCH=${BRANCH}, BIN_NAME=${BIN_NAME}, OUT_NAME=${OUT_NAME}"
           echo "Remote → ${APP_PATH}, service=${SERVICE_NAME}"
 

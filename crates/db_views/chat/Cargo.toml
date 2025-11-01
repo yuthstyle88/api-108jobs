@@ -27,9 +27,10 @@ lemmy_utils = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }
-chrono = { workspace = true }
+futures-util = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 i-love-jesus = { workspace = true, optional = true }
+futures = "0.3.31"
 
 [lints]
 workspace = true

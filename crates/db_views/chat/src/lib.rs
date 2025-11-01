@@ -6,6 +6,7 @@ use lemmy_db_schema::source::{
 };
 use serde::{Deserialize, Serialize};
 use lemmy_db_schema::source::person::Person;
+use lemmy_db_schema::source::workflow::Workflow;
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -40,6 +41,8 @@ pub struct ChatRoomView {
   pub participants: Vec<ChatParticipantView>,
   pub post: Option<Post>,
   pub current_comment: Option<Comment>,
+  pub last_message: Option<ChatMessage>,
+  pub workflow: Option<Workflow>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

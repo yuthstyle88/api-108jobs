@@ -2,10 +2,7 @@ use crate::{ChatMessageView, ChatRoomView};
 use lemmy_db_schema::newtypes::{
   ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
 };
-use lemmy_db_schema::source::chat_participant::ChatParticipant;
-use lemmy_db_schema::source::chat_room::ChatRoom;
 use lemmy_db_schema::source::last_read::LastRead;
-use lemmy_db_schema::source::workflow::Workflow;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -29,32 +26,14 @@ pub struct PeerReadQuery {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LastMessage {
-  pub content: String,
-  pub timestamp: String,
-  pub sender_id: LocalUserId,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ChatRoomWithParticipants {
-  pub room: ChatRoom,
-  pub participants: Vec<ChatParticipant>,
-  pub last_message: Option<LastMessage>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ChatRoomResponse {
   pub room: ChatRoomView,
-  pub last_message: Option<LastMessage>,
-  pub workflow: Option<Workflow>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListUserChatRoomsResponse {
-  pub rooms: Vec<ChatRoomWithParticipants>,
+  pub rooms: Vec<ChatRoomView>,
 }
 
 #[derive(Debug, Serialize)]
@@ -113,17 +92,13 @@ pub struct JoinRoomQuery {
   /// Phoenix Socket(..., { params: { token } }) → ?token=...
   #[serde(default)]
   pub token: Option<String>,
-
   /// FE อาจไม่ส่ง room มาทาง query (จะได้จาก topic ตอน phx_join)
   #[serde(alias = "roomId", alias = "room_id", alias = "room", default)]
   pub room_id: String,
-
   #[serde(alias = "roomName", alias = "room_name", default)]
   pub room_name: Option<String>,
-
   #[serde(alias = "userId", alias = "user_id", default)]
   pub local_user_id: Option<i32>,
-
   /// เก็บพารามิเตอร์อื่น ๆ (เช่น vsn) ป้องกัน deserialize error
   #[serde(flatten)]
   pub extra: HashMap<String, String>,

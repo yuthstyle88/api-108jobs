@@ -342,4 +342,6 @@ pub enum TopupStatus {
   Pending,
   /// Payment was successful
   Success,
+  /// payment was expired
+  Expired,
 }

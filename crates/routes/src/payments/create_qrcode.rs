@@ -1,7 +1,7 @@
 use crate::payments::get_token::fetch_scb_token;
-use crate::utils::parse_expiry_time;
 use actix_web::web::{Data, Json};
 use actix_web::HttpResponse;
+use chrono::{Duration, Utc};
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::source::wallet_topup::{WalletTopup, WalletTopupInsertForm};
 use lemmy_db_schema::traits::Crud;
@@ -128,7 +128,7 @@ pub async fn create_qrcode(
     .await?;
 
   if let Some(ref data) = res.data {
-    let expiry_time = parse_expiry_time(&data.expiry_time);
+    let expiry_time = Utc::now() + Duration::minutes(1);
 
     let wallet_topup_insert_form = WalletTopupInsertForm {
       local_user_id: local_user_view.local_user.id,

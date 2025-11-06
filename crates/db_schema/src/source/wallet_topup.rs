@@ -27,6 +27,7 @@ pub struct WalletTopup {
   pub qr_id: String,
   pub cs_ext_expiry_time: DateTime<Utc>,
   pub status: TopupStatus,
+  pub transferred: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
   pub paid_at: Option<DateTime<Utc>>,
@@ -54,4 +55,5 @@ pub struct WalletTopupUpdateForm {
   pub status: Option<TopupStatus>,
   pub updated_at: Option<DateTime<Utc>>,
   pub paid_at: Option<Option<DateTime<Utc>>>,
+  pub transferred: Option<bool>,
 }

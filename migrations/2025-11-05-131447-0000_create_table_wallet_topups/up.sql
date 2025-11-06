@@ -1,4 +1,4 @@
-CREATE TYPE topup_status AS ENUM ('Pending', 'Success');
+CREATE TYPE topup_status AS ENUM ('Pending', 'Success', 'Expired');
 
 CREATE TABLE wallet_topups
 (
@@ -13,7 +13,7 @@ CREATE TABLE wallet_topups
     qr_id              TEXT             NOT NULL UNIQUE,
     cs_ext_expiry_time TIMESTAMPTZ      NOT NULL,
     status             topup_status     NOT NULL DEFAULT 'Pending',
-
+    transferred        boolean          NOT NULL DEFAULT false,
     -- Metadata
     created_at         TIMESTAMPTZ      NOT NULL DEFAULT now(),
     updated_at         TIMESTAMPTZ      NOT NULL DEFAULT now(),

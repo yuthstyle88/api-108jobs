@@ -37,6 +37,7 @@ use lemmy_utils::{
 };
 use std::time::Duration;
 
+use lemmy_routes::utils::scheduled_tasks::setup;
 use lemmy_ws::broker::{phoenix_manager::PhoenixManager, presence_manager::PresenceManager};
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
@@ -175,8 +176,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   // Presence manager: timeout & sweep configuration
   let heartbeat_ttl = Duration::from_secs(45);
   // Start a lightweight system broker for broadcasting presence events
-  let presence_manager = PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()))
-      .start();
+  let presence_manager =
+    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone())).start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -193,7 +194,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     SETTINGS.get_phoenix_url(),
     pool.clone(),
     presence_manager.clone(),
-    redis_client.clone()
+    redis_client.clone(),
   )
   .await
   .start();
@@ -217,6 +218,10 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
 
   let mut interrupt = tokio::signal::unix::signal(SignalKind::interrupt())?;
   let mut terminate = tokio::signal::unix::signal(SignalKind::terminate())?;
+
+  if let Err(err) = setup(Data::new(context.clone())).await {
+    tracing::error!("Setup failed in HTTP init: {err:?}");
+  }
 
   tokio::select! {
     _ = tokio::signal::ctrl_c() => {
@@ -268,7 +273,6 @@ fn create_http_server(
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
     let rate_limit = context.rate_limit_cell().clone();
-
     let cors_config = cors_config(&settings);
 
     // Create a more efficient middleware stack with optimized ordering

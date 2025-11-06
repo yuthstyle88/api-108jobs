@@ -90,6 +90,7 @@ pub async fn inquire_qrcode(
         status: Some(TopupStatus::Success),
         updated_at: Some(Utc::now()),
         paid_at: Some(Some(data.transaction_dateand_time.parse()?)),
+        transferred: None,
       };
       let _updated = WalletTopup::update_by_qr_id(
         &mut context.pool(),

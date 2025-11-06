@@ -136,7 +136,7 @@ impl WalletTopupView {
 
     let pq = paginate(
       query,
-      SortDirection::Asc,
+      SortDirection::Desc,
       cursor_data,
       None,
       params.page_back,

@@ -1354,6 +1354,7 @@ diesel::table! {
         qr_id -> Text,
         cs_ext_expiry_time -> Timestamptz,
         status -> TopupStatus,
+        transferred -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         paid_at -> Nullable<Timestamptz>,

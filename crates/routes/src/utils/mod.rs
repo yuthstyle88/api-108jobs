@@ -1,5 +1,4 @@
 use actix_cors::Cors;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use lemmy_utils::settings::structs::Settings;
 use std::path::{Path, PathBuf};
 
@@ -60,11 +59,4 @@ pub fn sanitize_filename(name: &str) -> String {
       _ => '-',
     })
     .collect()
-}
-
-pub fn parse_expiry_time(s: &str) -> DateTime<Utc> {
-  NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-    .map(|naive| DateTime::from_naive_utc_and_offset(naive, Utc))
-    .or_else(|_| DateTime::parse_from_rfc3339(s).map(|dt| dt.with_timezone(&Utc)))
-    .unwrap_or_else(|_| Utc::now()) // fallback if parsing fails
 }

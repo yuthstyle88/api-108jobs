@@ -46,7 +46,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::Message(ev) => {
         if let Some(mut payload) = ev.payload.clone() {
           // mark status as Sent for outbound consumers
-          payload.status = Some(MessageStatus::Sent);
+          payload.status = Some(MessageStatus::Delivered);
           let json = serde_json::to_value(&payload).unwrap_or(serde_json::Value::Null);
           issue_outbound(ev.room_id.clone(), ChatEvent::Message, json);
 

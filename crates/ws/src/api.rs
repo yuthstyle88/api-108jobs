@@ -59,9 +59,10 @@ pub enum ChatEvent {
 #[serde(rename_all = "lowercase")]
 pub enum MessageStatus {
     #[default]
-    Pending,
+    Sending,
     Retrying,
-    Sent,
+    Delivered,
+    Read,
     Failed,
 }
 

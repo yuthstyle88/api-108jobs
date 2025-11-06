@@ -45,3 +45,4 @@ pub mod chat_participant;
 pub mod user_review;
 pub mod last_read;
 pub mod pending_sender_ack;
+pub mod wallet_topup;

@@ -82,6 +82,16 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "tx_kind"))]
   pub struct TxKind;
 
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "topup_status"))]
+  pub struct TopupStatus;
+
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "language_level"))]
   pub struct LanguageLevel;
@@ -1332,6 +1342,24 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::TopupStatus;
+
+    wallet_topups (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        amount -> Float8,
+        currency_name -> Text,
+        qr_id -> Text,
+        cs_ext_expiry_time -> Timestamptz,
+        status -> TopupStatus,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        paid_at -> Nullable<Timestamptz>,
+    }
+}
+
 diesel::joinable!(user_bank_accounts -> banks (bank_id));
 diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
@@ -1460,6 +1488,7 @@ diesel::joinable!(certificates -> person (person_id));
 diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
+diesel::joinable!(wallet_topups -> local_user (local_user_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1542,6 +1571,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   job_budget_plan,
   user_review,
   identity_cards,
+  wallet_topups,
 );
-
-

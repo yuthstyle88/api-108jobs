@@ -1,16 +1,15 @@
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::str::FromStr;
 use std::{
   fmt,
   fmt::{Display, Formatter},
   ops::Deref,
 };
-use std::str::FromStr;
 use url::Url;
-use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Neg};
 #[cfg(feature = "full")]
 use {
-
   diesel::{
     backend::Backend,
     deserialize::FromSql,
@@ -41,7 +40,6 @@ impl fmt::Display for PostId {
 /// The chat message id.
 pub struct ChatMessageId(pub i64);
 
-
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -53,7 +51,6 @@ impl fmt::Display for ChatMessageRefId {
     write!(f, "{}", self.0)
   }
 }
-
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -97,7 +94,7 @@ pub struct LocalUserId(pub i32);
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The local user id.
+/// The local pair user id.
 pub struct LocalPairUserId(pub i32, pub i32);
 
 impl TryFrom<String> for LocalPairUserId {
@@ -127,6 +124,13 @@ impl TryFrom<&str> for LocalPairUserId {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The wallet id.
 pub struct WalletId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The wallet id.
+pub struct WalletTopupId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -162,7 +166,7 @@ pub struct WorkflowId(pub i32);
 /// The Job Budget Plan id.
 pub struct JobBudgetPlanId(pub i32);
 #[derive(
-  Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize
+  Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -186,35 +190,47 @@ impl PartialOrd<i32> for Coin {
 impl Add for Coin {
   type Output = Coin;
   #[inline]
-  fn add(self, rhs: Coin) -> Coin { Coin(self.0 + rhs.0) }
+  fn add(self, rhs: Coin) -> Coin {
+    Coin(self.0 + rhs.0)
+  }
 }
 
 impl Sub for Coin {
   type Output = Coin;
   #[inline]
-  fn sub(self, rhs: Coin) -> Coin { Coin(self.0 - rhs.0) }
+  fn sub(self, rhs: Coin) -> Coin {
+    Coin(self.0 - rhs.0)
+  }
 }
 
 impl AddAssign for Coin {
   #[inline]
-  fn add_assign(&mut self, rhs: Coin) { self.0 += rhs.0; }
+  fn add_assign(&mut self, rhs: Coin) {
+    self.0 += rhs.0;
+  }
 }
 
 impl SubAssign for Coin {
   #[inline]
-  fn sub_assign(&mut self, rhs: Coin) { self.0 -= rhs.0; }
+  fn sub_assign(&mut self, rhs: Coin) {
+    self.0 -= rhs.0;
+  }
 }
 
 impl Neg for Coin {
   type Output = Coin;
   #[inline]
-  fn neg(self) -> Coin { Coin(-self.0) }
+  fn neg(self) -> Coin {
+    Coin(-self.0)
+  }
 }
 
 impl Neg for &Coin {
   type Output = Coin;
   #[inline]
-  fn neg(self) -> Coin { Coin(-self.0) }
+  fn neg(self) -> Coin {
+    Coin(-self.0)
+  }
 }
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -262,11 +278,11 @@ impl ChatRoomId {
     s.chars()
       .filter(|&c| {
         // Remove control chars (U+0000..U+001F, U+007F), and common zero-width (U+200B..U+200F, U+FEFF)
-        !(c.is_control() ||
-          matches!(c,
+        !(c.is_control()
+          || matches!(
+            c,
             '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{200E}' | '\u{200F}' | '\u{FEFF}'
-          )
-        )
+          ))
       })
       .collect::<String>()
       .trim()
@@ -303,13 +319,13 @@ impl ChatRoomId {
     let is_hex = s.len() == 16 && s.chars().all(|c| matches!(c, 'a'..='f' | '0'..='9'));
     let is_uuid = {
       let parts: Vec<&str> = s.split('-').collect();
-      parts.len() == 5 &&
-        parts[0].len() == 8 &&
-        parts[1].len() == 4 &&
-        parts[2].len() == 4 &&
-        parts[3].len() == 4 &&
-        parts[4].len() == 12 &&
-        s.chars().all(|c| c == '-' || c.is_ascii_hexdigit())
+      parts.len() == 5
+        && parts[0].len() == 8
+        && parts[1].len() == 4
+        && parts[2].len() == 4
+        && parts[3].len() == 4
+        && parts[4].len() == 12
+        && s.chars().all(|c| c == '-' || c.is_ascii_hexdigit())
     };
     is_hex || is_uuid
   }
@@ -685,7 +701,6 @@ where
     Ok(DbUrl(Box::new(Url::parse(&str)?)))
   }
 }
-
 
 impl InstanceId {
   pub fn inner(self) -> i32 {

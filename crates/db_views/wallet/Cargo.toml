@@ -22,6 +22,7 @@ full = [
     "lemmy_db_schema/full",
     "diesel",
     "diesel-async",
+    "i-love-jesus",
 ]
 ts-rs = ["dep:ts-rs"]
 
@@ -35,6 +36,7 @@ diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 lemmy_utils = { workspace = true }
 ts-rs = { workspace = true, optional = true }
+i-love-jesus = { workspace = true, optional = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

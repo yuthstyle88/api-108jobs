@@ -334,6 +334,7 @@ pub enum FastJobErrorType {
     CouldntCreatePendingSenderAck,
   CouldntUpdatePendingSenderAck,
     BankAccountAlreadyExistsForThisBank,
+    ExternalApiError,
 }
 
 cfg_if! {

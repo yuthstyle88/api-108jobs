@@ -1,6 +1,6 @@
 use actix_web::{guard, web::*};
 use lemmy_api::admin::bank_account::list_bank_accounts;
-use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
+use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet, admin_list_wallet_topups};
 use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -11,6 +11,7 @@ use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
+use lemmy_api::local_user::list_wallet_topup::list_wallet_topups;
 use lemmy_api::local_user::workflow::{
   approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
@@ -88,6 +89,7 @@ use lemmy_api_crud::community::list::list_communities;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
+use lemmy_api_crud::site::read::health;
 use lemmy_api_crud::{
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -112,7 +114,6 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_api_crud::site::read::health;
 use lemmy_apub::api::list_comments::list_comments;
 use lemmy_apub::api::list_posts::list_posts;
 use lemmy_apub::api::search::search;
@@ -132,7 +133,6 @@ use lemmy_routes::images::{
   },
 };
 use lemmy_routes::payments::create_qrcode::create_qrcode;
-use lemmy_routes::payments::get_token::generate_scb_token;
 use lemmy_routes::payments::inquire::inquire_qrcode;
 use lemmy_utils::rate_limit::RateLimit;
 use lemmy_ws::handler::{get_history, get_last_read, get_peer_status, phoenix_ws};
@@ -317,7 +317,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
-            .service(scope("/wallet").route("", get().to(get_wallet)))
+            .service(scope("/wallet")
+              .route("", get().to(get_wallet))
+              .route("/top-ups", get().to(list_wallet_topups))
+            )
             // Bank account management scope
             .service(scope("/banks").route("", get().to(list_banks)))
             // Services scope for workflow service
@@ -388,7 +391,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/wallet")
                 .route("/top-up", post().to(admin_top_up_wallet))
-                .route("/withdraw", post().to(admin_withdraw_wallet)),
+                .route("/withdraw", post().to(admin_withdraw_wallet))
+                .route("/top-ups", get().to(admin_list_wallet_topups)),
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )
@@ -440,7 +444,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         //scb payment
         .service(
           scope("/scb")
-            .route("/token", post().to(generate_scb_token))
             .route("/qrcode/create", post().to(create_qrcode))
             .route("/inquire", post().to(inquire_qrcode)),
         ),

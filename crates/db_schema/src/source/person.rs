@@ -71,6 +71,7 @@ pub struct Person {
   pub portfolio_pics: Option<JsonValue>,
   pub work_samples: Option<JsonValue>,
   pub available: bool,
+  pub is_secure_message: bool,
 }
 
 #[derive(Clone, derive_new::new)]
@@ -118,6 +119,8 @@ pub struct PersonInsertForm {
   pub work_samples: Option<JsonValue>,
   #[new(default)]
   pub available: Option<bool>,
+  #[new(default)]
+  pub is_secure_message: Option<bool>,
 }
 
 #[derive(Clone, Default)]
@@ -144,6 +147,7 @@ pub struct PersonUpdateForm {
   pub portfolio_pics: Option<Option<JsonValue>>,
   pub work_samples: Option<Option<JsonValue>>,
   pub available: Option<bool>,
+  pub is_secure_message: Option<bool>,
 }
 
 #[skip_serializing_none]

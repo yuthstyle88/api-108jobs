@@ -857,6 +857,7 @@ diesel::table! {
         portfolio_pics -> Nullable<Jsonb>,
         work_samples -> Nullable<Jsonb>,
         available -> Bool,
+        is_secure_message -> Bool,
     }
 }
 

@@ -627,6 +627,7 @@ pub struct SaveUserSettings {
   /// Your work samples to prove your quality
   pub work_samples: Option<Vec<WorkSample>>,
   pub available: Option<bool>,
+  pub is_secure_message: Option<bool>,
 }
 
 

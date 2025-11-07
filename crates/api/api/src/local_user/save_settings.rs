@@ -143,6 +143,7 @@ pub async fn save_user_settings(
     portfolio_pics: Some(Some(portfolio_pics_json)),
     work_samples: Some(Some(work_samples_json)),
     available: data.available,
+    is_secure_message: data.is_secure_message,
     ..Default::default()
   };
 

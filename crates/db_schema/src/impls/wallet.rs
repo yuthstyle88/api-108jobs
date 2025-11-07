@@ -446,7 +446,7 @@ impl WalletModel {
     Self::validate_positive_amount(amount)?;
 
     let conn = &mut get_conn(pool).await?;
-    return conn
+    conn
       .run_transaction(|conn| {
         async move {
           // move funds: platform -> user
@@ -465,7 +465,7 @@ impl WalletModel {
         }
         .scope_boxed()
       })
-      .await;
+      .await
   }
 
   /// Withdraw to platform (user -> platform): must create a pair of journal rows

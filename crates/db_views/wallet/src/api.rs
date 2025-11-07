@@ -1,5 +1,5 @@
 use crate::WalletTopupView;
-use lemmy_db_schema::newtypes::{Coin, PaginationCursor, WalletId};
+use lemmy_db_schema::newtypes::{Coin, LocalUserId, PaginationCursor, WalletId};
 use lemmy_db_schema_file::enums::TopupStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -15,7 +15,6 @@ pub struct GetWallet {
 pub struct UpdateWallet {
   pub amount: Coin,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -34,6 +33,7 @@ pub struct GetWalletResponse {
 /// Add funds to wallet (deposit).
 pub struct DepositWallet {
   pub amount: Coin,
+  pub target_user_id: LocalUserId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -54,7 +54,8 @@ pub struct WalletOperationResponse {
 #[serde(rename_all = "camelCase")]
 /// Admin top up user wallet.
 pub struct AdminTopUpWallet {
-  pub wallet_id: WalletId,
+  pub target_user_id: LocalUserId,
+  pub qr_id: String,
   pub amount: Coin,
   pub reason: String,
 }
@@ -65,7 +66,7 @@ pub struct AdminTopUpWallet {
 #[serde(rename_all = "camelCase")]
 /// Admin withdraw from user wallet.
 pub struct AdminWithdrawWallet {
-  pub wallet_id: WalletId,
+  pub target_user_id: LocalUserId,
   pub amount: Coin,
   pub reason: String,
 }

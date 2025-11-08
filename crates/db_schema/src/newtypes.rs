@@ -136,6 +136,13 @@ pub struct TopUpRequestId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Withdrawal Request id.
+pub struct WithdrawRequestId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The billing id.
 pub struct BillingId(pub i32);
 

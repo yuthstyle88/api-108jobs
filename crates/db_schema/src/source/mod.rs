@@ -52,6 +52,7 @@ pub mod user_review;
 pub mod last_read;
 pub mod pending_sender_ack;
 pub mod top_up_request;
+pub mod withdraw_request;
 
 /// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
 ///

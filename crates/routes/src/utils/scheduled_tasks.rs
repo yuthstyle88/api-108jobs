@@ -5,10 +5,10 @@ use diesel::{dsl::IntervalDsl, sql_query, BoolExpressionMethods, ExpressionMetho
 use diesel_async::RunQueryDsl;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_db_schema::utils::{get_conn, now, DbPool};
-use lemmy_db_schema_file::enums::TopupStatus;
+use lemmy_db_schema_file::enums::TopUpStatus;
 use lemmy_db_schema_file::schema::captcha_answer;
-use lemmy_db_schema_file::schema::wallet_topups::dsl::wallet_topups;
-use lemmy_db_schema_file::schema::wallet_topups::{cs_ext_expiry_time, id, status};
+use lemmy_db_schema_file::schema::top_up_requests::dsl::top_up_requests;
+use lemmy_db_schema_file::schema::top_up_requests::{cs_ext_expiry_time, id, status};
 use lemmy_utils::error::FastJobResult;
 use std::time::Duration;
 use tracing::{info, warn};
@@ -87,12 +87,12 @@ async fn _active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
 async fn update_expired_wallet_topups(pool: &mut DbPool<'_>) -> FastJobResult<()> {
   let mut conn = get_conn(pool).await?;
   let now_utc = Utc::now();
-  let expired_ids: Vec<i32> = wallet_topups
+  let expired_ids: Vec<i32> = top_up_requests
     .filter(
       cs_ext_expiry_time
         .lt(now_utc)
-        .and(status.ne(TopupStatus::Expired))
-        .and(status.ne(TopupStatus::Success)),
+        .and(status.ne(TopUpStatus::Expired))
+        .and(status.ne(TopUpStatus::Success)),
     )
     .select(id)
     .load(&mut conn)
@@ -105,8 +105,8 @@ async fn update_expired_wallet_topups(pool: &mut DbPool<'_>) -> FastJobResult<()
   );
 
   if !expired_ids.is_empty() {
-    let updated = diesel::update(wallet_topups.filter(id.eq_any(&expired_ids)))
-      .set(status.eq(TopupStatus::Expired))
+    let updated = diesel::update(top_up_requests.filter(id.eq_any(&expired_ids)))
+      .set(status.eq(TopUpStatus::Expired))
       .execute(&mut conn)
       .await?;
 

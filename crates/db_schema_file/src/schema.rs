@@ -89,8 +89,18 @@ pub mod sql_types {
     serde::Serialize,
     serde::Deserialize,
   )]
-  #[diesel(postgres_type(name = "topup_status"))]
-  pub struct TopupStatus;
+  #[diesel(postgres_type(name = "top_up_status"))]
+  pub struct TopUpStatus;
+
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "withdraw_status"))]
+  pub struct WithdrawStatus;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "language_level"))]
@@ -1345,20 +1355,37 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use crate::schema::sql_types::TopupStatus;
+    use crate::schema::sql_types::TopUpStatus;
 
-    wallet_topups (id) {
+    top_up_requests (id) {
         id -> Int4,
         local_user_id -> Int4,
         amount -> Float8,
         currency_name -> Text,
         qr_id -> Text,
         cs_ext_expiry_time -> Timestamptz,
-        status -> TopupStatus,
+        status -> TopUpStatus,
         transferred -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         paid_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::WithdrawStatus;
+
+    withdraw_requests (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        wallet_id -> Int4,
+        user_bank_account_id -> Int4,
+        amount -> Int4,
+        status -> WithdrawStatus,
+        reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -1490,7 +1517,7 @@ diesel::joinable!(certificates -> person (person_id));
 diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
-diesel::joinable!(wallet_topups -> local_user (local_user_id));
+diesel::joinable!(top_up_requests -> local_user (local_user_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1573,5 +1600,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   job_budget_plan,
   user_review,
   identity_cards,
-  wallet_topups,
+  top_up_requests,
 );

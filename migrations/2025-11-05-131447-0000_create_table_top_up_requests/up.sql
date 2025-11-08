@@ -1,6 +1,6 @@
-CREATE TYPE topup_status AS ENUM ('Pending', 'Success', 'Expired');
+CREATE TYPE top_up_status AS ENUM ('Pending', 'Success', 'Expired');
 
-CREATE TABLE wallet_topups
+CREATE TABLE top_up_requests
 (
     id                 SERIAL PRIMARY KEY,
 
@@ -12,7 +12,7 @@ CREATE TABLE wallet_topups
     currency_name      TEXT             NOT NULL,
     qr_id              TEXT             NOT NULL UNIQUE,
     cs_ext_expiry_time TIMESTAMPTZ      NOT NULL,
-    status             topup_status     NOT NULL DEFAULT 'Pending',
+    status             top_up_status    NOT NULL DEFAULT 'Pending',
     transferred        boolean          NOT NULL DEFAULT false,
     -- Metadata
     created_at         TIMESTAMPTZ      NOT NULL DEFAULT now(),
@@ -20,10 +20,10 @@ CREATE TABLE wallet_topups
     paid_at            TIMESTAMPTZ, -- when confirmed success
 
     -- Idempotency & concurrency safety
-    CONSTRAINT wallet_topups_unique_pair UNIQUE (local_user_id, qr_id)
+    CONSTRAINT top_ups_unique_pair UNIQUE (local_user_id, qr_id)
 );
 
 -- Performance indexes
-CREATE INDEX idx_wallet_topups_user_id ON wallet_topups (local_user_id);
-CREATE INDEX idx_wallet_topups_status ON wallet_topups (status);
-CREATE INDEX idx_wallet_topups_created_at ON wallet_topups (created_at DESC);
+CREATE INDEX idx_top_up_requests_user_id ON top_up_requests (local_user_id);
+CREATE INDEX idx_top_up_requests_status ON top_up_requests (status);
+CREATE INDEX idx_top_up_requests_created_at ON top_up_requests (created_at DESC);

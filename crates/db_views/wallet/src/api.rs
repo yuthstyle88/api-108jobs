@@ -1,6 +1,6 @@
-use crate::WalletTopupView;
+use crate::TopUpRequestView;
 use lemmy_db_schema::newtypes::{Coin, LocalUserId, PaginationCursor, WalletId};
-use lemmy_db_schema_file::enums::TopupStatus;
+use lemmy_db_schema_file::enums::TopUpStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -90,11 +90,11 @@ pub struct AdminWalletOperationResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Fetches a list of wallet topups for a user.
-pub struct ListWalletTopupsQuery {
+pub struct ListTopUpRequestQuery {
   pub amount_min: Option<f64>,
   pub amount_max: Option<f64>,
   /// Optional filter by status (Pending, Success)
-  pub status: Option<TopupStatus>,
+  pub status: Option<TopUpStatus>,
   /// Optional filter by year of created_at
   pub year: Option<i32>,
   /// Optional filter by month of created_at
@@ -110,8 +110,8 @@ pub struct ListWalletTopupsQuery {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ListWalletTopupsResponse {
-  pub wallet_topups: Vec<WalletTopupView>,
+pub struct ListTopUpRequestResponse {
+  pub top_up_requests: Vec<TopUpRequestView>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,

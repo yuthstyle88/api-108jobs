@@ -5,8 +5,8 @@ use actix_web::{
 };
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::wallet_topup::{WalletTopup, WalletTopupUpdateForm};
-use lemmy_db_schema_file::enums::TopupStatus;
+use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
+use lemmy_db_schema_file::enums::TopUpStatus;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
@@ -86,16 +86,16 @@ pub async fn inquire_qrcode(
     }
 
     if let Some(ref data) = parsed.data {
-      let wallet_topup_update_form = WalletTopupUpdateForm {
-        status: Some(TopupStatus::Success),
+      let update_form = TopUpRequestUpdateForm {
+        status: Some(TopUpStatus::Success),
         updated_at: Some(Utc::now()),
         paid_at: Some(Some(data.transaction_dateand_time.parse()?)),
         transferred: None,
       };
-      let _updated = WalletTopup::update_by_qr_id(
+      let _updated = TopUpRequest::update_by_qr_id(
         &mut context.pool(),
         data.qr_id.clone(),
-        &wallet_topup_update_form,
+        &update_form,
       )
       .await?;
     }

@@ -3,36 +3,36 @@ use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
 use lemmy_api_utils::utils::is_admin;
 use lemmy_db_schema::newtypes::CoinId;
+use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
-use lemmy_db_schema::source::wallet_topup::{WalletTopup, WalletTopupUpdateForm};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{
-  AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListWalletTopupsQuery,
-  ListWalletTopupsResponse,
+  AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListTopUpRequestQuery,
+  ListTopUpRequestResponse,
 };
-use lemmy_db_views_wallet::WalletTopupView;
+use lemmy_db_views_wallet::TopUpRequestView;
 use lemmy_utils::error::FastJobResult;
 use uuid::Uuid;
 
-pub async fn admin_list_wallet_topups(
-  query: Query<ListWalletTopupsQuery>,
+pub async fn admin_list_top_up_requests(
+  query: Query<ListTopUpRequestQuery>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<ListWalletTopupsResponse>> {
+) -> FastJobResult<Json<ListTopUpRequestResponse>> {
   let data = query.into_inner();
   // Ensure admin access
   is_admin(&local_user_view)?;
   let cursor_data = if let Some(cursor) = &data.page_cursor {
-    Some(WalletTopupView::from_cursor(cursor, &mut context.pool()).await?)
+    Some(TopUpRequestView::from_cursor(cursor, &mut context.pool()).await?)
   } else {
     None
   };
-  let items = WalletTopupView::list(&mut context.pool(), None, cursor_data, data).await?;
+  let items = TopUpRequestView::list(&mut context.pool(), None, cursor_data, data).await?;
   let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
   let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
-  Ok(Json(ListWalletTopupsResponse {
-    wallet_topups: items,
+  Ok(Json(ListTopUpRequestResponse {
+    top_up_requests: items,
     next_page,
     prev_page,
   }))
@@ -76,13 +76,13 @@ pub async fn admin_top_up_wallet(
     WalletModel::create_transaction(&mut context.pool(), &form, coin_id, platform_wallet_id)
       .await?;
 
-  let wallet_topup_update_form = WalletTopupUpdateForm {
+  let wallet_topup_update_form = TopUpRequestUpdateForm {
     status: None,
     updated_at: Some(Utc::now()),
     paid_at: None,
     transferred: Some(true),
   };
-  let _updated = WalletTopup::update_by_qr_id(
+  let _updated = TopUpRequest::update_by_qr_id(
     &mut context.pool(),
     data.qr_id.clone(),
     &wallet_topup_update_form,

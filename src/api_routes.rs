@@ -1,17 +1,19 @@
 use actix_web::{guard, web::*};
 use lemmy_api::admin::bank_account::list_bank_accounts;
-use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet, admin_list_wallet_topups};
+use lemmy_api::admin::wallet::{
+  admin_list_top_up_requests, admin_top_up_wallet, admin_withdraw_wallet,
+};
 use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account, update_bank_account,
 };
 use lemmy_api::local_user::exchange::exchange_key;
+use lemmy_api::local_user::list_top_up_requests::list_top_up_requests;
 use lemmy_api::local_user::profile::visit_profile;
 use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
 use lemmy_api::local_user::update_term::update_term;
 use lemmy_api::local_user::wallet::get_wallet;
-use lemmy_api::local_user::list_wallet_topup::list_wallet_topups;
 use lemmy_api::local_user::workflow::{
   approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
@@ -317,9 +319,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
-            .service(scope("/wallet")
-              .route("", get().to(get_wallet))
-              .route("/top-ups", get().to(list_wallet_topups))
+            .service(
+              scope("/wallet")
+                .route("", get().to(get_wallet))
+                .route("/top-ups", get().to(list_top_up_requests)),
             )
             // Bank account management scope
             .service(scope("/banks").route("", get().to(list_banks)))
@@ -392,7 +395,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/wallet")
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet))
-                .route("/top-ups", get().to(admin_list_wallet_topups)),
+                .route("/top-ups", get().to(admin_list_top_up_requests)),
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )

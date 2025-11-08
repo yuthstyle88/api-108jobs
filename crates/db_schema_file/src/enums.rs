@@ -330,13 +330,13 @@ pub enum TxKind {
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::TopupStatus"
+  ExistingTypePath = "crate::schema::sql_types::TopUpStatus"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 /// The wallet top-up status
-pub enum TopupStatus {
+pub enum TopUpStatus {
   /// Waiting for payment confirmation
   #[default]
   Pending,
@@ -344,4 +344,26 @@ pub enum TopupStatus {
   Success,
   /// payment was expired
   Expired,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::WithdrawStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Enum type for withdraw_status
+pub enum WithdrawStatus {
+  /// Pending
+  #[default]
+  Pending,
+  /// Rejected
+  Rejected,
+  /// Completed
+  Completed,
 }

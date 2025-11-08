@@ -1,7 +1,7 @@
 use diesel::{Queryable, Selectable};
 use lemmy_db_schema::source::local_user::LocalUser;
 use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_schema::source::wallet_topup::WalletTopup;
+use lemmy_db_schema::source::top_up_request::TopUpRequest;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
@@ -22,10 +22,10 @@ pub struct WalletView {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A chat wallet topup view, including wallet_topup and local_user.
-pub struct WalletTopupView {
+/// A Top UpRequest view, including top_up_request and local_user.
+pub struct TopUpRequestView {
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub wallet_topup: WalletTopup,
+  pub top_up_request: TopUpRequest,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub local_user: LocalUser,
 }

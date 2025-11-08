@@ -3,7 +3,7 @@ use actix_web::web::{Data, Json};
 use actix_web::HttpResponse;
 use chrono::{Duration, Utc};
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::wallet_topup::{WalletTopup, WalletTopupInsertForm};
+use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestInsertForm};
 use lemmy_db_schema::traits::Crud;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
@@ -130,7 +130,7 @@ pub async fn create_qrcode(
   if let Some(ref data) = res.data {
     let expiry_time = Utc::now() + Duration::minutes(1);
 
-    let wallet_topup_insert_form = WalletTopupInsertForm {
+    let insert_form = TopUpRequestInsertForm {
       local_user_id: local_user_view.local_user.id,
       amount: data.amount.parse().unwrap_or(0.0),
       currency_name: data.currency_name.clone(),
@@ -139,7 +139,7 @@ pub async fn create_qrcode(
       paid_at: None,
     };
 
-    let _created = WalletTopup::create(&mut context.pool(), &wallet_topup_insert_form).await?;
+    let _created = TopUpRequest::create(&mut context.pool(), &insert_form).await?;
   }
 
   Ok(HttpResponse::Ok().json(res))

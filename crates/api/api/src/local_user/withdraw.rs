@@ -43,7 +43,7 @@ pub async fn list_withdraw_requests(
 ) -> FastJobResult<Json<ListWithdrawRequestResponse>> {
   let res = list_withdraw_requests_inner(
     &mut context.pool(),
-    local_user_view.local_user.id,
+    Some(local_user_view.local_user.id),
     query.into_inner(),
   )
   .await?;

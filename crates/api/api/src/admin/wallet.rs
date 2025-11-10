@@ -22,7 +22,7 @@ pub async fn admin_list_top_up_requests(
   is_admin(&local_user_view)?;
   let res = list_top_up_requests_inner(
     &mut context.pool(),
-    Some(local_user_view.local_user.id),
+    None,
     query.into_inner(),
   )
   .await?;
@@ -146,7 +146,7 @@ pub async fn admin_list_withdraw_requests(
   is_admin(&local_user_view)?;
   let res = list_withdraw_requests_inner(
     &mut context.pool(),
-    local_user_view.local_user.id,
+    None,
     query.into_inner(),
   )
   .await?;

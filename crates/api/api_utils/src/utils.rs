@@ -849,7 +849,7 @@ pub async fn list_top_up_requests_inner(
 
 pub async fn list_withdraw_requests_inner(
   pool: &mut DbPool<'_>,
-  local_user_id: LocalUserId,
+  local_user_id: Option<LocalUserId>,
   query: ListWithdrawRequestQuery,
 ) -> FastJobResult<ListWithdrawRequestResponse> {
   let cursor_data = if let Some(cursor) = &query.page_cursor {
@@ -858,7 +858,7 @@ pub async fn list_withdraw_requests_inner(
     None
   };
 
-  let items = WithdrawRequestView::list(pool, Some(local_user_id), cursor_data, query).await?;
+  let items = WithdrawRequestView::list(pool, local_user_id, cursor_data, query).await?;
   let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
   let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
 

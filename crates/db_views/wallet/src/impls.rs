@@ -116,7 +116,7 @@ impl TopUpRequestView {
       .map_err(|_| FastJobErrorType::NotFound.into())
   }
 
-  /// List topups for a given user with filters and pagination
+  /// List top-ups for a given user with filters and pagination
   pub async fn list(
     pool: &mut DbPool<'_>,
     local_user_id: Option<LocalUserId>,

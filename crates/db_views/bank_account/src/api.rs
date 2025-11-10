@@ -1,8 +1,9 @@
 use crate::BankAccountView;
 use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
+use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use lemmy_utils::utils::validation::validate_bank_account;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use lemmy_db_schema::source::user_bank_account::BankAccount;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -25,7 +26,7 @@ pub struct SetDefaultBankAccount {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
@@ -37,8 +38,34 @@ pub struct CreateBankAccount {
   pub is_default: Option<bool>,
   pub verification_image: Option<String>, // Base64 encoded image or image path
 }
+
+impl TryFrom<BankAccountForm> for CreateBankAccount {
+  type Error = FastJobError;
+
+  fn try_from(data: BankAccountForm) -> Result<Self, Self::Error> {
+    // Validate account number presence and format by country
+    let acc_num = data.account_number.trim();
+    if acc_num.is_empty() || !validate_bank_account(&data.country_id, acc_num) {
+      return Err(FastJobErrorType::InvalidField("Invalid account number".to_string()).into());
+    }
+
+    // Validate account name
+    if data.account_name.trim().is_empty() {
+      return Err(FastJobErrorType::InvalidField("Invalid account name".to_string()).into());
+    }
+
+    Ok(CreateBankAccount {
+      bank_id: data.bank_id,
+      account_number: data.account_number,
+      account_name: data.account_name,
+      is_default: None,
+      verification_image: None,
+    })
+  }
+}
+
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
@@ -97,7 +124,7 @@ pub struct BankResponse {
 #[serde(rename_all = "camelCase")]
 /// Bank account operation response.
 pub struct BankAccountOperationResponse {
-  pub bank_account: BankAccount,
+  pub bank_account: BankAccountView,
   pub success: bool,
 }
 

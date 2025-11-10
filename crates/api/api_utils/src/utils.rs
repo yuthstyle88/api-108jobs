@@ -8,9 +8,10 @@ use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
 use enum_map::{enum_map, EnumMap};
-use lemmy_db_schema::newtypes::{LanguageId, LocalUserId};
+use lemmy_db_schema::newtypes::{BankAccountId, BankId, LanguageId, LocalUserId};
 use lemmy_db_schema::source::actor_language::SiteLanguage;
 use lemmy_db_schema::source::language::Language;
+use lemmy_db_schema::source::user_bank_account::BankAccount;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
@@ -866,6 +867,29 @@ pub async fn list_withdraw_requests_inner(
     next_page,
     prev_page,
   })
+}
+
+pub async fn ensure_bank_account_unique_for_user(
+  pool: &mut DbPool<'_>,
+  user_id: &LocalUserId,
+  bank_id: &BankId,
+  account_number: &str,
+  exclude_id: Option<BankAccountId>,
+) -> FastJobResult<()> {
+  let exists = BankAccount::exists_for_user_by_bank_and_number(
+    pool,
+    user_id,
+    bank_id,
+    account_number,
+    exclude_id,
+  )
+  .await?;
+
+  if exists {
+    return Err(FastJobErrorType::BankAccountAlreadyExistsForThisBank.into());
+  }
+
+  Ok(())
 }
 
 #[cfg(test)]

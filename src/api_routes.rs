@@ -409,7 +409,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet))
                 .route("/top-ups", get().to(admin_list_top_up_requests))
-                .route("/withdraw_requests", get().to(admin_list_withdraw_requests)),
+                .route("/withdraw-requests", get().to(admin_list_withdraw_requests)),
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )

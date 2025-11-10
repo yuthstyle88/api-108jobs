@@ -1235,7 +1235,7 @@ diesel::table! {
         bank_id -> Int4,
         account_number -> Varchar,
         account_name -> Varchar,
-        is_default -> Nullable<Bool>,
+        is_default -> Bool,
         is_verified -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,

@@ -19,7 +19,7 @@ pub struct BankAccount {
   pub bank_id: BankId,
   pub account_number: String,
   pub account_name: String,
-  pub is_default: Option<bool>,
+  pub is_default: bool,
   pub is_verified: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
@@ -34,7 +34,6 @@ pub struct UserBankAccountInsertForm {
   pub bank_id: BankId,
   pub account_number: String,
   pub account_name: String,
-  pub is_default: Option<bool>,
   pub verification_image_path: Option<String>,
 }
 

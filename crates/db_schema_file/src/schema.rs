@@ -1376,7 +1376,7 @@ diesel::table! {
     use diesel::sql_types::*;
     use crate::schema::sql_types::WithdrawStatus;
 
-    withdraw_requests (id) {
+     withdraw_requests (id) {
         id -> Int4,
         local_user_id -> Int4,
         wallet_id -> Int4,
@@ -1518,6 +1518,8 @@ diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
 diesel::joinable!(top_up_requests -> local_user (local_user_id));
+diesel::joinable!(withdraw_requests -> local_user (local_user_id));
+diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
@@ -1601,4 +1603,5 @@ diesel::allow_tables_to_appear_in_same_query!(
   user_review,
   identity_cards,
   top_up_requests,
+  withdraw_requests
 );

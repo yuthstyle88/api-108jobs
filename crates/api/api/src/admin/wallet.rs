@@ -1,17 +1,15 @@
 use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::is_admin;
+use lemmy_api_utils::utils::{is_admin, list_top_up_requests_inner, list_withdraw_requests_inner};
 use lemmy_db_schema::newtypes::CoinId;
 use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
-use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_wallet::api::{
   AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListTopUpRequestQuery,
-  ListTopUpRequestResponse,
+  ListTopUpRequestResponse, ListWithdrawRequestQuery, ListWithdrawRequestResponse,
 };
-use lemmy_db_views_wallet::TopUpRequestView;
 use lemmy_utils::error::FastJobResult;
 use uuid::Uuid;
 
@@ -20,22 +18,16 @@ pub async fn admin_list_top_up_requests(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListTopUpRequestResponse>> {
-  let data = query.into_inner();
   // Ensure admin access
   is_admin(&local_user_view)?;
-  let cursor_data = if let Some(cursor) = &data.page_cursor {
-    Some(TopUpRequestView::from_cursor(cursor, &mut context.pool()).await?)
-  } else {
-    None
-  };
-  let items = TopUpRequestView::list(&mut context.pool(), None, cursor_data, data).await?;
-  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
-  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
-  Ok(Json(ListTopUpRequestResponse {
-    top_up_requests: items,
-    next_page,
-    prev_page,
-  }))
+  let res = list_top_up_requests_inner(
+    &mut context.pool(),
+    Some(local_user_view.local_user.id),
+    query.into_inner(),
+  )
+  .await?;
+
+  Ok(Json(res))
 }
 
 pub async fn admin_top_up_wallet(
@@ -144,4 +136,20 @@ pub async fn admin_withdraw_wallet(
     reason: data.reason.clone(),
     success: true,
   }))
+}
+
+pub async fn admin_list_withdraw_requests(
+  query: Query<ListWithdrawRequestQuery>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<ListWithdrawRequestResponse>> {
+  is_admin(&local_user_view)?;
+  let res = list_withdraw_requests_inner(
+    &mut context.pool(),
+    local_user_view.local_user.id,
+    query.into_inner(),
+  )
+  .await?;
+
+  Ok(Json(res))
 }

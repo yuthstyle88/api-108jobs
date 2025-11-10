@@ -8,9 +8,10 @@ use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
 use enum_map::{enum_map, EnumMap};
-use lemmy_db_schema::newtypes::LanguageId;
+use lemmy_db_schema::newtypes::{LanguageId, LocalUserId};
 use lemmy_db_schema::source::actor_language::SiteLanguage;
 use lemmy_db_schema::source::language::Language;
+use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::{
   newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
   source::{
@@ -36,6 +37,11 @@ use lemmy_db_views_local_image::LocalImageView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_person::PersonView;
 use lemmy_db_views_site::SiteView;
+use lemmy_db_views_wallet::api::{
+  ListTopUpRequestQuery, ListTopUpRequestResponse, ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
+};
+use lemmy_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
@@ -816,6 +822,50 @@ pub async fn prepare_user_languages(
   let interface_language = language_tags.first().cloned();
 
   Ok((language_ids.into_iter().collect(), interface_language))
+}
+
+pub async fn list_top_up_requests_inner(
+  pool: &mut DbPool<'_>,
+  user_id: Option<LocalUserId>, // None for admin/all
+  query: ListTopUpRequestQuery,
+) -> FastJobResult<ListTopUpRequestResponse> {
+  let cursor_data = if let Some(cursor) = &query.page_cursor {
+    Some(TopUpRequestView::from_cursor(cursor, pool).await?)
+  } else {
+    None
+  };
+
+  let items = TopUpRequestView::list(pool, user_id, cursor_data, query).await?;
+  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(ListTopUpRequestResponse {
+    top_up_requests: items,
+    next_page,
+    prev_page,
+  })
+}
+
+pub async fn list_withdraw_requests_inner(
+  pool: &mut DbPool<'_>,
+  local_user_id: LocalUserId,
+  query: ListWithdrawRequestQuery,
+) -> FastJobResult<ListWithdrawRequestResponse> {
+  let cursor_data = if let Some(cursor) = &query.page_cursor {
+    Some(WithdrawRequestView::from_cursor(cursor, pool).await?)
+  } else {
+    None
+  };
+
+  let items = WithdrawRequestView::list(pool, Some(local_user_id), cursor_data, query).await?;
+  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(ListWithdrawRequestResponse {
+    withdraw_requests: items,
+    next_page,
+    prev_page,
+  })
 }
 
 #[cfg(test)]

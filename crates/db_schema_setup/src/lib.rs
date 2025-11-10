@@ -329,7 +329,7 @@ mod tests {
   use serial_test::serial;
   // The number of migrations that should be run to set up some test data.
   // Currently, this includes migrations until
-  // 2020-04-07-135912_add_user_community_apub_constraints, since there are some mandatory apub
+  // 2020-04-07-135912_add_user_category_apub_constraints, since there are some mandatory apub
   // fields need to be added.
 
   const INITIAL_MIGRATIONS_COUNT: u64 = 40;
@@ -351,13 +351,13 @@ mod tests {
   const USER2_PASSWORD: &str = "test_password_2";
   const USER2_PUBLIC_KEY: &str = "test_public_key_2";
 
-  const TEST_COMMUNITY_ID_1: i32 = 101;
-  const COMMUNITY_NAME: &str = "test_community_1";
-  const COMMUNITY_TITLE: &str = "Test Community 1";
-  const COMMUNITY_DESCRIPTION: &str = "This is a test community.";
+  const TEST_category_ID_1: i32 = 101;
+  const category_NAME: &str = "test_category_1";
+  const category_TITLE: &str = "Test Category 1";
+  const category_DESCRIPTION: &str = "This is a test category.";
   const CATEGORY_ID: i32 = 4; // Should be a valid category "Movies"
-  const COMMUNITY_ACTOR_ID: &str = "https://fedi.example/community/12345";
-  const COMMUNITY_PUBLIC_KEY: &str = "test_public_key_community_1";
+  const category_ACTOR_ID: &str = "https://fedi.example/category/12345";
+  const category_PUBLIC_KEY: &str = "test_public_key_category_1";
 
   const TEST_POST_ID_1: i32 = 101;
   const POST_NAME: &str = "Post Title";
@@ -451,36 +451,36 @@ mod tests {
       USER2_PUBLIC_KEY
     ))?;
 
-    // Community
+    // Category
     conn.batch_execute(&format!(
-      "INSERT INTO community (id, actor_id, public_key, name, title, description, category_id, creator_id) \
+      "INSERT INTO category (id, actor_id, public_key, name, title, description, category_id, creator_id) \
           VALUES ({}, '{}', '{}', '{}', '{}', '{}', {}, {})",
-      TEST_COMMUNITY_ID_1,
-      COMMUNITY_ACTOR_ID,
-      COMMUNITY_PUBLIC_KEY,
-      COMMUNITY_NAME,
-      COMMUNITY_TITLE,
-      COMMUNITY_DESCRIPTION,
+      TEST_category_ID_1,
+      category_ACTOR_ID,
+      category_PUBLIC_KEY,
+      category_NAME,
+      category_TITLE,
+      category_DESCRIPTION,
       CATEGORY_ID,
       TEST_USER_ID_1
     ))?;
 
     conn.batch_execute(&format!(
-      "INSERT INTO community_moderator (community_id, user_id) \
+      "INSERT INTO category_moderator (category_id, user_id) \
           VALUES ({}, {})",
-      TEST_COMMUNITY_ID_1, TEST_USER_ID_1
+      TEST_category_ID_1, TEST_USER_ID_1
     ))?;
 
     // Post
     conn.batch_execute(&format!(
-      "INSERT INTO post (id, name, url, body, creator_id, community_id) \
+      "INSERT INTO post (id, name, url, body, creator_id, category_id) \
           VALUES ({}, '{}', '{}', '{}', {}, {})",
       TEST_POST_ID_1,
       POST_NAME,
       POST_URL,
       POST_BODY,
       TEST_USER_ID_1,
-      TEST_COMMUNITY_ID_1,
+      TEST_category_ID_1,
     ))?;
 
     // Comment

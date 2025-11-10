@@ -4,19 +4,19 @@ CREATE OR REPLACE FUNCTION post_aggregates_post ()
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, community_id, creator_id, instance_id)
+        INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, category_id, creator_id, instance_id)
         SELECT
             NEW.id,
             NEW.published,
             NEW.published,
             NEW.published,
-            NEW.community_id,
+            NEW.category_id,
             NEW.creator_id,
-            community.instance_id
+            category.instance_id
         FROM
-            community
+            category
         WHERE
-            NEW.community_id = community.id;
+            NEW.category_id = category.id;
     ELSIF (TG_OP = 'DELETE') THEN
         DELETE FROM post_aggregates
         WHERE post_id = OLD.id;
@@ -30,15 +30,15 @@ CREATE OR REPLACE TRIGGER post_aggregates_post
     FOR EACH ROW
     EXECUTE PROCEDURE post_aggregates_post ();
 
-CREATE OR REPLACE TRIGGER community_aggregates_post_count
+CREATE OR REPLACE TRIGGER category_aggregates_post_count
     AFTER INSERT OR DELETE OR UPDATE OF removed,
     deleted ON post
     FOR EACH ROW
-    EXECUTE PROCEDURE community_aggregates_post_count ();
+    EXECUTE PROCEDURE category_aggregates_post_count ();
 
-DROP FUNCTION IF EXISTS community_aggregates_post_count_insert CASCADE;
+DROP FUNCTION IF EXISTS category_aggregates_post_count_insert CASCADE;
 
-DROP FUNCTION IF EXISTS community_aggregates_post_update CASCADE;
+DROP FUNCTION IF EXISTS category_aggregates_post_update CASCADE;
 
 DROP FUNCTION IF EXISTS site_aggregates_post_update CASCADE;
 

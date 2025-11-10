@@ -15,9 +15,9 @@ use lemmy_db_schema::{
   utils::{
     get_conn, limit_fetch, paginate,
     queries::{
-      community_join, creator_community_actions_join, creator_home_instance_actions_join,
+      category_join, creator_category_actions_join, creator_home_instance_actions_join,
       creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_comment_actions_join, my_community_actions_join, my_instance_actions_person_join,
+      my_comment_actions_join, my_category_actions_join, my_instance_actions_person_join,
       my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
@@ -69,8 +69,8 @@ impl InboxCombinedViewInternal {
         .and(not(post::removed)),
     );
 
-    let my_community_actions_join: my_community_actions_join =
-      my_community_actions_join(Some(my_person_id));
+    let my_category_actions_join: my_category_actions_join =
+      my_category_actions_join(Some(my_person_id));
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(Some(my_person_id));
     let my_comment_actions_join: my_comment_actions_join =
       my_comment_actions_join(Some(my_person_id));
@@ -88,14 +88,14 @@ impl InboxCombinedViewInternal {
       .left_join(person_post_mention::table)
       .left_join(comment_join)
       .left_join(post_join)
-      .left_join(community_join())
+      .left_join(category_join())
       .inner_join(item_creator_join)
       .inner_join(recipient_join)
       .left_join(image_details_join())
-      .left_join(creator_community_actions_join())
+      .left_join(creator_category_actions_join())
       .left_join(my_local_user_admin_join)
       .left_join(creator_local_user_admin_join())
-      .left_join(my_community_actions_join)
+      .left_join(my_category_actions_join)
       .left_join(my_instance_actions_person_join)
       .left_join(creator_home_instance_actions_join())
       .left_join(creator_local_instance_actions_join)
@@ -300,20 +300,20 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment_reply), Some(comment), Some(post), Some(community)) = (
+    if let (Some(comment_reply), Some(comment), Some(post), Some(category)) = (
       v.comment_reply,
       v.comment.clone(),
       v.post.clone(),
-      v.community.clone(),
+      v.category.clone(),
     ) {
       Some(InboxCombinedView::CommentReply(CommentReplyView {
         comment_reply,
         comment,
         recipient: v.item_recipient,
         post,
-        community,
+        category,
         creator: v.item_creator,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         comment_actions: v.comment_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
@@ -321,14 +321,14 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
         post_tags: v.post_tags,
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
         creator_is_moderator: v.creator_is_moderator,
       }))
-    } else if let (Some(person_comment_mention), Some(comment), Some(post), Some(community)) = (
+    } else if let (Some(person_comment_mention), Some(comment), Some(post), Some(category)) = (
       v.person_comment_mention,
       v.comment,
       v.post.clone(),
-      v.community.clone(),
+      v.category.clone(),
     ) {
       Some(InboxCombinedView::CommentMention(
         PersonCommentMentionView {
@@ -336,29 +336,29 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
           comment,
           recipient: v.item_recipient,
           post,
-          community,
+          category,
           creator: v.item_creator,
-          community_actions: v.community_actions,
+          category_actions: v.category_actions,
           comment_actions: v.comment_actions,
           person_actions: v.person_actions,
           instance_actions: v.instance_actions,
           creator_is_admin: v.item_creator_is_admin,
           can_mod: v.can_mod,
           creator_banned: v.creator_banned,
-          creator_banned_from_community: v.creator_banned_from_community,
+          creator_banned_from_category: v.creator_banned_from_category,
           creator_is_moderator: v.creator_is_moderator,
         },
       ))
-    } else if let (Some(person_post_mention), Some(post), Some(community)) =
-      (v.person_post_mention, v.post, v.community)
+    } else if let (Some(person_post_mention), Some(post), Some(category)) =
+      (v.person_post_mention, v.post, v.category)
     {
       Some(InboxCombinedView::PostMention(PersonPostMentionView {
         person_post_mention,
         post,
-        community,
+        category,
         creator: v.item_creator,
         recipient: v.item_recipient,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
         post_actions: v.post_actions,
@@ -367,7 +367,7 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
         post_tags: v.post_tags,
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
         creator_is_moderator: v.creator_is_moderator,
       }))
     } else {
@@ -383,14 +383,14 @@ mod tests {
   use lemmy_db_schema::{
     assert_length,
     source::{
-      comment::{Comment, CommentInsertForm},
-      comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
-      person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
-      person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
-      post::{Post, PostInsertForm},
+        comment::{Comment, CommentInsertForm},
+        comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
+        category::{category, CategoryInsertForm},
+        instance::Instance,
+        person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
+        person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
+        person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+        post::{Post, PostInsertForm},
     },
     traits::{Blockable, Crud},
     utils::{build_db_pool_for_tests, DbPool},
@@ -424,18 +424,18 @@ mod tests {
     let jessica_form = PersonInsertForm::test_form(instance.id, "jessica_mrv");
     let jessica = Person::create(pool, &jessica_form).await?;
 
-    let community_form = CommunityInsertForm::new(
+    let category_form = CategoryInsertForm::new(
       instance.id,
-      "test community pcv".to_string(),
+      "test category pcv".to_string(),
       "nada".to_owned(),
     );
-    let community = Community::create(pool, &community_form).await?;
+    let category = category::create(pool, &category_form).await?;
 
-    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, community.id);
+    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
     let jessica_post_form =
-      PostInsertForm::new("jessica post prv".into(), jessica.id, community.id);
+      PostInsertForm::new("jessica post prv".into(), jessica.id, category.id);
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =

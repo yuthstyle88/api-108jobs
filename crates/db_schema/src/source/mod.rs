@@ -9,8 +9,8 @@ pub mod combined;
 pub mod comment;
 pub mod comment_reply;
 pub mod comment_report;
-pub mod community;
-pub mod community_report;
+pub mod category;
+pub mod category_report;
 pub mod custom_emoji;
 pub mod custom_emoji_keyword;
 pub mod email_verification;
@@ -52,7 +52,7 @@ pub mod user_review;
 pub mod last_read;
 pub mod pending_sender_ack;
 
-/// Default value for columns like [community::Community.inbox_url] which are marked as serde(skip).
+/// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
 ///
 /// This is necessary so they can be successfully deserialized from API responses, even though the
 /// value is not sent by Lemmy. Necessary for crates which rely on Rust API such as

@@ -11,17 +11,17 @@ DROP TRIGGER refresh_post_like ON post_like;
 
 DROP FUNCTION refresh_post_like ();
 
-DROP TRIGGER refresh_community ON community;
+DROP TRIGGER refresh_category ON category;
 
-DROP FUNCTION refresh_community ();
+DROP FUNCTION refresh_category ();
 
-DROP TRIGGER refresh_community_follower ON community_follower;
+DROP TRIGGER refresh_category_follower ON category_follower;
 
-DROP FUNCTION refresh_community_follower ();
+DROP FUNCTION refresh_category_follower ();
 
-DROP TRIGGER refresh_community_user_ban ON community_user_ban;
+DROP TRIGGER refresh_category_user_ban ON category_user_ban;
 
-DROP FUNCTION refresh_community_user_ban ();
+DROP FUNCTION refresh_category_user_ban ();
 
 DROP TRIGGER refresh_comment ON comment;
 
@@ -50,10 +50,10 @@ with all_post AS (
             SELECT
                 cb.id::bool
             FROM
-                community_user_ban cb
+                category_user_ban cb
             WHERE
                 p.creator_id = cb.user_id
-                AND p.community_id = cb.community_id) AS banned_from_community,
+                AND p.category_id = cb.category_id) AS banned_from_category,
         (
             SELECT
                 name
@@ -72,30 +72,30 @@ with all_post AS (
             SELECT
                 name
             FROM
-                community
+                category
             WHERE
-                p.community_id = community.id) AS community_name,
+                p.category_id = category.id) AS category_name,
         (
             SELECT
                 removed
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_removed,
+                p.category_id = c.id) AS category_removed,
         (
             SELECT
                 deleted
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_deleted,
+                p.category_id = c.id) AS category_deleted,
         (
             SELECT
                 self_promotion
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_self_promotion,
+                p.category_id = c.id) AS category_self_promotion,
         (
             SELECT
                 count(*)
@@ -131,10 +131,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -225,17 +225,17 @@ SELECT
 FROM
     user_ u;
 
--- community
-DROP VIEW community_mview;
+-- category
+DROP VIEW category_mview;
 
-DROP MATERIALIZED VIEW community_aggregates_mview;
+DROP MATERIALIZED VIEW category_aggregates_mview;
 
-DROP VIEW community_view;
+DROP VIEW category_view;
 
-DROP VIEW community_aggregates_view;
+DROP VIEW category_aggregates_view;
 
-CREATE VIEW community_view AS
-with all_community AS (
+CREATE VIEW category_view AS
+with all_category AS (
     SELECT
         *,
         (
@@ -263,16 +263,16 @@ with all_community AS (
             SELECT
                 count(*)
             FROM
-                community_follower cf
+                category_follower cf
             WHERE
-                cf.community_id = c.id) AS number_of_subscribers,
+                cf.category_id = c.id) AS number_of_subscribers,
         (
             SELECT
                 count(*)
             FROM
                 post p
             WHERE
-                p.community_id = c.id) AS number_of_posts,
+                p.category_id = c.id) AS number_of_posts,
         (
             SELECT
                 count(*)
@@ -280,16 +280,16 @@ with all_community AS (
                 comment co,
                 post p
             WHERE
-                c.id = p.community_id
+                c.id = p.category_id
                 AND p.id = co.post_id) AS number_of_comments,
         hot_rank ((
             SELECT
                 count(*)
-            FROM community_follower cf
+            FROM category_follower cf
             WHERE
-                cf.community_id = c.id), c.published) AS hot_rank
+                cf.category_id = c.id), c.published) AS hot_rank
 FROM
-    community c
+    category c
 )
 SELECT
     ac.*,
@@ -298,20 +298,20 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
 -- reply and comment view
 DROP VIEW reply_view;
@@ -332,7 +332,7 @@ with all_comment AS (
         c.*,
         (
             SELECT
-                community_id
+                category_id
             FROM
                 post p
             WHERE
@@ -348,12 +348,12 @@ with all_comment AS (
                     SELECT
                         cb.id::bool
                     FROM
-                        community_user_ban cb,
+                        category_user_ban cb,
                         post p
                     WHERE
                         c.creator_id = cb.user_id
                         AND p.id = c.post_id
-                        AND p.community_id = cb.community_id) AS banned_from_community,
+                        AND p.category_id = cb.category_id) AS banned_from_category,
                     (
                         SELECT
                             name
@@ -461,9 +461,9 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
+    c.category_id,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,

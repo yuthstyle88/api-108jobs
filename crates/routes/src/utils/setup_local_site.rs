@@ -116,7 +116,7 @@ pub async fn setup_local_site(
           // Finally create the local_site row with coin reference
           let local_site_form = LocalSiteInsertForm {
             site_setup: Some(settings.setup.is_some()),
-            community_creation_admin_only: Some(true),
+            category_creation_admin_only: Some(true),
             coin_id: Some(coin.id),
             ..LocalSiteInsertForm::new(site.id)
           };

@@ -15,14 +15,14 @@ DROP VIEW comment_aggregates_view;
 CREATE VIEW comment_aggregates_view AS
 SELECT
     ct.*,
-    -- community details
-    p.community_id,
-    c.actor_id AS community_actor_id,
-    c."local" AS community_local,
-    c."name" AS community_name,
+    -- category details
+    p.category_id,
+    c.actor_id AS category_actor_id,
+    c."local" AS category_local,
+    c."name" AS category_name,
     -- creator details
     u.banned AS banned,
-    coalesce(cb.id, 0)::bool AS banned_from_community,
+    coalesce(cb.id, 0)::bool AS banned_from_category,
     u.actor_id AS creator_actor_id,
     u.local AS creator_local,
     u.name AS creator_name,
@@ -35,11 +35,11 @@ SELECT
 FROM
     comment ct
     LEFT JOIN post p ON ct.post_id = p.id
-    LEFT JOIN community c ON p.community_id = c.id
+    LEFT JOIN category c ON p.category_id = c.id
     LEFT JOIN user_ u ON ct.creator_id = u.id
-    LEFT JOIN community_user_ban cb ON ct.creator_id = cb.user_id
+    LEFT JOIN category_user_ban cb ON ct.creator_id = cb.user_id
         AND p.id = ct.post_id
-        AND p.community_id = cb.community_id
+        AND p.category_id = cb.category_id
     LEFT JOIN (
         SELECT
             l.comment_id AS id,
@@ -82,8 +82,8 @@ CREATE OR REPLACE VIEW comment_view AS (
                 AND cav.id = cl.comment_id
         LEFT JOIN comment_saved cs ON u.id = cs.user_id
             AND cs.comment_id = cav.id
-    LEFT JOIN community_follower cf ON u.id = cf.user_id
-        AND cav.community_id = cf.community_id) AS us
+    LEFT JOIN category_follower cf ON u.id = cf.user_id
+        AND cav.category_id = cf.category_id) AS us
 UNION ALL
 SELECT
     cav.*,
@@ -124,8 +124,8 @@ FROM
                 AND cav.id = cl.comment_id
         LEFT JOIN comment_saved cs ON u.id = cs.user_id
             AND cs.comment_id = cav.id
-    LEFT JOIN community_follower cf ON u.id = cf.user_id
-        AND cav.community_id = cf.community_id) AS us
+    LEFT JOIN category_follower cf ON u.id = cf.user_id
+        AND cav.category_id = cf.category_id) AS us
 UNION ALL
 SELECT
     cav.*,
@@ -151,12 +151,12 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
-    c.community_actor_id,
-    c.community_local,
-    c.community_name,
+    c.category_id,
+    c.category_actor_id,
+    c.category_local,
+    c.category_name,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -202,12 +202,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -264,12 +264,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -351,14 +351,14 @@ SELECT
     u."name" AS creator_name,
     u.avatar AS creator_avatar,
     u.banned AS banned,
-    cb.id::bool AS banned_from_community,
-    -- community details
-    c.actor_id AS community_actor_id,
-    c."local" AS community_local,
-    c."name" AS community_name,
-    c.removed AS community_removed,
-    c.deleted AS community_deleted,
-    c.self_promotion AS community_self_promotion,
+    cb.id::bool AS banned_from_category,
+    -- category details
+    c.actor_id AS category_actor_id,
+    c."local" AS category_local,
+    c."name" AS category_name,
+    c.removed AS category_removed,
+    c.deleted AS category_deleted,
+    c.self_promotion AS category_self_promotion,
     -- post score data/comment count
     coalesce(ct.comments, 0) AS number_of_comments,
     coalesce(pl.score, 0) AS score,
@@ -379,9 +379,9 @@ SELECT
 FROM
     post p
     LEFT JOIN user_ u ON p.creator_id = u.id
-    LEFT JOIN community_user_ban cb ON p.creator_id = cb.user_id
-        AND p.community_id = cb.community_id
-    LEFT JOIN community c ON p.community_id = c.id
+    LEFT JOIN category_user_ban cb ON p.creator_id = cb.user_id
+        AND p.category_id = cb.category_id
+    LEFT JOIN category c ON p.category_id = c.id
     LEFT JOIN (
         SELECT
             post_id,
@@ -417,16 +417,16 @@ FROM
     CROSS JOIN LATERAL (
         SELECT
             u.id,
-            coalesce(cf.community_id, 0) AS is_subbed,
+            coalesce(cf.category_id, 0) AS is_subbed,
             coalesce(pr.post_id, 0) AS is_read,
             coalesce(ps.post_id, 0) AS is_saved,
             coalesce(pl.score, 0) AS user_vote
         FROM
             user_ u
-            LEFT JOIN community_user_ban cb ON u.id = cb.user_id
-                AND cb.community_id = pav.community_id
-        LEFT JOIN community_follower cf ON u.id = cf.user_id
-            AND cf.community_id = pav.community_id
+            LEFT JOIN category_user_ban cb ON u.id = cb.user_id
+                AND cb.category_id = pav.category_id
+        LEFT JOIN category_follower cf ON u.id = cf.user_id
+            AND cf.category_id = pav.category_id
     LEFT JOIN post_read pr ON u.id = pr.user_id
         AND pr.post_id = pav.id
     LEFT JOIN post_saved ps ON u.id = ps.user_id
@@ -466,16 +466,16 @@ FROM
     CROSS JOIN LATERAL (
         SELECT
             u.id,
-            coalesce(cf.community_id, 0) AS is_subbed,
+            coalesce(cf.category_id, 0) AS is_subbed,
             coalesce(pr.post_id, 0) AS is_read,
             coalesce(ps.post_id, 0) AS is_saved,
             coalesce(pl.score, 0) AS user_vote
         FROM
             user_ u
-            LEFT JOIN community_user_ban cb ON u.id = cb.user_id
-                AND cb.community_id = pav.community_id
-        LEFT JOIN community_follower cf ON u.id = cf.user_id
-            AND cf.community_id = pav.community_id
+            LEFT JOIN category_user_ban cb ON u.id = cb.user_id
+                AND cb.category_id = pav.category_id
+        LEFT JOIN category_follower cf ON u.id = cf.user_id
+            AND cf.category_id = pav.category_id
     LEFT JOIN post_read pr ON u.id = pr.user_id
         AND pr.post_id = pav.id
     LEFT JOIN post_saved ps ON u.id = ps.user_id

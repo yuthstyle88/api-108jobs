@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
@@ -36,7 +36,7 @@ pub async fn distinguish_comment(
     Err(FastJobErrorType::NoCommentEditAllowed)?
   }
 
-  check_community_deleted_removed(&orig_comment.community)?;
+  check_category_deleted_removed(&orig_comment.category)?;
 
   // Update the Comment
   let form = CommentUpdateForm {

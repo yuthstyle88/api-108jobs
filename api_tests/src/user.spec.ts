@@ -81,7 +81,7 @@ test("Delete user", async () => {
   // make a local post and comment
   let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
   if (!alphaCommunity) {
-    throw "Missing alpha community";
+    throw "Missing alpha category";
   }
   let localPost = (await createPost(user, alphaCommunity.community.id))
     .post_view.post;
@@ -93,7 +93,7 @@ test("Delete user", async () => {
   // make a remote post and comment
   let betaCommunity = await resolveBetaCommunity(user);
   if (!betaCommunity) {
-    throw "Missing beta community";
+    throw "Missing beta category";
   }
   let remotePost = (await createPost(user, betaCommunity.community.id))
     .post_view.post;
@@ -232,7 +232,7 @@ test("Make sure banned user can delete their account", async () => {
   // make a local post
   let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
   if (!alphaCommunity) {
-    throw "Missing alpha community";
+    throw "Missing alpha category";
   }
   let localPost = (await createPost(user, alphaCommunity.community.id))
     .post_view.post;

@@ -40,7 +40,7 @@ pub struct Group {
   pub featured: Option<Url>,
   #[serde(default)]
   pub(crate) language: Vec<LanguageTag>,
-  /// True if this is a private community
+  /// True if this is a private category
   pub(crate) manually_approves_followers: Option<bool>,
   pub published: Option<DateTime<Utc>>,
   pub updated: Option<DateTime<Utc>>,

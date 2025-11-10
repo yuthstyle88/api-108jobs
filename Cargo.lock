@@ -3430,9 +3430,9 @@ dependencies = [
  "lemmy_db_schema_file",
  "lemmy_db_views_bank_account",
  "lemmy_db_views_billing",
+ "lemmy_db_views_category",
  "lemmy_db_views_chat",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
@@ -3474,8 +3474,8 @@ dependencies = [
  "lemmy_db_schema",
  "lemmy_db_schema_file",
  "lemmy_db_views_bank_account",
+ "lemmy_db_views_category",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_custom_emoji",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
@@ -3515,9 +3515,9 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_category",
  "lemmy_db_views_chat",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_custom_emoji",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
@@ -3559,8 +3559,8 @@ dependencies = [
  "jsonwebtoken",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_category",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
@@ -3606,8 +3606,8 @@ dependencies = [
  "lemmy_apub_objects",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_category",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_person_content_combined",
@@ -3645,7 +3645,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_community_person_ban",
+ "lemmy_db_views_category_person_ban",
  "lemmy_db_views_local_user",
  "lemmy_db_views_site",
  "lemmy_utils",
@@ -3763,6 +3763,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "lemmy_db_views_category"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "diesel_ltree",
+ "i-love-jesus",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_db_views_person",
+ "lemmy_utils",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "slug",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "lemmy_db_views_category_person_ban"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "lemmy_db_schema",
+ "lemmy_db_schema_file",
+ "lemmy_utils",
+ "serde",
+]
+
+[[package]]
 name = "lemmy_db_views_chat"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -3813,39 +3846,6 @@ dependencies = [
  "serial_test",
  "tokio",
  "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "diesel_ltree",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_person",
- "lemmy_utils",
- "serde",
- "serde_with",
- "serial_test",
- "slug",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_community_person_ban"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
 ]
 
 [[package]]
@@ -4026,7 +4026,7 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_community",
+ "lemmy_db_views_category",
  "lemmy_db_views_local_user",
  "lemmy_db_views_vote",
  "lemmy_utils",
@@ -4106,8 +4106,8 @@ dependencies = [
  "i-love-jesus",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
+ "lemmy_db_views_category",
  "lemmy_db_views_comment",
- "lemmy_db_views_community",
  "lemmy_db_views_local_user",
  "lemmy_db_views_person",
  "lemmy_db_views_post",
@@ -4235,7 +4235,7 @@ dependencies = [
  "lemmy_api_utils",
  "lemmy_db_schema",
  "lemmy_db_schema_file",
- "lemmy_db_views_community",
+ "lemmy_db_views_category",
  "lemmy_db_views_inbox_combined",
  "lemmy_db_views_local_image",
  "lemmy_db_views_local_user",

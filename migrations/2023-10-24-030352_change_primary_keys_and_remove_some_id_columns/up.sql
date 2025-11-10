@@ -22,41 +22,41 @@ ALTER TABLE comment_saved
 
 DROP INDEX idx_comment_saved_person_id;
 
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     DROP COLUMN id,
-    ADD PRIMARY KEY (community_id),
-    DROP CONSTRAINT community_aggregates_community_id_key;
+    ADD PRIMARY KEY (category_id),
+    DROP CONSTRAINT category_aggregates_category_id_key;
 
-ALTER TABLE community_block
+ALTER TABLE category_block
     DROP COLUMN id,
-    ADD PRIMARY KEY (person_id, community_id),
-    DROP CONSTRAINT community_block_person_id_community_id_key;
+    ADD PRIMARY KEY (person_id, category_id),
+    DROP CONSTRAINT category_block_person_id_category_id_key;
 
-DROP INDEX idx_community_block_person;
+DROP INDEX idx_category_block_person;
 
-ALTER TABLE community_follower
+ALTER TABLE category_follower
     DROP COLUMN id,
-    ADD PRIMARY KEY (person_id, community_id),
-    DROP CONSTRAINT community_follower_community_id_person_id_key;
+    ADD PRIMARY KEY (person_id, category_id),
+    DROP CONSTRAINT category_follower_category_id_person_id_key;
 
-DROP INDEX idx_community_follower_person;
+DROP INDEX idx_category_follower_person;
 
-ALTER TABLE community_language
+ALTER TABLE category_language
     DROP COLUMN id,
-    ADD PRIMARY KEY (community_id, language_id),
-    DROP CONSTRAINT community_language_community_id_language_id_key;
+    ADD PRIMARY KEY (category_id, language_id),
+    DROP CONSTRAINT category_language_category_id_language_id_key;
 
-ALTER TABLE community_moderator
+ALTER TABLE category_moderator
     DROP COLUMN id,
-    ADD PRIMARY KEY (person_id, community_id),
-    DROP CONSTRAINT community_moderator_community_id_person_id_key;
+    ADD PRIMARY KEY (person_id, category_id),
+    DROP CONSTRAINT category_moderator_category_id_person_id_key;
 
-DROP INDEX idx_community_moderator_person;
+DROP INDEX idx_category_moderator_person;
 
-ALTER TABLE community_person_ban
+ALTER TABLE category_person_ban
     DROP COLUMN id,
-    ADD PRIMARY KEY (person_id, community_id),
-    DROP CONSTRAINT community_person_ban_community_id_person_id_key;
+    ADD PRIMARY KEY (person_id, category_id),
+    DROP CONSTRAINT category_person_ban_category_id_person_id_key;
 
 ALTER TABLE custom_emoji_keyword
     DROP COLUMN id,

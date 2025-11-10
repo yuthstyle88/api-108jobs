@@ -71,10 +71,10 @@ with all_post AS (
             SELECT
                 cb.id::bool
             FROM
-                community_user_ban cb
+                category_user_ban cb
             WHERE
                 p.creator_id = cb.user_id
-                AND p.community_id = cb.community_id) AS banned_from_community,
+                AND p.category_id = cb.category_id) AS banned_from_category,
         (
             SELECT
                 name
@@ -93,30 +93,30 @@ with all_post AS (
             SELECT
                 name
             FROM
-                community
+                category
             WHERE
-                p.community_id = community.id) AS community_name,
+                p.category_id = category.id) AS category_name,
         (
             SELECT
                 removed
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_removed,
+                p.category_id = c.id) AS category_removed,
         (
             SELECT
                 deleted
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_deleted,
+                p.category_id = c.id) AS category_deleted,
         (
             SELECT
                 self_promotion
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_self_promotion,
+                p.category_id = c.id) AS category_self_promotion,
         (
             SELECT
                 count(*)
@@ -152,10 +152,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -188,11 +188,11 @@ FROM
     FROM
         all_post ap;
 
--- community
-DROP VIEW community_view;
+-- category
+DROP VIEW category_view;
 
-CREATE VIEW community_view AS
-with all_community AS (
+CREATE VIEW category_view AS
+with all_category AS (
     SELECT
         *,
         (
@@ -220,16 +220,16 @@ with all_community AS (
             SELECT
                 count(*)
             FROM
-                community_follower cf
+                category_follower cf
             WHERE
-                cf.community_id = c.id) AS number_of_subscribers,
+                cf.category_id = c.id) AS number_of_subscribers,
         (
             SELECT
                 count(*)
             FROM
                 post p
             WHERE
-                p.community_id = c.id) AS number_of_posts,
+                p.category_id = c.id) AS number_of_posts,
         (
             SELECT
                 count(*)
@@ -237,16 +237,16 @@ with all_community AS (
                 comment co,
                 post p
             WHERE
-                c.id = p.community_id
+                c.id = p.category_id
                 AND p.id = co.post_id) AS number_of_comments,
         hot_rank ((
             SELECT
                 count(*)
-            FROM community_follower cf
+            FROM category_follower cf
             WHERE
-                cf.community_id = c.id), c.published) AS hot_rank
+                cf.category_id = c.id), c.published) AS hot_rank
 FROM
-    community c
+    category c
 )
 SELECT
     ac.*,
@@ -255,20 +255,20 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
 -- reply and comment view
 DROP VIEW reply_view;
@@ -283,7 +283,7 @@ with all_comment AS (
         c.*,
         (
             SELECT
-                community_id
+                category_id
             FROM
                 post p
             WHERE
@@ -299,12 +299,12 @@ with all_comment AS (
                     SELECT
                         cb.id::bool
                     FROM
-                        community_user_ban cb,
+                        category_user_ban cb,
                         post p
                     WHERE
                         c.creator_id = cb.user_id
                         AND p.id = c.post_id
-                        AND p.community_id = cb.community_id) AS banned_from_community,
+                        AND p.category_id = cb.category_id) AS banned_from_category,
                     (
                         SELECT
                             name
@@ -412,9 +412,9 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
+    c.category_id,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -430,16 +430,16 @@ FROM
 WHERE
     um.comment_id = c.id;
 
--- community views
-DROP VIEW community_moderator_view;
+-- category views
+DROP VIEW category_moderator_view;
 
-DROP VIEW community_follower_view;
+DROP VIEW category_follower_view;
 
-DROP VIEW community_user_ban_view;
+DROP VIEW category_user_ban_view;
 
 DROP VIEW site_view;
 
-CREATE VIEW community_moderator_view AS
+CREATE VIEW category_moderator_view AS
 SELECT
     *,
     (
@@ -459,13 +459,13 @@ SELECT
         SELECT
             name
         FROM
-            community c
+            category c
         WHERE
-            cm.community_id = c.id) AS community_name
+            cm.category_id = c.id) AS category_name
 FROM
-    community_moderator cm;
+    category_moderator cm;
 
-CREATE VIEW community_follower_view AS
+CREATE VIEW category_follower_view AS
 SELECT
     *,
     (
@@ -485,13 +485,13 @@ SELECT
         SELECT
             name
         FROM
-            community c
+            category c
         WHERE
-            cf.community_id = c.id) AS community_name
+            cf.category_id = c.id) AS category_name
 FROM
-    community_follower cf;
+    category_follower cf;
 
-CREATE VIEW community_user_ban_view AS
+CREATE VIEW category_user_ban_view AS
 SELECT
     *,
     (
@@ -511,11 +511,11 @@ SELECT
         SELECT
             name
         FROM
-            community c
+            category c
         WHERE
-            cm.community_id = c.id) AS community_name
+            cm.category_id = c.id) AS category_name
 FROM
-    community_user_ban cm;
+    category_user_ban cm;
 
 CREATE VIEW site_view AS
 SELECT
@@ -553,7 +553,7 @@ SELECT
         SELECT
             count(*)
         FROM
-            community) AS number_of_communities
+            category) AS number_of_communities
 FROM
     site s;
 

@@ -4,7 +4,7 @@ with all_comment AS (
         c.*,
         (
             SELECT
-                community_id
+                category_id
             FROM
                 post p
             WHERE
@@ -20,12 +20,12 @@ with all_comment AS (
                     SELECT
                         cb.id::bool
                     FROM
-                        community_user_ban cb,
+                        category_user_ban cb,
                         post p
                     WHERE
                         c.creator_id = cb.user_id
                         AND p.id = c.post_id
-                        AND p.community_id = cb.community_id) AS banned_from_community,
+                        AND p.category_id = cb.category_id) AS banned_from_category,
                     (
                         SELECT
                             name

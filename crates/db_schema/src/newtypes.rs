@@ -84,8 +84,8 @@ pub enum PostOrCommentId {
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The community id.
-pub struct CommunityId(pub i32);
+/// The category id.
+pub struct CategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -385,8 +385,8 @@ pub struct CommentReportId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The community report id.
-pub struct CommunityReportId(pub i32);
+/// The category report id.
+pub struct CategoryReportId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -554,7 +554,7 @@ pub struct AdminPurgePersonId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct AdminPurgeCommunityId(pub i32);
+pub struct AdminPurgeCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -584,7 +584,7 @@ pub struct ModRemoveCommentId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModRemoveCommunityId(pub i32);
+pub struct ModRemoveCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -602,7 +602,7 @@ pub struct ModFeaturePostId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModBanFromCommunityId(pub i32);
+pub struct ModBanFromCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -614,19 +614,19 @@ pub struct ModBanId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModChangeCommunityVisibilityId(pub i32);
+pub struct ModChangeCategoryVisibilityId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModAddCommunityId(pub i32);
+pub struct ModAddCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModTransferCommunityId(pub i32);
+pub struct ModTransferCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -721,7 +721,7 @@ impl PaginationCursor {
     Self::new(&[(prefix, id)])
   }
 
-  /// Some tables (like community_actions for example) have compound primary keys.
+  /// Some tables (like category_actions for example) have compound primary keys.
   /// This creates a cursor that can use both, like `C123-P123`
   pub fn new(prefixes_and_ids: &[(char, i32)]) -> Self {
     Self(

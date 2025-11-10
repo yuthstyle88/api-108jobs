@@ -16,8 +16,8 @@ import { EditPost } from "lemmy-js-client";
 beforeAll(setupLogins);
 afterAll(unfollows);
 
-test("Create, update, delete community tag", async () => {
-  // Create a community first
+test("Create, update, delete category tag", async () => {
+  // Create a category first
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 
@@ -67,7 +67,7 @@ test("Create, update, delete community tag", async () => {
 });
 
 test("Update post tags", async () => {
-  // Create a community
+  // Create a category
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 
@@ -116,7 +116,7 @@ test("Update post tags", async () => {
 });
 
 test("Post author can update post tags", async () => {
-  // Create a community
+  // Create a category
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 

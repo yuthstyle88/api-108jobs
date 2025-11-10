@@ -3,14 +3,14 @@ use actix_web::{self, web::*, HttpRequest};
 use lemmy_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
 use lemmy_db_schema::{
   source::{
-    community::{Community, CommunityUpdateForm},
+    category::{Category, CategoryUpdateForm},
     images::{LocalImage, LocalImageForm},
     person::{Person, PersonUpdateForm},
     site::{Site, SiteUpdateForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_community::api::CommunityIdQuery;
+use lemmy_db_views_category::api::CategoryIdQuery;
 use lemmy_db_views_local_image::api::UploadImageResponse;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -75,44 +75,44 @@ pub async fn upload_user_banner(
   Ok(Json(image))
 }
 
-pub async fn upload_community_icon(
+pub async fn upload_category_icon(
   req: HttpRequest,
-  query: Query<CommunityIdQuery>,
+  query: Query<CategoryIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
-  let community: Community = Community::read(&mut context.pool(), query.id).await?;
+  let category: Category = Category::read(&mut context.pool(), query.id).await?;
 
   let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
-  delete_old_image(&community.icon, &context).await?;
+  delete_old_image(&category.icon, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     icon: Some(Some(image.image_url.clone().into())),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(image))
 }
 
-pub async fn upload_community_banner(
+pub async fn upload_category_banner(
   req: HttpRequest,
-  query: Query<CommunityIdQuery>,
+  query: Query<CategoryIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
-  let community: Community = Community::read(&mut context.pool(), query.id).await?;
+  let category: Category = Category::read(&mut context.pool(), query.id).await?;
 
   let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
-  delete_old_image(&community.banner, &context).await?;
+  delete_old_image(&category.banner, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     banner: Some(Some(image.image_url.clone().into())),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(image))
 }

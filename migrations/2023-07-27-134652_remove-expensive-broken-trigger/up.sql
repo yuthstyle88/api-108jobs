@@ -46,31 +46,31 @@ BEGIN
 END
 $$;
 
-CREATE OR REPLACE FUNCTION community_aggregates_comment_count ()
+CREATE OR REPLACE FUNCTION category_aggregates_comment_count ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (was_restored_or_created (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
             comments = comments + 1
         FROM
             post p
         WHERE
             p.id = NEW.post_id
-            AND ca.community_id = p.community_id;
+            AND ca.category_id = p.category_id;
     ELSIF (was_removed_or_deleted (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
             comments = comments - 1
         FROM
             post p
         WHERE
             p.id = OLD.post_id
-            AND ca.community_id = p.community_id;
+            AND ca.category_id = p.category_id;
     END IF;
     RETURN NULL;
 END

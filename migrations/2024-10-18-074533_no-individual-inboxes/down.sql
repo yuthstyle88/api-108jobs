@@ -1,6 +1,6 @@
 ALTER TABLE person
     ADD COLUMN shared_inbox_url varchar(255);
 
-ALTER TABLE community
+ALTER TABLE category
     ADD COLUMN shared_inbox_url varchar(255);
 

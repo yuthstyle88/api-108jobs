@@ -62,11 +62,11 @@ CREATE TABLE post_aggregates (
     published timestamp with time zone NOT NULL DEFAULT now(),
     newest_comment_time_necro timestamp with time zone NOT NULL DEFAULT now(),
     newest_comment_time timestamp with time zone NOT NULL DEFAULT now(),
-    featured_community boolean NOT NULL DEFAULT FALSE,
+    featured_category boolean NOT NULL DEFAULT FALSE,
     featured_local boolean NOT NULL DEFAULT FALSE,
     hot_rank double precision NOT NULL DEFAULT 0.0001,
     hot_rank_active double precision NOT NULL DEFAULT 0.0001,
-    community_id integer NOT NULL REFERENCES community (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+    category_id integer NOT NULL REFERENCES category (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     creator_id integer NOT NULL REFERENCES person (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     controversy_rank double precision NOT NULL DEFAULT 0,
     instance_id integer NOT NULL REFERENCES instance (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
@@ -85,11 +85,11 @@ SELECT
     published,
     newest_comment_time_necro,
     newest_comment_time,
-    featured_community,
+    featured_category,
     featured_local,
     hot_rank,
     hot_rank_active,
-    community_id,
+    category_id,
     creator_id,
     controversy_rank,
     instance_id,
@@ -114,49 +114,49 @@ ALTER TABLE post
     DROP COLUMN report_count,
     DROP COLUMN unresolved_report_count;
 
-SET CONSTRAINTS post_aggregates_community_id_fkey, post_aggregates_creator_id_fkey, post_aggregates_instance_id_fkey, post_aggregates_post_id_fkey IMMEDIATE;
+SET CONSTRAINTS post_aggregates_category_id_fkey, post_aggregates_creator_id_fkey, post_aggregates_instance_id_fkey, post_aggregates_post_id_fkey IMMEDIATE;
 
-SET CONSTRAINTS post_aggregates_community_id_fkey, post_aggregates_creator_id_fkey, post_aggregates_instance_id_fkey, post_aggregates_post_id_fkey DEFERRED;
+SET CONSTRAINTS post_aggregates_category_id_fkey, post_aggregates_creator_id_fkey, post_aggregates_instance_id_fkey, post_aggregates_post_id_fkey DEFERRED;
 
-CREATE INDEX idx_post_aggregates_community_active ON post_aggregates USING btree (community_id, featured_local DESC, hot_rank_active DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_active ON post_aggregates USING btree (category_id, featured_local DESC, hot_rank_active DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_controversy ON post_aggregates USING btree (community_id, featured_local DESC, controversy_rank DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_controversy ON post_aggregates USING btree (category_id, featured_local DESC, controversy_rank DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_hot ON post_aggregates USING btree (community_id, featured_local DESC, hot_rank DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_hot ON post_aggregates USING btree (category_id, featured_local DESC, hot_rank DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_most_comments ON post_aggregates USING btree (community_id, featured_local DESC, comments DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_most_comments ON post_aggregates USING btree (category_id, featured_local DESC, comments DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_newest_comment_time ON post_aggregates USING btree (community_id, featured_local DESC, newest_comment_time DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_newest_comment_time ON post_aggregates USING btree (category_id, featured_local DESC, newest_comment_time DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_newest_comment_time_necro ON post_aggregates USING btree (community_id, featured_local DESC, newest_comment_time_necro DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_newest_comment_time_necro ON post_aggregates USING btree (category_id, featured_local DESC, newest_comment_time_necro DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_published ON post_aggregates USING btree (community_id, featured_local DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_published ON post_aggregates USING btree (category_id, featured_local DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_published_asc ON post_aggregates USING btree (community_id, featured_local DESC, reverse_timestamp_sort (published) DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_published_asc ON post_aggregates USING btree (category_id, featured_local DESC, reverse_timestamp_sort (published) DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_scaled ON post_aggregates USING btree (community_id, featured_local DESC, scaled_rank DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_scaled ON post_aggregates USING btree (category_id, featured_local DESC, scaled_rank DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_community_score ON post_aggregates USING btree (community_id, featured_local DESC, score DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_category_score ON post_aggregates USING btree (category_id, featured_local DESC, score DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_active ON post_aggregates USING btree (community_id, featured_community DESC, hot_rank_active DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_active ON post_aggregates USING btree (category_id, featured_category DESC, hot_rank_active DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_controversy ON post_aggregates USING btree (community_id, featured_community DESC, controversy_rank DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_controversy ON post_aggregates USING btree (category_id, featured_category DESC, controversy_rank DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_hot ON post_aggregates USING btree (community_id, featured_community DESC, hot_rank DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_hot ON post_aggregates USING btree (category_id, featured_category DESC, hot_rank DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_most_comments ON post_aggregates USING btree (community_id, featured_community DESC, comments DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_most_comments ON post_aggregates USING btree (category_id, featured_category DESC, comments DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_newest_comment_time ON post_aggregates USING btree (community_id, featured_community DESC, newest_comment_time DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time ON post_aggregates USING btree (category_id, featured_category DESC, newest_comment_time DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_newest_comment_time_necr ON post_aggregates USING btree (community_id, featured_community DESC, newest_comment_time_necro DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time_necr ON post_aggregates USING btree (category_id, featured_category DESC, newest_comment_time_necro DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_published ON post_aggregates USING btree (community_id, featured_community DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_published ON post_aggregates USING btree (category_id, featured_category DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_published_asc ON post_aggregates USING btree (community_id, featured_community DESC, reverse_timestamp_sort (published) DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_published_asc ON post_aggregates USING btree (category_id, featured_category DESC, reverse_timestamp_sort (published) DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_scaled ON post_aggregates USING btree (community_id, featured_community DESC, scaled_rank DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_scaled ON post_aggregates USING btree (category_id, featured_category DESC, scaled_rank DESC, published DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_score ON post_aggregates USING btree (community_id, featured_community DESC, score DESC, published DESC, post_id DESC);
+CREATE INDEX idx_post_aggregates_featured_category_score ON post_aggregates USING btree (category_id, featured_category DESC, score DESC, published DESC, post_id DESC);
 
 CREATE INDEX idx_post_aggregates_featured_local_active ON post_aggregates USING btree (featured_local DESC, hot_rank_active DESC, published DESC, post_id DESC);
 
@@ -185,7 +185,7 @@ CREATE INDEX idx_post_aggregates_published ON post_aggregates USING btree (publi
 
 CREATE INDEX idx_post_aggregates_published_asc ON post_aggregates USING btree (reverse_timestamp_sort (published) DESC);
 
-DROP INDEX idx_post_featured_community_published_asc;
+DROP INDEX idx_post_featured_category_published_asc;
 
 DROP INDEX idx_post_featured_local_published;
 
@@ -197,9 +197,9 @@ DROP INDEX idx_post_published_asc;
 
 DROP INDEX idx_search_combined_score;
 
--- move community_aggregates back into separate table
-CREATE TABLE community_aggregates (
-    community_id int PRIMARY KEY NOT NULL REFERENCES COMMunity ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+-- move category_aggregates back into separate table
+CREATE TABLE category_aggregates (
+    category_id int PRIMARY KEY NOT NULL REFERENCES COMMunity ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     subscribers bigint NOT NULL DEFAULT 0,
     posts bigint NOT NULL DEFAULT 0,
     comments bigint NOT NULL DEFAULT 0,
@@ -215,7 +215,7 @@ CREATE TABLE community_aggregates (
     interactions_month bigint NOT NULL DEFAULT 0
 );
 
-INSERT INTO community_aggregates
+INSERT INTO category_aggregates
 SELECT
     id AS comment_id,
     subscribers,
@@ -232,9 +232,9 @@ SELECT
     unresolved_report_count,
     interactions_month
 FROM
-    community;
+    category;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN subscribers,
     DROP COLUMN posts,
     DROP COLUMN comments,
@@ -247,22 +247,22 @@ ALTER TABLE community
     DROP COLUMN report_count,
     DROP COLUMN unresolved_report_count,
     DROP COLUMN interactions_month,
-    ALTER CONSTRAINT community_instance_id_fkey NOT DEFERRABLE INITIALLY IMMEDIATE;
+    ALTER CONSTRAINT category_instance_id_fkey NOT DEFERRABLE INITIALLY IMMEDIATE;
 
-SET CONSTRAINTS community_aggregates_community_id_fkey IMMEDIATE;
+SET CONSTRAINTS category_aggregates_category_id_fkey IMMEDIATE;
 
-SET CONSTRAINTS community_aggregates_community_id_fkey DEFERRED;
+SET CONSTRAINTS category_aggregates_category_id_fkey DEFERRED;
 
-CREATE INDEX idx_community_aggregates_hot ON public.community_aggregates USING btree (hot_rank DESC);
+CREATE INDEX idx_category_aggregates_hot ON public.category_aggregates USING btree (hot_rank DESC);
 
-CREATE INDEX idx_community_aggregates_nonzero_hotrank ON public.community_aggregates USING btree (published)
+CREATE INDEX idx_category_aggregates_nonzero_hotrank ON public.category_aggregates USING btree (published)
 WHERE (hot_rank <> (0)::double precision);
 
-CREATE INDEX idx_community_aggregates_published ON public.community_aggregates USING btree (published DESC);
+CREATE INDEX idx_category_aggregates_published ON public.category_aggregates USING btree (published DESC);
 
-CREATE INDEX idx_community_aggregates_subscribers ON public.community_aggregates USING btree (subscribers DESC);
+CREATE INDEX idx_category_aggregates_subscribers ON public.category_aggregates USING btree (subscribers DESC);
 
-CREATE INDEX idx_community_aggregates_users_active_month ON public.community_aggregates USING btree (users_active_month DESC);
+CREATE INDEX idx_category_aggregates_users_active_month ON public.category_aggregates USING btree (users_active_month DESC);
 
 -- move person_aggregates back into separate table
 CREATE TABLE person_aggregates (

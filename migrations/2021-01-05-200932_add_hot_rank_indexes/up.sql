@@ -42,11 +42,11 @@ CREATE INDEX idx_user_published ON user_ (published DESC);
 -- User_aggregates
 CREATE INDEX idx_user_aggregates_comment_score ON user_aggregates (comment_score DESC);
 
--- Community
-CREATE INDEX idx_community_published ON community (published DESC);
+-- Category
+CREATE INDEX idx_category_published ON category (published DESC);
 
 -- Community_aggregates
-CREATE INDEX idx_community_aggregates_hot ON community_aggregates (hot_rank (subscribers, published) DESC, published DESC);
+CREATE INDEX idx_category_aggregates_hot ON category_aggregates (hot_rank (subscribers, published) DESC, published DESC);
 
-CREATE INDEX idx_community_aggregates_subscribers ON community_aggregates (subscribers DESC);
+CREATE INDEX idx_category_aggregates_subscribers ON category_aggregates (subscribers DESC);
 

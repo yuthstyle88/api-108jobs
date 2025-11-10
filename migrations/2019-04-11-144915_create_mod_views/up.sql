@@ -20,19 +20,19 @@ SELECT
             c.id
         FROM
             post p,
-            community c
+            category c
         WHERE
             mrp.post_id = p.id
-            AND p.community_id = c.id) AS community_id,
+            AND p.category_id = c.id) AS category_id,
     (
         SELECT
             c.name
         FROM
             post p,
-            community c
+            category c
         WHERE
             mrp.post_id = p.id
-            AND p.community_id = c.id) AS community_name
+            AND p.category_id = c.id) AS category_name
 FROM
     mod_remove_post mrp;
 
@@ -58,19 +58,19 @@ SELECT
             c.id
         FROM
             post p,
-            community c
+            category c
         WHERE
             mlp.post_id = p.id
-            AND p.community_id = c.id) AS community_id,
+            AND p.category_id = c.id) AS category_id,
     (
         SELECT
             c.name
         FROM
             post p,
-            community c
+            category c
         WHERE
             mlp.post_id = p.id
-            AND p.community_id = c.id) AS community_name
+            AND p.category_id = c.id) AS category_name
 FROM
     mod_lock_post mlp;
 
@@ -131,26 +131,26 @@ SELECT
         FROM
             comment c,
             post p,
-            community co
+            category co
         WHERE
             mrc.comment_id = c.id
             AND c.post_id = p.id
-            AND p.community_id = co.id) AS community_id,
+            AND p.category_id = co.id) AS category_id,
     (
         SELECT
             co.name
         FROM
             comment c,
             post p,
-            community co
+            category co
         WHERE
             mrc.comment_id = c.id
             AND c.post_id = p.id
-            AND p.community_id = co.id) AS community_name
+            AND p.category_id = co.id) AS category_name
 FROM
     mod_remove_comment mrc;
 
-CREATE VIEW mod_remove_community_view AS
+CREATE VIEW mod_remove_category_view AS
 SELECT
     mrc.*,
     (
@@ -164,13 +164,13 @@ SELECT
         SELECT
             c.name
         FROM
-            community c
+            category c
         WHERE
-            mrc.community_id = c.id) AS community_name
+            mrc.category_id = c.id) AS category_name
 FROM
-    mod_remove_community mrc;
+    mod_remove_category mrc;
 
-CREATE VIEW mod_ban_from_community_view AS
+CREATE VIEW mod_ban_from_category_view AS
 SELECT
     mb.*,
     (
@@ -191,11 +191,11 @@ SELECT
         SELECT
             name
         FROM
-            community c
+            category c
         WHERE
-            mb.community_id = c.id) AS community_name
+            mb.category_id = c.id) AS category_name
 FROM
-    mod_ban_from_community mb;
+    mod_ban_from_category mb;
 
 CREATE VIEW mod_ban_view AS
 SELECT
@@ -217,7 +217,7 @@ SELECT
 FROM
     mod_ban mb;
 
-CREATE VIEW mod_add_community_view AS
+CREATE VIEW mod_add_category_view AS
 SELECT
     ma.*,
     (
@@ -238,11 +238,11 @@ SELECT
         SELECT
             name
         FROM
-            community c
+            category c
         WHERE
-            ma.community_id = c.id) AS community_name
+            ma.category_id = c.id) AS category_name
 FROM
-    mod_add_community ma;
+    mod_add_category ma;
 
 CREATE VIEW mod_add_view AS
 SELECT

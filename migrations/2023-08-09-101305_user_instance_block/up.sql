@@ -15,19 +15,19 @@ CREATE OR REPLACE FUNCTION post_aggregates_post ()
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, community_id, creator_id, instance_id)
+        INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, category_id, creator_id, instance_id)
         SELECT
             NEW.id,
             NEW.published,
             NEW.published,
             NEW.published,
-            NEW.community_id,
+            NEW.category_id,
             NEW.creator_id,
-            community.instance_id
+            category.instance_id
         FROM
-            community
+            category
         WHERE
-            NEW.community_id = community.id;
+            NEW.category_id = category.id;
     ELSIF (TG_OP = 'DELETE') THEN
         DELETE FROM post_aggregates
         WHERE post_id = OLD.id;
@@ -39,10 +39,10 @@ $$;
 UPDATE
     post_aggregates
 SET
-    instance_id = community.instance_id
+    instance_id = category.instance_id
 FROM
     post
-    JOIN community ON post.community_id = community.id
+    JOIN category ON post.category_id = category.id
 WHERE
     post.id = post_aggregates.post_id;
 

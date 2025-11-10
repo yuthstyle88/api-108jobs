@@ -9,20 +9,20 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema::{
-  aliases::{self, creator_community_actions},
+  aliases::{self, creator_category_actions},
   newtypes::{CommentReportId, PersonId},
   utils::{get_conn, DbPool},
 };
 use lemmy_db_schema_file::schema::{
-  comment,
-  comment_actions,
-  comment_report,
-  community,
-  community_actions,
-  local_user,
-  person,
-  person_actions,
-  post,
+    comment,
+    comment_actions,
+    comment_report,
+    category,
+    category_actions,
+    local_user,
+    person,
+    person_actions,
+    post,
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -34,7 +34,7 @@ impl CommentReportView {
 
     let post_join = post::table.on(comment::post_id.eq(post::id));
 
-    let community_join = community::table.on(post::community_id.eq(community::id));
+    let category_join = category::table.on(post::category_id.eq(category::id));
 
     let report_creator_join = person::table.on(comment_report::creator_id.eq(person::id));
 
@@ -54,13 +54,13 @@ impl CommentReportView {
 
     let resolver_join = aliases::person2.on(comment_report::resolver_id.eq(resolver_id.nullable()));
 
-    let creator_community_actions_join = creator_community_actions.on(
-      creator_community_actions
-        .field(community_actions::community_id)
-        .eq(post::community_id)
+    let creator_category_actions_join = creator_category_actions.on(
+      creator_category_actions
+        .field(category_actions::category_id)
+        .eq(post::category_id)
         .and(
-          creator_community_actions
-            .field(community_actions::person_id)
+          creator_category_actions
+            .field(category_actions::person_id)
             .eq(comment::creator_id),
         ),
     );
@@ -71,24 +71,24 @@ impl CommentReportView {
         .and(person_actions::person_id.eq(my_person_id)),
     );
 
-    let community_actions_join = community_actions::table.on(
-      community_actions::community_id
-        .eq(post::community_id)
-        .and(community_actions::person_id.eq(my_person_id)),
+    let category_actions_join = category_actions::table.on(
+        category_actions::category_id
+        .eq(post::category_id)
+        .and(category_actions::person_id.eq(my_person_id)),
     );
 
     comment_report::table
       .inner_join(comment::table)
       .inner_join(post_join)
-      .inner_join(community_join)
+      .inner_join(category_join)
       .inner_join(report_creator_join)
       .inner_join(comment_creator_join)
       .left_join(comment_actions_join)
       .left_join(resolver_join)
-      .left_join(creator_community_actions_join)
+      .left_join(creator_category_actions_join)
       .left_join(local_user_join)
       .left_join(person_actions_join)
-      .left_join(community_actions_join)
+      .left_join(category_actions_join)
   }
 
   /// returns the CommentReportView for the provided report_id

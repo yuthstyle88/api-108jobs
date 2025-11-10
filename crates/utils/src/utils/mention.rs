@@ -6,7 +6,7 @@ use std::sync::LazyLock;
 pub(crate) static MENTIONS_REGEX: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"@(?P<name>[\w.]+)@(?P<domain>[a-zA-Z0-9._:-]+)").expect("compile regex")
 });
-// TODO nothing is done with community / group webfingers yet, so just ignore those for now
+// TODO nothing is done with category / group webfingers yet, so just ignore those for now
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct MentionData {
   pub name: String,
@@ -42,7 +42,7 @@ mod test {
 
   #[test]
   fn test_mentions_regex() {
-    let text = "Just read a great blog post by [@tedu@honk.teduangst.com](/u/test). And another by !test_community@fish.teduangst.com . Another [@lemmy@lemmy-alpha:8540](/u/fish)";
+    let text = "Just read a great blog post by [@tedu@honk.teduangst.com](/u/test). And another by !test_category@fish.teduangst.com . Another [@lemmy@lemmy-alpha:8540](/u/fish)";
     let mentions = scrape_text_for_mentions(text);
 
     assert_eq!(mentions[0].name, "tedu".to_string());

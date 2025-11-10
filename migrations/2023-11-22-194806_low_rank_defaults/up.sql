@@ -3,7 +3,7 @@
 --
 -- They must be non-zero, in order for them to be picked up by the hot_ranks updater.
 -- See https://github.com/LemmyNet/lemmy/issues/4178
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     ALTER COLUMN hot_rank SET DEFAULT 0.0001;
 
 ALTER TABLE comment_aggregates

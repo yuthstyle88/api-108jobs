@@ -11,7 +11,7 @@ use lemmy_db_schema::{
   traits::{Crud, Readable}
   ,
 };
-use lemmy_db_views_community::CommunityView;
+use lemmy_db_views_category::CategoryView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{
   api::{GetPost, GetPostResponse},
@@ -46,9 +46,9 @@ pub async fn get_post(
   };
 
   // Check to see if the person is a mod or admin, to show deleted / removed
-  let community_id = Post::read_xx(&mut context.pool(), post_id)
+  let category_id = Post::read_xx(&mut context.pool(), post_id)
     .await?
-    .community_id;
+    .category_id;
 
   let post_view = PostView::read(
     &mut context.pool(),
@@ -73,9 +73,9 @@ pub async fn get_post(
   }
 
   // Necessary for the sidebar subscribed
-  let community_view = CommunityView::read(
+  let category_view = CategoryView::read(
     &mut context.pool(),
-    community_id,
+    category_id,
     local_user.as_ref(),
   )
   .await?;
@@ -102,7 +102,7 @@ pub async fn get_post(
   // Return the jwt
   Ok(Json(GetPostResponse {
     post_view,
-    community_view,
+    category_view,
     cross_posts,
   }))
 }

@@ -16,56 +16,56 @@ FROM
 WHERE
     saved IS NOT NULL;
 
-CREATE TABLE community_block (
+CREATE TABLE category_block (
     person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     published timestamptz DEFAULT now() NOT NULL,
-    PRIMARY KEY (person_id, community_id)
+    PRIMARY KEY (person_id, category_id)
 );
 
-INSERT INTO community_block (person_id, community_id, published)
+INSERT INTO category_block (person_id, category_id, published)
 SELECT
     person_id,
-    community_id,
+    category_id,
     blocked
 FROM
-    community_actions
+    category_actions
 WHERE
     blocked IS NOT NULL;
 
-CREATE TABLE community_person_ban (
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+CREATE TABLE category_person_ban (
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     published timestamptz DEFAULT now() NOT NULL,
     expires timestamptz,
-    PRIMARY KEY (person_id, community_id)
+    PRIMARY KEY (person_id, category_id)
 );
 
-INSERT INTO community_person_ban (community_id, person_id, published, expires)
+INSERT INTO category_person_ban (category_id, person_id, published, expires)
 SELECT
-    community_id,
+    category_id,
     person_id,
     received_ban,
     ban_expires
 FROM
-    community_actions
+    category_actions
 WHERE
     received_ban IS NOT NULL;
 
-CREATE TABLE community_moderator (
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+CREATE TABLE category_moderator (
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     published timestamptz DEFAULT now() NOT NULL,
-    PRIMARY KEY (person_id, community_id)
+    PRIMARY KEY (person_id, category_id)
 );
 
-INSERT INTO community_moderator (community_id, person_id, published)
+INSERT INTO category_moderator (category_id, person_id, published)
 SELECT
-    community_id,
+    category_id,
     person_id,
     became_moderator
 FROM
-    community_actions
+    category_actions
 WHERE
     became_moderator IS NOT NULL;
 
@@ -162,7 +162,7 @@ WHERE
 DELETE FROM comment_actions
 WHERE liked IS NULL;
 
-DELETE FROM community_actions
+DELETE FROM category_actions
 WHERE followed IS NULL;
 
 DELETE FROM instance_actions
@@ -176,7 +176,7 @@ WHERE read IS NULL;
 
 ALTER TABLE comment_actions RENAME TO comment_like;
 
-ALTER TABLE community_actions RENAME TO community_follower;
+ALTER TABLE category_actions RENAME TO category_follower;
 
 ALTER TABLE instance_actions RENAME TO instance_block;
 
@@ -188,11 +188,11 @@ ALTER TABLE comment_like RENAME COLUMN liked TO published;
 
 ALTER TABLE comment_like RENAME COLUMN like_score TO score;
 
-ALTER TABLE community_follower RENAME COLUMN followed TO published;
+ALTER TABLE category_follower RENAME COLUMN followed TO published;
 
-ALTER TABLE community_follower RENAME COLUMN follow_state TO state;
+ALTER TABLE category_follower RENAME COLUMN follow_state TO state;
 
-ALTER TABLE community_follower RENAME COLUMN follow_approver_id TO approver_id;
+ALTER TABLE category_follower RENAME COLUMN follow_approver_id TO approver_id;
 
 ALTER TABLE instance_block RENAME COLUMN blocked TO published;
 
@@ -213,9 +213,9 @@ ALTER TABLE comment_like
     ALTER COLUMN score SET NOT NULL,
     DROP COLUMN saved;
 
-ALTER TABLE community_follower
-    DROP CONSTRAINT community_actions_check_followed,
-    DROP CONSTRAINT community_actions_check_received_ban,
+ALTER TABLE category_follower
+    DROP CONSTRAINT category_actions_check_followed,
+    DROP CONSTRAINT category_actions_check_received_ban,
     ALTER COLUMN published SET NOT NULL,
     ALTER COLUMN published SET DEFAULT now(),
     ALTER COLUMN state SET NOT NULL,
@@ -256,15 +256,15 @@ ALTER TABLE comment_like RENAME CONSTRAINT comment_actions_comment_id_fkey TO co
 
 ALTER TABLE comment_like RENAME CONSTRAINT comment_actions_person_id_fkey TO comment_like_person_id_fkey;
 
-ALTER INDEX community_actions_pkey RENAME TO community_follower_pkey;
+ALTER INDEX category_actions_pkey RENAME TO category_follower_pkey;
 
-ALTER INDEX idx_community_actions_community RENAME TO idx_community_follower_community;
+ALTER INDEX idx_category_actions_category RENAME TO idx_category_follower_category;
 
-ALTER TABLE community_follower RENAME CONSTRAINT community_actions_community_id_fkey TO community_follower_community_id_fkey;
+ALTER TABLE category_follower RENAME CONSTRAINT category_actions_category_id_fkey TO category_follower_category_id_fkey;
 
-ALTER TABLE community_follower RENAME CONSTRAINT community_actions_person_id_fkey TO community_follower_person_id_fkey;
+ALTER TABLE category_follower RENAME CONSTRAINT category_actions_person_id_fkey TO category_follower_person_id_fkey;
 
-ALTER TABLE community_follower RENAME CONSTRAINT community_actions_follow_approver_id_fkey TO community_follower_approver_id_fkey;
+ALTER TABLE category_follower RENAME CONSTRAINT category_actions_follow_approver_id_fkey TO category_follower_approver_id_fkey;
 
 ALTER INDEX instance_actions_pkey RENAME TO instance_block_pkey;
 
@@ -284,21 +284,21 @@ ALTER TABLE post_read RENAME CONSTRAINT post_actions_person_id_fkey TO post_read
 
 ALTER TABLE post_read RENAME CONSTRAINT post_actions_post_id_fkey TO post_read_post_id_fkey;
 
--- Rename idx_community_actions_followed and remove filter
-CREATE INDEX idx_community_follower_published ON community_follower (published);
+-- Rename idx_category_actions_followed and remove filter
+CREATE INDEX idx_category_follower_published ON category_follower (published);
 
-DROP INDEX idx_community_actions_followed;
+DROP INDEX idx_category_actions_followed;
 
 -- Move indexes back to their original tables
 CREATE INDEX idx_comment_saved_comment ON comment_saved (comment_id);
 
 CREATE INDEX idx_comment_saved_person ON comment_saved (person_id);
 
-CREATE INDEX idx_community_block_community ON community_block (community_id);
+CREATE INDEX idx_category_block_category ON category_block (category_id);
 
-CREATE INDEX idx_community_moderator_community ON community_moderator (community_id);
+CREATE INDEX idx_category_moderator_category ON category_moderator (category_id);
 
-CREATE INDEX idx_community_moderator_published ON community_moderator (published);
+CREATE INDEX idx_category_moderator_published ON category_moderator (published);
 
 CREATE INDEX idx_person_block_person ON person_block (person_id);
 
@@ -313,8 +313,8 @@ CREATE INDEX idx_post_like_post ON post_like (post_id);
 DROP INDEX idx_person_actions_person, idx_person_actions_target, idx_post_actions_person, idx_post_actions_post;
 
 -- Drop `NOT NULL` indexes of columns that still exist
-DROP INDEX idx_comment_actions_liked_not_null, idx_community_actions_followed_not_null, idx_person_actions_followed_not_null, idx_post_actions_read_not_null, idx_instance_actions_blocked_not_null;
+DROP INDEX idx_comment_actions_liked_not_null, idx_category_actions_followed_not_null, idx_person_actions_followed_not_null, idx_post_actions_read_not_null, idx_instance_actions_blocked_not_null;
 
 -- Drop statistics of columns that still exist
-DROP statistics comment_actions_liked_stat, community_actions_followed_stat, person_actions_followed_stat;
+DROP statistics comment_actions_liked_stat, category_actions_followed_stat, person_actions_followed_stat;
 

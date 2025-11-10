@@ -30,17 +30,17 @@ BEGIN
 END
 $$;
 
-CREATE OR REPLACE FUNCTION community_aggregates_community ()
+CREATE OR REPLACE FUNCTION category_aggregates_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO community_aggregates (community_id)
+        INSERT INTO category_aggregates (category_id)
             VALUES (NEW.id);
     ELSIF (TG_OP = 'DELETE') THEN
-        DELETE FROM community_aggregates
-        WHERE community_id = OLD.id;
+        DELETE FROM category_aggregates
+        WHERE category_id = OLD.id;
     END IF;
     RETURN NULL;
 END

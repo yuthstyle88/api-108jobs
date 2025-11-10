@@ -14,16 +14,16 @@ ALTER TABLE person
 ALTER TABLE person RENAME COLUMN shared_inbox_url TO inbox_url;
 
 UPDATE
-    community
+    category
 SET
     shared_inbox_url = inbox_url
 WHERE
     shared_inbox_url IS NULL;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN inbox_url,
     ALTER COLUMN shared_inbox_url SET NOT NULL,
     ALTER COLUMN shared_inbox_url SET DEFAULT generate_unique_changeme ();
 
-ALTER TABLE community RENAME COLUMN shared_inbox_url TO inbox_url;
+ALTER TABLE category RENAME COLUMN shared_inbox_url TO inbox_url;
 

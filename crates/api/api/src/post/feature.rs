@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
@@ -9,7 +9,7 @@ use lemmy_api_utils::{
 };
 use lemmy_db_schema::{
   source::{
-    community::Community,
+    category::Category,
     mod_log::moderator::{ModFeaturePost, ModFeaturePostForm},
     post::{Post, PostUpdateForm},
   },
@@ -28,8 +28,8 @@ pub async fn feature_post(
   let post_id = data.post_id;
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
 
-  let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
-  check_community_deleted_removed(&community)?;
+  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
+  check_category_deleted_removed(&category)?;
 
   if data.feature_type == PostFeatureType::Local {
     is_admin(&local_user_view)?;
@@ -37,9 +37,9 @@ pub async fn feature_post(
 
   // Update the post
   let post_id = data.post_id;
-  let new_post: PostUpdateForm = if data.feature_type == PostFeatureType::Community {
+  let new_post: PostUpdateForm = if data.feature_type == PostFeatureType::Category {
     PostUpdateForm {
-      featured_community: Some(data.featured),
+      featured_category: Some(data.featured),
       ..Default::default()
     }
   } else {
@@ -55,7 +55,7 @@ pub async fn feature_post(
     mod_person_id: local_user_view.person.id,
     post_id: data.post_id,
     featured: Some(data.featured),
-    is_featured_community: Some(data.feature_type == PostFeatureType::Community),
+    is_featured_category: Some(data.feature_type == PostFeatureType::Category),
   };
 
   ModFeaturePost::create(&mut context.pool(), &form).await?;

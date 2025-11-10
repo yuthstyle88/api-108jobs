@@ -1,5 +1,5 @@
 use lemmy_db_schema::source::{
-  community::{Community, CommunityActions},
+  category::{Category, CategoryActions},
   images::ImageDetails,
   instance::InstanceActions,
   person::{Person, PersonActions},
@@ -14,8 +14,8 @@ use serde_with::skip_serializing_none;
 use {
   diesel::{Queryable, Selectable},
   lemmy_db_schema::utils::queries::{
-    creator_banned_from_community,
-    creator_banned_within_community,
+    creator_banned_from_category,
+    creator_banned_within_category,
   },
   lemmy_db_schema::utils::queries::{
     creator_is_moderator,
@@ -42,11 +42,11 @@ pub struct PostView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -73,7 +73,7 @@ pub struct PostView {
   pub can_mod: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_within_community()
+      select_expression = creator_banned_within_category()
     )
   )]
   pub creator_banned: bool,
@@ -85,8 +85,8 @@ pub struct PostView {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }

@@ -1,14 +1,14 @@
 use crate::newtypes::{
-  AdminAllowInstanceId,
-  AdminBlockInstanceId,
-  AdminPurgeCommentId,
-  AdminPurgeCommunityId,
-  AdminPurgePersonId,
-  AdminPurgePostId,
-  CommunityId,
-  InstanceId,
-  PersonId,
-  PostId,
+    AdminAllowInstanceId,
+    AdminBlockInstanceId,
+    AdminPurgeCommentId,
+    AdminPurgeCategoryId,
+    AdminPurgePersonId,
+    AdminPurgePostId,
+    CategoryId,
+    InstanceId,
+    PersonId,
+    PostId,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
@@ -16,7 +16,7 @@ use lemmy_db_schema_file::schema::{
   admin_allow_instance,
   admin_block_instance,
   admin_purge_comment,
-  admin_purge_community,
+  admin_purge_category,
   admin_purge_person,
   admin_purge_post,
 };
@@ -48,22 +48,22 @@ pub struct AdminPurgePersonForm {
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = admin_purge_community))]
+#[cfg_attr(feature = "full", diesel(table_name = admin_purge_category))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When an admin purges a community.
+/// When an admin purges a category.
 #[serde(rename_all = "camelCase")]
-pub struct AdminPurgeCommunity {
-  pub id: AdminPurgeCommunityId,
+pub struct AdminPurgeCategory {
+  pub id: AdminPurgeCategoryId,
   pub admin_person_id: PersonId,
   pub reason: Option<String>,
   pub published_at: DateTime<Utc>,
 }
 
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = admin_purge_community))]
-pub struct AdminPurgeCommunityForm {
+#[cfg_attr(feature = "full", diesel(table_name = admin_purge_category))]
+pub struct AdminPurgeCategoryForm {
   pub admin_person_id: PersonId,
   pub reason: Option<String>,
 }
@@ -80,7 +80,7 @@ pub struct AdminPurgeCommunityForm {
 pub struct AdminPurgePost {
   pub id: AdminPurgePostId,
   pub admin_person_id: PersonId,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   pub reason: Option<String>,
   pub published_at: DateTime<Utc>,
 }
@@ -89,7 +89,7 @@ pub struct AdminPurgePost {
 #[cfg_attr(feature = "full", diesel(table_name = admin_purge_post))]
 pub struct AdminPurgePostForm {
   pub admin_person_id: PersonId,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   pub reason: Option<String>,
 }
 

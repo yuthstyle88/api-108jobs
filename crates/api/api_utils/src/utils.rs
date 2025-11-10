@@ -12,10 +12,10 @@ use lemmy_db_schema::newtypes::LanguageId;
 use lemmy_db_schema::source::actor_language::SiteLanguage;
 use lemmy_db_schema::source::language::Language;
 use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
-  source::{
+    newtypes::{CommentId, CategoryId, DbUrl, InstanceId, PersonId, PostId},
+    source::{
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions},
+    category::{Category, CategoryActions},
     images::{ImageDetails, RemoteImage},
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
@@ -28,8 +28,8 @@ use lemmy_db_schema::{
     post::{Post, PostActions, PostReadCommentsForm},
     registration_application::RegistrationApplication,
   },
-  traits::{Crud, Likeable, ReadComments},
-  utils::DbPool,
+    traits::{Crud, Likeable, ReadComments},
+    utils::DbPool,
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_image::LocalImageView;
@@ -149,8 +149,8 @@ pub async fn check_registration_application(
   Ok(())
 }
 
-pub fn check_community_deleted_removed(community: &Community) -> FastJobResult<()> {
-  if community.deleted || community.removed {
+pub fn check_category_deleted_removed(category: &Category) -> FastJobResult<()> {
+  if category.deleted || category.removed {
     Err(FastJobErrorType::AlreadyDeleted)?
   }
   Ok(())
@@ -414,24 +414,24 @@ async fn create_modlog_entries_for_removed_or_restored_comments(
   Ok(())
 }
 
-pub async fn remove_or_restore_user_data_in_community(
-  community_id: CommunityId,
-  mod_person_id: PersonId,
-  banned_person_id: PersonId,
-  remove: bool,
-  reason: &Option<String>,
-  pool: &mut DbPool<'_>,
+pub async fn remove_or_restore_user_data_in_category(
+    category_id: CategoryId,
+    mod_person_id: PersonId,
+    banned_person_id: PersonId,
+    remove: bool,
+    reason: &Option<String>,
+    pool: &mut DbPool<'_>,
 ) -> FastJobResult<()> {
   // These actions are only possible when removing, not restoring
   if remove {
     // Remove post and comment votes
-    PostActions::remove_likes_in_community(pool, banned_person_id, community_id).await?;
-    CommentActions::remove_likes_in_community(pool, banned_person_id, community_id).await?;
+    PostActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
+    CommentActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
   }
 
   // Posts
   let posts =
-    Post::update_removed_for_creator_and_community(pool, banned_person_id, community_id, remove)
+    Post::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
       .await?;
 
   create_modlog_entries_for_removed_or_restored_posts(
@@ -445,7 +445,7 @@ pub async fn remove_or_restore_user_data_in_community(
 
   // Comments
   let removed_comment_ids =
-    Comment::update_removed_for_creator_and_community(pool, banned_person_id, community_id, remove)
+    Comment::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
       .await?;
 
   create_modlog_entries_for_removed_or_restored_comments(
@@ -482,7 +482,7 @@ pub async fn purge_user_account(
     .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
 
   // Leave communities they mod
-  CommunityActions::leave_mod_team_for_all_communities(pool, person_id).await?;
+  CategoryActions::leave_mod_team_for_all_communities(pool, person_id).await?;
 
   // Delete the oauth accounts linked to the local user
   if let Ok(local_user) = LocalUserView::read_person(pool, person_id).await {
@@ -511,8 +511,8 @@ pub fn generate_featured_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
   Ok(Url::parse(&format!("{ap_id}/featured"))?.into())
 }
 
-pub fn generate_moderators_url(community_id: &DbUrl) -> FastJobResult<DbUrl> {
-  Ok(Url::parse(&format!("{community_id}/moderators"))?.into())
+pub fn generate_moderators_url(category_id: &DbUrl) -> FastJobResult<DbUrl> {
+  Ok(Url::parse(&format!("{category_id}/moderators"))?.into())
 }
 
 /// Ensure that ban/block expiry is in valid range. If its in past, throw error. If its more

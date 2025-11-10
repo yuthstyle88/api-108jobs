@@ -19,7 +19,7 @@ use lemmy_db_views_reports::{
 use lemmy_multilang::admin::send_new_report_email_to_admins;
 use lemmy_utils::error::FastJobResult;
 
-/// Creates a post report and notifies the moderators of the community
+/// Creates a post report and notifies the moderators of the category
 pub async fn create_post_report(
   data: Json<CreatePostReport>,
   context: Data<FastJobContext>,
@@ -66,7 +66,7 @@ pub async fn create_post_report(
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
       actor: local_user_view.person,
-      receiver: Either::Right(post_view.community),
+      receiver: Either::Right(post_view.category),
       reason: data.reason.clone(),
     },
     &context,

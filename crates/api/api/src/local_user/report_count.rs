@@ -16,7 +16,7 @@ pub async fn report_count(
   let count = ReportCombinedViewInternal::get_report_count(
     &mut context.pool(),
     &local_user_view,
-    data.community_id,
+    data.category_id,
   )
   .await?;
 

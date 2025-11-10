@@ -40,10 +40,10 @@ ALTER TABLE mod_remove_post RENAME COLUMN mod_person_id TO mod_user_id;
 
 ALTER TABLE mod_remove_post RENAME CONSTRAINT mod_remove_post_mod_person_id_fkey TO mod_remove_post_mod_user_id_fkey;
 
--- mod_remove_community
-ALTER TABLE mod_remove_community RENAME COLUMN mod_person_id TO mod_user_id;
+-- mod_remove_category
+ALTER TABLE mod_remove_category RENAME COLUMN mod_person_id TO mod_user_id;
 
-ALTER TABLE mod_remove_community RENAME CONSTRAINT mod_remove_community_mod_person_id_fkey TO mod_remove_community_mod_user_id_fkey;
+ALTER TABLE mod_remove_category RENAME CONSTRAINT mod_remove_category_mod_person_id_fkey TO mod_remove_category_mod_user_id_fkey;
 
 -- mod_remove_comment
 ALTER TABLE mod_remove_comment RENAME COLUMN mod_person_id TO mod_user_id;
@@ -55,14 +55,14 @@ ALTER TABLE mod_lock_post RENAME COLUMN mod_person_id TO mod_user_id;
 
 ALTER TABLE mod_lock_post RENAME CONSTRAINT mod_lock_post_mod_person_id_fkey TO mod_lock_post_mod_user_id_fkey;
 
--- mod_add_community
-ALTER TABLE mod_ban_from_community RENAME COLUMN mod_person_id TO mod_user_id;
+-- mod_add_category
+ALTER TABLE mod_ban_from_category RENAME COLUMN mod_person_id TO mod_user_id;
 
-ALTER TABLE mod_ban_from_community RENAME COLUMN other_person_id TO other_user_id;
+ALTER TABLE mod_ban_from_category RENAME COLUMN other_person_id TO other_user_id;
 
-ALTER TABLE mod_ban_from_community RENAME CONSTRAINT mod_ban_from_community_mod_person_id_fkey TO mod_ban_from_community_mod_user_id_fkey;
+ALTER TABLE mod_ban_from_category RENAME CONSTRAINT mod_ban_from_category_mod_person_id_fkey TO mod_ban_from_category_mod_user_id_fkey;
 
-ALTER TABLE mod_ban_from_community RENAME CONSTRAINT mod_ban_from_community_other_person_id_fkey TO mod_ban_from_community_other_user_id_fkey;
+ALTER TABLE mod_ban_from_category RENAME CONSTRAINT mod_ban_from_category_other_person_id_fkey TO mod_ban_from_category_other_user_id_fkey;
 
 -- mod_ban
 ALTER TABLE mod_ban RENAME COLUMN mod_person_id TO mod_user_id;
@@ -73,14 +73,14 @@ ALTER TABLE mod_ban RENAME CONSTRAINT mod_ban_mod_person_id_fkey TO mod_ban_mod_
 
 ALTER TABLE mod_ban RENAME CONSTRAINT mod_ban_other_person_id_fkey TO mod_ban_other_user_id_fkey;
 
--- mod_add_community
-ALTER TABLE mod_add_community RENAME COLUMN mod_person_id TO mod_user_id;
+-- mod_add_category
+ALTER TABLE mod_add_category RENAME COLUMN mod_person_id TO mod_user_id;
 
-ALTER TABLE mod_add_community RENAME COLUMN other_person_id TO other_user_id;
+ALTER TABLE mod_add_category RENAME COLUMN other_person_id TO other_user_id;
 
-ALTER TABLE mod_add_community RENAME CONSTRAINT mod_add_community_mod_person_id_fkey TO mod_add_community_mod_user_id_fkey;
+ALTER TABLE mod_add_category RENAME CONSTRAINT mod_add_category_mod_person_id_fkey TO mod_add_category_mod_user_id_fkey;
 
-ALTER TABLE mod_add_community RENAME CONSTRAINT mod_add_community_other_person_id_fkey TO mod_add_community_other_user_id_fkey;
+ALTER TABLE mod_add_category RENAME CONSTRAINT mod_add_category_other_person_id_fkey TO mod_add_category_other_user_id_fkey;
 
 -- mod_add
 ALTER TABLE mod_add RENAME COLUMN mod_person_id TO mod_user_id;
@@ -91,35 +91,35 @@ ALTER TABLE mod_add RENAME CONSTRAINT mod_add_mod_person_id_fkey TO mod_add_mod_
 
 ALTER TABLE mod_add RENAME CONSTRAINT mod_add_other_person_id_fkey TO mod_add_other_user_id_fkey;
 
--- community_user_ban
-ALTER TABLE community_person_ban RENAME TO community_user_ban;
+-- category_user_ban
+ALTER TABLE category_person_ban RENAME TO category_user_ban;
 
-ALTER SEQUENCE community_person_ban_id_seq
-    RENAME TO community_user_ban_id_seq;
+ALTER SEQUENCE category_person_ban_id_seq
+    RENAME TO category_user_ban_id_seq;
 
-ALTER TABLE community_user_ban RENAME COLUMN person_id TO user_id;
+ALTER TABLE category_user_ban RENAME COLUMN person_id TO user_id;
 
-ALTER TABLE community_user_ban RENAME CONSTRAINT community_person_ban_pkey TO community_user_ban_pkey;
+ALTER TABLE category_user_ban RENAME CONSTRAINT category_person_ban_pkey TO category_user_ban_pkey;
 
-ALTER TABLE community_user_ban RENAME CONSTRAINT community_person_ban_community_id_fkey TO community_user_ban_community_id_fkey;
+ALTER TABLE category_user_ban RENAME CONSTRAINT category_person_ban_category_id_fkey TO category_user_ban_category_id_fkey;
 
-ALTER TABLE community_user_ban RENAME CONSTRAINT community_person_ban_community_id_person_id_key TO community_user_ban_community_id_user_id_key;
+ALTER TABLE category_user_ban RENAME CONSTRAINT category_person_ban_category_id_person_id_key TO category_user_ban_category_id_user_id_key;
 
-ALTER TABLE community_user_ban RENAME CONSTRAINT community_person_ban_person_id_fkey TO community_user_ban_user_id_fkey;
+ALTER TABLE category_user_ban RENAME CONSTRAINT category_person_ban_person_id_fkey TO category_user_ban_user_id_fkey;
 
--- community_moderator
-ALTER TABLE community_moderator RENAME COLUMN person_id TO user_id;
+-- category_moderator
+ALTER TABLE category_moderator RENAME COLUMN person_id TO user_id;
 
-ALTER TABLE community_moderator RENAME CONSTRAINT community_moderator_community_id_person_id_key TO community_moderator_community_id_user_id_key;
+ALTER TABLE category_moderator RENAME CONSTRAINT category_moderator_category_id_person_id_key TO category_moderator_category_id_user_id_key;
 
-ALTER TABLE community_moderator RENAME CONSTRAINT community_moderator_person_id_fkey TO community_moderator_user_id_fkey;
+ALTER TABLE category_moderator RENAME CONSTRAINT category_moderator_person_id_fkey TO category_moderator_user_id_fkey;
 
--- community_follower
-ALTER TABLE community_follower RENAME COLUMN person_id TO user_id;
+-- category_follower
+ALTER TABLE category_follower RENAME COLUMN person_id TO user_id;
 
-ALTER TABLE community_follower RENAME CONSTRAINT community_follower_community_id_person_id_key TO community_follower_community_id_user_id_key;
+ALTER TABLE category_follower RENAME CONSTRAINT category_follower_category_id_person_id_key TO category_follower_category_id_user_id_key;
 
-ALTER TABLE community_follower RENAME CONSTRAINT community_follower_person_id_fkey TO community_follower_user_id_fkey;
+ALTER TABLE category_follower RENAME CONSTRAINT category_follower_person_id_fkey TO category_follower_user_id_fkey;
 
 -- comment_saved
 ALTER TABLE comment_saved RENAME COLUMN person_id TO user_id;

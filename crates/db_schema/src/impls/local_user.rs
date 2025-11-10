@@ -1,11 +1,11 @@
 use crate::{
-  newtypes::{CommunityId, DbUrl, LanguageId, LocalUserId, PersonId},
-  source::{
+    newtypes::{CategoryId, DbUrl, LanguageId, LocalUserId, PersonId},
+    source::{
     actor_language::LocalUserLanguage,
     local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
     site::Site,
   },
-  utils::{
+    utils::{
     functions::{coalesce, lower},
     get_conn, now, DbPool,
   },
@@ -18,8 +18,8 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use lemmy_db_schema_file::{
-  enums::CommunityVisibility,
-  schema::{community, community_actions, local_user, person, registration_application},
+  enums::CategoryVisibility,
+  schema::{category, category_actions, local_user, person, registration_application},
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -237,10 +237,10 @@ impl LocalUser {
 
   /// Checks to make sure the acting moderator is higher than the target moderator
   pub async fn is_higher_mod_or_admin_check(
-    pool: &mut DbPool<'_>,
-    for_community_id: CommunityId,
-    admin_person_id: PersonId,
-    target_person_ids: Vec<PersonId>,
+      pool: &mut DbPool<'_>,
+      for_category_id: CategoryId,
+      admin_person_id: PersonId,
+      target_person_ids: Vec<PersonId>,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
@@ -255,12 +255,12 @@ impl LocalUser {
       .order_by(local_user::id)
       .select(local_user::person_id);
 
-    let mods = community_actions::table
-      .filter(community_actions::became_moderator_at.is_not_null())
-      .filter(community_actions::community_id.eq(for_community_id))
-      .filter(community_actions::person_id.eq_any(&persons))
-      .order_by(community_actions::became_moderator_at)
-      .select(community_actions::person_id);
+    let mods = category_actions::table
+      .filter(category_actions::became_moderator_at.is_not_null())
+      .filter(category_actions::category_id.eq(for_category_id))
+      .filter(category_actions::person_id.eq_any(&persons))
+      .order_by(category_actions::became_moderator_at)
+      .select(category_actions::person_id);
 
     let res = admins.union_all(mods).get_results::<PersonId>(conn).await?;
     let first_person = res
@@ -289,7 +289,7 @@ pub trait LocalUserOptionHelper {
   fn visible_communities_only<Q>(&self, query: Q) -> Q
   where
     Q: diesel::query_dsl::methods::FilterDsl<
-      diesel::dsl::Eq<community::visibility, CommunityVisibility>,
+      diesel::dsl::Eq<category::visibility, CategoryVisibility>,
       Output = Q,
     >;
 }
@@ -325,16 +325,16 @@ impl LocalUserOptionHelper for Option<&LocalUser> {
     self.map(|l| l.hide_media).unwrap_or(false)
   }
 
-  // TODO: use this function for private community checks, but the generics get extremely confusing
+  // TODO: use this function for private category checks, but the generics get extremely confusing
   fn visible_communities_only<Q>(&self, query: Q) -> Q
   where
     Q: diesel::query_dsl::methods::FilterDsl<
-      diesel::dsl::Eq<community::visibility, CommunityVisibility>,
+      diesel::dsl::Eq<category::visibility, CategoryVisibility>,
       Output = Q,
     >,
   {
     if self.is_none() {
-      query.filter(community::visibility.eq(CommunityVisibility::Public))
+      query.filter(category::visibility.eq(CategoryVisibility::Public))
     } else {
       query
     }

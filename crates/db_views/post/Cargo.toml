@@ -23,7 +23,7 @@ full = [
     "i-love-jesus",
     "lemmy_db_schema/full",
     "lemmy_db_schema_file/full",
-    "lemmy_db_views_community/full",
+    "lemmy_db_views_category/full",
     "lemmy_db_views_vote/full",
     "url",
 ]
@@ -31,7 +31,7 @@ ts-rs = [
     "dep:ts-rs",
     "lemmy_db_schema/ts-rs",
     "lemmy_db_schema_file/ts-rs",
-    "lemmy_db_views_community/ts-rs",
+    "lemmy_db_views_category/ts-rs",
     "lemmy_db_views_vote/ts-rs",
 ]
 
@@ -39,7 +39,7 @@ ts-rs = [
 lemmy_db_schema = { workspace = true }
 lemmy_utils = { workspace = true, optional = true }
 lemmy_db_schema_file = { workspace = true }
-lemmy_db_views_community = { workspace = true }
+lemmy_db_views_category = { workspace = true }
 lemmy_db_views_vote = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }

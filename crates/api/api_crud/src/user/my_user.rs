@@ -41,7 +41,7 @@ pub async fn get_my_user(
   ))?;
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),
-    community_blocks: Vec::new(),
+    category_blocks: Vec::new(),
     instance_blocks,
     person_blocks,
     keyword_blocks,

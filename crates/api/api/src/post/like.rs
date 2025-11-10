@@ -33,7 +33,7 @@ pub async fn like_post(
 
   check_bot_account(&local_user_view.person)?;
 
-  // Check for a community ban
+  // Check for a category ban
   let orig_post = PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
   let previous_score = orig_post.post_actions.and_then(|p| p.like_score);
 
@@ -59,7 +59,7 @@ pub async fn like_post(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      community: orig_post.community.clone(),
+      category: orig_post.category.clone(),
       previous_score,
       new_score: data.score,
     },

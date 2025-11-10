@@ -26,7 +26,7 @@ pub async fn purge_post(
   // Only let admin purge an item
   is_admin(&local_user_view)?;
 
-  // Read the post to get the community_id
+  // Read the post to get the category_id
   let post = Post::read(&mut context.pool(), data.post_id).await?;
 
   // Also check that you're a higher admin
@@ -45,7 +45,7 @@ pub async fn purge_post(
   let form = AdminPurgePostForm {
     admin_person_id: local_user_view.person.id,
     reason: data.reason.clone(),
-    community_id: post.community_id,
+    category_id: post.category_id,
   };
   AdminPurgePost::create(&mut context.pool(), &form).await?;
 

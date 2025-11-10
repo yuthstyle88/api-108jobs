@@ -84,68 +84,68 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION community_aggregates_comment_count ()
+CREATE FUNCTION category_aggregates_comment_count ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (was_restored_or_created (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
             comments = comments + 1
         FROM
             post p
         WHERE
             p.id = NEW.post_id
-            AND ca.community_id = p.community_id;
+            AND ca.category_id = p.category_id;
     ELSIF (was_removed_or_deleted (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
             comments = comments - 1
         FROM
             post p
         WHERE
             p.id = OLD.post_id
-            AND ca.community_id = p.community_id;
+            AND ca.category_id = p.category_id;
     END IF;
     RETURN NULL;
 END
 $$;
 
-CREATE FUNCTION community_aggregates_community ()
+CREATE FUNCTION category_aggregates_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO community_aggregates (community_id, published)
+        INSERT INTO category_aggregates (category_id, published)
             VALUES (NEW.id, NEW.published);
     ELSIF (TG_OP = 'DELETE') THEN
-        DELETE FROM community_aggregates
-        WHERE community_id = OLD.id;
+        DELETE FROM category_aggregates
+        WHERE category_id = OLD.id;
     END IF;
     RETURN NULL;
 END
 $$;
 
-CREATE FUNCTION community_aggregates_post_count ()
+CREATE FUNCTION category_aggregates_post_count ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (was_restored_or_created (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates
+            category_aggregates
         SET
             posts = posts + 1
         WHERE
-            community_id = NEW.community_id;
+            category_id = NEW.category_id;
         IF (TG_OP = 'UPDATE') THEN
             -- Post was restored, so restore comment counts as well
             UPDATE
-                community_aggregates ca
+                category_aggregates ca
             SET
                 posts = coalesce(cd.posts, 0),
                 comments = coalesce(cd.comments, 0)
@@ -155,30 +155,30 @@ BEGIN
                     count(DISTINCT p.id) AS posts,
                     count(DISTINCT ct.id) AS comments
                 FROM
-                    community c
-                LEFT JOIN post p ON c.id = p.community_id
+                    category c
+                LEFT JOIN post p ON c.id = p.category_id
                     AND p.deleted = 'f'
                     AND p.removed = 'f'
             LEFT JOIN comment ct ON p.id = ct.post_id
                 AND ct.deleted = 'f'
                 AND ct.removed = 'f'
         WHERE
-            c.id = NEW.community_id
+            c.id = NEW.category_id
         GROUP BY
             c.id) cd
         WHERE
-            ca.community_id = NEW.community_id;
+            ca.category_id = NEW.category_id;
         END IF;
     ELSIF (was_removed_or_deleted (TG_OP, OLD, NEW)) THEN
         UPDATE
-            community_aggregates
+            category_aggregates
         SET
             posts = posts - 1
         WHERE
-            community_id = OLD.community_id;
+            category_id = OLD.category_id;
         -- Update the counts if the post got deleted
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
             posts = coalesce(cd.posts, 0),
             comments = coalesce(cd.comments, 0)
@@ -188,77 +188,77 @@ BEGIN
                 count(DISTINCT p.id) AS posts,
                 count(DISTINCT ct.id) AS comments
             FROM
-                community c
-            LEFT JOIN post p ON c.id = p.community_id
+                category c
+            LEFT JOIN post p ON c.id = p.category_id
                 AND p.deleted = 'f'
                 AND p.removed = 'f'
         LEFT JOIN comment ct ON p.id = ct.post_id
             AND ct.deleted = 'f'
             AND ct.removed = 'f'
     WHERE
-        c.id = OLD.community_id
+        c.id = OLD.category_id
     GROUP BY
         c.id) cd
     WHERE
-        ca.community_id = OLD.community_id;
+        ca.category_id = OLD.category_id;
     END IF;
     RETURN NULL;
 END
 $$;
 
-CREATE FUNCTION community_aggregates_post_count_insert ()
+CREATE FUNCTION category_aggregates_post_count_insert ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE
-        community_aggregates
+        category_aggregates
     SET
         posts = posts + post_group.count
     FROM (
         SELECT
-            community_id,
+            category_id,
             count(*)
         FROM
             new_post
         GROUP BY
-            community_id) post_group
+            category_id) post_group
 WHERE
-    community_aggregates.community_id = post_group.community_id;
+    category_aggregates.category_id = post_group.category_id;
     RETURN NULL;
 END
 $$;
 
-CREATE FUNCTION community_aggregates_subscriber_count ()
+CREATE FUNCTION category_aggregates_subscriber_count ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
-            subscribers = subscribers + community.local::int,
+            subscribers = subscribers + category.local::int,
             subscribers_local = subscribers_local + person.local::int
         FROM
-            community
+            category
         LEFT JOIN person ON person.id = NEW.person_id
     WHERE
-        community.id = NEW.community_id
-            AND community.id = ca.community_id
+        category.id = NEW.category_id
+            AND category.id = ca.category_id
             AND person.local IS NOT NULL;
     ELSIF (TG_OP = 'DELETE') THEN
         UPDATE
-            community_aggregates ca
+            category_aggregates ca
         SET
-            subscribers = subscribers - community.local::int,
+            subscribers = subscribers - category.local::int,
             subscribers_local = subscribers_local - person.local::int
         FROM
-            community
+            category
         LEFT JOIN person ON person.id = OLD.person_id
     WHERE
-        community.id = OLD.community_id
-            AND community.id = ca.community_id
+        category.id = OLD.category_id
+            AND category.id = ca.category_id
             AND person.local IS NOT NULL;
     END IF;
     RETURN NULL;
@@ -270,7 +270,7 @@ CREATE FUNCTION delete_follow_before_person ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    DELETE FROM community_follower AS c
+    DELETE FROM category_follower AS c
     WHERE c.person_id = OLD.id;
     RETURN OLD;
 END;
@@ -479,7 +479,7 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION post_aggregates_featured_community ()
+CREATE FUNCTION post_aggregates_featured_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -487,7 +487,7 @@ BEGIN
     UPDATE
         post_aggregates pa
     SET
-        featured_community = NEW.featured_community
+        featured_category = NEW.featured_category
     WHERE
         pa.post_id = NEW.id;
     RETURN NULL;
@@ -514,21 +514,21 @@ CREATE FUNCTION post_aggregates_post ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, community_id, creator_id, instance_id)
+    INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, category_id, creator_id, instance_id)
     SELECT
         id,
         published,
         published,
         published,
-        community_id,
+        category_id,
         creator_id,
         (
             SELECT
-                community.instance_id
+                category.instance_id
             FROM
-                community
+                category
             WHERE
-                community.id = community_id
+                category.id = category_id
             LIMIT 1)
 FROM
     new_post;
@@ -640,7 +640,7 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION site_aggregates_community_delete ()
+CREATE FUNCTION site_aggregates_category_delete ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -659,7 +659,7 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION site_aggregates_community_insert ()
+CREATE FUNCTION site_aggregates_category_insert ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -839,32 +839,32 @@ CREATE TRIGGER comment_aggregates_score
     FOR EACH ROW
     EXECUTE FUNCTION comment_aggregates_score ();
 
-CREATE TRIGGER community_aggregates_comment_count
+CREATE TRIGGER category_aggregates_comment_count
     AFTER INSERT OR DELETE OR UPDATE OF removed,
     deleted ON comment
     FOR EACH ROW
-    EXECUTE FUNCTION community_aggregates_comment_count ();
+    EXECUTE FUNCTION category_aggregates_comment_count ();
 
-CREATE TRIGGER community_aggregates_community
-    AFTER INSERT OR DELETE ON community
+CREATE TRIGGER category_aggregates_category
+    AFTER INSERT OR DELETE ON category
     FOR EACH ROW
-    EXECUTE FUNCTION community_aggregates_community ();
+    EXECUTE FUNCTION category_aggregates_category ();
 
-CREATE TRIGGER community_aggregates_post_count
+CREATE TRIGGER category_aggregates_post_count
     AFTER DELETE OR UPDATE OF removed,
     deleted ON post
     FOR EACH ROW
-    EXECUTE FUNCTION community_aggregates_post_count ();
+    EXECUTE FUNCTION category_aggregates_post_count ();
 
-CREATE TRIGGER community_aggregates_post_count_insert
+CREATE TRIGGER category_aggregates_post_count_insert
     AFTER INSERT ON post REFERENCING NEW TABLE AS new_post
     FOR EACH STATEMENT
-    EXECUTE FUNCTION community_aggregates_post_count_insert ();
+    EXECUTE FUNCTION category_aggregates_post_count_insert ();
 
-CREATE TRIGGER community_aggregates_subscriber_count
-    AFTER INSERT OR DELETE ON community_follower
+CREATE TRIGGER category_aggregates_subscriber_count
+    AFTER INSERT OR DELETE ON category_follower
     FOR EACH ROW
-    EXECUTE FUNCTION community_aggregates_subscriber_count ();
+    EXECUTE FUNCTION category_aggregates_subscriber_count ();
 
 CREATE TRIGGER delete_follow_before_person
     BEFORE DELETE ON person
@@ -909,11 +909,11 @@ CREATE TRIGGER post_aggregates_comment_count
     FOR EACH ROW
     EXECUTE FUNCTION post_aggregates_comment_count ();
 
-CREATE TRIGGER post_aggregates_featured_community
+CREATE TRIGGER post_aggregates_featured_category
     AFTER UPDATE ON post
     FOR EACH ROW
-    WHEN ((old.featured_community IS DISTINCT FROM new.featured_community))
-    EXECUTE FUNCTION post_aggregates_featured_community ();
+    WHEN ((old.featured_category IS DISTINCT FROM new.featured_category))
+    EXECUTE FUNCTION post_aggregates_featured_category ();
 
 CREATE TRIGGER post_aggregates_featured_local
     AFTER UPDATE ON post
@@ -945,19 +945,19 @@ CREATE TRIGGER site_aggregates_comment_insert
     WHEN ((new.local = TRUE))
     EXECUTE FUNCTION site_aggregates_comment_insert ();
 
-CREATE TRIGGER site_aggregates_community_delete
+CREATE TRIGGER site_aggregates_category_delete
     AFTER DELETE OR UPDATE OF removed,
-    deleted ON community
+    deleted ON category
     FOR EACH ROW
     WHEN (OLD.local = TRUE)
-    EXECUTE PROCEDURE site_aggregates_community_delete ();
+    EXECUTE PROCEDURE site_aggregates_category_delete ();
 
-CREATE TRIGGER site_aggregates_community_insert
+CREATE TRIGGER site_aggregates_category_insert
     AFTER INSERT OR UPDATE OF removed,
-    deleted ON community
+    deleted ON category
     FOR EACH ROW
     WHEN ((new.local = TRUE))
-    EXECUTE FUNCTION site_aggregates_community_insert ();
+    EXECUTE FUNCTION site_aggregates_category_insert ();
 
 CREATE TRIGGER site_aggregates_person_delete
     AFTER DELETE ON person
@@ -1052,14 +1052,14 @@ $$;
 ALTER TABLE comment_aggregates
     ALTER CONSTRAINT comment_aggregates_comment_id_fkey NOT DEFERRABLE;
 
-ALTER TABLE community_aggregates
-    ALTER CONSTRAINT community_aggregates_community_id_fkey NOT DEFERRABLE;
+ALTER TABLE category_aggregates
+    ALTER CONSTRAINT category_aggregates_category_id_fkey NOT DEFERRABLE;
 
 ALTER TABLE person_aggregates
     ALTER CONSTRAINT person_aggregates_person_id_fkey NOT DEFERRABLE;
 
 ALTER TABLE post_aggregates
-    ALTER CONSTRAINT post_aggregates_community_id_fkey NOT DEFERRABLE,
+    ALTER CONSTRAINT post_aggregates_category_id_fkey NOT DEFERRABLE,
     ALTER CONSTRAINT post_aggregates_creator_id_fkey NOT DEFERRABLE,
     ALTER CONSTRAINT post_aggregates_instance_id_fkey NOT DEFERRABLE,
     ALTER CONSTRAINT post_aggregates_post_id_fkey NOT DEFERRABLE;

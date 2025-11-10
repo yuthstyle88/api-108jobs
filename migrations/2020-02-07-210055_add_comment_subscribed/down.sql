@@ -18,7 +18,7 @@ SELECT
     c.*,
     (
         SELECT
-            community_id
+            category_id
         FROM
             post p
         WHERE
@@ -33,12 +33,12 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb,
+            category_user_ban cb,
             post p
         WHERE
             c.creator_id = cb.user_id
             AND p.id = c.post_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             name
@@ -195,9 +195,9 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
+    c.category_id,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -232,9 +232,9 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
+    ac.category_id,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -270,9 +270,9 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
+    ac.category_id,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,

@@ -38,7 +38,7 @@ pub async fn remove_comment(
 
   LocalUser::is_higher_mod_or_admin_check(
     &mut context.pool(),
-    orig_comment.community.id,
+    orig_comment.category.id,
     local_user_view.person.id,
     vec![orig_comment.creator.id],
   )
@@ -80,7 +80,7 @@ pub async fn remove_comment(
     SendActivityData::RemoveComment {
       comment: updated_comment,
       moderator: local_user_view.person.clone(),
-      community: orig_comment.community,
+      category: orig_comment.category,
       reason: data.reason.clone(),
     },
     &context,

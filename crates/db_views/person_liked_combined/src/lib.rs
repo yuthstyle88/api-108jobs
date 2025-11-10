@@ -3,7 +3,7 @@ use lemmy_db_schema::{
   source::{
     combined::person_liked::PersonLikedCombined,
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions},
+    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
@@ -21,8 +21,8 @@ use serde_with::skip_serializing_none;
 use {
   diesel::{Queryable, Selectable},
   lemmy_db_schema::utils::queries::{
-    creator_banned_from_community,
-    creator_banned_within_community,
+    creator_banned_from_category,
+    creator_banned_within_category,
     creator_is_moderator,
   },
   lemmy_db_schema::utils::queries::{creator_is_admin, local_user_can_mod, post_tags_fragment},
@@ -46,9 +46,9 @@ pub(crate) struct PersonLikedCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub item_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance_actions: Option<InstanceActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -79,7 +79,7 @@ pub(crate) struct PersonLikedCombinedViewInternal {
   pub can_mod: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_within_community()
+      select_expression = creator_banned_within_category()
     )
   )]
   pub creator_banned: bool,
@@ -91,10 +91,10 @@ pub(crate) struct PersonLikedCombinedViewInternal {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

@@ -35,7 +35,7 @@ echo "explain (analyze, format json) select * from comment limit 100" >explain.s
 cat explain.sql | $PSQL_CMD >comment.json
 
 echo "explain (analyze, format json) select * from community limit 100" >explain.sql
-cat explain.sql | $PSQL_CMD >community.json
+cat explain.sql | $PSQL_CMD >category.json
 
 echo "explain (analyze, format json) select * from community c, community_aggregates ca where c.id = ca.community_id order by hot_rank(ca.subscribers, ca.published) desc, ca.published desc limit 100" >explain.sql
 cat explain.sql | $PSQL_CMD >community_ordered_by_subscribers.json

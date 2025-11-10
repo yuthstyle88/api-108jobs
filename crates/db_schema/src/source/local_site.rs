@@ -29,7 +29,7 @@ pub struct LocalSite {
   /// True if the site is set up.
   pub site_setup: bool,
   /// Whether only admins can create communities.
-  pub community_creation_admin_only: bool,
+  pub category_creation_admin_only: bool,
   /// Whether emails are required.
   pub require_email_verification: bool,
   /// An optional registration application questionnaire in markdown.
@@ -95,7 +95,7 @@ pub struct LocalSiteInsertForm {
   #[new(default)]
   pub site_setup: Option<bool>,
   #[new(default)]
-  pub community_creation_admin_only: Option<bool>,
+  pub category_creation_admin_only: Option<bool>,
   #[new(value = "Some(true)")]
   pub require_email_verification: Option<bool>,
   #[new(default)]
@@ -147,7 +147,7 @@ pub struct LocalSiteInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = local_site))]
 pub struct LocalSiteUpdateForm {
   pub site_setup: Option<bool>,
-  pub community_creation_admin_only: Option<bool>,
+  pub category_creation_admin_only: Option<bool>,
   pub require_email_verification: Option<bool>,
   pub application_question: Option<Option<String>>,
   pub private_instance: Option<bool>,

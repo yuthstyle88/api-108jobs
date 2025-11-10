@@ -34,7 +34,7 @@ use lemmy_utils::{
     slurs::check_slurs_opt,
     validation::{
       build_and_check_regex, check_urls_are_valid, is_valid_body_field, site_name_length_check,
-      site_or_community_description_length_check,
+      site_or_category_description_length_check,
     },
   },
 };
@@ -84,7 +84,7 @@ pub async fn update_site(
 
   let local_site_form = LocalSiteUpdateForm {
     registration_mode: data.registration_mode,
-    community_creation_admin_only: data.community_creation_admin_only,
+    category_creation_admin_only: data.category_creation_admin_only,
     require_email_verification: data.require_email_verification,
     application_question: diesel_string_update(data.application_question.as_deref()),
     private_instance: data.private_instance,
@@ -193,7 +193,7 @@ fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> Fast
   }
 
   if let Some(desc) = &edit_site.description {
-    site_or_community_description_length_check(desc)?;
+    site_or_category_description_length_check(desc)?;
     check_slurs_opt(&edit_site.description, &slur_regex)?;
   }
 

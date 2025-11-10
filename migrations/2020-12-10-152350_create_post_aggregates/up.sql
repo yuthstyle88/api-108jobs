@@ -44,7 +44,7 @@ FROM
         GROUP BY
             post_like.post_id) pl ON pl.post_id = p.id;
 
--- Add community aggregate triggers
+-- Add category aggregate triggers
 -- initial post add
 CREATE FUNCTION post_aggregates_post ()
     RETURNS TRIGGER

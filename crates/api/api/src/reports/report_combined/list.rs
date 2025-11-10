@@ -10,7 +10,7 @@ use lemmy_db_views_report_combined::{
 };
 use lemmy_utils::error::FastJobResult;
 
-/// Lists reports for a community if an id is supplied
+/// Lists reports for a category if an id is supplied
 /// or returns all reports for communities a user moderates
 pub async fn list_reports(
   data: Query<ListReports>,
@@ -31,11 +31,11 @@ pub async fn list_reports(
   };
 
   let reports = ReportCombinedQuery {
-    community_id: data.community_id,
+    category_id: data.category_id,
     post_id: data.post_id,
     type_: data.type_,
     unresolved_only: data.unresolved_only,
-    show_community_rule_violations: data.show_community_rule_violations,
+    show_category_rule_violations: data.show_category_rule_violations,
     my_reports_only,
     cursor_data,
     page_back: data.page_back,

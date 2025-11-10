@@ -24,10 +24,10 @@ CREATE TABLE mod_remove_comment (
     when_ timestamp NOT NULL DEFAULT now()
 );
 
-CREATE TABLE mod_remove_community (
+CREATE TABLE mod_remove_category (
     id serial PRIMARY KEY,
     mod_user_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     reason text,
     removed boolean DEFAULT TRUE,
     expires timestamp,
@@ -35,11 +35,11 @@ CREATE TABLE mod_remove_community (
 );
 
 -- TODO make sure you can't ban other mods
-CREATE TABLE mod_ban_from_community (
+CREATE TABLE mod_ban_from_category (
     id serial PRIMARY KEY,
     mod_user_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     other_user_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     reason text,
     banned boolean DEFAULT TRUE,
     expires timestamp,
@@ -56,11 +56,11 @@ CREATE TABLE mod_ban (
     when_ timestamp NOT NULL DEFAULT now()
 );
 
-CREATE TABLE mod_add_community (
+CREATE TABLE mod_add_category (
     id serial PRIMARY KEY,
     mod_user_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     other_user_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     removed boolean DEFAULT FALSE,
     when_ timestamp NOT NULL DEFAULT now()
 );

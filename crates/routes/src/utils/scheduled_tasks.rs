@@ -19,18 +19,18 @@ use lemmy_api_utils::{
 };
 use lemmy_db_schema::{
   source::{
-    community::Community,
+    category::Category,
     post::{Post, PostUpdateForm},
   },
   traits::Crud,
   utils::{functions::coalesce, get_conn, now, uplete, DbPool},
 };
 use lemmy_db_schema_file::schema::{
-  captcha_answer,
-  community,
-  community_actions,
-  person,
-  post,
+    captcha_answer,
+    category,
+    category_actions,
+    person,
+    post,
 };
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use std::time::Duration;
@@ -105,7 +105,7 @@ async fn update_hot_ranks(pool: &mut DbPool<'_>) -> FastJobResult<()> {
 
   process_ranks_in_batches(
     &mut conn,
-    "community",
+    "category",
     "a.hot_rank != 0",
     "SET hot_rank = r.hot_rank(a.subscribers, a.published_at)",
   )
@@ -168,7 +168,7 @@ async fn process_ranks_in_batches(
   Ok(())
 }
 
-/// Post aggregates is a special case, since it needs to join to the community_aggregates
+/// Post aggregates is a special case, since it needs to join to the category_aggregates
 /// table, to get the active monthly user counts.
 async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) -> FastJobResult<()> {
   let process_start_time: DateTime<Utc> = Utc.timestamp_opt(0, 0).single().unwrap_or_default();
@@ -189,9 +189,9 @@ async fn process_post_aggregates_ranks_in_batches(conn: &mut AsyncPgConnection) 
       SET hot_rank = r.hot_rank(pa.score, pa.published_at),
           hot_rank_active = r.hot_rank(pa.score, pa.newest_comment_time_necro_at),
           scaled_rank = r.scaled_rank(pa.score, pa.published_at, ca.interactions_month)
-      FROM batch, community ca
+      FROM batch, category ca
       WHERE pa.id = batch.id
-      AND pa.community_id = ca.id
+      AND pa.category_id = ca.id
       RETURNING pa.published_at;
 "#,
     )
@@ -226,9 +226,9 @@ async fn delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> FastJobResult<
   Ok(())
 }
 
-/// Re-calculate the site and community active counts every 12 hours
+/// Re-calculate the site and category active counts every 12 hours
 async fn active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  info!("Updating active site and community aggregates ...");
+  info!("Updating active site and category aggregates ...");
 
   let mut conn = get_conn(pool).await?;
 
@@ -246,11 +246,11 @@ async fn active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
     );
     sql_query(update_site_stmt).execute(&mut conn).await?;
 
-    let update_community_stmt = format!("update community ca set users_active_{} = mv.count_ from r.community_aggregates_activity('{}') mv where ca.id = mv.community_id_", abbr, full_form);
-    sql_query(update_community_stmt).execute(&mut conn).await?;
+    let update_category_stmt = format!("update category ca set users_active_{} = mv.count_ from r.category_aggregates_activity('{}') mv where ca.id = mv.category_id_", abbr, full_form);
+    sql_query(update_category_stmt).execute(&mut conn).await?;
   }
 
-  let update_interactions_stmt = "update community ca set interactions_month = mv.count_ from r.community_aggregates_interactions('1 month') mv where ca.id = mv.community_id_";
+  let update_interactions_stmt = "update category ca set interactions_month = mv.count_ from r.category_aggregates_interactions('1 month') mv where ca.id = mv.category_id_";
   sql_query(update_interactions_stmt)
     .execute(&mut conn)
     .await?;
@@ -265,10 +265,10 @@ async fn update_banned_when_expired(pool: &mut DbPool<'_>) -> FastJobResult<()> 
   let mut conn = get_conn(pool).await?;
 
   uplete::new(
-    community_actions::table.filter(community_actions::ban_expires_at.lt(now().nullable())),
+      category_actions::table.filter(category_actions::ban_expires_at.lt(now().nullable())),
   )
-  .set_null(community_actions::received_ban_at)
-  .set_null(community_actions::ban_expires_at)
+  .set_null(category_actions::received_ban_at)
+  .set_null(category_actions::ban_expires_at)
   .as_query()
   .execute(&mut conn)
   .await?;
@@ -282,29 +282,29 @@ async fn publish_scheduled_posts(context: &Data<FastJobContext>) -> FastJobResul
   let pool = &mut context.pool();
   let mut conn = get_conn(pool).await?;
 
-  let not_community_banned_action = community_actions::table
-    .find((person::id, community::id))
-    .filter(community_actions::received_ban_at.is_not_null());
+  let not_category_banned_action = category_actions::table
+    .find((person::id, category::id))
+    .filter(category_actions::received_ban_at.is_not_null());
   
 
   let scheduled_posts: Vec<_> = post::table
-    .inner_join(community::table)
+    .inner_join(category::table)
     .inner_join(person::table)
     // find all posts which have scheduled_publish_time that is in the  past
     .filter(post::scheduled_publish_time_at.is_not_null())
     .filter(coalesce(post::scheduled_publish_time_at, now()).lt(now()))
-    // make sure the post, person and community are still around
+    // make sure the post, person and category are still around
     .filter(not(post::deleted.or(post::removed)))
     .filter(not(person::deleted))
-    .filter(not(community::removed.or(community::deleted)))
-    // ensure that user isnt banned from community
-    .filter(not(exists(not_community_banned_action)))
+    .filter(not(category::removed.or(category::deleted)))
+    // ensure that user isnt banned from category
+    .filter(not(exists(not_category_banned_action)))
     // ensure that user isnt banned from local
-    .select((post::all_columns, community::all_columns))
-    .get_results::<(Post, Community)>(&mut conn)
+    .select((post::all_columns, category::all_columns))
+    .get_results::<(Post, Category)>(&mut conn)
     .await?;
 
-  for (post, _community) in scheduled_posts {
+  for (post, _category) in scheduled_posts {
     // mark post as published in db
     let form = PostUpdateForm {
       scheduled_publish_time_at: Some(None),

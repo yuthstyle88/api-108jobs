@@ -1,7 +1,7 @@
 use super::convert_published_time;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
@@ -17,7 +17,7 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use lemmy_db_views_community::CommunityView;
+use lemmy_db_views_category::CategoryView;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
 use lemmy_utils::{
@@ -65,17 +65,17 @@ pub async fn create_post(
     is_valid_body_field(body, true)?;
   }
 
-  let community_view = CommunityView::read(
+  let category_view = CategoryView::read(
     &mut context.pool(),
-    data.community_id,
+    data.category_id,
     Some(&local_user_view.local_user),
   )
   .await?;
-  let community = &community_view.community;
-  check_community_deleted_removed(&community)?;
+  let category = &category_view.category;
+  check_category_deleted_removed(&category)?;
 
   // Ensure that all posts in NSFW communities are marked as NSFW
-  let self_promotion = if community.self_promotion {
+  let self_promotion = if category.self_promotion {
     Some(true)
   } else {
     data.self_promotion
@@ -84,7 +84,7 @@ pub async fn create_post(
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
-    data.community_id,
+    data.category_id,
     local_user_view.local_user.id,
   )
   .await?;
@@ -107,7 +107,7 @@ pub async fn create_post(
     ..PostInsertForm::new(
       data.name.trim().to_string(),
       local_user_view.person.id,
-      data.community_id,
+      data.category_id,
     )
   };
 
@@ -117,7 +117,7 @@ pub async fn create_post(
     update_post_tags(
       &context,
       &inserted_post,
-      &community_view,
+      &category_view,
       tags,
       &local_user_view,
     )

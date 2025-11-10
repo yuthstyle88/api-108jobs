@@ -2,7 +2,7 @@
 -- okay if the function specified after `EXECUTE FUNCTION` is in `r`, since dropping the function drops the trigger.
 --
 -- Triggers that update multiple tables should use this order: person_aggregates, comment_aggregates,
--- post, community_aggregates, site_aggregates
+-- post, category_aggregates, site_aggregates
 --   * The order matters because the updated rows are locked until the end of the transaction, and statements
 --     in a trigger don't use separate transactions. This means that updates closer to the beginning cause
 --     longer locks because the duration of each update extends the durations of the locks caused by previous
@@ -199,13 +199,13 @@ WHERE
     a.id = diff.creator_id
         AND diff.post_count != 0;
 UPDATE
-    community AS a
+    category AS a
 SET
     posts = a.posts + diff.posts,
     comments = a.comments + diff.comments
 FROM (
     SELECT
-        (post).community_id,
+        (post).category_id,
         coalesce(sum(count_diff), 0) AS posts,
         coalesce(sum(count_diff * (post).comments), 0) AS comments
     FROM
@@ -213,9 +213,9 @@ FROM (
     WHERE
         r.is_counted (post)
     GROUP BY
-        (post).community_id) AS diff
+        (post).category_id) AS diff
 WHERE
-    a.id = diff.community_id
+    a.id = diff.category_id
     AND (diff.posts,
         diff.comments) != (0,
         0);
@@ -236,7 +236,7 @@ WHERE
 RETURN NULL;
 END;
 $$);
-CALL r.create_triggers ('community', $$
+CALL r.create_triggers ('category', $$
 BEGIN
     UPDATE
         local_site AS a
@@ -247,31 +247,31 @@ BEGIN
             coalesce(sum(count_diff), 0) AS communities
         FROM select_old_and_new_rows AS old_and_new_rows
         WHERE
-            r.is_counted (community)
-            AND (community).local) AS diff
+            r.is_counted (category)
+            AND (category).local) AS diff
 WHERE
     diff.communities != 0;
 RETURN NULL;
 END;
 $$);
 -- Count subscribers for communities.
--- subscribers should be updated only when a local community is followed by a local or remote person.
--- subscribers_local should be updated only when a local person follows a local or remote community.
-CALL r.create_triggers ('community_actions', $$
+-- subscribers should be updated only when a local category is followed by a local or remote person.
+-- subscribers_local should be updated only when a local person follows a local or remote category.
+CALL r.create_triggers ('category_actions', $$
 BEGIN
     UPDATE
-        community AS a
+        category AS a
     SET
         subscribers = a.subscribers + diff.subscribers, subscribers_local = a.subscribers_local + diff.subscribers_local
     FROM (
         SELECT
-            (community_actions).community_id, coalesce(sum(count_diff) FILTER (WHERE community.local), 0) AS subscribers, coalesce(sum(count_diff) FILTER (WHERE person.local), 0) AS subscribers_local
+            (category_actions).category_id, coalesce(sum(count_diff) FILTER (WHERE category.local), 0) AS subscribers, coalesce(sum(count_diff) FILTER (WHERE person.local), 0) AS subscribers_local
         FROM select_old_and_new_rows AS old_and_new_rows
-    LEFT JOIN community ON community.id = (community_actions).community_id
-    LEFT JOIN person ON person.id = (community_actions).person_id
-    WHERE (community_actions).followed_at IS NOT NULL GROUP BY (community_actions).community_id) AS diff
+    LEFT JOIN category ON category.id = (category_actions).category_id
+    LEFT JOIN person ON person.id = (category_actions).person_id
+    WHERE (category_actions).followed_at IS NOT NULL GROUP BY (category_actions).category_id) AS diff
 WHERE
-    a.id = diff.community_id
+    a.id = diff.category_id
         AND (diff.subscribers, diff.subscribers_local) != (0, 0);
 RETURN NULL;
 END;
@@ -308,18 +308,18 @@ AND a.id = diff.comment_id;
 RETURN NULL;
 END;
 $$);
-CALL r.create_triggers ('community_report', $$
+CALL r.create_triggers ('category_report', $$
 BEGIN
     UPDATE
-        community AS a
+        category AS a
     SET
         report_count = a.report_count + diff.report_count, unresolved_report_count = a.unresolved_report_count + diff.unresolved_report_count
     FROM (
         SELECT
-            (community_report).community_id, coalesce(sum(count_diff), 0) AS report_count, coalesce(sum(count_diff) FILTER (WHERE NOT (community_report).resolved), 0) AS unresolved_report_count
-    FROM select_old_and_new_rows AS old_and_new_rows GROUP BY (community_report).community_id) AS diff
+            (category_report).category_id, coalesce(sum(count_diff), 0) AS report_count, coalesce(sum(count_diff) FILTER (WHERE NOT (category_report).resolved), 0) AS unresolved_report_count
+    FROM select_old_and_new_rows AS old_and_new_rows GROUP BY (category_report).category_id) AS diff
 WHERE (diff.report_count, diff.unresolved_report_count) != (0, 0)
-    AND a.id = diff.community_id;
+    AND a.id = diff.category_id;
 RETURN NULL;
 END;
 $$);
@@ -329,7 +329,7 @@ CREATE FUNCTION r.delete_follow_before_person ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-DELETE FROM community_actions AS c
+DELETE FROM category_actions AS c
 WHERE c.person_id = OLD.id;
 RETURN OLD;
 END;
@@ -406,7 +406,7 @@ END;
 $a$;
 CALL r.create_report_combined_trigger ('post_report');
 CALL r.create_report_combined_trigger ('comment_report');
-CALL r.create_report_combined_trigger ('community_report');
+CALL r.create_report_combined_trigger ('category_report');
 -- person_content (comment, post)
 CREATE PROCEDURE r.create_person_content_combined_trigger (table_name text)
     LANGUAGE plpgsql
@@ -542,20 +542,20 @@ CALL r.create_person_liked_combined_trigger ('comment');
 -- admin_allow_instance
 -- admin_block_instance
 -- admin_purge_comment
--- admin_purge_community
+-- admin_purge_category
 -- admin_purge_person
 -- admin_purge_post
 -- mod_add
--- mod_add_community
+-- mod_add_category
 -- mod_ban
--- mod_ban_from_community
+-- mod_ban_from_category
 -- mod_feature_post
--- mod_change_community_visibility
+-- mod_change_category_visibility
 -- mod_lock_post
 -- mod_remove_comment
--- mod_remove_community
+-- mod_remove_category
 -- mod_remove_post
--- mod_transfer_community
+-- mod_transfer_category
 CREATE PROCEDURE r.create_modlog_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -581,20 +581,20 @@ $a$;
 CALL r.create_modlog_combined_trigger ('admin_allow_instance');
 CALL r.create_modlog_combined_trigger ('admin_block_instance');
 CALL r.create_modlog_combined_trigger ('admin_purge_comment');
-CALL r.create_modlog_combined_trigger ('admin_purge_community');
+CALL r.create_modlog_combined_trigger ('admin_purge_category');
 CALL r.create_modlog_combined_trigger ('admin_purge_person');
 CALL r.create_modlog_combined_trigger ('admin_purge_post');
 CALL r.create_modlog_combined_trigger ('mod_add');
-CALL r.create_modlog_combined_trigger ('mod_add_community');
+CALL r.create_modlog_combined_trigger ('mod_add_category');
 CALL r.create_modlog_combined_trigger ('mod_ban');
-CALL r.create_modlog_combined_trigger ('mod_ban_from_community');
+CALL r.create_modlog_combined_trigger ('mod_ban_from_category');
 CALL r.create_modlog_combined_trigger ('mod_feature_post');
-CALL r.create_modlog_combined_trigger ('mod_change_community_visibility');
+CALL r.create_modlog_combined_trigger ('mod_change_category_visibility');
 CALL r.create_modlog_combined_trigger ('mod_lock_post');
 CALL r.create_modlog_combined_trigger ('mod_remove_comment');
-CALL r.create_modlog_combined_trigger ('mod_remove_community');
+CALL r.create_modlog_combined_trigger ('mod_remove_category');
 CALL r.create_modlog_combined_trigger ('mod_remove_post');
-CALL r.create_modlog_combined_trigger ('mod_transfer_community');
+CALL r.create_modlog_combined_trigger ('mod_transfer_category');
 -- Inbox: (replies, comment mentions, post mentions, and private_messages)
 CREATE PROCEDURE r.create_inbox_combined_trigger (table_name text)
     LANGUAGE plpgsql
@@ -638,7 +638,7 @@ CREATE TRIGGER require_uplete
     FOR EACH STATEMENT
     EXECUTE FUNCTION r.require_uplete ();
 CREATE TRIGGER require_uplete
-    BEFORE DELETE ON community_actions
+    BEFORE DELETE ON category_actions
     FOR EACH STATEMENT
     EXECUTE FUNCTION r.require_uplete ();
 CREATE TRIGGER require_uplete
@@ -653,7 +653,7 @@ CREATE TRIGGER require_uplete
     BEFORE DELETE ON post_actions
     FOR EACH STATEMENT
     EXECUTE FUNCTION r.require_uplete ();
--- search: (post, comment, community, person, multi_community)
+-- search: (post, comment, category, person, multi_category)
 CREATE PROCEDURE r.create_search_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -679,12 +679,12 @@ END;
 $a$;
 CALL r.create_search_combined_trigger ('post');
 CALL r.create_search_combined_trigger ('comment');
-CALL r.create_search_combined_trigger ('community');
+CALL r.create_search_combined_trigger ('category');
 CALL r.create_search_combined_trigger ('person');
 -- You also need to triggers to update the `score` column.
 -- post | post::score
 -- comment | comment_aggregates::score
--- community | community_aggregates::users_active_monthly
+-- category | category_aggregates::users_active_monthly
 -- person | person_aggregates::post_score
 --
 -- Post score
@@ -744,8 +744,8 @@ CREATE TRIGGER search_combined_person_score
     AFTER UPDATE OF post_score ON person
     FOR EACH ROW
     EXECUTE FUNCTION r.search_combined_person_score_update ();
--- Community score
-CREATE FUNCTION r.search_combined_community_score_update ()
+-- Category score
+CREATE FUNCTION r.search_combined_category_score_update ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -755,11 +755,11 @@ UPDATE
 SET
     score = NEW.users_active_month
 WHERE
-    community_id = NEW.id;
+    category_id = NEW.id;
 RETURN NULL;
 END
 $$;
-CREATE TRIGGER search_combined_community_score
-    AFTER UPDATE OF users_active_month ON community
+CREATE TRIGGER search_combined_category_score
+    AFTER UPDATE OF users_active_month ON category
     FOR EACH ROW
-    EXECUTE FUNCTION r.search_combined_community_score_update ();
+    EXECUTE FUNCTION r.search_combined_category_score_update ();

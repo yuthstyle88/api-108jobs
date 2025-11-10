@@ -12,9 +12,9 @@ ALTER TABLE user_
 ALTER TABLE user_
     ADD COLUMN matrix_user_id text UNIQUE;
 
--- Community
-ALTER TABLE community
-    DROP CONSTRAINT community_name_key;
+-- Category
+ALTER TABLE category
+    DROP CONSTRAINT category_name_key;
 
 CREATE VIEW user_view AS
 SELECT

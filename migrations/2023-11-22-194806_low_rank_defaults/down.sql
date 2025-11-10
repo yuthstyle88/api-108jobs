@@ -1,4 +1,4 @@
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     ALTER COLUMN hot_rank SET DEFAULT 0.1728;
 
 ALTER TABLE comment_aggregates

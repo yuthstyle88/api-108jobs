@@ -11,7 +11,7 @@ DROP INDEX idx_post_aggregates_newest_comment_time;
 
 DROP INDEX idx_post_aggregates_newest_comment_time_necro;
 
-DROP INDEX idx_post_aggregates_featured_community;
+DROP INDEX idx_post_aggregates_featured_category;
 
 DROP INDEX idx_post_aggregates_featured_local;
 
@@ -34,16 +34,16 @@ CREATE INDEX idx_post_aggregates_featured_local_published ON post_aggregates (fe
 
 CREATE INDEX idx_post_aggregates_published ON post_aggregates (published DESC);
 
--- featured_community
-CREATE INDEX idx_post_aggregates_featured_community_score ON post_aggregates (featured_community DESC, score DESC);
+-- featured_category
+CREATE INDEX idx_post_aggregates_featured_category_score ON post_aggregates (featured_category DESC, score DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_newest_comment_time ON post_aggregates (featured_community DESC, newest_comment_time DESC);
+CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time ON post_aggregates (featured_category DESC, newest_comment_time DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_newest_comment_time_necro ON post_aggregates (featured_community DESC, newest_comment_time_necro DESC);
+CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time_necro ON post_aggregates (featured_category DESC, newest_comment_time_necro DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_hot ON post_aggregates (featured_community DESC, hot_rank DESC);
+CREATE INDEX idx_post_aggregates_featured_category_hot ON post_aggregates (featured_category DESC, hot_rank DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_active ON post_aggregates (featured_community DESC, hot_rank_active DESC);
+CREATE INDEX idx_post_aggregates_featured_category_active ON post_aggregates (featured_category DESC, hot_rank_active DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_published ON post_aggregates (featured_community DESC, published DESC);
+CREATE INDEX idx_post_aggregates_featured_category_published ON post_aggregates (featured_category DESC, published DESC);
 

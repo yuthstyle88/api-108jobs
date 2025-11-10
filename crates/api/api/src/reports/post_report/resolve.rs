@@ -12,7 +12,7 @@ use lemmy_db_views_reports::{
 };
 use lemmy_utils::error::FastJobResult;
 
-/// Resolves or unresolves a post report and notifies the moderators of the community
+/// Resolves or unresolves a post report and notifies the moderators of the category
 pub async fn resolve_post_report(
   data: Json<ResolvePostReport>,
   context: Data<FastJobContext>,
@@ -36,7 +36,7 @@ pub async fn resolve_post_report(
     SendActivityData::SendResolveReport {
       actor: local_user_view.person,
       report_creator: report.creator,
-      receiver: Either::Right(post_report_view.community.clone()),
+      receiver: Either::Right(post_report_view.category.clone()),
     },
     &context,
   )?;

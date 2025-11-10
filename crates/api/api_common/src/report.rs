@@ -1,8 +1,8 @@
 pub use lemmy_db_schema::{
-  newtypes::{CommentReportId, CommunityReportId, PostReportId},
+  newtypes::{CommentReportId, CategoryReportId, PostReportId},
   source::{
     comment_report::CommentReport,
-    community_report::CommunityReport,
+    category_report::CategoryReport,
     post_report::PostReport,
   },
   ReportType,
@@ -14,18 +14,18 @@ pub use lemmy_db_views_report_combined::{
 pub use lemmy_db_views_reports::{
   api::{
     CommentReportResponse,
-    CommunityReportResponse,
+    CategoryReportResponse,
     CreateCommentReport,
-    CreateCommunityReport,
+    CreateCategoryReport,
     CreatePostReport,
     GetReportCount,
     GetReportCountResponse,
     PostReportResponse,
     ResolveCommentReport,
-    ResolveCommunityReport,
+    ResolveCategoryReport,
     ResolvePostReport,
   },
   CommentReportView,
-  CommunityReportView,
+  CategoryReportView,
   PostReportView,
 };

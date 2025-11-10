@@ -6,7 +6,7 @@ Here is an example using [reqwest](https://crates.io/crates/reqwest):
 
 ```rust
     let params = GetPosts {
-        community_name: Some("asklemmy".to_string()),
+        category_name: Some("asklemmy".to_string()),
         ..Default::default()
     };
     let client = Client::new();

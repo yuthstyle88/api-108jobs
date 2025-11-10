@@ -16,30 +16,30 @@ with all_post AS (
             SELECT
                 name
             FROM
-                community
+                category
             WHERE
-                p.community_id = community.id) AS community_name,
+                p.category_id = category.id) AS category_name,
         (
             SELECT
                 removed
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_removed,
+                p.category_id = c.id) AS category_removed,
         (
             SELECT
                 deleted
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_deleted,
+                p.category_id = c.id) AS category_deleted,
         (
             SELECT
                 self_promotion
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_self_promotion,
+                p.category_id = c.id) AS category_self_promotion,
         (
             SELECT
                 count(*)
@@ -75,10 +75,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool

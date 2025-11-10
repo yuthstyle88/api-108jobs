@@ -70,7 +70,7 @@ pub enum ListingType {
   Local,
   /// Content only from communities you've subscribed to.
   Subscribed,
-  /// Content that you can moderate (because you are a moderator of the community it is posted to)
+  /// Content that you can moderate (because you are a moderator of the category it is posted to)
   ModeratorView,
 }
 
@@ -124,34 +124,34 @@ pub enum PostListingMode {
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::CommunityVisibility"
+  ExistingTypePath = "crate::schema::sql_types::CategoryVisibility"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// Defines who can browse and interact with content in a community.
-pub enum CommunityVisibility {
-  /// Public community, any local or federated user can interact.
+/// Defines who can browse and interact with content in a category.
+pub enum CategoryVisibility {
+  /// Public category, any local or federated user can interact.
   #[default]
   Public,
-  /// Community is unlisted/hidden and doesn't appear in community list. Posts from the community
+  /// Category is unlisted/hidden and doesn't appear in category list. Posts from the category
   /// are not shown in Local and All feeds, except for subscribed users.
   Unlisted,
-  /// Unfederated community, only local users can interact (with or without login).
+  /// Unfederated category, only local users can interact (with or without login).
   LocalOnlyPublic,
-  /// Unfederated  community, only logged-in local users can interact.
+  /// Unfederated  category, only logged-in local users can interact.
   LocalOnlyPrivate,
   /// Users need to be approved by mods before they are able to browse or post.
   Private,
 }
 
-impl CommunityVisibility {
+impl CategoryVisibility {
   pub fn can_federate(&self) -> bool {
-    use CommunityVisibility::*;
+    use CategoryVisibility::*;
     self != &LocalOnlyPublic && self != &LocalOnlyPrivate
   }
   pub fn can_view_without_login(&self) -> bool {
-    use CommunityVisibility::*;
+    use CategoryVisibility::*;
     self == &Public || self == &LocalOnlyPublic
   }
 }
@@ -163,21 +163,21 @@ impl CommunityVisibility {
 )]
 pub enum ActorType {
   Site,
-  Community,
+  Category,
   Person,
-  MultiCommunity,
+  MultiCategory,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::CommunityFollowerState"
+  ExistingTypePath = "crate::schema::sql_types::CategoryFollowerState"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-pub enum CommunityFollowerState {
+pub enum CategoryFollowerState {
   Accepted,
   Pending,
   ApprovalRequired,

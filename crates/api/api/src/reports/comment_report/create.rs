@@ -19,7 +19,7 @@ use lemmy_db_views_reports::{
 };
 use lemmy_utils::error::FastJobResult;
 
-/// Creates a comment report and notifies the moderators of the community
+/// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(
   data: Json<CreateCommentReport>,
   context: Data<FastJobContext>,
@@ -59,7 +59,7 @@ pub async fn create_comment_report(
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
       actor: local_user_view.person,
-      receiver: Either::Right(comment_view.community),
+      receiver: Either::Right(comment_view.category),
       reason: data.reason.clone(),
     },
     &context,

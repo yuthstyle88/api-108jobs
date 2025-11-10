@@ -99,7 +99,7 @@ $$;
 -- Drop the indexes
 DROP INDEX IF EXISTS idx_post_aggregates_featured_local_controversy;
 
-DROP INDEX IF EXISTS idx_post_aggregates_featured_community_controversy;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_controversy;
 
 DROP INDEX IF EXISTS idx_comment_aggregates_controversy;
 

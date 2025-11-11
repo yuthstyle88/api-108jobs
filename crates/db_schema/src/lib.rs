@@ -57,11 +57,11 @@ pub enum SearchSortType {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 pub enum CategorySortType {
   ActiveSixMonths,
-  #[default]
   ActiveMonthly,
   ActiveWeekly,
   ActiveDaily,
   Hot,
+  #[default]
   New,
   Old,
   NameAsc,

@@ -307,7 +307,7 @@ VALUES
      'http://localhost:3000/c/50');
 
 -- allowed language categories --
-INSERT INTO category_language (community_id, language_id)
+INSERT INTO category_language (category_id, language_id)
 VALUES (1, 0),
        (1, 1),
        (1, 66),

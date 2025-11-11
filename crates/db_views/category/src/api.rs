@@ -182,8 +182,8 @@ pub struct HideCategory {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Fetches a list of communities.
-pub struct ListCommunities {
+/// Fetches a list of categories.
+pub struct ListCategories {
   pub type_: Option<ListingType>,
   pub sort: Option<CategorySortType>,
   /// Filter to within a given time range, in seconds.
@@ -199,10 +199,10 @@ pub struct ListCommunities {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The response for listing communities.
+/// The response for listing categories.
 #[serde(rename_all = "camelCase")]
-pub struct ListCommunitiesResponse {
-  pub communities: Vec<CategoryView>,
+pub struct ListCategoriesResponse {
+  pub categories: Vec<CategoryView>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -211,10 +211,10 @@ pub struct ListCommunitiesResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The response for listing communities.
+/// The response for listing categories.
 #[serde(rename_all = "camelCase")]
-pub struct ListCommunitiesTreeResponse {
-  pub communities: Vec<CategoryNodeView>,
+pub struct ListCategoriesTreeResponse {
+  pub categories: Vec<CategoryNodeView>,
   pub count: i32,
 }
 

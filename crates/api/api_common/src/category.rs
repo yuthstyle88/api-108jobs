@@ -12,8 +12,8 @@ pub use lemmy_db_views_category::{
     GetCategory,
     GetCategoryResponse,
     GetRandomCategory,
-    ListCommunities,
-    ListCommunitiesResponse,
+    ListCategories,
+    ListCategoriesResponse,
   },
   CategoryView,
 };

@@ -89,7 +89,7 @@ use lemmy_api::{
 };
 use lemmy_api_crud::chat::create::create_chat_room;
 use lemmy_api_crud::chat::read::get_chat_room;
-use lemmy_api_crud::category::list::list_category;
+use lemmy_api_crud::category::list::list_categories;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -175,7 +175,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/category")
             .route("", put().to(update_category))
             .route("/random", get().to(get_random_category))
-            .route("/list", get().to(list_category))
+            .route("/list", get().to(list_categories))
             .route("/report", post().to(create_category_report))
             .route("/report/resolve", put().to(resolve_category_report))
             // Mod Actions

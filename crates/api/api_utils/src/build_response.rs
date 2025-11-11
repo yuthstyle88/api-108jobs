@@ -14,7 +14,7 @@ use lemmy_db_schema::{
     traits::Crud,
 };
 use lemmy_db_views_comment::{api::CommentResponse, CommentView};
-use lemmy_db_views_category::api::ListCommunitiesTreeResponse;
+use lemmy_db_views_category::api::ListCategoriesTreeResponse;
 use lemmy_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_post::{api::PostResponse, PostView};
@@ -73,7 +73,7 @@ pub async fn build_post_response(
 
 pub fn build_category_tree(
   flat_list: Vec<Category>,
-) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
+) -> FastJobResult<Json<ListCategoriesTreeResponse>> {
   let mut node_map: HashMap<String, CategoryNodeView> = HashMap::new();
   let mut all_children: HashSet<String> = HashSet::new();
 
@@ -117,8 +117,8 @@ pub fn build_category_tree(
     })
     .collect();
 
-  Ok(Json(ListCommunitiesTreeResponse {
-    communities: roots.clone(),
+  Ok(Json(ListCategoriesTreeResponse {
+    categories: roots.clone(),
     count: roots.len() as i32,
   }))
 }

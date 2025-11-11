@@ -3,9 +3,7 @@ use crate::{TopUpRequestView, WalletView, WithdrawRequestView};
 use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::newtypes::{
-  LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId,
-};
+use lemmy_db_schema::newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId};
 use lemmy_db_schema::source::top_up_request::top_up_requests_keys as t_key;
 use lemmy_db_schema::source::top_up_request::TopUpRequest;
 use lemmy_db_schema::source::wallet::Wallet;
@@ -264,6 +262,7 @@ impl WithdrawRequestView {
       None,
       params.page_back,
     )
+    .then_order_by(w_key::updated_at)
     .then_order_by(w_key::created_at)
     .then_order_by(w_key::id);
 

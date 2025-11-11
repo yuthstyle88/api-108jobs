@@ -59,6 +59,7 @@ pub async fn login(
     local_user_view.local_user.email,
     local_user_view.local_user.interface_language, // default to open
     local_user_view.local_user.accepted_terms,
+    local_user_view.local_user.admin,
     req,
     &context,
   )

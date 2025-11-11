@@ -1,6 +1,9 @@
 use actix_web::{guard, web::*};
 use lemmy_api::admin::bank_account::list_bank_accounts;
-use lemmy_api::admin::wallet::{admin_list_top_up_requests, admin_list_withdraw_requests, admin_top_up_wallet, admin_withdraw_wallet};
+use lemmy_api::admin::wallet::{
+  admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
+  admin_top_up_wallet, admin_withdraw_wallet,
+};
 use lemmy_api::chat::list::list_chat_rooms;
 use lemmy_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -409,7 +412,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet))
                 .route("/top-ups", get().to(admin_list_top_up_requests))
-                .route("/withdraw-requests", get().to(admin_list_withdraw_requests)),
+                .route("/withdraw-requests", get().to(admin_list_withdraw_requests))
+                .route(
+                  "/withdraw-requests/reject",
+                  post().to(admin_reject_withdraw_request),
+                ),
             )
             .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
         )

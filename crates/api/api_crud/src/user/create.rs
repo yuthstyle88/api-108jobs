@@ -33,6 +33,7 @@ use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
 use lemmy_db_views_site::api::{AuthenticateWithOauth, LoginResponse};
 use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
+use lemmy_db_views_site::SiteView;
 use lemmy_email::{
   account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
 };
@@ -47,7 +48,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::sync::LazyLock;
-use lemmy_db_views_site::SiteView;
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -204,12 +204,14 @@ pub async fn register(
     || (!require_registration_terms && !local_site.require_email_verification)
   {
     let lang = user.local_user.interface_language;
-    let accepted_application = user.local_user.accepted_application;
+    let accepted_application = user.local_user.accepted_terms;
+    let is_admin = user.local_user.admin;
     let jwt = Claims::generate(
       user.local_user.id,
       user.local_user.email,
       lang,
       accepted_application,
+      is_admin,
       req,
       &context,
     )
@@ -397,12 +399,14 @@ pub async fn register_with_oauth(
       .await?;
     if !login_response.registration_created && !login_response.verify_email_sent {
       let lang = user.local_user.interface_language;
-      let accepted_application = user.local_user.accepted_application;
+      let accepted_application = user.local_user.accepted_terms;
+      let is_admin = user.local_user.admin;
       let jwt = Claims::generate(
         user.local_user.id,
         user.local_user.email,
         lang,
         accepted_application,
+        is_admin,
         req,
         &context,
       )
@@ -660,11 +664,13 @@ pub async fn authenticate_with_oauth(
   {
     let lang = local_user.interface_language;
     let accepted_terms = local_user.accepted_terms;
+    let is_admin = local_user.admin;
     let jwt = Claims::generate(
       local_user.id,
       local_user.email,
       lang,
       accepted_terms,
+      is_admin,
       req,
       &context,
     )

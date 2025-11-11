@@ -5,10 +5,15 @@ use lemmy_api_utils::utils::{is_admin, list_top_up_requests_inner, list_withdraw
 use lemmy_db_schema::newtypes::CoinId;
 use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
 use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
+use lemmy_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestUpdateForm};
+use lemmy_db_schema::traits::Crud;
+use lemmy_db_schema_file::enums::WithdrawStatus;
 use lemmy_db_views_local_user::LocalUserView;
+use lemmy_db_views_site::api::SuccessResponse;
 use lemmy_db_views_wallet::api::{
   AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListTopUpRequestQuery,
   ListTopUpRequestResponse, ListWithdrawRequestQuery, ListWithdrawRequestResponse,
+  RejectWithdrawalRequest,
 };
 use lemmy_utils::error::FastJobResult;
 use uuid::Uuid;
@@ -20,12 +25,7 @@ pub async fn admin_list_top_up_requests(
 ) -> FastJobResult<Json<ListTopUpRequestResponse>> {
   // Ensure admin access
   is_admin(&local_user_view)?;
-  let res = list_top_up_requests_inner(
-    &mut context.pool(),
-    None,
-    query.into_inner(),
-  )
-  .await?;
+  let res = list_top_up_requests_inner(&mut context.pool(), None, query.into_inner()).await?;
 
   Ok(Json(res))
 }
@@ -129,6 +129,19 @@ pub async fn admin_withdraw_wallet(
     WalletModel::create_transaction(&mut context.pool(), &form, coin_id, platform_wallet_id)
       .await?;
 
+  let withdrawal_update_form = WithdrawRequestUpdateForm {
+    status: Some(WithdrawStatus::Completed),
+    updated_at: Some(Utc::now()),
+    reason: Some(Some(data.reason.clone())),
+  };
+
+  let _updated = WithdrawRequest::update(
+    &mut context.pool(),
+    data.withdrawal_id,
+    &withdrawal_update_form,
+  )
+  .await?;
+
   Ok(Json(AdminWalletOperationResponse {
     wallet_id: wallet.id,
     new_balance: wallet.balance_total,
@@ -144,12 +157,26 @@ pub async fn admin_list_withdraw_requests(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListWithdrawRequestResponse>> {
   is_admin(&local_user_view)?;
-  let res = list_withdraw_requests_inner(
-    &mut context.pool(),
-    None,
-    query.into_inner(),
-  )
-  .await?;
+  let res = list_withdraw_requests_inner(&mut context.pool(), None, query.into_inner()).await?;
 
   Ok(Json(res))
+}
+
+pub async fn admin_reject_withdraw_request(
+  data: Json<RejectWithdrawalRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  is_admin(&local_user_view)?;
+
+  let update_form = WithdrawRequestUpdateForm {
+    status: Some(WithdrawStatus::Rejected),
+    updated_at: Some(Utc::now()),
+    reason: Some(Some(data.reason.clone())),
+  };
+
+  let _updated =
+    WithdrawRequest::update(&mut context.pool(), data.withdrawal_id, &update_form).await?;
+
+  Ok(Json(SuccessResponse::default()))
 }

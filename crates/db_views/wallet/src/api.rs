@@ -1,5 +1,7 @@
 use crate::{TopUpRequestView, WithdrawRequestView};
-use lemmy_db_schema::newtypes::{BankAccountId, Coin, LocalUserId, PaginationCursor, WalletId};
+use lemmy_db_schema::newtypes::{
+  BankAccountId, Coin, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
+};
 use lemmy_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -67,6 +69,7 @@ pub struct AdminTopUpWallet {
 /// Admin withdraw from user wallet.
 pub struct AdminWithdrawWallet {
   pub target_user_id: LocalUserId,
+  pub withdrawal_id: WithdrawRequestId,
   pub amount: Coin,
   pub reason: String,
 }
@@ -201,4 +204,14 @@ pub struct ListWithdrawRequestResponse {
   pub next_page: Option<PaginationCursor>,
   /// The pagination cursor to fetch the previous page
   pub prev_page: Option<PaginationCursor>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Admin reject withdrawal request from user wallet.
+pub struct RejectWithdrawalRequest {
+  pub withdrawal_id: WithdrawRequestId,
+  pub reason: String,
 }

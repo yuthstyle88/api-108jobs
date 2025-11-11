@@ -4,7 +4,7 @@ CREATE TABLE post (
     url text, -- These are both optional, a post can just have a title
     body text,
     creator_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     removed boolean DEFAULT FALSE NOT NULL,
     locked boolean DEFAULT FALSE NOT NULL,
     published timestamp NOT NULL DEFAULT now(),

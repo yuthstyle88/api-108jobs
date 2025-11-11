@@ -7,10 +7,10 @@
     "https://www.w3.org/ns/activitystreams#Public"
   ],
   "name": "Post title",
-  "content": "<p>This is a post in the /c/tenforward community</p>\n",
+  "content": "<p>This is a post in the /c/tenforward category</p>\n",
   "mediaType": "text/html",
   "source": {
-    "content": "This is a post in the /c/tenforward community",
+    "content": "This is a post in the /c/tenforward category",
     "mediaType": "text/markdown"
   },
   "attachment": [

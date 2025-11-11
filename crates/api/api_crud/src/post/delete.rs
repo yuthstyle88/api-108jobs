@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
@@ -8,7 +8,7 @@ use lemmy_api_utils::{
 };
 use lemmy_db_schema::{
   source::{
-    community::Community,
+    category::Category,
     post::{Post, PostUpdateForm},
   },
   traits::Crud,
@@ -30,8 +30,8 @@ pub async fn delete_post(
     Err(FastJobErrorType::CouldntUpdatePost)?
   }
 
-  let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
-  check_community_deleted_removed(&community)?;
+  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
+  check_category_deleted_removed(&category)?;
 
   // Verify that only the creator can delete
   if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {

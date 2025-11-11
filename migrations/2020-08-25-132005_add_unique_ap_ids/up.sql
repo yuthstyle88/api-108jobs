@@ -58,7 +58,7 @@ ALTER TABLE comment
 ALTER TABLE comment
     ALTER COLUMN ap_id SET DEFAULT generate_unique_changeme ();
 
--- Add the uniques, for user_ and community too
+-- Add the uniques, for user_ and category too
 ALTER TABLE post
     ADD CONSTRAINT idx_post_ap_id UNIQUE (ap_id);
 
@@ -68,6 +68,6 @@ ALTER TABLE comment
 ALTER TABLE user_
     ADD CONSTRAINT idx_user_actor_id UNIQUE (actor_id);
 
-ALTER TABLE community
-    ADD CONSTRAINT idx_community_actor_id UNIQUE (actor_id);
+ALTER TABLE category
+    ADD CONSTRAINT idx_category_actor_id UNIQUE (actor_id);
 

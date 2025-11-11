@@ -1,18 +1,18 @@
-CREATE OR REPLACE FUNCTION community_aggregates_activity (i text)
+CREATE OR REPLACE FUNCTION category_aggregates_activity (i text)
     RETURNS TABLE (
         count_ bigint,
-        community_id_ integer)
+        category_id_ integer)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN query
     SELECT
         count(*),
-        community_id
+        category_id
     FROM (
         SELECT
             c.creator_id,
-            p.community_id
+            p.category_id
         FROM
             comment c
             INNER JOIN post p ON c.post_id = p.id
@@ -21,13 +21,13 @@ BEGIN
         UNION
         SELECT
             p.creator_id,
-            p.community_id
+            p.category_id
         FROM
             post p
         WHERE
             p.published > ('now'::timestamp - i::interval)) a
 GROUP BY
-    community_id;
+    category_id;
 END;
 $$;
 

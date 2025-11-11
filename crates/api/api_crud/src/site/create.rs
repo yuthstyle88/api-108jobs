@@ -37,7 +37,7 @@ use lemmy_utils::{
       build_and_check_regex,
       is_valid_body_field,
       site_name_length_check,
-      site_or_community_description_length_check,
+      site_or_category_description_length_check,
     },
   },
 };
@@ -83,7 +83,7 @@ pub async fn create_site(
     // Set the site setup to true
     site_setup: Some(true),
     registration_mode: data.registration_mode,
-    community_creation_admin_only: data.community_creation_admin_only,
+    category_creation_admin_only: data.category_creation_admin_only,
     require_email_verification: data.require_email_verification,
     application_question: diesel_string_update(data.application_question.as_deref()),
     private_instance: data.private_instance,
@@ -157,7 +157,7 @@ fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> 
   check_slurs(&create_site.name, &slur_regex)?;
 
   if let Some(desc) = &create_site.description {
-    site_or_community_description_length_check(desc)?;
+    site_or_category_description_length_check(desc)?;
     check_slurs(desc, &slur_regex)?;
   }
 

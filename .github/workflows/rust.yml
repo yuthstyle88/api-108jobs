@@ -14,10 +14,11 @@ jobs:
       BIN_NAME: app_108jobs_api_server
       # Current branch name (prod/dev)
       BRANCH: ${{ github.ref_name }}
-      # Service name per-branch (adjust if you use a single prod service)
-      SERVICE_NAME: ${{ github.ref_name == 'prod' && 'app-108jobs-api-server' || 'staging-app-108jobs-api-server' }}
+      # Service name (wrapper that controls the real systemd unit)
+      SERVICE_NAME: 108jobs-apictl
       # Target app path on remote (one path for both branches; change if you want per-branch paths)
       APP_PATH: ${{ github.ref_name == 'prod' && '/var/www/apps/108jobs-api-server' || '/var/www/apps/108jobs-api-server-dev' }}
+      APP: ${{ github.ref_name == 'dev' && 'staging' || '' }}
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -42,19 +43,25 @@ jobs:
           OUT_NAME="${BIN_NAME}"
           APP_PATH="${{ env.APP_PATH }}"
           SERVICE_NAME="${{ env.SERVICE_NAME }}"
-
+          APP="${{ env.APP }}"
+          
           echo "Local → BRANCH=${BRANCH}, BIN_NAME=${BIN_NAME}, OUT_NAME=${OUT_NAME}"
           echo "Remote → ${APP_PATH}, service=${SERVICE_NAME}"
 
-          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s -- "$BRANCH" "$BIN_NAME" "$OUT_NAME" "$APP_PATH" "$SERVICE_NAME" <<'REMOTE'
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s -- "$BRANCH" "$BIN_NAME" "$OUT_NAME" "$APP_PATH" "$SERVICE_NAME" "$APP" <<'REMOTE'
           set -euo pipefail
           BRANCH="$1"
           BIN_NAME="$2"
           OUT_NAME="$3"
           APP_PATH="$4"
           SERVICE_NAME="$5"
+          APP="${6-}"
 
-          echo "Remote: BRANCH=${BRANCH}, BIN=${BIN_NAME}, OUT=${OUT_NAME}, APP_PATH=${APP_PATH}"
+          if [ -z "${APP}" ]; then
+            if [ "$BRANCH" = "dev" ]; then APP="staging"; else APP=""; fi
+          fi
+
+          echo "Remote: BRANCH=${BRANCH}, BIN=${BIN_NAME}, OUT=${OUT_NAME}, APP_PATH=${APP_PATH} APP=${APP}"
 
           # Ensure app path and git repo
           mkdir -p "$APP_PATH"
@@ -89,11 +96,12 @@ jobs:
           # Stop service before replacing binary to avoid in-use file issues (no fallbacks)
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Stopping systemd service: ${SERVICE_NAME}"
-            sudo  -n systemctl stop "${SERVICE_NAME}.service" || true
+            sudo -n "${SERVICE_NAME}" stop ${APP:+$APP}
 
             echo "Waiting up to 20s for ${SERVICE_NAME} to stop..."
             for i in {1..20}; do
-              if sudo -n systemctl is-active --quiet "${SERVICE_NAME}.service" 2>/dev/null; then
+              if sudo -n "${SERVICE_NAME}" status ${APP:+$APP} >/dev/null 2>&1; then
+                # status exit 0 means active → wait a bit more
                 sleep 1
               else
                 echo "${SERVICE_NAME} stopped."
@@ -113,7 +121,7 @@ jobs:
           if [ "$BRANCH" = "prod" ] || [ "$BRANCH" = "dev" ]; then
             echo "Starting systemd service: ${SERVICE_NAME}"
             # Reload units then start (run as deploy; NOPASSWD is guaranteed for this user)
-            sudo -n systemctl start "${SERVICE_NAME}.service" || true
+            sudo -n "${SERVICE_NAME}" start ${APP:+$APP} || true
           else
             echo "Branch ${BRANCH}: skip systemd start"
           fi

@@ -6,13 +6,13 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts - 1
         WHERE
-            id = OLD.community_id;
+            id = OLD.category_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
@@ -45,13 +45,13 @@ BEGIN
             id = NEW.creator_id
         ON CONFLICT (id)
             DO NOTHING;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts + 1
         WHERE
-            id = NEW.community_id;
+            id = NEW.category_id;
         -- Update the hot rank on the post table
         -- TODO this might not correctly update it, using a 1 week interval
         UPDATE
@@ -76,15 +76,15 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM comment_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments - 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = OLD.post_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM comment_aggregates_fast
@@ -134,15 +134,15 @@ BEGIN
         WHERE
             paf.id = NEW.post_id
             AND (paf.published < ('now'::timestamp - '1 week'::interval));
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments + 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = NEW.post_id;
     END IF;
     RETURN NULL;

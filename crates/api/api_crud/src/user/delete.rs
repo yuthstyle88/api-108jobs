@@ -7,7 +7,7 @@ use lemmy_api_utils::{
   utils::purge_user_account,
 };
 use lemmy_db_schema::source::{
-  community::CommunityActions,
+  category::CategoryActions,
   login_token::LoginToken,
   oauth_account::OAuthAccount,
   person::Person,
@@ -40,7 +40,7 @@ pub async fn delete_account(
     // These are already run in purge_user_account,
     // but should be done anyway even if delete_content is false
     OAuthAccount::delete_user_accounts(&mut context.pool(), local_user_view.local_user.id).await?;
-    CommunityActions::leave_mod_team_for_all_communities(
+    CategoryActions::leave_mod_team_for_all_communities(
       &mut context.pool(),
       local_user_view.person.id,
     )

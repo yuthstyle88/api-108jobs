@@ -2,10 +2,10 @@ use crate::context::FastJobContext;
 use either::Either;
 use futures::future::BoxFuture;
 use lemmy_db_schema::{
-  newtypes::{CommunityId, PersonId},
-  source::{
+    newtypes::{CategoryId, PersonId},
+    source::{
     comment::Comment,
-    community::Community,
+    category::Category,
     person::Person,
     post::Post,
     site::Site,
@@ -46,27 +46,27 @@ pub enum SendActivityData {
   FeaturePost(Post, Person, bool),
   CreateComment(Comment),
   UpdateComment(Comment),
-  DeleteComment(Comment, Person, Community),
+  DeleteComment(Comment, Person, Category),
   RemoveComment {
     comment: Comment,
     moderator: Person,
-    community: Community,
+    category: Category,
     reason: Option<String>,
   },
   LikePostOrComment {
     actor: Person,
-    community: Community,
+    category: Category,
     previous_score: Option<i16>,
     new_score: i16,
   },
-  FollowCommunity(Community, Person, bool),
-  AcceptFollower(CommunityId, PersonId),
-  RejectFollower(CommunityId, PersonId),
-  UpdateCommunity(Person, Community),
-  DeleteCommunity(Person, Community, bool),
-  RemoveCommunity {
+  FollowCategory(Category, Person, bool),
+  AcceptFollower(CategoryId, PersonId),
+  RejectFollower(CategoryId, PersonId),
+  UpdateCategory(Person, Category),
+  DeleteCategory(Person, Category, bool),
+  RemoveCategory {
     moderator: Person,
-    community: Community,
+    category: Category,
     reason: Option<String>,
     removed: bool,
   },
@@ -82,13 +82,13 @@ pub enum SendActivityData {
   DeleteUser(Person, bool),
   CreateReport {
     actor: Person,
-    receiver: Either<Site, Community>,
+    receiver: Either<Site, Category>,
     reason: String,
   },
   SendResolveReport {
     actor: Person,
     report_creator: Person,
-    receiver: Either<Site, Community>,
+    receiver: Either<Site, Category>,
   }
 }
 

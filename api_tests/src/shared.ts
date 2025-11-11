@@ -298,7 +298,7 @@ export async function featurePost(
   let form: FeaturePost = {
     post_id: post.id,
     featured,
-    feature_type: "Community",
+    feature_type: "Category",
   };
   return api.featurePost(form);
 }
@@ -419,7 +419,7 @@ export async function resolveBetaCommunity(
   return api
     .resolveObject(form)
     .then(a => a.results.at(0))
-    .then(a => (a?.type_ == "Community" ? a : undefined));
+    .then(a => (a?.type_ == "Category" ? a : undefined));
 }
 
 export async function resolveCommunity(
@@ -432,7 +432,7 @@ export async function resolveCommunity(
   return api
     .resolveObject(form)
     .then(a => a.results.at(0))
-    .then(a => (a?.type_ == "Community" ? a : undefined));
+    .then(a => (a?.type_ == "Category" ? a : undefined));
 }
 
 export async function resolvePerson(
@@ -807,7 +807,7 @@ export async function followBeta(api: LemmyHttp): Promise<CommunityResponse> {
     let follow = await followCommunity(api, true, betaCommunity.community.id);
     return follow;
   } else {
-    return Promise.reject("no community worked");
+    return Promise.reject("no category worked");
   }
 }
 

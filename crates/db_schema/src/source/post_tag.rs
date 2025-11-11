@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "full", diesel(primary_key(post_id, tag_id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 /// An association between a post and a tag. Created/updated by the post author or mods of a
-/// community. In the future, more access controls could be added, for example that specific tag
+/// category. In the future, more access controls could be added, for example that specific tag
 /// types can only be added by mods.
 pub struct PostTag {
   pub post_id: PostId,

@@ -1,2 +1,2 @@
-DROP FUNCTION community_aggregates_activity, site_aggregates_activity CASCADE;
+DROP FUNCTION category_aggregates_activity, site_aggregates_activity CASCADE;
 

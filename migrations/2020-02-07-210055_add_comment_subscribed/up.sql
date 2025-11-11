@@ -1,4 +1,4 @@
--- Adding community name, hot_rank, to comment_view, user_mention_view, and subscribed to comment_view
+-- Adding category name, hot_rank, to comment_view, user_mention_view, and subscribed to comment_view
 -- Rebuild the comment view
 DROP VIEW reply_view;
 
@@ -20,7 +20,7 @@ SELECT
     c.*,
     (
         SELECT
-            community_id
+            category_id
         FROM
             post p
         WHERE
@@ -29,10 +29,10 @@ SELECT
             co.name
         FROM
             post p,
-            community co
+            category co
         WHERE
             p.id = c.post_id
-            AND p.community_id = co.id) AS community_name,
+            AND p.category_id = co.id) AS category_name,
     (
         SELECT
             u.banned
@@ -44,12 +44,12 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb,
+            category_user_ban cb,
             post p
         WHERE
             c.creator_id = cb.user_id
             AND p.id = c.post_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             name
@@ -107,10 +107,10 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.community_id = cf.community_id) AS subscribed,
+            AND ac.category_id = cf.category_id) AS subscribed,
     (
         SELECT
             cs.id::bool
@@ -149,10 +149,10 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.community_id = cf.community_id) AS subscribed,
+            AND ac.category_id = cf.category_id) AS subscribed,
     (
         SELECT
             cs.id::bool
@@ -225,10 +225,10 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
-    c.community_name,
+    c.category_id,
+    c.category_name,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -264,10 +264,10 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_name,
+    ac.category_id,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -304,10 +304,10 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_name,
+    ac.category_id,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,

@@ -9,18 +9,18 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
 use lemmy_db_schema::{
-  aliases::creator_community_actions,
+  aliases::creator_category_actions,
   newtypes::{CommentId, PaginationCursor, PersonId, PostId},
   source::{comment::CommentActions, post::PostActions},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use lemmy_db_schema_file::schema::{
-  comment,
-  comment_actions,
-  community_actions,
-  person,
-  post,
-  post_actions,
+    comment,
+    comment_actions,
+    category_actions,
+    person,
+    post,
+    post_actions,
 };
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
@@ -61,13 +61,13 @@ impl VoteView {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
-    let creator_community_actions_join = creator_community_actions.on(
-      creator_community_actions
-        .field(community_actions::community_id)
-        .eq(post::community_id)
+    let creator_category_actions_join = creator_category_actions.on(
+      creator_category_actions
+        .field(category_actions::category_id)
+        .eq(post::category_id)
         .and(
-          creator_community_actions
-            .field(community_actions::person_id)
+          creator_category_actions
+            .field(category_actions::person_id)
             .eq(post_actions::person_id),
         ),
     );
@@ -75,13 +75,13 @@ impl VoteView {
     let query = post_actions::table
       .inner_join(person::table)
       .inner_join(post::table)
-      .left_join(creator_community_actions_join)
+      .left_join(creator_category_actions_join)
       .filter(post_actions::post_id.eq(post_id))
       .filter(post_actions::like_score.is_not_null())
       .select((
         person::all_columns,
-        creator_community_actions
-          .field(community_actions::received_ban_at)
+        creator_category_actions
+          .field(category_actions::received_ban_at)
           .nullable()
           .is_not_null(),
         post_actions::like_score.assume_not_null(),
@@ -135,13 +135,13 @@ impl VoteView {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
-    let creator_community_actions_join = creator_community_actions.on(
-      creator_community_actions
-        .field(community_actions::community_id)
-        .eq(post::community_id)
+    let creator_category_actions_join = creator_category_actions.on(
+      creator_category_actions
+        .field(category_actions::category_id)
+        .eq(post::category_id)
         .and(
-          creator_community_actions
-            .field(community_actions::person_id)
+          creator_category_actions
+            .field(category_actions::person_id)
             .eq(comment_actions::person_id),
         ),
     );
@@ -149,13 +149,13 @@ impl VoteView {
     let query = comment_actions::table
       .inner_join(person::table)
       .inner_join(comment::table.inner_join(post::table))
-      .left_join(creator_community_actions_join)
+      .left_join(creator_category_actions_join)
       .filter(comment_actions::comment_id.eq(comment_id))
       .filter(comment_actions::like_score.is_not_null())
       .select((
         person::all_columns,
-        creator_community_actions
-          .field(community_actions::received_ban_at)
+        creator_category_actions
+          .field(category_actions::received_ban_at)
           .nullable()
           .is_not_null(),
         comment_actions::like_score.assume_not_null(),
@@ -181,11 +181,11 @@ mod tests {
   use crate::VoteView;
   use lemmy_db_schema::{
     source::{
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm},
+        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+        category::{Category, CategoryInsertForm},
+        instance::Instance,
+        person::{Person, PersonInsertForm},
+        post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
     traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
@@ -211,17 +211,17 @@ mod tests {
 
     let inserted_sara = Person::create(pool, &new_person_2).await?;
 
-    let new_community = CommunityInsertForm::new(
+    let new_category = CategoryInsertForm::new(
       inserted_instance.id,
-      "test community vv".to_string(),
+      "test category vv".to_string(),
       "nada".to_owned(),
     );
-    let inserted_community = Community::create(pool, &new_community).await?;
+    let inserted_category = Category::create(pool, &new_category).await?;
 
     let new_post = PostInsertForm::new(
       "A test post vv".into(),
       inserted_timmy.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post = Post::create(pool, &new_post).await?;
 
@@ -243,12 +243,12 @@ mod tests {
     let mut expected_post_vote_views = [
       VoteView {
         creator: inserted_sara.clone(),
-        creator_banned_from_community: false,
+        creator_banned_from_category: false,
         score: -1,
       },
       VoteView {
         creator: inserted_timmy.clone(),
-        creator_banned_from_community: false,
+        creator_banned_from_category: false,
         score: 1,
       },
     ];
@@ -270,12 +270,12 @@ mod tests {
     let mut expected_comment_vote_views = [
       VoteView {
         creator: inserted_timmy.clone(),
-        creator_banned_from_community: false,
+        creator_banned_from_category: false,
         score: -1,
       },
       VoteView {
         creator: inserted_sara.clone(),
-        creator_banned_from_community: false,
+        creator_banned_from_category: false,
         score: 1,
       },
     ];
@@ -286,20 +286,20 @@ mod tests {
       VoteView::list_for_comment(pool, inserted_comment.id, None, None, None).await?;
     assert_eq!(read_comment_vote_views, expected_comment_vote_views);
 
-    // Make sure creator_banned_from_community is true
+    // Make sure creator_banned_from_category is true
     let read_comment_vote_views_after_ban =
       VoteView::list_for_comment(pool, inserted_comment.id, None, None, None).await?;
 
     assert!(read_comment_vote_views_after_ban
       .first()
-      .is_some_and(|c| c.creator_banned_from_community));
+      .is_some_and(|c| c.creator_banned_from_category));
 
     let read_post_vote_views_after_ban =
       VoteView::list_for_post(pool, inserted_post.id, None, None, None).await?;
 
     assert!(read_post_vote_views_after_ban
       .get(1)
-      .is_some_and(|p| p.creator_banned_from_community));
+      .is_some_and(|p| p.creator_banned_from_category));
 
     // Cleanup
     Instance::delete(pool, inserted_instance.id).await?;

@@ -9,9 +9,9 @@ ALTER TABLE user_
     ALTER COLUMN fedi_name DROP DEFAULT,
     ADD CONSTRAINT user__name_fedi_name_key UNIQUE (name, fedi_name);
 
--- Community
-ALTER TABLE community
-    ADD CONSTRAINT community_name_key UNIQUE (name);
+-- Category
+ALTER TABLE category
+    ADD CONSTRAINT category_name_key UNIQUE (name);
 
 CREATE VIEW user_view AS
 SELECT

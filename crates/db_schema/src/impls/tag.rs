@@ -1,8 +1,8 @@
 use crate::{
-  newtypes::{CommunityId, TagId},
-  source::tag::{Tag, TagInsertForm, TagUpdateForm, TagsView},
-  traits::Crud,
-  utils::{get_conn, DbPool},
+    newtypes::{CategoryId, TagId},
+    source::tag::{Tag, TagInsertForm, TagUpdateForm, TagsView},
+    traits::Crud,
+    utils::{get_conn, DbPool},
 };
 use diesel::{
   deserialize::FromSql,
@@ -18,13 +18,13 @@ use lemmy_db_schema_file::schema::tag;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Tag {
-  pub async fn get_by_community(
-    pool: &mut DbPool<'_>,
-    search_community_id: CommunityId,
+  pub async fn get_by_category(
+      pool: &mut DbPool<'_>,
+      search_category_id: CategoryId,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     tag::table
-      .filter(tag::community_id.eq(search_community_id))
+      .filter(tag::category_id.eq(search_category_id))
       .filter(tag::deleted.eq(false))
       .load::<Self>(conn)
       .await

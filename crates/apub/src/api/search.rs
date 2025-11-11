@@ -28,7 +28,7 @@ pub async fn search(
     let pool = &mut context.pool();
     let search_query = SearchCombinedQuery {
         search_term: data.q.clone(),
-        community_id: data.community_id,
+        category_id: data.category_id,
         creator_id: data.creator_id,
         sort: data.sort,
         time_range_seconds: data.time_range_seconds,

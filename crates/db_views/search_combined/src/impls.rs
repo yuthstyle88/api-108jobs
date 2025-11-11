@@ -1,5 +1,5 @@
 use crate::{
-  CommentView, CommunityView, LocalUserView, PersonView, PostView, SearchCombinedView,
+  CommentView, CategoryView, LocalUserView, PersonView, PostView, SearchCombinedView,
   SearchCombinedViewInternal,
 };
 use diesel::{
@@ -9,29 +9,29 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
-  newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId},
-  source::{
+    newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
+    source::{
     combined::search::{search_combined_keys as key, SearchCombined},
     site::Site,
   },
-  traits::{InternalToCombinedView, PaginationCursorBuilder},
-  utils::{
+    traits::{InternalToCombinedView, PaginationCursorBuilder},
+    utils::{
     fuzzy_search, get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join, creator_home_instance_actions_join,
+      creator_category_actions_join, creator_home_instance_actions_join,
       creator_local_instance_actions_join, creator_local_user_admin_join
       , image_details_join, my_comment_actions_join,
-      my_community_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_category_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
       my_person_actions_join, my_post_actions_join,
     },
     seconds_to_pg_interval, DbPool,
   },
-  SearchSortType::{self, *}
-  ,
+    SearchSortType::{self, *}
+    ,
 };
 use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_db_schema_file::schema::{
-  comment, community, person, post,
+  comment, category, person, post,
   search_combined,
 };
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -72,17 +72,17 @@ impl SearchCombinedViewInternal {
         .and(not(post::deleted)),
     );
 
-    let community_join = community::table.on(
-      search_combined::community_id
-        .eq(community::id.nullable())
-        .or(post::community_id.eq(community::id))
-        .and(not(community::removed))
-        .and(not(community::local_removed))
-        .and(not(community::deleted)),
+    let category_join = category::table.on(
+      search_combined::category_id
+        .eq(category::id.nullable())
+        .or(post::category_id.eq(category::id))
+        .and(not(category::removed))
+        .and(not(category::local_removed))
+        .and(not(category::deleted)),
     );
 
-    let my_community_actions_join: my_community_actions_join =
-      my_community_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join =
+      my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
@@ -96,11 +96,11 @@ impl SearchCombinedViewInternal {
       .left_join(comment_join)
       .left_join(post_join)
       .left_join(item_creator_join)
-      .left_join(community_join)
-      .left_join(creator_community_actions_join())
+      .left_join(category_join)
+      .left_join(creator_category_actions_join())
       .left_join(my_local_user_admin_join)
       .left_join(creator_local_user_admin_join())
-      .left_join(my_community_actions_join)
+      .left_join(my_category_actions_join)
       .left_join(my_instance_actions_person_join)
       .left_join(creator_home_instance_actions_join())
       .left_join(creator_local_instance_actions_join)
@@ -129,7 +129,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
     let (prefix, id) = match &self {
       SearchCombinedView::Post(v) => ('P', v.post.id.0),
       SearchCombinedView::Comment(v) => ('C', v.comment.id.0),
-      SearchCombinedView::Community(v) => ('O', v.community.id.0),
+      SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -153,7 +153,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
     query = match prefix {
       'P' => query.filter(search_combined::post_id.eq(id)),
       'C' => query.filter(search_combined::comment_id.eq(id)),
-      'O' => query.filter(search_combined::community_id.eq(id)),
+      'O' => query.filter(search_combined::category_id.eq(id)),
       'E' => query.filter(search_combined::person_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -166,7 +166,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
 #[derive(Default)]
 pub struct SearchCombinedQuery {
   pub search_term: Option<String>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub creator_id: Option<PersonId>,
   pub sort: Option<SearchSortType>,
   pub time_range_seconds: Option<i32>,
@@ -206,13 +206,13 @@ impl SearchCombinedQuery {
             .ilike(searcher.clone());
         let body_or_description_filter = post::body
               .ilike(searcher.clone())
-              .or(community::description.ilike(searcher.clone()));
+              .or(category::description.ilike(searcher.clone()));
         query = query.filter(name_or_title_filter.or(body_or_description_filter));
     }
 
-    // Community id
-    if let Some(community_id) = self.community_id {
-      query = query.filter(community::id.eq(community_id));
+    // Category id
+    if let Some(category_id) = self.category_id {
+      query = query.filter(category::id.eq(category_id));
     }
 
     if let Some(req) = self.requires_english {
@@ -294,18 +294,18 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment), Some(creator), Some(post), Some(community)) = (
+    if let (Some(comment), Some(creator), Some(post), Some(category)) = (
       v.comment,
       v.item_creator.clone(),
       v.post.clone(),
-      v.community.clone(),
+      v.category.clone(),
     ) {
       Some(SearchCombinedView::Comment(CommentView {
         comment,
         post,
-        community,
+        category,
         creator,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         person_actions: v.person_actions,
         comment_actions: v.comment_actions,
@@ -314,18 +314,18 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
       }))
-    } else if let (Some(post), Some(creator), Some(community)) =
-      (v.post, v.item_creator.clone(), v.community.clone())
+    } else if let (Some(post), Some(creator), Some(category)) =
+      (v.post, v.item_creator.clone(), v.category.clone())
     {
       Some(SearchCombinedView::Post(PostView {
         post,
-        community,
+        category,
         creator,
         creator_is_admin: v.item_creator_is_admin,
         image_details: v.image_details,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         person_actions: v.person_actions,
         post_actions: v.post_actions,
@@ -333,15 +333,15 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
       }))
-    } else if let Some(community) = v.community {
-      Some(SearchCombinedView::Community(CommunityView {
-        community,
-        community_actions: v.community_actions,
+    } else if let Some(category) = v.category {
+      Some(SearchCombinedView::Category(CategoryView {
+        category,
+        category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         can_mod: v.can_mod,
-        post_tags: v.community_post_tags,
+        post_tags: v.category_post_tags,
       }))
     } else if let Some(person) = v.item_creator {
       Some(SearchCombinedView::Person(PersonView {
@@ -364,13 +364,13 @@ mod tests {
   use lemmy_db_schema::{
     assert_length,
     source::{
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      local_user::{LocalUser, LocalUserInsertForm},
-      person::{Person, PersonInsertForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm, PostUpdateForm},
-      site::{Site, SiteInsertForm},
+        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
+        category::{category, CategoryInsertForm},
+        instance::Instance,
+        local_user::{LocalUser, LocalUserInsertForm},
+        person::{Person, PersonInsertForm},
+        post::{Post, PostActions, PostInsertForm, PostLikeForm, PostUpdateForm},
+        site::{Site, SiteInsertForm},
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -387,8 +387,8 @@ mod tests {
     timmy: Person,
     timmy_view: LocalUserView,
     sara: Person,
-    community: Community,
-    community_2: Community,
+    category: category,
+    category_2: category,
     timmy_post: Post,
     timmy_post_2: Post,
     sara_post: Post,
@@ -417,41 +417,41 @@ mod tests {
       banned: false,
     };
 
-    let community_form = CommunityInsertForm {
+    let category_form = CategoryInsertForm {
       description: Some("ask lemmy things".into()),
-      ..CommunityInsertForm::new(
+      ..CategoryInsertForm::new(
         instance.id,
         "asklemmy".to_string(),
         "Ask FastJob".to_owned(),
       )
     };
-    let community = Community::create(pool, &community_form).await?;
+    let category = category::create(pool, &category_form).await?;
 
-    let community_form_2 = CommunityInsertForm::new(
+    let category_form_2 = CategoryInsertForm::new(
       instance.id,
       "startrek_ds9".to_string(),
       "Star Trek - Deep Space Nine".to_owned(),
     );
-    let community_2 = Community::create(pool, &community_form_2).await?;
+    let category_2 = category::create(pool, &category_form_2).await?;
 
     let timmy_post_form = PostInsertForm {
       body: Some("postbody inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
-      ..PostInsertForm::new("timmy post prv".into(), timmy.id, community.id)
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id, category.id)
     };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, community.id);
+    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, community_2.id);
+    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category_2.id);
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let self_promotion_post_form = PostInsertForm {
       body: Some("self_promotion post inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
       self_promotion: Some(true),
-      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id, community.id)
+      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id, category.id)
     };
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
@@ -509,8 +509,8 @@ mod tests {
       timmy,
       timmy_view,
       sara,
-      community,
-      community_2,
+      category,
+      category_2,
       timmy_post,
       timmy_post_2,
       sara_post,
@@ -545,7 +545,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -553,7 +553,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.community_2.id, v.community.id);
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -561,40 +561,40 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[3] {
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.community_2.id, v.community.id);
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[4] {
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[5] {
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::Community(v) = &search[6] {
-      assert_eq!(data.community_2.id, v.community.id);
+    if let SearchCombinedView::category(v) = &search[6] {
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::Community(v) = &search[7] {
-      assert_eq!(data.community.id, v.community.id);
+    if let SearchCombinedView::category(v) = &search[7] {
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -611,14 +611,14 @@ mod tests {
       panic!("wrong type");
     }
 
-    // Filtered by community id
-    let search_by_community = SearchCombinedQuery {
-      community_id: Some(data.community.id),
+    // Filtered by category id
+    let search_by_category = SearchCombinedQuery {
+      category_id: Some(data.category.id),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(5, search_by_community);
+    assert_length!(5, search_by_category);
 
     // Filtered by creator_id
     let search_by_creator = SearchCombinedQuery {
@@ -705,67 +705,67 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community() -> FastJobResult<()> {
+  async fn category() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Community search
-    let community_search = SearchCombinedQuery {
+    // Category search
+    let category_search = SearchCombinedQuery {
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(2, community_search);
+    assert_length!(2, category_search);
 
     // Make sure the types are correct
-    if let SearchCombinedView::Community(v) = &community_search[0] {
-      assert_eq!(data.community_2.id, v.community.id);
+    if let SearchCombinedView::category(v) = &category_search[0] {
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::Community(v) = &community_search[1] {
-      assert_eq!(data.community.id, v.community.id);
+    if let SearchCombinedView::category(v) = &category_search[1] {
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     // Filtered by id
-    let community_search_by_id = SearchCombinedQuery {
-      community_id: Some(data.community.id),
+    let category_search_by_id = SearchCombinedQuery {
+      category_id: Some(data.category.id),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(1, community_search_by_id);
+    assert_length!(1, category_search_by_id);
 
     // Using a term
-    let community_search_by_name = SearchCombinedQuery {
+    let category_search_by_name = SearchCombinedQuery {
       search_term: Some("things".into()),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
 
-    assert_length!(1, community_search_by_name);
-    if let SearchCombinedView::Community(v) = &community_search_by_name[0] {
-      // The asklemmy community
-      assert_eq!(data.community.id, v.community.id);
+    assert_length!(1, category_search_by_name);
+    if let SearchCombinedView::category(v) = &category_search_by_name[0] {
+      // The asklemmy category
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     // Test title only search to make sure 'ask lemmy things' doesn't get returned
     // Using a term
-    let community_search_title_only = SearchCombinedQuery {
+    let category_search_title_only = SearchCombinedQuery {
       search_term: Some("things".into()),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
 
-    assert!(community_search_title_only.is_empty());
+    assert!(category_search_title_only.is_empty());
 
     cleanup(data, pool).await?;
 
@@ -868,33 +868,33 @@ mod tests {
     // Make sure the types are correct
     if let SearchCombinedView::Post(v) = &post_search[0] {
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.community_2.id, v.community.id);
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[1] {
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[2] {
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     // Filtered by id
-    let post_search_by_community = SearchCombinedQuery {
-      community_id: Some(data.community.id),
+    let post_search_by_category = SearchCombinedQuery {
+      category_id: Some(data.category.id),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(2, post_search_by_community);
+    assert_length!(2, post_search_by_category);
 
     // Using a term
     let post_search_by_name = SearchCombinedQuery {
@@ -959,7 +959,7 @@ mod tests {
     // Timmy_post_2 has a dislike, so it should be last
     if let SearchCombinedView::Post(v) = &post_search_sort_top[2] {
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -1043,7 +1043,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -1051,7 +1051,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.community_2.id, v.community.id);
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -1059,19 +1059,19 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
     // Filtered by id
-    let comment_search_by_community = SearchCombinedQuery {
-      community_id: Some(data.community.id),
+    let comment_search_by_category = SearchCombinedQuery {
+      category_id: Some(data.category.id),
       ..Default::default()
     }
     .list(pool, &None, &data.site)
     .await?;
-    assert_length!(2, comment_search_by_community);
+    assert_length!(2, comment_search_by_category);
 
     // Using a term
     let comment_search_by_name = SearchCombinedQuery {
@@ -1113,7 +1113,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search_sort_top[2] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.community.id, v.community.id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }

@@ -1,5 +1,5 @@
 use crate::{CommentSlimView, CommentView};
-use lemmy_db_schema::newtypes::{CommentId, CommunityId, LanguageId, PaginationCursor, PostId};
+use lemmy_db_schema::newtypes::{CommentId, CategoryId, LanguageId, PaginationCursor, PostId};
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType};
 use lemmy_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -99,8 +99,8 @@ pub struct GetComments {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
-  pub community_id: Option<CommunityId>,
-  pub community_name: Option<String>,
+  pub category_id: Option<CategoryId>,
+  pub category_name: Option<String>,
   pub post_id: Option<PostId>,
   pub parent_id: Option<CommentId>,
 }
@@ -120,7 +120,7 @@ pub struct GetCommentsResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A slimmer comment list response, without the post or community.
+/// A slimmer comment list response, without the post or category.
 pub struct GetCommentsSlimResponse {
   pub comments: Vec<CommentSlimView>,
   pub next_page: Option<PaginationCursor>,

@@ -151,22 +151,22 @@ DECLARE
 END;
 $a$;
 
--- Edit community aggregates to include voters as active users
-CREATE OR REPLACE FUNCTION r.community_aggregates_activity (i text)
+-- Edit category aggregates to include voters as active users
+CREATE OR REPLACE FUNCTION r.category_aggregates_activity (i text)
     RETURNS TABLE (
         count_ bigint,
-        community_id_ integer)
+        category_id_ integer)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN query
     SELECT
         count(*),
-        community_id
+        category_id
     FROM (
         SELECT
             c.creator_id,
-            p.community_id
+            p.category_id
         FROM
             comment c
             INNER JOIN post p ON c.post_id = p.id
@@ -177,7 +177,7 @@ BEGIN
         UNION
         SELECT
             p.creator_id,
-            p.community_id
+            p.category_id
         FROM
             post p
             INNER JOIN person pe ON p.creator_id = pe.id
@@ -187,7 +187,7 @@ BEGIN
         UNION
         SELECT
             pa.person_id,
-            p.community_id
+            p.category_id
         FROM
             post_actions pa
             INNER JOIN post p ON pa.post_id = p.id
@@ -198,7 +198,7 @@ BEGIN
         UNION
         SELECT
             ca.person_id,
-            p.community_id
+            p.category_id
         FROM
             comment_actions ca
             INNER JOIN comment c ON ca.comment_id = c.id
@@ -208,28 +208,28 @@ BEGIN
             ca.liked_at > ('now'::timestamp - i::interval)
             AND pe.bot_account = FALSE) a
 GROUP BY
-    community_id;
+    category_id;
 END;
 $$;
 
--- Community aggregate function for adding up total number of interactions
-CREATE OR REPLACE FUNCTION r.community_aggregates_interactions (i text)
+-- Category aggregate function for adding up total number of interactions
+CREATE OR REPLACE FUNCTION r.category_aggregates_interactions (i text)
     RETURNS TABLE (
         count_ bigint,
-        community_id_ integer)
+        category_id_ integer)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN query
     SELECT
         COALESCE(sum(comments + upvotes + downvotes)::bigint, 0) AS count_,
-        community_id AS community_id_
+        category_id AS category_id_
     FROM
         post
     WHERE
         published_at >= (CURRENT_TIMESTAMP - i::interval)
     GROUP BY
-        community_id;
+        category_id;
 END;
 $$;
 

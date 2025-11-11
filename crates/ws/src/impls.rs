@@ -8,9 +8,10 @@ impl FromStr for MessageStatus {
   type Err = ConvertError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "pending" => Ok(MessageStatus::Pending),
-      "sent" => Ok(MessageStatus::Sent),
+      "sending" => Ok(MessageStatus::Sending),
+      "delivered" => Ok(MessageStatus::Delivered),
       "retrying" => Ok(MessageStatus::Retrying),
+      "read" => Ok(MessageStatus::Read),
       "failed" => Ok(MessageStatus::Failed),
       other => Err(ConvertError::UnknownStatus(other.to_string())),
     }

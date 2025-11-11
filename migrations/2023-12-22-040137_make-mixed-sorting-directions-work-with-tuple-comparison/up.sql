@@ -8,9 +8,9 @@ $$
 LANGUAGE plpgsql
 IMMUTABLE PARALLEL SAFE;
 
-CREATE INDEX idx_post_aggregates_community_published_asc ON public.post_aggregates USING btree (community_id, featured_local DESC, reverse_timestamp_sort (published) DESC);
+CREATE INDEX idx_post_aggregates_category_published_asc ON public.post_aggregates USING btree (category_id, featured_local DESC, reverse_timestamp_sort (published) DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_published_asc ON public.post_aggregates USING btree (community_id, featured_community DESC, reverse_timestamp_sort (published) DESC);
+CREATE INDEX idx_post_aggregates_featured_category_published_asc ON public.post_aggregates USING btree (category_id, featured_category DESC, reverse_timestamp_sort (published) DESC);
 
 CREATE INDEX idx_post_aggregates_featured_local_published_asc ON public.post_aggregates USING btree (featured_local DESC, reverse_timestamp_sort (published) DESC);
 

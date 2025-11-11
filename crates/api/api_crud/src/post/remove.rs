@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
@@ -8,7 +8,7 @@ use lemmy_api_utils::{
 };
 use lemmy_db_schema::{
   source::{
-    community::Community,
+    category::Category,
     local_user::LocalUser,
     mod_log::moderator::{ModRemovePost, ModRemovePostForm},
     post::{Post, PostUpdateForm},
@@ -29,15 +29,15 @@ pub async fn remove_post(
 
   // We cannot use PostView to avoid a database read here, as it doesn't return removed items
   // by default. So we would have to pass in `is_mod_or_admin`, but that is impossible without
-  // knowing which community the post belongs to.
+  // knowing which category the post belongs to.
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
-  let community = Community::read(&mut context.pool(), orig_post.community_id).await?;
+  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
 
-  check_community_deleted_removed(&community)?;
+  check_category_deleted_removed(&category)?;
 
   LocalUser::is_higher_mod_or_admin_check(
     &mut context.pool(),
-    orig_post.community_id,
+    orig_post.category_id,
     local_user_view.person.id,
     vec![orig_post.creator_id],
   )

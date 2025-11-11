@@ -18,7 +18,7 @@ beforeAll(setupLogins);
 
 afterAll(unfollows);
 
-test("Follow local community", async () => {
+test("Follow local category", async () => {
   let user = await registerUser(beta, betaUrl);
 
   let community = await resolveBetaCommunity(user);
@@ -49,15 +49,15 @@ test("Follow local community", async () => {
   );
 });
 
-test("Follow federated community", async () => {
-  // It takes about 1 second for the community aggregates to federate
+test("Follow federated category", async () => {
+  // It takes about 1 second for the category aggregates to federate
   await delay(2000); // if this is the second test run, we don't have a way to wait for the correct number of subscribers
   const betaCommunityInitial = await waitUntil(
     () => resolveBetaCommunity(alpha),
     c => !!c?.community && c.community.subscribers >= 1,
   );
   if (!betaCommunityInitial) {
-    throw "Missing beta community";
+    throw "Missing beta category";
   }
   let follow = await followCommunity(
     alpha,
@@ -94,7 +94,7 @@ test("Follow federated community", async () => {
   expect(remoteCommunityId).toBeDefined();
 
   if (!remoteCommunityId) {
-    throw "Missing remote community id";
+    throw "Missing remote category id";
   }
 
   // Test an unfollow

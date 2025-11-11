@@ -51,7 +51,7 @@ pub async fn create_comment(
   .await?;
 
   let post = post_view.post;
-  let community_id = post_view.community.id;
+  let category_id = post_view.category.id;
 
   check_post_deleted_or_removed(&post)?;
 
@@ -63,7 +63,7 @@ pub async fn create_comment(
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
-    community_id,
+    category_id,
     local_user_view.local_user.id,
   )
   .await?;

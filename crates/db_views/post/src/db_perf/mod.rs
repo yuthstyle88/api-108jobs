@@ -8,10 +8,10 @@ use diesel::{
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use lemmy_db_schema::{
   source::{
-    community::{Community, CommunityInsertForm},
-    instance::Instance,
-    person::{Person, PersonInsertForm},
-    site::Site,
+      category::{category, CategoryInsertForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      site::Site,
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{build_db_pool, get_conn, now},
@@ -74,27 +74,27 @@ async fn db_perf() -> FastJobResult<()> {
   }
 
   println!("🌍 creating {} communities", args.communities);
-  let mut community_ids = vec![];
+  let mut category_ids = vec![];
   for i in 0..args.communities.get() {
-    let form = CommunityInsertForm::new(
+    let form = CategoryInsertForm::new(
       instance.id,
       format!("c{i}"),
       i.to_string(),
     );
-    community_ids.push(Community::create(&mut conn.into(), &form).await?.id);
+    category_ids.push(category::create(&mut conn.into(), &form).await?.id);
   }
 
   let post_batches = args.people.get() * args.communities.get();
   let posts_per_batch = args.posts.get() / post_batches;
   let num_posts: usize = (post_batches * posts_per_batch).try_into()?;
   println!(
-    "📜 creating {} posts ({} featured in community)",
+    "📜 creating {} posts ({} featured in category)",
     num_posts, post_batches
   );
   let mut num_inserted_posts = 0;
   // TODO: progress bar
   for person_id in &person_ids {
-    for community_id in &community_ids {
+    for category_id in &category_ids {
       let n = dsl::insert_into(post::table)
         .values(ValuesFromSeries {
           start: 1,
@@ -102,7 +102,7 @@ async fn db_perf() -> FastJobResult<()> {
           selection: (
             "AAAAAAAAAAA".into_sql::<sql_types::Text>(),
             person_id.into_sql::<sql_types::Integer>(),
-            community_id.into_sql::<sql_types::Integer>(),
+            category_id.into_sql::<sql_types::Integer>(),
             series::current_value.eq(1),
             now()
               - sql::<sql_types::Interval>("make_interval(secs => ")
@@ -113,8 +113,8 @@ async fn db_perf() -> FastJobResult<()> {
         .into_columns((
           post::name,
           post::creator_id,
-          post::community_id,
-          post::featured_community,
+          post::category_id,
+          post::featured_category,
           post::published_at,
         ))
         .execute(conn)
@@ -147,7 +147,7 @@ async fn db_perf() -> FastJobResult<()> {
 
     // TODO: include local_user
     let post_views = PostQuery {
-      community_id: community_ids.as_slice().first().cloned(),
+      category_id: category_ids.as_slice().first().cloned(),
       sort: Some(PostSortType::New),
       limit: Some(20),
       cursor_data,

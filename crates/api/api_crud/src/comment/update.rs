@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::utils::check_community_deleted_removed;
+use lemmy_api_utils::utils::check_category_deleted_removed;
 use lemmy_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
@@ -39,7 +39,7 @@ pub async fn update_comment(
   )
   .await?;
 
-  check_community_deleted_removed(&orig_comment.community)?;
+  check_category_deleted_removed(&orig_comment.category)?;
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {
@@ -49,7 +49,7 @@ pub async fn update_comment(
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
-    orig_comment.community.id,
+    orig_comment.category.id,
     local_user_view.local_user.id,
   )
   .await?;

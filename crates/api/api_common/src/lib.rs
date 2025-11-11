@@ -1,6 +1,6 @@
 pub mod account;
 pub mod comment;
-pub mod community;
+pub mod category;
 pub mod custom_emoji;
 pub mod error;
 pub mod inbox;

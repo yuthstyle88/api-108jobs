@@ -1,9 +1,9 @@
 use crate::newtypes::{
-  CommentId,
-  CommunityId,
-  PersonId,
-  PostId,
-  SearchCombinedId,
+    CommentId,
+    CategoryId,
+    PersonId,
+    PostId,
+    SearchCombinedId,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
@@ -29,6 +29,6 @@ pub struct SearchCombined {
   pub score: i64,
   pub post_id: Option<PostId>,
   pub comment_id: Option<CommentId>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub person_id: Option<PersonId>,
 }

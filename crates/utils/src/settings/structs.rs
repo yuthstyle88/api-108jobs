@@ -101,11 +101,11 @@ pub struct PictrsConfig {
   #[default(512)]
   pub max_thumbnail_size: u32,
 
-  /// Maximum size for user avatar, community icon and site icon. Larger images are downscaled.
+  /// Maximum size for user avatar, category icon and site icon. Larger images are downscaled.
   #[default(512)]
   pub max_avatar_size: u32,
 
-  /// Maximum size for user, community and site banner. Larger images are downscaled.
+  /// Maximum size for user, category and site banner. Larger images are downscaled.
   #[default(1024)]
   pub max_banner_size: u32,
 

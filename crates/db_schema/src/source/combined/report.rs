@@ -1,6 +1,6 @@
 use crate::newtypes::{
   CommentReportId,
-  CommunityReportId,
+  CategoryReportId,
   PostReportId,
   ReportCombinedId,
 };
@@ -27,5 +27,5 @@ pub struct ReportCombined {
   pub published_at: DateTime<Utc>,
   pub post_report_id: Option<PostReportId>,
   pub comment_report_id: Option<CommentReportId>,
-  pub community_report_id: Option<CommunityReportId>,
+  pub category_report_id: Option<CategoryReportId>,
 }

@@ -40,7 +40,7 @@ SELECT
         SELECT
             count(*)
         FROM
-            community) AS number_of_communities
+            category) AS number_of_communities
 FROM
     site s;
 

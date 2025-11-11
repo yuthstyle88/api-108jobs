@@ -30,7 +30,7 @@ pub async fn get_mod_log(
   let modlog = ModlogCombinedQuery {
     type_: data.type_,
     listing_type: data.listing_type,
-    community_id: data.community_id,
+    category_id: data.category_id,
     mod_person_id: data.mod_person_id,
     other_person_id: data.other_person_id,
     local_user: local_user_view.as_ref().map(|u| &u.local_user),

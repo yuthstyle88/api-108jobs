@@ -25,16 +25,16 @@ FROM (
     SELECT
         actor_id
     FROM
-        community) AS p;
+        category) AS p;
 
--- Alter site, person, and community tables to reference the instance table.
+-- Alter site, person, and category tables to reference the instance table.
 ALTER TABLE site
     ADD COLUMN instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE person
     ADD COLUMN instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE;
 
-ALTER TABLE community
+ALTER TABLE category
     ADD COLUMN instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- Add those columns
@@ -57,7 +57,7 @@ WHERE
     substring(actor_id FROM '(?:.*://)?(?:www\.)?([^/?]*)') = i.domain;
 
 UPDATE
-    community
+    category
 SET
     instance_id = i.id
 FROM
@@ -75,7 +75,7 @@ ALTER TABLE site
 ALTER TABLE person
     ALTER COLUMN instance_id SET NOT NULL;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN instance_id SET NOT NULL;
 
 
@@ -89,7 +89,7 @@ CREATE TABLE local_site (
     enable_downvotes boolean DEFAULT TRUE NOT NULL,
     open_registration boolean DEFAULT TRUE NOT NULL,
     enable_self_promotion boolean DEFAULT TRUE NOT NULL,
-    community_creation_admin_only boolean DEFAULT FALSE NOT NULL,
+    category_creation_admin_only boolean DEFAULT FALSE NOT NULL,
     require_email_verification boolean DEFAULT FALSE NOT NULL,
     require_application boolean DEFAULT TRUE NOT NULL,
     application_question text DEFAULT 'to verify that you are human, please explain why you want to create an account on this site' ::text,
@@ -130,14 +130,14 @@ CREATE TABLE local_site_rate_limit (
 );
 
 -- Insert the data into local_site
-INSERT INTO local_site (site_id, site_setup, enable_downvotes, open_registration, enable_self_promotion, community_creation_admin_only, require_email_verification, require_application, application_question, private_instance, default_theme, default_post_listing_type, legal_information, hide_modlog_mod_names, application_email_admins, published, updated)
+INSERT INTO local_site (site_id, site_setup, enable_downvotes, open_registration, enable_self_promotion, category_creation_admin_only, require_email_verification, require_application, application_question, private_instance, default_theme, default_post_listing_type, legal_information, hide_modlog_mod_names, application_email_admins, published, updated)
 SELECT
     id,
     TRUE, -- Assume site if setup if there's already a site row
     enable_downvotes,
     open_registration,
     enable_self_promotion,
-    community_creation_admin_only,
+    category_creation_admin_only,
     require_email_verification,
     require_application,
     application_question,
@@ -170,7 +170,7 @@ ALTER TABLE site
     DROP COLUMN enable_downvotes,
     DROP COLUMN open_registration,
     DROP COLUMN enable_self_promotion,
-    DROP COLUMN community_creation_admin_only,
+    DROP COLUMN category_creation_admin_only,
     DROP COLUMN require_email_verification,
     DROP COLUMN require_application,
     DROP COLUMN application_question,

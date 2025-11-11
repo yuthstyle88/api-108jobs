@@ -5,9 +5,9 @@ DROP VIEW post_fast_view;
 
 DROP TABLE post_aggregates_fast;
 
-DROP VIEW community_fast_view;
+DROP VIEW category_fast_view;
 
-DROP TABLE community_aggregates_fast;
+DROP TABLE category_aggregates_fast;
 
 DROP VIEW reply_fast_view;
 
@@ -86,29 +86,29 @@ FROM
 
 CREATE UNIQUE INDEX idx_user_mview_id ON user_mview (id);
 
--- community
-DROP TRIGGER refresh_community ON community;
+-- category
+DROP TRIGGER refresh_category ON category;
 
-CREATE TRIGGER refresh_community
-    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON community
+CREATE TRIGGER refresh_category
+    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON category
     FOR EACH statement
-    EXECUTE PROCEDURE refresh_community ();
+    EXECUTE PROCEDURE refresh_category ();
 
-CREATE OR REPLACE FUNCTION refresh_community ()
+CREATE OR REPLACE FUNCTION refresh_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     REFRESH MATERIALIZED VIEW CONCURRENTLY post_aggregates_mview;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY community_aggregates_mview;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY category_aggregates_mview;
     REFRESH MATERIALIZED VIEW CONCURRENTLY user_mview;
     RETURN NULL;
 END
 $$;
 
-DROP VIEW community_aggregates_view CASCADE;
+DROP VIEW category_aggregates_view CASCADE;
 
-CREATE VIEW community_aggregates_view AS
+CREATE VIEW category_aggregates_view AS
 -- Now that there's public and private keys, you have to be explicit here
 SELECT
     c.id,
@@ -164,16 +164,16 @@ SELECT
         SELECT
             count(*)
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
-            cf.community_id = c.id) AS number_of_subscribers,
+            cf.category_id = c.id) AS number_of_subscribers,
     (
         SELECT
             count(*)
         FROM
             post p
         WHERE
-            p.community_id = c.id) AS number_of_posts,
+            p.category_id = c.id) AS number_of_posts,
     (
         SELECT
             count(*)
@@ -181,31 +181,31 @@ SELECT
             comment co,
             post p
         WHERE
-            c.id = p.community_id
+            c.id = p.category_id
             AND p.id = co.post_id) AS number_of_comments,
     hot_rank ((
         SELECT
             count(*)
-        FROM community_follower cf
+        FROM category_follower cf
         WHERE
-            cf.community_id = c.id), c.published) AS hot_rank
+            cf.category_id = c.id), c.published) AS hot_rank
 FROM
-    community c;
+    category c;
 
-CREATE MATERIALIZED VIEW community_aggregates_mview AS
+CREATE MATERIALIZED VIEW category_aggregates_mview AS
 SELECT
     *
 FROM
-    community_aggregates_view;
+    category_aggregates_view;
 
-CREATE UNIQUE INDEX idx_community_aggregates_mview_id ON community_aggregates_mview (id);
+CREATE UNIQUE INDEX idx_category_aggregates_mview_id ON category_aggregates_mview (id);
 
-CREATE VIEW community_view AS
-with all_community AS (
+CREATE VIEW category_view AS
+with all_category AS (
     SELECT
         ca.*
     FROM
-        community_aggregates_view ca
+        category_aggregates_view ca
 )
 SELECT
     ac.*,
@@ -214,27 +214,27 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
-CREATE VIEW community_mview AS
-with all_community AS (
+CREATE VIEW category_mview AS
+with all_category AS (
     SELECT
         ca.*
     FROM
-        community_aggregates_mview ca
+        category_aggregates_mview ca
 )
 SELECT
     ac.*,
@@ -243,20 +243,20 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
 -- Post
 DROP VIEW post_view;
@@ -278,10 +278,10 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb
+            category_user_ban cb
         WHERE
             p.creator_id = cb.user_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             actor_id
@@ -314,44 +314,44 @@ SELECT
         SELECT
             actor_id
         FROM
-            community
+            category
         WHERE
-            p.community_id = community.id) AS community_actor_id,
+            p.category_id = category.id) AS category_actor_id,
     (
         SELECT
             local
         FROM
-            community
+            category
         WHERE
-            p.community_id = community.id) AS community_local,
+            p.category_id = category.id) AS category_local,
     (
         SELECT
             name
         FROM
-            community
+            category
         WHERE
-            p.community_id = community.id) AS community_name,
+            p.category_id = category.id) AS category_name,
     (
         SELECT
             removed
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_removed,
+            p.category_id = c.id) AS category_removed,
     (
         SELECT
             deleted
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_deleted,
+            p.category_id = c.id) AS category_deleted,
     (
         SELECT
             self_promotion
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_self_promotion,
+            p.category_id = c.id) AS category_self_promotion,
     (
         SELECT
             count(*)
@@ -422,10 +422,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -473,10 +473,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -540,7 +540,7 @@ SELECT
     c.*,
     (
         SELECT
-            community_id
+            category_id
         FROM
             post p
         WHERE
@@ -549,28 +549,28 @@ SELECT
             co.actor_id
         FROM
             post p,
-            community co
+            category co
         WHERE
             p.id = c.post_id
-            AND p.community_id = co.id) AS community_actor_id,
+            AND p.category_id = co.id) AS category_actor_id,
     (
         SELECT
             co.local
         FROM
             post p,
-            community co
+            category co
         WHERE
             p.id = c.post_id
-            AND p.community_id = co.id) AS community_local,
+            AND p.category_id = co.id) AS category_local,
     (
         SELECT
             co.name
         FROM
             post p,
-            community co
+            category co
         WHERE
             p.id = c.post_id
-            AND p.community_id = co.id) AS community_name,
+            AND p.category_id = co.id) AS category_name,
     (
         SELECT
             u.banned
@@ -582,12 +582,12 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb,
+            category_user_ban cb,
             post p
         WHERE
             c.creator_id = cb.user_id
             AND p.id = c.post_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             actor_id
@@ -659,10 +659,10 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.community_id = cf.community_id) AS subscribed,
+            AND ac.category_id = cf.category_id) AS subscribed,
     (
         SELECT
             cs.id::bool
@@ -701,10 +701,10 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.community_id = cf.community_id) AS subscribed,
+            AND ac.category_id = cf.category_id) AS subscribed,
     (
         SELECT
             cs.id::bool
@@ -779,12 +779,12 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
-    c.community_actor_id,
-    c.community_local,
-    c.community_name,
+    c.category_id,
+    c.category_actor_id,
+    c.category_local,
+    c.category_name,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -836,12 +836,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -894,12 +894,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,

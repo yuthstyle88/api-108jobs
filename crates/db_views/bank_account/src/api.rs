@@ -164,7 +164,7 @@ pub struct ListBankAccounts {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Fetches a random community
+/// Fetches a random category
 pub struct GetBankAccounts {
   pub local_user_id: Option<LocalUserId>,
   pub is_verified: Option<bool>,

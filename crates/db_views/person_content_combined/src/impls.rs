@@ -25,14 +25,14 @@ use lemmy_db_schema::{
     limit_fetch,
     paginate,
     queries::{
-      community_join,
-      creator_community_actions_join,
+      category_join,
+      creator_category_actions_join,
       creator_home_instance_actions_join,
       creator_local_instance_actions_join,
       creator_local_user_admin_join,
       image_details_join,
       my_comment_actions_join,
-      my_community_actions_join,
+      my_category_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
@@ -71,8 +71,8 @@ impl PersonContentCombinedViewInternal {
         ),
     );
 
-    let my_community_actions_join: my_community_actions_join =
-      my_community_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join =
+      my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
@@ -86,11 +86,11 @@ impl PersonContentCombinedViewInternal {
       .left_join(comment_join)
       .inner_join(post_join)
       .inner_join(item_creator_join)
-      .inner_join(community_join())
-      .left_join(creator_community_actions_join())
+      .inner_join(category_join())
+      .left_join(creator_category_actions_join())
       .left_join(my_local_user_admin_join)
       .left_join(creator_local_user_admin_join())
-      .left_join(my_community_actions_join)
+      .left_join(my_category_actions_join)
       .left_join(my_instance_actions_person_join)
       .left_join(creator_home_instance_actions_join())
       .left_join(creator_local_instance_actions_join)
@@ -239,9 +239,9 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
       Some(PersonContentCombinedView::Comment(CommentView {
         comment,
         post: v.post,
-        community: v.community,
+        category: v.category,
         creator: v.item_creator,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         comment_actions: v.comment_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
@@ -250,15 +250,15 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
       }))
     } else {
       Some(PersonContentCombinedView::Post(PostView {
         post: v.post,
-        community: v.community,
+        category: v.category,
         creator: v.item_creator,
         image_details: v.image_details,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         post_actions: v.post_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
@@ -267,7 +267,7 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
         can_mod: v.can_mod,
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
-        creator_banned_from_community: v.creator_banned_from_community,
+        creator_banned_from_category: v.creator_banned_from_category,
       }))
     }
   }
@@ -280,11 +280,11 @@ mod tests {
   use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
   use lemmy_db_schema::{
     source::{
-      comment::{Comment, CommentInsertForm},
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
+        comment::{Comment, CommentInsertForm},
+        category::{category, CategoryInsertForm},
+        instance::Instance,
+        person::{Person, PersonInsertForm},
+        post::{Post, PostInsertForm},
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
@@ -314,20 +314,20 @@ mod tests {
     let sara_form = PersonInsertForm::test_form(instance.id, "sara_pcv");
     let sara = Person::create(pool, &sara_form).await?;
 
-    let community_form = CommunityInsertForm::new(
+    let category_form = CategoryInsertForm::new(
       instance.id,
-      "test community pcv".to_string(),
+      "test category pcv".to_string(),
       "nada".to_owned(),
     );
-    let community = Community::create(pool, &community_form).await?;
+    let category = category::create(pool, &category_form).await?;
 
-    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, community.id);
+    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, community.id);
+    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, community.id);
+    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category.id);
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =

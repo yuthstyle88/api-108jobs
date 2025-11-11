@@ -20,7 +20,7 @@ workspace = true
 [features]
 full = [
     "lemmy_db_schema/full",
-    "lemmy_db_views_community/full",
+    "lemmy_db_views_category/full",
     "lemmy_db_views_local_image/full",
     "lemmy_db_views_local_user/full",
     "lemmy_db_views_person/full",
@@ -32,7 +32,7 @@ full = [
 [dependencies]
 lemmy_db_schema = { workspace = true }
 lemmy_db_schema_file = { workspace = true }
-lemmy_db_views_community = { workspace = true }
+lemmy_db_views_category = { workspace = true }
 lemmy_db_views_local_image = { workspace = true }
 lemmy_db_views_local_user = { workspace = true }
 lemmy_db_views_person = { workspace = true }

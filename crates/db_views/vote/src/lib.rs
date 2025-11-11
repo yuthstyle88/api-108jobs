@@ -17,6 +17,6 @@ pub mod impls;
 #[serde(rename_all = "camelCase")]
 pub struct VoteView {
   pub creator: Person,
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
   pub score: i16,
 }

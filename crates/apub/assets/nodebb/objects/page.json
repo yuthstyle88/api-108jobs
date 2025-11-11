@@ -1,14 +1,14 @@
 {
   "@context": "https://www.w3.org/ns/activitystreams",
-  "id": "https://community.nodebb.org/topic/17908",
+  "id": "https://category.nodebb.org/topic/17908",
   "type": "Page",
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
-  "cc": ["https://community.nodebb.org/uid/2/followers"],
+  "cc": ["https://category.nodebb.org/uid/2/followers"],
   "inReplyTo": null,
   "published": "2024-03-19T20:25:39.462Z",
-  "url": "https://community.nodebb.org/topic/17908/threadiverse-working-group",
-  "attributedTo": "https://community.nodebb.org/uid/2",
-  "audience": "https://community.nodebb.org/category/31/threadiverse-working-group",
+  "url": "https://category.nodebb.org/topic/17908/threadiverse-working-group",
+  "attributedTo": "https://category.nodebb.org/uid/2",
+  "audience": "https://category.nodebb.org/category/31/threadiverse-working-group",
   "sensitive": false,
   "summary": null,
   "name": "Threadiverse Working Group",
@@ -20,17 +20,17 @@
   "tag": [
     {
       "type": "Hashtag",
-      "href": "https://community.nodebb.org/tags/fediforum",
+      "href": "https://category.nodebb.org/tags/fediforum",
       "name": "#fediforum"
     },
     {
       "type": "Hashtag",
-      "href": "https://community.nodebb.org/tags/activitypub",
+      "href": "https://category.nodebb.org/tags/activitypub",
       "name": "#activitypub"
     },
     {
       "type": "Hashtag",
-      "href": "https://community.nodebb.org/tags/threadiverse",
+      "href": "https://category.nodebb.org/tags/threadiverse",
       "name": "#threadiverse"
     }
   ],

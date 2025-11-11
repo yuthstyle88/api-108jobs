@@ -1,8 +1,8 @@
 use lemmy_db_schema::source::{
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
-  community::{Community, CommunityActions},
-  community_report::CommunityReport,
+  category::{Category, CategoryActions},
+  category_report::CategoryReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
@@ -27,7 +27,7 @@ pub mod api;
 pub mod comment_report_view;
 
 #[cfg(feature = "full")]
-pub mod community_report_view;
+pub mod category_report_view;
 
 #[cfg(feature = "full")]
 pub mod post_report_view;
@@ -48,7 +48,7 @@ pub struct CommentReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full",
@@ -63,7 +63,7 @@ pub struct CommentReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = comment_creator_is_admin()
@@ -78,13 +78,13 @@ pub struct CommentReportView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A community report view.
+/// A category report view.
 #[serde(rename_all = "camelCase")]
-pub struct CommunityReportView {
+pub struct CategoryReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_report: CommunityReport,
+  pub category_report: CategoryReport,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
 }
@@ -103,7 +103,7 @@ pub struct PostReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full",
@@ -114,7 +114,7 @@ pub struct PostReportView {
   )]
   pub post_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post_actions: Option<PostActions>,
   #[cfg_attr(feature = "full", diesel(embed))]

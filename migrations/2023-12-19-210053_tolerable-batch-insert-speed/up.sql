@@ -5,21 +5,21 @@ CREATE OR REPLACE FUNCTION post_aggregates_post ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, community_id, creator_id, instance_id)
+    INSERT INTO post_aggregates (post_id, published, newest_comment_time, newest_comment_time_necro, category_id, creator_id, instance_id)
     SELECT
         id,
         published,
         published,
         published,
-        community_id,
+        category_id,
         creator_id,
         (
             SELECT
-                community.instance_id
+                category.instance_id
             FROM
-                community
+                category
             WHERE
-                community.id = community_id
+                category.id = category_id
             LIMIT 1)
 FROM
     new_post;
@@ -27,25 +27,25 @@ FROM
 END
 $$;
 
-CREATE OR REPLACE FUNCTION community_aggregates_post_count_insert ()
+CREATE OR REPLACE FUNCTION category_aggregates_post_count_insert ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE
-        community_aggregates
+        category_aggregates
     SET
         posts = posts + post_group.count
     FROM (
         SELECT
-            community_id,
+            category_id,
             count(*)
         FROM
             new_post
         GROUP BY
-            community_id) post_group
+            category_id) post_group
 WHERE
-    community_aggregates.community_id = post_group.community_id;
+    category_aggregates.category_id = post_group.category_id;
     RETURN NULL;
 END
 $$;
@@ -79,16 +79,16 @@ CREATE OR REPLACE TRIGGER post_aggregates_post
     EXECUTE PROCEDURE post_aggregates_post ();
 
 -- Don't run old trigger for insert
-CREATE OR REPLACE TRIGGER community_aggregates_post_count
+CREATE OR REPLACE TRIGGER category_aggregates_post_count
     AFTER DELETE OR UPDATE OF removed,
     deleted ON post
     FOR EACH ROW
-    EXECUTE PROCEDURE community_aggregates_post_count ();
+    EXECUTE PROCEDURE category_aggregates_post_count ();
 
-CREATE OR REPLACE TRIGGER community_aggregates_post_count_insert
+CREATE OR REPLACE TRIGGER category_aggregates_post_count_insert
     AFTER INSERT ON post REFERENCING NEW TABLE AS new_post
     FOR EACH STATEMENT
-    EXECUTE PROCEDURE community_aggregates_post_count_insert ();
+    EXECUTE PROCEDURE category_aggregates_post_count_insert ();
 
 CREATE OR REPLACE FUNCTION site_aggregates_post_update ()
     RETURNS TRIGGER

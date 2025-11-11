@@ -1,11 +1,11 @@
-use crate::{CommentReportView, CommunityReportView, PostReportView};
+use crate::{CommentReportView, CategoryReportView, PostReportView};
 use lemmy_db_schema::newtypes::{
-  CommentId,
-  CommentReportId,
-  CommunityId,
-  CommunityReportId,
-  PostId,
-  PostReportId,
+    CommentId,
+    CommentReportId,
+    CategoryId,
+    CategoryReportId,
+    PostId,
+    PostReportId,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -22,10 +22,10 @@ pub struct CommentReportResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A community report response.
+/// A category report response.
 #[serde(rename_all = "camelCase")]
-pub struct CommunityReportResponse {
-  pub community_report_view: CommunityReportView,
+pub struct CategoryReportResponse {
+  pub category_report_view: CategoryReportView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -42,10 +42,10 @@ pub struct CreateCommentReport {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Create a report for a community.
+/// Create a report for a category.
 #[serde(rename_all = "camelCase")]
-pub struct CreateCommunityReport {
-  pub community_id: CommunityId,
+pub struct CreateCategoryReport {
+  pub category_id: CategoryId,
   pub reason: String,
 }
 
@@ -67,7 +67,7 @@ pub struct CreatePostReport {
 /// Get a count of the number of reports.
 #[serde(rename_all = "camelCase")]
 pub struct GetReportCount {
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
 }
 
 #[skip_serializing_none]
@@ -93,10 +93,10 @@ pub struct ResolveCommentReport {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Resolve a community report.
+/// Resolve a category report.
 #[serde(rename_all = "camelCase")]
-pub struct ResolveCommunityReport {
-  pub report_id: CommunityReportId,
+pub struct ResolveCategoryReport {
+  pub report_id: CategoryReportId,
   pub resolved: bool,
 }
 

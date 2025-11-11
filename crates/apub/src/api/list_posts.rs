@@ -23,7 +23,7 @@ pub async fn list_posts(
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let limit = data.limit;
-  let community_id = data.community_id;
+  let category_id = data.category_id;
 
   let show_hidden = data.show_hidden;
   // Show nsfw content if param is true, or if content_warning exists
@@ -34,7 +34,7 @@ pub async fn list_posts(
     data.type_,
     local_user,
     &site_view.local_site,
-    community_id,
+    category_id,
   ));
 
   let sort = Some(post_sort_type_with_default(
@@ -55,7 +55,7 @@ pub async fn list_posts(
     listing_type,
     sort,
     time_range_seconds: None,
-    community_id,
+    category_id,
     limit,
     show_hidden,
     show_read: None,

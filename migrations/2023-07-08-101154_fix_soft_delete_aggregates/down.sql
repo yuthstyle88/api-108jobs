@@ -18,7 +18,7 @@ BEGIN
 END
 $$;
 
--- 2022-04-04-183652_update_community_aggregates_on_soft_delete/up.sql
+-- 2022-04-04-183652_update_category_aggregates_on_soft_delete/up.sql
 CREATE OR REPLACE FUNCTION was_restored_or_created (TG_OP text, OLD record, NEW record)
     RETURNS boolean
     LANGUAGE plpgsql

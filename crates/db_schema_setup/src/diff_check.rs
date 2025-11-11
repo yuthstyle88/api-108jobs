@@ -23,7 +23,7 @@ pub(crate) fn get_dump() -> String {
       // Allow differences in row data and old fast tables
       "--schema-only",
       "--exclude-table=comment_aggregates_fast",
-      "--exclude-table=community_aggregates_fast",
+      "--exclude-table=category_aggregates_fast",
       "--exclude-table=post_aggregates_fast",
       "--exclude-table=user_fast",
       // Ignore some things to reduce the amount of queries done by pg_dump
@@ -94,9 +94,9 @@ fn is_ignored_trigger(chunk: &str) -> bool {
   [
     "refresh_comment_like",
     "refresh_comment",
-    "refresh_community_follower",
-    "refresh_community_user_ban",
-    "refresh_community",
+    "refresh_category_follower",
+    "refresh_category_user_ban",
+    "refresh_category",
     "refresh_post_like",
     "refresh_post",
     "refresh_private_message",

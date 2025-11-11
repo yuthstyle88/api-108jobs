@@ -1,29 +1,29 @@
-use lemmy_db_schema::newtypes::CommunityId;
+use lemmy_db_schema::newtypes::CategoryId;
 use lemmy_db_schema::source::{local_site::LocalSite, local_user::LocalUser};
 use lemmy_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
 pub mod list_comments;
 pub mod list_person_content;
 pub mod list_posts;
-pub mod read_community;
+pub mod read_category;
 pub mod search;
 
-/// Returns default listing type, depending if the query is for frontpage or community.
+/// Returns default listing type, depending if the query is for frontpage or category.
 fn listing_type_with_default(
-  type_: Option<ListingType>,
-  local_user: Option<&LocalUser>,
-  local_site: &LocalSite,
-  community_id: Option<CommunityId>,
+    type_: Option<ListingType>,
+    local_user: Option<&LocalUser>,
+    local_site: &LocalSite,
+    category_id: Option<CategoryId>,
 ) -> ListingType {
   // On frontpage use listing type from param or admin configured default
-  if community_id.is_none() {
+  if category_id.is_none() {
     type_.unwrap_or(
       local_user
        .map(|u| u.default_listing_type)
        .unwrap_or(local_site.default_post_listing_type),
     )
   } else {
-    // inside of community show everything
+    // inside of category show everything
     ListingType::All
   }
 }

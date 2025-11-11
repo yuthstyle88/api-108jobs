@@ -13,19 +13,19 @@ DROP VIEW post_view;
 
 DROP VIEW post_aggregates_view;
 
-DROP VIEW community_moderator_view;
+DROP VIEW category_moderator_view;
 
-DROP VIEW community_follower_view;
+DROP VIEW category_follower_view;
 
-DROP VIEW community_user_ban_view;
+DROP VIEW category_user_ban_view;
 
-DROP VIEW community_view;
+DROP VIEW category_view;
 
-DROP VIEW community_aggregates_view;
+DROP VIEW category_aggregates_view;
 
-DROP VIEW community_fast_view;
+DROP VIEW category_fast_view;
 
-DROP TABLE community_aggregates_fast;
+DROP TABLE category_aggregates_fast;
 
 DROP VIEW user_mention_view;
 
@@ -45,7 +45,7 @@ ALTER TABLE site
     DROP COLUMN icon,
     DROP COLUMN banner;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN icon,
     DROP COLUMN banner;
 
@@ -89,7 +89,7 @@ SELECT
         SELECT
             count(*)
         FROM
-            community) AS number_of_communities
+            category) AS number_of_communities
 FROM
     site s;
 
@@ -156,14 +156,14 @@ SELECT
     u.published AS creator_published,
     u.avatar AS creator_avatar,
     u.banned AS banned,
-    cb.id::bool AS banned_from_community,
-    -- community details
-    c.actor_id AS community_actor_id,
-    c."local" AS community_local,
-    c."name" AS community_name,
-    c.removed AS community_removed,
-    c.deleted AS community_deleted,
-    c.self_promotion AS community_self_promotion,
+    cb.id::bool AS banned_from_category,
+    -- category details
+    c.actor_id AS category_actor_id,
+    c."local" AS category_local,
+    c."name" AS category_name,
+    c.removed AS category_removed,
+    c.deleted AS category_deleted,
+    c.self_promotion AS category_self_promotion,
     -- post score data/comment count
     coalesce(ct.comments, 0) AS number_of_comments,
     coalesce(pl.score, 0) AS score,
@@ -184,9 +184,9 @@ SELECT
 FROM
     post p
     LEFT JOIN user_ u ON p.creator_id = u.id
-    LEFT JOIN community_user_ban cb ON p.creator_id = cb.user_id
-        AND p.community_id = cb.community_id
-    LEFT JOIN community c ON p.community_id = c.id
+    LEFT JOIN category_user_ban cb ON p.creator_id = cb.user_id
+        AND p.category_id = cb.category_id
+    LEFT JOIN category c ON p.category_id = c.id
     LEFT JOIN (
         SELECT
             post_id,
@@ -222,16 +222,16 @@ FROM
     CROSS JOIN LATERAL (
         SELECT
             u.id,
-            coalesce(cf.community_id, 0) AS is_subbed,
+            coalesce(cf.category_id, 0) AS is_subbed,
             coalesce(pr.post_id, 0) AS is_read,
             coalesce(ps.post_id, 0) AS is_saved,
             coalesce(pl.score, 0) AS user_vote
         FROM
             user_ u
-            LEFT JOIN community_user_ban cb ON u.id = cb.user_id
-                AND cb.community_id = pav.community_id
-        LEFT JOIN community_follower cf ON u.id = cf.user_id
-            AND cf.community_id = pav.community_id
+            LEFT JOIN category_user_ban cb ON u.id = cb.user_id
+                AND cb.category_id = pav.category_id
+        LEFT JOIN category_follower cf ON u.id = cf.user_id
+            AND cf.category_id = pav.category_id
     LEFT JOIN post_read pr ON u.id = pr.user_id
         AND pr.post_id = pav.id
     LEFT JOIN post_saved ps ON u.id = ps.user_id
@@ -271,16 +271,16 @@ FROM
     CROSS JOIN LATERAL (
         SELECT
             u.id,
-            coalesce(cf.community_id, 0) AS is_subbed,
+            coalesce(cf.category_id, 0) AS is_subbed,
             coalesce(pr.post_id, 0) AS is_read,
             coalesce(ps.post_id, 0) AS is_saved,
             coalesce(pl.score, 0) AS user_vote
         FROM
             user_ u
-            LEFT JOIN community_user_ban cb ON u.id = cb.user_id
-                AND cb.community_id = pav.community_id
-        LEFT JOIN community_follower cf ON u.id = cf.user_id
-            AND cf.community_id = pav.community_id
+            LEFT JOIN category_user_ban cb ON u.id = cb.user_id
+                AND cb.category_id = pav.category_id
+        LEFT JOIN category_follower cf ON u.id = cf.user_id
+            AND cf.category_id = pav.category_id
     LEFT JOIN post_read pr ON u.id = pr.user_id
         AND pr.post_id = pav.id
     LEFT JOIN post_saved ps ON u.id = ps.user_id
@@ -298,8 +298,8 @@ SELECT
 FROM
     post_aggregates_fast pav;
 
--- Community
-CREATE VIEW community_aggregates_view AS
+-- Category
+CREATE VIEW category_aggregates_view AS
 SELECT
     c.id,
     c.name,
@@ -325,107 +325,107 @@ SELECT
     coalesce(cd.comments, 0) AS number_of_comments,
     hot_rank (cf.subs, c.published) AS hot_rank
 FROM
-    community c
+    category c
     LEFT JOIN user_ u ON c.creator_id = u.id
     LEFT JOIN category cat ON c.category_id = cat.id
     LEFT JOIN (
         SELECT
-            p.community_id,
+            p.category_id,
             count(DISTINCT p.id) AS posts,
             count(DISTINCT ct.id) AS comments
         FROM
             post p
             JOIN comment ct ON p.id = ct.post_id
         GROUP BY
-            p.community_id) cd ON cd.community_id = c.id
+            p.category_id) cd ON cd.category_id = c.id
     LEFT JOIN (
         SELECT
-            community_id,
+            category_id,
             count(*) AS subs
         FROM
-            community_follower
+            category_follower
         GROUP BY
-            community_id) cf ON cf.community_id = c.id;
+            category_id) cf ON cf.category_id = c.id;
 
-CREATE VIEW community_view AS
+CREATE VIEW category_view AS
 SELECT
     cv.*,
     us.user AS user_id,
     us.is_subbed::bool AS subscribed
 FROM
-    community_aggregates_view cv
+    category_aggregates_view cv
     CROSS JOIN LATERAL (
         SELECT
             u.id AS user,
-            coalesce(cf.community_id, 0) AS is_subbed
+            coalesce(cf.category_id, 0) AS is_subbed
         FROM
             user_ u
-            LEFT JOIN community_follower cf ON u.id = cf.user_id
-                AND cf.community_id = cv.id) AS us
+            LEFT JOIN category_follower cf ON u.id = cf.user_id
+                AND cf.category_id = cv.id) AS us
 UNION ALL
 SELECT
     cv.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    community_aggregates_view cv;
+    category_aggregates_view cv;
 
-CREATE VIEW community_moderator_view AS
+CREATE VIEW category_moderator_view AS
 SELECT
     cm.*,
     u.actor_id AS user_actor_id,
     u.local AS user_local,
     u.name AS user_name,
     u.avatar AS avatar,
-    c.actor_id AS community_actor_id,
-    c.local AS community_local,
-    c.name AS community_name
+    c.actor_id AS category_actor_id,
+    c.local AS category_local,
+    c.name AS category_name
 FROM
-    community_moderator cm
+    category_moderator cm
     LEFT JOIN user_ u ON cm.user_id = u.id
-    LEFT JOIN community c ON cm.community_id = c.id;
+    LEFT JOIN category c ON cm.category_id = c.id;
 
-CREATE VIEW community_follower_view AS
+CREATE VIEW category_follower_view AS
 SELECT
     cf.*,
     u.actor_id AS user_actor_id,
     u.local AS user_local,
     u.name AS user_name,
     u.avatar AS avatar,
-    c.actor_id AS community_actor_id,
-    c.local AS community_local,
-    c.name AS community_name
+    c.actor_id AS category_actor_id,
+    c.local AS category_local,
+    c.name AS category_name
 FROM
-    community_follower cf
+    category_follower cf
     LEFT JOIN user_ u ON cf.user_id = u.id
-    LEFT JOIN community c ON cf.community_id = c.id;
+    LEFT JOIN category c ON cf.category_id = c.id;
 
-CREATE VIEW community_user_ban_view AS
+CREATE VIEW category_user_ban_view AS
 SELECT
     cb.*,
     u.actor_id AS user_actor_id,
     u.local AS user_local,
     u.name AS user_name,
     u.avatar AS avatar,
-    c.actor_id AS community_actor_id,
-    c.local AS community_local,
-    c.name AS community_name
+    c.actor_id AS category_actor_id,
+    c.local AS category_local,
+    c.name AS category_name
 FROM
-    community_user_ban cb
+    category_user_ban cb
     LEFT JOIN user_ u ON cb.user_id = u.id
-    LEFT JOIN community c ON cb.community_id = c.id;
+    LEFT JOIN category c ON cb.category_id = c.id;
 
--- The community fast table
-CREATE TABLE community_aggregates_fast AS
+-- The category fast table
+CREATE TABLE category_aggregates_fast AS
 SELECT
     *
 FROM
-    community_aggregates_view;
+    category_aggregates_view;
 
-ALTER TABLE community_aggregates_fast
+ALTER TABLE category_aggregates_fast
     ADD PRIMARY KEY (id);
 
-CREATE VIEW community_fast_view AS
+CREATE VIEW category_fast_view AS
 SELECT
     ac.*,
     u.id AS user_id,
@@ -433,24 +433,24 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
     CROSS JOIN (
         SELECT
             ca.*
         FROM
-            community_aggregates_fast ca) ac
+            category_aggregates_fast ca) ac
 UNION ALL
 SELECT
     caf.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    community_aggregates_fast caf;
+    category_aggregates_fast caf;
 
 -- Comments, mentions, replies
 CREATE VIEW comment_aggregates_view AS
@@ -458,14 +458,14 @@ SELECT
     ct.*,
     -- post details
     p."name" AS post_name,
-    p.community_id,
-    -- community details
-    c.actor_id AS community_actor_id,
-    c."local" AS community_local,
-    c."name" AS community_name,
+    p.category_id,
+    -- category details
+    c.actor_id AS category_actor_id,
+    c."local" AS category_local,
+    c."name" AS category_name,
     -- creator details
     u.banned AS banned,
-    coalesce(cb.id, 0)::bool AS banned_from_community,
+    coalesce(cb.id, 0)::bool AS banned_from_category,
     u.actor_id AS creator_actor_id,
     u.local AS creator_local,
     u.name AS creator_name,
@@ -479,11 +479,11 @@ SELECT
 FROM
     comment ct
     LEFT JOIN post p ON ct.post_id = p.id
-    LEFT JOIN community c ON p.community_id = c.id
+    LEFT JOIN category c ON p.category_id = c.id
     LEFT JOIN user_ u ON ct.creator_id = u.id
-    LEFT JOIN community_user_ban cb ON ct.creator_id = cb.user_id
+    LEFT JOIN category_user_ban cb ON ct.creator_id = cb.user_id
         AND p.id = ct.post_id
-        AND p.community_id = cb.community_id
+        AND p.category_id = cb.category_id
     LEFT JOIN (
         SELECT
             l.comment_id AS id,
@@ -526,8 +526,8 @@ CREATE OR REPLACE VIEW comment_view AS (
                 AND cav.id = cl.comment_id
         LEFT JOIN comment_saved cs ON u.id = cs.user_id
             AND cs.comment_id = cav.id
-    LEFT JOIN community_follower cf ON u.id = cf.user_id
-        AND cav.community_id = cf.community_id) AS us
+    LEFT JOIN category_follower cf ON u.id = cf.user_id
+        AND cav.category_id = cf.category_id) AS us
 UNION ALL
 SELECT
     cav.*,
@@ -568,8 +568,8 @@ FROM
                 AND cav.id = cl.comment_id
         LEFT JOIN comment_saved cs ON u.id = cs.user_id
             AND cs.comment_id = cav.id
-    LEFT JOIN community_follower cf ON u.id = cf.user_id
-        AND cav.community_id = cf.community_id) AS us
+    LEFT JOIN category_follower cf ON u.id = cf.user_id
+        AND cav.category_id = cf.category_id) AS us
 UNION ALL
 SELECT
     cav.*,
@@ -596,12 +596,12 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
-    c.community_actor_id,
-    c.community_local,
-    c.community_name,
+    c.category_id,
+    c.category_actor_id,
+    c.category_local,
+    c.category_name,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -648,12 +648,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -711,12 +711,12 @@ SELECT
     ac.published,
     ac.updated,
     ac.deleted,
-    ac.community_id,
-    ac.community_actor_id,
-    ac.community_local,
-    ac.community_name,
+    ac.category_id,
+    ac.category_actor_id,
+    ac.category_local,
+    ac.category_name,
     ac.banned,
-    ac.banned_from_community,
+    ac.banned_from_category,
     ac.creator_name,
     ac.creator_avatar,
     ac.score,
@@ -789,13 +789,13 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts - 1
         WHERE
-            id = OLD.community_id;
+            id = OLD.category_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
@@ -824,13 +824,13 @@ BEGIN
             user_view
         WHERE
             id = NEW.creator_id;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts + 1
         WHERE
-            id = NEW.community_id;
+            id = NEW.category_id;
         -- Update the hot rank on the post table
         -- TODO this might not correctly update it, using a 1 week interval
         UPDATE
@@ -855,15 +855,15 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM comment_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments - 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = OLD.post_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM comment_aggregates_fast
@@ -909,15 +909,15 @@ BEGIN
         WHERE
             paf.id = NEW.post_id
             AND (paf.published < ('now'::timestamp - '1 week'::interval));
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments + 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = NEW.post_id;
     END IF;
     RETURN NULL;

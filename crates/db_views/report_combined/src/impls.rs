@@ -1,6 +1,6 @@
 use crate::{
   CommentReportView,
-  CommunityReportView,
+  CategoryReportView,
   LocalUserView,
   PostReportView,
   ReportCombinedView,
@@ -18,20 +18,20 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::{
-  aliases::{self, creator_community_actions},
-  newtypes::{CommunityId, PaginationCursor, PersonId, PostId},
-  source::combined::report::{report_combined_keys as key, ReportCombined},
-  traits::{InternalToCombinedView, PaginationCursorBuilder},
-  utils::{get_conn, limit_fetch, paginate, DbPool},
-  ReportType,
+    aliases::{self, creator_category_actions},
+    newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
+    source::combined::report::{report_combined_keys as key, ReportCombined},
+    traits::{InternalToCombinedView, PaginationCursorBuilder},
+    utils::{get_conn, limit_fetch, paginate, DbPool},
+    ReportType,
 };
 use lemmy_db_schema_file::schema::{
   comment,
   comment_actions,
   comment_report,
-  community,
-  community_actions,
-  community_report,
+  category,
+  category_actions,
+  category_report,
   local_user,
   person,
   person_actions,
@@ -55,17 +55,17 @@ impl ReportCombinedViewInternal {
         .or(comment::post_id.eq(post::id)),
     );
 
-    let community_actions_join = community_actions::table.on(
-      community_actions::community_id
-        .eq(community::id)
-        .and(community_actions::person_id.eq(my_person_id)),
+    let category_actions_join = category_actions::table.on(
+        category_actions::category_id
+        .eq(category::id)
+        .and(category_actions::person_id.eq(my_person_id)),
     );
 
     let report_creator_join = person::table.on(
       post_report::creator_id
         .eq(report_creator)
         .or(comment_report::creator_id.eq(report_creator))
-        .or(community_report::creator_id.eq(report_creator)),
+        .or(category_report::creator_id.eq(report_creator)),
     );
 
     let item_creator_join = aliases::person1.on(
@@ -74,10 +74,10 @@ impl ReportCombinedViewInternal {
         .or(comment::creator_id.eq(item_creator)),
     );
 
-    let community_join = community::table.on(
-      community_report::community_id
-        .eq(community::id)
-        .or(post::community_id.eq(community::id)),
+    let category_join = category::table.on(
+      category_report::category_id
+        .eq(category::id)
+        .or(post::category_id.eq(category::id)),
     );
 
     let local_user_join = local_user::table.on(
@@ -86,13 +86,13 @@ impl ReportCombinedViewInternal {
         .and(local_user::admin.eq(true)),
     );
 
-    let creator_community_actions_join = creator_community_actions.on(
-      creator_community_actions
-        .field(community_actions::community_id)
-        .eq(post::community_id)
+    let creator_category_actions_join = creator_category_actions.on(
+      creator_category_actions
+        .field(category_actions::category_id)
+        .eq(post::category_id)
         .and(
-          creator_community_actions
-            .field(community_actions::person_id)
+          creator_category_actions
+            .field(category_actions::person_id)
             .eq(item_creator),
         ),
     );
@@ -118,15 +118,15 @@ impl ReportCombinedViewInternal {
     report_combined::table
       .left_join(post_report::table)
       .left_join(comment_report::table)
-      .left_join(community_report::table)
+      .left_join(category_report::table)
       .inner_join(report_creator_join)
       .left_join(comment_join)
       .left_join(post_join)
       .left_join(item_creator_join)
-      .left_join(community_join)
-      .left_join(creator_community_actions_join)
+      .left_join(category_join)
+      .left_join(creator_category_actions_join)
       .left_join(local_user_join)
-      .left_join(community_actions_join)
+      .left_join(category_actions_join)
       .left_join(post_actions_join)
       .left_join(person_actions_join)
       .left_join(comment_actions_join)
@@ -134,9 +134,9 @@ impl ReportCombinedViewInternal {
 
   /// returns the current unresolved report count for the communities you mod
   pub async fn get_report_count(
-    pool: &mut DbPool<'_>,
-    user: &LocalUserView,
-    community_id: Option<CommunityId>,
+      pool: &mut DbPool<'_>,
+      user: &LocalUserView,
+      category_id: Option<CategoryId>,
   ) -> FastJobResult<i64> {
     use diesel::dsl::count;
 
@@ -148,11 +148,11 @@ impl ReportCombinedViewInternal {
       .select(count(report_combined::id))
       .into_boxed();
 
-    if let Some(community_id) = community_id {
+    if let Some(category_id) = category_id {
       query = query.filter(
-        community::id
-          .eq(community_id)
-          .and(report_combined::community_report_id.is_null()),
+        category::id
+          .eq(category_id)
+          .and(report_combined::category_report_id.is_null()),
       );
     }
 
@@ -176,7 +176,7 @@ impl PaginationCursorBuilder for ReportCombinedView {
     let (prefix, id) = match &self {
       ReportCombinedView::Comment(v) => ('C', v.comment_report.id.0),
       ReportCombinedView::Post(v) => ('P', v.post_report.id.0),
-      ReportCombinedView::Community(v) => ('Y', v.community_report.id.0),
+      ReportCombinedView::Category(v) => ('Y', v.category_report.id.0),
     };
     PaginationCursor::new_single(prefix, id)
   }
@@ -199,7 +199,7 @@ impl PaginationCursorBuilder for ReportCombinedView {
     query = match prefix {
       'C' => query.filter(report_combined::comment_report_id.eq(id)),
       'P' => query.filter(report_combined::post_report_id.eq(id)),
-      'Y' => query.filter(report_combined::community_report_id.eq(id)),
+      'Y' => query.filter(report_combined::category_report_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
     let token = query.first(conn).await?;
@@ -212,10 +212,10 @@ impl PaginationCursorBuilder for ReportCombinedView {
 pub struct ReportCombinedQuery {
   pub type_: Option<ReportType>,
   pub post_id: Option<PostId>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub unresolved_only: Option<bool>,
   /// For admins, also show reports with `violates_instance_rules=false`
-  pub show_community_rule_violations: Option<bool>,
+  pub show_category_rule_violations: Option<bool>,
   pub cursor_data: Option<ReportCombined>,
   pub my_reports_only: Option<bool>,
   pub page_back: Option<bool>,
@@ -237,17 +237,17 @@ impl ReportCombinedQuery {
       .limit(limit)
       .into_boxed();
 
-    if let Some(community_id) = self.community_id {
+    if let Some(category_id) = self.category_id {
       query = query.filter(
-        community::id
-          .eq(community_id)
-          .and(report_combined::community_report_id.is_null()),
+        category::id
+          .eq(category_id)
+          .and(report_combined::category_report_id.is_null()),
       );
     }
 
     if user.local_user.admin {
-      let show_community_rule_violations = self.show_community_rule_violations.unwrap_or_default();
-      if !show_community_rule_violations {
+      let show_category_rule_violations = self.show_category_rule_violations.unwrap_or_default();
+      if !show_category_rule_violations {
         query = query.filter(filter_admin_reports(Utc::now() - Days::new(3)));
       }
     } else {
@@ -267,7 +267,7 @@ impl ReportCombinedQuery {
         ReportType::All => query,
         ReportType::Posts => query.filter(report_combined::post_report_id.is_not_null()),
         ReportType::Comments => query.filter(report_combined::comment_report_id.is_not_null()),
-        ReportType::Communities => query.filter(report_combined::community_report_id.is_not_null()),
+        ReportType::Communities => query.filter(report_combined::category_report_id.is_not_null()),
       }
     }
 
@@ -310,10 +310,10 @@ impl ReportCombinedQuery {
 /// and which have `violates_instance_rules == false`.
 #[diesel::dsl::auto_type]
 fn filter_mod_reports() -> _ {
-  community_actions::became_moderator_at
+  category_actions::became_moderator_at
     .is_not_null()
-    // Reporting a community or private message must go to admins
-    .and(report_combined::community_report_id.is_null())
+    // Reporting a category or private message must go to admins
+    .and(report_combined::category_report_id.is_null())
     .and(filter_violates_instance_rules().is_distinct_from(true))
 }
 
@@ -323,24 +323,24 @@ fn filter_mod_reports() -> _ {
 fn filter_admin_reports(interval: DateTime<Utc>) -> _ {
   filter_violates_instance_rules()
     .or(report_combined::published_at.lt(interval))
-    // Also show community reports where the admin is a community mod
-    .or(community_actions::became_moderator_at.is_not_null())
+    // Also show category reports where the admin is a category mod
+    .or(category_actions::became_moderator_at.is_not_null())
 }
 
 /// Filter reports which are only for admins (either post/comment report with
-/// `violates_instance_rules=true`, or report on a community/person/private message.
+/// `violates_instance_rules=true`, or report on a category/person/private message.
 #[diesel::dsl::auto_type]
 fn filter_violates_instance_rules() -> _ {
   post_report::violates_instance_rules
     .or(comment_report::violates_instance_rules)
-    .or(report_combined::community_report_id.is_not_null())
+    .or(report_combined::category_report_id.is_not_null())
 }
 
 #[diesel::dsl::auto_type]
 fn report_is_not_resolved() -> _ {
   post_report::resolved
     .or(comment_report::resolved)
-    .or(community_report::resolved)
+    .or(category_report::resolved)
     .is_distinct_from(true)
 }
 
@@ -351,19 +351,19 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(post_report), Some(post), Some(community), Some(post_creator)) = (
+    if let (Some(post_report), Some(post), Some(category), Some(post_creator)) = (
       v.post_report,
       v.post.clone(),
-      v.community.clone(),
+      v.category.clone(),
       v.item_creator.clone(),
     ) {
       Some(ReportCombinedView::Post(PostReportView {
         post_report,
         post,
-        community,
+        category,
         post_creator,
         creator: v.report_creator,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         post_actions: v.post_actions,
         person_actions: v.person_actions,
         creator_is_admin: v.item_creator_is_admin,
@@ -372,31 +372,31 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
       Some(comment_report),
       Some(comment),
       Some(post),
-      Some(community),
+      Some(category),
       Some(comment_creator),
     ) = (
       v.comment_report,
       v.comment,
       v.post,
-      v.community.clone(),
+      v.category.clone(),
       v.item_creator.clone(),
     ) {
       Some(ReportCombinedView::Comment(CommentReportView {
         comment_report,
         comment,
         post,
-        community,
+        category,
         creator: v.report_creator,
         comment_creator,
-        community_actions: v.community_actions,
+        category_actions: v.category_actions,
         comment_actions: v.comment_actions,
         person_actions: v.person_actions,
         creator_is_admin: v.item_creator_is_admin,
       }))
-    } else if let (Some(community), Some(community_report)) = (v.community, v.community_report) {
-      Some(ReportCombinedView::Community(CommunityReportView {
-        community_report,
-        community,
+    } else if let (Some(category), Some(category_report)) = (v.category, v.category_report) {
+      Some(ReportCombinedView::Category(CategoryReportView {
+        category_report,
+        category,
         creator: v.report_creator,
       }))
     } else {
@@ -421,15 +421,15 @@ mod tests {
   use lemmy_db_schema::{
     assert_length,
     source::{
-      comment::{Comment, CommentInsertForm},
-      comment_report::{CommentReport, CommentReportForm},
-      community::{Community, CommunityInsertForm},
-      community_report::{CommunityReport, CommunityReportForm},
-      instance::Instance,
-      local_user::{LocalUser, LocalUserInsertForm},
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
-      post_report::{PostReport, PostReportForm},
+        comment::{Comment, CommentInsertForm},
+        comment_report::{CommentReport, CommentReportForm},
+        category::{category, CategoryInsertForm},
+        category_report::{CategoryReport, CategoryReportForm},
+        instance::Instance,
+        local_user::{LocalUser, LocalUserInsertForm},
+        person::{Person, PersonInsertForm},
+        post::{Post, PostInsertForm},
+        post_report::{PostReport, PostReportForm},
     },
     traits::{Crud, Reportable},
     utils::{build_db_pool_for_tests, get_conn, DbPool},
@@ -448,7 +448,7 @@ mod tests {
     jessica: Person,
     timmy_view: LocalUserView,
     admin_view: LocalUserView,
-    community: Community,
+    category: category,
     post: Post,
     post_2: Post,
     comment: Comment,
@@ -484,24 +484,24 @@ mod tests {
     let jessica_form = PersonInsertForm::test_form(inserted_instance.id, "jessica_mrv");
     let inserted_jessica = Person::create(pool, &jessica_form).await?;
 
-    let community_form = CommunityInsertForm::new(
+    let category_form = CategoryInsertForm::new(
       inserted_instance.id,
-      "test community crv".to_string(),
+      "test category crv".to_string(),
       "nada".to_owned(),
     );
-    let inserted_community = Community::create(pool, &community_form).await?;
+    let inserted_category = category::create(pool, &category_form).await?;
 
     let post_form = PostInsertForm::new(
       "A test post crv".into(),
       inserted_timmy.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post = Post::create(pool, &post_form).await?;
 
     let new_post_2 = PostInsertForm::new(
       "A test post crv 2".into(),
       inserted_timmy.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post_2 = Post::create(pool, &new_post_2).await?;
 
@@ -520,7 +520,7 @@ mod tests {
       jessica: inserted_jessica,
       admin_view,
       timmy_view,
-      community: inserted_community,
+      category: inserted_category,
       post: inserted_post,
       post_2: inserted_post_2,
       comment: inserted_comment,
@@ -540,19 +540,19 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Sara reports the community
-    let sara_report_community_form = CommunityReportForm {
+    // Sara reports the category
+    let sara_report_category_form = categoryReportForm {
       creator_id: data.sara.id,
-      community_id: data.community.id,
-      original_community_name: data.community.name.clone(),
-      original_community_title: data.community.title.clone(),
-      original_community_banner: None,
-      original_community_description: None,
-      original_community_sidebar: None,
-      original_community_icon: None,
+      category_id: data.category.id,
+      original_category_name: data.category.name.clone(),
+      original_category_title: data.category.title.clone(),
+      original_category_banner: None,
+      original_category_description: None,
+      original_category_sidebar: None,
+      original_category_icon: None,
       reason: "from sara".into(),
     };
-    CommunityReport::report(pool, &sara_report_community_form).await?;
+    categoryReport::report(pool, &sara_report_category_form).await?;
 
     // sara reports the post
     let sara_report_post_form = PostReportForm {
@@ -579,7 +579,7 @@ mod tests {
 
     // Do a batch read of admins reports
     let reports = ReportCombinedQuery {
-      show_community_rule_violations: Some(true),
+      show_category_rule_violations: Some(true),
       ..Default::default()
     }
     .list(pool, &data.admin_view)
@@ -587,8 +587,8 @@ mod tests {
     assert_length!(4, reports);
 
     // Make sure the report types are correct
-    if let ReportCombinedView::Community(v) = &reports[3] {
-      assert_eq!(data.community.id, v.community.id);
+    if let ReportCombinedView::category(v) = &reports[3] {
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -635,7 +635,7 @@ mod tests {
     assert_length!(2, reports_by_post_id);
 
     // Timmy should only see 2 reports, since they're not an admin,
-    // but they do mod the community
+    // but they do mod the category
     let timmys_reports = ReportCombinedQuery::default()
       .list(pool, &data.timmy_view)
       .await?;
@@ -883,51 +883,51 @@ mod tests {
 
   #[tokio::test]
   #[serial]
-  async fn community_reports() -> FastJobResult<()> {
+  async fn category_reports() -> FastJobResult<()> {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // jessica reports community
-    let community_report_form = CommunityReportForm {
+    // jessica reports category
+    let category_report_form = categoryReportForm {
       creator_id: data.jessica.id,
-      community_id: data.community.id,
-      original_community_name: data.community.name.clone(),
-      original_community_title: data.community.title.clone(),
-      original_community_banner: None,
-      original_community_description: None,
-      original_community_sidebar: None,
-      original_community_icon: None,
+      category_id: data.category.id,
+      original_category_name: data.category.name.clone(),
+      original_category_title: data.category.title.clone(),
+      original_category_banner: None,
+      original_category_description: None,
+      original_category_sidebar: None,
+      original_category_icon: None,
       reason: "the ice cream incident".into(),
     };
-    let community_report = CommunityReport::report(pool, &community_report_form).await?;
+    let category_report = categoryReport::report(pool, &category_report_form).await?;
 
     let reports = ReportCombinedQuery {
-      show_community_rule_violations: Some(true),
+      show_category_rule_violations: Some(true),
       ..Default::default()
     }
     .list(pool, &data.admin_view)
     .await?;
     assert_length!(1, reports);
-    if let ReportCombinedView::Community(v) = &reports[0] {
-      assert!(!v.community_report.resolved);
+    if let ReportCombinedView::category(v) = &reports[0] {
+      assert!(!v.category_report.resolved);
       assert_eq!(data.jessica.name, v.creator.name);
-      assert_eq!(community_report.reason, v.community_report.reason);
-      assert_eq!(data.community.name, v.community.name);
-      assert_eq!(data.community.title, v.community.title);
+      assert_eq!(category_report.reason, v.category_report.reason);
+      assert_eq!(data.category.name, v.category.name);
+      assert_eq!(data.category.title, v.category.title);
     } else {
       panic!("wrong type");
     }
 
     let reports = ReportCombinedQuery {
-      show_community_rule_violations: Some(true),
+      show_category_rule_violations: Some(true),
       ..Default::default()
     }
     .list(pool, &data.admin_view)
     .await?;
     assert_length!(1, reports);
-    if let ReportCombinedView::Community(v) = &reports[0] {
-      assert!(v.community_report.resolved);
+    if let ReportCombinedView::category(v) = &reports[0] {
+      assert!(v.category_report.resolved);
     } else {
       panic!("wrong type");
     }
@@ -1003,7 +1003,7 @@ mod tests {
 
     // admin can see the report with `view_mod_reports` set
     let admin_reports = ReportCombinedQuery {
-      show_community_rule_violations: Some(true),
+      show_category_rule_violations: Some(true),
       ..Default::default()
     }
     .list(pool, &data.timmy_view)

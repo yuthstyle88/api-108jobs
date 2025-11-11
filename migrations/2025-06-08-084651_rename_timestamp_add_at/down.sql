@@ -6,7 +6,7 @@ ALTER TABLE admin_block_instance RENAME COLUMN published_at TO published;
 
 ALTER TABLE admin_purge_comment RENAME COLUMN published_at TO published;
 
-ALTER TABLE admin_purge_community RENAME COLUMN published_at TO published;
+ALTER TABLE admin_purge_category RENAME COLUMN published_at TO published;
 
 ALTER TABLE admin_purge_person RENAME COLUMN published_at TO published;
 
@@ -28,23 +28,23 @@ ALTER TABLE comment_report RENAME COLUMN published_at TO published;
 
 ALTER TABLE comment_report RENAME COLUMN updated_at TO updated;
 
-ALTER TABLE community RENAME COLUMN published_at TO published;
+ALTER TABLE category RENAME COLUMN published_at TO published;
 
-ALTER TABLE community RENAME COLUMN updated_at TO updated;
+ALTER TABLE category RENAME COLUMN updated_at TO updated;
 
-ALTER TABLE community_actions RENAME COLUMN followed_at TO followed;
+ALTER TABLE category_actions RENAME COLUMN followed_at TO followed;
 
-ALTER TABLE community_actions RENAME COLUMN blocked_at TO blocked;
+ALTER TABLE category_actions RENAME COLUMN blocked_at TO blocked;
 
-ALTER TABLE community_actions RENAME COLUMN became_moderator_at TO became_moderator;
+ALTER TABLE category_actions RENAME COLUMN became_moderator_at TO became_moderator;
 
-ALTER TABLE community_actions RENAME COLUMN received_ban_at TO received_ban;
+ALTER TABLE category_actions RENAME COLUMN received_ban_at TO received_ban;
 
-ALTER TABLE community_actions RENAME COLUMN ban_expires_at TO ban_expires;
+ALTER TABLE category_actions RENAME COLUMN ban_expires_at TO ban_expires;
 
-ALTER TABLE community_report RENAME COLUMN published_at TO published;
+ALTER TABLE category_report RENAME COLUMN published_at TO published;
 
-ALTER TABLE community_report RENAME COLUMN updated_at TO updated;
+ALTER TABLE category_report RENAME COLUMN updated_at TO updated;
 
 ALTER TABLE custom_emoji RENAME COLUMN published_at TO published;
 
@@ -84,17 +84,17 @@ ALTER TABLE login_token RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_add RENAME COLUMN published_at TO published;
 
-ALTER TABLE mod_add_community RENAME COLUMN published_at TO published;
+ALTER TABLE mod_add_category RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_ban RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_ban RENAME COLUMN expires_at TO expires;
 
-ALTER TABLE mod_ban_from_community RENAME COLUMN published_at TO published;
+ALTER TABLE mod_ban_from_category RENAME COLUMN published_at TO published;
 
-ALTER TABLE mod_ban_from_community RENAME COLUMN expires_at TO expires;
+ALTER TABLE mod_ban_from_category RENAME COLUMN expires_at TO expires;
 
-ALTER TABLE mod_change_community_visibility RENAME COLUMN published_at TO published;
+ALTER TABLE mod_change_category_visibility RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_feature_post RENAME COLUMN published_at TO published;
 
@@ -102,11 +102,11 @@ ALTER TABLE mod_lock_post RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_remove_comment RENAME COLUMN published_at TO published;
 
-ALTER TABLE mod_remove_community RENAME COLUMN published_at TO published;
+ALTER TABLE mod_remove_category RENAME COLUMN published_at TO published;
 
 ALTER TABLE mod_remove_post RENAME COLUMN published_at TO published;
 
-ALTER TABLE mod_transfer_community RENAME COLUMN published_at TO published;
+ALTER TABLE mod_transfer_category RENAME COLUMN published_at TO published;
 
 ALTER TABLE modlog_combined RENAME COLUMN published_at TO published;
 

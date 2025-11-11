@@ -25,9 +25,9 @@ use lemmy_api::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
     save::save_comment,
   },
-  community::{
-    random::get_random_community,
-    tag::{create_community_tag, delete_community_tag, update_community_tag},
+  category::{
+    random::get_random_category,
+    tag::{create_category_tag, delete_category_tag, update_category_tag},
   },
   local_user::{
     add_admin::add_admin,
@@ -69,7 +69,7 @@ use lemmy_api::{
   },
   reports::{
     comment_report::{create::create_comment_report, resolve::resolve_comment_report},
-    community_report::{create::create_community_report, resolve::resolve_community_report},
+    category_report::{create::create_category_report, resolve::resolve_category_report},
     report_combined::list::list_reports,
   },
   site::{
@@ -89,7 +89,7 @@ use lemmy_api::{
 };
 use lemmy_api_crud::chat::create::create_chat_room;
 use lemmy_api_crud::chat::read::get_chat_room;
-use lemmy_api_crud::community::list::list_communities;
+use lemmy_api_crud::category::list::list_category;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
@@ -99,7 +99,7 @@ use lemmy_api_crud::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
-  community::update::update_community,
+  category::update::update_category,
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
@@ -126,13 +126,13 @@ use lemmy_routes::files::download::get_file;
 use lemmy_routes::files::upload::upload_file;
 use lemmy_routes::images::{
   delete::{
-    delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
+    delete_category_banner, delete_category_icon, delete_image, delete_image_admin,
     delete_site_banner, delete_site_icon, delete_user_avatar, delete_user_banner,
   },
   download::{get_image, image_proxy},
   pictrs_health,
   upload::{
-    upload_community_banner, upload_community_icon, upload_image, upload_site_banner,
+    upload_category_banner, upload_category_icon, upload_image, upload_site_banner,
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
@@ -165,27 +165,27 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             // .wrap(rate_limit.search())
             .route(get().to(search)),
         )
-        // Community
+        // Category
         .service(
-          resource("/community")
+          resource("/category")
             .guard(guard::Post())
             .wrap(rate_limit.register()),
         )
         .service(
-          scope("/community")
-            .route("", put().to(update_community))
-            .route("/random", get().to(get_random_community))
-            .route("/list", get().to(list_communities))
-            .route("/report", post().to(create_community_report))
-            .route("/report/resolve", put().to(resolve_community_report))
+          scope("/category")
+            .route("", put().to(update_category))
+            .route("/random", get().to(get_random_category))
+            .route("/list", get().to(list_category))
+            .route("/report", post().to(create_category_report))
+            .route("/report/resolve", put().to(resolve_category_report))
             // Mod Actions
-            .route("/icon", post().to(upload_community_icon))
-            .route("/icon", delete().to(delete_community_icon))
-            .route("/banner", post().to(upload_community_banner))
-            .route("/banner", delete().to(delete_community_banner))
-            .route("/tag", post().to(create_community_tag))
-            .route("/tag", put().to(update_community_tag))
-            .route("/tag", delete().to(delete_community_tag)),
+            .route("/icon", post().to(upload_category_icon))
+            .route("/icon", delete().to(delete_category_icon))
+            .route("/banner", post().to(upload_category_banner))
+            .route("/banner", delete().to(delete_category_banner))
+            .route("/tag", post().to(create_category_tag))
+            .route("/tag", put().to(update_category_tag))
+            .route("/tag", delete().to(delete_category_tag)),
         )
         // Post
         .service(

@@ -6,7 +6,7 @@ use lemmy_db_schema::{
   sensitive::SensitiveString,
   source::{
     comment::Comment,
-    community::Community,
+    category::Category,
     instance::Instance,
     language::Language,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -158,7 +158,7 @@ pub struct CreateSite {
   pub name: String,
   pub sidebar: Option<String>,
   pub description: Option<String>,
-  pub community_creation_admin_only: Option<bool>,
+  pub category_creation_admin_only: Option<bool>,
   pub require_email_verification: Option<bool>,
   pub application_question: Option<String>,
   pub private_instance: Option<bool>,
@@ -237,8 +237,8 @@ pub struct EditSite {
   pub sidebar: Option<String>,
   /// A shorter, one line description of your site.
   pub description: Option<String>,
-  /// Limits community creation to admins only.
-  pub community_creation_admin_only: Option<bool>,
+  /// Limits category creation to admins only.
+  pub category_creation_admin_only: Option<bool>,
   /// Whether to require multilang verification.
   pub require_email_verification: Option<bool>,
   /// Your application question form. This is in markdown, and can be many questions.
@@ -510,7 +510,7 @@ pub struct LoginResponse {
 #[serde(rename_all = "camelCase")]
 pub struct MyUserInfo {
   pub local_user_view: LocalUserView,
-  pub community_blocks: Vec<Community>,
+  pub category_blocks: Vec<Category>,
   pub instance_blocks: Vec<Instance>,
   pub person_blocks: Vec<Person>,
   pub keyword_blocks: Vec<String>,

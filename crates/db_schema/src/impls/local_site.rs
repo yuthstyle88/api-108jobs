@@ -40,7 +40,7 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-      community::{Community, CommunityInsertForm, CommunityUpdateForm}
+      category::{Category, CategoryInsertForm, CategoryUpdateForm}
       ,
       person::{Person, PersonInsertForm}
 
@@ -62,23 +62,23 @@ mod tests {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  async fn prepare_site_with_community(
+  async fn prepare_site_with_category(
     pool: &mut DbPool<'_>,
-  ) -> FastJobResult<(TestData, Person, Community)> {
+  ) -> FastJobResult<(TestData, Person, Category)> {
     let data = TestData::create(pool).await?;
 
     let new_person = PersonInsertForm::test_form(data.instance.id, "thommy_site_agg");
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let new_community = CommunityInsertForm::new(
+    let new_category = CategoryInsertForm::new(
       data.instance.id,
       "TIL_site_agg".into(),
       "nada".to_owned(),
     );
 
-    let inserted_community = Community::create(pool, &new_community).await?;
+    let inserted_category = Category::create(pool, &new_category).await?;
 
-    Ok((data, inserted_person, inserted_community))
+    Ok((data, inserted_person, inserted_category))
   }
 
   #[tokio::test]
@@ -87,15 +87,15 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let (data, inserted_person, inserted_community) = prepare_site_with_community(pool).await?;
+    let (data, inserted_person, inserted_category) = prepare_site_with_category(pool).await?;
 
     let site_aggregates_before = read_local_site(pool).await?;
     assert_eq!(1, site_aggregates_before.communities);
 
-    Community::update(
+    Category::update(
       pool,
-      inserted_community.id,
-      &CommunityUpdateForm {
+      inserted_category.id,
+      &CategoryUpdateForm {
         deleted: Some(true),
         ..Default::default()
       },
@@ -105,20 +105,20 @@ mod tests {
     let site_aggregates_after_delete = read_local_site(pool).await?;
     assert_eq!(0, site_aggregates_after_delete.communities);
 
-    Community::update(
+    Category::update(
       pool,
-      inserted_community.id,
-      &CommunityUpdateForm {
+      inserted_category.id,
+      &CategoryUpdateForm {
         deleted: Some(false),
         ..Default::default()
       },
     )
     .await?;
 
-    Community::update(
+    Category::update(
       pool,
-      inserted_community.id,
-      &CommunityUpdateForm {
+      inserted_category.id,
+      &CategoryUpdateForm {
         removed: Some(true),
         ..Default::default()
       },
@@ -128,10 +128,10 @@ mod tests {
     let site_aggregates_after_remove = read_local_site(pool).await?;
     assert_eq!(0, site_aggregates_after_remove.communities);
 
-    Community::update(
+    Category::update(
       pool,
-      inserted_community.id,
-      &CommunityUpdateForm {
+      inserted_category.id,
+      &CategoryUpdateForm {
         deleted: Some(true),
         ..Default::default()
       },
@@ -141,7 +141,7 @@ mod tests {
     let site_aggregates_after_remove_delete = read_local_site(pool).await?;
     assert_eq!(0, site_aggregates_after_remove_delete.communities);
 
-    Community::delete(pool, inserted_community.id).await?;
+    Category::delete(pool, inserted_category.id).await?;
     Person::delete(pool, inserted_person.id).await?;
     data.delete(pool).await?;
 

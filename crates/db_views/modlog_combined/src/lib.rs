@@ -1,28 +1,28 @@
 use lemmy_db_schema::source::{
   comment::Comment,
-  community::Community,
+  category::Category,
   instance::Instance,
   mod_log::{
     admin::{
       AdminAllowInstance,
       AdminBlockInstance,
       AdminPurgeComment,
-      AdminPurgeCommunity,
+      AdminPurgeCategory,
       AdminPurgePerson,
       AdminPurgePost,
     },
     moderator::{
       ModAdd,
-      ModAddCommunity,
+      ModAddCategory,
       ModBan,
-      ModBanFromCommunity,
-      ModChangeCommunityVisibility,
+      ModBanFromCategory,
+      ModChangeCategoryVisibility,
       ModFeaturePost,
       ModLockPost,
       ModRemoveComment,
-      ModRemoveCommunity,
+      ModRemoveCategory,
       ModRemovePost,
-      ModTransferCommunity,
+      ModTransferCategory,
     },
   },
   person::Person,
@@ -46,12 +46,12 @@ pub mod impls;
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When someone is added as a community moderator.
+/// When someone is added as a category moderator.
 #[serde(rename_all = "camelCase")]
-pub struct ModAddCommunityView {
-  pub mod_add_community: ModAddCommunity,
+pub struct ModAddCategoryView {
+  pub mod_add_category: ModAddCategory,
   pub moderator: Option<Person>,
-  pub community: Community,
+  pub category: Category,
   pub other_person: Person,
 }
 
@@ -75,12 +75,12 @@ pub struct ModAddView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When someone is banned from a community.
+/// When someone is banned from a category.
 #[serde(rename_all = "camelCase")]
-pub struct ModBanFromCommunityView {
-  pub mod_ban_from_community: ModBanFromCommunity,
+pub struct ModBanFromCategoryView {
+  pub mod_ban_from_category: ModBanFromCategory,
   pub moderator: Option<Person>,
-  pub community: Community,
+  pub category: Category,
   pub other_person: Person,
 }
 
@@ -104,12 +104,12 @@ pub struct ModBanView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When the visibility of a community is changed
+/// When the visibility of a category is changed
 #[serde(rename_all = "camelCase")]
-pub struct ModChangeCommunityVisibilityView {
-  pub mod_change_community_visibility: ModChangeCommunityVisibility,
+pub struct ModChangeCategoryVisibilityView {
+  pub mod_change_category_visibility: ModChangeCategoryVisibility,
   pub moderator: Option<Person>,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -125,7 +125,7 @@ pub struct ModLockPostView {
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -142,7 +142,7 @@ pub struct ModRemoveCommentView {
   pub other_person: Person,
   pub comment: Comment,
   pub post: Post,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -151,12 +151,12 @@ pub struct ModRemoveCommentView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When a moderator removes a community.
+/// When a moderator removes a category.
 #[serde(rename_all = "camelCase")]
-pub struct ModRemoveCommunityView {
-  pub mod_remove_community: ModRemoveCommunity,
+pub struct ModRemoveCategoryView {
+  pub mod_remove_category: ModRemoveCategory,
   pub moderator: Option<Person>,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -171,7 +171,7 @@ pub struct ModRemovePostView {
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -180,13 +180,13 @@ pub struct ModRemovePostView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When a moderator features a post on a community (pins it to the top).
+/// When a moderator features a post on a category (pins it to the top).
 pub struct ModFeaturePostView {
   pub mod_feature_post: ModFeaturePost,
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -195,11 +195,11 @@ pub struct ModFeaturePostView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When a moderator transfers a community to a new owner.
-pub struct ModTransferCommunityView {
-  pub mod_transfer_community: ModTransferCommunity,
+/// When a moderator transfers a category to a new owner.
+pub struct ModTransferCategoryView {
+  pub mod_transfer_category: ModTransferCategory,
   pub moderator: Option<Person>,
-  pub community: Community,
+  pub category: Category,
   pub other_person: Person,
 }
 
@@ -222,9 +222,9 @@ pub struct AdminPurgeCommentView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When an admin purges a community.
-pub struct AdminPurgeCommunityView {
-  pub admin_purge_community: AdminPurgeCommunity,
+/// When an admin purges a category.
+pub struct AdminPurgeCategoryView {
+  pub admin_purge_category: AdminPurgeCategory,
   pub admin: Option<Person>,
 }
 
@@ -250,7 +250,7 @@ pub struct AdminPurgePersonView {
 pub struct AdminPurgePostView {
   pub admin_purge_post: AdminPurgePost,
   pub admin: Option<Person>,
-  pub community: Community,
+  pub category: Category,
 }
 
 #[skip_serializing_none]
@@ -292,7 +292,7 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub admin_purge_comment: Option<AdminPurgeComment>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub admin_purge_community: Option<AdminPurgeCommunity>,
+  pub admin_purge_category: Option<AdminPurgeCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub admin_purge_person: Option<AdminPurgePerson>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -300,25 +300,25 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_add: Option<ModAdd>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_add_community: Option<ModAddCommunity>,
+  pub mod_add_category: Option<ModAddCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_ban: Option<ModBan>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_ban_from_community: Option<ModBanFromCommunity>,
+  pub mod_ban_from_category: Option<ModBanFromCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_feature_post: Option<ModFeaturePost>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_change_community_visibility: Option<ModChangeCommunityVisibility>,
+  pub mod_change_category_visibility: Option<ModChangeCategoryVisibility>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_lock_post: Option<ModLockPost>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_remove_comment: Option<ModRemoveComment>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_remove_community: Option<ModRemoveCommunity>,
+  pub mod_remove_category: Option<ModRemoveCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_remove_post: Option<ModRemovePost>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_transfer_community: Option<ModTransferCommunity>,
+  pub mod_transfer_category: Option<ModTransferCategory>,
   // Specific fields
 
   // Shared
@@ -334,7 +334,7 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance: Option<Instance>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Option<Community>,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -350,18 +350,18 @@ pub enum ModlogCombinedView {
   AdminAllowInstance(AdminAllowInstanceView),
   AdminBlockInstance(AdminBlockInstanceView),
   AdminPurgeComment(AdminPurgeCommentView),
-  AdminPurgeCommunity(AdminPurgeCommunityView),
+  AdminPurgeCategory(AdminPurgeCategoryView),
   AdminPurgePerson(AdminPurgePersonView),
   AdminPurgePost(AdminPurgePostView),
   ModAdd(ModAddView),
-  ModAddCommunity(ModAddCommunityView),
+  ModAddCategory(ModAddCategoryView),
   ModBan(ModBanView),
-  ModBanFromCommunity(ModBanFromCommunityView),
+  ModBanFromCategory(ModBanFromCategoryView),
   ModFeaturePost(ModFeaturePostView),
-  ModChangeCommunityVisibility(ModChangeCommunityVisibilityView),
+  ModChangeCategoryVisibility(ModChangeCategoryVisibilityView),
   ModLockPost(ModLockPostView),
   ModRemoveComment(ModRemoveCommentView),
-  ModRemoveCommunity(ModRemoveCommunityView),
+  ModRemoveCategory(ModRemoveCategoryView),
   ModRemovePost(ModRemovePostView),
-  ModTransferCommunity(ModTransferCommunityView),
+  ModTransferCategory(ModTransferCategoryView),
 }

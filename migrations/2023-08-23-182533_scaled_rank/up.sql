@@ -1,5 +1,5 @@
 -- Change hot ranks and functions from an int to a float
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     ALTER COLUMN hot_rank TYPE float,
     ALTER COLUMN hot_rank SET DEFAULT 0.1728;
 
@@ -60,7 +60,7 @@ WHERE
     hot_rank = 0
     OR hot_rank_active = 0;
 
-CREATE INDEX idx_post_aggregates_featured_community_scaled ON post_aggregates (featured_community DESC, scaled_rank DESC, published DESC);
+CREATE INDEX idx_post_aggregates_featured_category_scaled ON post_aggregates (featured_category DESC, scaled_rank DESC, published DESC);
 
 CREATE INDEX idx_post_aggregates_featured_local_scaled ON post_aggregates (featured_local DESC, scaled_rank DESC, published DESC);
 

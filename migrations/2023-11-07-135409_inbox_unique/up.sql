@@ -2,8 +2,8 @@
 ALTER TABLE person
     DROP CONSTRAINT idx_person_inbox_url;
 
-ALTER TABLE community
-    DROP CONSTRAINT idx_community_inbox_url;
+ALTER TABLE category
+    DROP CONSTRAINT idx_category_inbox_url;
 
 -- change site inbox path from /inbox to /site_inbox
 -- we dont have any way here to set the correct protocol (http or https) according to tls_enabled, or set

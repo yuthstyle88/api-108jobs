@@ -8,8 +8,8 @@ ALTER TABLE comment
 ALTER TABLE user_
     DROP CONSTRAINT idx_user_actor_id;
 
-ALTER TABLE community
-    DROP CONSTRAINT idx_community_actor_id;
+ALTER TABLE category
+    DROP CONSTRAINT idx_category_actor_id;
 
 
 ALTER TABLE post

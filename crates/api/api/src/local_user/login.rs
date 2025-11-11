@@ -9,6 +9,7 @@ use lemmy_api_utils::{
   context::FastJobContext,
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
+use lemmy_api_utils::utils::check_local_user_valid;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_db_views_site::api::LoginRequest;
 use lemmy_db_views_site::api::{Login, LoginResponse};
@@ -38,6 +39,7 @@ pub async fn login(
   if !valid {
     Err(FastJobErrorType::IncorrectLogin)?
   }
+  check_local_user_valid(&local_user_view)?;
   check_local_user_deleted(&local_user_view)?;
   check_email_verified(&local_user_view, &site_view)?;
 
@@ -57,6 +59,7 @@ pub async fn login(
     local_user_view.local_user.email,
     local_user_view.local_user.interface_language, // default to open
     local_user_view.local_user.accepted_terms,
+    local_user_view.local_user.admin,
     req,
     &context,
   )

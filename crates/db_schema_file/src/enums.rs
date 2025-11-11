@@ -221,9 +221,8 @@ pub enum PostNotifications {
   Mute,
 }
 
-
 #[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
 )]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
@@ -237,10 +236,10 @@ pub enum IntendedUse {
   #[default]
   Business,
   Personal,
-  Unknown
+  Unknown,
 }
 #[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
 )]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
@@ -255,12 +254,10 @@ pub enum JobType {
   Freelance,
   Contract,
   PartTime,
-  FullTime
+  FullTime,
 }
 
-#[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
-)]
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
@@ -308,9 +305,7 @@ pub enum WorkFlowStatus {
   Cancelled,
 }
 
-#[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
-)]
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
@@ -323,8 +318,52 @@ pub enum TxKind {
   Deposit,
   Withdraw,
   Transfer,
-  Reserve,  // move funds from available -> outstanding (hold)
-  Release,  // move funds from outstanding -> available (cancel hold)
-  Capture,  // finalize: outstanding -> settled (total decreases)
-  Refund,   // return funds to payer after cancellation/adjustment
+  Reserve, // move funds from available -> outstanding (hold)
+  Release, // move funds from outstanding -> available (cancel hold)
+  Capture, // finalize: outstanding -> settled (total decreases)
+  Refund,  // return funds to payer after cancellation/adjustment
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::TopUpStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The wallet top-up status
+pub enum TopUpStatus {
+  /// Waiting for payment confirmation
+  #[default]
+  Pending,
+  /// Payment was successful
+  Success,
+  /// payment was expired
+  Expired,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::WithdrawStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Enum type for withdraw_status
+pub enum WithdrawStatus {
+  /// Pending
+  #[default]
+  Pending,
+  /// Rejected
+  Rejected,
+  /// Completed
+  Completed,
 }

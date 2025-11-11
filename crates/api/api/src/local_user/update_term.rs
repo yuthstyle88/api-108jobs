@@ -76,7 +76,7 @@ pub async fn update_term(
     )
     .await?;
 
-    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_terms, req, &context).await?;
+    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_terms, user.admin, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

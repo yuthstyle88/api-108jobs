@@ -1,8 +1,12 @@
+use crate::payments::get_token::fetch_scb_token;
 use actix_web::{
   web::{Data, Json},
   HttpResponse,
 };
+use chrono::Utc;
 use lemmy_api_utils::context::FastJobContext;
+use lemmy_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
+use lemmy_db_schema_file::enums::TopUpStatus;
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
@@ -28,7 +32,7 @@ pub struct Status {
 pub struct QrInquiryData {
   pub transaction_id: Option<String>,
   pub amount: Option<String>,
-  pub transaction_dateand_time: Option<String>,
+  pub transaction_dateand_time: String,
   #[serde(rename = "merchantPAN")]
   pub merchant_pan: Option<String>,
   #[serde(rename = "consumerPAN")]
@@ -36,7 +40,7 @@ pub struct QrInquiryData {
   pub currency_code: Option<String>,
   pub merchant_id: Option<String>,
   pub terminal_id: Option<String>,
-  pub qr_id: Option<String>,
+  pub qr_id: String,
   pub trace_no: Option<String>,
   pub authorize_code: Option<String>,
   pub payment_method: Option<String>,
@@ -49,7 +53,6 @@ pub struct QrInquiryData {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QrInquiryRequest {
-  pub token: String,
   pub qr_id: String,
 }
 
@@ -61,12 +64,14 @@ pub async fn inquire_qrcode(
   let scb = context.settings().scb.clone();
   let url = format!("{}v1/payment/qrcode/creditcard/{}", scb.url, data.qr_id);
 
+  let token = fetch_scb_token(&context).await?;
+
   let request_uid = Uuid::new_v4().to_string();
 
   let client = Client::new();
   let resp = client
     .get(url)
-    .header("authorization", format!("Bearer {}", data.token))
+    .header("authorization", format!("Bearer {}", token))
     .header("resourceOwnerId", scb.api_key.clone())
     .header("requestUId", request_uid)
     .header("accept-language", "EN")
@@ -79,6 +84,22 @@ pub async fn inquire_qrcode(
     if parsed.status.code == 2104 {
       return Err(FastJobErrorType::StillDoNotPayYet.into());
     }
+
+    if let Some(ref data) = parsed.data {
+      let update_form = TopUpRequestUpdateForm {
+        status: Some(TopUpStatus::Success),
+        updated_at: Some(Utc::now()),
+        paid_at: Some(Some(data.transaction_dateand_time.parse()?)),
+        transferred: None,
+      };
+      let _updated = TopUpRequest::update_by_qr_id(
+        &mut context.pool(),
+        data.qr_id.clone(),
+        &update_form,
+      )
+      .await?;
+    }
+
     return Ok(HttpResponse::Ok().json(parsed));
   }
 

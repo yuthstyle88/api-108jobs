@@ -1,6 +1,7 @@
 use crate::api::{CreateCategory, CreateCategoryRequest};
 use crate::CategoryView;
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel::{debug_query, ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use diesel_ltree::nlevel;
 use i_love_jesus::asc_if;
@@ -146,7 +147,7 @@ impl CategoryQuery<'_> {
     // Only sort by ascending for Old or NameAsc sorts.
     let sort = o.sort.unwrap_or_default();
     let sort_direction = asc_if(sort == Old || sort == NameAsc);
-
+    println!("SQL before pagination: {}", debug_query::<Pg, _>(&query));
     let mut pq = paginate(query, sort_direction, o.cursor_data, None, o.page_back);
 
     pq = match sort {

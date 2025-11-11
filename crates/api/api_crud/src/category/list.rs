@@ -6,12 +6,10 @@ use lemmy_db_schema::source::category::Category;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::CategorySortType;
 use lemmy_db_schema_file::enums::ListingType;
-use lemmy_db_views_category::api::ListCommunitiesTreeResponse;
-use lemmy_db_views_category::{
-  api::{ListCommunities, ListCommunitiesResponse},
-  impls::CategoryQuery,
-  CategoryView,
+use lemmy_db_views_category::api::{
+  ListCategories, ListCategoriesResponse, ListCategoriesTreeResponse,
 };
+use lemmy_db_views_category::{impls::CategoryQuery, CategoryView};
 use lemmy_db_views_local_user::LocalUserView;
 use lemmy_utils::error::FastJobResult;
 use moka::future::Cache;
@@ -61,7 +59,7 @@ impl Hash for CommunitiesListCacheKey {
 }
 
 // Create a static cache instance with a 5-minute expiration time
-static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitiesResponse>> =
+static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCategoriesResponse>> =
   LazyLock::new(|| {
     Cache::builder()
       // Set a reasonable maximum size to prevent memory issues
@@ -73,11 +71,11 @@ static COMMUNITIES_CACHE: LazyLock<Cache<CommunitiesListCacheKey, ListCommunitie
       .build()
   });
 
-pub async fn list_category(
-  data: Query<ListCommunities>,
+pub async fn list_categories(
+  data: Query<ListCategories>,
   context: Data<FastJobContext>,
   local_user_view: Option<LocalUserView>,
-) -> FastJobResult<Json<ListCommunitiesResponse>> {
+) -> FastJobResult<Json<ListCategoriesResponse>> {
   // Check private instance first to avoid unnecessary processing
   let site_view = context.site_config().get().await?.site_view;
   check_private_instance(&local_user_view, &site_view.local_site)?;
@@ -120,7 +118,7 @@ pub async fn list_category(
     .self_promotion
     .unwrap_or(site_view.site.content_warning.is_some());
 
-  let communities = CategoryQuery {
+  let categories = CategoryQuery {
     listing_type: data.type_,
     self_promotion: Some(self_promotion),
     sort: data.sort,
@@ -135,12 +133,12 @@ pub async fn list_category(
   .list(&site_view.site, &mut context.pool())
   .await?;
 
-  let next_page = communities.last().map(PaginationCursorBuilder::to_cursor);
-  let prev_page = communities.first().map(PaginationCursorBuilder::to_cursor);
+  let next_page = categories.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = categories.first().map(PaginationCursorBuilder::to_cursor);
 
   // Create the response
-  let response = ListCommunitiesResponse {
-    communities,
+  let response = ListCategoriesResponse {
+    categories,
     next_page,
     prev_page,
   };
@@ -156,7 +154,7 @@ pub async fn list_category(
 
 pub async fn list_communities_ltree(
   context: Data<FastJobContext>,
-) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
+) -> FastJobResult<Json<ListCategoriesTreeResponse>> {
   let flat_list = Category::list_all_communities(&mut context.pool()).await?;
 
   build_category_tree(flat_list)

@@ -5,6 +5,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
+use lemmy_db_schema::utils::limit_fetch;
 use lemmy_db_schema::{
   aliases::creator_home_instance_actions,
   newtypes::{LocalUserId, OAuthProviderId, PaginationCursor, PersonId},
@@ -155,8 +156,10 @@ impl LocalUserQuery {
   // TODO: add filters and sorts
   pub async fn list(self, pool: &mut DbPool<'_>) -> FastJobResult<Vec<LocalUserView>> {
     let conn = &mut get_conn(pool).await?;
+    let limit = limit_fetch(self.limit)?;
     let mut query = LocalUserView::joins()
       .filter(person::deleted.eq(false))
+      .limit(limit)
       .select(LocalUserView::as_select())
       .into_boxed();
 

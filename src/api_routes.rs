@@ -1,5 +1,5 @@
 use actix_web::{guard, web::*};
-use lemmy_api::admin::bank_account::list_bank_accounts;
+use lemmy_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
 use lemmy_api::admin::wallet::{
   admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
   admin_top_up_wallet, admin_withdraw_wallet,
@@ -21,13 +21,13 @@ use lemmy_api::local_user::workflow::{
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
 use lemmy_api::{
-  comment::{
-    distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
-    save::save_comment,
-  },
   category::{
     random::get_random_category,
     tag::{create_category_tag, delete_category_tag, update_category_tag},
+  },
+  comment::{
+    distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
+    save::save_comment,
   },
   local_user::{
     add_admin::add_admin,
@@ -68,8 +68,8 @@ use lemmy_api::{
     mark_read::mark_post_as_read, save::save_post, update_notifications::update_post_notifications,
   },
   reports::{
-    comment_report::{create::create_comment_report, resolve::resolve_comment_report},
     category_report::{create::create_category_report, resolve::resolve_category_report},
+    comment_report::{create::create_comment_report, resolve::resolve_comment_report},
     report_combined::list::list_reports,
   },
   site::{
@@ -87,19 +87,19 @@ use lemmy_api::{
     },
   },
 };
+use lemmy_api_crud::category::list::list_categories;
 use lemmy_api_crud::chat::create::create_chat_room;
 use lemmy_api_crud::chat::read::get_chat_room;
-use lemmy_api_crud::category::list::list_categories;
 use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
 use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
 use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
 use lemmy_api_crud::site::read::health;
 use lemmy_api_crud::{
+  category::update::update_category,
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
-  category::update::update_category,
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
@@ -418,7 +418,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                   post().to(admin_reject_withdraw_request),
                 ),
             )
-            .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
+            .service(
+              scope("/bank-account")
+                .route("/list", get().to(admin_list_bank_accounts))
+                .route("/verify", post().to(admin_verify_bank_account)),
+            ),
         )
         .service(
           scope("/chat")

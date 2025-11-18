@@ -80,7 +80,11 @@ pub async fn list_user_bank_accounts(
   let bank_accounts =
     BankAccountView::list_by_user(&mut context.pool(), Some(local_user_id), verify).await?;
 
-  Ok(Json(ListBankAccountsResponse { bank_accounts }))
+  Ok(Json(ListBankAccountsResponse {
+    bank_accounts,
+    next_page: None,
+    prev_page: None,
+  }))
 }
 
 pub async fn set_default_bank_account(
@@ -131,9 +135,9 @@ pub async fn update_bank_account(
     bank_id: Some(bank_id),
     account_number: Some(account_number),
     account_name: data.account_name,
-    is_default: data.is_default,
-    is_verified: None,
-    updated_at: None,
+    is_default: Some(false),
+    is_verified: Some(false),
+    updated_at: Some(Some(chrono::Utc::now())),
     verification_image_path: None,
   };
 

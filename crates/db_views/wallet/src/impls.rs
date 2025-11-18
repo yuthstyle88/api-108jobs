@@ -19,6 +19,7 @@ use lemmy_db_schema::{
 use lemmy_db_schema_file::schema::{
   local_user, top_up_requests, user_bank_accounts, wallet, withdraw_requests,
 };
+use lemmy_utils::apply_date_filters;
 use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl WalletView {
@@ -48,35 +49,6 @@ macro_rules! apply_cursor_pagination {
       }
     }
   };
-}
-
-#[macro_export]
-macro_rules! apply_date_filters {
-  ($query:ident, $params:expr, $created_at:expr) => {{
-    use diesel::dsl::sql;
-    use diesel::sql_types::Bool;
-
-    let mut q = $query;
-    if let Some(y) = $params.year {
-      q = q.filter(sql::<Bool>(&format!(
-        "EXTRACT(YEAR FROM {}) = {}",
-        $created_at, y
-      )));
-    }
-    if let Some(m) = $params.month {
-      q = q.filter(sql::<Bool>(&format!(
-        "EXTRACT(MONTH FROM {}) = {}",
-        $created_at, m
-      )));
-    }
-    if let Some(d) = $params.day {
-      q = q.filter(sql::<Bool>(&format!(
-        "EXTRACT(DAY FROM {}) = {}",
-        $created_at, d
-      )));
-    }
-    q
-  }};
 }
 
 /// Cursor-based pagination for top-ups

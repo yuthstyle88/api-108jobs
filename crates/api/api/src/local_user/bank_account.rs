@@ -23,7 +23,11 @@ pub async fn create_bank_account(
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let local_user_id = local_user_view.local_user.id;
   let data: CreateBankAccount = data.into_inner().try_into()?;
-  // Load the user's address to determine the allowed country
+
+  let count = BankAccount::count_for_user(&mut context.pool(), &local_user_id).await?;
+  if count >= 3 {
+    return Err(FastJobErrorType::ReachedMax3BankAccounts.into());
+  }
 
   // Verify bank belongs to user's country
   let bank = Bank::read(&mut context.pool(), data.bank_id)

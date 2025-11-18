@@ -335,6 +335,7 @@ pub enum FastJobErrorType {
     ExternalApiError,
     UnauthorizedAccess,
   CannotDeleteDefaultBankAccount,
+    ReachedMax3BankAccounts,
 }
 
 cfg_if! {

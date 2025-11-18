@@ -66,6 +66,35 @@ macro_rules! location_info {
   };
 }
 
+#[macro_export]
+macro_rules! apply_date_filters {
+  ($query:ident, $params:expr, $created_at:expr) => {{
+    use diesel::dsl::sql;
+    use diesel::sql_types::Bool;
+
+    let mut q = $query;
+    if let Some(y) = $params.year {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(YEAR FROM {}) = {}",
+        $created_at, y
+      )));
+    }
+    if let Some(m) = $params.month {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(MONTH FROM {}) = {}",
+        $created_at, m
+      )));
+    }
+    if let Some(d) = $params.day {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(DAY FROM {}) = {}",
+        $created_at, d
+      )));
+    }
+    q
+  }};
+}
+
 cfg_if! {
   if #[cfg(feature = "full")] {
 use moka::future::Cache;use std::fmt::Debug;use std::hash::Hash;

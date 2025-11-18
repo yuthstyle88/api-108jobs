@@ -12,7 +12,7 @@ pub extern crate rustls;
 #[actix_web::main]
 pub async fn main() -> FastJobResult<()> {
   let filter = EnvFilter::builder()
-    .with_default_directive(LevelFilter::DEBUG.into())
+    .with_default_directive(LevelFilter::INFO.into())
     .from_env_lossy();
   if SETTINGS.json_logging {
     tracing_subscriber::fmt()

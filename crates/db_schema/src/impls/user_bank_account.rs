@@ -121,4 +121,16 @@ impl BankAccount {
       .await?;
     Ok(updated)
   }
+
+  pub async fn count_for_user(pool: &mut DbPool<'_>, user_id: &LocalUserId) -> FastJobResult<i64> {
+    let conn = &mut get_conn(pool).await?;
+
+    let count: i64 = user_bank_accounts::table
+      .filter(user_bank_accounts::local_user_id.eq(user_id))
+      .select(count_star())
+      .get_result(conn)
+      .await?;
+
+    Ok(count)
+  }
 }

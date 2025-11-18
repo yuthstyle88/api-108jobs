@@ -1,5 +1,5 @@
 use crate::BankAccountView;
-use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId};
+use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
 use lemmy_utils::error::{FastJobError, FastJobErrorType};
 use lemmy_utils::utils::validation::validate_bank_account;
 use serde::{Deserialize, Serialize};
@@ -136,8 +136,6 @@ pub struct BankAccountOperationResponse {
 /// Verify a bank account (admin only).
 pub struct VerifyBankAccount {
   pub bank_account_id: BankAccountId,
-  pub verified: bool,
-  pub admin_notes: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -147,6 +145,8 @@ pub struct VerifyBankAccount {
 /// List unverified bank accounts (admin only).
 pub struct ListBankAccountsResponse {
   pub bank_accounts: Vec<BankAccountView>,
+  pub next_page: Option<PaginationCursor>,
+  pub prev_page: Option<PaginationCursor>,
 }
 
 #[skip_serializing_none]
@@ -168,4 +168,19 @@ pub struct ListBankAccounts {
 pub struct GetBankAccounts {
   pub local_user_id: Option<LocalUserId>,
   pub is_verified: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct ListBankAccountQuery {
+  pub limit: Option<i64>,
+  pub is_verified: Option<bool>,
+  pub is_default: Option<bool>,
+  pub year: Option<i32>,
+  pub month: Option<i32>,
+  pub day: Option<i32>,
+  pub page_cursor: Option<PaginationCursor>,
+  pub page_back: Option<bool>,
 }

@@ -23,7 +23,11 @@ pub async fn create_bank_account(
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let local_user_id = local_user_view.local_user.id;
   let data: CreateBankAccount = data.into_inner().try_into()?;
-  // Load the user's address to determine the allowed country
+
+  let count = BankAccount::count_for_user(&mut context.pool(), &local_user_id).await?;
+  if count >= 3 {
+    return Err(FastJobErrorType::ReachedMax3BankAccounts.into());
+  }
 
   // Verify bank belongs to user's country
   let bank = Bank::read(&mut context.pool(), data.bank_id)
@@ -76,7 +80,11 @@ pub async fn list_user_bank_accounts(
   let bank_accounts =
     BankAccountView::list_by_user(&mut context.pool(), Some(local_user_id), verify).await?;
 
-  Ok(Json(ListBankAccountsResponse { bank_accounts }))
+  Ok(Json(ListBankAccountsResponse {
+    bank_accounts,
+    next_page: None,
+    prev_page: None,
+  }))
 }
 
 pub async fn set_default_bank_account(
@@ -127,9 +135,9 @@ pub async fn update_bank_account(
     bank_id: Some(bank_id),
     account_number: Some(account_number),
     account_name: data.account_name,
-    is_default: data.is_default,
-    is_verified: None,
-    updated_at: None,
+    is_default: Some(false),
+    is_verified: Some(false),
+    updated_at: Some(Some(chrono::Utc::now())),
     verification_image_path: None,
   };
 

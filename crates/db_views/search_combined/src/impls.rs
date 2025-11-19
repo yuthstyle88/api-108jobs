@@ -29,6 +29,7 @@ use lemmy_db_schema::{
     SearchSortType::{self, *}
     ,
 };
+use lemmy_db_schema::newtypes::LanguageId;
 use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_db_schema_file::schema::{
   comment, category, person, post,
@@ -167,6 +168,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
 pub struct SearchCombinedQuery {
   pub search_term: Option<String>,
   pub category_id: Option<CategoryId>,
+  pub language_id: Option<LanguageId>,
   pub creator_id: Option<PersonId>,
   pub sort: Option<SearchSortType>,
   pub time_range_seconds: Option<i32>,
@@ -213,6 +215,10 @@ impl SearchCombinedQuery {
     // Category id
     if let Some(category_id) = self.category_id {
       query = query.filter(category::id.eq(category_id));
+    }
+
+    if let Some(language_id) = self.language_id {
+      query = query.filter(post::language_id.eq(language_id));
     }
 
     if let Some(req) = self.requires_english {

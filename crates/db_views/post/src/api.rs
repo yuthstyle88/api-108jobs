@@ -211,6 +211,7 @@ pub struct GetPosts {
   /// Use Zero to override the local_site and local_user time_range.
   pub time_range_seconds: Option<i32>,
   pub category_id: Option<CategoryId>,
+  pub language_id: Option<LanguageId>,
   pub show_hidden: Option<bool>,
   /// If true, then show the read posts (even if your user setting is to hide them)
   pub show_read: Option<bool>,

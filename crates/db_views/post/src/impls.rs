@@ -49,6 +49,7 @@ use slug::slugify;
 use tracing::debug;
 #[cfg(feature = "full")]
 use url::Url;
+use lemmy_db_schema::newtypes::LanguageId;
 
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
@@ -234,6 +235,7 @@ impl PostView {
 #[derive(Clone, Default)]
 pub struct PostQuery<'a> {
   pub listing_type: Option<ListingType>,
+  pub language_id: Option<LanguageId>,
   pub sort: Option<PostSortType>,
   pub time_range_seconds: Option<i32>,
   pub category_id: Option<CategoryId>,
@@ -368,6 +370,10 @@ impl PostQuery<'_> {
       ListingType::ModeratorView => {
         query = query.filter(category_actions::became_moderator_at.is_not_null());
       }
+    }
+
+    if let Some(language_id) = o.language_id {
+      query = query.filter(post::language_id.eq(language_id));
     }
 
     if !o

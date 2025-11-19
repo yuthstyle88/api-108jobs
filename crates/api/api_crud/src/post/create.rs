@@ -34,7 +34,7 @@ pub async fn create_post(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
   Post::check_post_name_taken(&mut context.pool(), &data.name).await?;
-  
+
   let data: CreatePost = data.into_inner().try_into()?;
   honeypot_check(&data.honeypot)?;
   let local_site= context.site_config().get().await?.site_view.local_site;

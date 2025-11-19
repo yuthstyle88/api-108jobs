@@ -1,7 +1,4 @@
-use crate::api::{
-  listing_type_with_default,
-  post_sort_type_with_default,
-};
+use crate::api::{listing_type_with_default, post_sort_type_with_default};
 use actix_web::web::{Data, Json, Query};
 use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
 use lemmy_db_schema::traits::PaginationCursorBuilder;
@@ -24,7 +21,7 @@ pub async fn list_posts(
 
   let limit = data.limit;
   let category_id = data.category_id;
-
+  let language_id = data.language_id;
   let show_hidden = data.show_hidden;
   // Show nsfw content if param is true, or if content_warning exists
   let hide_media = data.hide_media;
@@ -48,11 +45,13 @@ pub async fn list_posts(
   } else {
     None
   };
+
   let page_back = data.page_back;
 
   let posts = PostQuery {
     local_user,
     listing_type,
+    language_id,
     sort,
     time_range_seconds: None,
     category_id,

@@ -33,6 +33,7 @@ use {
   lemmy_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
   lemmy_db_views_local_user::LocalUserView,
 };
+use lemmy_db_schema::newtypes::LanguageId;
 
 #[cfg(feature = "full")]
 pub mod impls;
@@ -131,6 +132,7 @@ pub enum SearchCombinedView {
 pub struct Search {
   pub q: Option<String>,
   pub category_id: Option<CategoryId>,
+  pub language_id: Option<LanguageId>,
   pub category_name: Option<String>,
   pub creator_id: Option<PersonId>,
   pub r#type: Option<SearchType>,

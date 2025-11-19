@@ -556,7 +556,6 @@ dependencies = [
  "lemmy_apub",
  "lemmy_db_schema",
  "lemmy_db_schema_setup",
- "lemmy_db_views_site",
  "lemmy_routes",
  "lemmy_utils",
  "lemmy_ws",

@@ -1,5 +1,5 @@
 use crate::{
-  CommentView, CategoryView, LocalUserView, PersonView, PostView, SearchCombinedView,
+  CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
   SearchCombinedViewInternal,
 };
 use diesel::{
@@ -8,33 +8,28 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
+use lemmy_db_schema::newtypes::LanguageId;
 use lemmy_db_schema::{
-    newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
-    source::{
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
+  source::{
     combined::search::{search_combined_keys as key, SearchCombined},
     site::Site,
   },
-    traits::{InternalToCombinedView, PaginationCursorBuilder},
-    utils::{
+  traits::{InternalToCombinedView, PaginationCursorBuilder},
+  utils::{
     fuzzy_search, get_conn, limit_fetch, now, paginate,
     queries::{
       creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join
-      , image_details_join, my_comment_actions_join,
-      my_category_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
-      my_person_actions_join, my_post_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     seconds_to_pg_interval, DbPool,
   },
-    SearchSortType::{self, *}
-    ,
+  SearchSortType::{self, *},
 };
-use lemmy_db_schema::newtypes::LanguageId;
 use lemmy_db_schema_file::enums::{IntendedUse, JobType};
-use lemmy_db_schema_file::schema::{
-  comment, category, person, post,
-  search_combined,
-};
+use lemmy_db_schema_file::schema::{category, comment, person, post, search_combined};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
@@ -82,8 +77,7 @@ impl SearchCombinedViewInternal {
         .and(not(category::deleted)),
     );
 
-    let my_category_actions_join: my_category_actions_join =
-      my_category_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
@@ -201,15 +195,13 @@ impl SearchCombinedQuery {
       .into_boxed();
     // The search term
     if let Some(search_term) = &self.search_term {
+      let searcher = fuzzy_search(search_term);
 
-        let searcher = fuzzy_search(search_term);
-
-        let name_or_title_filter = post::name
-            .ilike(searcher.clone());
-        let body_or_description_filter = post::body
-              .ilike(searcher.clone())
-              .or(category::description.ilike(searcher.clone()));
-        query = query.filter(name_or_title_filter.or(body_or_description_filter));
+      let name_or_title_filter = post::name.ilike(searcher.clone());
+      let body_or_category_filter = post::body
+        .ilike(searcher.clone())
+        .or(category::name.ilike(searcher.clone()));
+      query = query.filter(name_or_title_filter.or(body_or_category_filter));
     }
 
     // Category id
@@ -370,13 +362,13 @@ mod tests {
   use lemmy_db_schema::{
     assert_length,
     source::{
-        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        post::{Post, PostActions, PostInsertForm, PostLikeForm, PostUpdateForm},
-        site::{Site, SiteInsertForm},
+      category::{category, CategoryInsertForm},
+      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostActions, PostInsertForm, PostLikeForm, PostUpdateForm},
+      site::{Site, SiteInsertForm},
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -461,25 +453,16 @@ mod tests {
     };
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
-    let timmy_comment_form = CommentInsertForm::new(
-      timmy.id,
-      timmy_post.id,
-      "timmy comment prv gold".into(),
-    );
+    let timmy_comment_form =
+      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into());
     let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
-    let sara_comment_form = CommentInsertForm::new(
-      sara.id,
-      sara_post.id,
-      "sara comment prv gold".into(),
-    );
+    let sara_comment_form =
+      CommentInsertForm::new(sara.id, sara_post.id, "sara comment prv gold".into());
     let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
-    let sara_comment_form_2 = CommentInsertForm::new(
-      sara.id,
-      timmy_post_2.id,
-      "sara comment prv 2".into(),
-    );
+    let sara_comment_form_2 =
+      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
     let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     let comment_in_self_promotion_post_form = CommentInsertForm::new(

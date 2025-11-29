@@ -101,8 +101,29 @@ pub(super) async fn delete_old_image(
   context: &Data<FastJobContext>,
 ) -> FastJobResult<()> {
   if let Some(old_image) = old_image {
-    let alias = old_image.as_str().split('/').next_back().ok_or(NotFound)?;
+    let hostname = context.settings().hostname.as_str();
+
+    // Parse URL safely
+    if let Ok(parsed) = url::Url::parse(old_image.as_str()) {
+      // If hostname does NOT match → skip deletion
+      if parsed.host_str() != Some(hostname) {
+        return Ok(());
+      }
+    } else {
+      // If parsing fails → do NOT delete
+      return Ok(());
+    }
+
+    // Extract alias from the URL path
+    let alias = old_image
+        .as_str()
+        .split('/')
+        .next_back()
+        .ok_or(NotFound)?;
+
     delete_image_alias(alias, context).await?;
   }
+
   Ok(())
 }
+

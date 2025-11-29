@@ -20,6 +20,7 @@ pub async fn list_person_created(
   let created = PostView::list_created(
     &mut context.pool(),
     &local_user_view.person,
+    data.language_id,
     cursor_data,
     data.page_back,
     data.limit,

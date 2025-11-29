@@ -195,6 +195,7 @@ impl PostView {
   pub async fn list_created(
     pool: &mut DbPool<'_>,
     my_person: &Person,
+    language_id: Option<LanguageId>,
     cursor_data: Option<Post>,
     page_back: Option<bool>,
     limit: Option<i64>,
@@ -211,6 +212,10 @@ impl PostView {
     if !no_limit.unwrap_or_default() {
       let limit = limit_fetch(limit)?;
       query = query.limit(limit);
+    }
+
+    if let Some(language_id) = language_id {
+      query = query.filter(post::language_id.eq(language_id));
     }
 
     // Sorting by published_at (newest to oldest), tie-breaker by id

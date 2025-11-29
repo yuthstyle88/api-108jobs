@@ -736,6 +736,7 @@ pub struct ListPersonReadResponse {
 /// Gets your created posts.
 #[serde(rename_all = "camelCase")]
 pub struct ListPersonCreated {
+  pub language_id: Option<LanguageId>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

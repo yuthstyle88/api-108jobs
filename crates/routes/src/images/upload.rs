@@ -126,7 +126,7 @@ pub async fn upload_site_icon(
   is_admin(&local_user_view)?;
   let site = Site::read_local(&mut context.pool()).await?;
 
-  let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
+  let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
   delete_old_image(&site.icon, &context).await?;
 
   let form = SiteUpdateForm {

@@ -408,7 +408,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/allow", post().to(admin_allow_instance)),
             )
             .service(
-              // manage wallet by admin
+              // manage wallet by admin (can reject)
               scope("/wallet")
                 .route("/top-up", post().to(admin_top_up_wallet))
                 .route("/withdraw", post().to(admin_withdraw_wallet))

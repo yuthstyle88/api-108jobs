@@ -22,6 +22,9 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    environment:
+      REDIS_PASSWORD: "12345"
+    command: [ "redis-server", "--requirepass", "12345" ]
 
   pictrs:
     image: asonix/pictrs:0.5.17-pre.9

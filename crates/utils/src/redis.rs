@@ -1,9 +1,8 @@
-#![cfg(feature = "full")] // ให้ทั้งไฟล์นี้ถูกคอมไพล์เฉพาะตอนเปิด feature full
+#![cfg(feature = "full")]
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::settings::structs::RedisConfig; // ใช้ได้เมื่อเปิด full เท่านั้น
-use serde_json;
 use redis::aio::MultiplexedConnection;
 pub use redis::AsyncCommands;
+use serde_json;
 
 #[derive(Clone)]
 pub struct RedisClient {
@@ -12,9 +11,9 @@ pub struct RedisClient {
 
 impl RedisClient {
   /// Initializes Redis client and connects immediately
-  pub async fn new(config: RedisConfig) -> FastJobResult<Self> {
-    let client = redis::Client::open(config.connection.clone())
-      .with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
+  pub async fn new(connection: &str) -> FastJobResult<Self> {
+    let client =
+      redis::Client::open(connection).with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
 
     let mut conn = client
       .get_multiplexed_async_connection()
@@ -25,7 +24,7 @@ impl RedisClient {
       .await
       .with_fastjob_type(FastJobErrorType::RedisConnectionFailed)?;
 
-    println!("Connected to Redis at {}", config.connection);
+    println!("Connected to Redis at {}", connection);
 
     Ok(Self { connection: conn })
   }
@@ -81,18 +80,14 @@ impl RedisClient {
   }
 
   /// Append a JSON-serialized value to a Redis list
-  pub async fn rpush<T: serde::Serialize>(
-    &mut self,
-    key: &str,
-    value: T,
-  ) -> FastJobResult<()> {
+  pub async fn rpush<T: serde::Serialize>(&mut self, key: &str, value: T) -> FastJobResult<()> {
     let value_str =
-        serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
+      serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
     let _: () = self
-        .connection
-        .rpush(key, value_str)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+      .connection
+      .rpush(key, value_str)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
   }
 
@@ -124,16 +119,12 @@ impl RedisClient {
   }
 
   /// Add a value to a Redis set
-  pub async fn sadd<T: ToString>(
-    &mut self,
-    key: &str,
-    value: T,
-  ) -> FastJobResult<()> {
+  pub async fn sadd<T: ToString>(&mut self, key: &str, value: T) -> FastJobResult<()> {
     let _: () = self
-        .connection
-        .sadd(key, value.to_string())
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+      .connection
+      .sadd(key, value.to_string())
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
   }
 
@@ -154,20 +145,20 @@ impl RedisClient {
   /// Retrieve all members of a Redis set
   pub async fn smembers(&mut self, key: &str) -> FastJobResult<Vec<String>> {
     let value_strs: Vec<String> = self
-        .connection
-        .smembers(key)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+      .connection
+      .smembers(key)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
     Ok(value_strs)
   }
 
   /// Set expiration time on a key
   pub async fn expire(&mut self, key: &str, seconds: usize) -> FastJobResult<()> {
     let _: () = self
-        .connection
-        .expire(key, seconds as i64)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+      .connection
+      .expire(key, seconds as i64)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
   }
 }

@@ -101,6 +101,16 @@ impl Settings {
   pub fn get_phoenix_url(&self) -> &Option<Url> {
     &self.phoenix_url
   }
+
+  pub fn get_redis_connection(&self) -> Result<String, anyhow::Error> {
+    let conn_str = match &self.redis.password {
+      Some(pwd) if !pwd.is_empty() => {
+        format!("redis://:{}@{}:{}/", pwd, self.redis.host, self.redis.port)
+      }
+      _ => format!("redis://{}:{}/", self.redis.host, self.redis.port),
+    };
+    Ok(conn_str)
+  }
 }
 #[allow(clippy::expect_used)]
 /// Necessary to avoid URL expect failures

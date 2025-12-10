@@ -186,14 +186,19 @@ pub struct GoogleConfig {
 }
 
 /// Configuration for connecting to a Redis instance.
-#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
 #[serde(default, deny_unknown_fields)]
 pub struct RedisConfig {
-  /// Redis connection string (e.g., `redis://localhost:6379`).
-  ///
-  /// This should follow the standard Redis URI format.
-  #[doku(example = "redis://localhost:6379")]
-  pub connection: String,
+  /// Redis host (e.g., "localhost")
+  #[default("localhost")]
+  pub host: String,
+
+  /// Redis port (e.g., 6379)
+  #[default(6379)]
+  pub port: u16,
+
+  /// Optional Redis password
+  pub password: Option<String>,
 
   /// URL to which Redis-related redirects should point.
   pub redirect_url: String,

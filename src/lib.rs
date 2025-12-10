@@ -169,7 +169,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let redis_client = RedisClient::new(SETTINGS.redis.clone()).await?;
+  let conn_str = SETTINGS.get_redis_connection()?;
+  let redis_client = RedisClient::new(&conn_str).await?;
   let scb_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();

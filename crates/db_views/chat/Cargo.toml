@@ -30,7 +30,7 @@ serde = { workspace = true }
 futures-util = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 i-love-jesus = { workspace = true, optional = true }
-futures = "0.3.31"
+chrono = {workspace = true}
 
 [lints]
 workspace = true

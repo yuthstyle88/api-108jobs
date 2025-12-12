@@ -2,15 +2,11 @@ use crate::api::{GetChatRoomRequest, ListUserChatRooms};
 use crate::{ChatMessageView, ChatParticipantView, ChatRoomView};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
-use futures_util::{stream, StreamExt, TryStreamExt};
-use lemmy_db_schema::source::person::Person;
+use futures_util::{StreamExt, TryStreamExt};
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{
-    chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom,
-    comment::Comment, post::Post,
-  },
+  source::{chat_message::ChatMessage, chat_room::ChatRoom, comment::Comment, post::Post},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
@@ -21,16 +17,17 @@ use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 /// Cursor support for chat message pagination
 impl PaginationCursorBuilder for ChatMessageView {
   type CursorData = ChatMessage;
+
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('M', self.message.id.0.try_into().unwrap())
+    PaginationCursor::new_i64('M', self.message.id.0)
   }
 
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
-    let id = cursor.first_id()?;
-    ChatMessage::read(pool, ChatMessageId(id.into())).await
+    let id = cursor.as_i64()?;
+    ChatMessage::read(pool, ChatMessageId(id)).await
   }
 }
 
@@ -89,6 +86,21 @@ impl ChatMessageView {
   }
 }
 
+impl PaginationCursorBuilder for ChatRoomView {
+  type CursorData = i64;
+
+  fn to_cursor(&self) -> PaginationCursor {
+    PaginationCursor::new_i64('R', self.room.serial_id.0)
+  }
+
+  async fn from_cursor(
+    cursor: &PaginationCursor,
+    _pool: &mut DbPool<'_>,
+  ) -> FastJobResult<Self::CursorData> {
+    cursor.as_i64()
+  }
+}
+
 /// ChatRoomView – parallel loading of a single room
 impl ChatRoomView {
   pub async fn read(pool: &mut DbPool<'_>, id: ChatRoomId) -> FastJobResult<Self> {
@@ -140,73 +152,116 @@ impl ChatRoomView {
     })
   }
   /// List all rooms a user participates in – **in parallel**.
-  pub async fn list_for_user(
+  pub async fn list_for_user_paginated(
     pool: &mut DbPool<'_>,
     user_id: LocalUserId,
-    limit: i64,
+    limit: Option<i64>,
+    cursor: Option<PaginationCursor>,
+    page_back: Option<bool>,
   ) -> FastJobResult<Vec<Self>> {
-    // Get all rooms this user participates in
-    let participants = ChatParticipant::list_rooms_for_user(pool, user_id, limit).await?;
-    if participants.is_empty() {
+    let limit = limit_fetch(limit)?;
+    let page_back = page_back.unwrap_or(false);
+
+    // 1. Get only the serial_ids of rooms the user is in, paginated via keyset
+    let serial_ids =
+      Self::paginated_serial_ids(pool, user_id, limit, cursor.as_ref(), page_back).await?;
+
+    if serial_ids.is_empty() {
       return Ok(vec![]);
     }
 
-    /// Bounded parallelism when using a real pool; sequential when inside a transaction/Conn
-    /// If you have 3 rooms → all 3 run at once.
-    /// If you have 20 rooms → it runs 8 first, then starts new ones as old ones finish.
+    // 2. Load full ChatRoomView in parallel (your existing battle-tested logic)
+    let room_ids = serial_ids
+      .into_iter()
+      .map(|serial_id| {
+        // You need a way to get ChatRoomId from serial_id.
+        // Assuming you added a helper or can query by serial_id:
+        // We'll do a fast lookup below
+        serial_id
+      })
+      .collect::<Vec<_>>();
+
+    // Fast path: lookup ChatRoomId by serial_id in one query
+    let id_map: std::collections::HashMap<i64, ChatRoomId> = chat_room::table
+      .filter(chat_room::serial_id.eq_any(&room_ids))
+      .select((chat_room::serial_id, chat_room::id))
+      .load::<(i64, ChatRoomId)>(&mut get_conn(pool).await?)
+      .await?
+      .into_iter()
+      .collect();
+
+    let room_ids: Vec<ChatRoomId> = room_ids
+      .into_iter()
+      .filter_map(|serial_id| id_map.get(&serial_id).cloned())
+      .collect();
+
+    // 3. Reuse your existing parallel loader
+    Self::load_views_parallel(pool, room_ids).await
+  }
+
+  /// Core keyset pagination query — pure Diesel, indexed, blazing fast
+  async fn paginated_serial_ids(
+    pool: &mut DbPool<'_>,
+    user_id: LocalUserId,
+    limit: i64,
+    cursor: Option<&PaginationCursor>,
+    page_back: bool,
+  ) -> FastJobResult<Vec<i64>> {
+    let mut query = chat_participant::table
+      .inner_join(chat_room::table.on(chat_participant::room_id.eq(chat_room::id)))
+      .filter(chat_participant::member_id.eq(user_id))
+      .select(chat_room::serial_id)
+      .into_boxed();
+
+    // Apply cursor if present
+    if let Some(cur) = cursor {
+      let cursor_serial = ChatRoomView::from_cursor(cur, pool).await?;
+      if page_back {
+        query = query.filter(chat_room::serial_id.lt(cursor_serial));
+      } else {
+        query = query.filter(chat_room::serial_id.gt(cursor_serial));
+      }
+    }
+
+    let serial_ids: Vec<i64> = query
+      .order_by(chat_room::serial_id.desc())
+      .limit(limit)
+      .load(&mut get_conn(pool).await?)
+      .await?;
+
+    Ok(serial_ids)
+  }
+
+  async fn load_views_parallel(
+    pool: &mut DbPool<'_>,
+    room_ids: Vec<ChatRoomId>,
+  ) -> FastJobResult<Vec<Self>> {
     const MAX_CONCURRENCY: usize = 8;
+
     match pool {
-      DbPool::Pool(__pool) => {
-        let indexed = participants.into_iter().enumerate();
-        let stream = stream::iter(indexed.map(|(idx, p)| {
-          let __pool = *__pool;
+      DbPool::Pool(p) => {
+        let stream = futures_util::stream::iter(room_ids.into_iter().map(|room_id| {
+          let p = *p;
           async move {
-            let mut dbp = DbPool::Pool(__pool);
-            let room = ChatRoomView::read(&mut dbp, p.id).await?;
-            Ok::<(usize, Self), FastJobError>((idx, room))
+            let mut dbp = DbPool::Pool(p);
+            ChatRoomView::read(&mut dbp, room_id).await
           }
         }));
 
-        let mut collected: Vec<(usize, Self)> = stream
+        let views = stream
           .buffer_unordered(MAX_CONCURRENCY)
-          .try_collect()
+          .try_collect::<Vec<Self>>()
           .await?;
-        collected.sort_by(|(_, a), (_, b)| {
-          let a_time = a
-            .last_message
-            .as_ref()
-            .and_then(|m| Some(m.created_at))
-            .unwrap_or(a.room.created_at);
-          let b_time = b
-            .last_message
-            .as_ref()
-            .and_then(|m| Some(m.created_at))
-            .unwrap_or(b.room.created_at);
-          b_time.cmp(&a_time)
-        });
-        Ok(collected.into_iter().map(|(_, room)| room).collect())
+
+        Ok(views)
       }
-      DbPool::Conn(__conn) => {
-        let mut out = Vec::with_capacity(participants.len());
-        for p in participants {
-          let mut dbp = DbPool::Conn(__conn);
-          let room = ChatRoomView::read(&mut dbp, p.id).await?;
-          out.push(room);
+      DbPool::Conn(c) => {
+        let mut views = Vec::with_capacity(room_ids.len());
+        for room_id in room_ids {
+          let mut dbp = DbPool::Conn(*c);
+          views.push(ChatRoomView::read(&mut dbp, room_id).await?);
         }
-        out.sort_by(|a, b| {
-          let a_time = a
-            .last_message
-            .as_ref()
-            .and_then(|m| Some(m.created_at))
-            .unwrap_or(a.room.created_at);
-          let b_time = b
-            .last_message
-            .as_ref()
-            .and_then(|m| Some(m.created_at))
-            .unwrap_or(b.room.created_at);
-          b_time.cmp(&a_time)
-        });
-        Ok(out)
+        Ok(views)
       }
     }
   }
@@ -233,35 +288,31 @@ impl TryFrom<GetChatRoomRequest> for ChatRoomId {
 
 /// ChatParticipantView
 impl ChatParticipantView {
-  #[diesel::dsl::auto_type(no_type_alias)]
-  fn joins() -> _ {
-    let local_user_join = local_user::table.on(chat_participant::member_id.eq(local_user::id));
-    let person_join = person::table.on(local_user::person_id.eq(person::id));
-
-    chat_participant::table
-      .inner_join(local_user_join)
-      .inner_join(person_join)
-  }
-
   pub async fn list_for_room(
     pool: &mut DbPool<'_>,
     room_id: ChatRoomId,
   ) -> FastJobResult<Vec<Self>> {
+    use diesel::prelude::{ExpressionMethods, JoinOnDsl, QueryDsl};
+
     let conn = &mut get_conn(pool).await?;
-    let results = Self::joins()
+
+    let results = chat_participant::table
+      .inner_join(local_user::table.on(chat_participant::member_id.eq(local_user::id)))
+      .inner_join(person::table.on(local_user::person_id.eq(person::id)))
       .filter(chat_participant::room_id.eq(room_id))
-      .select((ChatParticipant::as_select(), Person::as_select()))
-      .load::<(ChatParticipant, Person)>(conn)
+      .select((
+        chat_participant::member_id,
+        person::id,
+        person::name,
+        person::display_name,
+        person::avatar,
+        person::available,
+        chat_participant::room_id,
+        chat_participant::joined_at,
+      ))
+      .load::<ChatParticipantView>(conn)
       .await?;
 
-    Ok(
-      results
-        .into_iter()
-        .map(|(participant, member_person)| ChatParticipantView {
-          participant,
-          member_person,
-        })
-        .collect(),
-    )
+    Ok(results)
   }
 }

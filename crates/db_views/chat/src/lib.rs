@@ -1,12 +1,13 @@
+use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
+use lemmy_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
+use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::source::{
-  chat_message::ChatMessage, chat_participant::ChatParticipant, chat_room::ChatRoom,
-  local_user::LocalUser, post::Post, comment::Comment,
+  chat_message::ChatMessage, chat_room::ChatRoom, comment::Comment, local_user::LocalUser,
+  post::Post,
 };
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::source::person::Person;
-use lemmy_db_schema::source::workflow::Workflow;
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -18,7 +19,6 @@ pub mod impls;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A chat message view, including sender and room.
 pub struct ChatMessageView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub message: ChatMessage,
@@ -31,13 +31,9 @@ pub struct ChatMessageView {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A chat room view, including its participants. Not a Diesel selectable struct; constructed manually.
 pub struct ChatRoomView {
   pub room: ChatRoom,
-  // Not selectable by Diesel; assembled separately via additional query
   pub participants: Vec<ChatParticipantView>,
   pub post: Option<Post>,
   pub current_comment: Option<Comment>,
@@ -48,9 +44,15 @@ pub struct ChatRoomView {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[cfg_attr(feature = "full", derive(Queryable))]
 #[serde(rename_all = "camelCase")]
-/// A chat participant view. Not a Diesel selectable struct; constructed manually.
 pub struct ChatParticipantView {
-  pub participant: ChatParticipant,
-  pub member_person: Person,
+  pub id: LocalUserId,
+  pub person_id: PersonId,
+  pub name: String,
+  pub display_name: Option<String>,
+  pub avatar: Option<DbUrl>,
+  pub available: bool,
+  pub room_id: ChatRoomId,
+  pub joined_at: DateTime<Utc>,
 }

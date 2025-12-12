@@ -170,7 +170,9 @@ async fn set_status_from(
             room_name: None,
             updated_at: Some(Utc::now()),
             post_id: None,
-            current_comment_id: Some(None),
+            current_comment_id: None,
+            last_message_id: None,
+            last_message_at: None,
           };
           let _ = ChatRoom::update(&mut conn.into(), current.room_id.clone(), &clr)
             .await
@@ -239,7 +241,9 @@ async fn cancel_any_on(
           room_name: None,
           updated_at: Some(Utc::now()),
           post_id: None,
-          current_comment_id: Some(None),
+          current_comment_id: None,
+          last_message_id: None,
+          last_message_at: None,
         };
         let _ = ChatRoom::update(&mut conn.into(), cur.room_id, &clr)
           .await

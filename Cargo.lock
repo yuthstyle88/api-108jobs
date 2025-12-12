@@ -3799,9 +3799,9 @@ dependencies = [
 name = "lemmy_db_views_chat"
 version = "1.0.0-alpha.5"
 dependencies = [
+ "chrono",
  "diesel",
  "diesel-async",
- "futures",
  "futures-util",
  "i-love-jesus",
  "lemmy_db_schema",

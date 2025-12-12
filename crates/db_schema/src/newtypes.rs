@@ -56,6 +56,13 @@ impl fmt::Display for ChatMessageRefId {
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The chat room serial id.
+pub struct SerialId(pub i64);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The person id.
 pub struct PersonId(pub i32);
 
@@ -736,54 +743,78 @@ pub struct SkillId(pub i32);
 pub struct PaginationCursor(pub String);
 
 #[cfg(feature = "full")]
+#[cfg(feature = "full")]
 impl PaginationCursor {
-  /// Used for tables that have a single primary key.
-  /// IE the post table cursor looks like `P123`
   pub fn new_single(prefix: char, id: i32) -> Self {
-    Self::new(&[(prefix, id)])
+    Self::new_i64(prefix, id as i64)
   }
 
-  /// Some tables (like category_actions for example) have compound primary keys.
-  /// This creates a cursor that can use both, like `C123-P123`
   pub fn new(prefixes_and_ids: &[(char, i32)]) -> Self {
     Self(
       prefixes_and_ids
         .iter()
-        .map(|(prefix, id)|
-          // hex encoding to prevent ossification
-          format!("{prefix}{id:x}"))
+        .map(|(prefix, id)| format!("{prefix}{id:x}"))
         .collect::<Vec<String>>()
         .join("-"),
     )
   }
 
+  pub fn new_i64(prefix: char, id: i64) -> Self {
+    let high = (id >> 32) as i32;
+    let low = id as i32;
+
+    // Build exactly the same way the old `new()` does
+    let parts = [
+      format!("{prefix}{high:x}"),
+      format!("{}{low:x}", Self::next_prefix(prefix)),
+    ];
+    Self(parts.join("-"))
+  }
+
+  // Helper – deterministic second prefix so we know it’s an i64 cursor
+  fn next_prefix(p: char) -> char {
+    // 'M' → 'N', 'R' → 'S', etc. Safe because we only use ASCII letters
+    char::from_u32(p as u32 + 1).unwrap_or('Z')
+  }
+
+  // ────── Decoding ──────
   pub fn prefixes_and_ids(&self) -> Vec<(char, i32)> {
     let default_prefix = 'Z';
     let default_id = 0;
     self
       .0
-      .split("-")
-      .map(|i| {
-        let opt = i.split_at_checked(1);
-        if let Some((prefix_str, id_str)) = opt {
-          let prefix = prefix_str.chars().next().unwrap_or(default_prefix);
-          let id = i32::from_str_radix(id_str, 16).unwrap_or(default_id);
-          (prefix, id)
-        } else {
-          (default_prefix, default_id)
+      .split('-')
+      .map(|segment| {
+        if segment.is_empty() {
+          return (default_prefix, default_id);
         }
+        let (prefix_str, id_str) = segment.split_at(1);
+        let prefix = prefix_str.chars().next().unwrap_or(default_prefix);
+        let id = i32::from_str_radix(id_str, 16).unwrap_or(default_id);
+        (prefix, id)
       })
       .collect()
   }
 
   pub fn first_id(&self) -> FastJobResult<i32> {
-    Ok(
-      self
-        .prefixes_and_ids()
-        .as_slice()
-        .first()
-        .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
-        .1,
-    )
+    self
+      .prefixes_and_ids()
+      .first()
+      .map(|&(_, id)| id)
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken.into())
+  }
+
+  // ────── NEW: safe i64 decoder (backward compatible) ──────
+  pub fn as_i64(&self) -> FastJobResult<i64> {
+    let parts = self.prefixes_and_ids();
+    match parts.len() {
+      1 => Ok(parts[0].1 as i64), // old i32 cursor
+      2 => {
+        let high = parts[0].1 as i64;
+        let low = parts[1].1 as i64;
+        Ok((high << 32) | low)
+      }
+      _ => Err(FastJobErrorType::CouldntParsePaginationToken.into()),
+    }
   }
 }

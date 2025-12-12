@@ -57,6 +57,7 @@ pub async fn create_chat_room(
       updated_at: Some(Utc::now()),
       post_id: post_id.clone().map(Some),
       current_comment_id: current_comment_id.clone().map(Some),
+      ..Default::default()
     };
     // Only call update if at least one optional is provided
     if upd.room_name.is_some() || upd.post_id.is_some() || upd.current_comment_id.is_some() {

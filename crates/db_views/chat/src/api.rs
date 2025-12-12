@@ -10,6 +10,8 @@ use std::collections::HashMap;
 #[serde(rename_all = "camelCase")]
 pub struct ListUserChatRooms {
   pub limit: Option<i64>,
+  pub page_cursor: Option<PaginationCursor>,
+  pub page_back: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,6 +36,9 @@ pub struct ChatRoomResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ListUserChatRoomsResponse {
   pub rooms: Vec<ChatRoomView>,
+  /// the pagination cursor to use to fetch the next page
+  pub next_page: Option<PaginationCursor>,
+  pub prev_page: Option<PaginationCursor>,
 }
 
 #[derive(Debug, Serialize)]
@@ -54,7 +59,7 @@ pub struct GetChatRoomRequest {
 #[serde(rename_all = "camelCase")]
 /// The chat messages response, mirroring SearchResponse shape
 pub struct ChatMessagesResponse {
-  pub results: Vec<ChatMessageView>, // only return messages for this
+  pub results: Vec<ChatMessageView>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -68,6 +73,7 @@ pub struct ChatMessagesResponse {
 pub struct LastReadResponse {
   pub last_read: LastRead,
 }
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

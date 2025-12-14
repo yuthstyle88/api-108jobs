@@ -4,7 +4,7 @@ use diesel::{Queryable, Selectable};
 use lemmy_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::source::{
-  chat_message::ChatMessage, chat_room::ChatRoom, comment::Comment, local_user::LocalUser,
+  chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser,
   post::Post,
 };
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,6 @@ pub struct ChatRoomView {
   pub room: ChatRoom,
   pub participants: Vec<ChatParticipantView>,
   pub post: Option<Post>,
-  pub current_comment: Option<Comment>,
   pub last_message: Option<ChatMessage>,
   pub workflow: Option<Workflow>,
 }

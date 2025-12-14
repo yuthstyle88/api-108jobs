@@ -6,7 +6,7 @@ use futures_util::{StreamExt, TryStreamExt};
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_room::ChatRoom, comment::Comment, post::Post},
+  source::{chat_message::ChatMessage, chat_room::ChatRoom, post::Post},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
@@ -108,7 +108,6 @@ impl ChatRoomView {
     let ChatRoom {
       id: room_id,
       post_id,
-      current_comment_id,
       ..
     } = room.clone();
 
@@ -116,17 +115,11 @@ impl ChatRoomView {
     let rid_for_part = room_id.clone();
     let rid_for_workflow = room_id.clone();
 
-    let (post, current_comment, last_message, participants, workflow) = try_join_with_pool!(
+    let (post, last_message, participants, workflow) = try_join_with_pool!(
         pool => (
             |pool| async move {
                 match post_id {
                     Some(pid) => Post::read(pool, pid).await.map(Some),
-                    None => Ok(None),
-                }
-            },
-            |pool| async move {
-                match current_comment_id {
-                    Some(cid) => Comment::read(pool, cid).await.map(Some),
                     None => Ok(None),
                 }
             },
@@ -146,7 +139,6 @@ impl ChatRoomView {
       room,
       participants,
       post,
-      current_comment,
       last_message,
       workflow,
     })

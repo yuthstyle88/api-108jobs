@@ -8,16 +8,18 @@ use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
 use enum_map::{enum_map, EnumMap};
-use lemmy_db_schema::newtypes::{BankAccountId, BankId, LanguageId, LocalUserId};
+use lemmy_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
 use lemmy_db_schema::source::actor_language::SiteLanguage;
+use lemmy_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
+use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
 use lemmy_db_schema::source::language::Language;
 use lemmy_db_schema::source::user_bank_account::BankAccount;
 use lemmy_db_schema::traits::PaginationCursorBuilder;
 use lemmy_db_schema::{
-    newtypes::{CommentId, CategoryId, DbUrl, InstanceId, PersonId, PostId},
-    source::{
-    comment::{Comment, CommentActions},
+  newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId, PostId},
+  source::{
     category::{Category, CategoryActions},
+    comment::{Comment, CommentActions},
     images::{ImageDetails, RemoteImage},
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
@@ -30,8 +32,8 @@ use lemmy_db_schema::{
     post::{Post, PostActions, PostReadCommentsForm},
     registration_application::RegistrationApplication,
   },
-    traits::{Crud, Likeable, ReadComments},
-    utils::DbPool,
+  traits::{Crud, Likeable, ReadComments},
+  utils::DbPool,
 };
 use lemmy_db_schema_file::enums::RegistrationMode;
 use lemmy_db_views_local_image::LocalImageView;
@@ -43,6 +45,7 @@ use lemmy_db_views_wallet::api::{
   ListWithdrawRequestResponse,
 };
 use lemmy_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
+use lemmy_utils::redis::RedisClient;
 use lemmy_utils::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
@@ -59,6 +62,7 @@ use rand::Rng;
 use regex::{escape, Regex, RegexSet};
 use std::collections::HashSet;
 use std::sync::LazyLock;
+use tracing::info;
 use url::{ParseError, Url};
 use urlencoding::encode;
 
@@ -422,12 +426,12 @@ async fn create_modlog_entries_for_removed_or_restored_comments(
 }
 
 pub async fn remove_or_restore_user_data_in_category(
-    category_id: CategoryId,
-    mod_person_id: PersonId,
-    banned_person_id: PersonId,
-    remove: bool,
-    reason: &Option<String>,
-    pool: &mut DbPool<'_>,
+  category_id: CategoryId,
+  mod_person_id: PersonId,
+  banned_person_id: PersonId,
+  remove: bool,
+  reason: &Option<String>,
+  pool: &mut DbPool<'_>,
 ) -> FastJobResult<()> {
   // These actions are only possible when removing, not restoring
   if remove {
@@ -888,6 +892,54 @@ pub async fn ensure_bank_account_unique_for_user(
   if exists {
     return Err(FastJobErrorType::BankAccountAlreadyExistsForThisBank.into());
   }
+
+  Ok(())
+}
+
+pub async fn flush_room_and_update_last_message(
+  pool: &mut DbPool<'_>,
+  redis: &mut RedisClient,
+  room_id: ChatRoomId,
+) -> FastJobResult<()> {
+  let key = format!("chat:room:{}:messages", room_id);
+
+  // 1. Read buffered messages
+  let messages: Vec<ChatMessageInsertForm> = redis.lrange(&key, 0, -1).await?;
+
+  if messages.is_empty() {
+    return Ok(());
+  }
+
+  info!(
+    "Flushing {} buffered messages for room {}",
+    messages.len(),
+    room_id
+  );
+
+  // 2. Persist to DB
+  ChatMessage::bulk_insert(pool, &messages).await?;
+
+  // 3. Find latest message
+  let latest = messages
+    .iter()
+    .max_by_key(|m| m.created_at.unwrap_or(Utc::now()))
+    .or_else(|| messages.last())
+    .expect("messages not empty");
+
+  let latest_id = latest.msg_ref_id.clone().expect("has msg_ref_id");
+  let latest_at = latest.created_at.unwrap_or(Utc::now());
+
+  let chat_room_update_form = ChatRoomUpdateForm {
+    last_message_id: Some(Some(latest_id)),
+    last_message_at: Some(Some(latest_at)),
+    ..Default::default()
+  };
+  
+  let _ = ChatRoom::update(pool, room_id.clone(), &chat_room_update_form).await?;
+
+  // 5. Clean up Redis
+  let _ = redis.delete_key(&key).await;
+  let _ = redis.srem("chat:active_rooms", room_id.to_string()).await;
 
   Ok(())
 }

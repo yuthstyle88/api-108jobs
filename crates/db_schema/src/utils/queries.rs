@@ -1,45 +1,24 @@
 use crate::{
   aliases::{
-    creator_category_actions,
-    creator_category_instance_actions,
-    creator_home_instance_actions,
-    creator_local_instance_actions,
-    creator_local_user,
-    person1,
-    person2,
+    creator_category_actions, creator_category_instance_actions, creator_home_instance_actions,
+    creator_local_instance_actions, creator_local_user, person1, person2,
   },
   newtypes::{InstanceId, PersonId},
-  Person1AliasAllColumnsTuple,
-  Person2AliasAllColumnsTuple,
+  Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple,
 };
 use diesel::{
   dsl::{case_when, exists, not},
   expression::SqlLiteral,
   helper_types::{Eq, NotEq},
   sql_types::Json,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgExpressionMethods, QueryDsl,
 };
 use lemmy_db_schema_file::{
   enums::{CategoryFollowerState, CategoryVisibility},
   schema::{
-      comment,
-      comment_actions,
-      category,
-      category_actions,
-      image_details,
-      instance_actions,
-      local_user,
-      person,
-      person_actions,
-      post,
-      post_actions,
-      post_tag,
-      tag,
+    category, category_actions, comment, comment_actions, image_details, instance_actions,
+    local_user, person, person_actions, post, post_actions, post_tag, tag,
   },
 };
 
@@ -359,7 +338,7 @@ pub fn image_details_join() -> _ {
 #[diesel::dsl::auto_type]
 pub fn my_category_actions_join(my_person_id: Option<PersonId>) -> _ {
   category_actions::table.on(
-      category_actions::category_id
+    category_actions::category_id
       .eq(category::id)
       .and(category_actions::person_id.nullable().eq(my_person_id)),
   )

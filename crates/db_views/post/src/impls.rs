@@ -1,6 +1,6 @@
 use crate::api::EditPost;
 use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
-use crate::PostView;
+use crate::{PostPreview, PostView};
 use diesel::{
   self, debug_query,
   dsl::{exists, not},
@@ -11,6 +11,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
+use lemmy_db_schema::newtypes::LanguageId;
 use lemmy_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
@@ -49,7 +50,6 @@ use slug::slugify;
 use tracing::debug;
 #[cfg(feature = "full")]
 use url::Url;
-use lemmy_db_schema::newtypes::LanguageId;
 
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
@@ -73,8 +73,7 @@ impl PostView {
 
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
-    let my_category_actions_join: my_category_actions_join =
-      my_category_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
     let my_instance_actions_category_join: my_instance_actions_category_join =
@@ -632,6 +631,30 @@ impl TryFrom<EditPostRequest> for EditPost {
   }
 }
 
+impl PostPreview {
+  pub async fn read(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<Self> {
+    use diesel::prelude::*;
+    use diesel_async::RunQueryDsl;
+
+    let conn = &mut get_conn(pool).await?;
+
+    let post = post::table
+      .filter(post::id.eq(post_id))
+      .select((
+        post::id,
+        post::name,
+        post::budget,
+        post::language_id,
+        post::deadline,
+        post::creator_id,
+      ))
+      .first::<PostPreview>(conn)
+      .await?;
+
+    Ok(post)
+  }
+}
+
 #[allow(clippy::indexing_slicing)]
 #[expect(clippy::expect_used)]
 #[cfg(test)]
@@ -642,25 +665,26 @@ mod tests {
   };
   use chrono::Utc;
   use diesel_async::SimpleAsyncConnection;
+  use lemmy_db_schema::newtypes::DbUrl;
   use lemmy_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
     source::{
-        actor_language::LocalUserLanguage,
-        comment::{Comment, CommentInsertForm},
-        category::{category, CategoryInsertForm, categoryUpdateForm},
-        instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
-        keyword_block::LocalUserKeywordBlock,
-        language::Language,
-        local_site::{LocalSite, LocalSiteUpdateForm},
-        local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
-        person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
-        post::{
+      actor_language::LocalUserLanguage,
+      category::{category, categoryUpdateForm, CategoryInsertForm},
+      comment::{Comment, CommentInsertForm},
+      instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
+      keyword_block::LocalUserKeywordBlock,
+      language::Language,
+      local_site::{LocalSite, LocalSiteUpdateForm},
+      local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
+      person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
+      post::{
         Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadForm, PostUpdateForm,
       },
-        post_tag::{PostTag, PostTagForm},
-        site::Site,
-        tag::{Tag, TagInsertForm},
+      post_tag::{PostTag, PostTagForm},
+      site::Site,
+      tag::{Tag, TagInsertForm},
     },
     test_data::TestData,
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
@@ -677,7 +701,6 @@ mod tests {
   };
   use test_context::{test_context, AsyncTestContext};
   use url::Url;
-  use lemmy_db_schema::newtypes::DbUrl;
 
   const POST_BY_BLOCKED_PERSON: &str = "post by blocked person";
   const POST_BY_BOT: &str = "post by bot";
@@ -809,11 +832,8 @@ mod tests {
 
       let post = Post::create(pool, &new_post).await?;
 
-      let new_bot_post = PostInsertForm::new(
-        POST_BY_BOT.to_string(),
-        inserted_bot_person.id,
-        category.id,
-      );
+      let new_bot_post =
+        PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id, category.id);
       let bot_post = Post::create(pool, &new_bot_post).await?;
 
       // A sample post with tags
@@ -1395,11 +1415,7 @@ mod tests {
 
     let post_spanish = PostInsertForm {
       language_id: Some(spanish_id),
-      ..PostInsertForm::new(
-        EL_POSTO.to_string(),
-        data.tegan.person.id,
-        data.category.id,
-      )
+      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id, data.category.id)
     };
     Post::create(pool, &post_spanish).await?;
 
@@ -1615,7 +1631,7 @@ mod tests {
         for _ in 0..comments {
           let comment_form =
             CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
-          let inserted_comment = Comment::create(pool, &comment_form,).await?;
+          let inserted_comment = Comment::create(pool, &comment_form).await?;
           inserted_comment_ids.push(inserted_comment.id);
         }
       }
@@ -2193,11 +2209,8 @@ mod tests {
     let name_not_blocked = "post_with_name_not_blocked".to_string();
     let name_not_blocked2 = "post_with_name_not_blocked2".to_string();
 
-    let post_name_blocked = PostInsertForm::new(
-      name_blocked.clone(),
-      data.tegan.person.id,
-      data.category.id,
-    );
+    let post_name_blocked =
+      PostInsertForm::new(name_blocked.clone(), data.tegan.person.id, data.category.id);
 
     let post_body_blocked = PostInsertForm {
       body: Some(body),

@@ -1,9 +1,9 @@
+use crate::newtypes::{ChatRoomId, CommentId, PostId, SerialId};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use lemmy_db_schema_file::schema::chat_room;
-use crate::newtypes::{ChatRoomId, PostId, CommentId};
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -13,35 +13,40 @@ use crate::newtypes::{ChatRoomId, PostId, CommentId};
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[serde(rename_all = "camelCase")]
 pub struct ChatRoom {
-    pub id: ChatRoomId,
-    pub room_name: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub post_id: Option<PostId>,
-    pub current_comment_id: Option<CommentId>,
+  pub id: ChatRoomId,
+  pub serial_id: SerialId,
+  pub room_name: String,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
+  pub post_id: Option<PostId>,
+  pub current_comment_id: Option<CommentId>,
+  pub last_message_id: Option<String>,
+  pub last_message_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]
 #[cfg_attr(
-    feature = "full",
-    derive(Insertable, AsChangeset, Serialize, Deserialize)
+  feature = "full",
+  derive(Insertable, AsChangeset, Serialize, Deserialize)
 )]
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 pub struct ChatRoomInsertForm {
-    pub id: ChatRoomId,
-    pub room_name: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub post_id: Option<PostId>,
-    pub current_comment_id: Option<CommentId>,
+  pub id: ChatRoomId,
+  pub room_name: String,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
+  pub post_id: Option<PostId>,
+  pub current_comment_id: Option<CommentId>,
 }
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "full", derive(Serialize, Deserialize, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = chat_room))]
 pub struct ChatRoomUpdateForm {
-    pub room_name: Option<String>,
-    pub updated_at: Option<DateTime<Utc>>,
-    pub post_id: Option<Option<PostId>>,
-    pub current_comment_id: Option<Option<CommentId>>,
+  pub room_name: Option<String>,
+  pub updated_at: Option<DateTime<Utc>>,
+  pub post_id: Option<Option<PostId>>,
+  pub current_comment_id: Option<Option<CommentId>>,
+  pub last_message_id: Option<Option<String>>,
+  pub last_message_at: Option<Option<DateTime<Utc>>>,
 }

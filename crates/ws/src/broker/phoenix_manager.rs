@@ -3,11 +3,7 @@ use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFut
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
-  source::{
-    chat_message::{ChatMessage, ChatMessageInsertForm},
-    chat_room::ChatRoom,
-    last_read::LastRead,
-  },
+  source::{chat_message::ChatMessageInsertForm, chat_room::ChatRoom, last_read::LastRead},
   utils::{ActualDbPool, DbPool},
 };
 use lemmy_db_views_chat::api::ChatMessagesResponse;
@@ -19,6 +15,7 @@ use crate::broker::connect_now::ConnectNow;
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
 use chrono::{DateTime, Utc};
+use lemmy_api_utils::utils::flush_room_and_update_last_message;
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use lemmy_utils::redis::RedisClient;
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
@@ -332,28 +329,7 @@ impl PhoenixManager {
     db: &mut DbPool<'_>,
     room_id: ChatRoomId,
   ) -> FastJobResult<()> {
-    let key = format!("chat:room:{}:messages", room_id);
-
-    // Read messages
-    let messages: Vec<ChatMessageInsertForm> = redis.lrange(&key, 0, -1).await?;
-
-    if messages.is_empty() {
-      return Ok(());
-    }
-
-    tracing::info!(
-      "Flushing {} buffered messages for room {room_id}",
-      messages.len()
-    );
-
-    // Persist to DB
-    ChatMessage::bulk_insert(db, &messages).await?;
-
-    // Only delete from Redis if DB succeeded
-    self.try_delete_room_buffer(redis, &room_id).await?;
-    self.try_remove_from_active_rooms(redis, &room_id).await?;
-
-    Ok(())
+    flush_room_and_update_last_message(db, redis, room_id).await
   }
 
   // Your preferred helpers — perfect as-is
@@ -368,22 +344,6 @@ impl PhoenixManager {
         tracing::error!("Failed to delete Redis buffer for room {room_id}: {e}");
       }
     }
-    Ok(())
-  }
-
-  async fn try_remove_from_active_rooms(
-    &self,
-    redis: &mut RedisClient,
-    room_id: &ChatRoomId,
-  ) -> FastJobResult<()> {
-    let _ = redis
-      .srem(ACTIVE_ROOMS_KEY, room_id.to_string())
-      .await
-      .map_err(|e| {
-        if !matches!(e.error_type, FastJobErrorType::RedisKeyNotFound) {
-          tracing::warn!("Failed to remove room {room_id} from active set: {e}");
-        }
-      });
     Ok(())
   }
 

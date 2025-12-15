@@ -681,6 +681,40 @@ pub fn get_required_sensitive(
       .ok_or_else(|| err.into())
 }
 
+// crates/db_schema/src/utils.rs  (or any shared utils file)
+#[cfg(feature = "full")]
+#[macro_export]
+macro_rules! impl_flat_selectable {
+    ($struct_name:ty, $($col:expr),+) => {
+        // ── Selectable ─────────────────────────────────────────────────────
+        impl diesel::expression::Selectable<diesel::pg::Pg> for $struct_name {
+            type Columns = ($($col,)+);
+
+            fn columns() -> Self::Columns {
+                ($($col,)+)
+            }
+        }
+
+        // ── Queryable (Diesel 2.2+ — the only correct signature) ───────────
+        impl diesel::Queryable<($($col::SqlType,)+), diesel::pg::Pg> for $struct_name {
+            type Row = ($($col::ST,)+);
+
+            fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
+                Ok(Self {
+                    id: row.0,
+                    person_id: row.1,
+                    name: row.2,
+                    display_name: row.3,
+                    avatar: row.4,
+                    available: row.5,
+                    room_id: row.6,
+                    joined_at: row.7,
+                })
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

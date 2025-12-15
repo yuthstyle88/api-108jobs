@@ -248,11 +248,14 @@ diesel::table! {
 diesel::table! {
     chat_room (id) {
         id -> Varchar,
+        serial_id -> Int8,
         room_name -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         post_id -> Nullable<Int4>,
         current_comment_id -> Nullable<Int4>,
+        last_message_id -> Nullable<Varchar>,
+        last_message_at -> Nullable<Timestamptz>,
     }
 }
 

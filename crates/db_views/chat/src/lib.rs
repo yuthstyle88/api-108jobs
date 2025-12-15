@@ -5,9 +5,9 @@ use lemmy_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::source::{
   chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser,
-  post::Post,
 };
 use serde::{Deserialize, Serialize};
+use lemmy_db_views_post::PostPreview;
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -35,7 +35,7 @@ pub struct ChatMessageView {
 pub struct ChatRoomView {
   pub room: ChatRoom,
   pub participants: Vec<ChatParticipantView>,
-  pub post: Option<Post>,
+  pub post: Option<PostPreview>,
   pub last_message: Option<ChatMessage>,
   pub workflow: Option<Workflow>,
 }

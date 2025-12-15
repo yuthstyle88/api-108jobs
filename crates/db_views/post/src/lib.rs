@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use lemmy_db_schema::source::{
   category::{Category, CategoryActions},
   images::ImageDetails,
@@ -24,6 +25,7 @@ use {
     post_tags_fragment,
   },
 };
+use lemmy_db_schema::newtypes::{LanguageId, PersonId, PostId};
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -90,3 +92,17 @@ pub struct PostView {
   )]
   pub creator_banned_from_category: bool,
 }
+
+/// View only
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(Queryable))]
+#[serde(rename_all = "camelCase")]
+pub struct PostPreview {
+  pub id: PostId,
+  pub name: String,
+  pub budget: f64,
+  pub language_id: LanguageId,
+  pub deadline: Option<DateTime<Utc>>,
+  pub creator_id: PersonId,
+}
+

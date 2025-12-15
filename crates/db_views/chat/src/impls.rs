@@ -6,12 +6,13 @@ use futures_util::{StreamExt, TryStreamExt};
 use lemmy_db_schema::source::workflow::Workflow;
 use lemmy_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_room::ChatRoom, post::Post},
+  source::{chat_message::ChatMessage, chat_room::ChatRoom},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
 };
 use lemmy_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user, person};
+use lemmy_db_views_post::PostPreview;
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Cursor support for chat message pagination
@@ -119,8 +120,8 @@ impl ChatRoomView {
         pool => (
             |pool| async move {
                 match post_id {
-                    Some(pid) => Post::read(pool, pid).await.map(Some),
-                    None => Ok(None),
+                  Some(pid) => PostPreview::read(pool, pid).await.map(Some),
+                  None => Ok(None),
                 }
             },
             |pool| async move {

@@ -162,7 +162,6 @@ impl PhoenixManager {
   }
 
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
-  #[allow(dead_code)]
   async fn broadcast_read_event(
     &self,
     room_id: ChatRoomId,

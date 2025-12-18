@@ -39,6 +39,8 @@ pub enum ChatEvent {
     SyncPending,
     #[serde(rename = "chat:update")]
     Update,
+    #[serde(rename = "chats:signal")]
+    ChatsSignal,
     #[serde(rename = "chat:read")]
     Read,
     #[serde(rename = "readUpTo")]

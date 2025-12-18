@@ -1,15 +1,17 @@
 use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::helper::{get_or_create_channel, push_to_session, send_event_to_channel};
+use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::pending_ack_handler::handle_ack_event;
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
 use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
 use crate::impls::AnyIncomingEvent;
 use actix::{Context, Handler, ResponseFuture};
+use actix::prelude::*;
 use actix_broker::{BrokerIssue, SystemBroker};
 use chrono::Utc;
 use lemmy_db_schema::newtypes::ChatRoomId;
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
+use lemmy_db_schema::source::chat_participant::ChatParticipant;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use std::sync::Arc;
@@ -19,15 +21,23 @@ use tokio::time::timeout;
 use lemmy_db_schema::utils::DbPool;
 use lemmy_db_views_chat_pending_ack::AckReminderQuery;
 
+// Message to route arbitrary topic emissions back through PhoenixManager (so we can use issue_async safely)
+#[derive(Message, Debug, Clone)]
+#[rtype(result = "()")]
+pub struct EmitTopics {
+  pub items: Vec<(String, ChatEvent, serde_json::Value)>,
+}
+
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
     // Convert wire-level IncomingEvent (payload: Value) to strongly-typed AnyIncomingEvent
     let any_event: AnyIncomingEvent = msg.any_event.clone();
 
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
+    let addr = ctx.address();
 
     // Helper to issue outbound (to internal broker) using JSON payload
     let issue_outbound =
@@ -40,6 +50,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
         };
         self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
       };
+
+    // Note: arbitrary-topic emission is handled via EmitTopics message to avoid borrowing self in async tasks
 
     match any_event {
       // ---------------------- MESSAGE ----------------------
@@ -68,7 +80,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
               }
             });
 
-            // --- NEW: Application-level ACK + enqueue pending ack ---
             // 1) Issue messageAck to client
             let client_id_json = serde_json::to_value(&payload.id).unwrap_or(serde_json::Value::Null);
             issue_outbound(ev.room_id.clone(), ChatEvent::MessageAck, serde_json::json!({
@@ -93,6 +104,32 @@ impl Handler<BridgeMessage> for PhoenixManager {
                 ).await;
               });
             }
+
+            // 3) Emit lightweight user-level chats signal to each participant (except sender)
+            let pool_owned = self.pool.clone();
+            let room_id_signal = ev.room_id.clone();
+            let sender_id_signal = payload.sender_id;
+            let last_message_id = payload.id.clone();
+            let last_message_at = payload.created_at.clone();
+            actix::spawn(async move {
+              let mut db = DbPool::Pool(&pool_owned);
+              // Fetch participants for the room
+              if let Ok(participants) = ChatParticipant::list_participants_for_rooms(&mut db, &[room_id_signal.clone()]).await {
+                for p in participants.into_iter().filter(|p| sender_id_signal.map(|sid| sid != p.member_id).unwrap_or(true)) {
+                  // TODO: compute real unreadCount; default to 0 for now
+                  let payload = json!({
+                    "version": 1,
+                    "roomId": room_id_signal,
+                    "lastMessageId": last_message_id,
+                    "lastMessageAt": last_message_at,
+                    "unreadCount": 0,
+                    "senderId": sender_id_signal,
+                  });
+                  let topic = format!("user:{}:events", p.member_id.0);
+                  let _ = addr.do_send(EmitTopics { items: vec![(topic, ChatEvent::ChatsSignal, payload)] });
+                }
+              }
+            });
           }
         } else {
           // still notify listeners to keep flow consistent
@@ -106,7 +143,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         let json = if let Some(m) = ev.payload.clone() {
           serde_json::to_value(&m).unwrap_or(serde_json::Value::Null)
         } else {
-          serde_json::json!({"typing": true})
+          json!({"typing": true})
         };
         issue_outbound(ev.room_id, ChatEvent::Typing, json);
         Box::pin(async move {})
@@ -150,6 +187,17 @@ impl Handler<BridgeMessage> for PhoenixManager {
         }
 
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
+
+        // Emit reset signal for the reader on user topic (unreadCount = 0)
+        if let Some(p) = ev.payload.clone() {
+          let topic = format!("user:{}:events", p.reader_id.0);
+          let payload = json!({
+            "version": 1,
+            "roomId": p.room_id,
+            "unreadCount": 0,
+          });
+          let _ = addr.do_send(EmitTopics { items: vec![(topic, ChatEvent::ChatsSignal, payload)] });
+        }
         Box::pin(async move {})
       }
       AnyIncomingEvent::AckConfirm(ev) => {
@@ -178,11 +226,13 @@ impl Handler<BridgeMessage> for PhoenixManager {
               &AckReminderQuery { room_id: p.room_id, sender_id: p.sender_id, limit: Some(200) }
             ).await {
               Ok(reminder) => {
-                let _ = push_to_session(
-                  &topic, // assumed present in payload; otherwise derive from room_id
-                  &ChatEvent::SyncPending,
-                  json!({ "clientIds": reminder.client_ids })
-                );
+                let _ = addr.do_send(EmitTopics {
+                  items: vec![(
+                    topic,
+                    ChatEvent::SyncPending,
+                    json!({ "clientIds": reminder.client_ids })
+                  )]
+                });
               }
               Err(e) => {
                 tracing::error!("ack_reminder failed: {}", e);
@@ -190,34 +240,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
             }
           });
         }
-        Box::pin(async move {})
-      }
-      AnyIncomingEvent::ReadUpTo(ev) => {
-        let mut json = ev
-          .payload
-          .as_ref()
-          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-          .unwrap_or(serde_json::Value::Null);
-
-        let mut this = self.clone();
-        let room_id_clone = ev.room_id.clone();
-        let payload_clone = ev.payload.clone();
-        let read_at = Utc::now();
-
-        actix::spawn(async move {
-          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone, Some(read_at)) {
-            tracing::error!("Failed to handle read up to event: {}", e);
-          }
-        });
-        // Add timestamp to JSON response
-        if let Some(obj) = json.as_object_mut() {
-          obj.insert(
-            "updatedAt".to_string(),
-            serde_json::Value::String(read_at.to_rfc3339()),
-          );
-        }
-
-        issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
 
@@ -297,5 +319,24 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
       _ => Box::pin(async move {})
     }
+  }
+}
+
+impl Handler<EmitTopics> for PhoenixManager {
+  type Result = ResponseFuture<()>;
+
+  fn handle(&mut self, msg: EmitTopics, _ctx: &mut Context<Self>) -> Self::Result {
+    for (topic, event, payload) in msg.items.into_iter() {
+      let room_id: ChatRoomId =
+        ChatRoomId::from_channel_name(topic.as_str()).unwrap_or(ChatRoomId(topic.clone()));
+      let out_event = IncomingEvent {
+        room_id,
+        event: event.clone(),
+        topic: topic.clone(),
+        payload,
+      };
+      self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
+    }
+    Box::pin(async move {})
   }
 }

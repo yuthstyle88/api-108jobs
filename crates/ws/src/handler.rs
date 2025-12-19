@@ -1,4 +1,4 @@
-use crate::broker::phoenix_manager::{FetchHistoryDirect, GetLastRead, PhoenixManager};
+use crate::broker::phoenix_manager::{FetchHistoryDirect, GetLastRead, GetUnreadSnapshot, PhoenixManager};
 use crate::phoenix_session::PhoenixSession;
 use actix::Addr;
 use actix_web::{
@@ -43,6 +43,22 @@ pub async fn get_last_read(
     .send(GetLastRead {
       local_user_id: q.peer_id.clone(),
       room_id: q.room_id.clone(),
+    })
+    .await
+    .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
+
+  Ok(HttpResponse::Ok().json(resp))
+}
+
+/// Fetch unread snapshot for the current user across all rooms.
+/// This replaces the previous WS-based initial unread emission.
+pub async fn get_unread_snapshot(
+  phoenix: Data<Addr<PhoenixManager>>,
+  local_user_view: LocalUserView,
+) -> actix_web::Result<HttpResponse> {
+  let resp = phoenix
+    .send(GetUnreadSnapshot {
+      local_user_id: local_user_view.local_user.id,
     })
     .await
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;

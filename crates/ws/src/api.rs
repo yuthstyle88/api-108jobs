@@ -183,3 +183,15 @@ pub enum ConvertError {
     #[error("missing field or invalid payload for event {0}")]
     InvalidPayload(&'static str),
 }
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatsSignalPayload {
+    pub version: i32,
+    pub room_id: ChatRoomId,
+    pub last_message_id: Option<String>,
+    pub last_message_at: Option<DateTime<Utc>>,
+    pub unread_count: i64,
+    pub sender_id: Option<LocalUserId>,
+}

@@ -268,6 +268,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    chat_unread (local_user_id, room_id) {
+        local_user_id -> Int4,
+        room_id -> Varchar,
+        unread_count -> Int4,
+        last_message_id -> Nullable<Varchar>,
+        last_message_at -> Nullable<Timestamptz>,
+        updated_at -> Timestamptz,
+    }
+}
+
+
+diesel::table! {
     chat_message (id) {
         id -> Int8,
         msg_ref_id -> Varchar,

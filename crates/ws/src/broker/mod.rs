@@ -9,4 +9,3 @@ pub mod phoenix_manager;
 mod register_client_msg;
 pub mod presence_manager;
 pub mod pending_ack_handler;
-pub mod payloads;

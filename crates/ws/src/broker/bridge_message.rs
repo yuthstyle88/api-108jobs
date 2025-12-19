@@ -3,13 +3,13 @@ use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::pending_ack_handler::handle_ack_event;
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
+use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave};
 use crate::impls::AnyIncomingEvent;
 use actix::prelude::*;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
 use chrono::Utc;
-use lemmy_db_schema::newtypes::ChatRoomId;
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
 use lemmy_db_schema::source::chat_unread::ChatUnread;
 use lemmy_db_schema::utils::DbPool;
@@ -291,7 +291,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
           // keep original payload as JSON once
           let content_json = serde_json::to_value(&payload).unwrap_or(serde_json::Value::Null);
           let this = self.clone();
-          let pool_owned = self.pool.clone();
 
           Box::pin(async move {
             if let Ok(arc_chan) = get_or_create_channel(channels, socket, &channel_name).await {
@@ -324,8 +323,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
 
               // Cast the event
               send_event_to_channel(arc_chan, phoenix_event, payload).await;
-
-              // Note: initial unread snapshot is now provided via HTTP API; no WS emission here.
             }
           })
         } else {
@@ -353,9 +350,20 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::ActiveRooms(_ev) => Box::pin(async move {
         tracing::debug!("ActiveRooms");
       }),
-      AnyIncomingEvent::Leave(_ev) => Box::pin(async move {
-        tracing::debug!("Leave");
-      }),
+      AnyIncomingEvent::Leave(ev) => {
+        let this = self.clone();
+        Box::pin(async move {
+          tracing::debug!("Leave");
+          let _ = this
+            .presence
+            .send(OnlineLeave {
+              room_id: ev.room_id,
+              local_user_id: LocalUserId(0), // we cannot infer sender from payload-less leave; rely on timeout
+              left_at: Utc::now(),
+            })
+            .await;
+        })
+      }
 
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
       _ => Box::pin(async move {}),

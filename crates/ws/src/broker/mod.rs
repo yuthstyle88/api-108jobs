@@ -2,6 +2,7 @@ pub mod bridge_message;
 mod connect_now;
 mod fetch_history_direct;
 mod get_last_read;
+mod get_unread_snapshot;
 pub mod helper;
 mod init_socket;
 pub mod phoenix_manager;

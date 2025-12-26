@@ -1,4 +1,5 @@
 use crate::{ChatMessageView, ChatRoomView};
+use chrono::{DateTime, Utc};
 use lemmy_db_schema::newtypes::{
   ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
 };
@@ -117,4 +118,15 @@ pub struct HistoryQuery {
   pub cursor: Option<PaginationCursor>,
   pub limit: Option<i64>,
   pub back: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct UnreadSnapshotItem {
+  pub room_id: ChatRoomId,
+  pub unread_count: i32,
+  pub last_message_id: Option<String>,
+  pub last_message_at: Option<DateTime<Utc>>,
 }

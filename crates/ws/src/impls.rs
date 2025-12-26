@@ -38,6 +38,7 @@ impl FromStr for ChatEvent {
       "typing:start" => ChatEvent::TypingStart,
       "chat:stop" => ChatEvent::TypingStop,
       "chat:update" => ChatEvent::Update,
+      "chats:signal" => ChatEvent::ChatsSignal,
       _ => ChatEvent::Unknown,
     })
   }
@@ -63,6 +64,7 @@ impl ChatEvent {
       ChatEvent::TypingStart => "typing:start",
       ChatEvent::TypingStop => "typing:stop",
       ChatEvent::Update => "chat:update",
+      ChatEvent::ChatsSignal => "chats:signal",
       ChatEvent::Unknown => "unknown",
     }
   }

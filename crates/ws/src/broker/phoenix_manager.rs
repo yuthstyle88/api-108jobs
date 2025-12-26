@@ -9,6 +9,7 @@ use lemmy_db_schema::{
 use lemmy_db_views_chat::api::ChatMessagesResponse;
 use lemmy_db_views_chat::api::LastReadResponse;
 use lemmy_db_views_chat::api::PeerReadResponse;
+use lemmy_db_views_chat::api::UnreadSnapshotItem;
 
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
@@ -54,6 +55,12 @@ pub struct FetchHistoryDirect {
   pub page_cursor: Option<PaginationCursor>,
   pub limit: Option<i64>,
   pub page_back: Option<bool>,
+}
+
+#[derive(Message)]
+#[rtype(result = "FastJobResult<Vec<UnreadSnapshotItem>>")]
+pub struct GetUnreadSnapshot {
+  pub local_user_id: LocalUserId,
 }
 
 #[derive(Clone)]
@@ -162,7 +169,6 @@ impl PhoenixManager {
   }
 
   /// Re-broadcast a normalized `chat:read` event to local WS subscribers and Phoenix channel
-  #[allow(dead_code)]
   async fn broadcast_read_event(
     &self,
     room_id: ChatRoomId,

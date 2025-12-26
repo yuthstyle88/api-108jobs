@@ -336,6 +336,7 @@ pub enum FastJobErrorType {
     UnauthorizedAccess,
   CannotDeleteDefaultBankAccount,
     ReachedMax3BankAccounts,
+    CouldntUpdateChatUnread,
 }
 
 cfg_if! {

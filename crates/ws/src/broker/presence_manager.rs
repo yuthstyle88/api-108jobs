@@ -1,4 +1,4 @@
-use actix::{Actor, AsyncContext, Context, Handler, Message};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, Message};
 use actix::ResponseFuture;
 use chrono::{DateTime, Utc};
 use std::time::{Duration as StdDuration, Duration};
@@ -6,12 +6,13 @@ use std::collections::HashSet;
 use tracing;
 use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_utils::redis::RedisClient;
+use actix_broker::{BrokerIssue, SystemBroker};
+use serde_json::json;
 
-pub struct SystemBroker;
+use crate::api::ChatEvent;
+use crate::broker::bridge_message::EmitTopics;
 
-impl Actor for SystemBroker {
-    type Context = Context<Self>;
-}
+// Note: we use actix_broker::SystemBroker; do not redefine here.
 
 /// ===== PresenceManager Actor =====
 
@@ -22,6 +23,8 @@ pub struct PresenceManager {
     heartbeat_ttl: Duration,
     redis: Option<RedisClient>,
     local_online: HashSet<i32>,
+    /// Track which rooms each user is active in (for broadcasting presence to partners)
+    rooms_by_user: std::collections::HashMap<i32, std::collections::HashSet<ChatRoomId>>,    
 }
 
 /// ===== Presence messages =====
@@ -58,6 +61,7 @@ impl PresenceManager {
             heartbeat_ttl,
             redis,
             local_online: HashSet::new(),
+            rooms_by_user: Default::default(),
         }
     }
 
@@ -121,7 +125,7 @@ impl PresenceManager {
     }
 
     /// Sweep users whose last_seen exceeded heartbeat_ttl and emit OnlineStopped
-    pub fn sweep_timeouts(&mut self) {
+    pub fn sweep_timeouts(&mut self, addr: Addr<PresenceManager>) {
         let Some(client) = &self.redis else { return; };
         let ttl = self.heartbeat_ttl;
         let client = client.clone();
@@ -137,18 +141,25 @@ impl PresenceManager {
 
             // Filter users that still have their online key alive
             let mut still_online: Vec<i32> = Vec::with_capacity(users.len());
+            let mut went_offline: Vec<i32> = Vec::new();
             for uid in users {
                 let ok = match client.get_value::<bool>(&format!("presence:user:{}:online", uid)).await {
                     Ok(Some(true)) => true,
                     _ => false,
                 };
-                if ok { still_online.push(uid); }
+                if ok { still_online.push(uid); } else { went_offline.push(uid); }
             }
 
             // Write back pruned list with a modest TTL so it refreshes regularly
             let _ = client
                 .set_value_with_expiry(&list_key, still_online, ttl.as_secs() as usize)
                 .await;
+
+            // Notify actor about users that went offline so it can broadcast
+            let now = Utc::now();
+            for uid in went_offline {
+                let _ = addr.do_send(OnlineStopped { local_user_id: LocalUserId(uid), stopped_at: now });
+            }
         });
     }
 }
@@ -160,7 +171,8 @@ impl Actor for PresenceManager {
         let ttl_secs = self.heartbeat_ttl.as_secs();
         let sweep_every = if ttl_secs >= 10 { StdDuration::from_secs(ttl_secs / 2) } else { StdDuration::from_secs(5) };
         ctx.run_interval(sweep_every, |act, _ctx| {
-            act.sweep_timeouts();
+            let addr = _ctx.address();
+            act.sweep_timeouts(addr);
         });
 
         tracing::info!(
@@ -178,7 +190,25 @@ impl Handler<OnlineJoin> for PresenceManager {
         // Local idempotency guard: `insert` returns false if already present
         // let already_local = !self.local_online.insert(msg.local_user_id.0);
 
-        // Make OnlineJoin idempotent to avoid duplicate INFO logs
+        // Track room membership and broadcast join if first time for this room
+        {
+            let rooms = self
+                .rooms_by_user
+                .entry(msg.local_user_id.0)
+                .or_default();
+            if rooms.insert(msg.room_id.clone()) {
+                let topic = format!("room:{}", msg.room_id);
+                let payload = json!({
+                    "type": "presence:diff",
+                    "room_id": msg.room_id,
+                    "joins": [{"user_id": msg.local_user_id.0, "at": msg.started_at} ],
+                    "leaves": []
+                });
+                self.issue_async::<actix_broker::SystemBroker, _>(EmitTopics { items: vec![(topic, ChatEvent::Update, payload)]});
+            }
+        }
+
+        // Make OnlineJoin idempotent to avoid duplicate INFO logs (Redis-backed)
         if let Some(client) = &self.redis {
             let ttl = self.heartbeat_ttl.as_secs() as usize;
             let online_key = format!("presence:user:{}:online", msg.local_user_id.0);
@@ -217,6 +247,8 @@ impl Handler<OnlineJoin> for PresenceManager {
         self.mark_online(msg.local_user_id);
         self.touch(msg.local_user_id);
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.started_at, "presence: online_join");
+
+        // broadcast was done above for no-redis as well
     }
 }
 
@@ -224,7 +256,44 @@ impl Handler<OnlineLeave> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Context<Self>) -> Self::Result {
         self.mark_offline(msg.local_user_id);
-        // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.left_at, "presence: online_leave");
+
+        let should_broadcast = {
+            // Scope the mutable borrow here
+            if let Some(rooms) = self.rooms_by_user.get_mut(&msg.local_user_id.0) {
+                if rooms.remove(&msg.room_id) {
+                    // We removed the room → need to broadcast
+                    !rooms.contains(&msg.room_id) // just return true if removed
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        };
+
+        // Now the mutable borrow is dropped — safe to use self again
+        if should_broadcast {
+            let topic = format!("room:{}", msg.room_id);
+            let payload = json!({
+                "type": "presence:diff",
+                "room_id": msg.room_id,
+                "joins": [],
+                "leaves": [{
+                    "user_id": msg.local_user_id.0,
+                    "last_seen": msg.left_at
+                }]
+            });
+            self.issue_async::<SystemBroker, _>(EmitTopics {
+                items: vec![(topic, ChatEvent::Update, payload)]
+            });
+        }
+
+        // Clean up empty user entry — safe now
+        if let Some(rooms) = self.rooms_by_user.get(&msg.local_user_id.0) {
+            if rooms.is_empty() {
+                self.rooms_by_user.remove(&msg.local_user_id.0);
+            }
+        }
     }
 }
 
@@ -232,6 +301,26 @@ impl Handler<OnlineStopped> for PresenceManager {
     type Result = ();
     fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Context<Self>) -> Self::Result {
         self.mark_offline(msg.local_user_id);
+        // Broadcast leaves to all rooms this user was active in
+        if let Some(rooms) = self.rooms_by_user.remove(&msg.local_user_id.0) {
+            let stopped_at = msg.stopped_at;
+            let items: Vec<(String, ChatEvent, serde_json::Value)> = rooms
+                .into_iter()
+                .map(|room_id| {
+                    let topic = format!("room:{}", room_id);
+                    let payload = json!({
+                        "type": "presence:diff",
+                        "room_id": room_id,
+                        "joins": [],
+                        "leaves": [{"user_id": msg.local_user_id.0, "last_seen": stopped_at} ]
+                    });
+                    (topic, ChatEvent::Update, payload)
+                })
+                .collect();
+            if !items.is_empty() {
+                self.issue_async::<actix_broker::SystemBroker, _>(EmitTopics { items });
+            }
+        }
         // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.stopped_at, "presence: online_stopped(event)");
     }
 }
@@ -275,6 +364,8 @@ impl Handler<Heartbeat> for PresenceManager {
                     .await;
             });
         }
+
+        // No broadcast on heartbeat; broadcasts are done on join/leave/timeout
     }
 }
 

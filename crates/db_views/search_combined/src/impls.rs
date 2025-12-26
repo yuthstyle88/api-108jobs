@@ -9,25 +9,19 @@ use diesel::{
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
 use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::{
-  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
-  source::{
-    combined::search::{search_combined_keys as key, SearchCombined},
-    site::Site,
+use lemmy_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
+  combined::search::{search_combined_keys as key, SearchCombined},
+  site::Site,
+}, traits::{InternalToCombinedView, PaginationCursorBuilder}, utils::{
+  fuzzy_search, get_conn, limit_fetch, now, paginate,
+  queries::{
+    creator_category_actions_join, creator_home_instance_actions_join,
+    creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+    my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+    my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
   },
-  traits::{InternalToCombinedView, PaginationCursorBuilder},
-  utils::{
-    fuzzy_search, get_conn, limit_fetch, now, paginate,
-    queries::{
-      creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
-    },
-    seconds_to_pg_interval, DbPool,
-  },
-  SearchSortType::{self, *},
-};
+  seconds_to_pg_interval, DbPool,
+}, SearchSortType::{self, *}, SearchType};
 use lemmy_db_schema_file::enums::{IntendedUse, JobType};
 use lemmy_db_schema_file::schema::{category, comment, person, post, search_combined};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
@@ -127,23 +121,27 @@ impl PaginationCursorBuilder for SearchCombinedView {
       SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
     };
-    PaginationCursor::new_single(prefix, id)
+    // Simple: just prefix + hex id (old Lemmy style)
+    PaginationCursor(format!("{}{:x}", prefix, id))
   }
 
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
-    let conn = &mut get_conn(pool).await?;
-    let pids = cursor.prefixes_and_ids();
-    let (prefix, id) = pids
-      .as_slice()
-      .first()
-      .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
+    let s = &cursor.0;
+    if s.len() < 2 {
+      return Err(FastJobErrorType::CouldntParsePaginationToken.into());
+    }
+    let prefix = s.chars().next().unwrap();
+    let id_hex = &s[1..];
+    let id = i32::from_str_radix(id_hex, 16)
+        .map_err(|_| FastJobErrorType::CouldntParsePaginationToken)?;
 
+    let conn = &mut get_conn(pool).await?;
     let mut query = search_combined::table
-      .select(Self::CursorData::as_select())
-      .into_boxed();
+        .select(Self::CursorData::as_select())
+        .into_boxed();
 
     query = match prefix {
       'P' => query.filter(search_combined::post_id.eq(id)),
@@ -152,8 +150,8 @@ impl PaginationCursorBuilder for SearchCombinedView {
       'E' => query.filter(search_combined::person_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
-    let token = query.first(conn).await?;
 
+    let token = query.first(conn).await?;
     Ok(token)
   }
 }
@@ -163,6 +161,7 @@ pub struct SearchCombinedQuery {
   pub search_term: Option<String>,
   pub category_id: Option<CategoryId>,
   pub language_id: Option<LanguageId>,
+  pub type_: Option<SearchType>,
   pub creator_id: Option<PersonId>,
   pub sort: Option<SearchSortType>,
   pub time_range_seconds: Option<i32>,
@@ -193,6 +192,13 @@ impl SearchCombinedQuery {
       .select(SearchCombinedViewInternal::as_select())
       .limit(limit)
       .into_boxed();
+
+    // Some helpers
+    let is_post = search_combined::post_id.is_not_null();
+    let is_comment = search_combined::comment_id.is_not_null();
+    let is_category = search_combined::category_id.is_not_null();
+    let is_person = search_combined::person_id.is_not_null();
+
     // The search term
     if let Some(search_term) = &self.search_term {
       let searcher = fuzzy_search(search_term);
@@ -243,6 +249,15 @@ impl SearchCombinedQuery {
       // TODO: implement like/dislike filtering based on user preferences.
       // The previous closure here was unused and triggered a compiler warning.
       let _ = item_creator.ne(my_id);
+    };
+
+    // Type
+    query = match self.type_.unwrap_or_default() {
+      SearchType::All => query,
+      SearchType::Posts => query.filter(is_post),
+      SearchType::Comments => query.filter(is_comment),
+      SearchType::Communities => query.filter(is_category),
+      SearchType::Users => query.filter(is_person),
     };
 
     // Filter by the time range

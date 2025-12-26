@@ -30,6 +30,7 @@ pub async fn search(
   let search_query = SearchCombinedQuery {
     search_term: data.q.clone(),
     category_id: data.category_id,
+    type_: data.r#type,
     language_id,
     creator_id: data.creator_id,
     sort: data.sort,

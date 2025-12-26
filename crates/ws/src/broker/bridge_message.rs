@@ -1,33 +1,43 @@
-use crate::api::{ChatEvent, IncomingEvent, MessageStatus};
+use crate::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::helper::{get_or_create_channel, push_to_session, send_event_to_channel};
+use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
 use crate::broker::pending_ack_handler::handle_ack_event;
 use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use crate::broker::presence_manager::{Heartbeat, OnlineJoin};
+use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave};
 use crate::impls::AnyIncomingEvent;
+use actix::prelude::*;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
 use chrono::Utc;
-use lemmy_db_schema::newtypes::ChatRoomId;
+use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
-use phoenix_channels_client::{ChannelStatus, Event, Payload};
-use serde_json;
-use std::sync::Arc;
-use std::time::Duration;
-use serde_json::json;
-use tokio::time::timeout;
+use lemmy_db_schema::source::chat_unread::ChatUnread;
 use lemmy_db_schema::utils::DbPool;
 use lemmy_db_views_chat_pending_ack::AckReminderQuery;
+use phoenix_channels_client::{ChannelStatus, Event, Payload};
+use serde_json;
+use serde_json::json;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::timeout;
+
+// Message to route arbitrary topic emissions back through PhoenixManager (so we can use issue_async safely)
+#[derive(Message, Debug, Clone)]
+#[rtype(result = "()")]
+pub struct EmitTopics {
+  pub items: Vec<(String, ChatEvent, serde_json::Value)>,
+}
 
 impl Handler<BridgeMessage> for PhoenixManager {
   type Result = ResponseFuture<()>;
 
-  fn handle(&mut self, msg: BridgeMessage, _ctx: &mut Context<Self>) -> Self::Result {
+  fn handle(&mut self, msg: BridgeMessage, ctx: &mut Context<Self>) -> Self::Result {
     // Convert wire-level IncomingEvent (payload: Value) to strongly-typed AnyIncomingEvent
     let any_event: AnyIncomingEvent = msg.any_event.clone();
 
     let socket = self.socket.clone();
     let channels = Arc::clone(&self.channels);
+    let addr = ctx.address();
 
     // Helper to issue outbound (to internal broker) using JSON payload
     let issue_outbound =
@@ -40,6 +50,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
         };
         self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
       };
+
+    // Note: arbitrary-topic emission is handled via EmitTopics message to avoid borrowing self in async tasks
 
     match any_event {
       // ---------------------- MESSAGE ----------------------
@@ -68,19 +80,27 @@ impl Handler<BridgeMessage> for PhoenixManager {
               }
             });
 
-            // --- NEW: Application-level ACK + enqueue pending ack ---
             // 1) Issue messageAck to client
-            let client_id_json = serde_json::to_value(&payload.id).unwrap_or(serde_json::Value::Null);
-            issue_outbound(ev.room_id.clone(), ChatEvent::MessageAck, serde_json::json!({
-              "clientId": client_id_json
-            }));
+            let client_id_json =
+              serde_json::to_value(&payload.id).unwrap_or(serde_json::Value::Null);
+            issue_outbound(
+              ev.room_id.clone(),
+              ChatEvent::MessageAck,
+              serde_json::json!({
+                "clientId": client_id_json
+              }),
+            );
 
             // 2) Enqueue pending ack (idempotent)
             let pool_owned = self.pool.clone();
             let room_id_for_enqueue = ev.room_id.clone();
             let sender_id_for_enqueue = payload.sender_id;
             // Parse client_id as UUID string if necessary
-            let client_id_for_enqueue_opt = payload.id.as_ref().and_then(|v| Some(v.as_str())).and_then(|s| uuid::Uuid::parse_str(s).ok());
+            let client_id_for_enqueue_opt = payload
+              .id
+              .as_ref()
+              .and_then(|v| Some(v.as_str()))
+              .and_then(|s| uuid::Uuid::parse_str(s).ok());
 
             if let Some(client_id_for_enqueue) = client_id_for_enqueue_opt {
               actix::spawn(async move {
@@ -90,9 +110,46 @@ impl Handler<BridgeMessage> for PhoenixManager {
                   room_id_for_enqueue,
                   sender_id_for_enqueue,
                   Some(client_id_for_enqueue),
-                ).await;
+                )
+                .await;
               });
             }
+
+            // 3) Bulk increment unread for all participants (except sender) and emit per-user signals
+            let pool_owned = self.pool.clone();
+            let room_id_signal = ev.room_id.clone();
+            let sender_id_signal = payload.sender_id;
+            let last_message_id = payload.id.clone();
+            let last_message_at = payload.created_at.clone();
+            actix::spawn(async move {
+              let mut db = DbPool::Pool(&pool_owned);
+              if let Ok(results) = ChatUnread::bulk_increment_for_room(
+                &mut db,
+                room_id_signal.clone(),
+                sender_id_signal,
+                last_message_id.clone(),
+                last_message_at.clone(),
+              )
+              .await
+              {
+                for (user_id, unread_count) in results.into_iter() {
+                  let payload_struct = ChatsSignalPayload {
+                    version: 1,
+                    room_id: room_id_signal.clone(),
+                    last_message_id: last_message_id.clone(),
+                    last_message_at: last_message_at.clone(),
+                    unread_count: unread_count as i64,
+                    sender_id: sender_id_signal,
+                  };
+                  let payload =
+                    serde_json::to_value(payload_struct).unwrap_or(serde_json::Value::Null);
+                  let topic = format!("user:{}:events", user_id.0);
+                  let _ = addr.do_send(EmitTopics {
+                    items: vec![(topic, ChatEvent::ChatsSignal, payload)],
+                  });
+                }
+              }
+            });
           }
         } else {
           // still notify listeners to keep flow consistent
@@ -106,7 +163,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
         let json = if let Some(m) = ev.payload.clone() {
           serde_json::to_value(&m).unwrap_or(serde_json::Value::Null)
         } else {
-          serde_json::json!({"typing": true})
+          json!({"typing": true})
         };
         issue_outbound(ev.room_id, ChatEvent::Typing, json);
         Box::pin(async move {})
@@ -150,6 +207,29 @@ impl Handler<BridgeMessage> for PhoenixManager {
         }
 
         issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
+
+        // Reset unread counter for reader and emit reset signal (unreadCount = 0)
+        if let Some(p) = ev.payload.clone() {
+          let pool_owned = self.pool.clone();
+          let topic = format!("user:{}:events", p.reader_id.0);
+          actix::spawn(async move {
+            let mut db = DbPool::Pool(&pool_owned);
+            let _ = ChatUnread::reset_unread(&mut db, p.reader_id, p.room_id.clone()).await;
+
+            let payload_struct = ChatsSignalPayload {
+              version: 1,
+              room_id: p.room_id,
+              last_message_id: None,
+              last_message_at: None,
+              unread_count: 0,
+              sender_id: None,
+            };
+            let payload = serde_json::to_value(payload_struct).unwrap_or(serde_json::Value::Null);
+            let _ = addr.do_send(EmitTopics {
+              items: vec![(topic, ChatEvent::ChatsSignal, payload)],
+            });
+          });
+        }
         Box::pin(async move {})
       }
       AnyIncomingEvent::AckConfirm(ev) => {
@@ -175,14 +255,22 @@ impl Handler<BridgeMessage> for PhoenixManager {
             let mut pool = DbPool::Pool(&pool_owned);
             match lemmy_db_views_chat_pending_ack::ack_reminder(
               &mut pool,
-              &AckReminderQuery { room_id: p.room_id, sender_id: p.sender_id, limit: Some(200) }
-            ).await {
+              &AckReminderQuery {
+                room_id: p.room_id,
+                sender_id: p.sender_id,
+                limit: Some(200),
+              },
+            )
+            .await
+            {
               Ok(reminder) => {
-                let _ = push_to_session(
-                  &topic, // assumed present in payload; otherwise derive from room_id
-                  &ChatEvent::SyncPending,
-                  json!({ "clientIds": reminder.client_ids })
-                );
+                let _ = addr.do_send(EmitTopics {
+                  items: vec![(
+                    topic,
+                    ChatEvent::SyncPending,
+                    json!({ "clientIds": reminder.client_ids }),
+                  )],
+                });
               }
               Err(e) => {
                 tracing::error!("ack_reminder failed: {}", e);
@@ -190,34 +278,6 @@ impl Handler<BridgeMessage> for PhoenixManager {
             }
           });
         }
-        Box::pin(async move {})
-      }
-      AnyIncomingEvent::ReadUpTo(ev) => {
-        let mut json = ev
-          .payload
-          .as_ref()
-          .map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null))
-          .unwrap_or(serde_json::Value::Null);
-
-        let mut this = self.clone();
-        let room_id_clone = ev.room_id.clone();
-        let payload_clone = ev.payload.clone();
-        let read_at = Utc::now();
-
-        actix::spawn(async move {
-          if let Err(e) = this.handle_read_event(room_id_clone, payload_clone, Some(read_at)) {
-            tracing::error!("Failed to handle read up to event: {}", e);
-          }
-        });
-        // Add timestamp to JSON response
-        if let Some(obj) = json.as_object_mut() {
-          obj.insert(
-            "updatedAt".to_string(),
-            serde_json::Value::String(read_at.to_rfc3339()),
-          );
-        }
-
-        issue_outbound(ev.room_id, ChatEvent::ReadUpTo, json); // now safe to use original
         Box::pin(async move {})
       }
 
@@ -290,12 +350,42 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::ActiveRooms(_ev) => Box::pin(async move {
         tracing::debug!("ActiveRooms");
       }),
-      AnyIncomingEvent::Leave(_ev) => Box::pin(async move {
-        tracing::debug!("Leave");
-      }),
+      AnyIncomingEvent::Leave(ev) => {
+        let this = self.clone();
+        Box::pin(async move {
+          tracing::debug!("Leave");
+          let _ = this
+            .presence
+            .send(OnlineLeave {
+              room_id: ev.room_id,
+              local_user_id: LocalUserId(0), // we cannot infer sender from payload-less leave; rely on timeout
+              left_at: Utc::now(),
+            })
+            .await;
+        })
+      }
 
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
-      _ => Box::pin(async move {})
+      _ => Box::pin(async move {}),
     }
+  }
+}
+
+impl Handler<EmitTopics> for PhoenixManager {
+  type Result = ResponseFuture<()>;
+
+  fn handle(&mut self, msg: EmitTopics, _ctx: &mut Context<Self>) -> Self::Result {
+    for (topic, event, payload) in msg.items.into_iter() {
+      let room_id: ChatRoomId =
+        ChatRoomId::from_channel_name(topic.as_str()).unwrap_or(ChatRoomId(topic.clone()));
+      let out_event = IncomingEvent {
+        room_id,
+        event: event.clone(),
+        topic: topic.clone(),
+        payload,
+      };
+      self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
+    }
+    Box::pin(async move {})
   }
 }

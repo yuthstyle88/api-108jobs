@@ -742,6 +742,12 @@ pub struct SkillId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct PaginationCursor(pub String);
 
+pub enum DecodedCursor {
+  I32(i32),
+  I64(i64),
+  Composite(Vec<(char, i32)>),
+}
+
 #[cfg(feature = "full")]
 #[cfg(feature = "full")]
 impl PaginationCursor {
@@ -815,6 +821,92 @@ impl PaginationCursor {
         Ok((high << 32) | low)
       }
       _ => Err(FastJobErrorType::CouldntParsePaginationToken.into()),
+    }
+  }
+
+  /* ───────── i32 ───────── */
+  pub fn v2_i32(id: i32) -> Self {
+    Self(format!("v2:I:{:x}", id))
+  }
+
+  /* ───────── i64 ───────── */
+  pub fn v2_i64(id: i64) -> Self {
+    let high = (id >> 32) as u32;
+    let low = id as u32;
+    Self(format!("v2:L:{:x}:{:x}", high, low))
+  }
+
+  /* ───────── composite ───────── */
+  pub fn v2_composite(parts: &[(char, i32)]) -> Self {
+    let encoded = parts
+        .iter()
+        .map(|(p, id)| format!("{p}{:x}", id))
+        .collect::<Vec<_>>()
+        .join(",");
+    Self(format!("v2:C:{encoded}"))
+  }
+
+  pub fn decode(&self) -> FastJobResult<DecodedCursor> {
+    if !self.0.starts_with("v2:") {
+      return self.decode_legacy();
+    }
+
+    let payload = &self.0[3..];
+    let mut it = payload.split(':');
+
+    match it.next() {
+      Some("I") => {
+        let id = i32::from_str_radix(
+          it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
+          16,
+        )?;
+        Ok(DecodedCursor::I32(id))
+      }
+
+      Some("L") => {
+        let high = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
+        let low = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
+        Ok(DecodedCursor::I64((high << 32) | low))
+      }
+
+      Some("C") => {
+        let parts = it
+            .next()
+            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
+            .split(',')
+            .map(|s| {
+              let (p, rest) = s.split_at(1);
+              let id = i32::from_str_radix(rest, 16)?;
+              Ok((p.chars().next().unwrap(), id))
+            })
+            .collect::<FastJobResult<Vec<_>>>()?;
+
+        Ok(DecodedCursor::Composite(parts))
+      }
+
+      _ => Err(FastJobErrorType::CouldntParsePaginationToken.into()),
+    }
+  }
+
+  fn decode_legacy(&self) -> FastJobResult<DecodedCursor> {
+    let parts = self
+        .0
+        .split('-')
+        .map(|segment| {
+          let (p, id) = segment.split_at(1);
+          let id = i32::from_str_radix(id, 16)?;
+          Ok((p.chars().next().unwrap(), id))
+        })
+        .collect::<FastJobResult<Vec<_>>>()?;
+
+    if parts.len() == 1 {
+      Ok(DecodedCursor::I32(parts[0].1))
+    } else if parts.len() == 2 {
+      let high = parts[0].1 as i64;
+      let low = parts[1].1 as i64;
+      Ok(DecodedCursor::I64((high << 32) | low))
+    } else {
+      Ok(DecodedCursor::Composite(parts))
     }
   }
 }

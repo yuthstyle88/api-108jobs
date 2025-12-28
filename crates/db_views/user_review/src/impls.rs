@@ -8,6 +8,7 @@ use lemmy_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
+use lemmy_db_schema::newtypes::DecodedCursor;
 use lemmy_db_schema_file::schema::{person, user_review, workflow};
 use lemmy_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -15,14 +16,21 @@ impl PaginationCursorBuilder for UserReviewView {
   type CursorData = UserReview;
 
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('R', self.review.id.0)
+    PaginationCursor::v2_i32(self.review.id.0)
   }
 
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
-    let id = cursor.first_id()?;
+    let decoded = cursor.decode()?;
+
+    let id = match decoded {
+      DecodedCursor::I32(id) => id,
+      DecodedCursor::I64(id) => id as i32,
+      DecodedCursor::Composite(parts) => parts[0].1,
+    };
+
     UserReview::read(pool, UserReviewId(id)).await
   }
 }

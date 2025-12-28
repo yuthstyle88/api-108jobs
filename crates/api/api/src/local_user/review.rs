@@ -67,18 +67,13 @@ pub async fn list_user_reviews(
   }
   let lim = Some(lim);
 
-  // If a cursor exists and direction not specified, default to paging backward (older)
-  let effective_page_back = match (cursor_data.as_ref(), data.page_back) {
-    (Some(_), None) => Some(true),
-    _ => data.page_back,
-  };
 
   let results = UserReviewView::list_for_user(
     &mut context.pool(),
     data.profile_id,
     lim,
     cursor_data,
-    effective_page_back,
+    data.page_back,
   )
   .await?;
 

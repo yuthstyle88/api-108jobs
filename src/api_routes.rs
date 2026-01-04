@@ -139,9 +139,7 @@ use lemmy_routes::images::{
 use lemmy_routes::payments::create_qrcode::create_qrcode;
 use lemmy_routes::payments::inquire::inquire_qrcode;
 use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{
-  get_history, get_last_read, get_peer_status, get_unread_snapshot, phoenix_ws,
-};
+use lemmy_ws::server::handler::{get_history, get_last_read, get_peer_status, get_unread_snapshot, phoenix_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg

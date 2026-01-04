@@ -1,5 +1,5 @@
-use crate::broker::helper::{ensure_room_membership, list_chat_messages};
-use crate::broker::phoenix_manager::{FetchHistoryDirect, PhoenixManager};
+use crate::persistence::{ensure_room_membership, list_chat_messages};
+use crate::broker::manager::{FetchHistoryDirect, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
 use lemmy_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
 use lemmy_db_schema::utils::DbPool;

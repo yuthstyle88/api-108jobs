@@ -161,4 +161,14 @@ impl RedisClient {
       .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
   }
+
+  /// Get keys matching a pattern
+  pub async fn keys(&mut self, pattern: &str) -> FastJobResult<Vec<String>> {
+    let keys: Vec<String> = self
+      .connection
+      .keys(pattern)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+    Ok(keys)
+  }
 }

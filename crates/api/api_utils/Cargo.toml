@@ -39,7 +39,7 @@ lemmy_db_views_person = { workspace = true }
 lemmy_db_views_site = { workspace = true }
 lemmy_db_views_comment = { workspace = true }
 lemmy_db_views_post = { workspace = true }
-lemmy_db_views_wallet = { workspace = true }
+lemmy_db_views_wallet = { workspace = true, features = ["full"] }
 anyhow = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

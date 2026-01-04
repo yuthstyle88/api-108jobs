@@ -1,5 +1,5 @@
-use crate::broker::helper::get_last_read;
-use crate::broker::phoenix_manager::{GetLastRead, PhoenixManager};
+use crate::persistence::get_last_read;
+use crate::broker::manager::{GetLastRead, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
 use lemmy_db_views_chat::api::LastReadResponse;
 use lemmy_utils::error::FastJobResult;

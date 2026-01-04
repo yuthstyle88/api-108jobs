@@ -1,4 +1,4 @@
-use crate::broker::phoenix_manager::PhoenixManager;
+use crate::broker::manager::PhoenixManager;
 use actix::{Context, Handler, Message};
 use phoenix_channels_client::Socket;
 use std::sync::Arc;

@@ -38,13 +38,14 @@ use lemmy_utils::{
 use std::time::Duration;
 
 use lemmy_routes::utils::scheduled_tasks::setup;
-use lemmy_ws::broker::{phoenix_manager::PhoenixManager, presence_manager::PresenceManager};
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use lemmy_ws::broker::manager::PhoenixManager;
+use lemmy_ws::presence::PresenceManager;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;

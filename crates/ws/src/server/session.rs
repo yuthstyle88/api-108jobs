@@ -1,25 +1,32 @@
-use crate::bridge_message::OutboundMessage;
-use crate::broker::helper::{is_base64_like, parse_phx, phx_push, phx_reply};
-use crate::impls::AnyIncomingEvent;
-use crate::bridge_message::BridgeMessage;
-use actix::prelude::*;
+use actix::{Actor, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use lemmy_utils::crypto;
+use chrono::Utc;
 use serde_json::Value;
-use crate::api::ChatEvent;
+use crate::bridge_message::{BridgeMessage, GlobalOffline, GlobalOnline, OutboundMessage};
+use crate::protocol::phx_helper::{is_base64_like, parse_phx, phx_push, phx_reply};
+use crate::protocol::impls::AnyIncomingEvent;
+use crate::protocol::api::{ChatEvent, IncomingEvent};
+use uuid::Uuid;
+use lemmy_db_schema::newtypes::LocalUserId;
+use lemmy_utils::crypto;
 
 // ===== actor =====
 pub struct PhoenixSession {
   pub(crate) shared_key: Option<String>,
+  pub(crate) local_user_id: Option<LocalUserId>,
+  pub(crate) connection_id: String,
 }
 
 impl PhoenixSession {
   pub fn new(
     shared_key: Option<String>,
+    local_user_id: Option<LocalUserId>,
   ) -> Self {
     Self {
       shared_key,
+      local_user_id,
+      connection_id: Uuid::new_v4().to_string(),
     }
   }
 
@@ -54,6 +61,45 @@ impl Actor for PhoenixSession {
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.subscribe_system_sync::<OutboundMessage>(ctx);
+
+    // Emit GlobalOnline if user is authenticated
+    if let Some(uid) = self.local_user_id {
+        let ev = GlobalOnline {
+            local_user_id: uid,
+            connection_id: self.connection_id.clone(),
+            at: Utc::now(),
+        };
+        let bridge_msg = BridgeMessage {
+            any_event: AnyIncomingEvent::GlobalOnline(ev),
+            incoming_event: IncomingEvent {
+                event: ChatEvent::Unknown, // Placeholder
+                room_id: lemmy_db_schema::newtypes::ChatRoomId("global".to_string()),
+                topic: "global".to_string(),
+                payload: serde_json::Value::Null,
+            }
+        };
+        self.issue_async::<SystemBroker, _>(bridge_msg);
+    }
+  }
+
+  fn stopped(&mut self, _ctx: &mut Self::Context) {
+      // Emit GlobalOffline if user is authenticated
+      if let Some(uid) = self.local_user_id {
+          let ev = GlobalOffline {
+              local_user_id: uid,
+              connection_id: self.connection_id.clone(),
+          };
+          let bridge_msg = BridgeMessage {
+              any_event: AnyIncomingEvent::GlobalOffline(ev),
+              incoming_event: IncomingEvent {
+                  event: ChatEvent::Unknown, // Placeholder
+                  room_id: lemmy_db_schema::newtypes::ChatRoomId("global".to_string()),
+                  topic: "global".to_string(),
+                  payload: serde_json::Value::Null,
+              }
+          };
+          self.issue_async::<SystemBroker, _>(bridge_msg);
+      }
   }
 }
 
@@ -104,7 +150,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
           }
 
           let any_event: AnyIncomingEvent = AnyIncomingEvent::from(incoming.clone());
-          let bridge_msg = BridgeMessage { any_event, incoming_event: incoming.clone() };
+          
+          // Inject connection_id into Heartbeat if applicable
+          let any_event = match any_event {
+              AnyIncomingEvent::Heartbeat(mut h) => {
+                  h.payload = h.payload.map(|mut p| {
+                      p.connection_id = self.connection_id.clone();
+                      p
+                  });
+                  AnyIncomingEvent::Heartbeat(h)
+              },
+              other => other,
+          };
+
+          let bridge_msg = match any_event {
+              AnyIncomingEvent::GlobalOnline(go) => BridgeMessage { 
+                  any_event: AnyIncomingEvent::GlobalOnline(go),
+                  incoming_event: incoming.clone() 
+              },
+              AnyIncomingEvent::GlobalOffline(go) => BridgeMessage { 
+                  any_event: AnyIncomingEvent::GlobalOffline(go),
+                  incoming_event: incoming.clone() 
+              },
+              _ => BridgeMessage { any_event, incoming_event: incoming.clone() }
+          };
+
           self.issue_async::<SystemBroker, _>(bridge_msg);
           ctx.text(phx_reply(&jr, &mr, &incoming.topic, "ok", reply));
         }

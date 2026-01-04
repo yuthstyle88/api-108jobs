@@ -1,4 +1,4 @@
-use crate::api::{ChatEvent, GenericIncomingEvent, IncomingEvent, ReadPayload, StoreChatMessage};
+use crate::protocol::api::{ChatEvent, GenericIncomingEvent, IncomingEvent, ReadPayload, StoreChatMessage};
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use lemmy_db_schema::{
@@ -13,8 +13,8 @@ use lemmy_db_views_chat::api::UnreadSnapshotItem;
 
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::connect_now::ConnectNow;
-use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
-use crate::broker::presence_manager::{IsUserOnline, PresenceManager};
+use crate::protocol::phx_helper::{get_or_create_channel, send_event_to_channel};
+use crate::presence::{IsUserOnline, PresenceManager};
 use chrono::{DateTime, Utc};
 use lemmy_api_utils::utils::flush_room_and_update_last_message;
 use lemmy_utils::error::{FastJobError, FastJobErrorType, FastJobResult};

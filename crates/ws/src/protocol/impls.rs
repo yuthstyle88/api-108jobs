@@ -1,4 +1,5 @@
-use crate::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
+use crate::protocol::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
+use crate::bridge_message::{GlobalOffline, GlobalOnline};
 use lemmy_utils::error::FastJobError;
 
 use serde::{Deserialize, Serialize};
@@ -120,6 +121,9 @@ pub enum AnyIncomingEvent {
 
   #[serde(rename = "chat:update")]
   Update(GenericIncomingEvent<MessageModel>),
+
+  GlobalOnline(GlobalOnline),
+  GlobalOffline(GlobalOffline),
 
   // --- Fallback ---
   #[serde(other)]

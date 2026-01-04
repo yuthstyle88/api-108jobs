@@ -1,4 +1,4 @@
-use crate::broker::phoenix_manager::{GetUnreadSnapshot, PhoenixManager};
+use crate::broker::manager::{GetUnreadSnapshot, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
 use lemmy_db_schema::source::chat_unread::ChatUnread;
 use lemmy_db_schema::utils::DbPool;

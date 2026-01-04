@@ -3,7 +3,7 @@
 //! This module exposes a single entry point `handle_ack_event(...)` which returns
 //! a `FastJobResult<()>` for the broker/actor to await or spawn.
 
-use crate::impls::AnyIncomingEvent;
+use crate::protocol::impls::AnyIncomingEvent;
 use lemmy_db_schema::utils::DbPool; // use DbPool to match db_views function signature
 use lemmy_db_views_chat_pending_ack::{AckConfirmRequest, AckConfirmResponse};
 use lemmy_utils::error::FastJobResult;

@@ -79,7 +79,10 @@ pub struct JoinPayload {
 #[serde(rename_all = "camelCase")]
 pub struct HeartbeatPayload {
     pub sender_id: LocalUserId,
-}#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+    #[serde(default)]
+    pub connection_id: String,
+}
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AckConfirmPayload {
     pub sender_id: LocalUserId,

@@ -1,10 +1,11 @@
-use crate::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus};
+use crate::protocol::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus};
 use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::helper::{get_or_create_channel, send_event_to_channel};
-use crate::broker::pending_ack_handler::handle_ack_event;
-use crate::broker::phoenix_manager::{PhoenixManager, JOIN_TIMEOUT_SECS};
-use crate::broker::presence_manager::{Heartbeat, OnlineJoin, OnlineLeave};
-use crate::impls::AnyIncomingEvent;
+use crate::protocol::phx_helper::{get_or_create_channel, send_event_to_channel};
+use crate::ack::handle_ack_event;
+use crate::broker::manager::PhoenixManager;
+use crate::broker::JOIN_TIMEOUT_SECS;
+use crate::presence::{Heartbeat, OnlineJoin, OnlineLeave};
+use crate::protocol::impls::AnyIncomingEvent;
 use actix::prelude::*;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
@@ -332,6 +333,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
       AnyIncomingEvent::Heartbeat(ev) => {
         if let Some(payload) = ev.payload.clone() {
           let sender_id = payload.sender_id;
+          let connection_id = payload.connection_id;
           let this = self.clone();
           Box::pin(async move {
             tracing::debug!("Heartbeat");
@@ -339,6 +341,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
               .presence
               .send(Heartbeat {
                 local_user_id: sender_id,
+                connection_id,
                 client_time: None,
               })
               .await;
@@ -365,6 +368,18 @@ impl Handler<BridgeMessage> for PhoenixManager {
         })
       }
 
+      AnyIncomingEvent::GlobalOnline(ev) => {
+          let this = self.clone();
+          Box::pin(async move {
+              let _ = this.presence.send(ev).await;
+          })
+      }
+      AnyIncomingEvent::GlobalOffline(ev) => {
+          let this = self.clone();
+          Box::pin(async move {
+              let _ = this.presence.send(ev).await;
+          })
+      }
       AnyIncomingEvent::Unknown => Box::pin(async move {}),
       _ => Box::pin(async move {}),
     }

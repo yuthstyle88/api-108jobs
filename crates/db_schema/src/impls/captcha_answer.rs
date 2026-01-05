@@ -4,8 +4,8 @@ use crate::{
 };
 use diesel::{delete, dsl::exists, insert_into, select, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::captcha_answer::dsl::{answer, captcha_answer};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::captcha_answer::dsl::{answer, captcha_answer};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CaptchaAnswer {
   pub async fn insert(pool: &mut DbPool<'_>, captcha: &CaptchaAnswerForm) -> FastJobResult<Self> {
@@ -50,7 +50,7 @@ mod tests {
     source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm, CheckCaptchaAnswer},
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use serial_test::serial;
 
   #[tokio::test]

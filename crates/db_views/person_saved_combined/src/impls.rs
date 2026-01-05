@@ -15,7 +15,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_saved::{person_saved_combined_keys as key, PersonSavedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
@@ -42,8 +42,8 @@ use lemmy_db_schema::{
   },
   PersonContentType,
 };
-use lemmy_db_schema_file::schema::{comment, person, person_saved_combined, post};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{comment, person, person_saved_combined, post};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 #[derive(Default)]
 pub struct PersonSavedCombinedQuery {
@@ -257,7 +257,7 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonSavedCombinedQuery, LocalUserView, PersonSavedCombinedView};
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     source::{
         comment::{Comment, CommentActions, CommentInsertForm, CommentSavedForm},
         category::{category, CategoryInsertForm},
@@ -269,10 +269,10 @@ mod tests {
     traits::{Crud, Saveable},
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,

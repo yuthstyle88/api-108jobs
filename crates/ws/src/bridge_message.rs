@@ -3,7 +3,7 @@ use actix::Message;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use lemmy_db_schema::newtypes::LocalUserId;
+use app_108jobs_db_schema::newtypes::LocalUserId;
 use crate::protocol::impls::AnyIncomingEvent;
 
 #[derive(Message, Clone, Serialize, Deserialize)]

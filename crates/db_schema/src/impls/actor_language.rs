@@ -24,14 +24,14 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   category_language,
   local_site,
   local_user_language,
   site,
   site_language,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use tokio::sync::OnceCell;
 
 pub const UNDETERMINED_ID: LanguageId = LanguageId(0);
@@ -192,7 +192,7 @@ impl CategoryLanguage {
     for_language_id: LanguageId,
     for_category_id: CategoryId,
   ) -> FastJobResult<()> {
-    use lemmy_db_schema_file::schema::category_language::dsl::category_language;
+    use app_108jobs_db_schema_file::schema::category_language::dsl::category_language;
     let conn = &mut get_conn(pool).await?;
 
     let is_allowed = select(exists(
@@ -216,7 +216,7 @@ impl CategoryLanguage {
     conn: &mut AsyncPgConnection,
     for_instance_id: InstanceId,
   ) -> FastJobResult<()> {
-    use lemmy_db_schema_file::schema::{
+    use app_108jobs_db_schema_file::schema::{
       category::dsl as c,
       category_language::dsl as cl,
       site_language::dsl as sl,
@@ -242,7 +242,7 @@ impl CategoryLanguage {
     pool: &mut DbPool<'_>,
     for_category_id: CategoryId,
   ) -> FastJobResult<Vec<LanguageId>> {
-    use lemmy_db_schema_file::schema::category_language::dsl::{
+    use app_108jobs_db_schema_file::schema::category_language::dsl::{
       category_id,
       category_language,
       language_id,
@@ -317,7 +317,7 @@ pub async fn validate_post_language(
   category_id: CategoryId,
   local_user_id: LocalUserId,
 ) -> FastJobResult<LanguageId> {
-  use lemmy_db_schema_file::schema::{
+  use app_108jobs_db_schema_file::schema::{
     category_language::dsl as cl,
     local_user_language::dsl as ul,
   };
@@ -375,7 +375,7 @@ async fn convert_read_languages(
   static ALL_LANGUAGES_COUNT: OnceCell<i64> = OnceCell::const_new();
   let count: usize = (*ALL_LANGUAGES_COUNT
     .get_or_init(|| async {
-      use lemmy_db_schema_file::schema::language::dsl::{id, language};
+      use app_108jobs_db_schema_file::schema::language::dsl::{id, language};
       let count: i64 = language
         .select(count(id))
         .first(conn)
@@ -447,7 +447,7 @@ mod tests {
   #[tokio::test]
   #[serial]
   async fn test_convert_read_languages() -> FastJobResult<()> {
-    use lemmy_db_schema_file::schema::language::dsl::{id, language};
+    use app_108jobs_db_schema_file::schema::language::dsl::{id, language};
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 

@@ -1,7 +1,7 @@
 
 use crate::newtypes::{CoinId, LocalSiteId, SiteId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::{
+use app_108jobs_db_schema_file::enums::{
   CommentSortType,
   ListingType,
   PostListingMode,
@@ -9,7 +9,7 @@ use lemmy_db_schema_file::enums::{
   RegistrationMode,
 };
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::local_site;
+use app_108jobs_db_schema_file::schema::local_site;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

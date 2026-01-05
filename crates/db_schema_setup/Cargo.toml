@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_schema_setup"
+name = "app_108jobs_db_schema_setup"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,7 +10,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_db_schema_setup"
+name = "app_108jobs_db_schema_setup"
 path = "src/lib.rs"
 doctest = false
 
@@ -34,5 +34,5 @@ itertools = { workspace = true }
 pathfinding = "4.14.0"
 unified-diff = { workspace = true }
 diesel_ltree = { workspace = true }
-lemmy_db_schema_file = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema_file = { workspace = true, features = ["full"] }
+app_108jobs_utils = { workspace = true, features = ["full"] }

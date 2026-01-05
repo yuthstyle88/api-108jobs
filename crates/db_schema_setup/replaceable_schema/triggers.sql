@@ -436,7 +436,7 @@ CALL r.create_person_content_combined_trigger ('comment');
 -- This one is a little different, because it triggers using x_actions.saved,
 -- Rather than any row insert
 -- TODO a hack because local is not currently on the post_view table
--- https://github.com/LemmyNet/lemmy/pull/5616#discussion_r2064219628
+-- https://github.com/app_108jobsNet/app_108jobs/pull/5616#discussion_r2064219628
 CREATE PROCEDURE r.create_person_saved_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -483,7 +483,7 @@ CALL r.create_person_saved_combined_trigger ('comment');
 -- This one is a little different, because it triggers using x_actions.liked,
 -- Rather than any row insert
 -- TODO a hack because local is not currently on the post_view table
--- https://github.com/LemmyNet/lemmy/pull/5616#discussion_r2064219628
+-- https://github.com/app_108jobsNet/app_108jobs/pull/5616#discussion_r2064219628
 CREATE PROCEDURE r.create_person_liked_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$

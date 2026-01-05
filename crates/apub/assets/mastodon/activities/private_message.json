@@ -18,22 +18,22 @@
   "published": "2023-08-08T14:29:04Z",
   "url": "https://mastodon.world/@nutomic/110854468010322301",
   "attributedTo": "https://mastodon.world/users/nutomic",
-  "to": ["https://ds9.lemmy.ml/u/nutomic"],
+  "to": ["https://ds9.app_108jobs.ml/u/nutomic"],
   "cc": [],
   "sensitive": false,
   "atomUri": "https://mastodon.world/users/nutomic/statuses/110854468010322301",
   "inReplyToAtomUri": "https://mastodon.world/users/nutomic/statuses/110854464248188528",
   "conversation": "tag:mastodon.world,2023-08-08:objectId=121377096:objectType=Conversation",
-  "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://ds9.lemmy.ml/u/nutomic\" class=\"u-url mention\">@<span>nutomic@ds9.lemmy.ml</span></a></span> 444</p>",
+  "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://ds9.app_108jobs.ml/u/nutomic\" class=\"u-url mention\">@<span>nutomic@ds9.app_108jobs.ml</span></a></span> 444</p>",
   "contentMap": {
-    "es": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://ds9.lemmy.ml/u/nutomic\" class=\"u-url mention\">@<span>nutomic@ds9.lemmy.ml</span></a></span> 444</p>"
+    "es": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://ds9.app_108jobs.ml/u/nutomic\" class=\"u-url mention\">@<span>nutomic@ds9.app_108jobs.ml</span></a></span> 444</p>"
   },
   "attachment": [],
   "tag": [
     {
       "type": "Mention",
-      "href": "https://ds9.lemmy.ml/u/nutomic",
-      "name": "@nutomic@ds9.lemmy.ml"
+      "href": "https://ds9.app_108jobs.ml/u/nutomic",
+      "name": "@nutomic@ds9.app_108jobs.ml"
     }
   ],
   "replies": {

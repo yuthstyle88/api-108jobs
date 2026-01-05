@@ -1,23 +1,23 @@
 {
   "type": "OrderedCollection",
-  "id": "https://ds9.lemmy.ml/c/testcom/outbox",
+  "id": "https://ds9.app_108jobs.ml/c/testcom/outbox",
   "totalItems": 2,
   "orderedItems": [
     {
-      "actor": "https://ds9.lemmy.ml/c/testcom",
+      "actor": "https://ds9.app_108jobs.ml/c/testcom",
       "to": ["https://www.w3.org/ns/activitystreams#Public"],
       "object": {
-        "actor": "https://ds9.lemmy.ml/u/nutomic",
+        "actor": "https://ds9.app_108jobs.ml/u/nutomic",
         "to": ["https://www.w3.org/ns/activitystreams#Public"],
-        "cc": ["https://ds9.lemmy.ml/c/testcom"],
+        "cc": ["https://ds9.app_108jobs.ml/c/testcom"],
         "type": "Create",
-        "id": "http://ds9.lemmy.ml/activities/create/eee6a57a-622f-464d-b560-73ae1fcd3ddf",
+        "id": "http://ds9.app_108jobs.ml/activities/create/eee6a57a-622f-464d-b560-73ae1fcd3ddf",
         "object": {
           "type": "Page",
-          "id": "https://ds9.lemmy.ml/post/2328",
-          "attributedTo": "https://ds9.lemmy.ml/u/nutomic",
+          "id": "https://ds9.app_108jobs.ml/post/2328",
+          "attributedTo": "https://ds9.app_108jobs.ml/u/nutomic",
           "to": [
-            "https://ds9.lemmy.ml/c/testcom",
+            "https://ds9.app_108jobs.ml/c/testcom",
             "https://www.w3.org/ns/activitystreams#Public"
           ],
           "name": "another outbox test",
@@ -27,25 +27,25 @@
           "published": "2021-11-18T17:19:45.895163Z"
         }
       },
-      "cc": ["https://ds9.lemmy.ml/c/testcom/followers"],
+      "cc": ["https://ds9.app_108jobs.ml/c/testcom/followers"],
       "type": "Announce",
-      "id": "https://ds9.lemmy.ml/activities/announce/b204fe9f-b13d-4af2-9d22-239ac2d892e6"
+      "id": "https://ds9.app_108jobs.ml/activities/announce/b204fe9f-b13d-4af2-9d22-239ac2d892e6"
     },
     {
-      "actor": "https://ds9.lemmy.ml/c/testcom",
+      "actor": "https://ds9.app_108jobs.ml/c/testcom",
       "to": ["https://www.w3.org/ns/activitystreams#Public"],
       "object": {
-        "actor": "https://ds9.lemmy.ml/u/nutomic",
+        "actor": "https://ds9.app_108jobs.ml/u/nutomic",
         "to": ["https://www.w3.org/ns/activitystreams#Public"],
-        "cc": ["https://ds9.lemmy.ml/c/testcom"],
+        "cc": ["https://ds9.app_108jobs.ml/c/testcom"],
         "type": "Create",
-        "id": "http://ds9.lemmy.ml/activities/create/eee6a57a-622f-464d-b560-73ae1fcd3ddf",
+        "id": "http://ds9.app_108jobs.ml/activities/create/eee6a57a-622f-464d-b560-73ae1fcd3ddf",
         "object": {
           "type": "Page",
-          "id": "https://ds9.lemmy.ml/post/2327",
-          "attributedTo": "https://ds9.lemmy.ml/u/nutomic",
+          "id": "https://ds9.app_108jobs.ml/post/2327",
+          "attributedTo": "https://ds9.app_108jobs.ml/u/nutomic",
           "to": [
-            "https://ds9.lemmy.ml/c/testcom",
+            "https://ds9.app_108jobs.ml/c/testcom",
             "https://www.w3.org/ns/activitystreams#Public"
           ],
           "name": "outbox test",
@@ -55,9 +55,9 @@
           "published": "2021-11-18T17:19:05.763109Z"
         }
       },
-      "cc": ["https://ds9.lemmy.ml/c/testcom/followers"],
+      "cc": ["https://ds9.app_108jobs.ml/c/testcom/followers"],
       "type": "Announce",
-      "id": "https://ds9.lemmy.ml/activities/announce/c6c960ce-c8d8-4231-925e-3ba367468f18"
+      "id": "https://ds9.app_108jobs.ml/activities/announce/c6c960ce-c8d8-4231-925e-3ba367468f18"
     }
   ]
 }

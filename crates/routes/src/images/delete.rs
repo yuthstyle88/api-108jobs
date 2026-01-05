@@ -1,11 +1,11 @@
 use super::utils::delete_old_image;
 use actix_web::web::*;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   request::{delete_image_alias, purge_image_from_pictrs},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     category::{Category, CategoryUpdateForm},
     images::LocalImage,
@@ -14,11 +14,11 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_category::api::CategoryIdQuery;
-use lemmy_db_views_local_image::api::DeleteImageParams;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_category::api::CategoryIdQuery;
+use app_108jobs_db_views_local_image::api::DeleteImageParams;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_site_icon(
   context: Data<FastJobContext>,

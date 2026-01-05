@@ -33,12 +33,12 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::{CategoryVisibility, ListingType},
   schema::{comment, category, category_actions, instance, post},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::{
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::{
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_CATEGORY,
 };
@@ -518,7 +518,7 @@ mod tests {
     utils::{build_db_pool_for_tests, RANK_DEFAULT},
   };
   use diesel_ltree::Ltree;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

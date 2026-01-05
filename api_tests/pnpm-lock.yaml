@@ -35,9 +35,9 @@ importers:
       joi:
         specifier: ^17.13.3
         version: 17.13.3
-      lemmy-js-client:
-        specifier: file:./lemmy-js-client
-        version: file:lemmy-js-client
+      app_108jobs-js-client:
+        specifier: file:./app_108jobs-js-client
+        version: file:app_108jobs-js-client
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -1594,8 +1594,8 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  lemmy-js-client@file:lemmy-js-client:
-    resolution: {directory: lemmy-js-client, type: directory}
+  app_108jobs-js-client@file:app_108jobs-js-client:
+    resolution: {directory: app_108jobs-js-client, type: directory}
 
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
@@ -4404,7 +4404,7 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  lemmy-js-client@file:lemmy-js-client:
+  app_108jobs-js-client@file:app_108jobs-js-client:
     dependencies:
       '@tsoa/runtime': 6.6.0
     transitivePeerDependencies:

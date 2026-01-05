@@ -8,8 +8,8 @@ use crate::protocol::phx_helper::{is_base64_like, parse_phx, phx_push, phx_reply
 use crate::protocol::impls::AnyIncomingEvent;
 use crate::protocol::api::{ChatEvent, IncomingEvent};
 use uuid::Uuid;
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_utils::crypto;
+use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_utils::crypto;
 
 // ===== actor =====
 pub struct PhoenixSession {
@@ -73,9 +73,9 @@ impl Actor for PhoenixSession {
             any_event: AnyIncomingEvent::GlobalOnline(ev),
             incoming_event: IncomingEvent {
                 event: ChatEvent::Unknown, // Placeholder
-                room_id: lemmy_db_schema::newtypes::ChatRoomId("global".to_string()),
+                room_id: app_108jobs_db_schema::newtypes::ChatRoomId("global".to_string()),
                 topic: "global".to_string(),
-                payload: serde_json::Value::Null,
+                payload: Value::Null,
             }
         };
         self.issue_async::<SystemBroker, _>(bridge_msg);
@@ -93,7 +93,7 @@ impl Actor for PhoenixSession {
               any_event: AnyIncomingEvent::GlobalOffline(ev),
               incoming_event: IncomingEvent {
                   event: ChatEvent::Unknown, // Placeholder
-                  room_id: lemmy_db_schema::newtypes::ChatRoomId("global".to_string()),
+                  room_id: app_108jobs_db_schema::newtypes::ChatRoomId("global".to_string()),
                   topic: "global".to_string(),
                   payload: serde_json::Value::Null,
               }

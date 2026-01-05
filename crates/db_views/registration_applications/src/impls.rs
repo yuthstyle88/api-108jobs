@@ -5,19 +5,19 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::sensitive::SensitiveString;
-use lemmy_db_schema::utils::get_required_sensitive;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db_schema::utils::get_required_sensitive;
+use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
   source::registration_application::RegistrationApplication,
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
-use lemmy_db_schema_file::schema::{local_user, person, registration_application};
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::utils::helper::rand_number5;
-use lemmy_utils::utils::validation::is_valid_email;
+use app_108jobs_db_schema_file::schema::{local_user, person, registration_application};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::utils::helper::rand_number5;
+use app_108jobs_utils::utils::validation::is_valid_email;
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;

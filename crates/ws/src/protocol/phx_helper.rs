@@ -1,7 +1,7 @@
 use crate::protocol::api::{ChatEvent, IncomingEvent};
 use crate::broker::{CONNECT_TIMEOUT_SECS, JOIN_TIMEOUT_SECS};
-use lemmy_db_schema::newtypes::ChatRoomId;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_utils::error::FastJobResult;
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use serde_json::Value;
 use std::collections::HashMap;

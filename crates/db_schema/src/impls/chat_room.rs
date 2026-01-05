@@ -5,8 +5,8 @@ use crate::{
 };
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::chat_room;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::chat_room;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::newtypes::ChatRoomId;
 
 impl Crud for ChatRoom {

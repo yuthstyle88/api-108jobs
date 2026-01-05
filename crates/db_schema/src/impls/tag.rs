@@ -14,8 +14,8 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::tag;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::tag;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Tag {
   pub async fn get_by_category(

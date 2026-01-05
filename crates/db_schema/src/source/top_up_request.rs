@@ -1,12 +1,12 @@
 use crate::newtypes::{LocalUserId, TopUpRequestId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::enums::TopUpStatus;
+use app_108jobs_db_schema_file::enums::TopUpStatus;
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {i_love_jesus::CursorKeysModule, lemmy_db_schema_file::schema::top_up_requests};
+use {i_love_jesus::CursorKeysModule, app_108jobs_db_schema_file::schema::top_up_requests};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

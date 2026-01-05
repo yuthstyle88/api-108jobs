@@ -1,26 +1,26 @@
 name: "\U0001F680 Feature request"
-description: Suggest an idea for improving Lemmy
+description: Suggest an idea for improving app_108jobs
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Have a suggestion about Lemmy's UI?
-        For backend issues, use [lemmy](https://github.com/LemmyNet/lemmy)
+        Have a suggestion about app_108jobs's UI?
+        For backend issues, use [app_108jobs](https://github.com/app_108jobsNet/app_108jobs)
   - type: checkboxes
     attributes:
       label: Requirements
       description: Before you create a bug report please do the following.
       options:
-        - label: Is this a feature request? For questions or discussions use https://lemmy.ml/c/lemmy_support or the [matrix chat](https://matrix.to/#/#lemmy:matrix.org).
+        - label: Is this a feature request? For questions or discussions use https://app_108jobs.ml/c/app_108jobs_support or the [matrix chat](https://matrix.to/#/#app_108jobs:matrix.org).
           required: true
         - label: Did you check to see if this issue already exists?
           required: true
         - label: Is this only a feature request? Do not put multiple feature requests in one issue.
           required: true
-        - label: Is this a backend issue? Use the [lemmy-ui](https://github.com/LemmyNet/lemmy-ui) repo for UI / frontend issues.
+        - label: Is this a backend issue? Use the [app_108jobs-ui](https://github.com/app_108jobsNet/app_108jobs-ui) repo for UI / frontend issues.
           required: true
-        - label: Do you agree to follow the rules in our [Code of Conduct](https://join-lemmy.org/docs/code_of_conduct.html)?
+        - label: Do you agree to follow the rules in our [Code of Conduct](https://join-app_108jobs.org/docs/code_of_conduct.html)?
           required: true
   - type: textarea
     id: problem

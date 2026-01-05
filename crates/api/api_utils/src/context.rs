@@ -1,10 +1,10 @@
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::secret::Secret,
   utils::{ActualDbPool, DbPool},
 };
-use lemmy_utils::error::FastJobResult;
-use lemmy_utils::redis::RedisClient;
-use lemmy_utils::{
+use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{
   rate_limit::RateLimit,
   settings::{structs::Settings, SETTINGS},
 };

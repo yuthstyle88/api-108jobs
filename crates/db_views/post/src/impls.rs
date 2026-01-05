@@ -11,8 +11,8 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
-use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
@@ -35,17 +35,17 @@ use lemmy_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use lemmy_db_schema_file::enums::{IntendedUse, JobType};
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
+use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,
     PostSortType::{self, *},
   },
   schema::{category, category_actions, local_user_language, person, post, post_actions},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::settings::SETTINGS;
-use lemmy_utils::utils::validation::is_valid_post_title;
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::settings::SETTINGS;
+use app_108jobs_utils::utils::validation::is_valid_post_title;
 use slug::slugify;
 use tracing::debug;
 #[cfg(feature = "full")]
@@ -270,7 +270,7 @@ impl PostQuery<'_> {
     // category PostgreSQL can optimize the query to use an index on e.g. (=, >=, >=, >=) and
     // fetch only LIMIT rows but for the followed-communities query it has to query the index on
     // (IN, >=, >=, >=) which it currently can't do at all (as of PG 16). see the discussion
-    // here: https://github.com/LemmyNet/lemmy/issues/2877#issuecomment-1673597190
+    // here: https://github.com/app_108jobsNet/app_108jobs/issues/2877#issuecomment-1673597190
     //
     // the results are correct no matter which category we fetch these for, since it basically
     // covers the "worst case" of the whole page consisting of posts from one category
@@ -665,8 +665,8 @@ mod tests {
   };
   use chrono::Utc;
   use diesel_async::SimpleAsyncConnection;
-  use lemmy_db_schema::newtypes::DbUrl;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
     source::{
@@ -690,9 +690,9 @@ mod tests {
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use lemmy_db_schema_file::enums::categoryVisibility;
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_views_local_user::LocalUserView;
+  use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use std::{

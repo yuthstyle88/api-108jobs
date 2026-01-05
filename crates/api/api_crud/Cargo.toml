@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_api_crud"
+name = "app_108jobs_api_crud"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -14,24 +14,24 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-lemmy_db_views_comment = { workspace = true, features = ["full"] }
-lemmy_db_views_category = { workspace = true, features = ["full"] }
-lemmy_db_views_post = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_person = { workspace = true, features = ["full"] }
-lemmy_db_views_custom_emoji = { workspace = true, features = ["full"] }
-lemmy_db_views_registration_applications = { workspace = true, features = [
+app_108jobs_db_views_comment = { workspace = true, features = ["full"] }
+app_108jobs_db_views_category = { workspace = true, features = ["full"] }
+app_108jobs_db_views_post = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person = { workspace = true, features = ["full"] }
+app_108jobs_db_views_custom_emoji = { workspace = true, features = ["full"] }
+app_108jobs_db_views_registration_applications = { workspace = true, features = [
     "full",
 ] }
-lemmy_db_views_search_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_db_views_wallet = { workspace = true, features = ["full"] }
-lemmy_db_views_chat = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_api_utils = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_email = { workspace = true }
+app_108jobs_db_views_search_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
+app_108jobs_db_views_chat = { workspace = true, features = ["full"] }
+app_108jobs_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_api_utils = { workspace = true }
+app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_email = { workspace = true }
 bcrypt = { workspace = true }
 actix-web = { workspace = true }
 url = { workspace = true }

@@ -1,4 +1,4 @@
-use lemmy_db_schema::utils::ActualDbPool;
+use app_108jobs_db_schema::utils::ActualDbPool;
 pub mod api;
 pub mod fetcher;
 

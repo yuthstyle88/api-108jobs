@@ -11,8 +11,8 @@ use diesel::{
   IntoSql,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::password_reset_request;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::password_reset_request;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PasswordResetRequest {
   pub async fn create(
@@ -56,7 +56,7 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

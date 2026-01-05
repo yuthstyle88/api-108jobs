@@ -1,10 +1,10 @@
 use crate::persistence::{ensure_room_membership, list_chat_messages};
 use crate::broker::manager::{FetchHistoryDirect, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
-use lemmy_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
-use lemmy_db_schema::utils::DbPool;
-use lemmy_db_views_chat::api::ChatMessagesResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
+use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_views_chat::api::ChatMessagesResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 impl Handler<FetchHistoryDirect> for PhoenixManager {
   type Result = ResponseFuture<FastJobResult<ChatMessagesResponse>>;

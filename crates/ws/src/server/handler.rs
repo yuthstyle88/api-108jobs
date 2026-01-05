@@ -8,12 +8,12 @@ use actix_web::{
   Error, HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::local_user_view_from_jwt;
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::local_user_view_from_jwt;
+use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobError, FastJobErrorType};
 
 /// Direct history API: query DB without routing through chat/broker
 pub async fn get_history(

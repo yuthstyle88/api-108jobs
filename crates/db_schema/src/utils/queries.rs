@@ -14,7 +14,7 @@ use diesel::{
   BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
   PgExpressionMethods, QueryDsl,
 };
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::{CategoryFollowerState, CategoryVisibility},
   schema::{
     category, category_actions, comment, comment_actions, image_details, instance_actions,
@@ -245,14 +245,14 @@ pub fn person2_select() -> Person2AliasAllColumnsTuple {
 }
 
 type IsSubscribedType =
-  Eq<lemmy_db_schema_file::schema::category_actions::follow_state, Option<CategoryFollowerState>>;
+  Eq<app_108jobs_db_schema_file::schema::category_actions::follow_state, Option<CategoryFollowerState>>;
 
 pub fn filter_is_subscribed() -> IsSubscribedType {
   category_actions::follow_state.eq(Some(CategoryFollowerState::Accepted))
 }
 
 type IsNotUnlistedType =
-  NotEq<lemmy_db_schema_file::schema::category::visibility, CategoryVisibility>;
+  NotEq<app_108jobs_db_schema_file::schema::category::visibility, CategoryVisibility>;
 
 #[diesel::dsl::auto_type]
 pub fn filter_not_unlisted_or_is_subscribed() -> _ {

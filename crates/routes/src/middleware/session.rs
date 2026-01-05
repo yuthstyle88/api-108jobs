@@ -7,7 +7,7 @@ use actix_web::{
 };
 use core::future::Ready;
 use futures_util::future::LocalBoxFuture;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };

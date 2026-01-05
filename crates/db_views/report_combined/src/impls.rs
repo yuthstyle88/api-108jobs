@@ -17,7 +17,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     aliases::{self, creator_category_actions},
     newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
     source::combined::report::{report_combined_keys as key, ReportCombined},
@@ -25,7 +25,7 @@ use lemmy_db_schema::{
     utils::{get_conn, limit_fetch, paginate, DbPool},
     ReportType,
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   comment,
   comment_actions,
   comment_report,
@@ -40,7 +40,7 @@ use lemmy_db_schema_file::schema::{
   post_report,
   report_combined,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl ReportCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -418,7 +418,7 @@ mod tests {
   use chrono::{Days, Utc};
   use diesel::{update, ExpressionMethods, QueryDsl};
   use diesel_async::RunQueryDsl;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     assert_length,
     source::{
         comment::{Comment, CommentInsertForm},
@@ -435,11 +435,11 @@ mod tests {
     utils::{build_db_pool_for_tests, get_conn, DbPool},
     ReportType,
   };
-  use lemmy_db_schema_file::schema::report_combined;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_db_schema_file::schema::report_combined;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,

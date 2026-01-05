@@ -10,11 +10,11 @@ use actix::prelude::*;
 use actix::{Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
 use chrono::Utc;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use lemmy_db_schema::source::chat_message::ChatMessageInsertForm;
-use lemmy_db_schema::source::chat_unread::ChatUnread;
-use lemmy_db_schema::utils::DbPool;
-use lemmy_db_views_chat_pending_ack::AckReminderQuery;
+use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use app_108jobs_db_schema::source::chat_message::ChatMessageInsertForm;
+use app_108jobs_db_schema::source::chat_unread::ChatUnread;
+use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_views_chat_pending_ack::AckReminderQuery;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
 use serde_json;
 use serde_json::json;
@@ -106,7 +106,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
             if let Some(client_id_for_enqueue) = client_id_for_enqueue_opt {
               actix::spawn(async move {
                 let mut pool = DbPool::Pool(&pool_owned);
-                let _ = lemmy_db_views_chat_pending_ack::enqueue_pending(
+                let _ = app_108jobs_db_views_chat_pending_ack::enqueue_pending(
                   &mut pool,
                   room_id_for_enqueue,
                   sender_id_for_enqueue,
@@ -254,7 +254,7 @@ impl Handler<BridgeMessage> for PhoenixManager {
           let topic = ev.topic.clone();
           actix::spawn(async move {
             let mut pool = DbPool::Pool(&pool_owned);
-            match lemmy_db_views_chat_pending_ack::ack_reminder(
+            match app_108jobs_db_views_chat_pending_ack::ack_reminder(
               &mut pool,
               &AckReminderQuery {
                 room_id: p.room_id,

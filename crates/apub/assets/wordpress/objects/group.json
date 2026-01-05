@@ -7,7 +7,7 @@
       "schema": "http://schema.org#",
       "toot": "http://joinmastodon.org/ns#",
       "webfinger": "https://webfinger.net/#",
-      "lemmy": "https://join-lemmy.org/ns#",
+      "app_108jobs": "https://join-app_108jobs.org/ns#",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "PropertyValue": "schema:PropertyValue",
       "value": "schema:value",
@@ -21,10 +21,10 @@
         "@type": "@id"
       },
       "moderators": {
-        "@id": "lemmy:moderators",
+        "@id": "app_108jobs:moderators",
         "@type": "@id"
       },
-      "postingRestrictedToMods": "lemmy:postingRestrictedToMods",
+      "postingRestrictedToMods": "app_108jobs:postingRestrictedToMods",
       "discoverable": "toot:discoverable",
       "indexable": "toot:indexable",
       "resource": "webfinger:resource"

@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::{check_conflicting_like_filters, check_private_instance};
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_search_combined::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::{check_conflicting_like_filters, check_private_instance};
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_search_combined::{
   impls::SearchCombinedQuery, Search, SearchCombinedView, SearchResponse,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn search(
   data: Query<Search>,

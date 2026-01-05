@@ -1,12 +1,12 @@
 use crate::newtypes::{CategoryId, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{post, post_actions},
+  app_108jobs_db_schema_file::schema::{post, post_actions},
 };
 
 #[skip_serializing_none]

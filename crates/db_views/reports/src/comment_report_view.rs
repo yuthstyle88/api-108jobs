@@ -8,12 +8,12 @@ use diesel::{
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{CommentReportId, PersonId},
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
     comment,
     comment_actions,
     comment_report,
@@ -24,7 +24,7 @@ use lemmy_db_schema_file::schema::{
     person_actions,
     post,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl CommentReportView {
   #[diesel::dsl::auto_type(no_type_alias)]

@@ -2,7 +2,7 @@ use super::convert_published_time;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
   request::generate_post_link_metadata,
@@ -15,20 +15,20 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
-use lemmy_db_views_category::CategoryView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::EditPostRequest;
-use lemmy_db_views_post::{
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::EditPostRequest;
+use app_108jobs_db_views_post::{
   api::{EditPost, PostResponse},
   PostView,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::{
     slurs::check_slurs,

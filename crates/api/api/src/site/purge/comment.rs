@@ -1,11 +1,11 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     comment::Comment,
     local_user::LocalUser,
@@ -13,10 +13,10 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_comment::{api::PurgeComment, CommentView};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_comment::{api::PurgeComment, CommentView};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_comment(
   data: Json<PurgeComment>,

@@ -1,9 +1,9 @@
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_schema::source::top_up_request::TopUpRequest;
-use lemmy_db_schema::source::user_bank_account::BankAccount;
-use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_schema::source::withdraw_request::WithdrawRequest;
+use app_108jobs_db_schema::source::local_user::LocalUser;
+use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
+use app_108jobs_db_schema::source::user_bank_account::BankAccount;
+use app_108jobs_db_schema::source::wallet::Wallet;
+use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
 use serde::{Deserialize, Serialize};
 
 pub mod api;

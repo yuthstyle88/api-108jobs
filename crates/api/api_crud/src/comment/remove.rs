@@ -1,11 +1,11 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     comment::{Comment, CommentUpdateForm},
     comment_report::CommentReport,
@@ -14,12 +14,12 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Reportable},
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{CommentResponse, RemoveComment},
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn remove_comment(
   data: Json<RemoveComment>,

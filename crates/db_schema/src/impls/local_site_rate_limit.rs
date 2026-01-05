@@ -9,8 +9,8 @@ use crate::{
 };
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::local_site_rate_limit;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::local_site_rate_limit;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalSiteRateLimit {
   pub async fn read(pool: &mut DbPool<'_>) -> FastJobResult<Option<Self>> {

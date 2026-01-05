@@ -1,18 +1,18 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::{check_category_deleted_removed, is_admin};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
+use app_108jobs_api_utils::{
   build_response::build_category_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::category::{Category, CategoryUpdateForm},
   traits::Crud,
 };
-use lemmy_db_views_category::api::{CategoryResponse, DeleteCategory};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_category::api::{CategoryResponse, DeleteCategory};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_category(
   data: Json<DeleteCategory>,

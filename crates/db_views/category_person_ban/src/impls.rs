@@ -6,12 +6,12 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     newtypes::{CategoryId, PersonId},
     utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::category_actions;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::category_actions;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl CategoryPersonBanView {
   pub async fn check(

@@ -3,9 +3,9 @@
 
 variables:
   # When updating the rust version here, be sure to update versions in `docker/Dockerfile`
-  # as well. Otherwise release builds can fail if Lemmy or dependencies rely on new Rust
+  # as well. Otherwise release builds can fail if app_108jobs or dependencies rely on new Rust
   # features. In particular the ARM builder image needs to be updated manually in the repo below:
-  # https://github.com/raskyld/lemmy-cross-toolchains
+  # https://github.com/raskyld/app_108jobs-cross-toolchains
   - &rust_image "rust:1.81"
   - &rust_nightly_image "rustlang/rust:nightly"
   - &install_pnpm "npm install -g corepack@latest && corepack enable pnpm"
@@ -129,20 +129,20 @@ steps:
       PGUSER: postgres
       PGPASSWORD: password
       PGHOST: database
-      PGDATABASE: lemmy
+      PGDATABASE: app_108jobs
     commands:
-      - psql -c "CREATE USER lemmy WITH PASSWORD 'password' SUPERUSER;"
+      - psql -c "CREATE USER app_108jobs WITH PASSWORD 'password' SUPERUSER;"
     when: *slow_check_paths
 
   cargo_test:
     image: *rust_image
     environment:
-      LEMMY_DATABASE_URL: postgres://lemmy:password@database:5432/lemmy
+      app_108jobs_DATABASE_URL: postgres://app_108jobs:password@database:5432/app_108jobs
       RUST_BACKTRACE: "1"
       CARGO_HOME: .cargo_home
       RUSTUP_HOME: .rustup_home
-      LEMMY_TEST_FAST_FEDERATION: "1"
-      LEMMY_CONFIG_LOCATION: /woodpecker/src/github.com/LemmyNet/lemmy/config/config.hjson
+      app_108jobs_TEST_FAST_FEDERATION: "1"
+      app_108jobs_CONFIG_LOCATION: /woodpecker/src/github.com/app_108jobsNet/app_108jobs/config/config.hjson
     commands:
       # Install pg_dump for the schema setup test (must match server version)
       - apt update && apt install -y lsb-release
@@ -153,33 +153,33 @@ steps:
       - cargo test --workspace --no-fail-fast
     when: *slow_check_paths
 
-  # make sure api builds with default features (used by other crates relying on lemmy api)
+  # make sure api builds with default features (used by other crates relying on app_108jobs api)
   check_api_common_default_features:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
       RUSTUP_HOME: .rustup_home
     commands:
-      - cargo check --package lemmy_api_common
+      - cargo check --package app_108jobs_api_common
     when: *slow_check_paths
 
-  lemmy_api_common_doesnt_depend_on_diesel:
+  app_108jobs_api_common_doesnt_depend_on_diesel:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
       RUSTUP_HOME: .rustup_home
     commands:
-      - "! cargo tree -p lemmy_api_common --no-default-features -i diesel"
+      - "! cargo tree -p app_108jobs_api_common --no-default-features -i diesel"
     when: *slow_check_paths
 
-  lemmy_api_common_works_with_wasm:
+  app_108jobs_api_common_works_with_wasm:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
       RUSTUP_HOME: .rustup_home
     commands:
       - "rustup target add wasm32-unknown-unknown"
-      - "cargo check --target wasm32-unknown-unknown -p lemmy_api_common"
+      - "cargo check --target wasm32-unknown-unknown -p app_108jobs_api_common"
     when: *slow_check_paths
 
   cargo_build:
@@ -195,8 +195,8 @@ steps:
   check_diesel_schema:
     image: *rust_image
     environment:
-      LEMMY_DATABASE_URL: postgres://lemmy:password@database:5432/lemmy
-      DATABASE_URL: postgres://lemmy:password@database:5432/lemmy
+      app_108jobs_DATABASE_URL: postgres://app_108jobs:password@database:5432/app_108jobs
+      DATABASE_URL: postgres://app_108jobs:password@database:5432/app_108jobs
       RUST_BACKTRACE: "1"
       CARGO_HOME: .cargo_home
       RUSTUP_HOME: .rustup_home
@@ -215,7 +215,7 @@ steps:
   run_federation_tests:
     image: node:22-bookworm-slim
     environment:
-      LEMMY_DATABASE_URL: postgres://lemmy:password@database:5432
+      app_108jobs_DATABASE_URL: postgres://app_108jobs:password@database:5432
       DO_WRITE_HOSTS_FILE: "1"
     commands:
       - *install_pnpm
@@ -230,7 +230,7 @@ steps:
     image: alpine:3
     commands:
       # `|| true` prevents this step from appearing to fail if the server output files don't exist
-      - cat target/log/lemmy_*.out || true
+      - cat target/log/app_108jobs_*.out || true
       - "# If you can't see all output, then use the download button"
     when:
       - event: pull_request
@@ -239,7 +239,7 @@ steps:
   publish_release_docker:
     image: woodpeckerci/plugin-docker-buildx
     settings:
-      repo: dessalines/lemmy
+      repo: dessalines/app_108jobs
       dockerfile: docker/Dockerfile
       username:
         from_secret: docker_username
@@ -252,7 +252,7 @@ steps:
     when:
       - event: tag
 
-  # lemmy container doesnt run as root so we need to change permissions to let it copy the binary
+  # app_108jobs container doesnt run as root so we need to change permissions to let it copy the binary
   chmod_for_native_binary:
     image: alpine:3
     commands:
@@ -260,9 +260,9 @@ steps:
     when:
       - event: tag
 
-  # extract lemmy binary from newly built docker image into workspace folder
+  # extract app_108jobs binary from newly built docker image into workspace folder
   extract_native_binary:
-    image: dessalines/lemmy:${CI_COMMIT_TAG=default}
+    image: dessalines/app_108jobs:${CI_COMMIT_TAG=default}
     commands:
       - cp /usr/local/bin/app_108jobs_api_server .
     when:
@@ -309,7 +309,7 @@ steps:
     image: alpine:3
     commands:
       - apk add curl
-      - "curl -H'Title: ✔️ ${CI_REPO_NAME}/${CI_COMMIT_SOURCE_BRANCH}' -d'${CI_PIPELINE_URL}' ntfy.sh/lemmy_drone_ci"
+      - "curl -H'Title: ✔️ ${CI_REPO_NAME}/${CI_COMMIT_SOURCE_BRANCH}' -d'${CI_PIPELINE_URL}' ntfy.sh/app_108jobs_drone_ci"
     when:
       - event: pull_request
         status: [success]
@@ -318,7 +318,7 @@ steps:
     image: alpine:3
     commands:
       - apk add curl
-      - "curl -H'Title: ❌ ${CI_REPO_NAME}/${CI_COMMIT_SOURCE_BRANCH}' -d'${CI_PIPELINE_URL}' ntfy.sh/lemmy_drone_ci"
+      - "curl -H'Title: ❌ ${CI_REPO_NAME}/${CI_COMMIT_SOURCE_BRANCH}' -d'${CI_PIPELINE_URL}' ntfy.sh/app_108jobs_drone_ci"
     when:
       - event: pull_request
         status: [failure]
@@ -327,7 +327,7 @@ steps:
     image: alpine:3
     commands:
       - apk add curl
-      - "curl -H'Title: ${CI_REPO_NAME}:${CI_COMMIT_TAG} deployed' -d'${CI_PIPELINE_URL}' ntfy.sh/lemmy_drone_ci"
+      - "curl -H'Title: ${CI_REPO_NAME}:${CI_COMMIT_TAG} deployed' -d'${CI_PIPELINE_URL}' ntfy.sh/app_108jobs_drone_ci"
     when:
       event: tag
 
@@ -336,6 +336,6 @@ services:
     # 15-alpine image necessary because of diesel tests
     image: pgautoupgrade/pgautoupgrade:15-alpine
     environment:
-      POSTGRES_DB: lemmy
+      POSTGRES_DB: app_108jobs
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password

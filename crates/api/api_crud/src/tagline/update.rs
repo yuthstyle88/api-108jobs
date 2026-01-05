@@ -1,17 +1,17 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, is_admin, process_markdown, slur_regex},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::tagline::{Tagline, TaglineUpdateForm},
   traits::Crud,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{TaglineResponse, UpdateTagline};
-use lemmy_utils::error::FastJobError;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{TaglineResponse, UpdateTagline};
+use app_108jobs_utils::error::FastJobError;
 
 pub async fn update_tagline(
   data: Json<UpdateTagline>,

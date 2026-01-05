@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
-use lemmy_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
-use lemmy_db_schema::source::billing::WorkStep;
-use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
-use lemmy_utils::error::FastJobErrorType;
+use app_108jobs_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
+use app_108jobs_db_schema::source::billing::WorkStep;
+use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
+use app_108jobs_utils::error::FastJobErrorType;
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::source::job_budget_plan::JobBudgetPlan;
+use app_108jobs_db_schema::source::job_budget_plan::JobBudgetPlan;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

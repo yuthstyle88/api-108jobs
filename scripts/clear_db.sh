@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-psql -U lemmy -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA utils CASCADE;"
+psql -U app_108jobs -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA utils CASCADE;"

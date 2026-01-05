@@ -1,5 +1,5 @@
 use crate::{CommentReportView, CategoryReportView, PostReportView};
-use lemmy_db_schema::newtypes::{
+use app_108jobs_db_schema::newtypes::{
     CommentId,
     CommentReportId,
     CategoryId,

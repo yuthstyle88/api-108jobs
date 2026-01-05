@@ -1,13 +1,13 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{
   source::instance::{InstanceActions, InstanceBlockForm},
   traits::Blockable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{SuccessResponse, UserBlockInstanceParams};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{SuccessResponse, UserBlockInstanceParams};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn user_block_instance(
   data: Json<UserBlockInstanceParams>,

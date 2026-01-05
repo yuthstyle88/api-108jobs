@@ -11,10 +11,10 @@ use diesel::{ExpressionMethods, OptionalExtension};
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::user_review;
-use lemmy_db_schema_file::schema::user_review::dsl as ur;
+use app_108jobs_db_schema_file::schema::user_review;
+use app_108jobs_db_schema_file::schema::user_review::dsl as ur;
 #[cfg(feature = "full")]
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 
 #[cfg(feature = "full")]

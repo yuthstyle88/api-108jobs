@@ -1,4 +1,4 @@
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{
     combined::person_liked::PersonLikedCombined,
@@ -13,20 +13,20 @@ use lemmy_db_schema::{
   LikeType,
   PersonContentType,
 };
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_post::PostView;
+use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     creator_banned_from_category,
     creator_banned_within_category,
     creator_is_moderator,
   },
-  lemmy_db_schema::utils::queries::{creator_is_admin, local_user_can_mod, post_tags_fragment},
-  lemmy_db_views_local_user::LocalUserView,
+  app_108jobs_db_schema::utils::queries::{creator_is_admin, local_user_can_mod, post_tags_fragment},
+  app_108jobs_db_views_local_user::LocalUserView,
 };
 
 #[cfg(feature = "full")]

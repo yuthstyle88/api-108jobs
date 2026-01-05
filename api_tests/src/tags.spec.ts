@@ -8,10 +8,10 @@ import {
   randomString,
   createPost,
 } from "./shared";
-import { CreateCommunityTag } from "../lemmy-js-client/dist/types/CreateCommunityTag";
-import { UpdateCommunityTag } from "../lemmy-js-client/dist/types/UpdateCommunityTag";
-import { DeleteCommunityTag } from "../lemmy-js-client/dist/types/DeleteCommunityTag";
-import { EditPost } from "lemmy-js-client";
+import { CreateCommunityTag } from "../app_108jobs-js-client/dist/types/CreateCommunityTag";
+import { UpdateCommunityTag } from "../app_108jobs-js-client/dist/types/UpdateCommunityTag";
+import { DeleteCommunityTag } from "../app_108jobs-js-client/dist/types/DeleteCommunityTag";
+import { EditPost } from "app_108jobs-js-client";
 
 beforeAll(setupLogins);
 afterAll(unfollows);

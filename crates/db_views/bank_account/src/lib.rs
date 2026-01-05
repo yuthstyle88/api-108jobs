@@ -3,7 +3,7 @@ pub mod api;
 pub mod impls;
 
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::source::{bank::Bank, user_bank_account::BankAccount};
+use app_108jobs_db_schema::source::{bank::Bank, user_bank_account::BankAccount};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

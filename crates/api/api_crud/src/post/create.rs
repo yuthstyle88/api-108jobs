@@ -1,8 +1,8 @@
 use super::convert_published_time;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_category_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
   tags::update_post_tags,
@@ -11,16 +11,16 @@ use lemmy_api_utils::{
     process_markdown_opt, slur_regex,
   },
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use lemmy_db_views_category::CategoryView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
-use lemmy_utils::{
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
+use app_108jobs_utils::{
   error::FastJobResult,
   utils::{
     slurs::check_slurs,

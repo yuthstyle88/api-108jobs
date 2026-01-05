@@ -1,6 +1,6 @@
 jest.setTimeout(180000);
 
-import { PostResponse } from "../lemmy-js-client/dist/types/PostResponse";
+import { PostResponse } from "../app_108jobs-js-client/dist/types/PostResponse";
 import {
   alpha,
   beta,
@@ -44,11 +44,11 @@ import {
   CommentView,
   CommunityView,
   DistinguishComment,
-  LemmyError,
+  app_108jobsError,
   PersonCommentMentionView,
   ReportCombinedView,
   SaveUserSettings,
-} from "lemmy-js-client";
+} from "app_108jobs-js-client";
 
 let betaCommunity: CommunityView | undefined;
 let postOnAlphaRes: PostResponse;
@@ -100,7 +100,7 @@ test("Create a comment", async () => {
 
 test("Create a comment in a non-existent post", async () => {
   await expect(createComment(alpha, -1)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
 });
 
@@ -276,7 +276,7 @@ test("Remove a comment from admin and category on different instance", async () 
 test("Unlike a comment", async () => {
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
 
-  // Lemmy automatically creates 1 like (vote) by author of comment.
+  // app_108jobs automatically creates 1 like (vote) by author of comment.
   // Make sure that comment is liked (voted up) on gamma, downstream peer
   // This is testing replication from remote-home-remote (alpha-beta-gamma)
 
@@ -436,7 +436,7 @@ test("Bot reply notifications are filtered when bots are hidden", async () => {
 
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@app_108jobs-alpha:8541",
   );
 
   if (!alphaCommunity) {
@@ -484,7 +484,7 @@ test("Mention beta from alpha comment", async () => {
   // Create a new branch, trunk-level comment branch, from alpha instance
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
   // Create a reply comment to previous comment, this has a mention in body
-  let mentionContent = "A test mention of @lemmy_beta@lemmy-beta:8551";
+  let mentionContent = "A test mention of @app_108jobs_beta@app_108jobs-beta:8551";
   let mentionRes = await createComment(
     alpha,
     postOnAlphaRes.post_view.post.id,
@@ -548,7 +548,7 @@ test("Comment Search", async () => {
 
 test("A and G subscribe to B (center) A posts, G mentions B, it gets announced to A", async () => {
   // Create a local post
-  let alphaCommunity = await resolveCommunity(alpha, "!main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(alpha, "!main@app_108jobs-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha category";
   }
@@ -571,7 +571,7 @@ test("A and G subscribe to B (center) A posts, G mentions B, it gets announced t
   }
 
   let commentContent =
-    "A jest test federated comment announce, lets mention @lemmy_beta@lemmy-beta:8551";
+    "A jest test federated comment announce, lets mention @app_108jobs_beta@app_108jobs-beta:8551";
   let commentRes = await createComment(
     gamma,
     gammaPost.post.id,

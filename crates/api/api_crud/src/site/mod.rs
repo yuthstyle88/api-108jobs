@@ -1,5 +1,5 @@
-use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::enums::{ListingType, RegistrationMode};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod create;
 pub mod read;
@@ -50,7 +50,7 @@ fn not_zero(val: Option<i32>) -> Option<i32> {
 #[cfg(test)]
 mod tests {
   use crate::site::{application_question_check, not_zero, site_default_post_listing_type_check};
-  use lemmy_db_schema_file::enums::{ListingType, RegistrationMode};
+  use app_108jobs_db_schema_file::enums::{ListingType, RegistrationMode};
 
   #[test]
   fn test_site_default_post_listing_type_check() {

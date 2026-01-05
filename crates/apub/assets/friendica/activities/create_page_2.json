@@ -27,10 +27,10 @@
     "name": "Friendica 'Siberian Iris' 2022.05-dev-1452",
     "url": "https://pirati.ca"
   },
-  "to": ["https://ds9.lemmy.ml/c/testcom"],
+  "to": ["https://ds9.app_108jobs.ml/c/testcom"],
   "cc": [
     "https://www.w3.org/ns/activitystreams#Public",
-    "https://ds9.lemmy.ml/c/testcom/followers"
+    "https://ds9.app_108jobs.ml/c/testcom/followers"
   ],
   "object": {
     "id": "https://pirati.ca/objects/ec054ce7-5162-3bf2-504c-16d024994850",
@@ -43,27 +43,27 @@
     "attributedTo": "https://pirati.ca/profile/heluecht",
     "sensitive": false,
     "context": "https://pirati.ca/objects/ec054ce7-5162-3bf2-504c-16d024994850#context",
-    "name": "From Friendica to Lemmy",
-    "content": "Hello Lemmy!",
+    "name": "From Friendica to app_108jobs",
+    "content": "Hello app_108jobs!",
     "contentMap": {
-      "de": "<bdi>!<a href=\"https://ds9.lemmy.ml/c/testcom\" class=\"userinfo mention\" title=\"testcom\">testcom</a></bdi> Hello Lemmy!"
+      "de": "<bdi>!<a href=\"https://ds9.app_108jobs.ml/c/testcom\" class=\"userinfo mention\" title=\"testcom\">testcom</a></bdi> Hello app_108jobs!"
     },
     "source": {
-      "content": "![url=https://ds9.lemmy.ml/c/testcom]testcom[/url] Hello Lemmy!",
+      "content": "![url=https://ds9.app_108jobs.ml/c/testcom]testcom[/url] Hello app_108jobs!",
       "mediaType": "text/bbcode"
     },
     "attachment": [],
     "tag": [
       {
         "type": "Mention",
-        "href": "https://ds9.lemmy.ml/c/testcom",
-        "name": "@testcom@ds9.lemmy.ml"
+        "href": "https://ds9.app_108jobs.ml/c/testcom",
+        "name": "@testcom@ds9.app_108jobs.ml"
       }
     ],
-    "to": ["https://ds9.lemmy.ml/c/testcom"],
+    "to": ["https://ds9.app_108jobs.ml/c/testcom"],
     "cc": [
       "https://www.w3.org/ns/activitystreams#Public",
-      "https://ds9.lemmy.ml/c/testcom/followers"
+      "https://ds9.app_108jobs.ml/c/testcom/followers"
     ]
   },
   "signature": {

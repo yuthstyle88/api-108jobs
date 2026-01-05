@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Path, Json};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use tokio::fs;
-use lemmy_db_views_site::api::SuccessResponse;
+use app_108jobs_db_views_site::api::SuccessResponse;
 use crate::files::DeleteFileRequest;
 use crate::utils::{sanitize_filename, user_files_dir};
 

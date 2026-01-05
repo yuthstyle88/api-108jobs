@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
-use lemmy_db_schema::source::workflow::Workflow;
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
+use app_108jobs_db_schema::source::workflow::Workflow;
+use app_108jobs_db_schema::source::{
   chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser,
 };
 use serde::{Deserialize, Serialize};
-use lemmy_db_views_post::PostPreview;
+use app_108jobs_db_views_post::PostPreview;
 
 pub mod api;
 #[cfg(feature = "full")]

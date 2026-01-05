@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::check_private_instance,
 };
-use lemmy_db_schema::source::actor_language::CategoryLanguage;
-use lemmy_db_views_category::{
+use app_108jobs_db_schema::source::actor_language::CategoryLanguage;
+use app_108jobs_db_views_category::{
   api::{GetCategory, GetCategoryResponse},
   CategoryView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_category(
   data: Query<GetCategory>,

@@ -2,8 +2,8 @@
 # https://git-cliff.org/docs/configuration
 
 [remote.github]
-owner = "LemmyNet"
-repo = "lemmy"
+owner = "app_108jobsNet"
+repo = "app_108jobs"
 # token = ""
 
 [changelog]

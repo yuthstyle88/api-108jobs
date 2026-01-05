@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   combined::report::ReportCombined,
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
@@ -8,7 +8,7 @@ use lemmy_db_schema::source::{
   post::{Post, PostActions},
   post_report::PostReport,
 };
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_reports::{
   CommentReportView,
   CategoryReportView,
   PostReportView,
@@ -17,11 +17,11 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::{
+  app_108jobs_db_schema::{
     utils::queries::{local_user_is_admin, person1_select, },
     Person1AliasAllColumnsTuple,
   },
-  lemmy_db_views_local_user::LocalUserView,
+  app_108jobs_db_views_local_user::LocalUserView,
 };
 
 pub mod api;

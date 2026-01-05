@@ -26,7 +26,7 @@ use crate::{
 };
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   admin_allow_instance,
   admin_block_instance,
   admin_purge_comment,
@@ -34,7 +34,7 @@ use lemmy_db_schema_file::schema::{
   admin_purge_person,
   admin_purge_post,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for AdminPurgePerson {
   type InsertForm = AdminPurgePersonForm;

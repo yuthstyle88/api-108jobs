@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
   category::{Category, CategoryActions},
@@ -12,7 +12,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::{
+  app_108jobs_db_schema::{
     utils::queries::{
       comment_creator_is_admin,
       person1_select,

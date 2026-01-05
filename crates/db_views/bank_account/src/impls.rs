@@ -3,18 +3,18 @@ use crate::BankAccountView;
 use diesel::{prelude::*, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::source::user_bank_account::user_bank_accounts_keys as key;
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_schema::utils::{limit_fetch, paginate};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::source::user_bank_account::user_bank_accounts_keys as key;
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::utils::{limit_fetch, paginate};
+use app_108jobs_db_schema::{
   newtypes::{BankAccountId, LocalUserId, PaginationCursor},
   source::{bank::Bank, user_bank_account::BankAccount},
   traits::PaginationCursorBuilder,
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{banks, user_bank_accounts};
-use lemmy_utils::apply_date_filters;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{banks, user_bank_accounts};
+use app_108jobs_utils::apply_date_filters;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for BankAccountView {
   type CursorData = BankAccount;

@@ -1,12 +1,12 @@
 use crate::BillingView;
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::{
   newtypes::{BillingId, LocalUserId},
   source::billing::Billing,
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::billing;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema_file::schema::billing;
+use app_108jobs_utils::error::FastJobResult;
 /// Read-only view/query methods for Billing
 impl BillingView {
   pub async fn read(pool: &mut DbPool<'_>, billing_id: BillingId) -> FastJobResult<Billing> {

@@ -1,6 +1,6 @@
 use crate::protocol::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
 use crate::bridge_message::{GlobalOffline, GlobalOnline};
-use lemmy_utils::error::FastJobError;
+use app_108jobs_utils::error::FastJobError;
 
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;

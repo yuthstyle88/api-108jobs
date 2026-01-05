@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::report_combined;
+use app_108jobs_db_schema_file::schema::report_combined;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

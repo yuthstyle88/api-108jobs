@@ -2,14 +2,14 @@ pub mod fetch_history_direct;
 pub mod get_last_read;
 pub mod get_unread_snapshot;
 
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
-use lemmy_db_schema::source::chat_participant::ChatParticipant;
-use lemmy_db_schema::source::last_read::LastRead;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_schema::utils::{ActualDbPool, DbPool};
-use lemmy_db_views_chat::api::{ChatMessagesResponse, LastReadResponse};
-use lemmy_db_views_chat::ChatMessageView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
+use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
+use app_108jobs_db_schema::source::last_read::LastRead;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
+use app_108jobs_db_views_chat::api::{ChatMessagesResponse, LastReadResponse};
+use app_108jobs_db_views_chat::ChatMessageView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// List chat messages using cursor pagination
 pub async fn list_chat_messages(

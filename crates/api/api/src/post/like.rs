@@ -1,25 +1,25 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext
   ,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_bot_account,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     person::PersonActions,
     post::{PostActions, PostReadForm},
   },
   traits::{Likeable, Readable},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::{
   api::{CreatePostLike, PostResponse},
   PostView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_post(

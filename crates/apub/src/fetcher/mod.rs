@@ -1,8 +1,8 @@
 use actix_web::web::Data;
 use diesel::NotFound;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{traits::ApubActor};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{traits::ApubActor};
+use app_108jobs_utils::error::FastJobResult;
 
 
 /// Resolve actor identifier like `!news@example.com` to user or category object.

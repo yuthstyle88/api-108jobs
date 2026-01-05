@@ -1,13 +1,13 @@
-/// Very minimal wrapper around `lemmy_db_schema_setup::run` to allow running migrations without
+/// Very minimal wrapper around `app_108jobs_db_schema_setup::run` to allow running migrations without
 /// compiling everything.
 fn main() -> anyhow::Result<()> {
   if std::env::args().len() > 1 {
-    anyhow::bail!("To set parameters for running migrations, use the lemmy_server command.");
+    anyhow::bail!("To set parameters for running migrations, use the app_108jobs_server command.");
   }
 
-  lemmy_db_schema_setup::run(
-    lemmy_db_schema_setup::Options::default().run(),
-    &std::env::var("LEMMY_DATABASE_URL")?,
+  app_108jobs_db_schema_setup::run(
+    app_108jobs_db_schema_setup::Options::default().run(),
+    &std::env::var("app_108jobs_DATABASE_URL")?,
   )?;
 
   Ok(())

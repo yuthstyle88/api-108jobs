@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use std::time::Duration;
 use std::collections::HashSet;
 use tracing;
-use lemmy_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use lemmy_utils::redis::RedisClient;
+use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use app_108jobs_utils::redis::RedisClient;
 use actix_broker::{Broker, BrokerIssue, SystemBroker};
 use serde_json::json;
 

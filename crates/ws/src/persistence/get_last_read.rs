@@ -1,8 +1,8 @@
 use crate::persistence::get_last_read;
 use crate::broker::manager::{GetLastRead, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
-use lemmy_db_views_chat::api::LastReadResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_chat::api::LastReadResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 impl Handler<GetLastRead> for PhoenixManager {
   type Result = ResponseFuture<FastJobResult<LastReadResponse>>;

@@ -1,6 +1,6 @@
 use crate::newtypes::{ActivityId, CategoryId, DbUrl};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::ActorType,
   schema::{sent_activity, received_activity},
 };

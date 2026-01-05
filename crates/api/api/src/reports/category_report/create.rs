@@ -2,12 +2,12 @@ use crate::check_report_reason;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use either::Either;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::slur_regex,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     category::Category,
     category_report::{CategoryReport, CategoryReportForm},
@@ -15,12 +15,12 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Reportable},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_reports::{
   api::{CategoryReportResponse, CreateCategoryReport},
   CategoryReportView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn create_category_report(
   data: Json<CreateCategoryReport>,

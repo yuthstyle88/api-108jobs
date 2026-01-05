@@ -1,8 +1,8 @@
 use crate::{TopUpRequestView, WithdrawRequestView};
-use lemmy_db_schema::newtypes::{
+use app_108jobs_db_schema::newtypes::{
   BankAccountId, Coin, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
 };
-use lemmy_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
+use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

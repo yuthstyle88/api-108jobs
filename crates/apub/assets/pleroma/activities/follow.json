@@ -9,8 +9,8 @@
   "actor": "https://mycrowd.ca/users/kinetix",
   "cc": [],
   "id": "https://mycrowd.ca/activities/dab6a4d3-0db0-41ee-8aab-7bfa4929b4fd",
-  "object": "https://lemmy.ca/u/kinetix",
+  "object": "https://app_108jobs.ca/u/kinetix",
   "state": "pending",
-  "to": ["https://lemmy.ca/u/kinetix"],
+  "to": ["https://app_108jobs.ca/u/kinetix"],
   "type": "Follow"
 }

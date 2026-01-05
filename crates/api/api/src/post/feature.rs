@@ -1,13 +1,13 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_category_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     category::Category,
     mod_log::moderator::{ModFeaturePost, ModFeaturePostForm},
@@ -16,9 +16,9 @@ use lemmy_db_schema::{
   traits::Crud,
   PostFeatureType,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{FeaturePost, PostResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::{FeaturePost, PostResponse};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn feature_post(
   data: Json<FeaturePost>,

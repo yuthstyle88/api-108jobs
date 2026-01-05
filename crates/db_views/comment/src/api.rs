@@ -1,7 +1,7 @@
 use crate::{CommentSlimView, CommentView};
-use lemmy_db_schema::newtypes::{CommentId, CategoryId, LanguageId, PaginationCursor, PostId};
-use lemmy_db_schema_file::enums::{CommentSortType, ListingType};
-use lemmy_db_views_vote::VoteView;
+use app_108jobs_db_schema::newtypes::{CommentId, CategoryId, LanguageId, PaginationCursor, PostId};
+use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType};
+use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

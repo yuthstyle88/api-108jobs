@@ -1,12 +1,12 @@
-pub use lemmy_db_schema::{
+pub use app_108jobs_db_schema::{
     newtypes::{CategoryId, TagId},
     source::{
     category::{Category, CategoryActions},
     tag::{Tag, TagsView},
   },
 };
-pub use lemmy_db_schema_file::enums::CategoryVisibility;
-pub use lemmy_db_views_category::{
+pub use app_108jobs_db_schema_file::enums::CategoryVisibility;
+pub use app_108jobs_db_views_category::{
   api::{
     CategoryResponse,
     GetCategory,
@@ -19,14 +19,14 @@ pub use lemmy_db_views_category::{
 };
 
 pub mod actions {
-  pub use lemmy_db_views_category::api::{
+  pub use app_108jobs_db_views_category::api::{
     CreateCategory,
     HideCategory,
   };
 
   pub mod moderation {
-    pub use lemmy_db_schema_file::enums::CategoryFollowerState;
-    pub use lemmy_db_views_category::api::{
+    pub use app_108jobs_db_schema_file::enums::CategoryFollowerState;
+    pub use app_108jobs_db_views_category::api::{
       CategoryIdQuery,
       CreateCategoryTag,
       DeleteCategory,

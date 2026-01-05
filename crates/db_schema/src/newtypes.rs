@@ -18,7 +18,7 @@ use {
     sql_types::Text,
   },
   diesel_ltree::Ltree,
-  lemmy_utils::error::{FastJobErrorType, FastJobResult},
+  app_108jobs_utils::error::{FastJobErrorType, FastJobResult},
 };
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]

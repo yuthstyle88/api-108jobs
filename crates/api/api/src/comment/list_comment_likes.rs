@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::is_admin;
-use lemmy_db_views_comment::api::{ListCommentLikes, ListCommentLikesResponse};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_vote::VoteView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::is_admin;
+use app_108jobs_db_views_comment::api::{ListCommentLikes, ListCommentLikesResponse};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_vote::VoteView;
+use app_108jobs_utils::error::FastJobResult;
 
 /// Lists likes for a comment
 pub async fn list_comment_likes(

@@ -2,7 +2,7 @@ use crate::PersonView;
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::person::{person_keys as key, Person},
   traits::{Crud, PaginationCursorBuilder},
@@ -18,8 +18,8 @@ use lemmy_db_schema::{
     DbPool,
   },
 };
-use lemmy_db_schema_file::schema::{local_user, person};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{local_user, person};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for PersonView {
   type CursorData = Person;
@@ -126,7 +126,7 @@ impl PersonQuery {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     assert_length,
     source::{
       instance::Instance,
@@ -136,7 +136,7 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

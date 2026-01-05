@@ -1,14 +1,14 @@
 {
-  hostname: lemmy-epsilon:8581
+  hostname: app_108jobs-epsilon:8581
   port: 8581
   tls_enabled: false
   setup: {
-    admin_username: lemmy_epsilon
-    admin_password: lemmylemmy
-    site_name: lemmy-epsilon
+    admin_username: app_108jobs_epsilon
+    admin_password: app_108jobsapp_108jobs
+    site_name: app_108jobs-epsilon
   }
   database: {
-    connection: "postgres://lemmy:password@postgres_epsilon:5432/lemmy"
+    connection: "postgres://app_108jobs:password@postgres_epsilon:5432/app_108jobs"
   }
   pictrs: {
     api_key: "my-pictrs-key"

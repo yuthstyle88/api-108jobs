@@ -14,11 +14,11 @@ use diesel::ExpressionMethods;
 use diesel_async::RunQueryDsl;
 
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::last_reads;
-use lemmy_db_schema_file::schema::last_reads::dsl as lr;
+use app_108jobs_db_schema_file::schema::last_reads;
+use app_108jobs_db_schema_file::schema::last_reads::dsl as lr;
 
 #[cfg(feature = "full")]
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 #[cfg(feature = "full")]
 impl LastRead {
   pub async fn get_one(

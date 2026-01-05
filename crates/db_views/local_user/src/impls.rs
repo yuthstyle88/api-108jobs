@@ -5,8 +5,8 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::utils::limit_fetch;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::utils::limit_fetch;
+use app_108jobs_db_schema::{
   aliases::creator_home_instance_actions,
   newtypes::{LocalUserId, OAuthProviderId, PaginationCursor, PersonId},
   source::{
@@ -22,8 +22,8 @@ use lemmy_db_schema::{
     DbPool,
   },
 };
-use lemmy_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use std::future::{ready, Ready};
 
 impl LocalUserView {
@@ -231,7 +231,7 @@ impl PaginationCursorBuilder for LocalUserView {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use super::*;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     assert_length,
     source::{
       instance::{Instance, InstanceActions, InstanceBanForm},
@@ -241,7 +241,7 @@ mod tests {
     traits::Bannable,
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

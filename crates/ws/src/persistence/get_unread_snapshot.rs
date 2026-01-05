@@ -1,9 +1,9 @@
 use crate::broker::manager::{GetUnreadSnapshot, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
-use lemmy_db_schema::source::chat_unread::ChatUnread;
-use lemmy_db_schema::utils::DbPool;
-use lemmy_db_views_chat::api::UnreadSnapshotItem;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema::source::chat_unread::ChatUnread;
+use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_views_chat::api::UnreadSnapshotItem;
+use app_108jobs_utils::error::FastJobResult;
 
 impl Handler<GetUnreadSnapshot> for PhoenixManager {
   type Result = ResponseFuture<FastJobResult<Vec<UnreadSnapshotItem>>>;

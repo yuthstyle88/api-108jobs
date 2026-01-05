@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::newtypes::{
+use app_108jobs_db_schema::newtypes::{
   ChatRoomId, LocalUserId, PaginationCursor,
 };
 use serde::{Deserialize, Serialize};

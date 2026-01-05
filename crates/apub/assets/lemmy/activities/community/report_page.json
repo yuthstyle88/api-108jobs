@@ -1,8 +1,8 @@
 {
-  "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
-  "to": ["http://enterprise.lemmy.ml/c/main"],
-  "object": "http://enterprise.lemmy.ml/post/7",
+  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
+  "to": ["http://enterprise.app_108jobs.ml/c/main"],
+  "object": "http://enterprise.app_108jobs.ml/post/7",
   "summary": "report this post",
   "type": "Flag",
-  "id": "http://ds9.lemmy.ml/activities/flag/98b0933f-5e45-4a95-a15f-e0dc86361ba4"
+  "id": "http://ds9.app_108jobs.ml/activities/flag/98b0933f-5e45-4a95-a15f-e0dc86361ba4"
 }

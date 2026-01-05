@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use lemmy_utils::settings::structs::Settings;
+use app_108jobs_utils::settings::structs::Settings;
 use std::path::{Path, PathBuf};
 
 pub mod prometheus_metrics;

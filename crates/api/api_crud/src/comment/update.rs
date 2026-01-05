@@ -1,25 +1,25 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::utils::check_category_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
   plugins::plugin_hook_after,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{CommentResponse, EditComment},
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };

@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json, Query};
 use chrono::Utc;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::is_admin;
-use lemmy_db_schema::source::user_bank_account::{BankAccount, UserBankAccountUpdateForm};
-use lemmy_db_schema::traits::{Crud, PaginationCursorBuilder};
-use lemmy_db_views_bank_account::api::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::is_admin;
+use app_108jobs_db_schema::source::user_bank_account::{BankAccount, UserBankAccountUpdateForm};
+use app_108jobs_db_schema::traits::{Crud, PaginationCursorBuilder};
+use app_108jobs_db_views_bank_account::api::{
   ListBankAccountQuery, ListBankAccountsResponse, VerifyBankAccount,
 };
-use lemmy_db_views_bank_account::BankAccountView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_bank_account::BankAccountView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn admin_list_bank_accounts(
   data: Query<ListBankAccountQuery>,

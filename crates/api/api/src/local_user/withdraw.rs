@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::list_withdraw_requests_inner;
-use lemmy_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm};
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_db_views_wallet::api::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::list_withdraw_requests_inner;
+use app_108jobs_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm};
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_db_views_wallet::api::{
   ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest,
   ValidWithdrawRequest,
 };
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn submit_withdraw(
   data: Json<SubmitWithdrawRequest>,

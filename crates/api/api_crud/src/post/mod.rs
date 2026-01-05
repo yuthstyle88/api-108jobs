@@ -1,8 +1,8 @@
 use chrono::{DateTime, TimeZone, Utc};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::post::Post;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::post::Post;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod create;
 pub mod delete;

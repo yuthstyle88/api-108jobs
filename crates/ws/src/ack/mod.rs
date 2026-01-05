@@ -4,9 +4,9 @@
 //! a `FastJobResult<()>` for the broker/actor to await or spawn.
 
 use crate::protocol::impls::AnyIncomingEvent;
-use lemmy_db_schema::utils::DbPool; // use DbPool to match db_views function signature
-use lemmy_db_views_chat_pending_ack::{AckConfirmRequest, AckConfirmResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema::utils::DbPool; // use DbPool to match db_views function signature
+use app_108jobs_db_views_chat_pending_ack::{AckConfirmRequest, AckConfirmResponse};
+use app_108jobs_utils::error::FastJobResult;
 use uuid::Uuid;
 
 /// Handle AckConfirm/SyncPending/Unknown events from the client.
@@ -26,7 +26,7 @@ pub async fn handle_ack_event(any_event: AnyIncomingEvent, pool: &mut DbPool<'_>
 
                 let req = AckConfirmRequest { room_id, sender_id, client_ids };
                 // Best-effort; idempotent. Swallow error to avoid breaking the WS stream.
-                let _res: Result<AckConfirmResponse, _> = lemmy_db_views_chat_pending_ack::ack_confirm(pool, &req).await;
+                let _res: Result<AckConfirmResponse, _> = app_108jobs_db_views_chat_pending_ack::ack_confirm(pool, &req).await;
             }
             Ok(())
         }

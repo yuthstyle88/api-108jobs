@@ -2,11 +2,11 @@ use crate::newtypes::{Coin, LocalUserId, WalletId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-pub use lemmy_db_schema_file::enums::TxKind;
+pub use app_108jobs_db_schema_file::enums::TxKind;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::wallet;
+use app_108jobs_db_schema_file::schema::wallet;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::wallet_transaction;
+use app_108jobs_db_schema_file::schema::wallet_transaction;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

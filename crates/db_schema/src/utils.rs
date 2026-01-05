@@ -27,7 +27,7 @@ use diesel_async::{pg::AsyncPgConnection, pooled_connection::{
 }, scoped_futures::ScopedBoxFuture, AsyncConnection, RunQueryDsl};
 use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::{SETTINGS},
   utils::validation::clean_url,
@@ -53,7 +53,7 @@ use std::{
 };
 use tracing::error;
 use url::Url;
-use lemmy_utils::settings::structs::Settings;
+use app_108jobs_utils::settings::structs::Settings;
 use crate::sensitive::SensitiveString;
 
 const FETCH_LIMIT_DEFAULT: i64 = 500;
@@ -374,15 +374,15 @@ pub fn diesel_url_create(opt: Option<&str>) -> FastJobResult<Option<DbUrl>> {
   }
 }
 
-/// Sets a few additional config options necessary for starting lemmy
+/// Sets a few additional config options necessary for starting app_108jobs
 fn build_config_options_uri_segment(config: &str) -> FastJobResult<String> {
   let mut url = Url::parse(config)?;
 
-  // Set `lemmy.protocol_and_hostname` so triggers can use it
-  let lemmy_protocol_and_hostname_option =
-   "lemmy.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
+  // Set `app_108jobs.protocol_and_hostname` so triggers can use it
+  let app_108jobs_protocol_and_hostname_option =
+   "app_108jobs.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
   let mut options = CONNECTION_OPTIONS.to_vec();
-  options.push(&lemmy_protocol_and_hostname_option);
+  options.push(&app_108jobs_protocol_and_hostname_option);
 
   // Create the connection uri portion
   let options_segments = options
@@ -532,7 +532,7 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
    }))
    .build()?;
 
-  lemmy_db_schema_setup::run(lemmy_db_schema_setup::Options::default().run(), &db_url)?;
+  app_108jobs_db_schema_setup::run(app_108jobs_db_schema_setup::Options::default().run(), &db_url)?;
 
   Ok(pool)
 }

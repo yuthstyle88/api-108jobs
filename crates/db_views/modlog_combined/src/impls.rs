@@ -29,7 +29,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     aliases,
     impls::local_user::LocalUserOptionHelper,
     newtypes::{CommentId, CategoryId, PaginationCursor, PersonId, PostId},
@@ -47,7 +47,7 @@ use lemmy_db_schema::{
   },
     ModlogActionType,
 };
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{
       admin_allow_instance,
@@ -76,7 +76,7 @@ use lemmy_db_schema_file::{
       post,
   },
 };
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl ModlogCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -342,7 +342,7 @@ impl ModlogCombinedQuery<'_> {
     }
 
     if let Some(type_) = self.type_ {
-      use lemmy_db_schema::ModlogActionType::*;
+      use app_108jobs_db_schema::ModlogActionType::*;
       query = match type_ {
         All => query,
         ModRemovePost => query.filter(modlog_combined::mod_remove_post_id.is_not_null()),
@@ -623,7 +623,7 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
 mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     newtypes::PersonId,
     source::{
         comment::{Comment, CommentInsertForm},
@@ -676,11 +676,11 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     ModlogActionType,
   };
-  use lemmy_db_schema_file::enums::categoryVisibility;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,

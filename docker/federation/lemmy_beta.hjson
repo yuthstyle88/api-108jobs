@@ -1,14 +1,14 @@
 {
-  hostname: lemmy-beta:8551
+  hostname: app_108jobs-beta:8551
   port: 8551
   tls_enabled: false
   setup: {
-    admin_username: lemmy_beta
-    admin_password: lemmylemmy
-    site_name: lemmy-beta
+    admin_username: app_108jobs_beta
+    admin_password: app_108jobsapp_108jobs
+    site_name: app_108jobs-beta
   }
   database: {
-    connection: "postgres://lemmy:password@postgres_beta:5432/lemmy"
+    connection: "postgres://app_108jobs:password@postgres_beta:5432/app_108jobs"
   }
   pictrs: {
     api_key: "my-pictrs-key"

@@ -6,15 +6,15 @@ use crate::{
 use actix_web::web::Data;
 use either::Either;
 use html2md::parse_html;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::PersonId;
-use lemmy_db_schema::source::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::PersonId;
+use app_108jobs_db_schema::source::{
   category::Category,
   instance::InstanceActions,
 };
-use lemmy_db_schema_file::enums::{ActorType, CategoryVisibility};
-use lemmy_db_views_category_person_ban::CategoryPersonBanView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::enums::{ActorType, CategoryVisibility};
+use app_108jobs_db_views_category_person_ban::CategoryPersonBanView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use url::Url;
 
 pub fn read_from_string_or_source(
@@ -23,7 +23,7 @@ pub fn read_from_string_or_source(
   source: &Option<Source>,
 ) -> String {
   if let Some(s) = source {
-    // markdown sent by lemmy in source field
+    // markdown sent by app_108jobs in source field
     s.content.clone()
   } else {
     // otherwise, convert content html to markdown

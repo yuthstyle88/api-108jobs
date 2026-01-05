@@ -1,14 +1,14 @@
 {
-  "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
+  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
   "object": {
     "type": "Note",
-    "id": "http://ds9.lemmy.ml/comment/1",
-    "attributedTo": "http://ds9.lemmy.ml/u/lemmy_alpha",
+    "id": "http://ds9.app_108jobs.ml/comment/1",
+    "attributedTo": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
     "to": ["https://www.w3.org/ns/activitystreams#Public"],
     "cc": [
-      "http://enterprise.lemmy.ml/c/main",
-      "http://ds9.lemmy.ml/u/lemmy_alpha"
+      "http://enterprise.app_108jobs.ml/c/main",
+      "http://ds9.app_108jobs.ml/u/app_108jobs_alpha"
     ],
     "content": "hello",
     "mediaType": "text/html",
@@ -16,20 +16,20 @@
       "content": "hello",
       "mediaType": "text/markdown"
     },
-    "inReplyTo": "http://ds9.lemmy.ml/post/1",
+    "inReplyTo": "http://ds9.app_108jobs.ml/post/1",
     "published": "2021-11-01T11:45:49.794920Z"
   },
   "cc": [
-    "http://enterprise.lemmy.ml/c/main",
-    "http://ds9.lemmy.ml/u/lemmy_alpha"
+    "http://enterprise.app_108jobs.ml/c/main",
+    "http://ds9.app_108jobs.ml/u/app_108jobs_alpha"
   ],
   "tag": [
     {
-      "href": "http://ds9.lemmy.ml/u/lemmy_alpha",
+      "href": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
       "type": "Mention",
-      "name": "@lemmy_alpha@ds9.lemmy.ml"
+      "name": "@app_108jobs_alpha@ds9.app_108jobs.ml"
     }
   ],
   "type": "Create",
-  "id": "http://ds9.lemmy.ml/activities/create/1e77d67c-44ac-45ed-bf2a-460e21f60236"
+  "id": "http://ds9.app_108jobs.ml/activities/create/1e77d67c-44ac-45ed-bf2a-460e21f60236"
 }

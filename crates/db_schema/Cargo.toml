@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_schema"
+name = "app_108jobs_db_schema"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,7 +10,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_db_schema"
+name = "app_108jobs_db_schema"
 path = "src/lib.rs"
 doctest = false
 
@@ -19,11 +19,11 @@ workspace = true
 
 [features]
 full = [
-    "lemmy_utils/full",
+    "app_108jobs_utils/full",
     "diesel",
     "diesel-derive-newtype",
     "bcrypt",
-    "lemmy_utils",
+    "app_108jobs_utils",
     "regex",
     "serde_json",
     "diesel_ltree",
@@ -36,8 +36,8 @@ full = [
     "i-love-jesus",
     "tuplex",
     "moka",
-    "lemmy_db_schema_file/full",
-    "lemmy_db_schema_setup",
+    "app_108jobs_db_schema_file/full",
+    "app_108jobs_db_schema_setup",
 ]
 ts-rs = ["dep:ts-rs"]
 
@@ -48,9 +48,9 @@ serde_with = { workspace = true }
 url = { workspace = true }
 strum = { workspace = true }
 serde_json = { workspace = true, optional = true }
-lemmy_utils = { workspace = true, optional = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_db_schema_setup = { workspace = true, optional = true }
+app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_db_schema_setup = { workspace = true, optional = true }
 bcrypt = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 diesel-derive-newtype = { workspace = true, optional = true }

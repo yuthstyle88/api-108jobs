@@ -1,5 +1,5 @@
 use crate::CustomEmojiView;
-use lemmy_db_schema::newtypes::CustomEmojiId;
+use app_108jobs_db_schema::newtypes::CustomEmojiId;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;

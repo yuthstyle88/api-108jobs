@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_db_schema::source::{actor_language::CategoryLanguage, category::Category};
-use lemmy_db_views_category::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_db_schema::source::{actor_language::CategoryLanguage, category::Category};
+use app_108jobs_db_views_category::{
   api::{CategoryResponse, GetRandomCategory},
   CategoryView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_random_category(
   data: Query<GetRandomCategory>,

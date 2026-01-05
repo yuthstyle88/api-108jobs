@@ -18,13 +18,13 @@ pub fn jsonify_plain_text_errors<BODY>(
   }
 
   let (req, res_parts) = res.into_parts();
-  let lemmy_err_type = if let Some(error) = res_parts.error() {
+  let app_108jobs_err_type = if let Some(error) = res_parts.error() {
     FastJobErrorType::Unknown(error.to_string())
   } else {
     FastJobErrorType::Unknown("couldnt build json".into())
   };
 
-  let response = HttpResponse::build(res_parts.status()).json(lemmy_err_type);
+  let response = HttpResponse::build(res_parts.status()).json(app_108jobs_err_type);
 
   let service_response = ServiceResponse::new(req, response);
   Ok(ErrorHandlerResponse::Response(
@@ -59,13 +59,13 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_lemmy_errors_are_not_modified() {
-    async fn lemmy_error_service() -> actix_web::Result<String, FastJobError> {
+  async fn test_app_108jobs_errors_are_not_modified() {
+    async fn app_108jobs_error_service() -> actix_web::Result<String, FastJobError> {
       Err(FastJobError::from(FastJobErrorType::EmailAlreadyExists))
     }
 
     check_for_jsonification(
-      lemmy_error_service,
+      app_108jobs_error_service,
       StatusCode::BAD_REQUEST,
       "{\"error\":\"email_already_exists\"}",
     )
@@ -87,7 +87,7 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_anyhow_errors_wrapped_in_lemmy_errors_are_jsonified_correctly() {
+  async fn test_anyhow_errors_wrapped_in_app_108jobs_errors_are_jsonified_correctly() {
     async fn anyhow_error_service() -> actix_web::Result<String, FastJobError> {
       Err(FastJobError::from(anyhow::anyhow!("This is the inner error")))
     }

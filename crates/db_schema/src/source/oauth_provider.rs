@@ -4,7 +4,7 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::oauth_provider;
+use app_108jobs_db_schema_file::schema::oauth_provider;
 use serde::{
   ser::{SerializeStruct, Serializer},
   Deserialize,

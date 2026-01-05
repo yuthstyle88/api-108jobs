@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use app_108jobs_db_schema::{
   newtypes::{CommentReplyId, PersonCommentMentionId, PersonPostMentionId},
   source::{
     comment_reply::CommentReply,
@@ -7,7 +7,7 @@ pub use lemmy_db_schema::{
   },
   InboxDataType,
 };
-pub use lemmy_db_views_inbox_combined::{
+pub use app_108jobs_db_views_inbox_combined::{
   api::{
     GetUnreadCountResponse,
     MarkCommentReplyAsRead,

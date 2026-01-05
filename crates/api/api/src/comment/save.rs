@@ -1,16 +1,16 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{
   source::comment::{CommentActions, CommentSavedForm},
   traits::Saveable,
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{CommentResponse, SaveComment},
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn save_comment(
   data: Json<SaveComment>,

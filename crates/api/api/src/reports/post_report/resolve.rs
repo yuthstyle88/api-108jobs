@@ -1,16 +1,16 @@
 use actix_web::web::Data;
 use either::Either;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{source::post_report::PostReport, traits::Reportable};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_schema::{source::post_report::PostReport, traits::Reportable};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_reports::{
   api::{PostReportResponse, ResolvePostReport},
   PostReportView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 /// Resolves or unresolves a post report and notifies the moderators of the category
 pub async fn resolve_post_report(

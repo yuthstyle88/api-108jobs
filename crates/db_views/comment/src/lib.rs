@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   comment::{Comment, CommentActions},
   category::{Category, CategoryActions},
   instance::InstanceActions,
@@ -11,13 +11,13 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     comment_creator_is_admin,
     comment_select_remove_deletes,
     local_user_can_mod_comment,
     post_tags_fragment,
   },
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     creator_banned_from_category,
     creator_banned_within_category,
     creator_is_moderator,

@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_views_person"
+name = "app_108jobs_db_views_person"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -17,22 +17,22 @@ workspace = true
 
 [features]
 full = [
-  "lemmy_utils",
+  "app_108jobs_utils",
   "diesel",
   "diesel-async",
   "i-love-jesus",
-  "lemmy_db_schema/full",
-  "lemmy_db_schema_file/full",
+  "app_108jobs_db_schema/full",
+  "app_108jobs_db_schema_file/full",
 ]
 ts-rs = [
   "dep:ts-rs",
-  "lemmy_db_schema/ts-rs",
+  "app_108jobs_db_schema/ts-rs",
 ]
 
 [dependencies]
-lemmy_db_schema = { workspace = true }
-lemmy_utils = { workspace = true, optional = true }
-lemmy_db_schema_file = { workspace = true }
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_db_schema_file = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

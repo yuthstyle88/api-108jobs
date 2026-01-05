@@ -15,7 +15,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   self,
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
@@ -42,8 +42,8 @@ use lemmy_db_schema::{
   },
   PersonContentType,
 };
-use lemmy_db_schema_file::schema::{comment, person, person_content_combined, post};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{comment, person, person_content_combined, post};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl PersonContentCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -278,7 +278,7 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     source::{
         comment::{Comment, CommentInsertForm},
         category::{category, CategoryInsertForm},
@@ -289,10 +289,10 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use crate::impls::lemmy_db_schema::newtypes::DbUrl;
+  use crate::impls::app_108jobs_db_schema::newtypes::DbUrl;
   struct Data {
     instance: Instance,
     timmy: Person,

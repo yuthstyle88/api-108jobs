@@ -5,7 +5,7 @@ set -e
 
 pushd reports
 
-PSQL_CMD="docker exec -i dev_postgres_1 psql -qAt -U lemmy"
+PSQL_CMD="docker exec -i dev_postgres_1 psql -qAt -U app_108jobs"
 
 echo "explain (analyze, format json) select * from user_ limit 100" >explain.sql
 cat explain.sql | $PSQL_CMD >user_.json

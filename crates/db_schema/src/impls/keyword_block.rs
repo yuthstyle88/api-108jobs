@@ -5,8 +5,8 @@ use crate::{
 };
 use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
-use lemmy_db_schema_file::schema::local_user_keyword_block;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::local_user_keyword_block;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUserKeywordBlock {
   pub async fn read(

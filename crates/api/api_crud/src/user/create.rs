@@ -3,8 +3,8 @@ use actix_web::{
   HttpRequest,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
-use lemmy_api_utils::utils::prepare_user_languages;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::prepare_user_languages;
+use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{
@@ -12,9 +12,9 @@ use lemmy_api_utils::{
     generate_inbox_url, honeypot_check, slur_regex,
   },
 };
-use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::source::wallet::WalletModel;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::source::wallet::WalletModel;
+use app_108jobs_db_schema::{
   newtypes::OAuthProviderId,
   source::{
     captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer},
@@ -28,16 +28,16 @@ use lemmy_db_schema::{
   traits::{ApubActor, Crud},
   utils::get_conn,
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::api::{Register, RegisterRequest};
-use lemmy_db_views_site::api::{AuthenticateWithOauth, LoginResponse};
-use lemmy_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
-use lemmy_db_views_site::SiteView;
-use lemmy_email::{
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_registration_applications::api::{Register, RegisterRequest};
+use app_108jobs_db_views_site::api::{AuthenticateWithOauth, LoginResponse};
+use app_108jobs_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
+use app_108jobs_db_views_site::SiteView;
+use app_108jobs_email::{
   account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::{
     slurs::{check_slurs, check_slurs_opt},

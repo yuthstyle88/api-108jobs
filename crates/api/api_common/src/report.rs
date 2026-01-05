@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use app_108jobs_db_schema::{
   newtypes::{CommentReportId, CategoryReportId, PostReportId},
   source::{
     comment_report::CommentReport,
@@ -7,11 +7,11 @@ pub use lemmy_db_schema::{
   },
   ReportType,
 };
-pub use lemmy_db_views_report_combined::{
+pub use app_108jobs_db_views_report_combined::{
   api::{ListReports, ListReportsResponse},
   ReportCombinedView,
 };
-pub use lemmy_db_views_reports::{
+pub use app_108jobs_db_views_reports::{
   api::{
     CommentReportResponse,
     CategoryReportResponse,

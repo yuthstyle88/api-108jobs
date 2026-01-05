@@ -1,4 +1,4 @@
--- Following this issue : https://github.com/LemmyNet/lemmy/issues/957
+-- Following this issue : https://github.com/app_108jobsNet/app_108jobs/issues/957
 -- Creating a unique changeme actor_id
 CREATE OR REPLACE FUNCTION generate_unique_changeme ()
     RETURNS text

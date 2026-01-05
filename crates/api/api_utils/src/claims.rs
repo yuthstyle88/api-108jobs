@@ -2,12 +2,12 @@ use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::LocalUserId,
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

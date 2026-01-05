@@ -1,14 +1,14 @@
 {
-  hostname: lemmy-gamma:8561
+  hostname: app_108jobs-gamma:8561
   port: 8561
   tls_enabled: false
   setup: {
-    admin_username: lemmy_gamma
-    admin_password: lemmylemmy
-    site_name: lemmy-gamma
+    admin_username: app_108jobs_gamma
+    admin_password: app_108jobsapp_108jobs
+    site_name: app_108jobs-gamma
   }
   database: {
-    connection: "postgres://lemmy:password@postgres_gamma:5432/lemmy"
+    connection: "postgres://app_108jobs:password@postgres_gamma:5432/app_108jobs"
   }
   pictrs: {
     api_key: "my-pictrs-key"

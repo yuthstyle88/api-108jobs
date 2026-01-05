@@ -17,11 +17,11 @@ use diesel::{
   CombineDsl, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::CategoryVisibility,
   schema::{category, category_actions, local_user, person, registration_application},
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUser {
   pub async fn create(
@@ -183,7 +183,7 @@ impl LocalUser {
     pool: &mut DbPool<'_>,
     person_id_: PersonId,
   ) -> FastJobResult<UserBackupLists> {
-    use lemmy_db_schema_file::schema::{instance, instance_actions};
+    use app_108jobs_db_schema_file::schema::{instance, instance_actions};
     let conn = &mut get_conn(pool).await?;
 
     let blocked_instances = instance_actions::table
@@ -373,7 +373,7 @@ mod tests {
     },
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use serial_test::serial;
 
   #[tokio::test]

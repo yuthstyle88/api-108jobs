@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::check_local_user_valid};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_valid};
+use app_108jobs_db_schema::{
   source::{
     actor_language::LocalUserLanguage,
     instance::InstanceActions,
@@ -10,10 +10,10 @@ use lemmy_db_schema::{
   },
   traits::{Blockable},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::MyUserInfo;
-use lemmy_db_views_wallet::WalletView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::MyUserInfo;
+use app_108jobs_db_views_wallet::WalletView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_my_user(
   local_user_view: LocalUserView,
@@ -32,7 +32,7 @@ pub async fn get_my_user(
     keyword_blocks,
     discussion_languages,
     wallet,
-  ) = lemmy_db_schema::try_join_with_pool!(pool => (
+  ) = app_108jobs_db_schema::try_join_with_pool!(pool => (
     |pool| InstanceActions::read_blocks_for_person(pool, person_id),
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),

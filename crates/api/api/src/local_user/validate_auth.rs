@@ -2,12 +2,12 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// Returns an error message if the auth token is invalid for any reason. Necessary because other
 /// endpoints silently treat any call with invalid auth as unauthenticated.

@@ -1,8 +1,8 @@
 -- Some fixes
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN hidden DROP NOT NULL;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN posting_restricted_to_mods DROP NOT NULL;
 
 ALTER TABLE activity
@@ -11,16 +11,16 @@ ALTER TABLE activity
 ALTER TABLE mod_add
     ALTER COLUMN removed DROP NOT NULL;
 
-ALTER TABLE mod_add_community
+ALTER TABLE mod_add_category
     ALTER COLUMN removed DROP NOT NULL;
 
 ALTER TABLE mod_ban
     ALTER COLUMN banned DROP NOT NULL;
 
-ALTER TABLE mod_ban_from_community
+ALTER TABLE mod_ban_from_category
     ALTER COLUMN banned DROP NOT NULL;
 
-ALTER TABLE mod_hide_community
+ALTER TABLE mod_hide_category
     ALTER COLUMN hidden DROP NOT NULL;
 
 ALTER TABLE mod_lock_post
@@ -29,13 +29,13 @@ ALTER TABLE mod_lock_post
 ALTER TABLE mod_remove_comment
     ALTER COLUMN removed DROP NOT NULL;
 
-ALTER TABLE mod_remove_community
+ALTER TABLE mod_remove_category
     ALTER COLUMN removed DROP NOT NULL;
 
 ALTER TABLE mod_remove_post
     ALTER COLUMN removed DROP NOT NULL;
 
-ALTER TABLE mod_transfer_community
+ALTER TABLE mod_transfer_category
     ADD COLUMN removed boolean DEFAULT FALSE;
 
 ALTER TABLE LANGUAGE

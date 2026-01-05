@@ -1,20 +1,20 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use either::Either;
-use lemmy_api_utils::utils::check_community_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_schema::{source::comment_report::CommentReport, traits::Reportable};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, ResolveCommentReport},
   CommentReportView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
-/// Resolves or unresolves a comment report and notifies the moderators of the community
+/// Resolves or unresolves a comment report and notifies the moderators of the category
 pub async fn resolve_comment_report(
   data: Json<ResolveCommentReport>,
   context: Data<FastJobContext>,
@@ -25,7 +25,7 @@ pub async fn resolve_comment_report(
   let report = CommentReportView::read(&mut context.pool(), report_id, person_id).await?;
 
   let person_id = local_user_view.person.id;
-  check_community_deleted_removed(&report.community)?;
+  check_category_deleted_removed(&report.category)?;
 
   if data.resolved {
     CommentReport::resolve(&mut context.pool(), report_id, person_id).await?;
@@ -41,7 +41,7 @@ pub async fn resolve_comment_report(
     SendActivityData::SendResolveReport {
       actor: local_user_view.person,
       report_creator: report.creator,
-      receiver: Either::Right(comment_report_view.community.clone()),
+      receiver: Either::Right(comment_report_view.category.clone()),
     },
     &context,
   )?;

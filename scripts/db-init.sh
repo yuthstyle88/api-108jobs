@@ -2,9 +2,9 @@
 set -e
 
 # Default configurations
-username=lemmy
+username=app_108jobs
 password=password
-dbname=lemmy
+dbname=app_108jobs
 port=5432
 
 yes_no_prompt_invalid() {
@@ -78,6 +78,6 @@ ask_for_db_config
 
 psql -c "CREATE USER $username WITH PASSWORD '$password' SUPERUSER;" -U postgres
 psql -c "CREATE DATABASE $dbname WITH OWNER $username;" -U postgres
-export LEMMY_DATABASE_URL=postgres://$username:$password@localhost:$port/$dbname
+export app_108jobs_DATABASE_URL=postgres://$username:$password@localhost:$port/$dbname
 
-echo "The database URL is $LEMMY_DATABASE_URL"
+echo "The database URL is $app_108jobs_DATABASE_URL"

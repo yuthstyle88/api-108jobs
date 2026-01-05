@@ -4,15 +4,16 @@ use actix_web::{
   HttpRequest,
 };
 use bcrypt::verify;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{check_email_verified, check_local_user_deleted, check_registration_application},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::LoginRequest;
-use lemmy_db_views_site::api::{Login, LoginResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::utils::check_local_user_valid;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::LoginRequest;
+use app_108jobs_db_views_site::api::{Login, LoginResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn login(
   data: Json<LoginRequest>,
@@ -38,6 +39,7 @@ pub async fn login(
   if !valid {
     Err(FastJobErrorType::IncorrectLogin)?
   }
+  check_local_user_valid(&local_user_view)?;
   check_local_user_deleted(&local_user_view)?;
   check_email_verified(&local_user_view, &site_view)?;
 
@@ -55,8 +57,9 @@ pub async fn login(
   let jwt = Claims::generate(
     local_user_view.local_user.id,
     local_user_view.local_user.email,
-    local_user_view.local_user.interface_language,
-    local_user_view.local_user.accepted_application,
+    local_user_view.local_user.interface_language, // default to open
+    local_user_view.local_user.accepted_terms,
+    local_user_view.local_user.admin,
     req,
     &context,
   )
@@ -66,6 +69,6 @@ pub async fn login(
     jwt: Some(jwt.clone()),
     verify_email_sent: false,
     registration_created: false,
-    application_pending: false,
+    accepted_terms: false,
   }))
 }

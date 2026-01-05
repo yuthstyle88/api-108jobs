@@ -15,17 +15,17 @@ DROP INDEX idx_post_aggregates_featured_local_published;
 
 DROP INDEX idx_post_aggregates_published;
 
-DROP INDEX idx_post_aggregates_featured_community_score;
+DROP INDEX idx_post_aggregates_featured_category_score;
 
-DROP INDEX idx_post_aggregates_featured_community_newest_comment_time;
+DROP INDEX idx_post_aggregates_featured_category_newest_comment_time;
 
-DROP INDEX idx_post_aggregates_featured_community_newest_comment_time_necro;
+DROP INDEX idx_post_aggregates_featured_category_newest_comment_time_necro;
 
-DROP INDEX idx_post_aggregates_featured_community_hot;
+DROP INDEX idx_post_aggregates_featured_category_hot;
 
-DROP INDEX idx_post_aggregates_featured_community_active;
+DROP INDEX idx_post_aggregates_featured_category_active;
 
-DROP INDEX idx_post_aggregates_featured_community_published;
+DROP INDEX idx_post_aggregates_featured_category_published;
 
 -- Create single column indexes again
 CREATE INDEX idx_post_aggregates_score ON post_aggregates (score DESC);
@@ -36,7 +36,7 @@ CREATE INDEX idx_post_aggregates_newest_comment_time ON post_aggregates (newest_
 
 CREATE INDEX idx_post_aggregates_newest_comment_time_necro ON post_aggregates (newest_comment_time_necro DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community ON post_aggregates (featured_community DESC);
+CREATE INDEX idx_post_aggregates_featured_category ON post_aggregates (featured_category DESC);
 
 CREATE INDEX idx_post_aggregates_featured_local ON post_aggregates (featured_local DESC);
 

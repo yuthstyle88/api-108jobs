@@ -1,10 +1,10 @@
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN followers_url;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN inbox_url;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN shared_inbox_url;
 
 ALTER TABLE user_

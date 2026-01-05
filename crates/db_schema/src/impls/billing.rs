@@ -11,11 +11,11 @@ use crate::{
 use diesel::QueryDsl;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::enums::BillingStatus;
+use app_108jobs_db_schema_file::enums::BillingStatus;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::billing;
+use app_108jobs_db_schema_file::schema::billing;
 #[cfg(feature = "full")]
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 #[cfg(feature = "full")]
 impl Crud for Billing {

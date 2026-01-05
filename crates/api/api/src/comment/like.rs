@@ -1,24 +1,24 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::build_comment_response,
   context::FastJobContext
   ,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     comment::CommentActions,
     person::PersonActions,
   },
   traits::Likeable,
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{CommentResponse, CreateCommentLike},
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_comment(
@@ -57,7 +57,7 @@ pub async fn like_comment(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      community: orig_comment.community,
+      category: orig_comment.category,
       previous_score,
       new_score: data.score,
     },

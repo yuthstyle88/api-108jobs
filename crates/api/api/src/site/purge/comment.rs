@@ -1,11 +1,11 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     comment::Comment,
     local_user::LocalUser,
@@ -13,10 +13,10 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_comment::{api::PurgeComment, CommentView};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_comment::{api::PurgeComment, CommentView};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_comment(
   data: Json<PurgeComment>,
@@ -29,7 +29,7 @@ pub async fn purge_comment(
   let comment_id = data.comment_id;
   let local_instance_id = local_user_view.person.instance_id;
 
-  // Read the comment to get the post_id and community
+  // Read the comment to get the post_id and category
   let comment_view = CommentView::read(
     &mut context.pool(),
     comment_id,
@@ -64,7 +64,7 @@ pub async fn purge_comment(
     SendActivityData::RemoveComment {
       comment: comment_view.comment,
       moderator: local_user_view.person.clone(),
-      community: comment_view.community,
+      category: comment_view.category,
       reason: data.reason.clone(),
     },
     &context,

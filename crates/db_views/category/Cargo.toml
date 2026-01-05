@@ -1,0 +1,53 @@
+[package]
+name = "app_108jobs_db_views_category"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+full = [
+    "app_108jobs_utils",
+    "diesel",
+    "diesel_ltree",
+    "diesel-async",
+    "i-love-jesus",
+    "app_108jobs_db_schema/full",
+    "app_108jobs_db_schema_file/full",
+    "app_108jobs_db_views_person/full",
+]
+ts-rs = [
+    "dep:ts-rs",
+    "app_108jobs_db_schema/ts-rs",
+    "app_108jobs_db_schema_file/ts-rs",
+    "app_108jobs_db_views_person/ts-rs",
+]
+
+[dependencies]
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_db_views_person = { workspace = true }
+diesel = { workspace = true, optional = true }
+diesel-async = { workspace = true, optional = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+i-love-jesus = { workspace = true, optional = true }
+slug = { workspace = true }
+diesel_ltree = { workspace = true, optional = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }

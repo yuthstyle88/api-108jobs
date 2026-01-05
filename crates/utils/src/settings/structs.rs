@@ -26,11 +26,11 @@ pub struct Settings {
   #[default("unset")]
   #[doku(example = "example.com")]
   pub hostname: String,
-  /// Address where lemmy should listen for incoming requests
+  /// Address where app_108jobs should listen for incoming requests
   #[default(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))]
   #[doku(as = "String")]
   pub bind: IpAddr,
-  /// Port where lemmy should listen for incoming requests
+  /// Port where app_108jobs should listen for incoming requests
   #[default(8536)]
   pub port: u16,
   /// Whether the site is available over TLS. Needs to be true for federation to work.
@@ -44,9 +44,9 @@ pub struct Settings {
   #[doku(example = "Some(Default::default())")]
   pub prometheus: Option<PrometheusConfig>,
   /// Sets a response Access-Control-Allow-Origin CORS header. Can also be set via environment:
-  /// `LEMMY_CORS_ORIGIN=example.org,site.com`
+  /// `app_108jobs_CORS_ORIGIN=example.org,site.com`
   /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
-  #[doku(example = "lemmy.tld")]
+  #[doku(example = "app_108jobs.tld")]
   cors_origin: Vec<String>,
   /// Print logs in JSON format. You can also disable ANSI colors in logs with env var `NO_COLOR`.
   pub json_logging: bool,
@@ -61,7 +61,7 @@ pub struct Settings {
 
 impl Settings {
   pub fn cors_origin(&self) -> Vec<String> {
-    env::var("LEMMY_CORS_ORIGIN")
+    env::var("app_108jobs_CORS_ORIGIN")
       .ok()
       .map(|e| e.split(',').map(ToString::to_string).collect())
       .unwrap_or(self.cors_origin.clone())
@@ -101,11 +101,11 @@ pub struct PictrsConfig {
   #[default(512)]
   pub max_thumbnail_size: u32,
 
-  /// Maximum size for user avatar, community icon and site icon. Larger images are downscaled.
+  /// Maximum size for user avatar, category icon and site icon. Larger images are downscaled.
   #[default(512)]
   pub max_avatar_size: u32,
 
-  /// Maximum size for user, community and site banner. Larger images are downscaled.
+  /// Maximum size for user, category and site banner. Larger images are downscaled.
   #[default(1024)]
   pub max_banner_size: u32,
 
@@ -133,7 +133,7 @@ pub enum PictrsImageMode {
   /// ensures that they can be reliably retrieved and can be resized using pict-rs APIs. However
   /// it also increases storage usage.
   ///
-  /// This behaviour matches Lemmy 0.18.
+  /// This behaviour matches app_108jobs 0.18.
   StoreLinkPreviews,
   /// If enabled, all images from remote domains are rewritten to pass through
   /// `/api/v4/image/proxy`, including embedded images in markdown. Images are stored temporarily
@@ -150,12 +150,12 @@ pub enum PictrsImageMode {
 #[serde(default, deny_unknown_fields)]
 pub struct DatabaseConfig {
   /// Configure the database by specifying URI pointing to a postgres instance. This parameter can
-  /// also be set by environment variable `LEMMY_DATABASE_URL`.
+  /// also be set by environment variable `app_108jobs_DATABASE_URL`.
   ///
   /// For an explanation of how to use connection URIs, see PostgreSQL's documentation:
   /// https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6
   #[default("postgres://postgres@localhost:5432/fastwork")]
-  #[doku(example = "postgresql:///lemmy?user=lemmy&host=/var/run/postgresql")]
+  #[doku(example = "postgresql:///app_108jobs?user=app_108jobs&host=/var/run/postgresql")]
   pub(crate) connection: String,
 
   /// Maximum number of active sql connections
@@ -186,14 +186,19 @@ pub struct GoogleConfig {
 }
 
 /// Configuration for connecting to a Redis instance.
-#[derive(Debug, Deserialize, Serialize, Clone, Default, Document)]
+#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
 #[serde(default, deny_unknown_fields)]
 pub struct RedisConfig {
-  /// Redis connection string (e.g., `redis://localhost:6379`).
-  ///
-  /// This should follow the standard Redis URI format.
-  #[doku(example = "redis://localhost:6379")]
-  pub connection: String,
+  /// Redis host (e.g., "localhost")
+  #[default("localhost")]
+  pub host: String,
+
+  /// Redis port (e.g., 6379)
+  #[default(6379)]
+  pub port: u16,
+
+  /// Optional Redis password
+  pub password: Option<String>,
 
   /// URL to which Redis-related redirects should point.
   pub redirect_url: String,
@@ -209,7 +214,7 @@ pub struct SetupConfig {
   #[doku(example = "tf6HHDS4RolWfFhk4Rq9")]
   pub admin_password: String,
   /// Name of the site, can be changed later. Maximum 20 characters.
-  #[doku(example = "My Lemmy Instance")]
+  #[doku(example = "My app_108jobs Instance")]
   pub site_name: String,
   /// Email for the admin user (optional, can be omitted and set later through the website)
   #[doku(example = "user@example.com")]

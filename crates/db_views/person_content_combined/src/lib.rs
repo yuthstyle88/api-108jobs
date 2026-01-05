@@ -1,9 +1,9 @@
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::{PaginationCursor, PersonId},
   source::{
     combined::person_content::PersonContentCombined,
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions},
+    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
@@ -12,21 +12,21 @@ use lemmy_db_schema::{
   },
   PersonContentType,
 };
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_post::PostView;
+use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     creator_banned,
     creator_is_admin,
     local_user_can_mod,
     post_tags_fragment,
   },
-  lemmy_db_schema::utils::queries::{creator_banned_from_community, creator_is_moderator},
-  lemmy_db_views_local_user::LocalUserView,
+  app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
+  app_108jobs_db_views_local_user::LocalUserView,
 };
 
 #[cfg(feature = "full")]
@@ -46,9 +46,9 @@ pub(crate) struct PersonContentCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub item_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance_actions: Option<InstanceActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -91,10 +91,10 @@ pub(crate) struct PersonContentCombinedViewInternal {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

@@ -36,7 +36,7 @@ SELECT
         SELECT
             coalesce(count(*), 0)
         FROM
-            community
+            category
         WHERE
             local = TRUE) AS communities
 FROM
@@ -195,8 +195,8 @@ CREATE TRIGGER site_aggregates_comment_delete
     WHEN (OLD.local = TRUE)
     EXECUTE PROCEDURE site_aggregates_comment_delete ();
 
--- community
-CREATE FUNCTION site_aggregates_community_insert ()
+-- category
+CREATE FUNCTION site_aggregates_category_insert ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -209,7 +209,7 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION site_aggregates_community_delete ()
+CREATE FUNCTION site_aggregates_category_delete ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -226,15 +226,15 @@ BEGIN
 END
 $$;
 
-CREATE TRIGGER site_aggregates_community_insert
-    AFTER INSERT ON community
+CREATE TRIGGER site_aggregates_category_insert
+    AFTER INSERT ON category
     FOR EACH ROW
     WHEN (NEW.local = TRUE)
-    EXECUTE PROCEDURE site_aggregates_community_insert ();
+    EXECUTE PROCEDURE site_aggregates_category_insert ();
 
-CREATE TRIGGER site_aggregates_community_delete
-    AFTER DELETE ON community
+CREATE TRIGGER site_aggregates_category_delete
+    AFTER DELETE ON category
     FOR EACH ROW
     WHEN (OLD.local = TRUE)
-    EXECUTE PROCEDURE site_aggregates_community_delete ();
+    EXECUTE PROCEDURE site_aggregates_category_delete ();
 

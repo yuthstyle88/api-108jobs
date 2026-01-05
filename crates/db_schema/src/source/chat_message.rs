@@ -1,7 +1,7 @@
 use crate::newtypes::{ChatMessageId, ChatRoomId, LocalUserId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::chat_message;
+use app_108jobs_db_schema_file::schema::chat_message;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -21,6 +21,7 @@ pub struct ChatMessage {
   pub status: i16,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  pub sender_ack_confirmed_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, derive_new::new)]

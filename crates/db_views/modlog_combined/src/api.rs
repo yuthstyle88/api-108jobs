@@ -1,9 +1,9 @@
 use crate::ModlogCombinedView;
-use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, PaginationCursor, PersonId, PostId},
-  ModlogActionType,
+use app_108jobs_db_schema::{
+    newtypes::{CommentId, CategoryId, PaginationCursor, PersonId, PostId},
+    ModlogActionType,
 };
-use lemmy_db_schema_file::enums::ListingType;
+use app_108jobs_db_schema_file::enums::ListingType;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -16,11 +16,11 @@ use serde_with::skip_serializing_none;
 pub struct GetModlog {
   /// Filter by the moderator.
   pub mod_person_id: Option<PersonId>,
-  /// Filter by the community.
-  pub community_id: Option<CommunityId>,
+  /// Filter by the category.
+  pub category_id: Option<CategoryId>,
   /// Filter by the modlog action type.
   pub type_: Option<ModlogActionType>,
-  /// Filter by listing type. When not using All, it will remove the non-community modlog entries,
+  /// Filter by listing type. When not using All, it will remove the non-category modlog entries,
   /// such as site bans, instance blocks, adding an admin, etc.
   pub listing_type: Option<ListingType>,
   /// Filter by the other / modded person.

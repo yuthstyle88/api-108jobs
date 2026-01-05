@@ -1,6 +1,6 @@
 jest.setTimeout(120000);
 
-import { FollowCommunity, LemmyError, LemmyHttp } from "lemmy-js-client";
+import { FollowCommunity, app_108jobsError, app_108jobsHttp } from "app_108jobs-js-client";
 import {
   alpha,
   setupLogins,
@@ -29,8 +29,8 @@ import {
 beforeAll(setupLogins);
 afterAll(unfollows);
 
-test("Follow a private community", async () => {
-  // create private community
+test("Follow a private category", async () => {
+  // create private category
   const community = await createCommunity(alpha, randomString(10), "Private");
   expect(community.community_view.community.visibility).toBe("Private");
   const alphaCommunityId = community.community_view.community.id;
@@ -122,8 +122,8 @@ test("Follow a private community", async () => {
   expect(approve2.success).toBe(true);
 });
 
-test("Only followers can view and interact with private community content", async () => {
-  // create private community
+test("Only followers can view and interact with private category content", async () => {
+  // create private category
   const community = await createCommunity(alpha, randomString(10), "Private");
   expect(community.community_view.community.visibility).toBe("Private");
   const alphaCommunityId = community.community_view.community.id;
@@ -136,22 +136,22 @@ test("Only followers can view and interact with private community content", asyn
   const comment_id = comment.comment_view.comment.id;
   expect(comment_id).toBeDefined();
 
-  // user is not following the community and cannot view nor create posts
+  // user is not following the category and cannot view nor create posts
   const user = await registerUser(beta, betaUrl);
   const betaCommunity = (
     await resolveCommunity(user, community.community_view.community.ap_id)
   )?.community;
   await expect(resolvePost(user, post0.post_view.post)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
   await expect(
     resolveComment(user, comment.comment_view.comment),
-  ).rejects.toStrictEqual(new LemmyError("not_found"));
+  ).rejects.toStrictEqual(new app_108jobsError("not_found"));
   await expect(createPost(user, betaCommunity!.id)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
 
-  // follow the community and approve
+  // follow the category and approve
   const follow_form: FollowCommunity = {
     community_id: betaCommunity!.id,
     follow: true,
@@ -159,7 +159,7 @@ test("Only followers can view and interact with private community content", asyn
   await user.followCommunity(follow_form);
   approveFollower(alpha, alphaCommunityId);
 
-  // now user can fetch posts and comments in community (using signed fetch), and create posts
+  // now user can fetch posts and comments in category (using signed fetch), and create posts
   await waitUntil(
     () => resolvePost(user, post0.post_view.post),
     p => p?.post.id != undefined,
@@ -177,18 +177,18 @@ test("Only followers can view and interact with private community content", asyn
 });
 
 test("Reject follower", async () => {
-  // create private community
+  // create private category
   const community = await createCommunity(alpha, randomString(10), "Private");
   expect(community.community_view.community.visibility).toBe("Private");
   const alphaCommunityId = community.community_view.community.id;
 
-  // user is not following the community and cannot view nor create posts
+  // user is not following the category and cannot view nor create posts
   const user = await registerUser(beta, betaUrl);
   const betaCommunity1 = (
     await resolveCommunity(user, community.community_view.community.ap_id)
   )?.community;
 
-  // follow the community and reject
+  // follow the category and reject
   const follow_form: FollowCommunity = {
     community_id: betaCommunity1!.id,
     follow: true,
@@ -216,8 +216,8 @@ test("Reject follower", async () => {
   );
 });
 
-test("Follow a private community and receive activities", async () => {
-  // create private community
+test("Follow a private category and receive activities", async () => {
+  // create private category
   const community = await createCommunity(alpha, randomString(10), "Private");
   expect(community.community_view.community.visibility).toBe("Private");
   const alphaCommunityId = community.community_view.community.id;
@@ -284,8 +284,8 @@ test("Follow a private community and receive activities", async () => {
   );
 });
 
-test("Fetch remote content in private community", async () => {
-  // create private community
+test("Fetch remote content in private category", async () => {
+  // create private category
   const community = await createCommunity(alpha, randomString(10), "Private");
   expect(community.community_view.community.visibility).toBe("Private");
   const alphaCommunityId = community.community_view.community.id;
@@ -333,13 +333,13 @@ test("Fetch remote content in private community", async () => {
 
   // cannot fetch post yet
   await expect(resolvePost(gamma, post.post_view.post)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
-  // follow community and approve
+  // follow category and approve
   await gamma.followCommunity(follow_form);
   await approveFollower(alpha, alphaCommunityId);
 
-  // now user can fetch posts and comments in community (using signed fetch), and create posts.
+  // now user can fetch posts and comments in category (using signed fetch), and create posts.
   // for this to work, beta checks with alpha if gamma is really an approved follower.
   let resolvedPost = await waitUntil(
     () => resolvePost(gamma, post.post_view.post),
@@ -355,7 +355,7 @@ test("Fetch remote content in private community", async () => {
   );
 });
 
-async function approveFollower(user: LemmyHttp, community_id: number) {
+async function approveFollower(user: app_108jobsHttp, community_id: number) {
   let pendingFollows1 = await waitUntil(
     () => listCommunityPendingFollows(user),
     f => f.items.length == 1,

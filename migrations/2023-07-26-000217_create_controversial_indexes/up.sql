@@ -44,7 +44,7 @@ SET
 -- Create single column indexes
 CREATE INDEX idx_post_aggregates_featured_local_controversy ON post_aggregates (featured_local DESC, controversy_rank DESC);
 
-CREATE INDEX idx_post_aggregates_featured_community_controversy ON post_aggregates (featured_community DESC, controversy_rank DESC);
+CREATE INDEX idx_post_aggregates_featured_category_controversy ON post_aggregates (featured_category DESC, controversy_rank DESC);
 
 CREATE INDEX idx_comment_aggregates_controversy ON comment_aggregates (controversy_rank DESC);
 

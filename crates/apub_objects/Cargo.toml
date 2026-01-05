@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_apub_objects"
+name = "app_108jobs_apub_objects"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_apub_objects"
+name = "app_108jobs_apub_objects"
 path = "src/lib.rs"
 doctest = false
 
@@ -22,13 +22,13 @@ workspace = true
 full = []
 
 [dependencies]
-lemmy_db_views_community_person_ban = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_api_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema_file = { workspace = true }
+app_108jobs_db_views_category_person_ban = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_api_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema_file = { workspace = true }
 actix-web = { workspace = true }
 diesel_ltree = { workspace = true, optional = true }
 chrono = { workspace = true }

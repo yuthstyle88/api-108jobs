@@ -3,7 +3,7 @@ ALTER TABLE site
     ADD COLUMN enable_downvotes boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN open_registration boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN enable_self_promotion boolean DEFAULT TRUE NOT NULL,
-    ADD COLUMN community_creation_admin_only boolean DEFAULT FALSE NOT NULL,
+    ADD COLUMN category_creation_admin_only boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN require_email_verification boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN require_application boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN application_question text DEFAULT 'To verify that you are human, please explain why you want to create an account on this site'::text,
@@ -21,7 +21,7 @@ SET
     enable_downvotes = ls.enable_downvotes,
     open_registration = ls.open_registration,
     enable_self_promotion = ls.enable_self_promotion,
-    community_creation_admin_only = ls.community_creation_admin_only,
+    category_creation_admin_only = ls.category_creation_admin_only,
     require_email_verification = ls.require_email_verification,
     require_application = ls.require_application,
     application_question = ls.application_question,
@@ -39,7 +39,7 @@ FROM (
         enable_downvotes,
         open_registration,
         enable_self_promotion,
-        community_creation_admin_only,
+        category_creation_admin_only,
         require_email_verification,
         require_application,
         application_question,
@@ -63,7 +63,7 @@ ALTER TABLE site
 ALTER TABLE person
     DROP COLUMN instance_id;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN instance_id;
 
 DROP TABLE local_site_rate_limit;

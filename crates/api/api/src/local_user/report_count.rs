@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::check_local_user_valid;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::ReportCombinedViewInternal;
-use lemmy_db_views_reports::api::{GetReportCount, GetReportCountResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::check_local_user_valid;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_report_combined::ReportCombinedViewInternal;
+use app_108jobs_db_views_reports::api::{GetReportCount, GetReportCountResponse};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn report_count(
   data: Query<GetReportCount>,
@@ -16,7 +16,7 @@ pub async fn report_count(
   let count = ReportCombinedViewInternal::get_report_count(
     &mut context.pool(),
     &local_user_view,
-    data.community_id,
+    data.category_id,
   )
   .await?;
 

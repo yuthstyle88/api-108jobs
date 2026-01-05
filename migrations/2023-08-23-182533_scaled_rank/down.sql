@@ -1,6 +1,6 @@
 DROP FUNCTION scaled_rank;
 
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     ALTER COLUMN hot_rank TYPE integer,
     ALTER COLUMN hot_rank SET DEFAULT 1728;
 
@@ -86,9 +86,9 @@ ALTER TABLE local_user
 DROP TYPE sort_type_enum__;
 
 -- Remove int to float conversions that were automatically added to index filters
-DROP INDEX idx_comment_aggregates_nonzero_hotrank, idx_community_aggregates_nonzero_hotrank, idx_post_aggregates_nonzero_hotrank;
+DROP INDEX idx_comment_aggregates_nonzero_hotrank, idx_category_aggregates_nonzero_hotrank, idx_post_aggregates_nonzero_hotrank;
 
-CREATE INDEX idx_community_aggregates_nonzero_hotrank ON community_aggregates (published)
+CREATE INDEX idx_category_aggregates_nonzero_hotrank ON category_aggregates (published)
 WHERE
     hot_rank != 0;
 

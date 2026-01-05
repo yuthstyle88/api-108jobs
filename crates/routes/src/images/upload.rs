@@ -1,19 +1,19 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
-use lemmy_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
+use app_108jobs_db_schema::{
   source::{
-    community::{Community, CommunityUpdateForm},
+    category::{Category, CategoryUpdateForm},
     images::{LocalImage, LocalImageForm},
     person::{Person, PersonUpdateForm},
     site::{Site, SiteUpdateForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_community::api::CommunityIdQuery;
-use lemmy_db_views_local_image::api::UploadImageResponse;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_category::api::CategoryIdQuery;
+use app_108jobs_db_views_local_image::api::UploadImageResponse;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Body;
 use std::time::Duration;
 use UploadType::*;
@@ -75,44 +75,44 @@ pub async fn upload_user_banner(
   Ok(Json(image))
 }
 
-pub async fn upload_community_icon(
+pub async fn upload_category_icon(
   req: HttpRequest,
-  query: Query<CommunityIdQuery>,
+  query: Query<CategoryIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
-  let community: Community = Community::read(&mut context.pool(), query.id).await?;
+  let category: Category = Category::read(&mut context.pool(), query.id).await?;
 
   let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
-  delete_old_image(&community.icon, &context).await?;
+  delete_old_image(&category.icon, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     icon: Some(Some(image.image_url.clone().into())),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(image))
 }
 
-pub async fn upload_community_banner(
+pub async fn upload_category_banner(
   req: HttpRequest,
-  query: Query<CommunityIdQuery>,
+  query: Query<CategoryIdQuery>,
   body: Payload,
   local_user_view: LocalUserView,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UploadImageResponse>> {
-  let community: Community = Community::read(&mut context.pool(), query.id).await?;
+  let category: Category = Category::read(&mut context.pool(), query.id).await?;
 
   let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
-  delete_old_image(&community.banner, &context).await?;
+  delete_old_image(&category.banner, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     banner: Some(Some(image.image_url.clone().into())),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(image))
 }
@@ -126,7 +126,7 @@ pub async fn upload_site_icon(
   is_admin(&local_user_view)?;
   let site = Site::read_local(&mut context.pool()).await?;
 
-  let image = do_upload_image(req, body, Avatar, &local_user_view, &context).await?;
+  let image = do_upload_image(req, body, Banner, &local_user_view, &context).await?;
   delete_old_image(&site.icon, &context).await?;
 
   let form = SiteUpdateForm {
@@ -211,7 +211,7 @@ pub async fn do_upload_image(
 
   let mut images = res.json::<PictrsResponse>().await?;
   for image in &images.files {
-    // Pictrs allows uploading multiple images in a single request. Lemmy doesnt need this,
+    // Pictrs allows uploading multiple images in a single request. app_108jobs doesnt need this,
     // but still a user may upload multiple and so we need to store all links in db for
     // to allow deletion via web ui.
     let form = LocalImageForm {

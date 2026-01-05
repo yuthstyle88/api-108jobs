@@ -1,15 +1,15 @@
 use crate::newtypes::{
-  CommentId,
-  CommunityId,
-  PersonId,
-  PostId,
-  SearchCombinedId,
+    CommentId,
+    CategoryId,
+    PersonId,
+    PostId,
+    SearchCombinedId,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::search_combined;
+use app_108jobs_db_schema_file::schema::search_combined;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -29,6 +29,6 @@ pub struct SearchCombined {
   pub score: i64,
   pub post_id: Option<PostId>,
   pub comment_id: Option<CommentId>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub person_id: Option<PersonId>,
 }

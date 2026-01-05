@@ -1,9 +1,9 @@
 use actix_web::web::Data;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::DbUrl,
   source::{
     actor_language::LocalUserLanguage,
@@ -14,13 +14,13 @@ use lemmy_db_schema::{
   traits::{ApubActor, Crud},
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{SaveUserSettings, SuccessResponse};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{SaveUserSettings, SuccessResponse};
 
 use actix_web::web::Json;
-use lemmy_email::account::send_verification_email;
-use lemmy_utils::utils::slurs::check_slurs_opt;
-use lemmy_utils::{
+use app_108jobs_email::account::send_verification_email;
+use app_108jobs_utils::utils::slurs::check_slurs_opt;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::{
     check_blocking_keywords_are_valid, is_valid_bio_field, is_valid_display_name,
@@ -142,11 +142,13 @@ pub async fn save_user_settings(
     avatar: avatar_url,
     portfolio_pics: Some(Some(portfolio_pics_json)),
     work_samples: Some(Some(work_samples_json)),
+    available: data.available,
+    is_secure_message: data.is_secure_message,
     ..Default::default()
   };
 
   // Ignore errors, because 'no fields updated' will return an error.
-  // https://github.com/LemmyNet/lemmy/issues/4076
+  // https://github.com/app_108jobsNet/app_108jobs/issues/4076
   Person::update(&mut context.pool(), person_id, &person_form)
     .await
     .ok();

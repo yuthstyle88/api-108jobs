@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_site::api::{ListPersonCreated, ListPersonCreatedResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::PostView;
+use app_108jobs_db_views_site::api::{ListPersonCreated, ListPersonCreatedResponse};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_person_created(
   data: Query<ListPersonCreated>,
@@ -20,6 +20,7 @@ pub async fn list_person_created(
   let created = PostView::list_created(
     &mut context.pool(),
     &local_user_view.person,
+    data.language_id,
     cursor_data,
     data.page_back,
     data.limit,

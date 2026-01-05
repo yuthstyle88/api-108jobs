@@ -1,9 +1,8 @@
 pub mod bridge_message;
-mod connect_now;
-mod fetch_history_direct;
-mod get_last_read;
-pub mod helper;
-mod init_socket;
-pub mod phoenix_manager;
-mod register_client_msg;
-pub mod presence_manager;
+pub mod manager;
+pub mod init_socket;
+pub mod connect_now;
+pub mod register_client_msg;
+
+pub const CONNECT_TIMEOUT_SECS: u64 = 10;
+pub const JOIN_TIMEOUT_SECS: u64 = 10;

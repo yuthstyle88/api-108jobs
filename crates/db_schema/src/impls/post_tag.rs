@@ -7,8 +7,8 @@ use crate::{
 };
 use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::post_tag;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::post_tag;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PostTag {
   pub async fn set(pool: &mut DbPool<'_>, tags: &[PostTagForm]) -> FastJobResult<Vec<Self>> {

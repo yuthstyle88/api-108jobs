@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_routes"
+name = "app_108jobs_routes"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -17,21 +17,21 @@ doctest = false
 workspace = true
 
 [dependencies]
-lemmy_db_views_community = { workspace = true, features = ["full"] }
-lemmy_db_views_post = { workspace = true, features = ["full"] }
-lemmy_db_views_local_image = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_views_inbox_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_modlog_combined = { workspace = true, features = ["full"] }
-lemmy_db_views_person_content_combined = { workspace = true, features = [
+app_108jobs_db_views_category = { workspace = true, features = ["full"] }
+app_108jobs_db_views_post = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_image = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_inbox_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_modlog_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person_content_combined = { workspace = true, features = [
   "full",
 ] }
-lemmy_db_views_person = { workspace = true, features = ["full"] }
-lemmy_db_views_site = { workspace = true, features = ["full"] }
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true }
-lemmy_api_utils = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
+app_108jobs_db_views_person = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_api_utils = { workspace = true }
+app_108jobs_db_schema_file = { workspace = true }
 actix-web = { workspace = true, features = ["cookies"] }
 actix-multipart = "0.7"
 anyhow = { workspace = true }

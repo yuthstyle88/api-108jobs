@@ -1,20 +1,20 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_community_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{CommentResponse, DistinguishComment},
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn distinguish_comment(
   data: Json<DistinguishComment>,
@@ -36,7 +36,7 @@ pub async fn distinguish_comment(
     Err(FastJobErrorType::NoCommentEditAllowed)?
   }
 
-  check_community_deleted_removed(&orig_comment.community)?;
+  check_category_deleted_removed(&orig_comment.category)?;
 
   // Update the Comment
   let form = CommentUpdateForm {

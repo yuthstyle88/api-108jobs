@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   local_user::LocalUser,
   person::Person,
   registration_application::RegistrationApplication,
@@ -8,7 +8,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
+  app_108jobs_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
 };
 
 pub mod api;

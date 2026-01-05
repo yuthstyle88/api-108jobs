@@ -1,17 +1,14 @@
-use crate::api::{
-  listing_type_with_default,
-  post_sort_type_with_default,
-};
+use crate::api::{listing_type_with_default, post_sort_type_with_default};
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::{
   api::{GetPosts, GetPostsResponse},
   impls::PostQuery,
   PostView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_posts(
   data: Query<GetPosts>,
@@ -23,8 +20,8 @@ pub async fn list_posts(
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let limit = data.limit;
-  let community_id = data.community_id;
-
+  let category_id = data.category_id;
+  let language_id = data.language_id;
   let show_hidden = data.show_hidden;
   // Show nsfw content if param is true, or if content_warning exists
   let hide_media = data.hide_media;
@@ -34,7 +31,7 @@ pub async fn list_posts(
     data.type_,
     local_user,
     &site_view.local_site,
-    community_id,
+    category_id,
   ));
 
   let sort = Some(post_sort_type_with_default(
@@ -48,14 +45,16 @@ pub async fn list_posts(
   } else {
     None
   };
+
   let page_back = data.page_back;
 
   let posts = PostQuery {
     local_user,
     listing_type,
+    language_id,
     sort,
     time_range_seconds: None,
-    community_id,
+    category_id,
     limit,
     show_hidden,
     show_read: None,

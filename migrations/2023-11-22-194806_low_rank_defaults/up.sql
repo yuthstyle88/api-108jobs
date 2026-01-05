@@ -2,8 +2,8 @@
 -- won't crowd out existing content.
 --
 -- They must be non-zero, in order for them to be picked up by the hot_ranks updater.
--- See https://github.com/LemmyNet/lemmy/issues/4178
-ALTER TABLE community_aggregates
+-- See https://github.com/app_108jobsNet/app_108jobs/issues/4178
+ALTER TABLE category_aggregates
     ALTER COLUMN hot_rank SET DEFAULT 0.0001;
 
 ALTER TABLE comment_aggregates

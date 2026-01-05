@@ -30,17 +30,17 @@ pub struct Group {
   pub summary: Option<String>,
   pub icon: Option<String>,
   pub image: Option<String>,
-  // lemmy extension
+  // app_108jobs extension
   pub sensitive: Option<bool>,
   pub attributed_to: Option<AttributedTo>,
-  // lemmy extension
+  // app_108jobs extension
   pub posting_restricted_to_mods: Option<bool>,
   pub outbox: Url,
   pub endpoints: Option<Endpoints>,
   pub featured: Option<Url>,
   #[serde(default)]
   pub(crate) language: Vec<LanguageTag>,
-  /// True if this is a private community
+  /// True if this is a private category
   pub(crate) manually_approves_followers: Option<bool>,
   pub published: Option<DateTime<Utc>>,
   pub updated: Option<DateTime<Utc>>,

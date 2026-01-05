@@ -1,20 +1,20 @@
 use super::protocol::Source;
 use crate::{
-  objects::community::ApubCommunity,
+  objects::category::ApubCategory,
   protocol::{group::Group, page::Attachment},
 };
 use actix_web::web::Data;
 use either::Either;
 use html2md::parse_html;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::PersonId;
-use lemmy_db_schema::source::{
-  community::Community,
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::PersonId;
+use app_108jobs_db_schema::source::{
+  category::Category,
   instance::InstanceActions,
 };
-use lemmy_db_schema_file::enums::{ActorType, CommunityVisibility};
-use lemmy_db_views_community_person_ban::CommunityPersonBanView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::enums::{ActorType, CategoryVisibility};
+use app_108jobs_db_views_category_person_ban::CategoryPersonBanView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use url::Url;
 
 pub fn read_from_string_or_source(
@@ -23,7 +23,7 @@ pub fn read_from_string_or_source(
   source: &Option<Source>,
 ) -> String {
   if let Some(s) = source {
-    // markdown sent by lemmy in source field
+    // markdown sent by app_108jobs in source field
     s.content.clone()
   } else {
     // otherwise, convert content html to markdown
@@ -54,7 +54,7 @@ pub async fn check_apub_id_valid_with_strictness(
     return Ok(());
   }
 
-  // Only check allowlist if this is a community, and there are instances in the allowlist
+  // Only check allowlist if this is a category, and there are instances in the allowlist
 
   Ok(())
 }
@@ -72,10 +72,10 @@ impl<L: GetActorType, R: GetActorType> GetActorType for either::Either<L, R> {
   }
 }
 
-/// Marks object as public only if the community is public
-pub fn generate_to(community: &Community) -> FastJobResult<Vec<Url>> {
-  let ap_id = community.ap_id.clone().into();
-  if community.visibility == CommunityVisibility::Public {
+/// Marks object as public only if the category is public
+pub fn generate_to(category: &Category) -> FastJobResult<Vec<Url>> {
+  let ap_id = category.ap_id.clone().into();
+  if category.visibility == CategoryVisibility::Public {
     Ok(vec![ap_id])
   } else {
     Ok(vec![
@@ -85,21 +85,21 @@ pub fn generate_to(community: &Community) -> FastJobResult<Vec<Url>> {
   }
 }
 
-/// Fetches the person and community to verify their type, then checks if person is banned from site
-/// or community.
-pub async fn verify_person_in_community(
+/// Fetches the person and category to verify their type, then checks if person is banned from site
+/// or category.
+pub async fn verify_person_in_category(
   person_id: PersonId,
-  community: &ApubCommunity,
+  category: &ApubCategory,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<()> {
   InstanceActions::check_ban(&mut context.pool(), person_id).await?;
-  let community_id = community.id;
-  CommunityPersonBanView::check(&mut context.pool(), person_id, community_id).await
+  let category_id = category.id;
+  CategoryPersonBanView::check(&mut context.pool(), person_id, category_id).await
 }
 
-/// Fetches the person and community or site to verify their type, then checks if person is banned
-/// from local site or community.
-pub async fn verify_person_in_site_or_community(
+/// Fetches the person and category or site to verify their type, then checks if person is banned
+/// from local site or category.
+pub async fn verify_person_in_site_or_category(
   person_id: PersonId,
   context: &Data<FastJobContext>,
 ) -> FastJobResult<()> {
@@ -125,12 +125,12 @@ pub async fn append_attachments_to_comment(
   Ok(content)
 }
 
-pub fn community_visibility(group: &Group) -> CommunityVisibility {
+pub fn category_visibility(group: &Group) -> CategoryVisibility {
   if group.manually_approves_followers.unwrap_or_default() {
-    CommunityVisibility::Private
+    CategoryVisibility::Private
   } else if !group.discoverable.unwrap_or(true) {
-    CommunityVisibility::Unlisted
+    CategoryVisibility::Unlisted
   } else {
-    CommunityVisibility::Public
+    CategoryVisibility::Public
   }
 }

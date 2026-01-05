@@ -1,6 +1,6 @@
-use crate::newtypes::{ActivityId, CommunityId, DbUrl};
+use crate::newtypes::{ActivityId, CategoryId, DbUrl};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::ActorType,
   schema::{sent_activity, received_activity},
 };
@@ -14,7 +14,7 @@ pub struct ActivitySendTargets {
   /// send to these inboxes explicitly
   pub inboxes: HashSet<Url>,
   /// send to all followers of these local communities
-  pub community_followers_of: Option<CommunityId>,
+  pub category_followers_of: Option<CategoryId>,
   /// send to all remote instances
   pub all_instances: bool,
 }
@@ -29,9 +29,9 @@ impl ActivitySendTargets {
     a.inboxes.insert(url);
     a
   }
-  pub fn to_local_community_followers(id: CommunityId) -> ActivitySendTargets {
+  pub fn to_local_category_followers(id: CategoryId) -> ActivitySendTargets {
     let mut a = ActivitySendTargets::empty();
-    a.community_followers_of = Some(id);
+    a.category_followers_of = Some(id);
     a
   }
   pub fn to_all_instances() -> ActivitySendTargets {
@@ -62,7 +62,7 @@ pub struct SentActivity {
   pub sensitive: bool,
   pub published_at: DateTime<Utc>,
   pub send_inboxes: Vec<Option<DbUrl>>,
-  pub send_community_followers_of: Option<CommunityId>,
+  pub send_category_followers_of: Option<CategoryId>,
   pub send_all_instances: bool,
   pub actor_type: ActorType,
   pub actor_apub_id: Option<DbUrl>,
@@ -75,7 +75,7 @@ pub struct SentActivityForm {
   pub data: Value,
   pub sensitive: bool,
   pub send_inboxes: Vec<Option<DbUrl>>,
-  pub send_community_followers_of: Option<i32>,
+  pub send_category_followers_of: Option<i32>,
   pub send_all_instances: bool,
   pub actor_type: ActorType,
   pub actor_apub_id: DbUrl,

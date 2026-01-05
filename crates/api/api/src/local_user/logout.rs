@@ -1,13 +1,13 @@
 use actix_web::web::Data;
 use actix_web::{cookie::Cookie, HttpRequest, HttpResponse};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{read_auth_token, AUTH_COOKIE_NAME},
 };
-use lemmy_db_schema::source::login_token::LoginToken;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema::source::login_token::LoginToken;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn logout(
   req: HttpRequest,

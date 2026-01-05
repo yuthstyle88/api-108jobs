@@ -2,15 +2,15 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::{claims::Claims, context::FastJobContext, utils::slur_regex};
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::api::OAuthUserUpdateRequest;
-use lemmy_db_views_site::api::LoginResponse;
-use lemmy_email::admin::send_new_applicant_email_to_admins;
-use lemmy_utils::utils::validation::password_length_check;
-use lemmy_utils::{
+use app_108jobs_api_utils::{claims::Claims, context::FastJobContext, utils::slur_regex};
+use app_108jobs_db_schema::source::local_user::LocalUser;
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_registration_applications::api::OAuthUserUpdateRequest;
+use app_108jobs_db_views_site::api::LoginResponse;
+use app_108jobs_email::admin::send_new_applicant_email_to_admins;
+use app_108jobs_utils::utils::validation::password_length_check;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
@@ -54,13 +54,13 @@ pub async fn update_term(
     jwt: None,
     registration_created: false,
     verify_email_sent: false,
-    application_pending: false,
+    accepted_terms: false,
   };
   // Log the user in directly if the site is not setup, or email verification and application aren't
   // required
   if !local_site.site_setup
     || (local_user_view.local_user.email_verified
-      && !local_user_view.local_user.accepted_application)
+      && !local_user_view.local_user.accepted_terms)
   {
     if data.password != data.password_verify {
       Err(FastJobErrorType::PasswordsDoNotMatch)?
@@ -76,7 +76,7 @@ pub async fn update_term(
     )
     .await?;
 
-    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_application, req, &context).await?;
+    let jwt = Claims::generate(user.id, user.email, user.interface_language, user.accepted_terms, user.admin, req, &context).await?;
     login_response.jwt = Some(jwt);
   }
 

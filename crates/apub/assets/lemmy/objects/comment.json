@@ -1,13 +1,13 @@
 {
-  "id": "https://enterprise.lemmy.ml/comment/38741",
+  "id": "https://enterprise.app_108jobs.ml/comment/38741",
   "type": "Note",
-  "attributedTo": "https://enterprise.lemmy.ml/u/picard",
+  "attributedTo": "https://enterprise.app_108jobs.ml/u/picard",
   "to": [
-    "https://enterprise.lemmy.ml/c/tenforward",
+    "https://enterprise.app_108jobs.ml/c/tenforward",
     "https://www.w3.org/ns/activitystreams#Public"
   ],
-  "cc": ["https://enterprise.lemmy.ml/u/picard"],
-  "inReplyTo": "https://enterprise.lemmy.ml/post/55143",
+  "cc": ["https://enterprise.app_108jobs.ml/u/picard"],
+  "inReplyTo": "https://enterprise.app_108jobs.ml/post/55143",
   "content": "<p>first comment!</p>\n",
   "mediaType": "text/html",
   "source": {
@@ -16,9 +16,9 @@
   },
   "tag": [
     {
-      "href": "https://enterprise.lemmy.ml/u/picard",
+      "href": "https://enterprise.app_108jobs.ml/u/picard",
       "type": "Mention",
-      "name": "@picard@enterprise.lemmy.ml"
+      "name": "@picard@enterprise.app_108jobs.ml"
     }
   ],
   "distinguished": false,

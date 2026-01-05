@@ -9,8 +9,8 @@ use diesel::{
   ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::coin;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::coin;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for CoinModel {
   type InsertForm = CoinModelInsertForm;

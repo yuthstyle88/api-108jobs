@@ -86,8 +86,8 @@ mod tests {
       // Links with added nofollow attribute
       (
         "links",
-        "[Lemmy](https://join-lemmy.org/ \"Join Lemmy!\")",
-        "<p><a href=\"https://join-lemmy.org/\" rel=\"nofollow\" title=\"Join Lemmy!\">Lemmy</a></p>\n"
+        "[app_108jobs](https://join-app_108jobs.org/ \"Join app_108jobs!\")",
+        "<p><a href=\"https://join-app_108jobs.org/\" rel=\"nofollow\" title=\"Join app_108jobs!\">app_108jobs</a></p>\n"
       ),
       // Remote images with proxy
       (
@@ -98,8 +98,8 @@ mod tests {
       // Local images without proxy
       (
         "images",
-        "![My linked image](https://lemmy-alpha/image.png \"image alt text\")",
-        "<p><img src=\"https://lemmy-alpha/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n"
+        "![My linked image](https://app_108jobs-alpha/image.png \"image alt text\")",
+        "<p><img src=\"https://app_108jobs-alpha/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n"
       ),
       // Ensure spoiler plugin is added
       (
@@ -152,8 +152,8 @@ mod tests {
   }
 
   // This replicates the logic when saving url blocklist patterns and querying them.
-  // Refer to lemmy_api_crud::site::update::update_site and
-  // lemmy_api_common::utils::get_url_blocklist().
+  // Refer to app_108jobs_api_crud::site::update::update_site and
+  // app_108jobs_api_common::utils::get_url_blocklist().
   fn create_url_blocklist_test_regex_set(patterns: Vec<&str>) -> FastJobResult<RegexSet> {
     let url_blocklist = patterns.iter().map(|&s| s.to_string()).collect();
     let valid_urls = check_urls_are_valid(&url_blocklist)?;

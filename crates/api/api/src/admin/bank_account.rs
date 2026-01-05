@@ -1,25 +1,61 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::is_admin;
-use lemmy_db_views_bank_account::api::{GetBankAccounts, ListBankAccountsResponse};
-use lemmy_db_views_bank_account::BankAccountView;
-use lemmy_db_views_local_user::LocalUserView;
+use chrono::Utc;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::is_admin;
+use app_108jobs_db_schema::source::user_bank_account::{BankAccount, UserBankAccountUpdateForm};
+use app_108jobs_db_schema::traits::{Crud, PaginationCursorBuilder};
+use app_108jobs_db_views_bank_account::api::{
+  ListBankAccountQuery, ListBankAccountsResponse, VerifyBankAccount,
+};
+use app_108jobs_db_views_bank_account::BankAccountView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
-use lemmy_utils::error::FastJobResult;
-
-pub async fn list_bank_accounts(
-  data: Query<GetBankAccounts>,
+pub async fn admin_list_bank_accounts(
+  data: Query<ListBankAccountQuery>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListBankAccountsResponse>> {
   // Check if user is admin
   is_admin(&local_user_view)?;
-  let bank = data.into_inner();
-  let verified = bank.is_verified;
-  let local_user_id = bank.local_user_id;
+  let data = data.into_inner();
 
-  let bank_accounts = BankAccountView::list_by_user(&mut context.pool(), local_user_id, verified).await?;
+  let cursor_data = if let Some(cursor) = &data.page_cursor {
+    Some(BankAccountView::from_cursor(cursor, &mut context.pool()).await?)
+  } else {
+    None
+  };
+
+  let items = BankAccountView::list(&mut context.pool(), None, cursor_data, data).await?;
+  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
+
   Ok(Json(ListBankAccountsResponse {
-    bank_accounts,
+    bank_accounts: items,
+    next_page,
+    prev_page,
   }))
+}
+
+pub async fn admin_verify_bank_account(
+  data: Json<VerifyBankAccount>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  let data = data.into_inner();
+  // Check if user is admin
+  is_admin(&local_user_view)?;
+  let update_form = UserBankAccountUpdateForm {
+    bank_id: None,
+    account_number: None,
+    account_name: None,
+    is_default: None,
+    is_verified: Some(true),
+    updated_at: Some(Some(Utc::now())),
+    verification_image_path: None,
+  };
+  let _result =
+    BankAccount::update(&mut context.pool(), data.bank_account_id, &update_form).await?;
+  Ok(Json(SuccessResponse::default()))
 }

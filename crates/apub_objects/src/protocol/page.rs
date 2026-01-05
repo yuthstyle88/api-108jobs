@@ -7,8 +7,8 @@ use crate::utils::protocol::{
 use actix_web::web::Data;
 
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{context::FastJobContext, utils::proxy_image_link};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::{context::FastJobContext, utils::proxy_image_link};
+use app_108jobs_utils::error::FastJobResult;
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;

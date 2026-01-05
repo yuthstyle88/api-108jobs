@@ -1,6 +1,6 @@
 jest.setTimeout(180000);
 
-import { PostResponse } from "../lemmy-js-client/dist/types/PostResponse";
+import { PostResponse } from "../app_108jobs-js-client/dist/types/PostResponse";
 import {
   alpha,
   beta,
@@ -44,11 +44,11 @@ import {
   CommentView,
   CommunityView,
   DistinguishComment,
-  LemmyError,
+  app_108jobsError,
   PersonCommentMentionView,
   ReportCombinedView,
   SaveUserSettings,
-} from "lemmy-js-client";
+} from "app_108jobs-js-client";
 
 let betaCommunity: CommunityView | undefined;
 let postOnAlphaRes: PostResponse;
@@ -100,7 +100,7 @@ test("Create a comment", async () => {
 
 test("Create a comment in a non-existent post", async () => {
   await expect(createComment(alpha, -1)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
 });
 
@@ -130,10 +130,10 @@ test("Update a comment", async () => {
 
 test("Delete a comment", async () => {
   let post = await createPost(alpha, betaCommunity!.community.id);
-  // creating a comment on alpha (remote from home of community)
+  // creating a comment on alpha (remote from home of category)
   let commentRes = await createComment(alpha, post.post_view.post.id);
 
-  // Find the comment on beta (home of community)
+  // Find the comment on beta (home of category)
   let betaComment = await resolveComment(beta, commentRes.comment_view.comment);
   if (!betaComment) {
     throw "Missing beta comment before delete";
@@ -186,7 +186,7 @@ test("Delete a comment", async () => {
   assertCommentFederation(betaComment2, undeleteCommentRes.comment_view);
 });
 
-test.skip("Remove a comment from admin and community on the same instance", async () => {
+test.skip("Remove a comment from admin and category on the same instance", async () => {
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
 
   // Get the id for beta
@@ -198,7 +198,7 @@ test.skip("Remove a comment from admin and community on the same instance", asyn
     throw "beta comment id is missing";
   }
 
-  // The beta admin removes it (the community lives on beta)
+  // The beta admin removes it (the category lives on beta)
   let removeCommentRes = await removeComment(beta, true, betaCommentId);
   expect(removeCommentRes.comment_view.comment.removed).toBe(true);
 
@@ -227,10 +227,10 @@ test.skip("Remove a comment from admin and community on the same instance", asyn
   );
 });
 
-test("Remove a comment from admin and community on different instance", async () => {
+test("Remove a comment from admin and category on different instance", async () => {
   let newAlphaApi = await registerUser(alpha, alphaUrl);
 
-  // New alpha user creates a community, post, and comment.
+  // New alpha user creates a category, post, and comment.
   let newCommunity = await createCommunity(newAlphaApi);
   let newPost = await createPost(
     newAlphaApi,
@@ -276,7 +276,7 @@ test("Remove a comment from admin and community on different instance", async ()
 test("Unlike a comment", async () => {
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
 
-  // Lemmy automatically creates 1 like (vote) by author of comment.
+  // app_108jobs automatically creates 1 like (vote) by author of comment.
   // Make sure that comment is liked (voted up) on gamma, downstream peer
   // This is testing replication from remote-home-remote (alpha-beta-gamma)
 
@@ -346,7 +346,7 @@ test("Reply to a comment from another instance, get notification", async () => {
     c => !!c?.community.instance_id,
   );
   if (!betaCommunity) {
-    throw "Missing beta community";
+    throw "Missing beta category";
   }
 
   const postOnAlphaRes = await createPost(alpha, betaCommunity.community.id);
@@ -436,11 +436,11 @@ test("Bot reply notifications are filtered when bots are hidden", async () => {
 
   const alphaCommunity = await resolveCommunity(
     alpha,
-    "!main@lemmy-alpha:8541",
+    "!main@app_108jobs-alpha:8541",
   );
 
   if (!alphaCommunity) {
-    throw "Missing alpha community";
+    throw "Missing alpha category";
   }
 
   await alpha.markAllNotificationsAsRead();
@@ -479,12 +479,12 @@ test("Bot reply notifications are filtered when bots are hidden", async () => {
 });
 
 test("Mention beta from alpha comment", async () => {
-  if (!betaCommunity) throw Error("no community");
+  if (!betaCommunity) throw Error("no category");
   const postOnAlphaRes = await createPost(alpha, betaCommunity.community.id);
   // Create a new branch, trunk-level comment branch, from alpha instance
   let commentRes = await createComment(alpha, postOnAlphaRes.post_view.post.id);
   // Create a reply comment to previous comment, this has a mention in body
-  let mentionContent = "A test mention of @lemmy_beta@lemmy-beta:8551";
+  let mentionContent = "A test mention of @app_108jobs_beta@app_108jobs-beta:8551";
   let mentionRes = await createComment(
     alpha,
     postOnAlphaRes.post_view.post.id,
@@ -548,12 +548,12 @@ test("Comment Search", async () => {
 
 test("A and G subscribe to B (center) A posts, G mentions B, it gets announced to A", async () => {
   // Create a local post
-  let alphaCommunity = await resolveCommunity(alpha, "!main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(alpha, "!main@app_108jobs-alpha:8541");
   if (!alphaCommunity) {
-    throw "Missing alpha community";
+    throw "Missing alpha category";
   }
 
-  // follow community from beta so that it accepts the mention
+  // follow category from beta so that it accepts the mention
   let betaCommunity = await resolveCommunity(
     beta,
     alphaCommunity.community.ap_id,
@@ -571,7 +571,7 @@ test("A and G subscribe to B (center) A posts, G mentions B, it gets announced t
   }
 
   let commentContent =
-    "A jest test federated comment announce, lets mention @lemmy_beta@lemmy-beta:8551";
+    "A jest test federated comment announce, lets mention @app_108jobs_beta@app_108jobs-beta:8551";
   let commentRes = await createComment(
     gamma,
     gammaPost.post.id,
@@ -618,7 +618,7 @@ test("A and G subscribe to B (center) A posts, G mentions B, it gets announced t
 });
 
 test("Check that activity from another instance is sent to third instance", async () => {
-  // Alpha and gamma users follow beta community
+  // Alpha and gamma users follow beta category
   let alphaFollow = await followBeta(alpha);
   expect(alphaFollow.community_view.community.local).toBe(false);
   expect(alphaFollow.community_view.community.name).toBe("main");
@@ -763,7 +763,7 @@ test("Fetch in_reply_tos: A is unsubbed from B, B makes a post, and some embedde
 test("Report a comment", async () => {
   let betaCommunity = await resolveBetaCommunity(beta);
   if (!betaCommunity) {
-    throw "Missing beta community";
+    throw "Missing beta category";
   }
   let postOnBetaRes = (await createPost(beta, betaCommunity.community.id))
     .post_view.post;
@@ -801,7 +801,7 @@ test("Report a comment", async () => {
   expect(betaReport.reason).toBe(alphaReport.reason);
 });
 
-test("Dont send a comment reply to a blocked community", async () => {
+test("Dont send a comment reply to a blocked category", async () => {
   await beta.markAllNotificationsAsRead();
   let newCommunity = await createCommunity(beta);
   let newCommunityId = newCommunity.community_view.community.id;
@@ -818,7 +818,7 @@ test("Dont send a comment reply to a blocked community", async () => {
   let unreadCount = await getUnreadCount(beta);
   expect(unreadCount.count).toBe(0);
 
-  // Beta blocks the new beta community
+  // Beta blocks the new beta category
   let blockRes = await blockCommunity(beta, newCommunityId, true);
   expect(blockRes.blocked).toBe(true);
   delay();
@@ -841,7 +841,7 @@ test("Dont send a comment reply to a blocked community", async () => {
   let replies = await listInbox(beta, "CommentReply", true);
   expect(replies.inbox.length).toBe(0);
 
-  // Unblock the community
+  // Unblock the category
   blockRes = await blockCommunity(beta, newCommunityId, false);
   expect(blockRes.blocked).toBe(false);
 });
@@ -881,7 +881,7 @@ test("Distinguish comment", async () => {
 
   let alphaPost = await resolvePost(alpha, post.post_view.post);
 
-  // Find the comment on alpha (home of community)
+  // Find the comment on alpha (home of category)
   let alphaComments = await waitUntil(
     () => getComments(alpha, alphaPost?.post.id),
     c => c.comments[0].comment.distinguished,

@@ -1,38 +1,39 @@
-use lemmy_db_schema::{
-  newtypes::{CommunityId, PaginationCursor, PersonId},
-  source::{
+use app_108jobs_db_schema::{
+    newtypes::{CategoryId, PaginationCursor, PersonId},
+    source::{
     combined::search::SearchCombined,
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions},
+    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
     tag::TagsView,
   },
-  SearchSortType,
-  SearchType,
+    SearchSortType,
+    SearchType,
 };
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType};
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_post::PostView;
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType};
+use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_person::PersonView;
+use app_108jobs_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
-    community_post_tags_fragment,
+  app_108jobs_db_schema::utils::queries::{
+    category_post_tags_fragment,
     creator_banned,
     creator_is_admin,
     local_user_can_mod,
     post_tags_fragment,
   },
-  lemmy_db_schema::utils::queries::{creator_banned_from_community, creator_is_moderator},
-  lemmy_db_views_local_user::LocalUserView,
+  app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
+  app_108jobs_db_views_local_user::LocalUserView,
 };
+use app_108jobs_db_schema::newtypes::LanguageId;
 
 #[cfg(feature = "full")]
 pub mod impls;
@@ -51,9 +52,9 @@ pub(crate) struct SearchCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub item_creator: Option<Person>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Option<Community>,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance_actions: Option<InstanceActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -79,11 +80,11 @@ pub(crate) struct SearchCombinedViewInternal {
   pub post_tags: TagsView,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = community_post_tags_fragment()
+      select_expression = category_post_tags_fragment()
     )
   )]
-  /// available tags in this community
-  pub community_post_tags: TagsView,
+  /// available tags in this category
+  pub category_post_tags: TagsView,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = local_user_can_mod()
@@ -104,10 +105,10 @@ pub(crate) struct SearchCombinedViewInternal {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -118,7 +119,7 @@ pub(crate) struct SearchCombinedViewInternal {
 pub enum SearchCombinedView {
   Post(PostView),
   Comment(CommentView),
-  Community(CommunityView),
+  Category(CategoryView),
   Person(PersonView),
 }
 
@@ -130,8 +131,9 @@ pub enum SearchCombinedView {
 #[serde(rename_all = "camelCase")]
 pub struct Search {
   pub q: Option<String>,
-  pub community_id: Option<CommunityId>,
-  pub community_name: Option<String>,
+  pub category_id: Option<CategoryId>,
+  pub language_id: Option<LanguageId>,
+  pub category_name: Option<String>,
   pub creator_id: Option<PersonId>,
   pub r#type: Option<SearchType>,
   pub sort: Option<SearchSortType>,

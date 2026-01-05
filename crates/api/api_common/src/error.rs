@@ -1,1 +1,1 @@
-pub use lemmy_utils::error::FastJobErrorType;
+pub use app_108jobs_utils::error::FastJobErrorType;

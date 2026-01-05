@@ -2,16 +2,17 @@ use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::LocalUserId,
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 pub struct Claims {
   /// local_user_id, standard claim by RFC 7519.
   pub sub: String,
@@ -22,7 +23,8 @@ pub struct Claims {
   pub session: String,
   pub email: Option<SensitiveString>,
   pub lang: String,
-  pub accepted_application: bool,
+  pub accepted_terms: bool,
+  pub is_admin: bool,
 }
 
 impl Claims {
@@ -45,7 +47,8 @@ impl Claims {
     user_id: LocalUserId,
     email: Option<SensitiveString>,
     lang: String,
-    accepted_application: bool,
+    accepted_terms: bool,
+    is_admin: bool,
     req: HttpRequest,
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {
@@ -58,7 +61,8 @@ impl Claims {
       session: generate_session(),
       email,
       lang,
-      accepted_application
+      accepted_terms,
+      is_admin
     };
 
     let secret = &context.secret().jwt_secret;

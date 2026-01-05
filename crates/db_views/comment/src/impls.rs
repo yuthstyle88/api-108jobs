@@ -4,10 +4,10 @@ use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, Sele
 use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::impls::local_user::LocalUserOptionHelper;
-use lemmy_db_schema::newtypes::CommunityId;
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::impls::local_user::LocalUserOptionHelper;
+use app_108jobs_db_schema::newtypes::CategoryId;
+use app_108jobs_db_schema::source::local_user::LocalUser;
+use app_108jobs_db_schema::{
   newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
     comment::{comment_keys as key, Comment},
@@ -17,22 +17,22 @@ use lemmy_db_schema::{
   utils::{
     get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join, creator_community_instance_actions_join,
+      creator_category_actions_join, creator_category_instance_actions_join,
       creator_home_instance_actions_join, creator_local_instance_actions_join,
-      my_comment_actions_join, my_community_actions_join, my_instance_actions_community_join,
+      my_comment_actions_join, my_category_actions_join, my_instance_actions_category_join,
       my_local_user_admin_join, my_person_actions_join,
     },
     seconds_to_pg_interval, DbPool,
   },
 };
-use lemmy_db_schema_file::{
-  enums::{
+use app_108jobs_db_schema_file::{
+    enums::{
     CommentSortType::{self, *},
-    CommunityFollowerState, CommunityVisibility, ListingType,
+    CategoryFollowerState, CategoryVisibility, ListingType,
   },
-  schema::{comment, community, community_actions, person, post},
+    schema::{comment, category, category_actions, person, post},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;
@@ -52,14 +52,14 @@ impl PaginationCursorBuilder for CommentView {
 impl CommentView {
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
-    let community_join = community::table.on(post::community_id.eq(community::id));
+    let category_join = category::table.on(post::category_id.eq(category::id));
 
-    let my_community_actions_join: my_community_actions_join =
-      my_community_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join =
+      my_category_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
-    let my_instance_actions_community_join: my_instance_actions_community_join =
-      my_instance_actions_community_join(my_person_id);
+    let my_instance_actions_category_join: my_instance_actions_category_join =
+      my_instance_actions_category_join(my_person_id);
     let my_person_actions_join: my_person_actions_join = my_person_actions_join(my_person_id);
     let creator_local_instance_actions_join: creator_local_instance_actions_join =
       creator_local_instance_actions_join(local_instance_id);
@@ -67,16 +67,16 @@ impl CommentView {
     comment::table
       .inner_join(person::table)
       .inner_join(post::table)
-      .inner_join(community_join)
-      .left_join(my_community_actions_join)
+      .inner_join(category_join)
+      .left_join(my_category_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(my_person_actions_join)
       .left_join(my_local_user_admin_join)
-      .left_join(my_instance_actions_community_join)
+      .left_join(my_instance_actions_category_join)
       .left_join(creator_home_instance_actions_join())
-      .left_join(creator_community_instance_actions_join())
+      .left_join(creator_category_instance_actions_join())
       .left_join(creator_local_instance_actions_join)
-      .left_join(creator_community_actions_join())
+      .left_join(creator_category_actions_join())
   }
 
   pub async fn read(
@@ -94,15 +94,15 @@ impl CommentView {
 
     query = my_local_user.visible_communities_only(query);
 
-    // Check permissions to view private community content.
-    // Specifically, if the community is private then only accepted followers may view its
-    // content, otherwise it is filtered out. Admins can view private community content
+    // Check permissions to view private category content.
+    // Specifically, if the category is private then only accepted followers may view its
+    // content, otherwise it is filtered out. Admins can view private category content
     // without restriction.
     if !my_local_user.is_admin() {
       query = query.filter(
-        community::visibility
-          .ne(CommunityVisibility::Private)
-          .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
+          category::visibility
+          .ne(CategoryVisibility::Private)
+          .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted)),
       );
     }
 
@@ -122,7 +122,7 @@ impl CommentView {
       creator_is_admin: self.creator_is_admin,
       can_mod: self.can_mod,
       creator_banned: self.creator_banned,
-      creator_banned_from_community: self.creator_banned_from_community,
+      creator_banned_from_category: self.creator_banned_from_category,
       creator_is_moderator: self.creator_is_moderator,
     }
   }
@@ -144,7 +144,7 @@ pub struct CommentQuery<'a> {
   pub listing_type: Option<ListingType>,
   pub sort: Option<CommentSortType>,
   pub time_range_seconds: Option<i32>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub post_id: Option<PostId>,
   pub parent_path: Option<Ltree>,
   pub local_user: Option<&'a LocalUser>,
@@ -174,7 +174,7 @@ impl CommentQuery<'_> {
       query = query.filter(comment::post_id.eq(post_id));
     };
 
-    // Community visibility filtering removed - show all comments regardless of community visibility
+    // Category visibility filtering removed - show all comments regardless of category visibility
 
     // Filter by the time range
     if let Some(time_range_seconds) = o.time_range_seconds {

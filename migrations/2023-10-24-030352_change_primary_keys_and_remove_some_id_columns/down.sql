@@ -22,40 +22,40 @@ ALTER TABLE comment_saved
     DROP CONSTRAINT comment_saved_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-ALTER TABLE community_aggregates
-    ADD UNIQUE (community_id),
-    DROP CONSTRAINT community_aggregates_pkey,
+ALTER TABLE category_aggregates
+    ADD UNIQUE (category_id),
+    DROP CONSTRAINT category_aggregates_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-CREATE INDEX idx_community_block_person ON community_block (person_id);
+CREATE INDEX idx_category_block_person ON category_block (person_id);
 
-ALTER TABLE community_block
-    ADD UNIQUE (person_id, community_id),
-    DROP CONSTRAINT community_block_pkey,
+ALTER TABLE category_block
+    ADD UNIQUE (person_id, category_id),
+    DROP CONSTRAINT category_block_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-CREATE INDEX idx_community_follower_person ON community_follower (person_id);
+CREATE INDEX idx_category_follower_person ON category_follower (person_id);
 
-ALTER TABLE community_follower
-    ADD UNIQUE (community_id, person_id),
-    DROP CONSTRAINT community_follower_pkey,
+ALTER TABLE category_follower
+    ADD UNIQUE (category_id, person_id),
+    DROP CONSTRAINT category_follower_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-ALTER TABLE community_language
-    ADD UNIQUE (community_id, language_id),
-    DROP CONSTRAINT community_language_pkey,
+ALTER TABLE category_language
+    ADD UNIQUE (category_id, language_id),
+    DROP CONSTRAINT category_language_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-CREATE INDEX idx_community_moderator_person ON community_moderator (person_id);
+CREATE INDEX idx_category_moderator_person ON category_moderator (person_id);
 
-ALTER TABLE community_moderator
-    ADD UNIQUE (community_id, person_id),
-    DROP CONSTRAINT community_moderator_pkey,
+ALTER TABLE category_moderator
+    ADD UNIQUE (category_id, person_id),
+    DROP CONSTRAINT category_moderator_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
-ALTER TABLE community_person_ban
-    ADD UNIQUE (community_id, person_id),
-    DROP CONSTRAINT community_person_ban_pkey,
+ALTER TABLE category_person_ban
+    ADD UNIQUE (category_id, person_id),
+    DROP CONSTRAINT category_person_ban_pkey,
     ADD COLUMN id serial PRIMARY KEY;
 
 ALTER TABLE custom_emoji_keyword

@@ -1,11 +1,11 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{is_admin, purge_post_images},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     local_user::LocalUser,
     mod_log::admin::{AdminPurgePost, AdminPurgePostForm},
@@ -13,10 +13,10 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::PurgePost;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::PurgePost;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_post(
   data: Json<PurgePost>,
@@ -26,7 +26,7 @@ pub async fn purge_post(
   // Only let admin purge an item
   is_admin(&local_user_view)?;
 
-  // Read the post to get the community_id
+  // Read the post to get the category_id
   let post = Post::read(&mut context.pool(), data.post_id).await?;
 
   // Also check that you're a higher admin
@@ -45,7 +45,7 @@ pub async fn purge_post(
   let form = AdminPurgePostForm {
     admin_person_id: local_user_view.person.id,
     reason: data.reason.clone(),
-    community_id: post.community_id,
+    category_id: post.category_id,
   };
   AdminPurgePost::create(&mut context.pool(), &form).await?;
 

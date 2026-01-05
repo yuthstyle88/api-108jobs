@@ -1,13 +1,13 @@
 <!-- This Chinese variant is generated from ./README.zh.hans.md via OpenCC and then proofread. Regional difference may occur, though. -->
 <div align="center">
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/LemmyNet/lemmy.svg)
-[![Build Status](https://cloud.drone.io/api/badges/LemmyNet/lemmy/status.svg)](https://cloud.drone.io/LemmyNet/lemmy/)
-[![GitHub issues](https://img.shields.io/github/issues-raw/LemmyNet/lemmy.svg)](https://github.com/LemmyNet/lemmy/issues)
-[![Docker Pulls](https://img.shields.io/docker/pulls/dessalines/lemmy.svg)](https://cloud.docker.com/repository/docker/dessalines/lemmy/)
-[![Translation status](http://weblate.yerbamate.ml/widgets/lemmy/-/lemmy/svg-badge.svg)](http://weblate.yerbamate.ml/engage/lemmy/)
-[![License](https://img.shields.io/github/license/LemmyNet/lemmy.svg)](LICENSE)
-![GitHub stars](https://img.shields.io/github/stars/LemmyNet/lemmy?style=social)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/app_108jobsNet/app_108jobs.svg)
+[![Build Status](https://cloud.drone.io/api/badges/app_108jobsNet/app_108jobs/status.svg)](https://cloud.drone.io/app_108jobsNet/app_108jobs/)
+[![GitHub issues](https://img.shields.io/github/issues-raw/app_108jobsNet/app_108jobs.svg)](https://github.com/app_108jobsNet/app_108jobs/issues)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dessalines/app_108jobs.svg)](https://cloud.docker.com/repository/docker/dessalines/app_108jobs/)
+[![Translation status](http://weblate.yerbamate.ml/widgets/app_108jobs/-/app_108jobs/svg-badge.svg)](http://weblate.yerbamate.ml/engage/app_108jobs/)
+[![License](https://img.shields.io/github/license/app_108jobsNet/app_108jobs.svg)](LICENSE)
+![GitHub stars](https://img.shields.io/github/stars/app_108jobsNet/app_108jobs?style=social)
 [![Delightful Humane Tech](https://codeberg.org/teaserbot-labs/delightful-humane-design/raw/branch/main/humane-tech-badge.svg)](https://codeberg.org/teaserbot-labs/delightful-humane-design)
 
 </div>
@@ -22,27 +22,27 @@
 </p>
 
 <p align="center">
-  <a href="https://join-lemmy.org/" rel="noopener">
- <img width=200px height=200px src="https://raw.githubusercontent.com/LemmyNet/lemmy-ui/main/src/assets/icons/favicon.svg"></a>
+  <a href="https://join-app_108jobs.org/" rel="noopener">
+ <img width=200px height=200px src="https://raw.githubusercontent.com/app_108jobsNet/app_108jobs-ui/main/src/assets/icons/favicon.svg"></a>
 
- <h3 align="center"><a href="https://join-lemmy.org">Lemmy</a></h3>
+ <h3 align="center"><a href="https://join-app_108jobs.org">app_108jobs</a></h3>
   <p align="center">
     一個聯邦宇宙的連結聚合器和論壇。
     <br />
     <br />
-    <a href="https://join-lemmy.org">加入 Lemmy</a>
+    <a href="https://join-app_108jobs.org">加入 app_108jobs</a>
     ·
-    <a href="https://join-lemmy.org/docs/en/index.html">文檔</a>
+    <a href="https://join-app_108jobs.org/docs/en/index.html">文檔</a>
     ·
-    <a href="https://matrix.to/#/#lemmy-space:matrix.org">Matrix 群組</a>
+    <a href="https://matrix.to/#/#app_108jobs-space:matrix.org">Matrix 群組</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/issues">報告缺陷</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">報告缺陷</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/issues">請求新特性</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">請求新特性</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/blob/main/RELEASES.md">發行版</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/blob/main/RELEASES.md">發行版</a>
     ·
-    <a href="https://join-lemmy.org/docs/en/code_of_conduct.html">行為準則</a>
+    <a href="https://join-app_108jobs.org/docs/en/code_of_conduct.html">行為準則</a>
   </p>
 </p>
 
@@ -50,21 +50,21 @@
 
 | 桌面設備                                                                                                        | 行動裝置                                                                                                    |
 | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![desktop](https://raw.githubusercontent.com/LemmyNet/joinlemmy-site/main/src/assets/images/main_screen_2.webp) | ![mobile](https://raw.githubusercontent.com/LemmyNet/joinlemmy-site/main/src/assets/images/mobile_pic.webp) |
+| ![desktop](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/main_screen_2.webp) | ![mobile](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/mobile_pic.webp) |
 
-[Lemmy](https://github.com/LemmyNet/lemmy) 與 [Reddit](https://reddit.com)、[Lobste.rs](https://lobste.rs) 或 [Hacker News](https://news.ycombinator.com/) 等網站類似：你可以訂閱你感興趣的論壇，釋出連結和討論，然後進行投票或評論。但在幕後，Lemmy 和他們不同——任何人都可以很容易地架設一個伺服器，所有伺服器都是聯邦式的（想想電子郵件），並與 [聯邦宇宙](https://zh.wikipedia.org/wiki/%E8%81%94%E9%82%A6%E5%AE%87%E5%AE%99) 互聯。
+[app_108jobs](https://github.com/app_108jobsNet/app_108jobs) 與 [Reddit](https://reddit.com)、[Lobste.rs](https://lobste.rs) 或 [Hacker News](https://news.ycombinator.com/) 等網站類似：你可以訂閱你感興趣的論壇，釋出連結和討論，然後進行投票或評論。但在幕後，app_108jobs 和他們不同——任何人都可以很容易地架設一個伺服器，所有伺服器都是聯邦式的（想想電子郵件），並與 [聯邦宇宙](https://zh.wikipedia.org/wiki/%E8%81%94%E9%82%A6%E5%AE%87%E5%AE%99) 互聯。
 
 對於一個連結聚合器來說，這意味著在一個伺服器上註冊的使用者可以訂閱任何其他伺服器上的論壇，並可以與其他地方註冊的使用者進行討論。
 
 它是 Reddit 和其他連結聚合器的一個易於自託管的、分散式的替代方案，不受公司的控制和干涉。
 
-每個 Lemmy 伺服器都可以設定自己的管理政策；任命全站管理員和社群版主來阻止網路白目，並培養一個健康、無毒的環境，讓所有人都能放心地作出貢獻。
+每個 app_108jobs 伺服器都可以設定自己的管理政策；任命全站管理員和社群版主來阻止網路白目，並培養一個健康、無毒的環境，讓所有人都能放心地作出貢獻。
 
-### 為什麼叫 Lemmy？
+### 為什麼叫 app_108jobs？
 
 - 來自 [Motörhead](https://invidio.us/watch?v=pWB5JZRGl0U) 的主唱。
 - 老式的 [電子遊戲](<https://en.wikipedia.org/wiki/Lemmings_(video_game)>)。
-- [超級馬里奧中的庫巴](https://www.mariowiki.com/Lemmy_Koopa)。
+- [超級馬里奧中的庫巴](https://www.mariowiki.com/app_108jobs_Koopa)。
 - [毛茸茸的齧齒動物](http://sunchild.fpwc.org/lemming-the-little-giant-of-the-north/)。
 
 ### 採用以下專案構建
@@ -79,7 +79,7 @@
 
 - 開源，採用 [AGPL 協議](/LICENSE)。
 - 可自託管，易於部署。
-  - 附帶 [Docker](https://join-lemmy.org/docs/en/administration/install_docker.html) 或 [Ansible](https://join-lemmy.org/docs/en/administration/install_ansible.html)。
+  - 附帶 [Docker](https://join-app_108jobs.org/docs/en/administration/install_docker.html) 或 [Ansible](https://join-app_108jobs.org/docs/en/administration/install_ansible.html)。
 - 乾淨、移動裝置友好的介面。
   - 僅需使用者名稱和密碼就可以註冊!
   - 支援使用者頭像。
@@ -113,33 +113,33 @@
 
 ## 安裝
 
-- [Docker](https://join-lemmy.org/docs/en/administration/install_docker.html)
-- [Ansible](https://join-lemmy.org/docs/en/administration/install_ansible.html)
+- [Docker](https://join-app_108jobs.org/docs/en/administration/install_docker.html)
+- [Ansible](https://join-app_108jobs.org/docs/en/administration/install_ansible.html)
 
-## Lemmy 專案
+## app_108jobs 專案
 
 ### 應用
 
-- [lemmy-ui - Lemmy 的官方網頁應用](https://github.com/LemmyNet/lemmy-ui)
-- [Lemmur - 一個 Lemmy 的行動應用程式（支援安卓、Linux、Windows）](https://github.com/LemmurOrg/lemmur)
-- [Jerboa - 一個由 Lemmy 的開發者打造的原生 Android 應用程式](https://github.com/dessalines/jerboa)
-- [Remmel - 一個原生 iOS 應用程式](https://github.com/uuttff8/Lemmy-iOS)
+- [app_108jobs-ui - app_108jobs 的官方網頁應用](https://github.com/app_108jobsNet/app_108jobs-ui)
+- [Lemmur - 一個 app_108jobs 的行動應用程式（支援安卓、Linux、Windows）](https://github.com/LemmurOrg/lemmur)
+- [Jerboa - 一個由 app_108jobs 的開發者打造的原生 Android 應用程式](https://github.com/dessalines/jerboa)
+- [Remmel - 一個原生 iOS 應用程式](https://github.com/uuttff8/app_108jobs-iOS)
 
 ### 庫
 
-- [lemmy-js-client](https://github.com/LemmyNet/lemmy-js-client)
-- [Kotlin API (尚在開發)](https://github.com/eiknat/lemmy-client)
-- [Dart API client](https://github.com/LemmurOrg/lemmy_api_client)
+- [app_108jobs-js-client](https://github.com/app_108jobsNet/app_108jobs-js-client)
+- [Kotlin API (尚在開發)](https://github.com/eiknat/app_108jobs-client)
+- [Dart API client](https://github.com/LemmurOrg/app_108jobs_api_client)
 
 ## 支援和捐助
 
-Lemmy 是免費的開放原始碼軟體，無廣告，無營利，無風險投資。您的捐款直接支援我們全職開發這一專案。
+app_108jobs 是免費的開放原始碼軟體，無廣告，無營利，無風險投資。您的捐款直接支援我們全職開發這一專案。
 
-- [在 Liberapay 上支援](https://liberapay.com/Lemmy)。
-- [在 Ko-fi 上支援](https://ko-fi.com/lemmynet).
+- [在 Liberapay 上支援](https://liberapay.com/app_108jobs)。
+- [在 Ko-fi 上支援](https://ko-fi.com/app_108jobsnet).
 - [在 Patreon 上支援](https://www.patreon.com/dessalines)。
-- [在 OpenCollective 上支援](https://opencollective.com/lemmy)。
-- [贊助者列表](https://join-lemmy.org/sponsors)。
+- [在 OpenCollective 上支援](https://opencollective.com/app_108jobs)。
+- [贊助者列表](https://join-app_108jobs.org/sponsors)。
 
 ### 加密貨幣
 
@@ -150,24 +150,24 @@ Lemmy 是免費的開放原始碼軟體，無廣告，無營利，無風險投�
 
 ## 貢獻
 
-- [貢獻指南](https://join-lemmy.org/docs/en/contributing/contributing.html)
-- [Docker 開發](https://join-lemmy.org/docs/en/contributing/docker_development.html)
-- [本地開發](https://join-lemmy.org/docs/en/contributing/local_development.html)
+- [貢獻指南](https://join-app_108jobs.org/docs/en/contributing/contributing.html)
+- [Docker 開發](https://join-app_108jobs.org/docs/en/contributing/docker_development.html)
+- [本地開發](https://join-app_108jobs.org/docs/en/contributing/local_development.html)
 
 ### 翻譯
 
-如果你想幫助翻譯，請至 [Weblate](https://weblate.yerbamate.ml/projects/lemmy/)；也可以 [翻譯文檔](https://github.com/LemmyNet/lemmy-docs#adding-a-new-language)。
+如果你想幫助翻譯，請至 [Weblate](https://weblate.yerbamate.ml/projects/app_108jobs/)；也可以 [翻譯文檔](https://github.com/app_108jobsNet/app_108jobs-docs#adding-a-new-language)。
 
 ## 聯絡
 
-- [Mastodon](https://mastodon.social/@LemmyDev)
-- [Lemmy 支援論壇](https://lemmy.ml/c/lemmy_support)
+- [Mastodon](https://mastodon.social/@app_108jobsDev)
+- [app_108jobs 支援論壇](https://app_108jobs.ml/c/app_108jobs_support)
 
 ## 程式碼鏡像
 
-- [GitHub](https://github.com/LemmyNet/lemmy)
-- [Gitea](https://yerbamate.ml/LemmyNet/lemmy)
-- [Codeberg](https://codeberg.org/LemmyNet/lemmy)
+- [GitHub](https://github.com/app_108jobsNet/app_108jobs)
+- [Gitea](https://yerbamate.ml/app_108jobsNet/app_108jobs)
+- [Codeberg](https://codeberg.org/app_108jobsNet/app_108jobs)
 
 ## 致謝
 

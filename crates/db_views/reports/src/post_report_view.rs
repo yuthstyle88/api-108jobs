@@ -8,22 +8,22 @@ use diesel::{
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
-  aliases::{self, creator_community_actions},
+use app_108jobs_db_schema::{
+  aliases::{self, creator_category_actions},
   newtypes::{PersonId, PostReportId},
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{
-  community,
-  community_actions,
-  local_user,
-  person,
-  person_actions,
-  post,
-  post_actions,
-  post_report,
+use app_108jobs_db_schema_file::schema::{
+    category,
+    category_actions,
+    local_user,
+    person,
+    person_actions,
+    post,
+    post_actions,
+    post_report,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PostReportView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -31,27 +31,27 @@ impl PostReportView {
     let recipient_id = aliases::person1.field(person::id);
     let resolver_id = aliases::person2.field(person::id);
 
-    let community_join = community::table.on(post::community_id.eq(community::id));
+    let category_join = category::table.on(post::category_id.eq(category::id));
 
     let report_creator_join = person::table.on(post_report::creator_id.eq(person::id));
 
     let post_creator_join = aliases::person1.on(post::creator_id.eq(recipient_id));
 
-    let creator_community_actions_join = creator_community_actions.on(
-      creator_community_actions
-        .field(community_actions::community_id)
-        .eq(post::community_id)
+    let creator_category_actions_join = creator_category_actions.on(
+      creator_category_actions
+        .field(category_actions::category_id)
+        .eq(post::category_id)
         .and(
-          creator_community_actions
-            .field(community_actions::person_id)
+          creator_category_actions
+            .field(category_actions::person_id)
             .eq(post::creator_id),
         ),
     );
 
-    let community_actions_join = community_actions::table.on(
-      community_actions::community_id
-        .eq(post::community_id)
-        .and(community_actions::person_id.eq(my_person_id)),
+    let category_actions_join = category_actions::table.on(
+        category_actions::category_id
+        .eq(post::category_id)
+        .and(category_actions::person_id.eq(my_person_id)),
     );
 
     let local_user_join = local_user::table.on(
@@ -76,11 +76,11 @@ impl PostReportView {
 
     post_report::table
       .inner_join(post::table)
-      .inner_join(community_join)
+      .inner_join(category_join)
       .inner_join(report_creator_join)
       .inner_join(post_creator_join)
-      .left_join(creator_community_actions_join)
-      .left_join(community_actions_join)
+      .left_join(creator_category_actions_join)
+      .left_join(category_actions_join)
       .left_join(local_user_join)
       .left_join(post_actions_join)
       .left_join(person_actions_join)

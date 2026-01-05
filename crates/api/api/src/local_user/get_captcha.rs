@@ -9,10 +9,10 @@ use actix_web::{
   HttpResponseBuilder,
 };
 use captcha::{generate, Difficulty};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm};
-use lemmy_db_views_site::api::{CaptchaResponse, GetCaptchaResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm};
+use app_108jobs_db_views_site::api::{CaptchaResponse, GetCaptchaResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_captcha(context: Data<FastJobContext>) -> FastJobResult<HttpResponse> {
   let local_site = context.site_config().get().await?.site_view.local_site;

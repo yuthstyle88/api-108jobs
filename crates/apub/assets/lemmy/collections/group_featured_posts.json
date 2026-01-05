@@ -1,14 +1,14 @@
 {
   "type": "OrderedCollection",
-  "id": "https://ds9.lemmy.ml/c/main/featured",
+  "id": "https://ds9.app_108jobs.ml/c/main/featured",
   "totalItems": 2,
   "orderedItems": [
     {
       "type": "Page",
-      "id": "https://ds9.lemmy.ml/post/2",
-      "attributedTo": "https://ds9.lemmy.ml/u/lemmy_alpha",
+      "id": "https://ds9.app_108jobs.ml/post/2",
+      "attributedTo": "https://ds9.app_108jobs.ml/u/app_108jobs_alpha",
       "to": [
-        "https://ds9.lemmy.ml/c/main",
+        "https://ds9.app_108jobs.ml/c/main",
         "https://www.w3.org/ns/activitystreams#Public"
       ],
       "name": "test 2",
@@ -24,10 +24,10 @@
     },
     {
       "type": "Page",
-      "id": "https://ds9.lemmy.ml/post/1",
-      "attributedTo": "https://ds9.lemmy.ml/u/lemmy_alpha",
+      "id": "https://ds9.app_108jobs.ml/post/1",
+      "attributedTo": "https://ds9.app_108jobs.ml/u/app_108jobs_alpha",
       "to": [
-        "https://ds9.lemmy.ml/c/main",
+        "https://ds9.app_108jobs.ml/c/main",
         "https://www.w3.org/ns/activitystreams#Public"
       ],
       "name": "test 1",

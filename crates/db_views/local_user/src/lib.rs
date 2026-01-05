@@ -1,9 +1,9 @@
-use lemmy_db_schema::source::{local_user::LocalUser, person::Person};
+use app_108jobs_db_schema::source::{local_user::LocalUser, person::Person};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::creator_home_banned,
+  app_108jobs_db_schema::utils::queries::creator_home_banned,
 };
 
 pub mod api;

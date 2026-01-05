@@ -1,9 +1,9 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_inbox_combined::{api::GetUnreadCountResponse, InboxCombinedViewInternal};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_views_inbox_combined::{api::GetUnreadCountResponse, InboxCombinedViewInternal};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn unread_count(
   context: Data<FastJobContext>,

@@ -12,8 +12,8 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::post_report;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::post_report;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for PostReport {
   type Form = PostReportForm;
@@ -111,10 +111,10 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
+        category::{Category, CategoryInsertForm},
+        instance::Instance,
+        person::{Person, PersonInsertForm},
+        post::{Post, PostInsertForm},
     },
     traits::Crud,
     utils::build_db_pool_for_tests,
@@ -126,14 +126,14 @@ mod tests {
     let person_form = PersonInsertForm::test_form(inserted_instance.id, "jim");
     let person = Person::create(pool, &person_form).await?;
 
-    let community_form = CommunityInsertForm::new(
+    let category_form = CategoryInsertForm::new(
       inserted_instance.id,
-      "test community_4".to_string(),
+      "test category_4".to_string(),
       "nada".to_owned(),
     );
-    let community = Community::create(pool, &community_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
-    let form = PostInsertForm::new("A test post".into(), person.id, community.id);
+    let form = PostInsertForm::new("A test post".into(), person.id, category.id);
     let post = Post::create(pool, &form).await?;
 
     let report_form = PostReportForm {

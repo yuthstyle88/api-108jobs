@@ -3,20 +3,20 @@ use actix_web::web::Data;
 
 use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_apub_objects::objects::community::ApubCommunity;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_apub_objects::objects::category::ApubCategory;
+use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
-  source::{comment::Comment, community::Community},
+  source::{comment::Comment, category::Category},
   traits::{Crud, PaginationCursorBuilder},
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},
   impls::CommentQuery,
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,
@@ -33,14 +33,14 @@ async fn list_comments_common(
   let site_view = context.site_config().get().await?.site_view;
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
-  let community_id = if let Some(name) = &data.community_name {
+  let category_id = if let Some(name) = &data.category_name {
     Some(
-      resolve_ap_identifier::<ApubCommunity, Community>(name, &context, true)
+      resolve_ap_identifier::<ApubCategory, Category>(name, &context, true)
         .await?,
     )
     .map(|c| c.id)
   } else {
-    data.community_id
+    data.category_id
   };
   let local_user_ref = local_user_view.as_ref().map(|u| &u.local_user);
   let sort = Some(comment_sort_type_with_default(
@@ -57,7 +57,7 @@ async fn list_comments_common(
     data.type_,
     local_user_view.as_ref().map(|u| &u.local_user),
     &site_view.local_site,
-    community_id,
+    category_id,
   ));
 
   // If a parent_id is given, fetch the comment to get the path
@@ -83,7 +83,7 @@ async fn list_comments_common(
     sort,
     time_range_seconds,
     max_depth,
-    community_id,
+    category_id,
     post_id,
     parent_path,
     local_user,

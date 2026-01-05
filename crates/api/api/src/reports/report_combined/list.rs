@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::check_local_user_valid;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_report_combined::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::check_local_user_valid;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_report_combined::{
   api::{ListReports, ListReportsResponse},
   impls::ReportCombinedQuery,
   ReportCombinedView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
-/// Lists reports for a community if an id is supplied
+/// Lists reports for a category if an id is supplied
 /// or returns all reports for communities a user moderates
 pub async fn list_reports(
   data: Query<ListReports>,
@@ -31,11 +31,11 @@ pub async fn list_reports(
   };
 
   let reports = ReportCombinedQuery {
-    community_id: data.community_id,
+    category_id: data.category_id,
     post_id: data.post_id,
     type_: data.type_,
     unresolved_only: data.unresolved_only,
-    show_community_rule_violations: data.show_community_rule_violations,
+    show_category_rule_violations: data.show_category_rule_violations,
     my_reports_only,
     cursor_data,
     page_back: data.page_back,

@@ -1,6 +1,6 @@
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   instance::Instance,
   local_site::LocalSite,
   local_site_rate_limit::LocalSiteRateLimit,

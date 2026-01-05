@@ -1,60 +1,60 @@
 use crate::{
   newtypes::{
-    ModAddCommunityId,
+    ModAddCategoryId,
     ModAddId,
-    ModBanFromCommunityId,
+    ModBanFromCategoryId,
     ModBanId,
-    ModChangeCommunityVisibilityId,
+    ModChangeCategoryVisibilityId,
     ModFeaturePostId,
     ModLockPostId,
     ModRemoveCommentId,
-    ModRemoveCommunityId,
+    ModRemoveCategoryId,
     ModRemovePostId,
-    ModTransferCommunityId,
+    ModTransferCategoryId,
   },
   source::mod_log::moderator::{
     ModAdd,
-    ModAddCommunity,
-    ModAddCommunityForm,
+    ModAddCategory,
+    ModAddCategoryForm,
     ModAddForm,
     ModBan,
     ModBanForm,
-    ModBanFromCommunity,
-    ModBanFromCommunityForm,
-    ModChangeCommunityVisibility,
-    ModChangeCommunityVisibilityForm,
+    ModBanFromCategory,
+    ModBanFromCategoryForm,
+    ModChangeCategoryVisibility,
+    ModChangeCategoryVisibilityForm,
     ModFeaturePost,
     ModFeaturePostForm,
     ModLockPost,
     ModLockPostForm,
     ModRemoveComment,
     ModRemoveCommentForm,
-    ModRemoveCommunity,
-    ModRemoveCommunityForm,
+    ModRemoveCategory,
+    ModRemoveCategoryForm,
     ModRemovePost,
     ModRemovePostForm,
-    ModTransferCommunity,
-    ModTransferCommunityForm,
+    ModTransferCategory,
+    ModTransferCategoryForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   mod_add,
-  mod_add_community,
+  mod_add_category,
   mod_ban,
-  mod_ban_from_community,
-  mod_change_community_visibility,
+  mod_ban_from_category,
+  mod_change_category_visibility,
   mod_feature_post,
   mod_lock_post,
   mod_remove_comment,
-  mod_remove_community,
+  mod_remove_category,
   mod_remove_post,
-  mod_transfer_community,
+  mod_transfer_category,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for ModRemovePost {
   type InsertForm = ModRemovePostForm;
@@ -196,14 +196,14 @@ impl ModRemoveComment {
   }
 }
 
-impl Crud for ModRemoveCommunity {
-  type InsertForm = ModRemoveCommunityForm;
-  type UpdateForm = ModRemoveCommunityForm;
-  type IdType = ModRemoveCommunityId;
+impl Crud for ModRemoveCategory {
+  type InsertForm = ModRemoveCategoryForm;
+  type UpdateForm = ModRemoveCategoryForm;
+  type IdType = ModRemoveCategoryId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_remove_community::table)
+    insert_into(mod_remove_category::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -216,7 +216,7 @@ impl Crud for ModRemoveCommunity {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_remove_community::table.find(from_id))
+    diesel::update(mod_remove_category::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -224,14 +224,14 @@ impl Crud for ModRemoveCommunity {
   }
 }
 
-impl Crud for ModBanFromCommunity {
-  type InsertForm = ModBanFromCommunityForm;
-  type UpdateForm = ModBanFromCommunityForm;
-  type IdType = ModBanFromCommunityId;
+impl Crud for ModBanFromCategory {
+  type InsertForm = ModBanFromCategoryForm;
+  type UpdateForm = ModBanFromCategoryForm;
+  type IdType = ModBanFromCategoryId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_ban_from_community::table)
+    insert_into(mod_ban_from_category::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -244,7 +244,7 @@ impl Crud for ModBanFromCommunity {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_ban_from_community::table.find(from_id))
+    diesel::update(mod_ban_from_category::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -280,14 +280,14 @@ impl Crud for ModBan {
   }
 }
 
-impl Crud for ModChangeCommunityVisibility {
-  type InsertForm = ModChangeCommunityVisibilityForm;
-  type UpdateForm = ModChangeCommunityVisibilityForm;
-  type IdType = ModChangeCommunityVisibilityId;
+impl Crud for ModChangeCategoryVisibility {
+  type InsertForm = ModChangeCategoryVisibilityForm;
+  type UpdateForm = ModChangeCategoryVisibilityForm;
+  type IdType = ModChangeCategoryVisibilityId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_change_community_visibility::table)
+    insert_into(mod_change_category_visibility::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -300,7 +300,7 @@ impl Crud for ModChangeCommunityVisibility {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_change_community_visibility::table.find(from_id))
+    diesel::update(mod_change_category_visibility::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -308,14 +308,14 @@ impl Crud for ModChangeCommunityVisibility {
   }
 }
 
-impl Crud for ModAddCommunity {
-  type InsertForm = ModAddCommunityForm;
-  type UpdateForm = ModAddCommunityForm;
-  type IdType = ModAddCommunityId;
+impl Crud for ModAddCategory {
+  type InsertForm = ModAddCategoryForm;
+  type UpdateForm = ModAddCategoryForm;
+  type IdType = ModAddCategoryId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_add_community::table)
+    insert_into(mod_add_category::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -328,7 +328,7 @@ impl Crud for ModAddCommunity {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_add_community::table.find(from_id))
+    diesel::update(mod_add_category::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -336,14 +336,14 @@ impl Crud for ModAddCommunity {
   }
 }
 
-impl Crud for ModTransferCommunity {
-  type InsertForm = ModTransferCommunityForm;
-  type UpdateForm = ModTransferCommunityForm;
-  type IdType = ModTransferCommunityId;
+impl Crud for ModTransferCategory {
+  type InsertForm = ModTransferCategoryForm;
+  type UpdateForm = ModTransferCategoryForm;
+  type IdType = ModTransferCategoryId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_transfer_community::table)
+    insert_into(mod_transfer_category::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -356,7 +356,7 @@ impl Crud for ModTransferCommunity {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_transfer_community::table.find(from_id))
+    diesel::update(mod_transfer_category::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await

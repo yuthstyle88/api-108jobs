@@ -2,15 +2,15 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::sensitive::SensitiveString;
-use lemmy_db_schema::source::person::Person;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db_schema::source::person::Person;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use p256::{PublicKey, SecretKey};
 
-use lemmy_utils::crypto::{
+use app_108jobs_utils::crypto::{
   normalize_pubkey_to_uncompressed_hex,
   public_key_to_hex,
   derive_aes256_from_ecdh,

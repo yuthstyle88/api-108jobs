@@ -27,10 +27,10 @@
     "name": "Friendica 'Siberian Iris' 2022.05-dev-1453",
     "url": "https://pirati.ca"
   },
-  "to": ["https://pirati.ca/profile/test8", "https://ds9.lemmy.ml/c/testcom"],
+  "to": ["https://pirati.ca/profile/test8", "https://ds9.app_108jobs.ml/c/testcom"],
   "cc": [
     "https://www.w3.org/ns/activitystreams#Public",
-    "https://ds9.lemmy.ml/c/testcom/followers"
+    "https://ds9.app_108jobs.ml/c/testcom/followers"
   ],
   "diaspora:guid": "ec054ce7-1062-3ce2-7f10-2a6640956978",
   "diaspora:like": "{\"author\":\"heluecht@pirati.ca\",\"guid\":\"ec054ce7-1062-3ce2-7f10-2a6640956978\",\"parent_guid\":\"ec054ce7-2062-3bfa-8687-ca8313624820\",\"parent_type\":\"Post\",\"positive\":\"true\",\"author_signature\":\"F7e4x++hte0pSoUwbB6BcK0gl1c4+FjxlhwjTMvmxnB4HL58Kxk8UJ\\/SiTS5g4IoDoRcvQdIgntuHZJfKx3SsIDyWQUP1U9+RrBJh1gskcVmTT15gb2E5qq30PNM8DFV0opewp33KCVWvqqkZ2DIhjiRqqF8eUASUNkdwQci732krkMul\\/B211qBbSndxLPdrqv5Wkl0F2mZJZLIiWRoIjaFNV60lUkOwdqz8p7OuD\\/DdR\\/T8g4s7ofuvKaZ\\/scpxqixYHvv7+0cWXBlsKllW97dH1VHo7SdvJKhApk2IQz9BT8JWcBhBYjkb71olF2gajo6EQxaXt2svEOtRi+mDVQ4Lb6gk\\/Fp5aC5BVAe5Fe4Wr2GUOLmo5P6Fc6IweaoTgcqH2os2OYc\\/isJtQ2jtUtw8smY7kPSa2Qo\\/FMLWyCI8XRrWI9XGo8uSA84E+eiSVuGfqYNQNDkhzr5qCZfiF457SsxFpGa3XI53IA24Iatkj91VGSMQ8OWppK7SERwax2mVc5tn7mSq+2va0k9DiLyLoHVdEdzQcjEGCWEW7rPz7ndKBT3cW\\/jjsww3znAOko7jloXWremEtiqBIZkmHhA+Ec9UnOcShedqz\\/oIB\\/IYVUhwD3STG7EpRjh6J6G0FoU1MieCKjtpSadHN+2GN4COzNTE9iIi9Uqonf4Xio=\"}",

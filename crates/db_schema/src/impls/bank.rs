@@ -12,9 +12,9 @@ use diesel::QueryDsl;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::banks;
+use app_108jobs_db_schema_file::schema::banks;
 #[cfg(feature = "full")]
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::source::bank::BanksResponse;
 
 #[cfg(feature = "full")]

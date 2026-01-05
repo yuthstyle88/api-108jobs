@@ -1,10 +1,10 @@
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{
     combined::inbox::InboxCombined,
     comment::{Comment, CommentActions},
     comment_reply::CommentReply,
-    community::{Community, CommunityActions},
+    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
@@ -20,7 +20,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::{
+  app_108jobs_db_schema::{
     utils::queries::{
       creator_banned,
       creator_is_admin,
@@ -28,7 +28,7 @@ use {
       person1_select,
       post_tags_fragment,
     },
-    utils::queries::{creator_banned_from_community, creator_is_moderator},
+    utils::queries::{creator_banned_from_category, creator_is_moderator},
     Person1AliasAllColumnsTuple,
   },
 };
@@ -55,7 +55,7 @@ pub struct InboxCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Option<Community>,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub item_creator: Person,
   #[cfg_attr(feature = "full",
@@ -68,7 +68,7 @@ pub struct InboxCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance_actions: Option<InstanceActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -109,10 +109,10 @@ pub struct InboxCombinedViewInternal {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -138,8 +138,8 @@ pub struct PersonCommentMentionView {
   pub comment: Comment,
   pub creator: Person,
   pub post: Post,
-  pub community: Community,
-  pub community_actions: Option<CommunityActions>,
+  pub category: Category,
+  pub category_actions: Option<CategoryActions>,
   pub comment_actions: Option<CommentActions>,
   pub person_actions: Option<PersonActions>,
   pub instance_actions: Option<InstanceActions>,
@@ -147,7 +147,7 @@ pub struct PersonCommentMentionView {
   pub can_mod: bool,
   pub creator_banned: bool,
   pub creator_is_moderator: bool,
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[skip_serializing_none]
@@ -162,9 +162,9 @@ pub struct PersonPostMentionView {
   pub recipient: Person,
   pub post: Post,
   pub creator: Person,
-  pub community: Community,
+  pub category: Category,
   pub image_details: Option<ImageDetails>,
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   pub person_actions: Option<PersonActions>,
   pub post_actions: Option<PostActions>,
   pub instance_actions: Option<InstanceActions>,
@@ -173,7 +173,7 @@ pub struct PersonPostMentionView {
   pub can_mod: bool,
   pub creator_banned: bool,
   pub creator_is_moderator: bool,
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[skip_serializing_none]
@@ -189,8 +189,8 @@ pub struct CommentReplyView {
   pub comment: Comment,
   pub creator: Person,
   pub post: Post,
-  pub community: Community,
-  pub community_actions: Option<CommunityActions>,
+  pub category: Category,
+  pub category_actions: Option<CategoryActions>,
   pub comment_actions: Option<CommentActions>,
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -200,7 +200,7 @@ pub struct CommentReplyView {
   pub can_mod: bool,
   pub creator_banned: bool,
   pub creator_is_moderator: bool,
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[skip_serializing_none]

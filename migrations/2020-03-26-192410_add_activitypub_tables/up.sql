@@ -16,13 +16,13 @@ CREATE UNIQUE INDEX idx_activity_unique_apid ON activity ((data ->> 'id'::text))
 ALTER TABLE user_
 -- TODO uniqueness constraints should be added on these 3 columns later
     ADD COLUMN actor_id character varying(255) NOT NULL DEFAULT 'http://fake.com', -- This needs to be checked and updated in code, building from the site url if local
-    ADD COLUMN bio text, -- not on community, already has description
+    ADD COLUMN bio text, -- not on category, already has description
     ADD COLUMN local boolean NOT NULL DEFAULT TRUE,
     ADD COLUMN last_refreshed_at timestamp NOT NULL DEFAULT now() -- Used to re-fetch federated actor periodically
 ;
 
--- Community
-ALTER TABLE community
+-- Category
+ALTER TABLE category
     ADD COLUMN actor_id character varying(255) NOT NULL DEFAULT 'http://fake.com', -- This needs to be checked and updated in code, building from the site url if local
     ADD COLUMN local boolean NOT NULL DEFAULT TRUE,
     ADD COLUMN last_refreshed_at timestamp NOT NULL DEFAULT now() -- Used to re-fetch federated actor periodically

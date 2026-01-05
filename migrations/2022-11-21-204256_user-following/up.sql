@@ -9,12 +9,12 @@ CREATE TABLE person_follower (
 );
 
 UPDATE
-    community_follower
+    category_follower
 SET
     pending = FALSE
 WHERE
     pending IS NULL;
 
-ALTER TABLE community_follower
+ALTER TABLE category_follower
     ALTER COLUMN pending SET NOT NULL;
 

@@ -1,10 +1,10 @@
 SET timezone TO utc;
 
-ALTER TABLE community_moderator
+ALTER TABLE category_moderator
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community_follower
+ALTER TABLE category_follower
     ALTER COLUMN published TYPE timestamp
     USING published;
 
@@ -12,11 +12,11 @@ ALTER TABLE person_ban
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community_person_ban
+ALTER TABLE category_person_ban
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community_person_ban
+ALTER TABLE category_person_ban
     ALTER COLUMN expires TYPE timestamp
     USING expires;
 
@@ -76,19 +76,19 @@ ALTER TABLE mod_remove_comment
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
-ALTER TABLE mod_remove_community
+ALTER TABLE mod_remove_category
     ALTER COLUMN expires TYPE timestamp
     USING expires;
 
-ALTER TABLE mod_remove_community
+ALTER TABLE mod_remove_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
-ALTER TABLE mod_ban_from_community
+ALTER TABLE mod_ban_from_category
     ALTER COLUMN expires TYPE timestamp
     USING expires;
 
-ALTER TABLE mod_ban_from_community
+ALTER TABLE mod_ban_from_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
@@ -100,7 +100,7 @@ ALTER TABLE mod_ban
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
-ALTER TABLE mod_add_community
+ALTER TABLE mod_add_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
@@ -128,15 +128,15 @@ ALTER TABLE received_activity
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN updated TYPE timestamp
     USING updated;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN last_refreshed_at TYPE timestamp
     USING last_refreshed_at;
 
@@ -180,15 +180,15 @@ ALTER TABLE comment_aggregates
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community_block
+ALTER TABLE category_block
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE community_aggregates
+ALTER TABLE category_aggregates
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE mod_transfer_community
+ALTER TABLE mod_transfer_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
@@ -208,7 +208,7 @@ ALTER TABLE email_verification
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE admin_purge_community
+ALTER TABLE admin_purge_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 
@@ -224,7 +224,7 @@ ALTER TABLE registration_application
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE mod_hide_community
+ALTER TABLE mod_hide_category
     ALTER COLUMN when_ TYPE timestamp
     USING when_;
 

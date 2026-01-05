@@ -1,10 +1,10 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{ResendVerificationEmail, SuccessResponse};
-use lemmy_email::account::send_verification_email_if_required;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{ResendVerificationEmail, SuccessResponse};
+use app_108jobs_email::account::send_verification_email_if_required;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn resend_verification_email(
   data: Json<ResendVerificationEmail>,

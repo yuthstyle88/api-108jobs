@@ -1,8 +1,8 @@
 use anyhow::anyhow;
 use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
 use extism_convert::Json;
-use lemmy_db_views_site::api::PluginMetadata;
-use lemmy_utils::{
+use app_108jobs_db_views_site::api::PluginMetadata;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
   VERSION,
@@ -85,12 +85,12 @@ impl FastJobPlugin {
     let reader = BufReader::new(file);
     let mut manifest: Manifest = serde_json::from_reader(reader)?;
     manifest.config.insert(
-      "lemmy_url".to_string(),
+      "app_108jobs_url".to_string(),
       format!("http://{}:{}/", SETTINGS.bind, SETTINGS.port),
     );
     manifest
       .config
-      .insert("lemmy_version".to_string(), VERSION.to_string());
+      .insert("app_108jobs_version".to_string(), VERSION.to_string());
     let builder = move || PluginBuilder::new(manifest.clone()).with_wasi(true).build();
     let metadata: PluginMetadata = builder()?.call("metadata", 0)?;
     let plugin_pool: Pool = Pool::new(builder);
@@ -120,7 +120,7 @@ impl FastJobPlugins {
     // TODO: use std::sync::OnceLock once get_mut_or_init() is stabilized
     // https://doc.rust-lang.org/std/sync/struct.OnceLock.html#method.get_mut_or_init
     static PLUGINS: Lazy<FastJobPlugins> = Lazy::new(|| {
-      let dir = env::var("LEMMY_PLUGIN_PATH").unwrap_or("plugins".to_string());
+      let dir = env::var("app_108jobs_PLUGIN_PATH").unwrap_or("plugins".to_string());
       let plugin_paths = match read_dir(dir) {
         Ok(r) => r,
         Err(e) => {

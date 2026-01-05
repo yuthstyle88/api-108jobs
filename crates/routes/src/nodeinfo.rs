@@ -1,7 +1,7 @@
 use actix_web::{web, Error, HttpResponse, Result};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_utils::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_utils::{
   cache_header::{cache_1hour, cache_3days},
   error::FastJobResult,
   VERSION,
@@ -19,7 +19,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
       web::get().to(node_info).wrap(cache_1hour()),
     )
     .service(web::redirect("/version", "/nodeinfo/2.1"))
-    // For backwards compatibility, can be removed after Lemmy 0.20
+    // For backwards compatibility, can be removed after app_108jobs 0.20
     .service(web::redirect("/nodeinfo/2.0.json", "/nodeinfo/2.1"))
     .service(web::redirect("/nodeinfo/2.1.json", "/nodeinfo/2.1"))
     .route(
@@ -50,10 +50,10 @@ async fn node_info(context: web::Data<FastJobContext>) -> Result<HttpResponse, E
   let json = NodeInfo {
     version: Some("2.1".to_string()),
     software: Some(NodeInfoSoftware {
-      name: Some("lemmy".to_string()),
+      name: Some("app_108jobs".to_string()),
       version: Some(VERSION.to_string()),
-      repository: Some("https://github.com/LemmyNet/lemmy".to_string()),
-      homepage: Some("https://join-lemmy.org/".to_string()),
+      repository: Some("https://github.com/app_108jobsNet/app_108jobs".to_string()),
+      homepage: Some("https://join-app_108jobs.org/".to_string()),
     }),
     protocols: Some(vec!["activitypub".to_string()]),
     usage: Some(NodeInfoUsage {

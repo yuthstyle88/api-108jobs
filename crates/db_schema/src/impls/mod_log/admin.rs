@@ -3,7 +3,7 @@ use crate::{
     AdminAllowInstanceId,
     AdminBlockInstanceId,
     AdminPurgeCommentId,
-    AdminPurgeCommunityId,
+    AdminPurgeCategoryId,
     AdminPurgePersonId,
     AdminPurgePostId,
   },
@@ -14,8 +14,8 @@ use crate::{
     AdminBlockInstanceForm,
     AdminPurgeComment,
     AdminPurgeCommentForm,
-    AdminPurgeCommunity,
-    AdminPurgeCommunityForm,
+    AdminPurgeCategory,
+    AdminPurgeCategoryForm,
     AdminPurgePerson,
     AdminPurgePersonForm,
     AdminPurgePost,
@@ -26,15 +26,15 @@ use crate::{
 };
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   admin_allow_instance,
   admin_block_instance,
   admin_purge_comment,
-  admin_purge_community,
+  admin_purge_category,
   admin_purge_person,
   admin_purge_post,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for AdminPurgePerson {
   type InsertForm = AdminPurgePersonForm;
@@ -64,14 +64,14 @@ impl Crud for AdminPurgePerson {
   }
 }
 
-impl Crud for AdminPurgeCommunity {
-  type InsertForm = AdminPurgeCommunityForm;
-  type UpdateForm = AdminPurgeCommunityForm;
-  type IdType = AdminPurgeCommunityId;
+impl Crud for AdminPurgeCategory {
+  type InsertForm = AdminPurgeCategoryForm;
+  type UpdateForm = AdminPurgeCategoryForm;
+  type IdType = AdminPurgeCategoryId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(admin_purge_community::table)
+    insert_into(admin_purge_category::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -84,7 +84,7 @@ impl Crud for AdminPurgeCommunity {
     form: &Self::InsertForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(admin_purge_community::table.find(from_id))
+    diesel::update(admin_purge_category::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await

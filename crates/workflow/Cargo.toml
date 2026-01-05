@@ -1,8 +1,8 @@
 [package]
-name = "lemmy_workflow"
+name = "app_108jobs_workflow"
 version = "1.0.0-alpha.5"
 edition = "2021"
-authors = ["Lemmy Authors"]
+authors = ["app_108jobs Authors"]
 description = "Workflow services for billing and job lifecycle"
 license = "AGPL-3.0"
 publish = false
@@ -10,15 +10,15 @@ publish = false
 [features]
 ts-rs = [
   "dep:ts-rs",
-  "lemmy_db_schema/ts-rs",
-  "lemmy_db_schema_file/ts-rs",
+  "app_108jobs_db_schema/ts-rs",
+  "app_108jobs_db_schema_file/ts-rs",
 ]
 [dependencies]
-lemmy_utils = { workspace = true }
-lemmy_db_schema = { workspace = true }
-lemmy_db_schema_file = { workspace = true }
-lemmy_db_views_wallet = { workspace = true }
-lemmy_db_views_billing = { workspace = true }
+app_108jobs_utils = { workspace = true }
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_db_views_wallet = { workspace = true }
+app_108jobs_db_views_billing = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true }
 chrono = { workspace = true }

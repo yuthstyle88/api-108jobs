@@ -1,20 +1,20 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use bcrypt::verify;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::purge_user_account,
 };
-use lemmy_db_schema::source::{
-  community::CommunityActions,
+use app_108jobs_db_schema::source::{
+  category::CategoryActions,
   login_token::LoginToken,
   oauth_account::OAuthAccount,
   person::Person,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{DeleteAccount, SuccessResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{DeleteAccount, SuccessResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_account(
   data: Json<DeleteAccount>,
@@ -40,7 +40,7 @@ pub async fn delete_account(
     // These are already run in purge_user_account,
     // but should be done anyway even if delete_content is false
     OAuthAccount::delete_user_accounts(&mut context.pool(), local_user_view.local_user.id).await?;
-    CommunityActions::leave_mod_team_for_all_communities(
+    CategoryActions::leave_mod_team_for_all_communities(
       &mut context.pool(),
       local_user_view.person.id,
     )

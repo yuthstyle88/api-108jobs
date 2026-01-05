@@ -1,5 +1,5 @@
 use crate::RegistrationApplicationView;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
   sensitive::SensitiveString,
 };
@@ -58,7 +58,7 @@ pub struct ListRegistrationApplicationsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Register / Sign up to lemmy.
+/// Register / Sign up to app_108jobs.
 #[serde(rename_all = "camelCase")]
 pub struct Register {
   pub username: String,

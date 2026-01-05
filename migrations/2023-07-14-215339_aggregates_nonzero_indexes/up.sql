@@ -1,5 +1,5 @@
 -- Your SQL goes here
-CREATE INDEX idx_community_aggregates_nonzero_hotrank ON community_aggregates (published)
+CREATE INDEX idx_category_aggregates_nonzero_hotrank ON category_aggregates (published)
 WHERE
     hot_rank != 0;
 

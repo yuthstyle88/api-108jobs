@@ -4,8 +4,8 @@ use crate::{
 };
 use diesel::dsl::insert_into;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
-use lemmy_db_schema_file::schema::local_site_url_blocklist;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::local_site_url_blocklist;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalSiteUrlBlocklist {
   pub async fn replace(pool: &mut DbPool<'_>, url_blocklist: Vec<String>) -> FastJobResult<usize> {

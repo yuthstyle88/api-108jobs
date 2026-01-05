@@ -1,4 +1,4 @@
--- https://github.com/dessalines/lemmy/issues/197
+-- https://github.com/dessalines/app_108jobs/issues/197
 DROP VIEW reply_view;
 
 -- Do the reply_view referencing the comment_mview

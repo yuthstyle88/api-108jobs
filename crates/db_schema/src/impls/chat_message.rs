@@ -7,8 +7,8 @@ use crate::{
 use diesel::dsl::update;
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl, OptionalExtension};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::chat_message;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::chat_message;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::newtypes::ChatRoomId;
 
 impl Crud for ChatMessage {

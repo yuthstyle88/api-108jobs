@@ -1,56 +1,35 @@
 use crate::{
   aliases::{
-    creator_community_actions,
-    creator_community_instance_actions,
-    creator_home_instance_actions,
-    creator_local_instance_actions,
-    creator_local_user,
-    person1,
-    person2,
+    creator_category_actions, creator_category_instance_actions, creator_home_instance_actions,
+    creator_local_instance_actions, creator_local_user, person1, person2,
   },
   newtypes::{InstanceId, PersonId},
-  Person1AliasAllColumnsTuple,
-  Person2AliasAllColumnsTuple,
+  Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple,
 };
 use diesel::{
   dsl::{case_when, exists, not},
   expression::SqlLiteral,
   helper_types::{Eq, NotEq},
   sql_types::Json,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgExpressionMethods, QueryDsl,
 };
-use lemmy_db_schema_file::{
-  enums::{CommunityFollowerState, CommunityVisibility},
+use app_108jobs_db_schema_file::{
+  enums::{CategoryFollowerState, CategoryVisibility},
   schema::{
-    comment,
-    comment_actions,
-    community,
-    community_actions,
-    image_details,
-    instance_actions,
-    local_user,
-    person,
-    person_actions,
-    post,
-    post_actions,
-    post_tag,
-    tag,
+    category, category_actions, comment, comment_actions, image_details, instance_actions,
+    local_user, person, person_actions, post, post_actions, post_tag, tag,
   },
 };
 
 /// Hide all content from blocked communities and persons. Content from blocked instances is also
-/// hidden, unless the user followed the community explicitly.
+/// hidden, unless the user followed the category explicitly.
 #[diesel::dsl::auto_type]
 pub fn filter_blocked() -> _ {
   instance_actions::blocked_at
     .is_null()
-    .or(community_actions::followed_at.is_not_null())
-    .and(community_actions::blocked_at.is_null())
+    .or(category_actions::followed_at.is_not_null())
+    .and(category_actions::blocked_at.is_null())
     .and(person_actions::blocked_at.is_null())
 }
 
@@ -94,16 +73,16 @@ pub fn post_creator_is_admin() -> _ {
 
 #[diesel::dsl::auto_type]
 pub fn creator_is_moderator() -> _ {
-  creator_community_actions
-    .field(community_actions::became_moderator_at)
+  creator_category_actions
+    .field(category_actions::became_moderator_at)
     .nullable()
     .is_not_null()
 }
 
 #[diesel::dsl::auto_type]
-pub fn creator_banned_from_community() -> _ {
-  creator_community_actions
-    .field(community_actions::received_ban_at)
+pub fn creator_banned_from_category() -> _ {
+  creator_category_actions
+    .field(category_actions::received_ban_at)
     .nullable()
     .is_not_null()
 }
@@ -129,14 +108,14 @@ pub fn creator_banned() -> _ {
 }
 
 /// Similar to creator_banned(), but also checks if creator was banned from instance where the
-/// community is hosted.
+/// category is hosted.
 #[diesel::dsl::auto_type]
-pub fn creator_banned_within_community() -> _ {
-  let community_ban = creator_community_instance_actions
+pub fn creator_banned_within_category() -> _ {
+  let category_ban = creator_category_instance_actions
     .field(instance_actions::received_ban_at)
     .nullable()
     .is_not_null();
-  creator_banned().or(community_ban)
+  creator_banned().or(category_ban)
 }
 
 #[diesel::dsl::auto_type]
@@ -150,10 +129,10 @@ pub fn creator_local_user_admin_join() -> _ {
 
 #[diesel::dsl::auto_type]
 fn am_higher_mod() -> _ {
-  let i_became_moderator = community_actions::became_moderator_at.nullable();
+  let i_became_moderator = category_actions::became_moderator_at.nullable();
 
-  let creator_became_moderator = creator_community_actions
-    .field(community_actions::became_moderator_at)
+  let creator_became_moderator = creator_category_actions
+    .field(category_actions::became_moderator_at)
     .nullable();
 
   i_became_moderator.is_not_null().and(
@@ -188,9 +167,9 @@ pub fn local_user_can_mod_comment() -> _ {
 
 /// A special type of can_mod for communities, which dont have creators.
 #[diesel::dsl::auto_type]
-pub fn local_user_community_can_mod() -> _ {
+pub fn local_user_category_can_mod() -> _ {
   let am_admin = local_user::admin.nullable();
-  let am_moderator = community_actions::became_moderator_at
+  let am_moderator = category_actions::became_moderator_at
     .nullable()
     .is_not_null();
   am_admin.or(am_moderator).is_not_distinct_from(true)
@@ -245,12 +224,12 @@ pub fn post_tags_fragment() -> _ {
 }
 
 #[diesel::dsl::auto_type]
-/// Gets the post tags available within a specific community
-pub fn community_post_tags_fragment() -> _ {
+/// Gets the post tags available within a specific category
+pub fn category_post_tags_fragment() -> _ {
   let sel: SqlLiteral<Json> = diesel::dsl::sql::<diesel::sql_types::Json>("json_agg(tag.*)");
   tag::table
     .select(sel)
-    .filter(tag::community_id.eq(community::id))
+    .filter(tag::category_id.eq(category::id))
     .filter(tag::deleted.eq(false))
     .single_value()
 }
@@ -266,25 +245,25 @@ pub fn person2_select() -> Person2AliasAllColumnsTuple {
 }
 
 type IsSubscribedType =
-  Eq<lemmy_db_schema_file::schema::community_actions::follow_state, Option<CommunityFollowerState>>;
+  Eq<app_108jobs_db_schema_file::schema::category_actions::follow_state, Option<CategoryFollowerState>>;
 
 pub fn filter_is_subscribed() -> IsSubscribedType {
-  community_actions::follow_state.eq(Some(CommunityFollowerState::Accepted))
+  category_actions::follow_state.eq(Some(CategoryFollowerState::Accepted))
 }
 
 type IsNotUnlistedType =
-  NotEq<lemmy_db_schema_file::schema::community::visibility, CommunityVisibility>;
+  NotEq<app_108jobs_db_schema_file::schema::category::visibility, CategoryVisibility>;
 
 #[diesel::dsl::auto_type]
 pub fn filter_not_unlisted_or_is_subscribed() -> _ {
-  let not_unlisted: IsNotUnlistedType = community::visibility.ne(CommunityVisibility::Unlisted);
+  let not_unlisted: IsNotUnlistedType = category::visibility.ne(CategoryVisibility::Unlisted);
   let is_subscribed: IsSubscribedType = filter_is_subscribed();
   not_unlisted.or(is_subscribed)
 }
 
 #[diesel::dsl::auto_type]
-pub fn community_join() -> _ {
-  community::table.on(post::community_id.eq(community::id))
+pub fn category_join() -> _ {
+  category::table.on(post::category_id.eq(category::id))
 }
 
 #[diesel::dsl::auto_type]
@@ -301,13 +280,13 @@ pub fn creator_home_instance_actions_join() -> _ {
   )
 }
 #[diesel::dsl::auto_type]
-pub fn creator_community_instance_actions_join() -> _ {
-  creator_community_instance_actions.on(
+pub fn creator_category_instance_actions_join() -> _ {
+  creator_category_instance_actions.on(
     creator_home_instance_actions
       .field(instance_actions::instance_id)
-      .eq(community::instance_id)
+      .eq(category::instance_id)
       .and(
-        creator_community_instance_actions
+        creator_category_instance_actions
           .field(instance_actions::person_id)
           .eq(person::id),
       ),
@@ -331,12 +310,12 @@ pub fn creator_local_instance_actions_join(local_instance_id: InstanceId) -> _ {
   )
 }
 
-/// Your instance actions for the community's instance.
+/// Your instance actions for the category's instance.
 #[diesel::dsl::auto_type]
-pub fn my_instance_actions_community_join(my_person_id: Option<PersonId>) -> _ {
+pub fn my_instance_actions_category_join(my_person_id: Option<PersonId>) -> _ {
   instance_actions::table.on(
     instance_actions::instance_id
-      .eq(community::instance_id)
+      .eq(category::instance_id)
       .and(instance_actions::person_id.nullable().eq(my_person_id)),
   )
 }
@@ -357,11 +336,11 @@ pub fn image_details_join() -> _ {
 }
 
 #[diesel::dsl::auto_type]
-pub fn my_community_actions_join(my_person_id: Option<PersonId>) -> _ {
-  community_actions::table.on(
-    community_actions::community_id
-      .eq(community::id)
-      .and(community_actions::person_id.nullable().eq(my_person_id)),
+pub fn my_category_actions_join(my_person_id: Option<PersonId>) -> _ {
+  category_actions::table.on(
+    category_actions::category_id
+      .eq(category::id)
+      .and(category_actions::person_id.nullable().eq(my_person_id)),
   )
 }
 
@@ -403,14 +382,14 @@ pub fn my_local_user_admin_join(my_person_id: Option<PersonId>) -> _ {
 }
 
 #[diesel::dsl::auto_type]
-pub fn creator_community_actions_join() -> _ {
-  creator_community_actions.on(
-    creator_community_actions
-      .field(community_actions::community_id)
-      .eq(community::id)
+pub fn creator_category_actions_join() -> _ {
+  creator_category_actions.on(
+    creator_category_actions
+      .field(category_actions::category_id)
+      .eq(category::id)
       .and(
-        creator_community_actions
-          .field(community_actions::person_id)
+        creator_category_actions
+          .field(category_actions::person_id)
           .eq(person::id),
       ),
   )

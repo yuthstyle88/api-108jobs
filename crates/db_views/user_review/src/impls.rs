@@ -1,28 +1,36 @@
 use crate::UserReviewView;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, UserReviewId, WorkflowId},
   source::user_review::UserReview,
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
-use lemmy_db_schema_file::schema::{person, user_review, workflow};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema::newtypes::DecodedCursor;
+use app_108jobs_db_schema_file::schema::{person, user_review, workflow};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for UserReviewView {
   type CursorData = UserReview;
 
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('R', self.review.id.0)
+    PaginationCursor::v2_i32(self.review.id.0)
   }
 
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
-    let id = cursor.first_id()?;
+    let decoded = cursor.decode()?;
+
+    let id = match decoded {
+      DecodedCursor::I32(id) => id,
+      DecodedCursor::I64(id) => id as i32,
+      DecodedCursor::Composite(parts) => parts[0].1,
+    };
+
     UserReview::read(pool, UserReviewId(id)).await
   }
 }
@@ -119,7 +127,7 @@ impl UserReviewView {
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
-    let mut query = base_user_review_query!(user_review::reviewer_id.eq(person_id));
+    let mut query = base_user_review_query!(user_review::reviewee_id.eq(person_id));
 
     apply_cursor_pagination!(query, cursor_data, page_back);
 

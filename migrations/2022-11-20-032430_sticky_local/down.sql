@@ -1,8 +1,8 @@
 DROP TRIGGER IF EXISTS post_aggregates_featured_local ON post;
 
-DROP TRIGGER IF EXISTS post_aggregates_featured_community ON post;
+DROP TRIGGER IF EXISTS post_aggregates_featured_category ON post;
 
-DROP FUNCTION post_aggregates_featured_community;
+DROP FUNCTION post_aggregates_featured_category;
 
 DROP FUNCTION post_aggregates_featured_local;
 
@@ -12,10 +12,10 @@ ALTER TABLE post
 UPDATE
     post
 SET
-    stickied = featured_community;
+    stickied = featured_category;
 
 ALTER TABLE post
-    DROP COLUMN featured_community;
+    DROP COLUMN featured_category;
 
 ALTER TABLE post
     DROP COLUMN featured_local;
@@ -26,10 +26,10 @@ ALTER TABLE post_aggregates
 UPDATE
     post_aggregates
 SET
-    stickied = featured_community;
+    stickied = featured_category;
 
 ALTER TABLE post_aggregates
-    DROP COLUMN featured_community;
+    DROP COLUMN featured_category;
 
 ALTER TABLE post_aggregates
     DROP COLUMN featured_local;
@@ -37,7 +37,7 @@ ALTER TABLE post_aggregates
 ALTER TABLE mod_feature_post RENAME COLUMN featured TO stickied;
 
 ALTER TABLE mod_feature_post
-    DROP COLUMN is_featured_community;
+    DROP COLUMN is_featured_category;
 
 ALTER TABLE mod_feature_post
     ALTER COLUMN stickied DROP NOT NULL;

@@ -31,7 +31,7 @@ SELECT
     cr.*,
     c.post_id,
     c.content AS current_comment_text,
-    p.community_id,
+    p.category_id,
     -- report creator details
     f.actor_id AS creator_actor_id,
     f.name AS creator_name,
@@ -65,7 +65,7 @@ SELECT
     p.name AS current_post_name,
     p.url AS current_post_url,
     p.body AS current_post_body,
-    p.community_id,
+    p.category_id,
     -- report creator details
     f.actor_id AS creator_actor_id,
     f.name AS creator_name,

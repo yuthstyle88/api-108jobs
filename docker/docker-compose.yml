@@ -22,10 +22,13 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    environment:
+      REDIS_PASSWORD: "12345"
+    command: [ "redis-server", "--requirepass", "12345" ]
 
   pictrs:
     image: asonix/pictrs:0.5.17-pre.9
-    # this needs to match the pictrs url in lemmy.hjson
+    # this needs to match the pictrs url in app_108jobs.hjson
     hostname: pictrs
     # we can set options to pictrs like this, here we set max. image size and forced format for conversion
     # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
@@ -37,6 +40,8 @@ services:
       - PICTRS__MEDIA__GIF__MAX_HEIGHT=256
       - PICTRS__MEDIA__GIF__MAX_AREA=65536
       - PICTRS__MEDIA__GIF__MAX_FRAME_COUNT=400
+    ports:
+      - "8080:8080"
     volumes:
       - ./volumes/pictrs:/mnt
     restart: unless-stopped

@@ -1,14 +1,14 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person_saved_combined::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person_saved_combined::{
   impls::PersonSavedCombinedQuery,
   ListPersonSaved,
   ListPersonSavedResponse,
   PersonSavedCombinedView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 pub async fn list_person_saved(
   data: Query<ListPersonSaved>,
   context: Data<FastJobContext>,

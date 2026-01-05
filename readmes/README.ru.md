@@ -1,12 +1,12 @@
 <div align="center">
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/LemmyNet/lemmy.svg)
-[![Build Status](https://cloud.drone.io/api/badges/LemmyNet/lemmy/status.svg)](https://cloud.drone.io/LemmyNet/lemmy/)
-[![GitHub issues](https://img.shields.io/github/issues-raw/LemmyNet/lemmy.svg)](https://github.com/LemmyNet/lemmy/issues)
-[![Docker Pulls](https://img.shields.io/docker/pulls/dessalines/lemmy.svg)](https://cloud.docker.com/repository/docker/dessalines/lemmy/)
-[![Translation status](http://weblate.yerbamate.ml/widgets/lemmy/-/lemmy/svg-badge.svg)](http://weblate.yerbamate.ml/engage/lemmy/)
-[![License](https://img.shields.io/github/license/LemmyNet/lemmy.svg)](LICENSE)
-![GitHub stars](https://img.shields.io/github/stars/LemmyNet/lemmy?style=social)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/app_108jobsNet/app_108jobs.svg)
+[![Build Status](https://cloud.drone.io/api/badges/app_108jobsNet/app_108jobs/status.svg)](https://cloud.drone.io/app_108jobsNet/app_108jobs/)
+[![GitHub issues](https://img.shields.io/github/issues-raw/app_108jobsNet/app_108jobs.svg)](https://github.com/app_108jobsNet/app_108jobs/issues)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dessalines/app_108jobs.svg)](https://cloud.docker.com/repository/docker/dessalines/app_108jobs/)
+[![Translation status](http://weblate.yerbamate.ml/widgets/app_108jobs/-/app_108jobs/svg-badge.svg)](http://weblate.yerbamate.ml/engage/app_108jobs/)
+[![License](https://img.shields.io/github/license/app_108jobsNet/app_108jobs.svg)](LICENSE)
+![GitHub stars](https://img.shields.io/github/stars/app_108jobsNet/app_108jobs?style=social)
 [![Delightful Humane Tech](https://codeberg.org/teaserbot-labs/delightful-humane-design/raw/branch/main/humane-tech-badge.svg)](https://codeberg.org/teaserbot-labs/delightful-humane-design)
 
 </div>
@@ -21,25 +21,25 @@
 </p>
 
 <p align="center">
-  <a href="https://join-lemmy.org/" rel="noopener">
- <img width=200px height=200px src="https://raw.githubusercontent.com/LemmyNet/lemmy-ui/main/src/assets/icons/favicon.svg"></a>
+  <a href="https://join-app_108jobs.org/" rel="noopener">
+ <img width=200px height=200px src="https://raw.githubusercontent.com/app_108jobsNet/app_108jobs-ui/main/src/assets/icons/favicon.svg"></a>
 
- <h3 align="center"><a href="https://join-lemmy.org">Lemmy</a></h3>
+ <h3 align="center"><a href="https://join-app_108jobs.org">app_108jobs</a></h3>
   <p align="center">
     Агрегатор ссылок / Клон Reddit для федиверс.
     <br />
     <br />
-    <a href="https://join-lemmy.org">Присоединяйтесь к Lemmy</a>
+    <a href="https://join-app_108jobs.org">Присоединяйтесь к app_108jobs</a>
     ·
-    <a href="https://join-lemmy.org/docs/en/index.html">Документация</a>
+    <a href="https://join-app_108jobs.org/docs/en/index.html">Документация</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/issues">Сообщить об Ошибке</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">Сообщить об Ошибке</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/issues">Запросить функционал</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">Запросить функционал</a>
     ·
-    <a href="https://github.com/LemmyNet/lemmy/blob/main/RELEASES.md">Релизы</a>
+    <a href="https://github.com/app_108jobsNet/app_108jobs/blob/main/RELEASES.md">Релизы</a>
     ·
-    <a href="https://join-lemmy.org/docs/en/code_of_conduct.html">Нормы поведения</a>
+    <a href="https://join-app_108jobs.org/docs/en/code_of_conduct.html">Нормы поведения</a>
   </p>
 </p>
 
@@ -47,23 +47,23 @@
 
 | Десктоп                                                                                                         | Мобильный                                                                                                   |
 | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![desktop](https://raw.githubusercontent.com/LemmyNet/joinlemmy-site/main/src/assets/images/main_screen_2.webp) | ![mobile](https://raw.githubusercontent.com/LemmyNet/joinlemmy-site/main/src/assets/images/mobile_pic.webp) |
+| ![desktop](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/main_screen_2.webp) | ![mobile](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/mobile_pic.webp) |
 
-[Lemmy](https://github.com/LemmyNet/lemmy) это аналог таких сайтов как [Reddit](https://reddit.com), [Lobste.rs](https://lobste.rs), или [Hacker News](https://news.ycombinator.com/): вы подписываетесь на форумы, которые вас интересуют , размещаете ссылки и дискутируете, затем голосуете и комментируете их. Однако за кулисами всё совсем по-другому; любой может легко запустить сервер, и все эти серверы объединены (например электронная почта) и подключены к одной вселенной, именуемой [Федиверс](https://ru.wikipedia.org/wiki/Fediverse).
+[app_108jobs](https://github.com/app_108jobsNet/app_108jobs) это аналог таких сайтов как [Reddit](https://reddit.com), [Lobste.rs](https://lobste.rs), или [Hacker News](https://news.ycombinator.com/): вы подписываетесь на форумы, которые вас интересуют , размещаете ссылки и дискутируете, затем голосуете и комментируете их. Однако за кулисами всё совсем по-другому; любой может легко запустить сервер, и все эти серверы объединены (например электронная почта) и подключены к одной вселенной, именуемой [Федиверс](https://ru.wikipedia.org/wiki/Fediverse).
 
 Для агрегатора ссылок это означает, что пользователь, зарегистрированный на одном сервере, может подписаться на форумы на любом другом сервере и может вести обсуждения с пользователями, зарегистрированными в другом месте.
 
 Основная цель - создать легко размещаемую, децентрализованную альтернативу Reddit и другим агрегаторам ссылок, вне их корпоративного контроля и вмешательства.
 
-Каждый сервер Lemmy может устанавливать свою собственную политику модерации; назначать администраторов всего сайта и модераторов сообщества для защиты от троллей и создания здоровой, нетоксичной среды, в которой каждый может чувствовать себя комфортно.
+Каждый сервер app_108jobs может устанавливать свою собственную политику модерации; назначать администраторов всего сайта и модераторов сообщества для защиты от троллей и создания здоровой, нетоксичной среды, в которой каждый может чувствовать себя комфортно.
 
 _Примечание: API-интерфейсы WebSocket и HTTP в настоящее время нестабильны_
 
-### Почему назвали Lemmy (рус.Лемми)?
+### Почему назвали app_108jobs (рус.Лемми)?
 
 - Ведущий певец из [Motörhead](https://invidio.us/watch?v=pWB5JZRGl0U).
 - Старая школа [video game](<https://en.wikipedia.org/wiki/Lemmings_(video_game)>).
-- Это [Koopa from Super Mario](https://www.mariowiki.com/Lemmy_Koopa).
+- Это [Koopa from Super Mario](https://www.mariowiki.com/app_108jobs_Koopa).
 - Это [furry rodents](http://sunchild.fpwc.org/lemming-the-little-giant-of-the-north/).
 
 ### Содержит
@@ -78,7 +78,7 @@ _Примечание: API-интерфейсы WebSocket и HTTP в насто�
 
 - Открытое программное обеспечение, [Лицензия AGPL](/LICENSE).
 - Возможность самостоятельного размещения, простота развёртывания.
-  - Работает на [Docker](https://join-lemmy.org/docs/en/administration/install_docker.html) и [Ansible](https://join-lemmy.org/docs/en/administration/install_ansible.html).
+  - Работает на [Docker](https://join-app_108jobs.org/docs/en/administration/install_docker.html) и [Ansible](https://join-app_108jobs.org/docs/en/administration/install_ansible.html).
 - Понятый и удобный интерфейс для мобильных устройств.
   - Для регистрации требуется минимум: имя пользователя и пароль!
   - Поддержка аватара пользователя.
@@ -113,32 +113,32 @@ _Примечание: API-интерфейсы WebSocket и HTTP в насто�
 
 ## Установка
 
-- [Docker](https://join-lemmy.org/docs/en/administration/install_docker.html)
-- [Ansible](https://join-lemmy.org/docs/en/administration/install_ansible.html)
+- [Docker](https://join-app_108jobs.org/docs/en/administration/install_docker.html)
+- [Ansible](https://join-app_108jobs.org/docs/en/administration/install_ansible.html)
 
-## Проекты Lemmy
+## Проекты app_108jobs
 
 ### Приложения
 
-- [lemmy-ui - Официальное веб приложение для lemmy](https://github.com/LemmyNet/lemmy-ui)
-- [Lemmur - Мобильные клиенты Lemmy для (Android, Linux, Windows)](https://github.com/LemmurOrg/lemmur)
-- [Remmel - Оригинальное приложение для iOS](https://github.com/uuttff8/Lemmy-iOS)
+- [app_108jobs-ui - Официальное веб приложение для app_108jobs](https://github.com/app_108jobsNet/app_108jobs-ui)
+- [Lemmur - Мобильные клиенты app_108jobs для (Android, Linux, Windows)](https://github.com/LemmurOrg/lemmur)
+- [Remmel - Оригинальное приложение для iOS](https://github.com/uuttff8/app_108jobs-iOS)
 
 ### Библиотеки
 
-- [lemmy-js-client](https://github.com/LemmyNet/lemmy-js-client)
-- [Kotlin API ( в разработке )](https://github.com/eiknat/lemmy-client)
-- [Dart API client ( в разработке )](https://github.com/LemmurOrg/lemmy_api_client)
+- [app_108jobs-js-client](https://github.com/app_108jobsNet/app_108jobs-js-client)
+- [Kotlin API ( в разработке )](https://github.com/eiknat/app_108jobs-client)
+- [Dart API client ( в разработке )](https://github.com/LemmurOrg/app_108jobs_api_client)
 
 ## Поддержать / Пожертвовать
 
-Lemmy - бесплатное программное обеспечение с открытым исходным кодом, что означает отсутствие рекламы, монетизации и даже венчурного капитала. Ваши пожертвования, напрямую поддерживают постоянное развитие проекта.
+app_108jobs - бесплатное программное обеспечение с открытым исходным кодом, что означает отсутствие рекламы, монетизации и даже венчурного капитала. Ваши пожертвования, напрямую поддерживают постоянное развитие проекта.
 
-- [Поддержать на Liberapay](https://liberapay.com/Lemmy).
-- [Поддержать на Ko-fi](https://ko-fi.com/lemmynet).
+- [Поддержать на Liberapay](https://liberapay.com/app_108jobs).
+- [Поддержать на Ko-fi](https://ko-fi.com/app_108jobsnet).
 - [Поддержать на Patreon](https://www.patreon.com/dessalines).
-- [Поддержать на OpenCollective](https://opencollective.com/lemmy).
-- [Список Спонсоров](https://join-lemmy.org/sponsors).
+- [Поддержать на OpenCollective](https://opencollective.com/app_108jobs).
+- [Список Спонсоров](https://join-app_108jobs.org/sponsors).
 
 ### Криптовалюты
 
@@ -148,24 +148,24 @@ Lemmy - бесплатное программное обеспечение с о
 
 ## Вклад
 
-- [Инструкции по внесению вклада](https://join-lemmy.org/docs/en/contributing/contributing.html)
-- [Docker разработка](https://join-lemmy.org/docs/en/contributing/docker_development.html)
-- [Локальное развитие](https://join-lemmy.org/docs/en/contributing/local_development.html)
+- [Инструкции по внесению вклада](https://join-app_108jobs.org/docs/en/contributing/contributing.html)
+- [Docker разработка](https://join-app_108jobs.org/docs/en/contributing/docker_development.html)
+- [Локальное развитие](https://join-app_108jobs.org/docs/en/contributing/local_development.html)
 
 ### Переводы
 
-Если вы хотите помочь с переводом, взгляните на [Weblate](https://weblate.yerbamate.ml/projects/lemmy/joinlemmy/ru/). Вы также можете помочь нам [перевести документацию](https://github.com/LemmyNet/lemmy-docs#adding-a-new-language).
+Если вы хотите помочь с переводом, взгляните на [Weblate](https://weblate.yerbamate.ml/projects/app_108jobs/joinapp_108jobs/ru/). Вы также можете помочь нам [перевести документацию](https://github.com/app_108jobsNet/app_108jobs-docs#adding-a-new-language).
 
 ## Контакт
 
-- [Mastodon](https://mastodon.social/@LemmyDev)
-- [Matrix](https://matrix.to/#/#lemmy:matrix.org)
+- [Mastodon](https://mastodon.social/@app_108jobsDev)
+- [Matrix](https://matrix.to/#/#app_108jobs:matrix.org)
 
 ## Зеркала с кодом
 
-- [GitHub](https://github.com/LemmyNet/lemmy)
-- [Gitea](https://yerbamate.ml/LemmyNet/lemmy)
-- [Codeberg](https://codeberg.org/LemmyNet/lemmy)
+- [GitHub](https://github.com/app_108jobsNet/app_108jobs)
+- [Gitea](https://yerbamate.ml/app_108jobsNet/app_108jobs)
+- [Codeberg](https://codeberg.org/app_108jobsNet/app_108jobs)
 
 ## Благодарность
 

@@ -18,7 +18,7 @@ pub struct Instance {
   /// instance domain, necessary for mastodon authorized fetch
   pub(crate) preferred_username: Option<String>,
   pub(crate) inbox: Url,
-  /// mandatory field in activitypub, lemmy currently serves an empty outbox
+  /// mandatory field in activitypub, app_108jobs currently serves an empty outbox
   pub(crate) outbox: Url,
   pub(crate) public_key: PublicKey,
 

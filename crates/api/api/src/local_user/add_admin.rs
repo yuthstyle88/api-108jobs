@@ -1,19 +1,19 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserUpdateForm},
     mod_log::moderator::{ModAdd, ModAddForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::{
   api::{AddAdmin, AddAdminResponse},
   impls::PersonQuery,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn add_admin(
   data: Json<AddAdmin>,

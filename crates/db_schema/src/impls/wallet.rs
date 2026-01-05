@@ -13,8 +13,8 @@ use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{person,local_user, wallet, wallet_transaction};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{person,local_user, wallet, wallet_transaction};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 
 /// Internal enum for modeling balance mutations only (not transaction kinds).
@@ -317,7 +317,7 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, form).await?;
           // return updated wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, lemmy_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -340,7 +340,7 @@ impl WalletModel {
           let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Release, amount).await?;
           let _ = Self::insert_wallet_tx(conn, form).await?;
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, lemmy_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -363,7 +363,7 @@ impl WalletModel {
           let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Capture, amount).await?;
           let _ = Self::insert_wallet_tx(conn, form).await?;
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, lemmy_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -429,7 +429,7 @@ impl WalletModel {
         // journal both sides
         let _ = Self::insert_wallet_tx(conn, form_out).await?;
         let _ = Self::insert_wallet_tx(conn, form_in).await?;
-        Ok::<_, lemmy_utils::error::FastJobError>(())
+        Ok::<_, app_108jobs_utils::error::FastJobError>(())
       }.scope_boxed()
     }).await?;
     Ok(())
@@ -446,7 +446,7 @@ impl WalletModel {
     Self::validate_positive_amount(amount)?;
 
     let conn = &mut get_conn(pool).await?;
-    return conn
+    conn
       .run_transaction(|conn| {
         async move {
           // move funds: platform -> user
@@ -461,11 +461,11 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, lemmy_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
         }
         .scope_boxed()
       })
-      .await;
+      .await
   }
 
   /// Withdraw to platform (user -> platform): must create a pair of journal rows
@@ -494,7 +494,7 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, lemmy_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
         }
         .scope_boxed()
       })

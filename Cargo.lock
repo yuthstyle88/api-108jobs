@@ -544,22 +544,153 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_api"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "app_108jobs_api_common",
+ "app_108jobs_api_crud",
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_bank_account",
+ "app_108jobs_db_views_billing",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_chat",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_inbox_combined",
+ "app_108jobs_db_views_local_image",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_modlog_combined",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_person_content_combined",
+ "app_108jobs_db_views_person_liked_combined",
+ "app_108jobs_db_views_person_saved_combined",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_registration_applications",
+ "app_108jobs_db_views_report_combined",
+ "app_108jobs_db_views_reports",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_user_review",
+ "app_108jobs_db_views_vote",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_email",
+ "app_108jobs_utils",
+ "app_108jobs_workflow",
+ "base64 0.22.1",
+ "bcrypt",
+ "captcha",
+ "chrono",
+ "diesel-async",
+ "either",
+ "elementtree",
+ "hex",
+ "hound",
+ "p256",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sitemap-rs",
+ "tokio",
+ "totp-rs",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_api_common"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_bank_account",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_custom_emoji",
+ "app_108jobs_db_views_inbox_combined",
+ "app_108jobs_db_views_local_image",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_modlog_combined",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_person_content_combined",
+ "app_108jobs_db_views_person_liked_combined",
+ "app_108jobs_db_views_person_saved_combined",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_registration_applications",
+ "app_108jobs_db_views_report_combined",
+ "app_108jobs_db_views_reports",
+ "app_108jobs_db_views_search_combined",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_vote",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_utils",
+ "serde",
+ "serde_with",
+]
+
+[[package]]
+name = "app_108jobs_api_crud"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "accept-language",
+ "actix-web",
+ "anyhow",
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_chat",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_custom_emoji",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_registration_applications",
+ "app_108jobs_db_views_search_combined",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_email",
+ "app_108jobs_utils",
+ "bcrypt",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "futures",
+ "futures-util",
+ "hex",
+ "log",
+ "moka",
+ "p256",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "app_108jobs_api_server"
 version = "1.0.0-alpha.5"
 dependencies = [
  "actix",
  "actix-web",
+ "app_108jobs_api",
+ "app_108jobs_api_crud",
+ "app_108jobs_api_utils",
+ "app_108jobs_apub",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_setup",
+ "app_108jobs_routes",
+ "app_108jobs_utils",
+ "app_108jobs_ws",
  "clap",
- "lemmy_api",
- "lemmy_api_crud",
- "lemmy_api_utils",
- "lemmy_apub",
- "lemmy_db_schema",
- "lemmy_db_schema_setup",
- "lemmy_db_views_site",
- "lemmy_routes",
- "lemmy_utils",
- "lemmy_ws",
  "mimalloc",
  "reqwest-middleware",
  "reqwest-tracing",
@@ -569,6 +700,829 @@ dependencies = [
  "tracing",
  "tracing-actix-web",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "app_108jobs_api_utils"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "actix-web-httpauth",
+ "anyhow",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_image",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel-async",
+ "either",
+ "encoding_rs",
+ "enum-map",
+ "extism",
+ "extism-convert",
+ "futures",
+ "infer",
+ "jsonwebtoken",
+ "mime",
+ "mime_guess",
+ "moka",
+ "once_cell",
+ "p256",
+ "pretty_assertions",
+ "rand 0.9.1",
+ "regex",
+ "reqwest 0.12.21",
+ "reqwest-middleware",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tokio",
+ "tracing",
+ "url",
+ "urlencoding",
+ "uuid",
+ "webmention",
+ "webpage",
+]
+
+[[package]]
+name = "app_108jobs_apub"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "app_108jobs_api_utils",
+ "app_108jobs_apub_objects",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_person_content_combined",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_search_combined",
+ "app_108jobs_db_views_site",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "either",
+ "enum_delegate",
+ "futures",
+ "futures-util",
+ "itertools 0.14.0",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "strum",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_apub_objects"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category_person_ban",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_site",
+ "app_108jobs_utils",
+ "assert-json-diff",
+ "chrono",
+ "diesel_ltree",
+ "either",
+ "futures",
+ "futures-util",
+ "html2md",
+ "html2text",
+ "itertools 0.14.0",
+ "moka",
+ "once_cell",
+ "pretty_assertions",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "stringreader",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_schema"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_schema_setup",
+ "app_108jobs_utils",
+ "bcrypt",
+ "chrono",
+ "deadpool",
+ "derive-new",
+ "diesel",
+ "diesel-async",
+ "diesel-derive-newtype",
+ "diesel_ltree",
+ "futures-util",
+ "i-love-jesus",
+ "moka",
+ "pretty_assertions",
+ "regex",
+ "rustls 0.23.27",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "strum",
+ "tokio",
+ "tokio-postgres",
+ "tokio-postgres-rustls",
+ "tracing",
+ "ts-rs",
+ "tuplex",
+ "url",
+ "uuid",
+ "validator",
+]
+
+[[package]]
+name = "app_108jobs_db_schema_file"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "diesel",
+ "diesel-derive-enum",
+ "diesel_ltree",
+ "serde",
+ "strum",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_schema_setup"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "anyhow",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel_ltree",
+ "diesel_migrations",
+ "diff",
+ "itertools 0.14.0",
+ "pathfinding",
+ "serial_test",
+ "tracing",
+ "unified-diff",
+]
+
+[[package]]
+name = "app_108jobs_db_views_bank_account"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_billing"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_category"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_person",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "diesel_ltree",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "slug",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_category_person_ban"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "serde",
+]
+
+[[package]]
+name = "app_108jobs_db_views_chat"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "futures-util",
+ "i-love-jesus",
+ "serde",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_chat_pending_ack"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_db_views_comment"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_vote",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "diesel_ltree",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_custom_emoji"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_with",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_inbox_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_local_image"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "serde",
+ "serde_with",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_local_user"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_modlog_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_person"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_person_content_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "derive-new",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_person_liked_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_person_saved_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_post"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_vote",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "slug",
+ "test-context",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_registration_applications"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_report_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_reports",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_reports"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_with",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_search_combined"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+ "url",
+]
+
+[[package]]
+name = "app_108jobs_db_views_site"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "anyhow",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_post",
+ "app_108jobs_utils",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "extism",
+ "extism-convert",
+ "serde",
+ "serde_with",
+ "tokio",
+ "ts-rs",
+ "url",
+ "validator",
+]
+
+[[package]]
+name = "app_108jobs_db_views_user_review"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_vote"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "tokio",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_db_views_wallet"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "ts-rs",
+]
+
+[[package]]
+name = "app_108jobs_email"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_utils",
+ "html2text",
+ "lettre",
+ "rosetta-build",
+ "rosetta-i18n",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_routes"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-cors",
+ "actix-multipart",
+ "actix-web",
+ "actix-web-prom",
+ "anyhow",
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_inbox_combined",
+ "app_108jobs_db_views_local_image",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_modlog_combined",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_person_content_combined",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_site",
+ "app_108jobs_utils",
+ "chrono",
+ "clokwerk",
+ "diesel",
+ "diesel-async",
+ "futures",
+ "futures-util",
+ "http 1.3.1",
+ "moka",
+ "percent-encoding",
+ "pretty_assertions",
+ "prometheus",
+ "rand 0.9.1",
+ "reqwest 0.12.21",
+ "reqwest-middleware",
+ "rss",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_utils"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-extensible-rate-limit",
+ "actix-web",
+ "aes-gcm",
+ "anyhow",
+ "base64 0.22.1",
+ "cfg-if",
+ "clearurls",
+ "deser-hjson",
+ "diesel",
+ "doku",
+ "enum-map",
+ "fastrand",
+ "futures",
+ "git-version",
+ "hex",
+ "http 1.3.1",
+ "invisible-characters",
+ "itertools 0.14.0",
+ "markdown-it",
+ "markdown-it-block-spoiler",
+ "markdown-it-footnote",
+ "markdown-it-ruby",
+ "markdown-it-sub",
+ "markdown-it-sup",
+ "moka",
+ "p256",
+ "pretty_assertions",
+ "rand_core 0.6.4",
+ "redis",
+ "regex",
+ "reqwest-middleware",
+ "serde",
+ "serde_json",
+ "smart-default",
+ "strum",
+ "thiserror 2.0.17",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "unic-langid",
+ "unicode-segmentation",
+ "unified-diff",
+ "url",
+ "urlencoding",
+]
+
+[[package]]
+name = "app_108jobs_workflow"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_billing",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_json",
+ "tracing",
+ "ts-rs",
+ "uuid",
+]
+
+[[package]]
+name = "app_108jobs_ws"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix",
+ "actix-broker",
+ "actix-web",
+ "actix-web-actors",
+ "anyhow",
+ "app_108jobs_api_utils",
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_db_views_chat",
+ "app_108jobs_db_views_chat_pending_ack",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_utils",
+ "chrono",
+ "hex",
+ "phoenix_channels_client",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
 ]
 
 [[package]]
@@ -3407,940 +4361,6 @@ name = "leb128fmt"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
-
-[[package]]
-name = "lemmy_api"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "anyhow",
- "base64 0.22.1",
- "bcrypt",
- "captcha",
- "chrono",
- "diesel-async",
- "either",
- "elementtree",
- "hex",
- "hound",
- "lemmy_api_common",
- "lemmy_api_crud",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_bank_account",
- "lemmy_db_views_billing",
- "lemmy_db_views_chat",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_inbox_combined",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog_combined",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_person_liked_combined",
- "lemmy_db_views_person_saved_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_report_combined",
- "lemmy_db_views_reports",
- "lemmy_db_views_site",
- "lemmy_db_views_user_review",
- "lemmy_db_views_vote",
- "lemmy_db_views_wallet",
- "lemmy_email",
- "lemmy_utils",
- "lemmy_workflow",
- "p256",
- "pretty_assertions",
- "rand 0.8.5",
- "regex",
- "serde",
- "serde_json",
- "serial_test",
- "sitemap-rs",
- "tokio",
- "totp-rs",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_api_common"
-version = "1.0.0-alpha.5"
-dependencies = [
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_bank_account",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_custom_emoji",
- "lemmy_db_views_inbox_combined",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog_combined",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_person_liked_combined",
- "lemmy_db_views_person_saved_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_report_combined",
- "lemmy_db_views_reports",
- "lemmy_db_views_search_combined",
- "lemmy_db_views_site",
- "lemmy_db_views_vote",
- "lemmy_db_views_wallet",
- "lemmy_utils",
- "serde",
- "serde_with",
-]
-
-[[package]]
-name = "lemmy_api_crud"
-version = "1.0.0-alpha.5"
-dependencies = [
- "accept-language",
- "actix-web",
- "anyhow",
- "bcrypt",
- "chrono",
- "diesel",
- "diesel-async",
- "futures",
- "futures-util",
- "hex",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_chat",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_custom_emoji",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_db_views_registration_applications",
- "lemmy_db_views_search_combined",
- "lemmy_db_views_site",
- "lemmy_db_views_wallet",
- "lemmy_email",
- "lemmy_utils",
- "log",
- "moka",
- "p256",
- "regex",
- "serde",
- "serde_json",
- "serde_with",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_api_utils"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "actix-web-httpauth",
- "anyhow",
- "chrono",
- "diesel-async",
- "either",
- "encoding_rs",
- "enum-map",
- "extism",
- "extism-convert",
- "futures",
- "infer",
- "jsonwebtoken",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_db_views_site",
- "lemmy_utils",
- "mime",
- "mime_guess",
- "moka",
- "once_cell",
- "p256",
- "pretty_assertions",
- "rand 0.9.1",
- "regex",
- "reqwest 0.12.21",
- "reqwest-middleware",
- "serde",
- "serde_json",
- "serial_test",
- "tokio",
- "tracing",
- "url",
- "urlencoding",
- "uuid",
- "webmention",
- "webpage",
-]
-
-[[package]]
-name = "lemmy_apub"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "anyhow",
- "chrono",
- "diesel",
- "either",
- "enum_delegate",
- "futures",
- "futures-util",
- "itertools 0.14.0",
- "lemmy_api_utils",
- "lemmy_apub_objects",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_search_combined",
- "lemmy_db_views_site",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "strum",
- "tokio",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_apub_objects"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "anyhow",
- "assert-json-diff",
- "chrono",
- "diesel_ltree",
- "either",
- "futures",
- "futures-util",
- "html2md",
- "html2text",
- "itertools 0.14.0",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community_person_ban",
- "lemmy_db_views_local_user",
- "lemmy_db_views_site",
- "lemmy_utils",
- "moka",
- "once_cell",
- "pretty_assertions",
- "semver",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "stringreader",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_schema"
-version = "1.0.0-alpha.5"
-dependencies = [
- "bcrypt",
- "chrono",
- "deadpool",
- "derive-new",
- "diesel",
- "diesel-async",
- "diesel-derive-newtype",
- "diesel_ltree",
- "futures-util",
- "i-love-jesus",
- "lemmy_db_schema_file",
- "lemmy_db_schema_setup",
- "lemmy_utils",
- "moka",
- "pretty_assertions",
- "regex",
- "rustls 0.23.27",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "strum",
- "tokio",
- "tokio-postgres",
- "tokio-postgres-rustls",
- "tracing",
- "ts-rs",
- "tuplex",
- "url",
- "uuid",
- "validator",
-]
-
-[[package]]
-name = "lemmy_db_schema_file"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-derive-enum",
- "diesel_ltree",
- "serde",
- "strum",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_schema_setup"
-version = "1.0.0-alpha.5"
-dependencies = [
- "anyhow",
- "chrono",
- "diesel",
- "diesel_ltree",
- "diesel_migrations",
- "diff",
- "itertools 0.14.0",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pathfinding",
- "serial_test",
- "tracing",
- "unified-diff",
-]
-
-[[package]]
-name = "lemmy_db_views_bank_account"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_billing"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_wallet",
- "lemmy_utils",
- "serde",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_chat"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_comment"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "diesel_ltree",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_vote",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_community"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "diesel_ltree",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_person",
- "lemmy_utils",
- "serde",
- "serde_with",
- "serial_test",
- "slug",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_community_person_ban"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
-]
-
-[[package]]
-name = "lemmy_db_views_custom_emoji"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_inbox_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_local_image"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_local_user"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_modlog_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_content_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "derive-new",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_liked_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_person_saved_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_local_user",
- "lemmy_db_views_post",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_post"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_local_user",
- "lemmy_db_views_vote",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "slug",
- "test-context",
- "tokio",
- "tracing",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_registration_applications"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_report_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_reports",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_reports"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "serde",
- "serde_with",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_search_combined"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_comment",
- "lemmy_db_views_community",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
- "url",
-]
-
-[[package]]
-name = "lemmy_db_views_site"
-version = "1.0.0-alpha.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "diesel",
- "diesel-async",
- "extism",
- "extism-convert",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_db_views_person",
- "lemmy_db_views_post",
- "lemmy_utils",
- "serde",
- "serde_with",
- "tokio",
- "ts-rs",
- "url",
- "validator",
-]
-
-[[package]]
-name = "lemmy_db_views_user_review"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_vote"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_db_views_wallet"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_utils",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "ts-rs",
-]
-
-[[package]]
-name = "lemmy_email"
-version = "1.0.0-alpha.5"
-dependencies = [
- "html2text",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_local_user",
- "lemmy_utils",
- "lettre",
- "rosetta-build",
- "rosetta-i18n",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_routes"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-cors",
- "actix-multipart",
- "actix-web",
- "actix-web-prom",
- "anyhow",
- "chrono",
- "clokwerk",
- "diesel",
- "diesel-async",
- "futures",
- "futures-util",
- "http 1.3.1",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_community",
- "lemmy_db_views_inbox_combined",
- "lemmy_db_views_local_image",
- "lemmy_db_views_local_user",
- "lemmy_db_views_modlog_combined",
- "lemmy_db_views_person",
- "lemmy_db_views_person_content_combined",
- "lemmy_db_views_post",
- "lemmy_db_views_site",
- "lemmy_utils",
- "moka",
- "percent-encoding",
- "pretty_assertions",
- "prometheus",
- "rand 0.9.1",
- "reqwest 0.12.21",
- "reqwest-middleware",
- "rss",
- "serde",
- "serde_json",
- "serial_test",
- "tokio",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_utils"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-extensible-rate-limit",
- "actix-web",
- "aes-gcm",
- "anyhow",
- "base64 0.22.1",
- "cfg-if",
- "clearurls",
- "deser-hjson",
- "diesel",
- "doku",
- "enum-map",
- "fastrand",
- "futures",
- "git-version",
- "hex",
- "http 1.3.1",
- "invisible-characters",
- "itertools 0.14.0",
- "markdown-it",
- "markdown-it-block-spoiler",
- "markdown-it-footnote",
- "markdown-it-ruby",
- "markdown-it-sub",
- "markdown-it-sup",
- "moka",
- "p256",
- "pretty_assertions",
- "rand_core 0.6.4",
- "redis",
- "regex",
- "reqwest-middleware",
- "serde",
- "serde_json",
- "smart-default",
- "strum",
- "thiserror 2.0.17",
- "tokio",
- "tracing",
- "ts-rs",
- "unic-langid",
- "unicode-segmentation",
- "unified-diff",
- "url",
- "urlencoding",
-]
-
-[[package]]
-name = "lemmy_workflow"
-version = "1.0.0-alpha.5"
-dependencies = [
- "chrono",
- "diesel",
- "diesel-async",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_billing",
- "lemmy_db_views_wallet",
- "lemmy_utils",
- "serde",
- "serde_json",
- "tracing",
- "ts-rs",
- "uuid",
-]
-
-[[package]]
-name = "lemmy_ws"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix",
- "actix-broker",
- "actix-web",
- "actix-web-actors",
- "anyhow",
- "chrono",
- "hex",
- "lemmy_api_utils",
- "lemmy_db_schema",
- "lemmy_db_schema_file",
- "lemmy_db_views_chat",
- "lemmy_db_views_local_user",
- "lemmy_utils",
- "phoenix_channels_client",
- "serde",
- "serde_json",
- "serde_with",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "url",
- "uuid",
-]
 
 [[package]]
 name = "lettre"

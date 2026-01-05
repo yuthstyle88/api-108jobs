@@ -2,24 +2,24 @@ use crate::check_report_reason;
 use actix_web::web::Data;
 use actix_web::web::Json;
 use either::Either;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_comment_deleted_or_removed, slur_regex},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::comment_report::{CommentReport, CommentReportForm},
   traits::Reportable,
 };
-use lemmy_db_views_comment::CommentView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, CreateCommentReport},
   CommentReportView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
-/// Creates a comment report and notifies the moderators of the community
+/// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(
   data: Json<CreateCommentReport>,
   context: Data<FastJobContext>,
@@ -59,7 +59,7 @@ pub async fn create_comment_report(
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
       actor: local_user_view.person,
-      receiver: Either::Right(comment_view.community),
+      receiver: Either::Right(comment_view.category),
       reason: data.reason.clone(),
     },
     &context,

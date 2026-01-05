@@ -15,7 +15,7 @@ use strum::{Display, EnumString};
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 // TODO add the controversial and scaled rankings to the doc below
-/// The post sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The post sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 pub enum PostSortType {
   #[default]
   Active,
@@ -40,7 +40,7 @@ pub enum PostSortType {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// The comment sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The comment sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 pub enum CommentSortType {
   #[default]
   Hot,
@@ -70,7 +70,7 @@ pub enum ListingType {
   Local,
   /// Content only from communities you've subscribed to.
   Subscribed,
-  /// Content that you can moderate (because you are a moderator of the community it is posted to)
+  /// Content that you can moderate (because you are a moderator of the category it is posted to)
   ModeratorView,
 }
 
@@ -124,34 +124,34 @@ pub enum PostListingMode {
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::CommunityVisibility"
+  ExistingTypePath = "crate::schema::sql_types::CategoryVisibility"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// Defines who can browse and interact with content in a community.
-pub enum CommunityVisibility {
-  /// Public community, any local or federated user can interact.
+/// Defines who can browse and interact with content in a category.
+pub enum CategoryVisibility {
+  /// Public category, any local or federated user can interact.
   #[default]
   Public,
-  /// Community is unlisted/hidden and doesn't appear in community list. Posts from the community
+  /// Category is unlisted/hidden and doesn't appear in category list. Posts from the category
   /// are not shown in Local and All feeds, except for subscribed users.
   Unlisted,
-  /// Unfederated community, only local users can interact (with or without login).
+  /// Unfederated category, only local users can interact (with or without login).
   LocalOnlyPublic,
-  /// Unfederated  community, only logged-in local users can interact.
+  /// Unfederated  category, only logged-in local users can interact.
   LocalOnlyPrivate,
   /// Users need to be approved by mods before they are able to browse or post.
   Private,
 }
 
-impl CommunityVisibility {
+impl CategoryVisibility {
   pub fn can_federate(&self) -> bool {
-    use CommunityVisibility::*;
+    use CategoryVisibility::*;
     self != &LocalOnlyPublic && self != &LocalOnlyPrivate
   }
   pub fn can_view_without_login(&self) -> bool {
-    use CommunityVisibility::*;
+    use CategoryVisibility::*;
     self == &Public || self == &LocalOnlyPublic
   }
 }
@@ -163,21 +163,21 @@ impl CommunityVisibility {
 )]
 pub enum ActorType {
   Site,
-  Community,
+  Category,
   Person,
-  MultiCommunity,
+  MultiCategory,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::CommunityFollowerState"
+  ExistingTypePath = "crate::schema::sql_types::CategoryFollowerState"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-pub enum CommunityFollowerState {
+pub enum CategoryFollowerState {
   Accepted,
   Pending,
   ApprovalRequired,
@@ -221,9 +221,8 @@ pub enum PostNotifications {
   Mute,
 }
 
-
 #[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
 )]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
@@ -237,10 +236,10 @@ pub enum IntendedUse {
   #[default]
   Business,
   Personal,
-  Unknown
+  Unknown,
 }
 #[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
 )]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
@@ -255,12 +254,10 @@ pub enum JobType {
   Freelance,
   Contract,
   PartTime,
-  FullTime
+  FullTime,
 }
 
-#[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
-)]
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
@@ -308,9 +305,7 @@ pub enum WorkFlowStatus {
   Cancelled,
 }
 
-#[derive(
-  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash,
-)]
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
@@ -323,8 +318,52 @@ pub enum TxKind {
   Deposit,
   Withdraw,
   Transfer,
-  Reserve,  // move funds from available -> outstanding (hold)
-  Release,  // move funds from outstanding -> available (cancel hold)
-  Capture,  // finalize: outstanding -> settled (total decreases)
-  Refund,   // return funds to payer after cancellation/adjustment
+  Reserve, // move funds from available -> outstanding (hold)
+  Release, // move funds from outstanding -> available (cancel hold)
+  Capture, // finalize: outstanding -> settled (total decreases)
+  Refund,  // return funds to payer after cancellation/adjustment
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::TopUpStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// The wallet top-up status
+pub enum TopUpStatus {
+  /// Waiting for payment confirmation
+  #[default]
+  Pending,
+  /// Payment was successful
+  Success,
+  /// payment was expired
+  Expired,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::WithdrawStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Enum type for withdraw_status
+pub enum WithdrawStatus {
+  /// Pending
+  #[default]
+  Pending,
+  /// Rejected
+  Rejected,
+  /// Completed
+  Completed,
 }

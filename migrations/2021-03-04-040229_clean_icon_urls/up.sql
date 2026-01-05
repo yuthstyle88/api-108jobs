@@ -14,14 +14,14 @@ WHERE
     banner NOT LIKE 'http%';
 
 UPDATE
-    community
+    category
 SET
     icon = NULL
 WHERE
     icon NOT LIKE 'http%';
 
 UPDATE
-    community
+    category
 SET
     banner = NULL
 WHERE

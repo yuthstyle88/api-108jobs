@@ -1,11 +1,11 @@
 use crate::check_totp_2fa_valid;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{UpdateTotp, UpdateTotpResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{UpdateTotp, UpdateTotpResponse};
+use app_108jobs_utils::error::FastJobResult;
 
 /// Enable or disable two-factor-authentication. The current setting is determined from
 /// [LocalUser.totp_2fa_enabled].

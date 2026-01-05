@@ -8,16 +8,16 @@ import {
   randomString,
   createPost,
 } from "./shared";
-import { CreateCommunityTag } from "../lemmy-js-client/dist/types/CreateCommunityTag";
-import { UpdateCommunityTag } from "../lemmy-js-client/dist/types/UpdateCommunityTag";
-import { DeleteCommunityTag } from "../lemmy-js-client/dist/types/DeleteCommunityTag";
-import { EditPost } from "lemmy-js-client";
+import { CreateCommunityTag } from "../app_108jobs-js-client/dist/types/CreateCommunityTag";
+import { UpdateCommunityTag } from "../app_108jobs-js-client/dist/types/UpdateCommunityTag";
+import { DeleteCommunityTag } from "../app_108jobs-js-client/dist/types/DeleteCommunityTag";
+import { EditPost } from "app_108jobs-js-client";
 
 beforeAll(setupLogins);
 afterAll(unfollows);
 
-test("Create, update, delete community tag", async () => {
-  // Create a community first
+test("Create, update, delete category tag", async () => {
+  // Create a category first
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 
@@ -67,7 +67,7 @@ test("Create, update, delete community tag", async () => {
 });
 
 test("Update post tags", async () => {
-  // Create a community
+  // Create a category
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 
@@ -116,7 +116,7 @@ test("Update post tags", async () => {
 });
 
 test("Post author can update post tags", async () => {
-  // Create a community
+  // Create a category
   let communityRes = await createCommunity(alpha);
   const communityId = communityRes.community_view.community.id;
 

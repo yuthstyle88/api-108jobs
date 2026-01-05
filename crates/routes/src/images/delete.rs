@@ -1,24 +1,24 @@
 use super::utils::delete_old_image;
 use actix_web::web::*;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   request::{delete_image_alias, purge_image_from_pictrs},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
-    community::{Community, CommunityUpdateForm},
+    category::{Category, CategoryUpdateForm},
     images::LocalImage,
     person::{Person, PersonUpdateForm},
     site::{Site, SiteUpdateForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_community::api::CommunityIdQuery;
-use lemmy_db_views_local_image::api::DeleteImageParams;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_category::api::CategoryIdQuery;
+use app_108jobs_db_views_local_image::api::DeleteImageParams;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_site_icon(
   context: Data<FastJobContext>,
@@ -55,40 +55,40 @@ pub async fn delete_site_banner(
   Ok(Json(SuccessResponse::default()))
 }
 
-pub async fn delete_community_icon(
-  data: Json<CommunityIdQuery>,
+pub async fn delete_category_icon(
+  data: Json<CategoryIdQuery>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
   
-  let community = Community::read(&mut context.pool(), data.id).await?;
-  delete_old_image(&community.icon, &context).await?;
+  let category = Category::read(&mut context.pool(), data.id).await?;
+  delete_old_image(&category.icon, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     icon: Some(None),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(SuccessResponse::default()))
 }
 
-pub async fn delete_community_banner(
-  data: Json<CommunityIdQuery>,
+pub async fn delete_category_banner(
+  data: Json<CategoryIdQuery>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
   
-  let community = Community::read(&mut context.pool(), data.id).await?;
-  delete_old_image(&community.icon, &context).await?;
+  let category = Category::read(&mut context.pool(), data.id).await?;
+  delete_old_image(&category.icon, &context).await?;
 
-  let form = CommunityUpdateForm {
+  let form = CategoryUpdateForm {
     icon: Some(None),
     ..Default::default()
   };
-  Community::update(&mut context.pool(), community.id, &form).await?;
+  Category::update(&mut context.pool(), category.id, &form).await?;
 
   Ok(Json(SuccessResponse::default()))
 }

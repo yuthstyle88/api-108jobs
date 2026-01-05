@@ -1,14 +1,14 @@
 {
-  hostname: lemmy-delta:8571
+  hostname: app_108jobs-delta:8571
   port: 8571
   tls_enabled: false
   setup: {
-    admin_username: lemmy_delta
-    admin_password: lemmylemmy
-    site_name: lemmy-delta
+    admin_username: app_108jobs_delta
+    admin_password: app_108jobsapp_108jobs
+    site_name: app_108jobs-delta
   }
   database: {
-    connection: "postgres://lemmy:password@postgres_delta:5432/lemmy"
+    connection: "postgres://app_108jobs:password@postgres_delta:5432/app_108jobs"
   }
   pictrs: {
     api_key: "my-pictrs-key"

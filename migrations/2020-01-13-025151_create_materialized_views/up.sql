@@ -13,10 +13,10 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb
+            category_user_ban cb
         WHERE
             p.creator_id = cb.user_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             name
@@ -35,30 +35,30 @@ SELECT
         SELECT
             name
         FROM
-            community
+            category
         WHERE
-            p.community_id = community.id) AS community_name,
+            p.category_id = category.id) AS category_name,
     (
         SELECT
             removed
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_removed,
+            p.category_id = c.id) AS category_removed,
     (
         SELECT
             deleted
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_deleted,
+            p.category_id = c.id) AS category_deleted,
     (
         SELECT
             self_promotion
         FROM
-            community c
+            category c
         WHERE
-            p.community_id = c.id) AS community_self_promotion,
+            p.category_id = c.id) AS category_self_promotion,
     (
         SELECT
             count(*)
@@ -111,10 +111,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -162,10 +162,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool
@@ -256,8 +256,8 @@ FROM
 
 CREATE UNIQUE INDEX idx_user_mview_id ON user_mview (id);
 
--- community
-CREATE VIEW community_aggregates_view AS
+-- category
+CREATE VIEW category_aggregates_view AS
 SELECT
     c.*,
     (
@@ -285,16 +285,16 @@ SELECT
         SELECT
             count(*)
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
-            cf.community_id = c.id) AS number_of_subscribers,
+            cf.category_id = c.id) AS number_of_subscribers,
     (
         SELECT
             count(*)
         FROM
             post p
         WHERE
-            p.community_id = c.id) AS number_of_posts,
+            p.category_id = c.id) AS number_of_posts,
     (
         SELECT
             count(*)
@@ -302,33 +302,33 @@ SELECT
             comment co,
             post p
         WHERE
-            c.id = p.community_id
+            c.id = p.category_id
             AND p.id = co.post_id) AS number_of_comments,
     hot_rank ((
         SELECT
             count(*)
-        FROM community_follower cf
+        FROM category_follower cf
         WHERE
-            cf.community_id = c.id), c.published) AS hot_rank
+            cf.category_id = c.id), c.published) AS hot_rank
 FROM
-    community c;
+    category c;
 
-CREATE MATERIALIZED VIEW community_aggregates_mview AS
+CREATE MATERIALIZED VIEW category_aggregates_mview AS
 SELECT
     *
 FROM
-    community_aggregates_view;
+    category_aggregates_view;
 
-CREATE UNIQUE INDEX idx_community_aggregates_mview_id ON community_aggregates_mview (id);
+CREATE UNIQUE INDEX idx_category_aggregates_mview_id ON category_aggregates_mview (id);
 
-DROP VIEW community_view;
+DROP VIEW category_view;
 
-CREATE VIEW community_view AS
-with all_community AS (
+CREATE VIEW category_view AS
+with all_category AS (
     SELECT
         ca.*
     FROM
-        community_aggregates_view ca
+        category_aggregates_view ca
 )
 SELECT
     ac.*,
@@ -337,27 +337,27 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
-CREATE VIEW community_mview AS
-with all_community AS (
+CREATE VIEW category_mview AS
+with all_category AS (
     SELECT
         ca.*
     FROM
-        community_aggregates_mview ca
+        category_aggregates_mview ca
 )
 SELECT
     ac.*,
@@ -366,20 +366,20 @@ SELECT
         SELECT
             cf.id::boolean
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND ac.id = cf.community_id) AS subscribed
+            AND ac.id = cf.category_id) AS subscribed
 FROM
     user_ u
-    CROSS JOIN all_community ac
+    CROSS JOIN all_category ac
 UNION ALL
 SELECT
     ac.*,
     NULL AS user_id,
     NULL AS subscribed
 FROM
-    all_community ac;
+    all_category ac;
 
 -- reply and comment view
 CREATE VIEW comment_aggregates_view AS
@@ -387,7 +387,7 @@ SELECT
     c.*,
     (
         SELECT
-            community_id
+            category_id
         FROM
             post p
         WHERE
@@ -402,12 +402,12 @@ SELECT
         SELECT
             cb.id::bool
         FROM
-            community_user_ban cb,
+            category_user_ban cb,
             post p
         WHERE
             c.creator_id = cb.user_id
             AND p.id = c.post_id
-            AND p.community_id = cb.community_id) AS banned_from_community,
+            AND p.category_id = cb.category_id) AS banned_from_category,
     (
         SELECT
             name
@@ -569,9 +569,9 @@ SELECT
     c.published,
     c.updated,
     c.deleted,
-    c.community_id,
+    c.category_id,
     c.banned,
-    c.banned_from_community,
+    c.banned_from_category,
     c.creator_name,
     c.creator_avatar,
     c.score,
@@ -640,43 +640,43 @@ CREATE TRIGGER refresh_post_like
     FOR EACH statement
     EXECUTE PROCEDURE refresh_post_like ();
 
--- community
-CREATE OR REPLACE FUNCTION refresh_community ()
+-- category
+CREATE OR REPLACE FUNCTION refresh_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     REFRESH MATERIALIZED VIEW CONCURRENTLY post_aggregates_mview;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY community_aggregates_mview;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY category_aggregates_mview;
     REFRESH MATERIALIZED VIEW CONCURRENTLY user_mview;
     RETURN NULL;
 END
 $$;
 
-CREATE TRIGGER refresh_community
-    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON community
+CREATE TRIGGER refresh_category
+    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON category
     FOR EACH statement
-    EXECUTE PROCEDURE refresh_community ();
+    EXECUTE PROCEDURE refresh_category ();
 
--- community_follower
-CREATE OR REPLACE FUNCTION refresh_community_follower ()
+-- category_follower
+CREATE OR REPLACE FUNCTION refresh_category_follower ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY community_aggregates_mview;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY category_aggregates_mview;
     REFRESH MATERIALIZED VIEW CONCURRENTLY post_aggregates_mview;
     RETURN NULL;
 END
 $$;
 
-CREATE TRIGGER refresh_community_follower
-    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON community_follower
+CREATE TRIGGER refresh_category_follower
+    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON category_follower
     FOR EACH statement
-    EXECUTE PROCEDURE refresh_community_follower ();
+    EXECUTE PROCEDURE refresh_category_follower ();
 
--- community_user_ban
-CREATE OR REPLACE FUNCTION refresh_community_user_ban ()
+-- category_user_ban
+CREATE OR REPLACE FUNCTION refresh_category_user_ban ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -687,10 +687,10 @@ BEGIN
 END
 $$;
 
-CREATE TRIGGER refresh_community_user_ban
-    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON community_user_ban
+CREATE TRIGGER refresh_category_user_ban
+    AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON category_user_ban
     FOR EACH statement
-    EXECUTE PROCEDURE refresh_community_user_ban ();
+    EXECUTE PROCEDURE refresh_category_user_ban ();
 
 -- comment
 CREATE OR REPLACE FUNCTION refresh_comment ()
@@ -700,7 +700,7 @@ CREATE OR REPLACE FUNCTION refresh_comment ()
 BEGIN
     REFRESH MATERIALIZED VIEW CONCURRENTLY post_aggregates_mview;
     REFRESH MATERIALIZED VIEW CONCURRENTLY comment_aggregates_mview;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY community_aggregates_mview;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY category_aggregates_mview;
     REFRESH MATERIALIZED VIEW CONCURRENTLY user_mview;
     RETURN NULL;
 END

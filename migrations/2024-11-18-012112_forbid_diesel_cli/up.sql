@@ -21,7 +21,7 @@ BEGIN
         FROM
             pg_locks
         WHERE (locktype, pid, objid) = ('advisory', pg_backend_pid(), 0)) THEN
-RAISE 'migrations must be managed using lemmy_server instead of diesel CLI';
+RAISE 'migrations must be managed using app_108jobs_server instead of diesel CLI';
 END IF;
     RETURN NULL;
 END;

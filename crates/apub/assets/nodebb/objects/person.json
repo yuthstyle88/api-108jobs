@@ -1,12 +1,12 @@
 {
   "@context": "https://www.w3.org/ns/activitystreams",
-  "id": "https://community.nodebb.org/uid/2",
-  "url": "https://community.nodebb.org/user/julian",
-  "followers": "https://community.nodebb.org/uid/2/followers",
-  "following": "https://community.nodebb.org/uid/2/following",
-  "inbox": "https://community.nodebb.org/uid/2/inbox",
-  "outbox": "https://community.nodebb.org/uid/2/outbox",
-  "sharedInbox": "https://community.nodebb.org/inbox",
+  "id": "https://category.nodebb.org/uid/2",
+  "url": "https://category.nodebb.org/user/julian",
+  "followers": "https://category.nodebb.org/uid/2/followers",
+  "following": "https://category.nodebb.org/uid/2/following",
+  "inbox": "https://category.nodebb.org/uid/2/inbox",
+  "outbox": "https://category.nodebb.org/uid/2/outbox",
+  "sharedInbox": "https://category.nodebb.org/inbox",
   "type": "Person",
   "name": "julian",
   "preferredUsername": "julian",
@@ -14,16 +14,16 @@
   "icon": {
     "type": "Image",
     "mediaType": "image/jpeg",
-    "url": "https://community.nodebb.org/assets/uploads/profile/uid-2/2-profileavatar-1701457270279.jpeg"
+    "url": "https://category.nodebb.org/assets/uploads/profile/uid-2/2-profileavatar-1701457270279.jpeg"
   },
   "image": {
     "type": "Image",
     "mediaType": "image/jpeg",
-    "url": "https://community.nodebb.org/assets/uploads/profile/uid-2/2-profilecover-1649468285913.jpeg"
+    "url": "https://category.nodebb.org/assets/uploads/profile/uid-2/2-profilecover-1649468285913.jpeg"
   },
   "publicKey": {
-    "id": "https://community.nodebb.org/uid/2#key",
-    "owner": "https://community.nodebb.org/uid/2",
+    "id": "https://category.nodebb.org/uid/2#key",
+    "owner": "https://category.nodebb.org/uid/2",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzEr0sFdATahQzprS4EOT\nZq+KMc6UTbt2GDP20OrQi/P5AXAbMaQiRCRdGWhYGjnH0jicn5NnozNxRo+HchJT\nV6NOHxpsxqPCoaLeoBkhfhbSCLr2Gzil6mmfqf9TjnI7A7ZTtCc0G+n0ztyL9HwL\nkEAI178l2gckk4XKKYnEd+dyiIevExrq/ROLgwW1o428FZvlF5amKxhpVUEygRU8\nCd1hqWYs+xYDOJURCP5qEx/MmRPpV/yGMTMyF+/gcQc0TUZnhWAM2E4M+aq3aKh6\nJP/vsry+5YZPUaPWfopbT5Ijyt6ZSElp6Avkg56eTz0a5SRcjCVS6IFVPwiLlzOe\nYwIDAQAB\n-----END PUBLIC KEY-----\n"
   }
 }

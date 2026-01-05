@@ -1,6 +1,6 @@
 use crate::{
-  newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId, PostId},
-  source::post::{
+    newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
+    source::post::{
     Post,
     PostActions,
     PostHideForm,
@@ -11,8 +11,8 @@ use crate::{
     PostSavedForm,
     PostUpdateForm,
   },
-  traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
-  utils::{
+    traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
+    utils::{
     functions::{coalesce, hot_rank, scaled_rank},
     get_conn,
     now,
@@ -29,11 +29,11 @@ use diesel::dsl::{exists, select};
 use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::PostNotifications,
-  schema::{community, person, post, post_actions},
+  schema::{category, person, post, post_actions},
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -102,16 +102,16 @@ impl Post {
   }
 
 
-  pub async fn list_featured_for_community(
-    pool: &mut DbPool<'_>,
-    the_community_id: CommunityId,
+  pub async fn list_featured_for_category(
+      pool: &mut DbPool<'_>,
+      the_category_id: CategoryId,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     post::table
-      .filter(post::community_id.eq(the_community_id))
+      .filter(post::category_id.eq(the_category_id))
       .filter(post::deleted.eq(false))
       .filter(post::removed.eq(false))
-      .filter(post::featured_community.eq(true))
+      .filter(post::featured_category.eq(true))
       .then_order_by(post::published_at.desc())
       .limit(FETCH_LIMIT_MAX.try_into()?)
       .load::<Self>(conn)
@@ -138,16 +138,16 @@ impl Post {
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
-  async fn creator_post_ids_in_community(
-    pool: &mut DbPool<'_>,
-    creator_id: PersonId,
-    community_id: CommunityId,
+  async fn creator_post_ids_in_category(
+      pool: &mut DbPool<'_>,
+      creator_id: PersonId,
+      category_id: CategoryId,
   ) -> FastJobResult<Vec<PostId>> {
     let conn = &mut get_conn(pool).await?;
 
     post::table
       .filter(post::creator_id.eq(creator_id))
-      .filter(post::community_id.eq(community_id))
+      .filter(post::category_id.eq(category_id))
       .select(post::id)
       .load::<PostId>(conn)
       .await
@@ -164,26 +164,26 @@ impl Post {
     let conn = &mut get_conn(pool).await?;
 
     post::table
-      .inner_join(community::table)
+      .inner_join(category::table)
       .filter(post::creator_id.eq(creator_id))
-      .filter(community::instance_id.eq(instance_id))
+      .filter(category::instance_id.eq(instance_id))
       .select(post::id)
       .load::<PostId>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn update_removed_for_creator_and_community(
-    pool: &mut DbPool<'_>,
-    creator_id: PersonId,
-    community_id: CommunityId,
-    removed: bool,
+  pub async fn update_removed_for_creator_and_category(
+      pool: &mut DbPool<'_>,
+      creator_id: PersonId,
+      category_id: CategoryId,
+      removed: bool,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     update(post::table)
       .filter(post::creator_id.eq(creator_id))
-      .filter(post::community_id.eq(community_id))
+      .filter(post::category_id.eq(category_id))
       .set((post::removed.eq(removed), post::updated_at.eq(Utc::now())))
       .get_results::<Self>(conn)
       .await
@@ -251,13 +251,13 @@ impl Post {
 
     post::table
       .inner_join(person::table)
-      .inner_join(community::table)
+      .inner_join(category::table)
       // find all posts which have scheduled_publish_time that is in the  future
       .filter(post::scheduled_publish_time_at.is_not_null())
       .filter(coalesce(post::scheduled_publish_time_at, now()).gt(now()))
-      // make sure the post and community are still around
+      // make sure the post and category are still around
       .filter(not(post::deleted.or(post::removed)))
-      .filter(not(community::removed.or(community::deleted)))
+      .filter(not(category::removed.or(category::deleted)))
       // only posts by specified user
       .filter(post::creator_id.eq(person_id))
       .select(count(post::id))
@@ -273,9 +273,9 @@ impl Post {
     // https://github.com/diesel-rs/diesel/issues/1478
     // Just select the metrics we need manually, for now, since its a single post anyway
 
-    let interactions_month = community::table
-      .select(community::interactions_month)
-      .inner_join(post::table.on(community::id.eq(post::community_id)))
+    let interactions_month = category::table
+      .select(category::interactions_month)
+      .inner_join(post::table.on(category::id.eq(post::category_id)))
       .filter(post::id.eq(post_id))
       .first::<i64>(conn)
       .await?;
@@ -371,12 +371,12 @@ impl Likeable for PostActions {
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
 
-  async fn remove_likes_in_community(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-    community_id: CommunityId,
+  async fn remove_likes_in_category(
+      pool: &mut DbPool<'_>,
+      person_id: PersonId,
+      category_id: CategoryId,
   ) -> FastJobResult<uplete::Count> {
-    let post_ids = Post::creator_post_ids_in_community(pool, person_id, community_id).await?;
+    let post_ids = Post::creator_post_ids_in_category(pool, person_id, category_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 
@@ -577,11 +577,11 @@ impl PostActions {
 mod tests {
   use crate::{
     source::{
-      comment::{Comment, CommentInsertForm, CommentUpdateForm},
-      community::{Community, CommunityInsertForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{
+        comment::{Comment, CommentInsertForm, CommentUpdateForm},
+        category::{Category, CategoryInsertForm},
+        instance::Instance,
+        person::{Person, PersonInsertForm},
+        post::{
         Post,
         PostActions,
         PostInsertForm,
@@ -595,7 +595,7 @@ mod tests {
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
   use chrono::DateTime;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -613,31 +613,31 @@ mod tests {
 
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let new_community = CommunityInsertForm::new(
+    let new_category = CategoryInsertForm::new(
       inserted_instance.id,
-      "test community_3".to_string(),
+      "test category_3".to_string(),
       "nada".to_owned(),
     );
 
-    let inserted_community = Community::create(pool, &new_community).await?;
+    let inserted_category = Category::create(pool, &new_category).await?;
 
     let new_post = PostInsertForm::new(
       "A test post".into(),
       inserted_person.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post = Post::create(pool, &new_post).await?;
 
     let new_post2 = PostInsertForm::new(
       "A test post 2".into(),
       inserted_person.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post2 = Post::create(pool, &new_post2).await?;
 
     let new_scheduled_post = PostInsertForm {
       scheduled_publish_time_at: Some(DateTime::from_timestamp_nanos(i64::MAX)),
-      ..PostInsertForm::new("beans".into(), inserted_person.id, inserted_community.id)
+      ..PostInsertForm::new("beans".into(), inserted_person.id, inserted_category.id)
     };
     let inserted_scheduled_post = Post::create(pool, &new_scheduled_post).await?;
 
@@ -648,7 +648,7 @@ mod tests {
       body: None,
       alt_text: None,
       creator_id: inserted_person.id,
-      community_id: inserted_community.id,
+      category_id: inserted_category.id,
       published_at: inserted_post.published_at,
       removed: false,
       locked: false,
@@ -662,7 +662,7 @@ mod tests {
       ap_id: Url::parse(&format!("https://108fasttob.com/post/{}", inserted_post.id))?.into(),
       local: true,
       language_id: Default::default(),
-      featured_community: false,
+      featured_category: false,
       featured_local: false,
       url_content_type: None,
       scheduled_publish_time_at: None,
@@ -734,7 +734,7 @@ mod tests {
       + Post::delete(pool, inserted_scheduled_post.id).await?;
 
     assert_eq!(3, num_deleted);
-    Community::delete(pool, inserted_community.id).await?;
+    Category::delete(pool, inserted_category.id).await?;
     Person::delete(pool, inserted_person.id).await?;
     Instance::delete(pool, inserted_instance.id).await?;
 
@@ -752,25 +752,25 @@ mod tests {
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_community_agg");
+    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_category_agg");
 
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let another_person = PersonInsertForm::test_form(inserted_instance.id, "jerry_community_agg");
+    let another_person = PersonInsertForm::test_form(inserted_instance.id, "jerry_category_agg");
 
     let another_inserted_person = Person::create(pool, &another_person).await?;
 
-    let new_community = CommunityInsertForm::new(
+    let new_category = CategoryInsertForm::new(
       inserted_instance.id,
-      "TIL_community_agg".into(),
+      "TIL_category_agg".into(),
       "nada".to_owned(),
     );
-    let inserted_community = Community::create(pool, &new_community).await?;
+    let inserted_category = Category::create(pool, &new_category).await?;
 
     let new_post = PostInsertForm::new(
       "A test post".into(),
       inserted_person.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post = Post::create(pool, &new_post).await?;
 
@@ -834,9 +834,9 @@ mod tests {
     let person_num_deleted = Person::delete(pool, inserted_person.id).await?;
     assert_eq!(1, person_num_deleted);
 
-    // Delete the community
-    let community_num_deleted = Community::delete(pool, inserted_community.id).await?;
-    assert_eq!(1, community_num_deleted);
+    // Delete the category
+    let category_num_deleted = Category::delete(pool, inserted_category.id).await?;
+    assert_eq!(1, category_num_deleted);
 
     // Should be none found, since the creator was deleted
     let after_delete = Post::read(pool, inserted_post.id).await;
@@ -855,21 +855,21 @@ mod tests {
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_community_agg");
+    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_category_agg");
 
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let new_community = CommunityInsertForm::new(
+    let new_category = CategoryInsertForm::new(
       inserted_instance.id,
-      "TIL_community_agg".into(),
+      "TIL_category_agg".into(),
       "nada".to_owned(),
     );
-    let inserted_community = Community::create(pool, &new_community).await?;
+    let inserted_category = Category::create(pool, &new_category).await?;
 
     let new_post = PostInsertForm::new(
       "A test post".into(),
       inserted_person.id,
-      inserted_community.id,
+      inserted_category.id,
     );
     let inserted_post = Post::create(pool, &new_post).await?;
 
@@ -936,7 +936,7 @@ mod tests {
     Comment::delete(pool, inserted_comment.id).await?;
     Post::delete(pool, inserted_post.id).await?;
     Person::delete(pool, inserted_person.id).await?;
-    Community::delete(pool, inserted_community.id).await?;
+    Category::delete(pool, inserted_category.id).await?;
     Instance::delete(pool, inserted_instance.id).await?;
 
     Ok(())

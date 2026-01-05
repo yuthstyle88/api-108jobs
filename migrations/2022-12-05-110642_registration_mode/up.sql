@@ -7,7 +7,7 @@ CREATE TYPE registration_mode_enum AS enum (
 
 -- use this enum for registration mode setting
 ALTER TABLE local_site
-    ADD COLUMN registration_mode registration_mode_enum NOT NULL DEFAULT 'require_application';
+    ADD COLUMN registration_mode registration_mode_enum NOT NULL DEFAULT 'open';
 
 -- generate registration mode value from previous settings
 WITH subquery AS (

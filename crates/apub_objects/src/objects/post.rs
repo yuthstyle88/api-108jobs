@@ -2,9 +2,9 @@ use crate::fake_trait::Object;
 use crate::{
   protocol::page::Page,
 };
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::post::Post;
-use lemmy_utils::error::FastJobError;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::post::Post;
+use app_108jobs_utils::error::FastJobError;
 use std::ops::Deref;
 use url::Url;
 

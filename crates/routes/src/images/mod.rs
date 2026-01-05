@@ -1,7 +1,7 @@
 use actix_web::web::*;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 
 pub mod delete;
 pub mod download;

@@ -7,10 +7,10 @@ use actix_web::{
   HttpResponse,
   Responder,
 };
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::images::RemoteImage;
-use lemmy_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::images::RemoteImage;
+use app_108jobs_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
+use app_108jobs_utils::error::FastJobResult;
 use moka::future::Cache;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::sync::LazyLock;
@@ -86,7 +86,7 @@ pub async fn image_proxy(
     // Bypass proxy and redirect user to original image
     Ok(Either::Left(Redirect::to(url.to_string()).respond_to(&req)))
   } else {
-    // Proxy the image data through Lemmy
+    // Proxy the image data through app_108jobs
     Ok(Either::Right(
       do_get_image(processed_url, req, &context).await?,
     ))

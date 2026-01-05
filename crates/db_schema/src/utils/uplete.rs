@@ -252,7 +252,7 @@ mod tests {
     SelectableExpression,
   };
   use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

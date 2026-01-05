@@ -1,6 +1,6 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   comment::{Comment, CommentActions},
-  community::{Community, CommunityActions},
+  category::{Category, CategoryActions},
   instance::InstanceActions,
   person::{Person, PersonActions},
   post::Post,
@@ -11,15 +11,15 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     comment_creator_is_admin,
     comment_select_remove_deletes,
     local_user_can_mod_comment,
     post_tags_fragment,
   },
-  lemmy_db_schema::utils::queries::{
-    creator_banned_from_community,
-    creator_banned_within_community,
+  app_108jobs_db_schema::utils::queries::{
+    creator_banned_from_category,
+    creator_banned_within_category,
     creator_is_moderator,
   },
 };
@@ -48,9 +48,9 @@ pub struct CommentView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Community,
+  pub category: Category,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment_actions: Option<CommentActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -77,7 +77,7 @@ pub struct CommentView {
   pub can_mod: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_within_community()
+      select_expression = creator_banned_within_category()
     )
   )]
   pub creator_banned: bool,
@@ -89,10 +89,10 @@ pub struct CommentView {
   pub creator_is_moderator: bool,
   #[cfg_attr(feature = "full",
     diesel(
-      select_expression = creator_banned_from_community()
+      select_expression = creator_banned_from_category()
     )
   )]
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }
 
 #[skip_serializing_none]
@@ -101,7 +101,7 @@ pub struct CommentView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A slimmer comment view, without the post, or community.
+/// A slimmer comment view, without the post, or category.
 #[serde(rename_all = "camelCase")]
 pub struct CommentSlimView {
   pub comment: Comment,
@@ -113,5 +113,5 @@ pub struct CommentSlimView {
   pub can_mod: bool,
   pub creator_banned: bool,
   pub creator_is_moderator: bool,
-  pub creator_banned_from_community: bool,
+  pub creator_banned_from_category: bool,
 }

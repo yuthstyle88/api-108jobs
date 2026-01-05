@@ -1,6 +1,6 @@
 {
   "@context": ["https://www.w3.org/ns/activitystreams"],
-  "id": "https://pfefferle.org/lemmy-part-4/#activity#activity",
+  "id": "https://pfefferle.org/app_108jobs-part-4/#activity#activity",
   "type": "Announce",
   "audience": "https://pfefferle.org/@pfefferle.org",
   "published": "2024-05-03T12:32:29Z",
@@ -11,7 +11,7 @@
   ],
   "cc": [],
   "object": {
-    "id": "https://pfefferle.org/lemmy-part-4/#activity",
+    "id": "https://pfefferle.org/app_108jobs-part-4/#activity",
     "type": "Update",
     "audience": "https://pfefferle.org/@pfefferle.org",
     "published": "2024-05-03T12:32:29Z",
@@ -22,7 +22,7 @@
     ],
     "cc": [],
     "object": {
-      "id": "https://pfefferle.org/lemmy-part-4/",
+      "id": "https://pfefferle.org/app_108jobs-part-4/",
       "type": "Article",
       "attachment": [],
       "attributedTo": "https://pfefferle.org/author/pfefferle/",
@@ -31,12 +31,12 @@
       "contentMap": {
         "en": "\u003Cp\u003EIdentifies one or more entities that represent the total population of entities for which the object can considered to be relevant. Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.          \u003C/p\u003E"
       },
-      "name": "Lemmy (Part 4)",
+      "name": "app_108jobs (Part 4)",
       "published": "2024-05-03T12:32:29Z",
       "summary": "Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant. Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object can considered to be relevant.Identifies one or more entities that represent the total population of entities for which the object [...]",
       "tag": [],
       "updated": "2024-05-06T08:20:33Z",
-      "url": "https://pfefferle.org/lemmy-part-4/",
+      "url": "https://pfefferle.org/app_108jobs-part-4/",
       "to": [
         "https://www.w3.org/ns/activitystreams#Public",
         "https://pfefferle.org/wp-json/activitypub/1.0/actors/1/followers"

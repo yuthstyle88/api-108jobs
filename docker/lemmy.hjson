@@ -1,17 +1,17 @@
 {
   # for more info about the config, check out the documentation
-  # https://join-lemmy.org/docs/en/administration/configuration.html
+  # https://join-app_108jobs.org/docs/en/administration/configuration.html
 
-  # This is a minimal lemmy config for the dev / main branch. Do not use for a 
+  # This is a minimal app_108jobs config for the dev / main branch. Do not use for a
   # release / stable version.
 
   setup: {
-    admin_username: "lemmy"
-    admin_password: "lemmylemmy"
-    site_name: "lemmy-dev"
+    admin_username: "app_108jobs"
+    admin_password: "app_108jobsapp_108jobs"
+    site_name: "app_108jobs-dev"
   }
   database: {
-    connection: "postgres://lemmy:password@postgres:5432/lemmy"
+    connection: "postgres://app_108jobs:password@postgres:5432/app_108jobs"
   }
 
   hostname: "localhost"

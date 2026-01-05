@@ -1,6 +1,6 @@
 use crate::{
-  newtypes::{CommunityId, DbUrl, PaginationCursor, PersonId},
-  utils::{get_conn, uplete, DbPool},
+    newtypes::{CategoryId, DbUrl, PaginationCursor, PersonId},
+    utils::{get_conn, uplete, DbPool},
 };
 use diesel::{
   associations::HasTable,
@@ -14,7 +14,7 @@ use diesel_async::{
   AsyncPgConnection,
   RunQueryDsl,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -96,9 +96,9 @@ pub trait Followable {
   where
     Self: Sized;
   fn follow_accepted(
-    pool: &mut DbPool<'_>,
-    community_id: CommunityId,
-    person_id: PersonId,
+      pool: &mut DbPool<'_>,
+      category_id: CategoryId,
+      person_id: PersonId,
   ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
@@ -151,10 +151,10 @@ pub trait Likeable {
   where
     Self: Sized;
 
-  fn remove_likes_in_community(
-    pool: &mut DbPool<'_>,
-    creator_id: PersonId,
-    community_id: CommunityId,
+  fn remove_likes_in_category(
+      pool: &mut DbPool<'_>,
+      creator_id: PersonId,
+      category_id: CategoryId,
   ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
@@ -275,7 +275,7 @@ pub trait Blockable {
   fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-    // Note: cant use lemmyresult because of try_pool
+    // Note: cant use app_108jobsresult because of try_pool
   ) -> impl Future<Output = FastJobResult<Vec<Self::ObjectType>>> + Send
   where
     Self: Sized;
@@ -329,7 +329,7 @@ pub trait ApubActor {
   ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
   where
    Self: Sized;
-  /// - actor_name is the name of the community or user to read.
+  /// - actor_name is the name of the category or user to read.
   /// - include_deleted, if true, will return communities or users that were deleted/removed
   fn read_from_name(
     pool: &mut DbPool<'_>,

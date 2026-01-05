@@ -27,10 +27,10 @@
     "name": "Friendica 'Siberian Iris' 2022.05-dev-1453",
     "url": "https://pirati.ca"
   },
-  "to": ["https://pirati.ca/profile/test8", "https://ds9.lemmy.ml/c/testcom"],
+  "to": ["https://pirati.ca/profile/test8", "https://ds9.app_108jobs.ml/c/testcom"],
   "cc": [
     "https://www.w3.org/ns/activitystreams#Public",
-    "https://ds9.lemmy.ml/c/testcom/followers"
+    "https://ds9.app_108jobs.ml/c/testcom/followers"
   ],
   "object": {
     "id": "https://pirati.ca/objects/ec054ce7-4762-3c1c-3c25-0cc665717210",

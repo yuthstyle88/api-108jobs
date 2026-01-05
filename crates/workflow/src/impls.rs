@@ -1,20 +1,20 @@
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use lemmy_db_schema::newtypes::{
+use app_108jobs_db_schema::newtypes::{
   BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId,
 };
-use lemmy_db_schema::source::billing::BillingInsertForm;
-use lemmy_db_schema::source::billing::{Billing, BillingUpdateForm};
-use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
-use lemmy_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
-use lemmy_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_schema::utils::{get_conn, DbPool};
-use lemmy_db_schema_file::enums::BillingStatus::QuotePendingReview;
-use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
-use lemmy_db_views_billing::api::ValidCreateInvoice;
-use lemmy_utils::error::FastJobErrorExt2;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema::source::billing::BillingInsertForm;
+use app_108jobs_db_schema::source::billing::{Billing, BillingUpdateForm};
+use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
+use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
+use app_108jobs_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::utils::{get_conn, DbPool};
+use app_108jobs_db_schema_file::enums::BillingStatus::QuotePendingReview;
+use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
+use app_108jobs_db_views_billing::api::ValidCreateInvoice;
+use app_108jobs_utils::error::FastJobErrorExt2;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use uuid::Uuid;
 
 // ---------- Typestate payload ----------
@@ -170,14 +170,16 @@ async fn set_status_from(
             room_name: None,
             updated_at: Some(Utc::now()),
             post_id: None,
-            current_comment_id: Some(None),
+            current_comment_id: None,
+            last_message_id: None,
+            last_message_at: None,
           };
           let _ = ChatRoom::update(&mut conn.into(), current.room_id.clone(), &clr)
             .await
             .with_fastjob_type(FastJobErrorType::DatabaseError)?;
         }
 
-        Ok::<_, lemmy_utils::error::FastJobError>(())
+        Ok::<_, app_108jobs_utils::error::FastJobError>(())
       }
       .scope_boxed()
     })
@@ -239,13 +241,15 @@ async fn cancel_any_on(
           room_name: None,
           updated_at: Some(Utc::now()),
           post_id: None,
-          current_comment_id: Some(None),
+          current_comment_id: None,
+          last_message_id: None,
+          last_message_at: None,
         };
         let _ = ChatRoom::update(&mut conn.into(), cur.room_id, &clr)
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-        Ok::<_, lemmy_utils::error::FastJobError>(())
+        Ok::<_, app_108jobs_utils::error::FastJobError>(())
       }
       .scope_boxed()
     })

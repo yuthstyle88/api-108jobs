@@ -1,10 +1,10 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::{source::oauth_provider::OAuthProvider, traits::Crud};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{DeleteOAuthProvider, SuccessResponse};
-use lemmy_utils::error::FastJobError;
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{source::oauth_provider::OAuthProvider, traits::Crud};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{DeleteOAuthProvider, SuccessResponse};
+use app_108jobs_utils::error::FastJobError;
 
 pub async fn delete_oauth_provider(
   data: Json<DeleteOAuthProvider>,

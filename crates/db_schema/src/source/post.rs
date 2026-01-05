@@ -1,12 +1,12 @@
-use crate::newtypes::{CommunityId, DbUrl, LanguageId, PersonId, PostId};
+use crate::newtypes::{CategoryId, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{post, post_actions},
+  app_108jobs_db_schema_file::schema::{post, post_actions},
 };
 
 #[skip_serializing_none]
@@ -30,7 +30,7 @@ pub struct Post {
   /// An optional post body, in markdown.
   pub body: Option<String>,
   pub creator_id: PersonId,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   /// Whether the post is removed.
   pub removed: bool,
   /// Whether the post is locked.
@@ -54,8 +54,8 @@ pub struct Post {
   /// A video url for the link.
   pub embed_video_url: Option<DbUrl>,
   pub language_id: LanguageId,
-  /// Whether the post is featured to its community.
-  pub featured_community: bool,
+  /// Whether the post is featured to its category.
+  pub featured_category: bool,
   /// Whether the post is featured to its site.
   pub featured_local: bool,
   pub url_content_type: Option<String>,
@@ -101,7 +101,7 @@ pub struct Post {
 pub struct PostInsertForm {
   pub name: String,
   pub creator_id: PersonId,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]
@@ -133,7 +133,7 @@ pub struct PostInsertForm {
   #[new(default)]
   pub ap_id: Option<DbUrl>,
   #[new(default)]
-  pub featured_community: Option<bool>,
+  pub featured_category: Option<bool>,
   #[new(default)]
   pub featured_local: Option<bool>,
   #[new(default)]
@@ -176,7 +176,7 @@ pub struct PostUpdateForm {
   pub ap_id: Option<DbUrl>,
   pub local: Option<bool>,
   pub language_id: Option<LanguageId>,
-  pub featured_community: Option<bool>,
+  pub featured_category: Option<bool>,
   pub featured_local: Option<bool>,
   pub url_content_type: Option<Option<String>>,
   pub alt_text: Option<Option<String>>,
@@ -186,7 +186,7 @@ pub struct PostUpdateForm {
   pub job_type: Option<JobType>,
   pub deadline: Option<Option<DateTime<Utc>>>,
   pub is_english_required: Option<bool>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub pending: Option<bool>,
 }
 

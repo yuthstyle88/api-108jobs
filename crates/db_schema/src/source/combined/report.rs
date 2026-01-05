@@ -1,6 +1,6 @@
 use crate::newtypes::{
   CommentReportId,
-  CommunityReportId,
+  CategoryReportId,
   PostReportId,
   ReportCombinedId,
 };
@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::report_combined;
+use app_108jobs_db_schema_file::schema::report_combined;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -27,5 +27,5 @@ pub struct ReportCombined {
   pub published_at: DateTime<Utc>,
   pub post_report_id: Option<PostReportId>,
   pub comment_report_id: Option<CommentReportId>,
-  pub community_report_id: Option<CommunityReportId>,
+  pub category_report_id: Option<CategoryReportId>,
 }

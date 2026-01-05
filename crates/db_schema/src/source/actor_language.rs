@@ -1,6 +1,6 @@
-use crate::newtypes::{CommunityId, LanguageId, LocalUserId, SiteId};
+use crate::newtypes::{CategoryId, LanguageId, LocalUserId, SiteId};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::local_user_language;
+use app_108jobs_db_schema_file::schema::local_user_language;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -22,28 +22,28 @@ pub struct LocalUserLanguageForm {
 }
 
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::community_language;
+use app_108jobs_db_schema_file::schema::category_language;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = community_language))]
-#[cfg_attr(feature = "full", diesel(primary_key(community_id, language_id)))]
+#[cfg_attr(feature = "full", diesel(table_name = category_language))]
+#[cfg_attr(feature = "full", diesel(primary_key(category_id, language_id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
-pub struct CommunityLanguage {
-  pub community_id: CommunityId,
+pub struct CategoryLanguage {
+  pub category_id: CategoryId,
   pub language_id: LanguageId,
 }
 
 #[derive(Clone)]
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = community_language))]
-pub struct CommunityLanguageForm {
-  pub community_id: CommunityId,
+#[cfg_attr(feature = "full", diesel(table_name = category_language))]
+pub struct CategoryLanguageForm {
+  pub category_id: CategoryId,
   pub language_id: LanguageId,
 }
 
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::site_language;
+use app_108jobs_db_schema_file::schema::site_language;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

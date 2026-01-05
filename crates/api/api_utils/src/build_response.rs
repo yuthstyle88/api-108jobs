@@ -1,24 +1,24 @@
 use crate::context::FastJobContext;
 use actix_web::web::Json;
-use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, InstanceId, PostId},
-  source::{
-    actor_language::CommunityLanguage,
-    comment::Comment,
-    community::Community,
-    person::Person,
-    person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
-    person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
-    post::Post,
+use app_108jobs_db_schema::{
+    newtypes::{CommentId, CategoryId, InstanceId, PostId},
+    source::{
+      actor_language::CategoryLanguage,
+      comment::Comment,
+      category::Category,
+      person::Person,
+      person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
+      person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+      post::Post,
   },
-  traits::Crud,
+    traits::Crud,
 };
-use lemmy_db_views_comment::{api::CommentResponse, CommentView};
-use lemmy_db_views_community::api::ListCommunitiesTreeResponse;
-use lemmy_db_views_community::{api::CommunityResponse, CommunityNodeView, CommunityView};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{api::PostResponse, PostView};
-use lemmy_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
+use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
+use app_108jobs_db_views_category::api::ListCategoriesTreeResponse;
+use app_108jobs_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::{api::PostResponse, PostView};
+use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
 
@@ -39,18 +39,18 @@ pub async fn build_comment_response(
   Ok(CommentResponse { comment_view })
 }
 
-pub async fn build_community_response(
-  context: &FastJobContext,
-  local_user_view: LocalUserView,
-  community_id: CommunityId,
-) -> FastJobResult<Json<CommunityResponse>> {
+pub async fn build_category_response(
+    context: &FastJobContext,
+    local_user_view: LocalUserView,
+    category_id: CategoryId,
+) -> FastJobResult<Json<CategoryResponse>> {
   let local_user = local_user_view.local_user;
-  let community_view =
-    CommunityView::read(&mut context.pool(), community_id, Some(&local_user)).await?;
-  let discussion_languages = CommunityLanguage::read(&mut context.pool(), community_id).await?;
+  let category_view =
+    CategoryView::read(&mut context.pool(), category_id, Some(&local_user)).await?;
+  let discussion_languages = CategoryLanguage::read(&mut context.pool(), category_id).await?;
 
-  Ok(Json(CommunityResponse {
-    community_view,
+  Ok(Json(CategoryResponse {
+    category_view,
     discussion_languages,
   }))
 }
@@ -71,27 +71,27 @@ pub async fn build_post_response(
   Ok(Json(PostResponse { post_view }))
 }
 
-pub fn build_community_tree(
-  flat_list: Vec<Community>,
-) -> FastJobResult<Json<ListCommunitiesTreeResponse>> {
-  let mut node_map: HashMap<String, CommunityNodeView> = HashMap::new();
+pub fn build_category_tree(
+  flat_list: Vec<Category>,
+) -> FastJobResult<Json<ListCategoriesTreeResponse>> {
+  let mut node_map: HashMap<String, CategoryNodeView> = HashMap::new();
   let mut all_children: HashSet<String> = HashSet::new();
 
   // First pass: build all nodes
-  for community in &flat_list {
-    let path_str = community.path.0.to_string();
+  for category in &flat_list {
+    let path_str = category.path.0.to_string();
     node_map.insert(
       path_str.clone(),
-      CommunityNodeView {
-        community: community.clone(),
+      CategoryNodeView {
+        category: category.clone(),
         children: Vec::new(),
       },
     );
   }
 
   // Second pass: build tree
-  for community in &flat_list {
-    let path_str = community.path.0.to_string();
+  for category in &flat_list {
+    let path_str = category.path.0.to_string();
     let segments: Vec<&str> = path_str.split('.').collect();
 
     if segments.len() > 1 {
@@ -106,7 +106,7 @@ pub fn build_community_tree(
   }
 
   // Collect root nodes (not children of anyone else)
-  let roots: Vec<CommunityNodeView> = node_map
+  let roots: Vec<CategoryNodeView> = node_map
     .into_iter()
     .filter_map(|(path, node)| {
       if !all_children.contains(&path) {
@@ -117,8 +117,8 @@ pub fn build_community_tree(
     })
     .collect();
 
-  Ok(Json(ListCommunitiesTreeResponse {
-    communities: roots.clone(),
+  Ok(Json(ListCategoriesTreeResponse {
+    categories: roots.clone(),
     count: roots.len() as i32,
   }))
 }

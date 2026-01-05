@@ -1,16 +1,16 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{
   source::{
     instance::Instance,
     mod_log::admin::{AdminBlockInstance, AdminBlockInstanceForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{AdminBlockInstanceParams, SuccessResponse};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{AdminBlockInstanceParams, SuccessResponse};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn admin_block_instance(
   data: Json<AdminBlockInstanceParams>,

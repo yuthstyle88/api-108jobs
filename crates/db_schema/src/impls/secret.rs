@@ -3,8 +3,8 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::secret::dsl::secret;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::secret::dsl::secret;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Secret {
   /// Initialize the Secrets from the DB.

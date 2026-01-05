@@ -34,3 +34,5 @@ pub mod identity_card;
 pub mod workflow;
 pub mod profile;
 pub mod review;
+pub mod list_top_up_requests;
+pub mod withdraw;

@@ -12,8 +12,8 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
-use lemmy_db_schema_file::schema::{image_details, local_image, remote_image};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{image_details, local_image, remote_image};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use url::Url;
 
 impl LocalImage {

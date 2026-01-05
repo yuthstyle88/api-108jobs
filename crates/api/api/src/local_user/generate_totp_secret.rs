@@ -1,14 +1,14 @@
 use crate::{build_totp_2fa, generate_totp_2fa_secret};
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::{
   local_user::{LocalUser, LocalUserUpdateForm},
   site::Site,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::GenerateTotpSecretResponse;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::GenerateTotpSecretResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// Generate a new secret for two-factor-authentication. Afterwards you need to call [toggle_totp]
 /// to enable it. This can only be called if 2FA is currently disabled.

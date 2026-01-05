@@ -1,21 +1,21 @@
 use actix_web::{error::ErrorBadRequest, web, Error, HttpRequest, HttpResponse, Result};
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_private_instance, local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
-  source::{community::Community, person::Person},
+use app_108jobs_db_schema::{
+  source::{category::Category, person::Person},
   traits::ApubActor,
   PersonContentType,
 };
-use lemmy_db_schema_file::enums::{ListingType, PostSortType};
-use lemmy_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
-use lemmy_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
-use lemmy_db_views_person_content_combined::impls::PersonContentCombinedQuery;
-use lemmy_db_views_post::{impls::PostQuery, PostView};
-use lemmy_utils::{
+use app_108jobs_db_schema_file::enums::{ListingType, PostSortType};
+use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
+use app_108jobs_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
+use app_108jobs_db_views_person_content_combined::impls::PersonContentCombinedQuery;
+use app_108jobs_db_views_post::{impls::PostQuery, PostView};
+use app_108jobs_utils::{
   cache_header::cache_1hour,
   error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
@@ -50,7 +50,7 @@ impl Params {
 }
 
 enum RequestType {
-  Community,
+  Category,
   User,
   Front,
   Inbox,
@@ -163,7 +163,7 @@ async fn get_feed(
 
   let request_type = match req_type.as_str() {
     "u" => RequestType::User,
-    "c" => RequestType::Community,
+    "c" => RequestType::Category,
     "front" => RequestType::Front,
     "inbox" => RequestType::Inbox,
     "modlog" => RequestType::Modlog,
@@ -172,8 +172,8 @@ async fn get_feed(
 
   let builder = match request_type {
     RequestType::User => get_feed_user(&context, &info.get_limit(), &param).await,
-    RequestType::Community => {
-      get_feed_community(&context, &info.sort_type()?, &info.get_limit(), &param).await
+    RequestType::Category => {
+      get_feed_category(&context, &info.sort_type()?, &info.get_limit(), &param).await
     }
     RequestType::Front => {
       get_feed_front(&context, &info.sort_type()?, &info.get_limit(), &param).await
@@ -233,17 +233,17 @@ async fn get_feed_user(
   Ok(channel)
 }
 
-async fn get_feed_community(
+async fn get_feed_category(
   context: &FastJobContext,
   sort_type: &PostSortType,
   limit: &i64,
-  community_name: &str,
+  category_name: &str,
 ) -> FastJobResult<Channel> {
   let site_view = context.site_config().get().await?.site_view;
-  let community = Community::read_from_name(&mut context.pool(), community_name, false)
+  let category = Category::read_from_name(&mut context.pool(), category_name, false)
     .await?
     .ok_or(FastJobErrorType::NotFound)?;
-  if !community.visibility.can_view_without_login() {
+  if !category.visibility.can_view_without_login() {
     return Err(FastJobErrorType::NotFound.into());
   }
 
@@ -251,7 +251,7 @@ async fn get_feed_community(
 
   let posts = PostQuery {
     sort: (Some(*sort_type)),
-    community_id: (Some(community.id)),
+    category_id: (Some(category.id)),
     limit: (Some(*limit)),
     ..Default::default()
   }
@@ -262,13 +262,13 @@ async fn get_feed_community(
 
   let mut channel = Channel {
     namespaces: RSS_NAMESPACE.clone(),
-    title: format!("{} - {}", site_view.site.name, community.name),
+    title: format!("{} - {}", site_view.site.name, category.name),
     items,
     ..Default::default()
   };
 
-  if let Some(community_desc) = community.description {
-    channel.set_description(markdown_to_html(&community_desc));
+  if let Some(category_desc) = category.description {
+    channel.set_description(markdown_to_html(&category_desc));
   }
 
   Ok(channel)
@@ -475,12 +475,12 @@ fn create_modlog_items(
         &v.admin_purge_comment.reason,
         settings,
       ),
-      ModlogCombinedView::AdminPurgeCommunity(v) => build_modlog_item(
+      ModlogCombinedView::AdminPurgeCategory(v) => build_modlog_item(
         &v.admin,
-        &v.admin_purge_community.published_at,
+        &v.admin_purge_category.published_at,
         &modlog_url,
-        "Admin purged community",
-        &v.admin_purge_community.reason,
+        "Admin purged category",
+        &v.admin_purge_category.reason,
         settings,
       ),
       ModlogCombinedView::AdminPurgePerson(v) => build_modlog_item(
@@ -511,15 +511,15 @@ fn create_modlog_items(
         &None,
         settings,
       ),
-      ModlogCombinedView::ModAddCommunity(v) => build_modlog_item(
+      ModlogCombinedView::ModAddCategory(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_add_community.published_at,
+        &v.mod_add_category.published_at,
         &modlog_url,
         &format!(
           "{} mod {} to /c/{}",
-          removed_added_str(v.mod_add_community.removed),
+          removed_added_str(v.mod_add_category.removed),
           &v.other_person.name,
-          &v.community.name
+          &v.category.name
         ),
         &None,
         settings,
@@ -536,17 +536,17 @@ fn create_modlog_items(
         &v.mod_ban.reason,
         settings,
       ),
-      ModlogCombinedView::ModBanFromCommunity(v) => build_modlog_item(
+      ModlogCombinedView::ModBanFromCategory(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_ban_from_community.published_at,
+        &v.mod_ban_from_category.published_at,
         &modlog_url,
         &format!(
           "{} {} from /c/{}",
-          banned_unbanned_str(v.mod_ban_from_community.banned),
+          banned_unbanned_str(v.mod_ban_from_category.banned),
           &v.other_person.name,
-          &v.community.name
+          &v.category.name
         ),
-        &v.mod_ban_from_community.reason,
+        &v.mod_ban_from_category.reason,
         settings,
       ),
       ModlogCombinedView::ModFeaturePost(v) => build_modlog_item(
@@ -565,13 +565,13 @@ fn create_modlog_items(
         &None,
         settings,
       ),
-      ModlogCombinedView::ModChangeCommunityVisibility(v) => build_modlog_item(
+      ModlogCombinedView::ModChangeCategoryVisibility(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_change_community_visibility.published_at,
+        &v.mod_change_category_visibility.published_at,
         &modlog_url,
         &format!(
           "Changed /c/{} visibility to {}",
-          &v.community.name, &v.mod_change_community_visibility.visibility
+          &v.category.name, &v.mod_change_category_visibility.visibility
         ),
         &None,
         settings,
@@ -604,16 +604,16 @@ fn create_modlog_items(
         &v.mod_remove_comment.reason,
         settings,
       ),
-      ModlogCombinedView::ModRemoveCommunity(v) => build_modlog_item(
+      ModlogCombinedView::ModRemoveCategory(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_remove_community.published_at,
+        &v.mod_remove_category.published_at,
         &modlog_url,
         &format!(
-          "{} community /c/{}",
-          removed_restored_str(v.mod_remove_community.removed),
-          &v.community.name
+          "{} category /c/{}",
+          removed_restored_str(v.mod_remove_category.removed),
+          &v.category.name
         ),
-        &v.mod_remove_community.reason,
+        &v.mod_remove_category.reason,
         settings,
       ),
       ModlogCombinedView::ModRemovePost(v) => build_modlog_item(
@@ -628,13 +628,13 @@ fn create_modlog_items(
         &v.mod_remove_post.reason,
         settings,
       ),
-      ModlogCombinedView::ModTransferCommunity(v) => build_modlog_item(
+      ModlogCombinedView::ModTransferCategory(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_transfer_community.published_at,
+        &v.mod_transfer_category.published_at,
         &modlog_url,
         &format!(
           "Tranferred /c/{} to /u/{}",
-          &v.community.name, &v.other_person.name
+          &v.category.name, &v.other_person.name
         ),
         &None,
         settings,
@@ -737,7 +737,7 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
 
   for p in posts {
     let post_url = p.post.local_url(settings)?;
-    let community_url = &p.community.actor_url(settings)?;
+    let category_url = &p.category.actor_url(settings)?;
     let dublin_core_ext = Some(DublinCoreExtension {
       creators: vec![],
       ..DublinCoreExtension::default()
@@ -749,8 +749,8 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
     let mut description = format!("submitted by <a href=\"{}\">{}</a> to <a href=\"{}\">{}</a><br>{} points | <a href=\"{}\">{} comments</a>",
     p.creator.actor_url(settings)?,
     &p.creator.name,
-    community_url,
-    &p.community.name,
+    category_url,
+    &p.category.name,
     p.post.score,
     post_url,
     p.post.comments);

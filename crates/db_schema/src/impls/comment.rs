@@ -1,6 +1,6 @@
 use crate::{
   diesel::OptionalExtension,
-  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId},
+  newtypes::{CommentId, CategoryId, DbUrl, InstanceId, PersonId},
   source::comment::{
     Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentSavedForm,
     CommentUpdateForm,
@@ -13,8 +13,8 @@ use diesel::{
   dsl::insert_into, expression::SelectableHelper, update, ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{comment, comment_actions, community, post};
-use lemmy_utils::{
+use app_108jobs_db_schema_file::schema::{comment, comment_actions, category, post};
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -85,17 +85,17 @@ impl Comment {
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
-  async fn creator_comment_ids_in_community(
+  async fn creator_comment_ids_in_category(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-    community_id: CommunityId,
+    category_id: CategoryId,
   ) -> FastJobResult<Vec<CommentId>> {
     let conn = &mut get_conn(pool).await?;
 
     comment::table
       .inner_join(post::table)
       .filter(comment::creator_id.eq(creator_id))
-      .filter(post::community_id.eq(community_id))
+      .filter(post::category_id.eq(category_id))
       .select(comment::id)
       .load::<CommentId>(conn)
       .await
@@ -109,27 +109,27 @@ impl Comment {
     instance_id: InstanceId,
   ) -> FastJobResult<Vec<CommentId>> {
     let conn = &mut get_conn(pool).await?;
-    let community_join = community::table.on(post::community_id.eq(community::id));
+    let category_join = category::table.on(post::category_id.eq(category::id));
 
     comment::table
       .inner_join(post::table)
-      .inner_join(community_join)
+      .inner_join(category_join)
       .filter(comment::creator_id.eq(creator_id))
-      .filter(community::instance_id.eq(instance_id))
+      .filter(category::instance_id.eq(instance_id))
       .select(comment::id)
       .load::<CommentId>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn update_removed_for_creator_and_community(
+  pub async fn update_removed_for_creator_and_category(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-    community_id: CommunityId,
+    category_id: CategoryId,
     removed: bool,
   ) -> FastJobResult<Vec<CommentId>> {
     let comment_ids =
-      Self::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
+      Self::creator_comment_ids_in_category(pool, creator_id, category_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 
@@ -221,7 +221,7 @@ impl Comment {
       .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
-  /// The comment was created locally and sent back, indicating that the community accepted it
+  /// The comment was created locally and sent back, indicating that the category accepted it
   pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
     if self.local && self.pending {
       let form = CommentUpdateForm {
@@ -286,13 +286,13 @@ impl Likeable for CommentActions {
       .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
   }
 
-  async fn remove_likes_in_community(
+  async fn remove_likes_in_category(
     pool: &mut DbPool<'_>,
     creator_id: PersonId,
-    community_id: CommunityId,
+    category_id: CategoryId,
   ) -> FastJobResult<uplete::Count> {
     let comment_ids =
-      Comment::creator_comment_ids_in_community(pool, creator_id, community_id).await?;
+      Comment::creator_comment_ids_in_category(pool, creator_id, category_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 

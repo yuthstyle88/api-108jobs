@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
 use captcha::Captcha;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
@@ -11,7 +11,7 @@ use totp_rs::{Secret, TOTP};
 
 pub mod admin;
 pub mod comment;
-pub mod community;
+pub mod category;
 pub mod local_user;
 pub mod post;
 pub mod reports;
@@ -123,7 +123,7 @@ mod tests {
   #[test]
   fn test_build_totp() {
     let generated_secret = generate_totp_2fa_secret();
-    let totp = build_totp_2fa("lemmy.ml", "my_name", &generated_secret);
+    let totp = build_totp_2fa("app_108jobs.ml", "my_name", &generated_secret);
     assert!(totp.is_ok());
   }
 }

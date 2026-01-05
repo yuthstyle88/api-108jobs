@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_views_custom_emoji::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_views_custom_emoji::{
   api::{ListCustomEmojis, ListCustomEmojisResponse},
   CustomEmojiView,
 };
-use lemmy_utils::error::FastJobError;
+use app_108jobs_utils::error::FastJobError;
 
 pub async fn list_custom_emojis(
   data: Query<ListCustomEmojis>,

@@ -1,5 +1,5 @@
 use assert_json_diff::assert_json_include;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{collections::HashMap, fs::File, io::BufReader};
 
@@ -12,7 +12,7 @@ pub fn file_to_json_object<T: DeserializeOwned>(path: &str) -> FastJobResult<T> 
 
 /// Check that json deserialize -> serialize -> deserialize gives identical file as initial one.
 /// Ensures that there are no breaking changes in sent data.
-pub fn test_parse_lemmy_item<T: Serialize + DeserializeOwned + std::fmt::Debug>(
+pub fn test_parse_app_108jobs_item<T: Serialize + DeserializeOwned + std::fmt::Debug>(
   path: &str,
 ) -> FastJobResult<T> {
   // parse file as T

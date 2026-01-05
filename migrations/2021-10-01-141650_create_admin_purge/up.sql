@@ -6,7 +6,7 @@ CREATE TABLE admin_purge_person (
     when_ timestamp NOT NULL DEFAULT now()
 );
 
-CREATE TABLE admin_purge_community (
+CREATE TABLE admin_purge_category (
     id serial PRIMARY KEY,
     admin_person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     reason text,
@@ -16,7 +16,7 @@ CREATE TABLE admin_purge_community (
 CREATE TABLE admin_purge_post (
     id serial PRIMARY KEY,
     admin_person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    community_id int REFERENCES community ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    category_id int REFERENCES category ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     reason text,
     when_ timestamp NOT NULL DEFAULT now()
 );

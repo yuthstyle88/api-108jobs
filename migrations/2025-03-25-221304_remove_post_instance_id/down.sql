@@ -3,7 +3,7 @@ ALTER TABLE post
     ADD COLUMN url_new character varying(2000),
     ADD COLUMN body_new text,
     ADD COLUMN creator_id_new integer,
-    ADD COLUMN community_id_new integer,
+    ADD COLUMN category_id_new integer,
     ADD COLUMN removed_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN locked_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN published_new timestamp with time zone DEFAULT now() NOT NULL,
@@ -17,7 +17,7 @@ ALTER TABLE post
     ADD COLUMN local_new boolean DEFAULT TRUE NOT NULL,
     ADD COLUMN embed_video_url_new text,
     ADD COLUMN language_id_new integer DEFAULT 0 NOT NULL,
-    ADD COLUMN featured_community_new boolean DEFAULT FALSE NOT NULL,
+    ADD COLUMN featured_category_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN featured_local_new boolean DEFAULT FALSE NOT NULL,
     ADD COLUMN url_content_type_new text,
     ADD COLUMN alt_text_new text,
@@ -45,7 +45,7 @@ SET
         url_new,
         body_new,
         creator_id_new,
-        community_id_new,
+        category_id_new,
         removed_new,
         locked_new,
         published_new,
@@ -59,7 +59,7 @@ SET
         local_new,
         embed_video_url_new,
         language_id_new,
-        featured_community_new,
+        featured_category_new,
         featured_local_new,
         url_content_type_new,
         alt_text_new,
@@ -80,7 +80,7 @@ SET
         url,
         body,
         creator_id,
-        community_id,
+        category_id,
         removed,
         LOCKED,
         published,
@@ -94,7 +94,7 @@ SET
         local,
         embed_video_url,
         language_id,
-        featured_community,
+        featured_category,
         featured_local,
         url_content_type,
         alt_text,
@@ -117,7 +117,7 @@ ALTER TABLE post
     DROP COLUMN url,
     DROP COLUMN body,
     DROP COLUMN creator_id,
-    DROP COLUMN community_id,
+    DROP COLUMN category_id,
     DROP COLUMN removed,
     DROP COLUMN LOCKED,
     DROP COLUMN published,
@@ -131,7 +131,7 @@ ALTER TABLE post
     DROP COLUMN local,
     DROP COLUMN embed_video_url,
     DROP COLUMN language_id,
-    DROP COLUMN featured_community,
+    DROP COLUMN featured_category,
     DROP COLUMN featured_local,
     DROP COLUMN url_content_type,
     DROP COLUMN alt_text,
@@ -157,7 +157,7 @@ ALTER TABLE post RENAME COLUMN body_new TO body;
 
 ALTER TABLE post RENAME COLUMN creator_id_new TO creator_id;
 
-ALTER TABLE post RENAME COLUMN community_id_new TO community_id;
+ALTER TABLE post RENAME COLUMN category_id_new TO category_id;
 
 ALTER TABLE post RENAME COLUMN removed_new TO removed;
 
@@ -185,7 +185,7 @@ ALTER TABLE post RENAME COLUMN embed_video_url_new TO embed_video_url;
 
 ALTER TABLE post RENAME COLUMN language_id_new TO language_id;
 
-ALTER TABLE post RENAME COLUMN featured_community_new TO featured_community;
+ALTER TABLE post RENAME COLUMN featured_category_new TO featured_category;
 
 ALTER TABLE post RENAME COLUMN featured_local_new TO featured_local;
 
@@ -225,50 +225,50 @@ UPDATE
 SET
     instance_id = c.instance_id
 FROM
-    community AS c
+    category AS c
 WHERE
-    p.community_id = c.id;
+    p.category_id = c.id;
 
 ALTER TABLE ONLY post
     ADD CONSTRAINT idx_post_ap_id UNIQUE (ap_id);
 
-CREATE INDEX idx_post_community ON post USING btree (community_id);
+CREATE INDEX idx_post_category ON post USING btree (category_id);
 
-CREATE INDEX idx_post_community_active ON post USING btree (community_id, featured_local DESC, hot_rank_active DESC, published DESC, id DESC);
+CREATE INDEX idx_post_category_active ON post USING btree (category_id, featured_local DESC, hot_rank_active DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_community_controversy ON post USING btree (community_id, featured_local DESC, controversy_rank DESC, id DESC);
+CREATE INDEX idx_post_category_controversy ON post USING btree (category_id, featured_local DESC, controversy_rank DESC, id DESC);
 
-CREATE INDEX idx_post_community_hot ON post USING btree (community_id, featured_local DESC, hot_rank DESC, published DESC, id DESC);
+CREATE INDEX idx_post_category_hot ON post USING btree (category_id, featured_local DESC, hot_rank DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_community_most_comments ON post USING btree (community_id, featured_local DESC, comments DESC, published DESC, id DESC);
+CREATE INDEX idx_post_category_most_comments ON post USING btree (category_id, featured_local DESC, comments DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_community_newest_comment_time ON post USING btree (community_id, featured_local DESC, newest_comment_time DESC, id DESC);
+CREATE INDEX idx_post_category_newest_comment_time ON post USING btree (category_id, featured_local DESC, newest_comment_time DESC, id DESC);
 
-CREATE INDEX idx_post_community_newest_comment_time_necro ON post USING btree (community_id, featured_local DESC, newest_comment_time_necro DESC, id DESC);
+CREATE INDEX idx_post_category_newest_comment_time_necro ON post USING btree (category_id, featured_local DESC, newest_comment_time_necro DESC, id DESC);
 
-CREATE INDEX idx_post_community_scaled ON post USING btree (community_id, featured_local DESC, scaled_rank DESC, published DESC, id DESC);
+CREATE INDEX idx_post_category_scaled ON post USING btree (category_id, featured_local DESC, scaled_rank DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_community_score ON post USING btree (community_id, featured_local DESC, score DESC, published DESC, id DESC);
+CREATE INDEX idx_post_category_score ON post USING btree (category_id, featured_local DESC, score DESC, published DESC, id DESC);
 
 CREATE INDEX idx_post_creator ON post USING btree (creator_id);
 
-CREATE INDEX idx_post_featured_community_active ON post USING btree (community_id, featured_community DESC, hot_rank_active DESC, published DESC, id DESC);
+CREATE INDEX idx_post_featured_category_active ON post USING btree (category_id, featured_category DESC, hot_rank_active DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_controversy ON post USING btree (community_id, featured_community DESC, controversy_rank DESC, id DESC);
+CREATE INDEX idx_post_featured_category_controversy ON post USING btree (category_id, featured_category DESC, controversy_rank DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_hot ON post USING btree (community_id, featured_community DESC, hot_rank DESC, published DESC, id DESC);
+CREATE INDEX idx_post_featured_category_hot ON post USING btree (category_id, featured_category DESC, hot_rank DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_most_comments ON post USING btree (community_id, featured_community DESC, comments DESC, published DESC, id DESC);
+CREATE INDEX idx_post_featured_category_most_comments ON post USING btree (category_id, featured_category DESC, comments DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_newest_comment_time ON post USING btree (community_id, featured_community DESC, newest_comment_time DESC, id DESC);
+CREATE INDEX idx_post_featured_category_newest_comment_time ON post USING btree (category_id, featured_category DESC, newest_comment_time DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_newest_comment_time_necr ON post USING btree (community_id, featured_community DESC, newest_comment_time_necro DESC, id DESC);
+CREATE INDEX idx_post_featured_category_newest_comment_time_necr ON post USING btree (category_id, featured_category DESC, newest_comment_time_necro DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_published_asc ON post USING btree (community_id, featured_community DESC, reverse_timestamp_sort (published) DESC, id DESC);
+CREATE INDEX idx_post_featured_category_published_asc ON post USING btree (category_id, featured_category DESC, reverse_timestamp_sort (published) DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_scaled ON post USING btree (community_id, featured_community DESC, scaled_rank DESC, published DESC, id DESC);
+CREATE INDEX idx_post_featured_category_scaled ON post USING btree (category_id, featured_category DESC, scaled_rank DESC, published DESC, id DESC);
 
-CREATE INDEX idx_post_featured_community_score ON post USING btree (community_id, featured_community DESC, score DESC, published DESC, id DESC);
+CREATE INDEX idx_post_featured_category_score ON post USING btree (category_id, featured_category DESC, score DESC, published DESC, id DESC);
 
 CREATE INDEX idx_post_featured_local_active ON post USING btree (featured_local DESC, hot_rank_active DESC, published DESC, id DESC);
 
@@ -308,7 +308,7 @@ CREATE INDEX idx_post_url ON post USING btree (url);
 CREATE INDEX idx_post_url_content_type ON post USING gin (url_content_type gin_trgm_ops);
 
 ALTER TABLE ONLY post
-    ADD CONSTRAINT post_community_id_fkey FOREIGN KEY (community_id) REFERENCES community (id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT post_category_id_fkey FOREIGN KEY (category_id) REFERENCES category (id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE ONLY post
     ADD CONSTRAINT post_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES person (id) ON UPDATE CASCADE ON DELETE CASCADE;
@@ -326,7 +326,7 @@ ALTER TABLE post
     ALTER COLUMN creator_id SET NOT NULL;
 
 ALTER TABLE post
-    ALTER COLUMN community_id SET NOT NULL;
+    ALTER COLUMN category_id SET NOT NULL;
 
 ALTER TABLE post
     ALTER COLUMN ap_id SET NOT NULL;

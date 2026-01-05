@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::user_review::UserReview;
-use lemmy_db_schema::source::workflow::Workflow;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_user_review::api::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::user_review::UserReview;
+use app_108jobs_db_schema::source::workflow::Workflow;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_user_review::api::{
   ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
   ValidSubmitUserReview,
 };
-use lemmy_db_views_user_review::UserReviewView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_user_review::UserReviewView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn submit_user_review(
   data: Json<SubmitUserReviewForm>,
@@ -67,18 +67,13 @@ pub async fn list_user_reviews(
   }
   let lim = Some(lim);
 
-  // If a cursor exists and direction not specified, default to paging backward (older)
-  let effective_page_back = match (cursor_data.as_ref(), data.page_back) {
-    (Some(_), None) => Some(true),
-    _ => data.page_back,
-  };
 
   let results = UserReviewView::list_for_user(
     &mut context.pool(),
     data.profile_id,
     lim,
     cursor_data,
-    effective_page_back,
+    data.page_back,
   )
   .await?;
 

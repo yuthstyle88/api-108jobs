@@ -1,6 +1,6 @@
 use crate::api::EditPost;
 use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
-use crate::PostView;
+use crate::{PostPreview, PostView};
 use diesel::{
   self, debug_query,
   dsl::{exists, not},
@@ -11,11 +11,12 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CommunityId, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
-    community::CommunityActions,
+    category::CategoryActions,
     local_user::LocalUser,
     person::Person,
     post::{post_actions_keys as pa_key, post_keys as key, Post, PostActions},
@@ -25,26 +26,26 @@ use lemmy_db_schema::{
   utils::{
     get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_community_actions_join, creator_community_instance_actions_join,
+      creator_category_actions_join, creator_category_instance_actions_join,
       creator_home_instance_actions_join, creator_local_instance_actions_join, filter_blocked,
       filter_is_subscribed, filter_not_unlisted_or_is_subscribed, image_details_join,
-      my_community_actions_join, my_instance_actions_community_join, my_local_user_admin_join,
+      my_category_actions_join, my_instance_actions_category_join, my_local_user_admin_join,
       my_person_actions_join, my_post_actions_join,
     },
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use lemmy_db_schema_file::enums::{IntendedUse, JobType};
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
+use app_108jobs_db_schema_file::{
   enums::{
-    CommunityFollowerState, CommunityVisibility, ListingType,
+    CategoryFollowerState, CategoryVisibility, ListingType,
     PostSortType::{self, *},
   },
-  schema::{community, community_actions, local_user_language, person, post, post_actions},
+  schema::{category, category_actions, local_user_language, person, post, post_actions},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::settings::SETTINGS;
-use lemmy_utils::utils::validation::is_valid_post_title;
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::settings::SETTINGS;
+use app_108jobs_utils::utils::validation::is_valid_post_title;
 use slug::slugify;
 use tracing::debug;
 #[cfg(feature = "full")]
@@ -72,29 +73,28 @@ impl PostView {
 
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
-    let my_community_actions_join: my_community_actions_join =
-      my_community_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
-    let my_instance_actions_community_join: my_instance_actions_community_join =
-      my_instance_actions_community_join(my_person_id);
+    let my_instance_actions_category_join: my_instance_actions_category_join =
+      my_instance_actions_category_join(my_person_id);
     let my_person_actions_join: my_person_actions_join = my_person_actions_join(my_person_id);
     let creator_local_instance_actions_join: creator_local_instance_actions_join =
       creator_local_instance_actions_join(local_instance_id);
 
     post::table
       .inner_join(person::table)
-      .inner_join(community::table)
+      .inner_join(category::table)
       .left_join(image_details_join())
-      .left_join(my_community_actions_join)
+      .left_join(my_category_actions_join)
       .left_join(my_person_actions_join)
       .left_join(my_post_actions_join)
-      .left_join(my_instance_actions_community_join)
+      .left_join(my_instance_actions_category_join)
       .left_join(my_local_user_admin_join)
       .left_join(creator_home_instance_actions_join())
-      .left_join(creator_community_instance_actions_join())
+      .left_join(creator_category_instance_actions_join())
       .left_join(creator_local_instance_actions_join)
-      .left_join(creator_community_actions_join())
+      .left_join(creator_category_actions_join())
   }
 
   pub async fn read(
@@ -194,6 +194,7 @@ impl PostView {
   pub async fn list_created(
     pool: &mut DbPool<'_>,
     my_person: &Person,
+    language_id: Option<LanguageId>,
     cursor_data: Option<Post>,
     page_back: Option<bool>,
     limit: Option<i64>,
@@ -210,6 +211,10 @@ impl PostView {
     if !no_limit.unwrap_or_default() {
       let limit = limit_fetch(limit)?;
       query = query.limit(limit);
+    }
+
+    if let Some(language_id) = language_id {
+      query = query.filter(post::language_id.eq(language_id));
     }
 
     // Sorting by published_at (newest to oldest), tie-breaker by id
@@ -234,9 +239,10 @@ impl PostView {
 #[derive(Clone, Default)]
 pub struct PostQuery<'a> {
   pub listing_type: Option<ListingType>,
+  pub language_id: Option<LanguageId>,
   pub sort: Option<PostSortType>,
   pub time_range_seconds: Option<i32>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub local_user: Option<&'a LocalUser>,
   pub show_hidden: Option<bool>,
   pub show_read: Option<bool>,
@@ -259,24 +265,24 @@ impl PostQuery<'_> {
     site: &Site,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Option<Post>> {
-    // first get one page for the most popular community to get an upper bound for the page end for
+    // first get one page for the most popular category to get an upper bound for the page end for
     // the real query. the reason this is needed is that when fetching posts for a single
-    // community PostgreSQL can optimize the query to use an index on e.g. (=, >=, >=, >=) and
+    // category PostgreSQL can optimize the query to use an index on e.g. (=, >=, >=, >=) and
     // fetch only LIMIT rows but for the followed-communities query it has to query the index on
     // (IN, >=, >=, >=) which it currently can't do at all (as of PG 16). see the discussion
-    // here: https://github.com/LemmyNet/lemmy/issues/2877#issuecomment-1673597190
+    // here: https://github.com/app_108jobsNet/app_108jobs/issues/2877#issuecomment-1673597190
     //
-    // the results are correct no matter which community we fetch these for, since it basically
-    // covers the "worst case" of the whole page consisting of posts from one community
-    // but using the largest community decreases the pagination-frame so make the real query more
+    // the results are correct no matter which category we fetch these for, since it basically
+    // covers the "worst case" of the whole page consisting of posts from one category
+    // but using the largest category decreases the pagination-frame so make the real query more
     // efficient.
 
-    // If its a subscribed type, you need to prefetch both the largest community, and the upper
+    // If its a subscribed type, you need to prefetch both the largest category, and the upper
     // bound post for the cursor.
     Ok(if self.listing_type == Some(ListingType::Subscribed) {
       if let Some(person_id) = self.local_user.person_id() {
         let largest_subscribed =
-          CommunityActions::fetch_largest_subscribed_community(pool, person_id).await?;
+          CategoryActions::fetch_largest_subscribed_category(pool, person_id).await?;
 
         let upper_bound_results = self
           .clone()
@@ -312,7 +318,7 @@ impl PostQuery<'_> {
     self,
     site: &Site,
     cursor_before_data: Option<Post>,
-    largest_subscribed_for_prefetch: Option<CommunityId>,
+    largest_subscribed_for_prefetch: Option<CategoryId>,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Vec<PostView>> {
     let o = self;
@@ -327,7 +333,7 @@ impl PostQuery<'_> {
       .into_boxed();
 
     // hide posts from deleted communities
-    query = query.filter(community::deleted.eq(false));
+    query = query.filter(category::deleted.eq(false));
 
     // only creator can see deleted posts and unpublished scheduled posts
     if let Some(person_id) = my_person_id {
@@ -343,15 +349,15 @@ impl PostQuery<'_> {
         .filter(post::scheduled_publish_time_at.is_null());
     }
 
-    match o.community_id {
+    match o.category_id {
       Some(id) => {
-        query = query.filter(post::community_id.eq(id));
+        query = query.filter(post::category_id.eq(id));
       }
       None => {
         if let (Some(ListingType::Subscribed), Some(id)) =
           (o.listing_type, largest_subscribed_for_prefetch)
         {
-          query = query.filter(post::community_id.eq(id));
+          query = query.filter(post::category_id.eq(id));
         }
       }
     }
@@ -361,13 +367,17 @@ impl PostQuery<'_> {
       ListingType::Subscribed => query = query.filter(filter_is_subscribed()),
       ListingType::Local => {
         query = query
-          .filter(community::local.eq(true))
+          .filter(category::local.eq(true))
           .filter(filter_not_unlisted_or_is_subscribed());
       }
       ListingType::All => query = query.filter(filter_not_unlisted_or_is_subscribed()),
       ListingType::ModeratorView => {
-        query = query.filter(community_actions::became_moderator_at.is_not_null());
+        query = query.filter(category_actions::became_moderator_at.is_not_null());
       }
+    }
+
+    if let Some(language_id) = o.language_id {
+      query = query.filter(post::language_id.eq(language_id));
     }
 
     if !o
@@ -376,7 +386,7 @@ impl PostQuery<'_> {
     {
       query = query
         .filter(post::self_promotion.eq(false))
-        .filter(community::self_promotion.eq(false));
+        .filter(category::self_promotion.eq(false));
     };
 
     if !o.local_user.show_bot_accounts() {
@@ -430,13 +440,13 @@ impl PostQuery<'_> {
     if !o.local_user.is_admin() {
       query = query
         .filter(
-          community::visibility
-            .ne(CommunityVisibility::Private)
-            .or(community_actions::follow_state.eq(CommunityFollowerState::Accepted)),
+          category::visibility
+            .ne(CategoryVisibility::Private)
+            .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted)),
         )
         // only show removed posts to admin
-        .filter(community::removed.eq(false))
-        .filter(community::local_removed.eq(false))
+        .filter(category::removed.eq(false))
+        .filter(category::local_removed.eq(false))
         .filter(post::removed.eq(false));
     }
 
@@ -479,10 +489,10 @@ impl PostQuery<'_> {
     // featured posts first
     // Don't do for new / old sorts
     if sort != New && sort != Old {
-      pq = if o.community_id.is_none() || largest_subscribed_for_prefetch.is_some() {
+      pq = if o.category_id.is_none() || largest_subscribed_for_prefetch.is_some() {
         pq.then_order_by(key::featured_local)
       } else {
-        pq.then_order_by(key::featured_community)
+        pq.then_order_by(key::featured_category)
       };
     }
 
@@ -549,7 +559,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
 
     Ok(CreatePost {
       name: data.name,
-      community_id: data.community_id,
+      category_id: data.category_id,
       url: data.url,
       body: data.body,
       alt_text: data.alt_text,
@@ -602,7 +612,7 @@ impl TryFrom<EditPostRequest> for EditPost {
 
     Ok(EditPost {
       post_id: data.post_id,
-      community_id: data.community_id,
+      category_id: data.category_id,
       name: data.name,
       url: data.url,
       body: data.body,
@@ -621,6 +631,30 @@ impl TryFrom<EditPostRequest> for EditPost {
   }
 }
 
+impl PostPreview {
+  pub async fn read(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<Self> {
+    use diesel::prelude::*;
+    use diesel_async::RunQueryDsl;
+
+    let conn = &mut get_conn(pool).await?;
+
+    let post = post::table
+      .filter(post::id.eq(post_id))
+      .select((
+        post::id,
+        post::name,
+        post::budget,
+        post::language_id,
+        post::deadline,
+        post::creator_id,
+      ))
+      .first::<PostPreview>(conn)
+      .await?;
+
+    Ok(post)
+  }
+}
+
 #[allow(clippy::indexing_slicing)]
 #[expect(clippy::expect_used)]
 #[cfg(test)]
@@ -631,13 +665,14 @@ mod tests {
   };
   use chrono::Utc;
   use diesel_async::SimpleAsyncConnection;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
     source::{
       actor_language::LocalUserLanguage,
+      category::{category, categoryUpdateForm, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
-      community::{Community, CommunityInsertForm, CommunityUpdateForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
       language::Language,
@@ -655,9 +690,9 @@ mod tests {
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use lemmy_db_schema_file::enums::CommunityVisibility;
-  use lemmy_db_views_local_user::LocalUserView;
-  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_views_local_user::LocalUserView;
+  use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use std::{
@@ -666,7 +701,6 @@ mod tests {
   };
   use test_context::{test_context, AsyncTestContext};
   use url::Url;
-  use lemmy_db_schema::newtypes::DbUrl;
 
   const POST_BY_BLOCKED_PERSON: &str = "post by blocked person";
   const POST_BY_BOT: &str = "post by bot";
@@ -684,7 +718,7 @@ mod tests {
     tegan: LocalUserView,
     john: LocalUserView,
     bot: LocalUserView,
-    community: Community,
+    category: category,
     post: Post,
     bot_post: Post,
     post_with_tags: Post,
@@ -734,12 +768,12 @@ mod tests {
       )
       .await?;
 
-      let new_community = CommunityInsertForm::new(
+      let new_category = CategoryInsertForm::new(
         data.instance.id,
-        "test_community_3".to_string(),
+        "test_category_3".to_string(),
         "nada".to_owned(),
       );
-      let community = Community::create(pool, &new_community).await?;
+      let category = category::create(pool, &new_category).await?;
 
       // Test a person block, make sure the post query doesn't include their post
       let john_person_form = PersonInsertForm::test_form(data.instance.id, "john");
@@ -756,7 +790,7 @@ mod tests {
         ..PostInsertForm::new(
           POST_BY_BLOCKED_PERSON.to_string(),
           inserted_john_person.id,
-          community.id,
+          category.id,
         )
       };
       Post::create(pool, &post_from_blocked_person).await?;
@@ -772,12 +806,12 @@ mod tests {
       )
       .await?;
 
-      // Two community post tags
+      // Two category post tags
       let tag_1 = Tag::create(
         pool,
         &TagInsertForm {
           display_name: "Test Tag 1".into(),
-          community_id: community.id,
+          category_id: category.id,
         },
       )
       .await?;
@@ -785,7 +819,7 @@ mod tests {
         pool,
         &TagInsertForm {
           display_name: "Test Tag 2".into(),
-          community_id: community.id,
+          category_id: category.id,
         },
       )
       .await?;
@@ -793,16 +827,13 @@ mod tests {
       // A sample post
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
-        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id, community.id)
+        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id, category.id)
       };
 
       let post = Post::create(pool, &new_post).await?;
 
-      let new_bot_post = PostInsertForm::new(
-        POST_BY_BOT.to_string(),
-        inserted_bot_person.id,
-        community.id,
-      );
+      let new_bot_post =
+        PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id, category.id);
       let bot_post = Post::create(pool, &new_bot_post).await?;
 
       // A sample post with tags
@@ -811,7 +842,7 @@ mod tests {
         ..PostInsertForm::new(
           POST_WITH_TAGS.to_string(),
           inserted_tegan_person.id,
-          community.id,
+          category.id,
         )
       };
 
@@ -851,7 +882,7 @@ mod tests {
         tegan,
         john,
         bot,
-        community,
+        category,
         post,
         bot_post,
         post_with_tags,
@@ -863,7 +894,7 @@ mod tests {
     async fn teardown(data: Data) -> FastJobResult<()> {
       let pool = &mut data.pool2();
       let num_deleted = Post::delete(pool, data.post.id).await?;
-      Community::delete(pool, data.community.id).await?;
+      category::delete(pool, data.category.id).await?;
       Person::delete(pool, data.tegan.person.id).await?;
       Person::delete(pool, data.bot.person.id).await?;
       Person::delete(pool, data.john.person.id).await?;
@@ -898,7 +929,7 @@ mod tests {
     data.tegan.local_user.show_bot_accounts = false;
 
     let mut read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       ..data.default_post_query()
     }
     .list(&data.site, pool)
@@ -928,7 +959,7 @@ mod tests {
     data.tegan.local_user.show_bot_accounts = true;
 
     let post_listings_with_bots = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       ..data.default_post_query()
     }
     .list(&data.site, pool)
@@ -949,7 +980,7 @@ mod tests {
     let pool = &mut pool.into();
 
     let read_post_listing_multiple_no_person = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: None,
       ..data.default_post_query()
     }
@@ -1022,7 +1053,7 @@ mod tests {
     data.tegan.local_user.show_bot_accounts = false;
 
     let mut read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       ..data.default_post_query()
     }
     .list(&data.site, pool)
@@ -1095,7 +1126,7 @@ mod tests {
     let bot_post_2 = PostInsertForm::new(
       "Bot post 2".to_string(),
       data.bot.person.id,
-      data.community.id,
+      data.category.id,
     );
     let bot_post_2 = Post::create(pool, &bot_post_2).await?;
 
@@ -1266,10 +1297,10 @@ mod tests {
   async fn creator_info(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
-    let community_id = data.community.id;
+    let category_id = data.category.id;
 
     let tegan_listings = PostQuery {
-      community_id: Some(community_id),
+      category_id: Some(category_id),
       ..data.default_post_query()
     }
     .list(&data.site, pool)
@@ -1384,11 +1415,7 @@ mod tests {
 
     let post_spanish = PostInsertForm {
       language_id: Some(spanish_id),
-      ..PostInsertForm::new(
-        EL_POSTO.to_string(),
-        data.tegan.person.id,
-        data.community.id,
-      )
+      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id, data.category.id)
     };
     Post::create(pool, &post_spanish).await?;
 
@@ -1526,19 +1553,19 @@ mod tests {
 
     let blocked_instance = Instance::read_or_create(pool, "another_domain.tld".to_string()).await?;
 
-    let community_form = CommunityInsertForm::new(
+    let category_form = CategoryInsertForm::new(
       blocked_instance.id,
-      "test_community_4".to_string(),
+      "test_category_4".to_string(),
       "none".to_owned(),
     );
-    let inserted_community = Community::create(pool, &community_form).await?;
+    let inserted_category = category::create(pool, &category_form).await?;
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
       ..PostInsertForm::new(
         POST_FROM_BLOCKED_INSTANCE.to_string(),
         data.bot.person.id,
-        inserted_community.id,
+        inserted_category.id,
       )
     };
     let post_from_blocked_instance = Post::create(pool, &post_form).await?;
@@ -1577,9 +1604,9 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    let community_form =
-      CommunityInsertForm::new(data.instance.id, "yes".to_string(), "yes".to_owned());
-    let inserted_community = Community::create(pool, &community_form).await?;
+    let category_form =
+      CategoryInsertForm::new(data.instance.id, "yes".to_string(), "yes".to_owned());
+    let inserted_category = category::create(pool, &category_form).await?;
 
     let mut inserted_post_ids = vec![];
     let mut inserted_comment_ids = vec![];
@@ -1590,12 +1617,12 @@ mod tests {
       for _ in 0..15 {
         let post_form = PostInsertForm {
           featured_local: Some((comments % 2) == 0),
-          featured_community: Some((comments % 2) == 0),
+          featured_category: Some((comments % 2) == 0),
           published_at: Some(Utc::now() - Duration::from_secs(comments % 3)),
           ..PostInsertForm::new(
             "keep Christ in Christmas".to_owned(),
             data.tegan.person.id,
-            inserted_community.id,
+            inserted_category.id,
           )
         };
         let inserted_post = Post::create(pool, &post_form).await?;
@@ -1604,14 +1631,14 @@ mod tests {
         for _ in 0..comments {
           let comment_form =
             CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
-          let inserted_comment = Comment::create(pool, &comment_form,).await?;
+          let inserted_comment = Comment::create(pool, &comment_form).await?;
           inserted_comment_ids.push(inserted_comment.id);
         }
       }
     }
 
     let options = PostQuery {
-      community_id: Some(inserted_community.id),
+      category_id: Some(inserted_category.id),
       sort: Some(PostSortType::MostComments),
       limit: Some(10),
       ..Default::default()
@@ -1669,7 +1696,7 @@ mod tests {
 
     assert_eq!(inserted_post_ids, listed_post_ids);
 
-    Community::delete(pool, inserted_community.id).await?;
+    category::delete(pool, inserted_category.id).await?;
     Ok(())
   }
 
@@ -1824,11 +1851,11 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    Community::update(
+    category::update(
       pool,
-      data.community.id,
-      &CommunityUpdateForm {
-        visibility: Some(CommunityVisibility::LocalOnlyPrivate),
+      data.category.id,
+      &categoryUpdateForm {
+        visibility: Some(categoryVisibility::LocalOnlyPrivate),
         ..Default::default()
       },
     )
@@ -1867,11 +1894,11 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_local_user_banned_from_community(data: &mut Data) -> FastJobResult<()> {
+  async fn post_listing_local_user_banned_from_category(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    // Test that post view shows if local user is blocked from community
+    // Test that post view shows if local user is blocked from category
     let banned_from_comm_person = PersonInsertForm::test_form(data.instance.id, "jill");
 
     let inserted_banned_from_comm_person = Person::create(pool, &banned_from_comm_person).await?;
@@ -1892,7 +1919,7 @@ mod tests {
     .await?;
 
     assert!(post_view
-      .community_actions
+      .category_actions
       .is_some_and(|x| x.received_ban_at.is_some()));
 
     Person::delete(pool, inserted_banned_from_comm_person.id).await?;
@@ -1902,7 +1929,7 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_local_user_not_banned_from_community(data: &mut Data) -> FastJobResult<()> {
+  async fn post_listing_local_user_not_banned_from_category(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
@@ -1914,7 +1941,7 @@ mod tests {
     )
     .await?;
 
-    assert!(post_view.community_actions.is_none());
+    assert!(post_view.category_actions.is_none());
 
     Ok(())
   }
@@ -1935,7 +1962,7 @@ mod tests {
       ..PostInsertForm::new(
         "banned person post".to_string(),
         banned_person.id,
-        data.community.id,
+        data.category.id,
       )
     };
     let banned_post = Post::create(pool, &post_form).await?;
@@ -1986,7 +2013,7 @@ mod tests {
 
       let post_form = PostInsertForm {
         url,
-        ..PostInsertForm::new(name, data.tegan.person.id, data.community.id)
+        ..PostInsertForm::new(name, data.tegan.person.id, data.category.id)
       };
       Post::create(pool, &post_form).await?;
     }
@@ -2023,16 +2050,16 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_private_community(data: &mut Data) -> FastJobResult<()> {
+  async fn post_listing_private_category(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    // Mark community as private
-    Community::update(
+    // Mark category as private
+    category::update(
       pool,
-      data.community.id,
-      &CommunityUpdateForm {
-        visibility: Some(CommunityVisibility::Private),
+      data.category.id,
+      &categoryUpdateForm {
+        visibility: Some(categoryVisibility::Private),
         ..Default::default()
       },
     )
@@ -2040,7 +2067,7 @@ mod tests {
 
     // No posts returned without auth
     let read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       ..Default::default()
     }
     .list(&data.site, pool)
@@ -2052,7 +2079,7 @@ mod tests {
     // No posts returned for non-follower who is not admin
     data.tegan.local_user.admin = false;
     let read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -2071,7 +2098,7 @@ mod tests {
     // Admin can view content without following
     data.tegan.local_user.admin = true;
     let read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -2089,7 +2116,7 @@ mod tests {
     data.tegan.local_user.admin = false;
 
     let read_post_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -2128,7 +2155,7 @@ mod tests {
 
     // Make sure all the posts are returned when `hide_media` is unset
     let hide_media_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -2146,7 +2173,7 @@ mod tests {
 
     // Ensure you don't see the image post
     let hide_media_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       ..Default::default()
     }
@@ -2156,7 +2183,7 @@ mod tests {
 
     // Make sure the `hide_media` override works
     let hide_media_listing = PostQuery {
-      community_id: Some(data.community.id),
+      category_id: Some(data.category.id),
       local_user: Some(&data.tegan.local_user),
       hide_media: Some(false),
       ..Default::default()
@@ -2182,18 +2209,15 @@ mod tests {
     let name_not_blocked = "post_with_name_not_blocked".to_string();
     let name_not_blocked2 = "post_with_name_not_blocked2".to_string();
 
-    let post_name_blocked = PostInsertForm::new(
-      name_blocked.clone(),
-      data.tegan.person.id,
-      data.community.id,
-    );
+    let post_name_blocked =
+      PostInsertForm::new(name_blocked.clone(), data.tegan.person.id, data.category.id);
 
     let post_body_blocked = PostInsertForm {
       body: Some(body),
       ..PostInsertForm::new(
         name_not_blocked.clone(),
         data.tegan.person.id,
-        data.community.id,
+        data.category.id,
       )
     };
 
@@ -2202,7 +2226,7 @@ mod tests {
       ..PostInsertForm::new(
         name_not_blocked2.clone(),
         data.tegan.person.id,
-        data.community.id,
+        data.category.id,
       )
     };
 
@@ -2212,7 +2236,7 @@ mod tests {
       ..PostInsertForm::new(
         name_blocked2.clone(),
         data.tegan.person.id,
-        data.community.id,
+        data.category.id,
       )
     };
     Post::create(pool, &post_name_blocked).await?;
@@ -2270,29 +2294,29 @@ mod tests {
   #[test_context(Data)]
   #[tokio::test]
   #[serial]
-  async fn post_listing_multi_community(data: &mut Data) -> FastJobResult<()> {
+  async fn post_listing_multi_category(data: &mut Data) -> FastJobResult<()> {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
     // create two more communities with one post each
-    let form = CommunityInsertForm::new(
+    let form = CategoryInsertForm::new(
       data.instance.id,
-      "test_community_4".to_string(),
+      "test_category_4".to_string(),
       "nada".to_owned(),
     );
-    let community_1 = Community::create(pool, &form).await?;
+    let category_1 = category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, community_1.id);
+    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_1.id);
     let post_1 = Post::create(pool, &form).await?;
 
-    let form = CommunityInsertForm::new(
+    let form = CategoryInsertForm::new(
       data.instance.id,
-      "test_community_5".to_string(),
+      "test_category_5".to_string(),
       "nada".to_owned(),
     );
-    let community_2 = Community::create(pool, &form).await?;
+    let category_2 = category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, community_2.id);
+    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_2.id);
     let post_2 = Post::create(pool, &form).await?;
 
     let listing = PostQuery {
@@ -2303,10 +2327,10 @@ mod tests {
 
     let listing_communities = listing
       .iter()
-      .map(|l| l.community.id)
+      .map(|l| l.category.id)
       .collect::<HashSet<_>>();
     assert_eq!(
-      HashSet::from([community_1.id, community_2.id]),
+      HashSet::from([category_1.id, category_2.id]),
       listing_communities
     );
 

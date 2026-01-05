@@ -1,8 +1,8 @@
 {
-  "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
+  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
-  "object": "http://ds9.lemmy.ml/post/1",
-  "cc": ["http://enterprise.lemmy.ml/c/main"],
+  "object": "http://ds9.app_108jobs.ml/post/1",
+  "cc": ["http://enterprise.app_108jobs.ml/c/main"],
   "type": "Delete",
-  "id": "http://ds9.lemmy.ml/activities/delete/f2abee48-c7bb-41d5-9e27-8775ff32db12"
+  "id": "http://ds9.app_108jobs.ml/activities/delete/f2abee48-c7bb-41d5-9e27-8775ff32db12"
 }

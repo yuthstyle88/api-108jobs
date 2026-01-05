@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::tagline::Tagline;
-use lemmy_db_views_site::api::{ListTaglines, ListTaglinesResponse};
-use lemmy_utils::error::FastJobError;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::tagline::Tagline;
+use app_108jobs_db_views_site::api::{ListTaglines, ListTaglinesResponse};
+use app_108jobs_utils::error::FastJobError;
 
 pub async fn list_taglines(
   data: Query<ListTaglines>,

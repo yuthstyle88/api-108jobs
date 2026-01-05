@@ -1,27 +1,27 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   combined::report::ReportCombined,
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
-  community::{Community, CommunityActions},
-  community_report::CommunityReport,
+  category::{Category, CategoryActions},
+  category_report::CategoryReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
 };
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_reports::{
   CommentReportView,
-  CommunityReportView,
+  CategoryReportView,
   PostReportView,
 };
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
   diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
-  lemmy_db_schema::{
+  app_108jobs_db_schema::{
     utils::queries::{local_user_is_admin, person1_select, },
     Person1AliasAllColumnsTuple,
   },
-  lemmy_db_views_local_user::LocalUserView,
+  app_108jobs_db_views_local_user::LocalUserView,
 };
 
 pub mod api;
@@ -41,7 +41,7 @@ pub struct ReportCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub comment_report: Option<CommentReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_report: Option<CommunityReport>,
+  pub category_report: Option<CategoryReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub report_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -56,9 +56,9 @@ pub struct ReportCombinedViewInternal {
   )]
   pub item_creator: Option<Person>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community: Option<Community>,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub community_actions: Option<CommunityActions>,
+  pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post_actions: Option<PostActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -81,5 +81,5 @@ pub struct ReportCombinedViewInternal {
 pub enum ReportCombinedView {
   Post(PostReportView),
   Comment(CommentReportView),
-  Community(CommunityReportView),
+  Category(CategoryReportView),
 }

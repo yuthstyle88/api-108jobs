@@ -1,12 +1,12 @@
 use crate::SiteView;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::source::wallet::Wallet;
+use app_108jobs_db_schema::{
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
     comment::Comment,
-    community::Community,
+    category::Category,
     instance::Instance,
     language::Language,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -18,13 +18,13 @@ use lemmy_db_schema::{
     tagline::Tagline,
   },
 };
-use lemmy_db_schema_file::enums::{
+use app_108jobs_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{PersonView};
-use lemmy_db_views_post::PostView;
-use lemmy_utils::error::FastJobError;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::{PersonView};
+use app_108jobs_db_views_post::PostView;
+use app_108jobs_utils::error::FastJobError;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -34,7 +34,7 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use lemmy_db_schema::source::person::{PortfolioPic, WorkSample};
+use app_108jobs_db_schema::source::person::{PortfolioPic, WorkSample};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -152,13 +152,13 @@ pub struct CreateOAuthProvider {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Creates a site. Should be done after first running lemmy.
+/// Creates a site. Should be done after first running app_108jobs.
 #[serde(rename_all = "camelCase")]
 pub struct CreateSite {
   pub name: String,
   pub sidebar: Option<String>,
   pub description: Option<String>,
-  pub community_creation_admin_only: Option<bool>,
+  pub category_creation_admin_only: Option<bool>,
   pub require_email_verification: Option<bool>,
   pub application_question: Option<String>,
   pub private_instance: Option<bool>,
@@ -237,8 +237,8 @@ pub struct EditSite {
   pub sidebar: Option<String>,
   /// A shorter, one line description of your site.
   pub description: Option<String>,
-  /// Limits community creation to admins only.
-  pub community_creation_admin_only: Option<bool>,
+  /// Limits category creation to admins only.
+  pub category_creation_admin_only: Option<bool>,
   /// Whether to require multilang verification.
   pub require_email_verification: Option<bool>,
   /// Your application question form. This is in markdown, and can be many questions.
@@ -430,7 +430,7 @@ pub struct ListLoginsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Logging into lemmy.
+/// Logging into app_108jobs.
 ///
 /// Note: Banned users can still log in, to be able to do certain things like delete
 /// their account.
@@ -500,7 +500,7 @@ pub struct LoginResponse {
   pub registration_created: bool,
   /// If multilang verifications are required, this will return true for a signup response.
   pub verify_email_sent: bool,
-  pub application_pending: bool,
+  pub accepted_terms: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -510,7 +510,7 @@ pub struct LoginResponse {
 #[serde(rename_all = "camelCase")]
 pub struct MyUserInfo {
   pub local_user_view: LocalUserView,
-  pub community_blocks: Vec<Community>,
+  pub category_blocks: Vec<Category>,
   pub instance_blocks: Vec<Instance>,
   pub person_blocks: Vec<Person>,
   pub keyword_blocks: Vec<String>,
@@ -569,7 +569,7 @@ pub struct SaveUserSettings {
   pub default_post_time_range_seconds: Option<i32>,
   /// The default comment sort, usually "hot"
   pub default_comment_sort_type: Option<CommentSortType>,
-  /// The language of the lemmy interface
+  /// The language of the app_108jobs interface
   pub interface_language: Option<String>,
   /// Your display name, which can contain strange characters, and does not need to be unique.
   pub display_name: Option<String>,
@@ -626,6 +626,8 @@ pub struct SaveUserSettings {
   pub portfolio_pics: Option<Vec<PortfolioPic>>,
   /// Your work samples to prove your quality
   pub work_samples: Option<Vec<WorkSample>>,
+  pub available: Option<bool>,
+  pub is_secure_message: Option<bool>,
 }
 
 
@@ -734,6 +736,7 @@ pub struct ListPersonReadResponse {
 /// Gets your created posts.
 #[serde(rename_all = "camelCase")]
 pub struct ListPersonCreated {
+  pub language_id: Option<LanguageId>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -824,7 +827,7 @@ pub struct PluginMetadata {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Does an apub fetch for an object.
 pub struct ResolveObject {
-  /// Can be the full url, or a shortened version like: !fediverse@lemmy.ml
+  /// Can be the full url, or a shortened version like: !fediverse@app_108jobs.ml
   pub q: String,
 }
 

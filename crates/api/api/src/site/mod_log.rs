@@ -1,16 +1,16 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::check_private_instance,
 };
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_modlog_combined::{
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_modlog_combined::{
   api::{GetModlog, GetModlogResponse},
   impls::ModlogCombinedQuery,
   ModlogCombinedView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_mod_log(
   data: Query<GetModlog>,
@@ -30,7 +30,7 @@ pub async fn get_mod_log(
   let modlog = ModlogCombinedQuery {
     type_: data.type_,
     listing_type: data.listing_type,
-    community_id: data.community_id,
+    category_id: data.category_id,
     mod_person_id: data.mod_person_id,
     other_person_id: data.other_person_id,
     local_user: local_user_view.as_ref().map(|u| &u.local_user),

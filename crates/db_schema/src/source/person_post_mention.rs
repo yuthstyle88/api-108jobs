@@ -1,7 +1,7 @@
 use crate::newtypes::{PersonId, PersonPostMentionId, PostId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::person_post_mention;
+use app_108jobs_db_schema_file::schema::person_post_mention;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

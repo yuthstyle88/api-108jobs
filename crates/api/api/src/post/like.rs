@@ -1,25 +1,25 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext
   ,
   send_activity::{ActivityChannel, SendActivityData},
   utils::check_bot_account,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     person::PersonActions,
     post::{PostActions, PostReadForm},
   },
   traits::{Likeable, Readable},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::{
   api::{CreatePostLike, PostResponse},
   PostView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_post(
@@ -33,7 +33,7 @@ pub async fn like_post(
 
   check_bot_account(&local_user_view.person)?;
 
-  // Check for a community ban
+  // Check for a category ban
   let orig_post = PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
   let previous_score = orig_post.post_actions.and_then(|p| p.like_score);
 
@@ -59,7 +59,7 @@ pub async fn like_post(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      community: orig_post.community.clone(),
+      category: orig_post.category.clone(),
       previous_score,
       new_score: data.score,
     },

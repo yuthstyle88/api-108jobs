@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use lemmy_db_schema::newtypes::WorkflowId;
-use lemmy_db_schema::source::workflow::WorkflowUpdateForm;
-use lemmy_db_schema_file::enums::WorkFlowStatus;
+use app_108jobs_db_schema::newtypes::WorkflowId;
+use app_108jobs_db_schema::source::workflow::WorkflowUpdateForm;
+use app_108jobs_db_schema_file::enums::WorkFlowStatus;
 
 mod api;
 mod impls;

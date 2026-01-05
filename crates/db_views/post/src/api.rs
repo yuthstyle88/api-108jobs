@@ -1,17 +1,17 @@
 use crate::PostView;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::{newtypes::{
+use app_108jobs_db_schema::{newtypes::{
   CommentId,
-  CommunityId,
+  CategoryId,
   DbUrl,
   LanguageId,
   PaginationCursor,
   PostId,
   TagId,
 }, PostFeatureType};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
-use lemmy_db_views_community::CommunityView;
-use lemmy_db_views_vote::VoteView;
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -22,7 +22,7 @@ use serde_with::skip_serializing_none;
 /// Create a post.
 pub struct CreatePost {
   pub name: String,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
   pub body: Option<String>,
@@ -53,7 +53,7 @@ pub struct CreatePost {
 #[serde(rename_all = "camelCase")]
 pub struct CreatePostRequest {
   pub name: String,
-  pub community_id: CommunityId,
+  pub category_id: CategoryId,
   /// Portfolio url
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -102,7 +102,7 @@ pub struct DeletePost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPost {
   pub post_id: PostId,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -130,7 +130,7 @@ pub struct EditPost {
 #[serde(rename_all = "camelCase")]
 pub struct EditPostRequest {
   pub post_id: PostId,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
   pub name: Option<String>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -192,7 +192,7 @@ pub struct GetPost {
 #[serde(rename_all = "camelCase")]
 pub struct GetPostResponse {
   pub post_view: PostView,
-  pub community_view: CommunityView,
+  pub category_view: CategoryView,
   /// A list of cross-posts, or other times / communities this link has been posted to.
   pub cross_posts: Vec<PostView>,
 }
@@ -210,7 +210,8 @@ pub struct GetPosts {
   /// IE 60 would give results for the past minute.
   /// Use Zero to override the local_site and local_user time_range.
   pub time_range_seconds: Option<i32>,
-  pub community_id: Option<CommunityId>,
+  pub category_id: Option<CategoryId>,
+  pub language_id: Option<LanguageId>,
   pub show_hidden: Option<bool>,
   /// If true, then show the read posts (even if your user setting is to hide them)
   pub show_read: Option<bool>,

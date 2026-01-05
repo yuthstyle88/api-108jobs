@@ -1,16 +1,15 @@
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::str::FromStr;
 use std::{
   fmt,
   fmt::{Display, Formatter},
   ops::Deref,
 };
-use std::str::FromStr;
 use url::Url;
-use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Neg};
 #[cfg(feature = "full")]
 use {
-
   diesel::{
     backend::Backend,
     deserialize::FromSql,
@@ -19,7 +18,7 @@ use {
     sql_types::Text,
   },
   diesel_ltree::Ltree,
-  lemmy_utils::error::{FastJobErrorType, FastJobResult},
+  app_108jobs_utils::error::{FastJobErrorType, FastJobResult},
 };
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -39,8 +38,7 @@ impl fmt::Display for PostId {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat message id.
-pub struct ChatMessageId(pub i32);
-
+pub struct ChatMessageId(pub i64);
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -54,6 +52,12 @@ impl fmt::Display for ChatMessageRefId {
   }
 }
 
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The chat room serial id.
+pub struct SerialId(pub i64);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -84,8 +88,8 @@ pub enum PostOrCommentId {
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The community id.
-pub struct CommunityId(pub i32);
+/// The category id.
+pub struct CategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -97,7 +101,7 @@ pub struct LocalUserId(pub i32);
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The local user id.
+/// The local pair user id.
 pub struct LocalPairUserId(pub i32, pub i32);
 
 impl TryFrom<String> for LocalPairUserId {
@@ -127,6 +131,20 @@ impl TryFrom<&str> for LocalPairUserId {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The wallet id.
 pub struct WalletId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Top-up Request id.
+pub struct TopUpRequestId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Withdrawal Request id.
+pub struct WithdrawRequestId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -162,7 +180,7 @@ pub struct WorkflowId(pub i32);
 /// The Job Budget Plan id.
 pub struct JobBudgetPlanId(pub i32);
 #[derive(
-  Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize
+  Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -186,35 +204,47 @@ impl PartialOrd<i32> for Coin {
 impl Add for Coin {
   type Output = Coin;
   #[inline]
-  fn add(self, rhs: Coin) -> Coin { Coin(self.0 + rhs.0) }
+  fn add(self, rhs: Coin) -> Coin {
+    Coin(self.0 + rhs.0)
+  }
 }
 
 impl Sub for Coin {
   type Output = Coin;
   #[inline]
-  fn sub(self, rhs: Coin) -> Coin { Coin(self.0 - rhs.0) }
+  fn sub(self, rhs: Coin) -> Coin {
+    Coin(self.0 - rhs.0)
+  }
 }
 
 impl AddAssign for Coin {
   #[inline]
-  fn add_assign(&mut self, rhs: Coin) { self.0 += rhs.0; }
+  fn add_assign(&mut self, rhs: Coin) {
+    self.0 += rhs.0;
+  }
 }
 
 impl SubAssign for Coin {
   #[inline]
-  fn sub_assign(&mut self, rhs: Coin) { self.0 -= rhs.0; }
+  fn sub_assign(&mut self, rhs: Coin) {
+    self.0 -= rhs.0;
+  }
 }
 
 impl Neg for Coin {
   type Output = Coin;
   #[inline]
-  fn neg(self) -> Coin { Coin(-self.0) }
+  fn neg(self) -> Coin {
+    Coin(-self.0)
+  }
 }
 
 impl Neg for &Coin {
   type Output = Coin;
   #[inline]
-  fn neg(self) -> Coin { Coin(-self.0) }
+  fn neg(self) -> Coin {
+    Coin(-self.0)
+  }
 }
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -262,11 +292,11 @@ impl ChatRoomId {
     s.chars()
       .filter(|&c| {
         // Remove control chars (U+0000..U+001F, U+007F), and common zero-width (U+200B..U+200F, U+FEFF)
-        !(c.is_control() ||
-          matches!(c,
+        !(c.is_control()
+          || matches!(
+            c,
             '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{200E}' | '\u{200F}' | '\u{FEFF}'
-          )
-        )
+          ))
       })
       .collect::<String>()
       .trim()
@@ -303,13 +333,13 @@ impl ChatRoomId {
     let is_hex = s.len() == 16 && s.chars().all(|c| matches!(c, 'a'..='f' | '0'..='9'));
     let is_uuid = {
       let parts: Vec<&str> = s.split('-').collect();
-      parts.len() == 5 &&
-        parts[0].len() == 8 &&
-        parts[1].len() == 4 &&
-        parts[2].len() == 4 &&
-        parts[3].len() == 4 &&
-        parts[4].len() == 12 &&
-        s.chars().all(|c| c == '-' || c.is_ascii_hexdigit())
+      parts.len() == 5
+        && parts[0].len() == 8
+        && parts[1].len() == 4
+        && parts[2].len() == 4
+        && parts[3].len() == 4
+        && parts[4].len() == 12
+        && s.chars().all(|c| c == '-' || c.is_ascii_hexdigit())
     };
     is_hex || is_uuid
   }
@@ -385,8 +415,8 @@ pub struct CommentReportId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The community report id.
-pub struct CommunityReportId(pub i32);
+/// The category report id.
+pub struct CategoryReportId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -554,7 +584,7 @@ pub struct AdminPurgePersonId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct AdminPurgeCommunityId(pub i32);
+pub struct AdminPurgeCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -584,7 +614,7 @@ pub struct ModRemoveCommentId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModRemoveCommunityId(pub i32);
+pub struct ModRemoveCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -602,7 +632,7 @@ pub struct ModFeaturePostId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModBanFromCommunityId(pub i32);
+pub struct ModBanFromCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -614,19 +644,19 @@ pub struct ModBanId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModChangeCommunityVisibilityId(pub i32);
+pub struct ModChangeCategoryVisibilityId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModAddCommunityId(pub i32);
+pub struct ModAddCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModTransferCommunityId(pub i32);
+pub struct ModTransferCategoryId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -686,7 +716,6 @@ where
   }
 }
 
-
 impl InstanceId {
   pub fn inner(self) -> i32 {
     self.0
@@ -713,55 +742,171 @@ pub struct SkillId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct PaginationCursor(pub String);
 
+pub enum DecodedCursor {
+  I32(i32),
+  I64(i64),
+  Composite(Vec<(char, i32)>),
+}
+
+#[cfg(feature = "full")]
 #[cfg(feature = "full")]
 impl PaginationCursor {
-  /// Used for tables that have a single primary key.
-  /// IE the post table cursor looks like `P123`
   pub fn new_single(prefix: char, id: i32) -> Self {
-    Self::new(&[(prefix, id)])
+    Self::new_i64(prefix, id as i64)
   }
 
-  /// Some tables (like community_actions for example) have compound primary keys.
-  /// This creates a cursor that can use both, like `C123-P123`
   pub fn new(prefixes_and_ids: &[(char, i32)]) -> Self {
     Self(
       prefixes_and_ids
         .iter()
-        .map(|(prefix, id)|
-          // hex encoding to prevent ossification
-          format!("{prefix}{id:x}"))
+        .map(|(prefix, id)| format!("{prefix}{id:x}"))
         .collect::<Vec<String>>()
         .join("-"),
     )
   }
 
+  pub fn new_i64(prefix: char, id: i64) -> Self {
+    let high = (id >> 32) as i32;
+    let low = id as i32;
+
+    // Build exactly the same way the old `new()` does
+    let parts = [
+      format!("{prefix}{high:x}"),
+      format!("{}{low:x}", Self::next_prefix(prefix)),
+    ];
+    Self(parts.join("-"))
+  }
+
+  // Helper – deterministic second prefix so we know it’s an i64 cursor
+  fn next_prefix(p: char) -> char {
+    // 'M' → 'N', 'R' → 'S', etc. Safe because we only use ASCII letters
+    char::from_u32(p as u32 + 1).unwrap_or('Z')
+  }
+
+  // ────── Decoding ──────
   pub fn prefixes_and_ids(&self) -> Vec<(char, i32)> {
     let default_prefix = 'Z';
     let default_id = 0;
     self
       .0
-      .split("-")
-      .map(|i| {
-        let opt = i.split_at_checked(1);
-        if let Some((prefix_str, id_str)) = opt {
-          let prefix = prefix_str.chars().next().unwrap_or(default_prefix);
-          let id = i32::from_str_radix(id_str, 16).unwrap_or(default_id);
-          (prefix, id)
-        } else {
-          (default_prefix, default_id)
+      .split('-')
+      .map(|segment| {
+        if segment.is_empty() {
+          return (default_prefix, default_id);
         }
+        let (prefix_str, id_str) = segment.split_at(1);
+        let prefix = prefix_str.chars().next().unwrap_or(default_prefix);
+        let id = i32::from_str_radix(id_str, 16).unwrap_or(default_id);
+        (prefix, id)
       })
       .collect()
   }
 
   pub fn first_id(&self) -> FastJobResult<i32> {
-    Ok(
-      self
-        .prefixes_and_ids()
-        .as_slice()
-        .first()
-        .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
-        .1,
-    )
+    self
+      .prefixes_and_ids()
+      .first()
+      .map(|&(_, id)| id)
+      .ok_or(FastJobErrorType::CouldntParsePaginationToken.into())
+  }
+
+  // ────── NEW: safe i64 decoder (backward compatible) ──────
+  pub fn as_i64(&self) -> FastJobResult<i64> {
+    let parts = self.prefixes_and_ids();
+    match parts.len() {
+      1 => Ok(parts[0].1 as i64), // old i32 cursor
+      2 => {
+        let high = parts[0].1 as i64;
+        let low = parts[1].1 as i64;
+        Ok((high << 32) | low)
+      }
+      _ => Err(FastJobErrorType::CouldntParsePaginationToken.into()),
+    }
+  }
+
+  /* ───────── i32 ───────── */
+  pub fn v2_i32(id: i32) -> Self {
+    Self(format!("v2:I:{:x}", id))
+  }
+
+  /* ───────── i64 ───────── */
+  pub fn v2_i64(id: i64) -> Self {
+    let high = (id >> 32) as u32;
+    let low = id as u32;
+    Self(format!("v2:L:{:x}:{:x}", high, low))
+  }
+
+  /* ───────── composite ───────── */
+  pub fn v2_composite(parts: &[(char, i32)]) -> Self {
+    let encoded = parts
+        .iter()
+        .map(|(p, id)| format!("{p}{:x}", id))
+        .collect::<Vec<_>>()
+        .join(",");
+    Self(format!("v2:C:{encoded}"))
+  }
+
+  pub fn decode(&self) -> FastJobResult<DecodedCursor> {
+    if !self.0.starts_with("v2:") {
+      return self.decode_legacy();
+    }
+
+    let payload = &self.0[3..];
+    let mut it = payload.split(':');
+
+    match it.next() {
+      Some("I") => {
+        let id = i32::from_str_radix(
+          it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
+          16,
+        )?;
+        Ok(DecodedCursor::I32(id))
+      }
+
+      Some("L") => {
+        let high = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
+        let low = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
+        Ok(DecodedCursor::I64((high << 32) | low))
+      }
+
+      Some("C") => {
+        let parts = it
+            .next()
+            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
+            .split(',')
+            .map(|s| {
+              let (p, rest) = s.split_at(1);
+              let id = i32::from_str_radix(rest, 16)?;
+              Ok((p.chars().next().unwrap(), id))
+            })
+            .collect::<FastJobResult<Vec<_>>>()?;
+
+        Ok(DecodedCursor::Composite(parts))
+      }
+
+      _ => Err(FastJobErrorType::CouldntParsePaginationToken.into()),
+    }
+  }
+
+  fn decode_legacy(&self) -> FastJobResult<DecodedCursor> {
+    let parts = self
+        .0
+        .split('-')
+        .map(|segment| {
+          let (p, id) = segment.split_at(1);
+          let id = i32::from_str_radix(id, 16)?;
+          Ok((p.chars().next().unwrap(), id))
+        })
+        .collect::<FastJobResult<Vec<_>>>()?;
+
+    if parts.len() == 1 {
+      Ok(DecodedCursor::I32(parts[0].1))
+    } else if parts.len() == 2 {
+      let high = parts[0].1 as i64;
+      let low = parts[1].1 as i64;
+      Ok(DecodedCursor::I64((high << 32) | low))
+    } else {
+      Ok(DecodedCursor::Composite(parts))
+    }
   }
 }

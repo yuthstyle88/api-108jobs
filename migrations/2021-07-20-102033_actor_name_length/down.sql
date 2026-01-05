@@ -2,10 +2,10 @@ DROP VIEW person_alias_1;
 
 DROP VIEW person_alias_2;
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN name TYPE varchar(20);
 
-ALTER TABLE community
+ALTER TABLE category
     ALTER COLUMN title TYPE varchar(100);
 
 ALTER TABLE person

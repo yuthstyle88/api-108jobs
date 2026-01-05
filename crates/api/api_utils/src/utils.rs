@@ -8,14 +8,18 @@ use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
 use enum_map::{enum_map, EnumMap};
-use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::source::actor_language::SiteLanguage;
-use lemmy_db_schema::source::language::Language;
-use lemmy_db_schema::{
-  newtypes::{CommentId, CommunityId, DbUrl, InstanceId, PersonId, PostId},
+use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
+use app_108jobs_db_schema::source::actor_language::SiteLanguage;
+use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
+use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
+use app_108jobs_db_schema::source::language::Language;
+use app_108jobs_db_schema::source::user_bank_account::BankAccount;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::{
+  newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId, PostId},
   source::{
+    category::{Category, CategoryActions},
     comment::{Comment, CommentActions},
-    community::{Community, CommunityActions},
     images::{ImageDetails, RemoteImage},
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
@@ -31,12 +35,18 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable, ReadComments},
   utils::DbPool,
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_image::LocalImageView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db_views_local_image::LocalImageView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::PersonView;
+use app_108jobs_db_views_site::SiteView;
+use app_108jobs_db_views_wallet::api::{
+  ListTopUpRequestQuery, ListTopUpRequestResponse, ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
+};
+use app_108jobs_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
+use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
   settings::{structs::PictrsImageMode, SETTINGS},
@@ -52,6 +62,7 @@ use rand::Rng;
 use regex::{escape, Regex, RegexSet};
 use std::collections::HashSet;
 use std::sync::LazyLock;
+use tracing::info;
 use url::{ParseError, Url};
 use urlencoding::encode;
 
@@ -149,8 +160,8 @@ pub async fn check_registration_application(
   Ok(())
 }
 
-pub fn check_community_deleted_removed(community: &Community) -> FastJobResult<()> {
-  if community.deleted || community.removed {
+pub fn check_category_deleted_removed(category: &Category) -> FastJobResult<()> {
+  if category.deleted || category.removed {
     Err(FastJobErrorType::AlreadyDeleted)?
   }
   Ok(())
@@ -253,7 +264,7 @@ pub async fn get_url_blocklist(context: &FastJobContext) -> FastJobResult<RegexS
 
         // The urls are already validated on saving, so just escape them.
         // If this regex creation changes it must be synced with
-        // lemmy_utils::utils::markdown::create_url_blocklist_test_regex_set.
+        // app_108jobs_utils::utils::markdown::create_url_blocklist_test_regex_set.
         let regexes = urls.iter().map(|url| format!(r"\b{}\b", escape(&url.url)));
 
         let set = RegexSet::new(regexes)?;
@@ -414,8 +425,8 @@ async fn create_modlog_entries_for_removed_or_restored_comments(
   Ok(())
 }
 
-pub async fn remove_or_restore_user_data_in_community(
-  community_id: CommunityId,
+pub async fn remove_or_restore_user_data_in_category(
+  category_id: CategoryId,
   mod_person_id: PersonId,
   banned_person_id: PersonId,
   remove: bool,
@@ -425,13 +436,13 @@ pub async fn remove_or_restore_user_data_in_community(
   // These actions are only possible when removing, not restoring
   if remove {
     // Remove post and comment votes
-    PostActions::remove_likes_in_community(pool, banned_person_id, community_id).await?;
-    CommentActions::remove_likes_in_community(pool, banned_person_id, community_id).await?;
+    PostActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
+    CommentActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
   }
 
   // Posts
   let posts =
-    Post::update_removed_for_creator_and_community(pool, banned_person_id, community_id, remove)
+    Post::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
       .await?;
 
   create_modlog_entries_for_removed_or_restored_posts(
@@ -445,7 +456,7 @@ pub async fn remove_or_restore_user_data_in_community(
 
   // Comments
   let removed_comment_ids =
-    Comment::update_removed_for_creator_and_community(pool, banned_person_id, community_id, remove)
+    Comment::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
       .await?;
 
   create_modlog_entries_for_removed_or_restored_comments(
@@ -482,7 +493,7 @@ pub async fn purge_user_account(
     .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
 
   // Leave communities they mod
-  CommunityActions::leave_mod_team_for_all_communities(pool, person_id).await?;
+  CategoryActions::leave_mod_team_for_all_communities(pool, person_id).await?;
 
   // Delete the oauth accounts linked to the local user
   if let Ok(local_user) = LocalUserView::read_person(pool, person_id).await {
@@ -511,8 +522,8 @@ pub fn generate_featured_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
   Ok(Url::parse(&format!("{ap_id}/featured"))?.into())
 }
 
-pub fn generate_moderators_url(community_id: &DbUrl) -> FastJobResult<DbUrl> {
-  Ok(Url::parse(&format!("{community_id}/moderators"))?.into())
+pub fn generate_moderators_url(category_id: &DbUrl) -> FastJobResult<DbUrl> {
+  Ok(Url::parse(&format!("{category_id}/moderators"))?.into())
 }
 
 /// Ensure that ban/block expiry is in valid range. If its in past, throw error. If its more
@@ -818,10 +829,125 @@ pub async fn prepare_user_languages(
   Ok((language_ids.into_iter().collect(), interface_language))
 }
 
+pub async fn list_top_up_requests_inner(
+  pool: &mut DbPool<'_>,
+  user_id: Option<LocalUserId>, // None for admin/all
+  query: ListTopUpRequestQuery,
+) -> FastJobResult<ListTopUpRequestResponse> {
+  let cursor_data = if let Some(cursor) = &query.page_cursor {
+    Some(TopUpRequestView::from_cursor(cursor, pool).await?)
+  } else {
+    None
+  };
+
+  let items = TopUpRequestView::list(pool, user_id, cursor_data, query).await?;
+  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(ListTopUpRequestResponse {
+    top_up_requests: items,
+    next_page,
+    prev_page,
+  })
+}
+
+pub async fn list_withdraw_requests_inner(
+  pool: &mut DbPool<'_>,
+  local_user_id: Option<LocalUserId>,
+  query: ListWithdrawRequestQuery,
+) -> FastJobResult<ListWithdrawRequestResponse> {
+  let cursor_data = if let Some(cursor) = &query.page_cursor {
+    Some(WithdrawRequestView::from_cursor(cursor, pool).await?)
+  } else {
+    None
+  };
+
+  let items = WithdrawRequestView::list(pool, local_user_id, cursor_data, query).await?;
+  let next_page = items.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = items.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(ListWithdrawRequestResponse {
+    withdraw_requests: items,
+    next_page,
+    prev_page,
+  })
+}
+
+pub async fn ensure_bank_account_unique_for_user(
+  pool: &mut DbPool<'_>,
+  user_id: &LocalUserId,
+  bank_id: &BankId,
+  account_number: &str,
+  exclude_id: Option<BankAccountId>,
+) -> FastJobResult<()> {
+  let exists = BankAccount::exists_for_user_by_bank_and_number(
+    pool,
+    user_id,
+    bank_id,
+    account_number,
+    exclude_id,
+  )
+  .await?;
+
+  if exists {
+    return Err(FastJobErrorType::BankAccountAlreadyExistsForThisBank.into());
+  }
+
+  Ok(())
+}
+
+pub async fn flush_room_and_update_last_message(
+  pool: &mut DbPool<'_>,
+  redis: &mut RedisClient,
+  room_id: ChatRoomId,
+) -> FastJobResult<()> {
+  let key = format!("chat:room:{}:messages", room_id);
+
+  // 1. Read buffered messages
+  let messages: Vec<ChatMessageInsertForm> = redis.lrange(&key, 0, -1).await?;
+
+  if messages.is_empty() {
+    return Ok(());
+  }
+
+  info!(
+    "Flushing {} buffered messages for room {}",
+    messages.len(),
+    room_id
+  );
+
+  // 2. Persist to DB
+  ChatMessage::bulk_insert(pool, &messages).await?;
+
+  // 3. Find latest message
+  let latest = messages
+    .iter()
+    .max_by_key(|m| m.created_at.unwrap_or(Utc::now()))
+    .or_else(|| messages.last())
+    .expect("messages not empty");
+
+  let latest_id = latest.msg_ref_id.clone().expect("has msg_ref_id");
+  let latest_at = latest.created_at.unwrap_or(Utc::now());
+
+  let chat_room_update_form = ChatRoomUpdateForm {
+    last_message_id: Some(Some(latest_id)),
+    last_message_at: Some(Some(latest_at)),
+    ..Default::default()
+  };
+  
+  let _ = ChatRoom::update(pool, room_id.clone(), &chat_room_update_form).await?;
+
+  // 5. Clean up Redis
+  let _ = redis.delete_key(&key).await;
+  let _ = redis.srem("chat:active_rooms", room_id.to_string()).await;
+
+  Ok(())
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
-  use lemmy_utils::utils::validation::password_length_check;
+  use app_108jobs_utils::utils::validation::password_length_check;
   use pretty_assertions::assert_eq;
 
   #[test]

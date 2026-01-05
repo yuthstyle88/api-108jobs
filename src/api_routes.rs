@@ -1,28 +1,33 @@
 use actix_web::{guard, web::*};
-use lemmy_api::admin::bank_account::list_bank_accounts;
-use lemmy_api::admin::wallet::{admin_top_up_wallet, admin_withdraw_wallet};
-use lemmy_api::chat::list::list_chat_rooms;
-use lemmy_api::local_user::bank_account::{
-  create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
-  set_default_bank_account,
+use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
+use app_108jobs_api::admin::wallet::{
+  admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
+  admin_top_up_wallet, admin_withdraw_wallet,
 };
-use lemmy_api::local_user::exchange::exchange_key;
-use lemmy_api::local_user::profile::visit_profile;
-use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
-use lemmy_api::local_user::update_term::update_term;
-use lemmy_api::local_user::wallet::get_wallet;
-use lemmy_api::local_user::workflow::{
+use app_108jobs_api::chat::list::list_chat_rooms;
+use app_108jobs_api::local_user::bank_account::{
+  create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
+  set_default_bank_account, update_bank_account,
+};
+use app_108jobs_api::local_user::exchange::exchange_key;
+use app_108jobs_api::local_user::list_top_up_requests::list_top_up_requests;
+use app_108jobs_api::local_user::profile::visit_profile;
+use app_108jobs_api::local_user::review::{list_user_reviews, submit_user_review};
+use app_108jobs_api::local_user::update_term::update_term;
+use app_108jobs_api::local_user::wallet::get_wallet;
+use app_108jobs_api::local_user::withdraw::{list_withdraw_requests, submit_withdraw};
+use app_108jobs_api::local_user::workflow::{
   approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
-use lemmy_api::{
+use app_108jobs_api::{
+  category::{
+    random::get_random_category,
+    tag::{create_category_tag, delete_category_tag, update_category_tag},
+  },
   comment::{
     distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
     save::save_comment,
-  },
-  community::{
-    random::get_random_community,
-    tag::{create_community_tag, delete_community_tag, update_community_tag},
   },
   local_user::{
     add_admin::add_admin,
@@ -63,8 +68,8 @@ use lemmy_api::{
     mark_read::mark_post_as_read, save::save_post, update_notifications::update_post_notifications,
   },
   reports::{
+    category_report::{create::create_category_report, resolve::resolve_category_report},
     comment_report::{create::create_comment_report, resolve::resolve_comment_report},
-    community_report::{create::create_community_report, resolve::resolve_community_report},
     report_combined::list::list_reports,
   },
   site::{
@@ -82,18 +87,19 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api_crud::chat::create::create_chat_room;
-use lemmy_api_crud::chat::read::get_chat_room;
-use lemmy_api_crud::community::list::list_communities;
-use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
-use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
-use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
-use lemmy_api_crud::{
+use app_108jobs_api_crud::category::list::list_categories;
+use app_108jobs_api_crud::chat::create::create_chat_room;
+use app_108jobs_api_crud::chat::read::get_chat_room;
+use app_108jobs_api_crud::oauth_provider::create::create_oauth_provider;
+use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
+use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
+use app_108jobs_api_crud::site::read::health;
+use app_108jobs_api_crud::{
+  category::update::update_category,
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
     update::update_comment,
   },
-  community::update::update_community,
   custom_emoji::{
     create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
     update::update_custom_emoji,
@@ -112,29 +118,28 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_apub::api::list_comments::list_comments;
-use lemmy_apub::api::list_posts::list_posts;
-use lemmy_apub::api::search::search;
-use lemmy_routes::files::delete::delete_file;
-use lemmy_routes::files::download::get_file;
-use lemmy_routes::files::upload::upload_file;
-use lemmy_routes::images::{
+use app_108jobs_apub::api::list_comments::list_comments;
+use app_108jobs_apub::api::list_posts::list_posts;
+use app_108jobs_apub::api::search::search;
+use app_108jobs_routes::files::delete::delete_file;
+use app_108jobs_routes::files::download::get_file;
+use app_108jobs_routes::files::upload::upload_file;
+use app_108jobs_routes::images::{
   delete::{
-    delete_community_banner, delete_community_icon, delete_image, delete_image_admin,
+    delete_category_banner, delete_category_icon, delete_image, delete_image_admin,
     delete_site_banner, delete_site_icon, delete_user_avatar, delete_user_banner,
   },
   download::{get_image, image_proxy},
   pictrs_health,
   upload::{
-    upload_community_banner, upload_community_icon, upload_image, upload_site_banner,
+    upload_category_banner, upload_category_icon, upload_image, upload_site_banner,
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
-use lemmy_routes::payments::create_qrcode::create_qrcode;
-use lemmy_routes::payments::get_token::generate_scb_token;
-use lemmy_routes::payments::inquire::inquire_qrcode;
-use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{get_history, get_last_read, get_peer_status, phoenix_ws};
+use app_108jobs_routes::payments::create_qrcode::create_qrcode;
+use app_108jobs_routes::payments::inquire::inquire_qrcode;
+use app_108jobs_utils::rate_limit::RateLimit;
+use app_108jobs_ws::server::handler::{get_history, get_last_read, get_peer_status, get_unread_snapshot, phoenix_ws};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
@@ -146,6 +151,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/site")
             .route("", get().to(get_site))
+            .route("/health", get().to(health))
             .route("", post().to(create_site))
             .route("", put().to(update_site))
             .route("/icon", post().to(upload_site_icon))
@@ -159,27 +165,27 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             // .wrap(rate_limit.search())
             .route(get().to(search)),
         )
-        // Community
+        // Category
         .service(
-          resource("/community")
+          resource("/category")
             .guard(guard::Post())
             .wrap(rate_limit.register()),
         )
         .service(
-          scope("/community")
-            .route("", put().to(update_community))
-            .route("/random", get().to(get_random_community))
-            .route("/list", get().to(list_communities))
-            .route("/report", post().to(create_community_report))
-            .route("/report/resolve", put().to(resolve_community_report))
+          scope("/category")
+            .route("", put().to(update_category))
+            .route("/random", get().to(get_random_category))
+            .route("/list", get().to(list_categories))
+            .route("/report", post().to(create_category_report))
+            .route("/report/resolve", put().to(resolve_category_report))
             // Mod Actions
-            .route("/icon", post().to(upload_community_icon))
-            .route("/icon", delete().to(delete_community_icon))
-            .route("/banner", post().to(upload_community_banner))
-            .route("/banner", delete().to(delete_community_banner))
-            .route("/tag", post().to(create_community_tag))
-            .route("/tag", put().to(update_community_tag))
-            .route("/tag", delete().to(delete_community_tag)),
+            .route("/icon", post().to(upload_category_icon))
+            .route("/icon", delete().to(delete_category_icon))
+            .route("/banner", post().to(upload_category_banner))
+            .route("/banner", delete().to(delete_category_banner))
+            .route("/tag", post().to(create_category_tag))
+            .route("/tag", put().to(update_category_tag))
+            .route("/tag", delete().to(delete_category_tag)),
         )
         // Post
         .service(
@@ -286,6 +292,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/bank-account")
                 .route("", post().to(create_bank_account))
                 .route("", get().to(list_user_bank_accounts))
+                .route("", put().to(update_bank_account))
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
             )
@@ -313,9 +320,26 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/hidden", get().to(list_person_hidden))
             .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
-            .route("/reviews", post().to(submit_user_review))
             // Wallet service scope
-            .service(scope("/wallet").route("", get().to(get_wallet)))
+            .service(
+              scope("/wallet")
+                // GET /wallet → get user wallet summary/info
+                .route("", get().to(get_wallet))
+                // Top-up operations
+                .service(
+                  scope("/top-ups")
+                    // GET /wallet/top-ups → list top-up requests
+                    .route("", get().to(list_top_up_requests)),
+                )
+                // Withdraw operations
+                .service(
+                  scope("/withdraw-requests")
+                    // GET /wallet/withdraw-requests → list withdrawal requests
+                    .route("", get().to(list_withdraw_requests))
+                    // POST /wallet/withdraw-requests → create new withdrawal request
+                    .route("", post().to(submit_withdraw)),
+                ),
+            )
             // Bank account management scope
             .service(scope("/banks").route("", get().to(list_banks)))
             // Services scope for workflow service
@@ -384,11 +408,22 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/allow", post().to(admin_allow_instance)),
             )
             .service(
+              // manage wallet by admin (can reject)
               scope("/wallet")
                 .route("/top-up", post().to(admin_top_up_wallet))
-                .route("/withdraw", post().to(admin_withdraw_wallet)),
+                .route("/withdraw", post().to(admin_withdraw_wallet))
+                .route("/top-ups", get().to(admin_list_top_up_requests))
+                .route("/withdraw-requests", get().to(admin_list_withdraw_requests))
+                .route(
+                  "/withdraw-requests/reject",
+                  post().to(admin_reject_withdraw_request),
+                ),
             )
-            .service(scope("/bank-account").route("/list", get().to(list_bank_accounts))),
+            .service(
+              scope("/bank-account")
+                .route("/list", get().to(admin_list_bank_accounts))
+                .route("/verify", post().to(admin_verify_bank_account)),
+            ),
         )
         .service(
           scope("/chat")
@@ -397,7 +432,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/rooms", post().to(create_chat_room))
             .route("/rooms/{id}", get().to(get_chat_room))
             .route("/last-read", get().to(get_last_read))
-            .route("/get-peer-status", get().to(get_peer_status)),
+            .route("/get-peer-status", get().to(get_peer_status))
+            .route("/unread-snapshot", get().to(get_unread_snapshot)),
         )
         .service(
           scope("/reviews")
@@ -438,7 +474,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         //scb payment
         .service(
           scope("/scb")
-            .route("/token", post().to(generate_scb_token))
             .route("/qrcode/create", post().to(create_qrcode))
             .route("/inquire", post().to(inquire_qrcode)),
         ),

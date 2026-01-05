@@ -1,25 +1,25 @@
 use crate::check_report_reason;
 use actix_web::web::Data;
 use either::Either;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, slur_regex},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::post_report::{PostReport, PostReportForm},
   traits::Reportable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::PostView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::PostView;
+use app_108jobs_db_views_reports::{
   api::{CreatePostReport, PostReportResponse},
   PostReportView,
 };
-use lemmy_multilang::admin::send_new_report_email_to_admins;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_multilang::admin::send_new_report_email_to_admins;
+use app_108jobs_utils::error::FastJobResult;
 
-/// Creates a post report and notifies the moderators of the community
+/// Creates a post report and notifies the moderators of the category
 pub async fn create_post_report(
   data: Json<CreatePostReport>,
   context: Data<FastJobContext>,
@@ -66,7 +66,7 @@ pub async fn create_post_report(
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
       actor: local_user_view.person,
-      receiver: Either::Right(post_view.community),
+      receiver: Either::Right(post_view.category),
       reason: data.reason.clone(),
     },
     &context,

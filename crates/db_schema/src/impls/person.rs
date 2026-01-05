@@ -1,12 +1,12 @@
 use crate::{
-  diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
-  newtypes::{CommunityId, DbUrl, InstanceId, LocalUserId, PersonId},
-  source::person::{
+    diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
+    newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
+    source::person::{
     Person, PersonActions, PersonBlockForm, PersonFollowerForm, PersonInsertForm, PersonNoteForm,
     PersonUpdateForm,
   },
-  traits::{ApubActor, Blockable, Crud, Followable},
-  utils::{functions::lower, get_conn, uplete, DbPool},
+    traits::{ApubActor, Blockable, Crud, Followable},
+    utils::{functions::lower, get_conn, uplete, DbPool},
 };
 use chrono::Utc;
 use diesel::{
@@ -15,10 +15,10 @@ use diesel::{
   ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   instance, instance_actions, local_user, person, person_actions,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -176,7 +176,7 @@ impl Person {
 
     // Try by local_user.id if input looks like an integer
     if let Ok(local_user_id_num) = username_or_id.parse::<i32>() {
-      use lemmy_db_schema_file::schema::local_user as lu;
+      use app_108jobs_db_schema_file::schema::local_user as lu;
       if let Some(found) = person::table
         .inner_join(lu::table.on(lu::person_id.eq(person::id)))
         .filter(lu::id.eq(local_user_id_num))
@@ -280,11 +280,11 @@ impl Followable for PersonActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CategoryFollowerAlreadyExists)
   }
 
   /// Currently no user following
-  async fn follow_accepted(_: &mut DbPool<'_>, _: CommunityId, _: PersonId) -> FastJobResult<Self> {
+  async fn follow_accepted(_: &mut DbPool<'_>, _: CategoryId, _: PersonId) -> FastJobResult<Self> {
     Err(FastJobErrorType::NotFound.into())
   }
 
@@ -299,7 +299,7 @@ impl Followable for PersonActions {
       .set_null(person_actions::follow_pending)
       .get_result(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CommunityFollowerAlreadyExists)
+      .with_fastjob_type(FastJobErrorType::CategoryFollowerAlreadyExists)
   }
 }
 
@@ -503,7 +503,7 @@ mod tests {
     traits::{Crud, Followable},
     utils::{build_db_pool_for_tests, uplete},
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

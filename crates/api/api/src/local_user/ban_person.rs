@@ -1,23 +1,23 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,
   },
   traits::Bannable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::{
   api::{BanPerson, BanPersonResponse},
   PersonView,
 };
-use lemmy_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
+use app_108jobs_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_site(
   data: Json<BanPerson>,

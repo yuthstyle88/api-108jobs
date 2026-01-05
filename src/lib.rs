@@ -8,13 +8,13 @@ use actix_web::{
   App, HttpResponse, HttpServer,
 };
 use clap::{Parser, Subcommand};
-use lemmy_api_utils::site_snapshot::CachedSiteConfigProvider;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::site_snapshot::CachedSiteConfigProvider;
+use app_108jobs_api_utils::{
   context::FastJobContext, request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
-use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
-use lemmy_routes::{
+use app_108jobs_db_schema::{source::secret::Secret, utils::build_db_pool};
+use app_108jobs_routes::{
   feeds,
   middleware::{
     idempotency::{IdempotencyMiddleware, IdempotencySet},
@@ -27,8 +27,8 @@ use lemmy_routes::{
     setup_local_site::setup_local_site,
   },
 };
-use lemmy_utils::redis::RedisClient;
-use lemmy_utils::{
+use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{
   error::FastJobResult,
   rate_limit::RateLimit,
   response::jsonify_plain_text_errors,
@@ -37,13 +37,15 @@ use lemmy_utils::{
 };
 use std::time::Duration;
 
-use lemmy_ws::broker::{phoenix_manager::PhoenixManager, presence_manager::PresenceManager};
+use app_108jobs_routes::utils::scheduled_tasks::setup;
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
+use app_108jobs_ws::broker::manager::PhoenixManager;
+use app_108jobs_ws::presence::PresenceManager;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -64,21 +66,21 @@ static GLOBAL: MiMalloc = MiMalloc;
 pub struct CmdArgs {
   /// Don't run scheduled tasks.
   ///
-  /// If you are running multiple Lemmy server processes, you probably want to disable scheduled
+  /// If you are running multiple app_108jobs server processes, you probably want to disable scheduled
   /// tasks on all but one of the processes, to avoid running the tasks more often than intended.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_SCHEDULED_TASKS")]
+  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_SCHEDULED_TASKS")]
   disable_scheduled_tasks: bool,
   /// Disables the HTTP server.
   ///
-  /// This can be used to run a Lemmy server process that only performs scheduled tasks or activity
+  /// This can be used to run a app_108jobs server process that only performs scheduled tasks or activity
   /// sending.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_HTTP_SERVER")]
+  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_HTTP_SERVER")]
   disable_http_server: bool,
   /// Disable sending outgoing ActivityPub messages.
   ///
   /// Only pass this for horizontally scaled setups.
-  /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for details.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_ACTIVITY_SENDING")]
+  /// See https://join-app_108jobs.org/docs/administration/horizontal_scaling.html for details.
+  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_ACTIVITY_SENDING")]
   disable_activity_sending: bool,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
@@ -107,7 +109,7 @@ enum MigrationSubcommand {
   Revert,
 }
 
-/// Placing the main function in lib.rs allows other crates to import it and embed Lemmy
+/// Placing the main function in lib.rs allows other crates to import it and embed app_108jobs
 pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   if let Some(CmdSubcommand::Migration {
     subcommand,
@@ -116,8 +118,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   }) = args.subcommand
   {
     let mut options = match subcommand {
-      MigrationSubcommand::Run => lemmy_db_schema_setup::Options::default().run(),
-      MigrationSubcommand::Revert => lemmy_db_schema_setup::Options::default().revert(),
+      MigrationSubcommand::Run => app_108jobs_db_schema_setup::Options::default().run(),
+      MigrationSubcommand::Revert => app_108jobs_db_schema_setup::Options::default().revert(),
     }
     .print_output();
 
@@ -125,7 +127,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
       options = options.limit(number);
     }
 
-    lemmy_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
+    app_108jobs_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
 
     return Ok(());
   }
@@ -168,15 +170,16 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let pictrs_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
-  let redis_client = RedisClient::new(SETTINGS.redis.clone()).await?;
+  let conn_str = SETTINGS.get_redis_connection()?;
+  let redis_client = RedisClient::new(&conn_str).await?;
   let scb_client = ClientBuilder::new(client_builder(&SETTINGS).no_proxy().build()?)
     .with(TracingMiddleware::default())
     .build();
   // Presence manager: timeout & sweep configuration
   let heartbeat_ttl = Duration::from_secs(45);
   // Start a lightweight system broker for broadcasting presence events
-  let presence_manager = PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()))
-      .start();
+  let presence_manager =
+    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone())).start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -193,7 +196,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     SETTINGS.get_phoenix_url(),
     pool.clone(),
     presence_manager.clone(),
-    redis_client.clone()
+    redis_client.clone(),
   )
   .await
   .start();
@@ -217,6 +220,10 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
 
   let mut interrupt = tokio::signal::unix::signal(SignalKind::interrupt())?;
   let mut terminate = tokio::signal::unix::signal(SignalKind::terminate())?;
+
+  if let Err(err) = setup(Data::new(context.clone())).await {
+    tracing::error!("Setup failed in HTTP init: {err:?}");
+  }
 
   tokio::select! {
     _ = tokio::signal::ctrl_c() => {
@@ -268,7 +275,6 @@ fn create_http_server(
   let bind = (settings.bind, settings.port);
   let server = HttpServer::new(move || {
     let rate_limit = context.rate_limit_cell().clone();
-
     let cors_config = cors_config(&settings);
 
     // Create a more efficient middleware stack with optimized ordering

@@ -1,27 +1,27 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::get_url_blocklist;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::get_url_blocklist;
+use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
-use lemmy_db_schema::newtypes::{PersonId, PostId};
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::{PersonId, PostId};
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
   traits::Likeable,
   utils::DbPool,
 };
-use lemmy_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
-use lemmy_db_schema_file::schema::comment::dsl::comment;
-use lemmy_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::PostView;
-use lemmy_utils::error::FastJobError;
-use lemmy_utils::{
+use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
+use app_108jobs_db_schema_file::schema::comment::dsl::comment;
+use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::PostView;
+use app_108jobs_utils::error::FastJobError;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
@@ -51,7 +51,7 @@ pub async fn create_comment(
   .await?;
 
   let post = post_view.post;
-  let community_id = post_view.community.id;
+  let category_id = post_view.category.id;
 
   check_post_deleted_or_removed(&post)?;
 
@@ -63,7 +63,7 @@ pub async fn create_comment(
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
-    community_id,
+    category_id,
     local_user_view.local_user.id,
   )
   .await?;
@@ -134,7 +134,7 @@ async fn check_user_already_commented(
 ) -> FastJobResult<()> {
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
-  use lemmy_db_schema::utils::get_conn;
+  use app_108jobs_db_schema::utils::get_conn;
 
   let conn = &mut get_conn(pool).await?;
 

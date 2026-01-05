@@ -1,61 +1,62 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::chat_message::ChatMessage;
-use lemmy_db_schema::source::chat_participant::ChatParticipant;
-use lemmy_db_views_chat::api::{
-  ChatRoomWithParticipants,
-  LastMessage,
-  ListUserChatRooms,
-  ListUserChatRoomsResponse,
-};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
+use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_views_chat::api::{ListUserChatRooms, ListUserChatRoomsResponse};
+use app_108jobs_db_views_chat::ChatRoomView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::redis::RedisClient;
+use tracing::{error, warn};
 
 pub async fn list_chat_rooms(
   data: Query<ListUserChatRooms>,
   context: Data<FastJobContext>,
-  local_user_view: LocalUserView
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListUserChatRoomsResponse>> {
-  let limit = data.limit.unwrap_or(50);
   let mut pool = context.pool();
 
-  // 1) fetch rooms for the current user
-  let rooms = ChatParticipant::list_rooms_for_user(
+  drain_all_buffered_messages(&mut pool, context.redis()).await;
+
+  let list_chat_room_views = ChatRoomView::list_for_user_paginated(
     &mut pool,
     local_user_view.local_user.id,
-    limit,
+    data.limit,
+    data.page_cursor.clone(),
+    None,
   )
   .await?;
 
-  // 2) fetch participants for these rooms
-  let room_ids: Vec<_> = rooms.iter().map(|r| r.id.clone()).collect();
-  let participants = ChatParticipant::list_participants_for_rooms(&mut pool, &room_ids).await?;
+  let next_page = list_chat_room_views
+    .last()
+    .map(PaginationCursorBuilder::to_cursor);
+  let prev_page = list_chat_room_views
+    .first()
+    .map(PaginationCursorBuilder::to_cursor);
 
-  // 3) group participants by room_id
-  use std::collections::HashMap;
-  let mut grouped: HashMap<String, Vec<_>> = HashMap::new();
-  for p in participants {
-    grouped.entry(p.room_id.to_string()).or_default().push(p);
+  Ok(Json(ListUserChatRoomsResponse {
+    rooms: list_chat_room_views,
+    next_page,
+    prev_page,
+  }))
+}
+
+async fn drain_all_buffered_messages(pool: &mut DbPool<'_>, redis_client: &RedisClient) {
+  let mut redis = redis_client.clone();
+  let Ok(raw_ids) = redis.smembers("chat:active_rooms").await else {
+    return;
+  };
+
+  for room_id_str in raw_ids {
+    let Ok(room_id) = room_id_str.parse::<ChatRoomId>() else {
+      warn!("Invalid room ID in active set: {}", room_id_str);
+      continue;
+    };
+
+    if let Err(e) = flush_room_and_update_last_message(pool, &mut redis, room_id).await {
+      error!("Safety net flush failed for room: {}", e);
+    }
   }
-
-  // 4) compose response with last_message per room
-  let mut rooms_with_participants = Vec::new();
-  for room in rooms {
-    let parts = grouped.remove(&room.id.to_string()).unwrap_or_default();
-
-    let last_message_opt = ChatMessage::last_by_room(&mut pool, room.id.clone()).await.unwrap_or(None);
-    let last_message = last_message_opt.map(|m| LastMessage {
-      content: m.content,
-      timestamp: m.created_at.to_rfc3339(),
-      sender_id: m.sender_id,
-    });
-
-    rooms_with_participants.push(ChatRoomWithParticipants {
-      room,
-      participants: parts,
-      last_message,
-    });
-  }
-
-  Ok(Json(ListUserChatRoomsResponse { rooms: rooms_with_participants }))
 }

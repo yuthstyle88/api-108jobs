@@ -6,7 +6,7 @@ ALTER TABLE user_
     DROP COLUMN local,
     DROP COLUMN last_refreshed_at;
 
-ALTER TABLE community
+ALTER TABLE category
     DROP COLUMN actor_id,
     DROP COLUMN local,
     DROP COLUMN last_refreshed_at;

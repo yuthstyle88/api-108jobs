@@ -1,10 +1,10 @@
 use crate::newtypes::{BillingId, ChatRoomId, PostId, WorkflowId};
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::WorkFlowStatus;
+use app_108jobs_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::workflow;
+use app_108jobs_db_schema_file::schema::workflow;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

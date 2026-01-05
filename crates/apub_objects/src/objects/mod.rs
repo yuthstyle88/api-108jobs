@@ -3,7 +3,7 @@ use crate::objects::post::ApubPost;
 use either::Either;
 
 pub mod comment;
-pub mod community;
+pub mod category;
 pub mod instance;
 pub mod person;
 pub mod post;

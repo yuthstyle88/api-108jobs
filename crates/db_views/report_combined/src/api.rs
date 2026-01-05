@@ -1,7 +1,7 @@
 use crate::ReportCombinedView;
-use lemmy_db_schema::{
-  newtypes::{CommunityId, PaginationCursor, PostId},
-  ReportType,
+use app_108jobs_db_schema::{
+    newtypes::{CategoryId, PaginationCursor, PostId},
+    ReportType,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -19,13 +19,13 @@ pub struct ListReports {
   pub type_: Option<ReportType>,
   /// Filter by the post id. Can return either comment or post reports.
   pub post_id: Option<PostId>,
-  /// if no community is given, it returns reports for all communities moderated by the auth user
-  pub community_id: Option<CommunityId>,
+  /// if no category is given, it returns reports for all communities moderated by the auth user
+  pub category_id: Option<CategoryId>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
   /// Only for admins: also show reports with `violates_instance_rules=false`
-  pub show_community_rule_violations: Option<bool>,
+  pub show_category_rule_violations: Option<bool>,
   /// If true, view all your created reports. Works for non-admins/mods also.
   pub my_reports_only: Option<bool>,
 }

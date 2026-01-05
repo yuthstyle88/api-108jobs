@@ -1,17 +1,17 @@
-# lemmy_api_common
+# app_108jobs_api_common
 
-This crate provides all the data types which are necessary to build a client for [Lemmy](https://join-lemmy.org/). You can use them with the HTTP client of your choice.
+This crate provides all the data types which are necessary to build a client for [app_108jobs](https://join-app_108jobs.org/). You can use them with the HTTP client of your choice.
 
 Here is an example using [reqwest](https://crates.io/crates/reqwest):
 
 ```rust
     let params = GetPosts {
-        community_name: Some("asklemmy".to_string()),
+        category_name: Some("askapp_108jobs".to_string()),
         ..Default::default()
     };
     let client = Client::new();
     let response = client
-        .get("https://lemmy.ml/api/v4/post/list")
+        .get("https://app_108jobs.ml/api/v4/post/list")
         .query(&params)
         .send()
         .await?;
@@ -19,11 +19,11 @@ Here is an example using [reqwest](https://crates.io/crates/reqwest):
     print!("{:?}", &json);
 ```
 
-As you can see, each API endpoint needs a parameter type ( GetPosts), path (/post/list) and response type (GetPostsResponse). You can find the paths and handler methods from [this file](https://github.com/LemmyNet/lemmy/blob/main/src/api_routes_http.rs). The parameter type and response type are defined on each handler method.
+As you can see, each API endpoint needs a parameter type ( GetPosts), path (/post/list) and response type (GetPostsResponse). You can find the paths and handler methods from [this file](https://github.com/app_108jobsNet/app_108jobs/blob/main/src/api_routes_http.rs). The parameter type and response type are defined on each handler method.
 
-For a real example of a Lemmy API client, look at [lemmyBB](https://github.com/LemmyNet/lemmyBB/tree/main/src/api).
+For a real example of a app_108jobs API client, look at [app_108jobsBB](https://github.com/app_108jobsNet/app_108jobsBB/tree/main/src/api).
 
-Lemmy also provides a websocket API. You can find the full websocket code in [this file](https://github.com/LemmyNet/lemmy/blob/main/src/api_routes_websocket.rs).
+app_108jobs also provides a websocket API. You can find the full websocket code in [this file](https://github.com/app_108jobsNet/app_108jobs/blob/main/src/api_routes_websocket.rs).
 
 ## Generate TypeScript bindings
 

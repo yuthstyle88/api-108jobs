@@ -1,21 +1,21 @@
 -- This adds on conflict do nothing triggers to all the insert_intos
--- Github issue: https://github.com/LemmyNet/lemmy/issues/1179
-CREATE OR REPLACE FUNCTION refresh_community ()
+-- Github issue: https://github.com/app_108jobsNet/app_108jobs/issues/1179
+CREATE OR REPLACE FUNCTION refresh_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF (TG_OP = 'DELETE') THEN
-        DELETE FROM community_aggregates_fast
+        DELETE FROM category_aggregates_fast
         WHERE id = OLD.id;
     ELSIF (TG_OP = 'UPDATE') THEN
-        DELETE FROM community_aggregates_fast
+        DELETE FROM category_aggregates_fast
         WHERE id = OLD.id;
-        INSERT INTO community_aggregates_fast
+        INSERT INTO category_aggregates_fast
         SELECT
             *
         FROM
-            community_aggregates_view
+            category_aggregates_view
         WHERE
             id = NEW.id
         ON CONFLICT (id)
@@ -32,25 +32,25 @@ BEGIN
             id = NEW.creator_id
         ON CONFLICT (id)
             DO NOTHING;
-        -- Update post view due to community changes
+        -- Update post view due to category changes
         DELETE FROM post_aggregates_fast
-        WHERE community_id = NEW.id;
+        WHERE category_id = NEW.id;
         INSERT INTO post_aggregates_fast
         SELECT
             *
         FROM
             post_aggregates_view
         WHERE
-            community_id = NEW.id
+            category_id = NEW.id
         ON CONFLICT (id)
             DO NOTHING;
         -- TODO make sure this shows up in the users page ?
     ELSIF (TG_OP = 'INSERT') THEN
-        INSERT INTO community_aggregates_fast
+        INSERT INTO category_aggregates_fast
         SELECT
             *
         FROM
-            community_aggregates_view
+            category_aggregates_view
         WHERE
             id = NEW.id;
     END IF;
@@ -122,13 +122,13 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts - 1
         WHERE
-            id = OLD.community_id;
+            id = OLD.category_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM post_aggregates_fast
         WHERE id = OLD.id;
@@ -161,13 +161,13 @@ BEGIN
             id = NEW.creator_id
         ON CONFLICT (id)
             DO NOTHING;
-        -- Update community number of posts
+        -- Update category number of posts
         UPDATE
-            community_aggregates_fast
+            category_aggregates_fast
         SET
             number_of_posts = number_of_posts + 1
         WHERE
-            id = NEW.community_id;
+            id = NEW.category_id;
         -- Update the hot rank on the post table
         -- TODO this might not correctly update it, using a 1 week interval
         UPDATE
@@ -192,15 +192,15 @@ BEGIN
     IF (TG_OP = 'DELETE') THEN
         DELETE FROM comment_aggregates_fast
         WHERE id = OLD.id;
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments - 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = OLD.post_id;
     ELSIF (TG_OP = 'UPDATE') THEN
         DELETE FROM comment_aggregates_fast
@@ -250,15 +250,15 @@ BEGIN
         WHERE
             paf.id = NEW.post_id
             AND (paf.published < ('now'::timestamp - '1 week'::interval));
-        -- Update community number of comments
+        -- Update category number of comments
         UPDATE
-            community_aggregates_fast AS caf
+            category_aggregates_fast AS caf
         SET
             number_of_comments = number_of_comments + 1
         FROM
             post AS p
         WHERE
-            caf.id = p.community_id
+            caf.id = p.category_id
             AND p.id = NEW.post_id;
     END IF;
     RETURN NULL;

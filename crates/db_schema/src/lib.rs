@@ -13,11 +13,11 @@ pub mod sensitive;
 pub mod test_data;
 #[cfg(feature = "full")]
 pub mod aliases {
-  use lemmy_db_schema_file::schema::{community_actions, instance_actions, local_user, person};
+  use app_108jobs_db_schema_file::schema::{category_actions, instance_actions, local_user, person};
   diesel::alias!(
-    community_actions as creator_community_actions: CreatorCommunityActions,
+    category_actions as creator_category_actions: CreatorcategoryActions,
     instance_actions as creator_home_instance_actions: CreatorHomeInstanceActions,
-    instance_actions as creator_community_instance_actions: CreatorCommunityInstanceActions,
+    instance_actions as creator_category_instance_actions: CreatorcategoryInstanceActions,
     instance_actions as creator_local_instance_actions: CreatorLocalInstanceActions,
     local_user as creator_local_user: CreatorLocalUser,
     person as person1: Person1,
@@ -34,8 +34,8 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 #[cfg(feature = "full")]
 use {
-  diesel::query_source::AliasedField,
-  lemmy_db_schema_file::schema::{community_actions, instance_actions, person},
+    diesel::query_source::AliasedField,
+    app_108jobs_db_schema_file::schema::{category_actions, instance_actions, person},
 };
 
 #[derive(
@@ -51,17 +51,17 @@ pub enum SearchSortType {
   Old,
 }
 
-/// The community sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The category sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-pub enum CommunitySortType {
+pub enum CategorySortType {
   ActiveSixMonths,
-  #[default]
   ActiveMonthly,
   ActiveWeekly,
   ActiveDaily,
   Hot,
+  #[default]
   New,
   Old,
   NameAsc,
@@ -97,15 +97,15 @@ pub enum ModlogActionType {
   ModLockPost,
   ModFeaturePost,
   ModRemoveComment,
-  ModRemoveCommunity,
-  ModBanFromCommunity,
-  ModAddCommunity,
-  ModTransferCommunity,
+  ModRemovecategory,
+  ModBanFromcategory,
+  ModAddcategory,
+  ModTransfercategory,
   ModAdd,
   ModBan,
-  ModChangeCommunityVisibility,
+  ModChangecategoryVisibility,
   AdminPurgePerson,
-  AdminPurgeCommunity,
+  AdminPurgecategory,
   AdminPurgePost,
   AdminPurgeComment,
   AdminBlockInstance,
@@ -154,8 +154,8 @@ pub enum PostFeatureType {
   #[default]
   /// Features to the top of your site.
   Local,
-  /// Features to the top of the community.
-  Community,
+  /// Features to the top of the category.
+  Category,
 }
 
 #[derive(
@@ -210,6 +210,8 @@ pub type Person1AliasAllColumnsTuple = (
   AliasedField<aliases::Person1, person::skills>,
   AliasedField<aliases::Person1, person::portfolio_pics>,
   AliasedField<aliases::Person1, person::work_samples>,
+  AliasedField<aliases::Person1, person::available>,
+  AliasedField<aliases::Person1, person::is_secure_message>,
 );
 
 #[cfg(feature = "full")]
@@ -242,20 +244,22 @@ pub type Person2AliasAllColumnsTuple = (
   AliasedField<aliases::Person2, person::skills>,
   AliasedField<aliases::Person2, person::portfolio_pics>,
   AliasedField<aliases::Person2, person::work_samples>,
+  AliasedField<aliases::Person2, person::available>,
+  AliasedField<aliases::Person2, person::is_secure_message>,
 );
 
 #[cfg(feature = "full")]
-/// A helper tuple for creator community actions
-pub type CreatorCommunityActionsAllColumnsTuple = (
-  AliasedField<aliases::CreatorCommunityActions, community_actions::community_id>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::person_id>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::followed_at>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::follow_state>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::follow_approver_id>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::blocked_at>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::became_moderator_at>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::received_ban_at>,
-  AliasedField<aliases::CreatorCommunityActions, community_actions::ban_expires_at>,
+/// A helper tuple for creator category actions
+pub type CreatorcategoryActionsAllColumnsTuple = (
+    AliasedField<aliases::CreatorcategoryActions, category_actions::category_id>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::person_id>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::followed_at>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::follow_state>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::follow_approver_id>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::blocked_at>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::became_moderator_at>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::received_ban_at>,
+    AliasedField<aliases::CreatorcategoryActions, category_actions::ban_expires_at>,
 );
 
 #[cfg(feature = "full")]
@@ -280,10 +284,10 @@ pub type CreatorLocalInstanceActionsAllColumnsTuple = (
 
 #[cfg(feature = "full")]
 /// A helper tuple for creator home instance actions.
-pub type CreatorCommunityInstanceActionsAllColumnsTuple = (
-  AliasedField<aliases::CreatorCommunityInstanceActions, instance_actions::person_id>,
-  AliasedField<aliases::CreatorCommunityInstanceActions, instance_actions::instance_id>,
-  AliasedField<aliases::CreatorCommunityInstanceActions, instance_actions::blocked_at>,
-  AliasedField<aliases::CreatorCommunityInstanceActions, instance_actions::received_ban_at>,
-  AliasedField<aliases::CreatorCommunityInstanceActions, instance_actions::ban_expires_at>,
+pub type CreatorcategoryInstanceActionsAllColumnsTuple = (
+  AliasedField<aliases::CreatorcategoryInstanceActions, instance_actions::person_id>,
+  AliasedField<aliases::CreatorcategoryInstanceActions, instance_actions::instance_id>,
+  AliasedField<aliases::CreatorcategoryInstanceActions, instance_actions::blocked_at>,
+  AliasedField<aliases::CreatorcategoryInstanceActions, instance_actions::received_ban_at>,
+  AliasedField<aliases::CreatorcategoryInstanceActions, instance_actions::ban_expires_at>,
 );

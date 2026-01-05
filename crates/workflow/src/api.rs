@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::WorkflowId;
+use app_108jobs_db_schema::newtypes::WorkflowId;
 
 // Shared data snapshot for typestate transitions
 #[derive(Clone, Debug)]

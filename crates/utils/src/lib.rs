@@ -47,12 +47,12 @@ pub const CACHE_DURATION_API: Duration = Duration::from_secs(0);
 pub const CACHE_DURATION_API: Duration = Duration::from_secs(1);
 
 #[cfg(debug_assertions)]
-pub const CACHE_DURATION_LARGEST_COMMUNITY: Duration = Duration::from_secs(0);
+pub const CACHE_DURATION_LARGEST_CATEGORY: Duration = Duration::from_secs(0);
 #[cfg(not(debug_assertions))]
-pub const CACHE_DURATION_LARGEST_COMMUNITY: Duration = DAY;
+pub const CACHE_DURATION_LARGEST_CATEGORY: Duration = DAY;
 
 pub const MAX_COMMENT_DEPTH_LIMIT: usize = 50;
-pub const MAX_COMMUNITY_DEPTH_LIMIT: usize = 1;
+pub const MAX_CATEGORY_DEPTH_LIMIT: usize = 1;
 
 #[macro_export]
 macro_rules! location_info {
@@ -66,17 +66,46 @@ macro_rules! location_info {
   };
 }
 
+#[macro_export]
+macro_rules! apply_date_filters {
+  ($query:ident, $params:expr, $created_at:expr) => {{
+    use diesel::dsl::sql;
+    use diesel::sql_types::Bool;
+
+    let mut q = $query;
+    if let Some(y) = $params.year {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(YEAR FROM {}) = {}",
+        $created_at, y
+      )));
+    }
+    if let Some(m) = $params.month {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(MONTH FROM {}) = {}",
+        $created_at, m
+      )));
+    }
+    if let Some(d) = $params.day {
+      q = q.filter(sql::<Bool>(&format!(
+        "EXTRACT(DAY FROM {}) = {}",
+        $created_at, d
+      )));
+    }
+    q
+  }};
+}
+
 cfg_if! {
   if #[cfg(feature = "full")] {
 use moka::future::Cache;use std::fmt::Debug;use std::hash::Hash;
 use serde_json::Value;use std::{sync::LazyLock};
 
 /// Only include a basic context to save space and bandwidth. The main context is hosted statically
-/// on join-lemmy.org. Include activitystreams explicitly for better compat, but this could
+/// on join-app_108jobs.org. Include activitystreams explicitly for better compat, but this could
 /// theoretically also be moved.
 pub static FEDERATION_CONTEXT: LazyLock<Value> = LazyLock::new(|| {
   Value::Array(vec![
-    Value::String("https://join-lemmy.org/context.json".to_string()),
+    Value::String("https://join-app_108jobs.org/context.json".to_string()),
     Value::String("https://www.w3.org/ns/activitystreams".to_string()),
   ])
 });

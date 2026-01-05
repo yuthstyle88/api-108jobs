@@ -2,27 +2,27 @@ use crate::newtypes::{
   AdminAllowInstanceId,
   AdminBlockInstanceId,
   AdminPurgeCommentId,
-  AdminPurgeCommunityId,
+  AdminPurgeCategoryId,
   AdminPurgePersonId,
   AdminPurgePostId,
-  ModAddCommunityId,
+  ModAddCategoryId,
   ModAddId,
-  ModBanFromCommunityId,
+  ModBanFromCategoryId,
   ModBanId,
-  ModChangeCommunityVisibilityId,
+  ModChangeCategoryVisibilityId,
   ModFeaturePostId,
   ModLockPostId,
   ModRemoveCommentId,
-  ModRemoveCommunityId,
+  ModRemoveCategoryId,
   ModRemovePostId,
-  ModTransferCommunityId,
+  ModTransferCategoryId,
   ModlogCombinedId,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::modlog_combined;
+use app_108jobs_db_schema_file::schema::modlog_combined;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Serialize, Deserialize, Debug, Clone)]
@@ -40,18 +40,18 @@ pub struct ModlogCombined {
   pub admin_allow_instance_id: Option<AdminAllowInstanceId>,
   pub admin_block_instance_id: Option<AdminBlockInstanceId>,
   pub admin_purge_comment_id: Option<AdminPurgeCommentId>,
-  pub admin_purge_community_id: Option<AdminPurgeCommunityId>,
+  pub admin_purge_category_id: Option<AdminPurgeCategoryId>,
   pub admin_purge_person_id: Option<AdminPurgePersonId>,
   pub admin_purge_post_id: Option<AdminPurgePostId>,
   pub mod_add_id: Option<ModAddId>,
-  pub mod_add_community_id: Option<ModAddCommunityId>,
+  pub mod_add_category_id: Option<ModAddCategoryId>,
   pub mod_ban_id: Option<ModBanId>,
-  pub mod_ban_from_community_id: Option<ModBanFromCommunityId>,
+  pub mod_ban_from_category_id: Option<ModBanFromCategoryId>,
   pub mod_feature_post_id: Option<ModFeaturePostId>,
-  pub mod_change_community_visibility_id: Option<ModChangeCommunityVisibilityId>,
+  pub mod_change_category_visibility_id: Option<ModChangeCategoryVisibilityId>,
   pub mod_lock_post_id: Option<ModLockPostId>,
   pub mod_remove_comment_id: Option<ModRemoveCommentId>,
-  pub mod_remove_community_id: Option<ModRemoveCommunityId>,
+  pub mod_remove_category_id: Option<ModRemoveCategoryId>,
   pub mod_remove_post_id: Option<ModRemovePostId>,
-  pub mod_transfer_community_id: Option<ModTransferCommunityId>,
+  pub mod_transfer_category_id: Option<ModTransferCategoryId>,
 }

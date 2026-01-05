@@ -34,19 +34,19 @@ SELECT
             c.id
         FROM
             post p,
-            community c
+            category c
         WHERE
             msp.post_id = p.id
-            AND p.community_id = c.id) AS community_id,
+            AND p.category_id = c.id) AS category_id,
     (
         SELECT
             c.name
         FROM
             post p,
-            community c
+            category c
         WHERE
             msp.post_id = p.id
-            AND p.community_id = c.id) AS community_name
+            AND p.category_id = c.id) AS category_name
 FROM
     mod_sticky_post msp;
 
@@ -68,10 +68,10 @@ with all_post AS (
             SELECT
                 cb.id::bool
             FROM
-                community_user_ban cb
+                category_user_ban cb
             WHERE
                 p.creator_id = cb.user_id
-                AND p.community_id = cb.community_id) AS banned_from_community,
+                AND p.category_id = cb.category_id) AS banned_from_category,
         (
             SELECT
                 name
@@ -83,30 +83,30 @@ with all_post AS (
             SELECT
                 name
             FROM
-                community
+                category
             WHERE
-                p.community_id = community.id) AS community_name,
+                p.category_id = category.id) AS category_name,
         (
             SELECT
                 removed
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_removed,
+                p.category_id = c.id) AS category_removed,
         (
             SELECT
                 deleted
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_deleted,
+                p.category_id = c.id) AS category_deleted,
         (
             SELECT
                 self_promotion
             FROM
-                community c
+                category c
             WHERE
-                p.community_id = c.id) AS community_self_promotion,
+                p.category_id = c.id) AS category_self_promotion,
         (
             SELECT
                 count(*)
@@ -142,10 +142,10 @@ SELECT
         SELECT
             cf.id::bool
         FROM
-            community_follower cf
+            category_follower cf
         WHERE
             u.id = cf.user_id
-            AND cf.community_id = ap.community_id) AS subscribed,
+            AND cf.category_id = ap.category_id) AS subscribed,
     (
         SELECT
             pr.id::bool

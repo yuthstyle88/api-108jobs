@@ -18,8 +18,8 @@
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
   "cc": [
     "https://masto.qa.urbanwildlife.biz/users/mastodon/followers",
-    "https://lemmy.qa.urbanwildlife.biz/c/lemmy_community",
-    "https://lemmy.qa.urbanwildlife.biz/c/lemmy_community/followers"
+    "https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category",
+    "https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category/followers"
   ],
   "object": {
     "id": "https://masto.qa.urbanwildlife.biz/users/mastodon/statuses/110435994705014161",
@@ -32,23 +32,23 @@
     "to": ["https://www.w3.org/ns/activitystreams#Public"],
     "cc": [
       "https://masto.qa.urbanwildlife.biz/users/mastodon/followers",
-      "https://lemmy.qa.urbanwildlife.biz/c/lemmy_community",
-      "https://lemmy.qa.urbanwildlife.biz/c/lemmy_community/followers"
+      "https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category",
+      "https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category/followers"
     ],
     "sensitive": false,
     "atomUri": "https://masto.qa.urbanwildlife.biz/users/mastodon/statuses/110435994705014161",
     "inReplyToAtomUri": null,
     "conversation": "tag:masto.qa.urbanwildlife.biz,2023-05-26:objectId=61:objectType=Conversation",
-    "content": "<p>Test post to community</p><p><span class=\"h-card\"><a href=\"https://lemmy.qa.urbanwildlife.biz/c/lemmy_community\" class=\"u-url mention\">@<span>lemmy_community</span></a></span></p>",
+    "content": "<p>Test post to category</p><p><span class=\"h-card\"><a href=\"https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category\" class=\"u-url mention\">@<span>app_108jobs_category</span></a></span></p>",
     "contentMap": {
-      "fr": "<p>Test post to community</p><p><span class=\"h-card\"><a href=\"https://lemmy.qa.urbanwildlife.biz/c/lemmy_community\" class=\"u-url mention\">@<span>lemmy_community</span></a></span></p>"
+      "fr": "<p>Test post to category</p><p><span class=\"h-card\"><a href=\"https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category\" class=\"u-url mention\">@<span>app_108jobs_category</span></a></span></p>"
     },
     "attachment": [],
     "tag": [
       {
         "type": "Mention",
-        "href": "https://lemmy.qa.urbanwildlife.biz/c/lemmy_community",
-        "name": "@lemmy_community@lemmy.qa.urbanwildlife.biz"
+        "href": "https://app_108jobs.qa.urbanwildlife.biz/c/app_108jobs_category",
+        "name": "@app_108jobs_category@app_108jobs.qa.urbanwildlife.biz"
       }
     ],
     "replies": {

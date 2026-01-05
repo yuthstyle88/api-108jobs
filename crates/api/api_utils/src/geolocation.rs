@@ -1,7 +1,7 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
-use lemmy_utils::error::{FastJobResult, FastJobErrorType};
+use app_108jobs_utils::error::{FastJobResult, FastJobErrorType};
 
 #[derive(Debug, Deserialize)]
 struct IpApiResponse {

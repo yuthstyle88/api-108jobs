@@ -3,7 +3,7 @@ use crate::bridge_message::{BridgeMessage, OutboundMessage};
 use crate::broker::manager::PhoenixManager;
 use crate::broker::JOIN_TIMEOUT_SECS;
 use crate::presence::{Heartbeat, OnlineJoin};
-use crate::protocol::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus, PresenceStatus};
+use crate::protocol::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus};
 use crate::protocol::impls::AnyIncomingEvent;
 use crate::protocol::phx_helper::{get_or_create_channel, send_event_to_channel};
 use actix::prelude::*;

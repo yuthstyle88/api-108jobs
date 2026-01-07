@@ -139,7 +139,10 @@ use app_108jobs_routes::images::{
 use app_108jobs_routes::payments::create_qrcode::create_qrcode;
 use app_108jobs_routes::payments::inquire::inquire_qrcode;
 use app_108jobs_utils::rate_limit::RateLimit;
-use app_108jobs_ws::server::handler::{get_history, get_last_read, get_peer_status, get_unread_snapshot, phoenix_ws};
+use app_108jobs_ws::server::handler::{
+  get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
+  phoenix_ws,
+};
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
@@ -433,7 +436,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/rooms/{id}", get().to(get_chat_room))
             .route("/last-read", get().to(get_last_read))
             .route("/get-peer-status", get().to(get_peer_status))
-            .route("/unread-snapshot", get().to(get_unread_snapshot)),
+            .route("/unread-snapshot", get().to(get_unread_snapshot))
+            .route("/presence-snapshot", get().to(get_presence_snapshot)),
         )
         .service(
           scope("/reviews")

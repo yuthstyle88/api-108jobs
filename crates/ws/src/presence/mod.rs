@@ -1,5 +1,3 @@
-mod presence_fanout;
-
 use crate::bridge_message::{GlobalOffline, GlobalOnline};
 use crate::broker::bridge_message::EmitTopics;
 use crate::broker::manager::GetPresenceSnapshot;

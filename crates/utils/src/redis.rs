@@ -2,6 +2,7 @@
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use redis::aio::MultiplexedConnection;
 pub use redis::AsyncCommands;
+use redis::Pipeline;
 use serde_json;
 
 #[derive(Clone)]
@@ -10,6 +11,19 @@ pub struct RedisClient {
 }
 
 impl RedisClient {
+  pub fn pipeline(&mut self) -> Pipeline {
+    redis::pipe()
+  }
+
+  pub async fn exec_pipeline(&mut self, pipe: &mut Pipeline) -> FastJobResult<()> {
+    let _: () = pipe
+      .query_async(&mut self.connection)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+
+    Ok(())
+  }
+
   /// Initializes Redis client and connects immediately
   pub async fn new(connection: &str) -> FastJobResult<Self> {
     let client =
@@ -170,5 +184,41 @@ impl RedisClient {
       .await
       .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
     Ok(keys)
+  }
+
+  /// Execute a Lua script
+  pub async fn script<T: redis::FromRedisValue>(
+    &mut self,
+    script: &redis::Script,
+    keys: &[&str],
+    args: &[&str],
+  ) -> FastJobResult<T> {
+    let result = script
+      .key(keys)
+      .arg(args)
+      .invoke_async(&mut self.connection)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+    Ok(result)
+  }
+
+  pub async fn scard(&mut self, key: &str) -> FastJobResult<i64> {
+    let count: i64 = self
+      .connection
+      .scard(key)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+    Ok(count)
+  }
+
+  /// Check if a key exists
+  pub async fn exists(&mut self, key: &str) -> FastJobResult<bool> {
+    let exists: bool = self
+      .connection
+      .exists(key)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+
+    Ok(exists)
   }
 }

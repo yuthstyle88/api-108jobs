@@ -1,6 +1,6 @@
-use crate::broker::manager::{FetchHistoryDirect, GetLastRead, GetUnreadSnapshot, PhoenixManager};
+use crate::broker::manager::{FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager};
 use crate::server::session::PhoenixSession;
-use crate::presence::IsUserOnline;
+use crate::presence::{IsUserOnline, PresenceManager};
 use actix::Addr;
 use actix_web::{
   web,
@@ -76,11 +76,25 @@ pub async fn get_peer_status(
     })
     .await
     .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-  println!("get_peer_status: online={:?}", online);
   Ok(HttpResponse::Ok().json(serde_json::json!({
     "online": online,
   })))
 }
+
+pub async fn get_presence_snapshot(
+  presence: Data<Addr<PresenceManager>>,
+  local_user_view: LocalUserView,
+) -> actix_web::Result<HttpResponse> {
+  let resp = presence
+      .send(GetPresenceSnapshot {
+        local_user_id: local_user_view.local_user.id,
+      })
+      .await
+      .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
+
+  Ok(HttpResponse::Ok().json(resp))
+}
+
 
 pub async fn phoenix_ws(
   req: HttpRequest,

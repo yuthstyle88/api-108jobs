@@ -7,7 +7,6 @@ use actix_web::{
   web::{scope, Data},
   App, HttpResponse, HttpServer,
 };
-use clap::{Parser, Subcommand};
 use app_108jobs_api_utils::site_snapshot::CachedSiteConfigProvider;
 use app_108jobs_api_utils::{
   context::FastJobContext, request::client_builder,
@@ -35,17 +34,18 @@ use app_108jobs_utils::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
+use clap::{Parser, Subcommand};
 use std::time::Duration;
 
 use app_108jobs_routes::utils::scheduled_tasks::setup;
+use app_108jobs_ws::broker::manager::PhoenixManager;
+use app_108jobs_ws::presence::PresenceManager;
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
-use app_108jobs_ws::broker::manager::PhoenixManager;
-use app_108jobs_ws::presence::PresenceManager;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -68,7 +68,11 @@ pub struct CmdArgs {
   ///
   /// If you are running multiple app_108jobs server processes, you probably want to disable scheduled
   /// tasks on all but one of the processes, to avoid running the tasks more often than intended.
-  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_SCHEDULED_TASKS")]
+  #[arg(
+    long,
+    default_value_t = false,
+    env = "app_108jobs_DISABLE_SCHEDULED_TASKS"
+  )]
   disable_scheduled_tasks: bool,
   /// Disables the HTTP server.
   ///
@@ -80,7 +84,11 @@ pub struct CmdArgs {
   ///
   /// Only pass this for horizontally scaled setups.
   /// See https://join-app_108jobs.org/docs/administration/horizontal_scaling.html for details.
-  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_ACTIVITY_SENDING")]
+  #[arg(
+    long,
+    default_value_t = false,
+    env = "app_108jobs_DISABLE_ACTIVITY_SENDING"
+  )]
   disable_activity_sending: bool,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
@@ -179,7 +187,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let heartbeat_ttl = Duration::from_secs(45);
   // Start a lightweight system broker for broadcasting presence events
   let presence_manager =
-    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone())).start();
+    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()), pool.clone()).start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -212,6 +220,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     Some(create_http_server(
       context.clone(),
       phoenix_manager,
+      presence_manager,
       SETTINGS.clone(),
     )?)
   } else {
@@ -266,6 +275,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
 fn create_http_server(
   context: FastJobContext,
   phoenix_manager: Addr<PhoenixManager>,
+  presence_manager: Addr<PresenceManager>,
   settings: Settings,
 ) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
@@ -307,7 +317,8 @@ fn create_http_server(
       ))
       // Application data - these don't affect middleware order
       .app_data(Data::new(context.clone()))
-      .app_data(Data::new(phoenix_manager.clone()));
+      .app_data(Data::new(phoenix_manager.clone()))
+      .app_data(Data::new(presence_manager.clone()));
 
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))

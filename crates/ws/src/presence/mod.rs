@@ -1,291 +1,458 @@
-use actix::{Actor, Context, Handler, Message};
-use actix::ResponseFuture;
-use chrono::{DateTime, Utc};
-use std::time::Duration;
-use std::collections::HashSet;
-use tracing;
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use app_108jobs_utils::redis::RedisClient;
-use actix_broker::{Broker, BrokerIssue, SystemBroker};
-use serde_json::json;
+mod presence_fanout;
 
 use crate::bridge_message::{GlobalOffline, GlobalOnline};
-use crate::protocol::api::ChatEvent;
 use crate::broker::bridge_message::EmitTopics;
-
-// Note: we use actix_broker::SystemBroker; do not redefine here.
+use crate::broker::manager::GetPresenceSnapshot;
+use crate::protocol::api::{ChatEvent, ChatsSignalPayload, PresenceSnapshotItem, PresenceStatus};
+use actix::ResponseFuture;
+use actix::{Actor, Context, Handler, Message};
+use actix_broker::{Broker, BrokerIssue, SystemBroker};
+use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
+use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
+use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::redis::RedisClient;
+use chrono::{DateTime, Utc};
+use serde_json::json;
+use std::collections::HashSet;
+use std::time::Duration;
+use tracing;
 
 /// ===== PresenceManager Actor =====
 
 /// Tracks online presence using heartbeats and explicit joins/leaves.
 /// Emits OnlineStopped when a user misses heartbeats beyond `heartbeat_ttl`.
 pub struct PresenceManager {
-    /// How long we wait before declaring a user “stopped” (timeout).
-    heartbeat_ttl: Duration,
-    redis: Option<RedisClient>,
-    /// Track which rooms each user is active in (for broadcasting presence to partners)
-    rooms_by_user: std::collections::HashMap<i32, std::collections::HashSet<ChatRoomId>>,    
+  /// How long we wait before declaring a user “stopped” (timeout).
+  heartbeat_ttl: Duration,
+  redis: Option<RedisClient>,
+  pool: ActualDbPool,
+  /// Track which rooms each user is active in (for broadcasting presence to partners)
+  rooms_by_user: std::collections::HashMap<i32, HashSet<ChatRoomId>>,
 }
 
 /// ===== Presence messages =====
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineJoin { pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub started_at: DateTime<Utc> }
+pub struct OnlineJoin {
+  pub room_id: ChatRoomId,
+  pub local_user_id: LocalUserId,
+  pub started_at: DateTime<Utc>,
+}
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineLeave {pub room_id: ChatRoomId, pub local_user_id: LocalUserId, pub left_at: DateTime<Utc> }
+pub struct OnlineLeave {
+  pub room_id: ChatRoomId,
+  pub local_user_id: LocalUserId,
+  pub left_at: DateTime<Utc>,
+}
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
-pub struct OnlineStopped {pub local_user_id: LocalUserId, pub stopped_at: DateTime<Utc> }
+pub struct OnlineStopped {
+  pub local_user_id: LocalUserId,
+  pub stopped_at: DateTime<Utc>,
+}
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "()")]
 pub struct Heartbeat {
-    pub local_user_id: LocalUserId,
-    pub connection_id: String,
-    pub client_time: Option<DateTime<Utc>>,
+  pub local_user_id: LocalUserId,
+  pub connection_id: String,
+  pub client_time: Option<DateTime<Utc>>,
 }
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "bool")]
-pub struct IsUserOnline {pub local_user_id: LocalUserId }
+pub struct IsUserOnline {
+  pub local_user_id: LocalUserId,
+}
 
 #[derive(Message, Clone, Debug)]
 #[rtype(result = "usize")]
 pub struct OnlineCount;
 
-impl PresenceManager {
-    pub fn new(
-        heartbeat_ttl: Duration,
-        redis: Option<RedisClient>,
-    ) -> Self {
-        Self {
-            heartbeat_ttl,
-            redis,
-            rooms_by_user: Default::default(),
-        }
+async fn ensure_contacts_loaded(
+  redis: &mut RedisClient,
+  db_pool: ActualDbPool,
+  user_id: LocalUserId,
+) {
+  let key = format!("contacts:user:{}", user_id.0);
+
+  // Already cached → do nothing
+  if redis.exists(&key).await.unwrap_or(false) {
+    return;
+  }
+
+  // CLONE redis for async task
+  let mut redis = redis.clone();
+
+  actix::spawn(async move {
+    let mut db = DbPool::Pool(&db_pool);
+
+    let Ok((rooms, members_by_room)) =
+      ChatParticipant::load_user_rooms_and_members(&mut db, user_id).await
+    else {
+      return;
+    };
+
+    let _ = sync_user_contacts_from_db(&mut redis, user_id, rooms, members_by_room).await;
+  });
+}
+
+/// One-time sync of user rooms + contacts from DB into Redis.
+/// This should be called ONLY when Redis cache is missing (cold start).
+///
+/// Redis keys:
+/// - rooms:user:{user_id}      -> SET(room_id)
+/// - contacts:user:{user_id}   -> SET(member_id)
+pub async fn sync_user_contacts_from_db(
+  redis: &mut RedisClient,
+  user_id: LocalUserId,
+  rooms: Vec<ChatRoomId>,
+  members_by_room: Vec<(ChatRoomId, Vec<LocalUserId>)>,
+) -> FastJobResult<()> {
+  let user_rooms_key = format!("rooms:user:{}", user_id.0);
+  let user_contacts_key = format!("contacts:user:{}", user_id.0);
+
+  // Optional: clear stale keys before rebuilding
+  // (safe because this is cold-sync only)
+  let _ = redis.delete_key(&user_rooms_key).await;
+  let _ = redis.delete_key(&user_contacts_key).await;
+
+  // Pipeline for best performance
+  let mut pipe = redis.pipeline();
+
+  // Save rooms
+  for room in &rooms {
+    pipe.sadd(&user_rooms_key, room.0.as_str());
+  }
+
+  // Save contacts (all other members from those rooms)
+  for (_room_id, members) in members_by_room {
+    for member_id in members {
+      if member_id != user_id {
+        pipe.sadd(&user_contacts_key, member_id.0);
+      }
     }
+  }
+
+  // Execute pipeline
+  redis.exec_pipeline(&mut pipe).await?;
+
+  Ok(())
+}
+
+impl PresenceManager {
+  pub fn new(heartbeat_ttl: Duration, redis: Option<RedisClient>, pool: ActualDbPool) -> Self {
+    Self {
+      heartbeat_ttl,
+      redis,
+      pool,
+      rooms_by_user: Default::default(),
+    }
+  }
 }
 
 impl Actor for PresenceManager {
-    type Context = Context<Self>;
+  type Context = Context<Self>;
 
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        tracing::info!(
-            ttl = self.heartbeat_ttl.as_secs(),
-            has_redis = self.redis.is_some(),
-            "PresenceManager started"
-        );
-    }
+  fn started(&mut self, _ctx: &mut Self::Context) {
+    tracing::info!(
+      ttl = self.heartbeat_ttl.as_secs(),
+      has_redis = self.redis.is_some(),
+      "PresenceManager started"
+    );
+  }
 }
 
 impl Handler<OnlineJoin> for PresenceManager {
-    type Result = ();
-    fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Context<Self>) -> Self::Result {
-        // Track room membership and broadcast join
-        let rooms = self
-            .rooms_by_user
-            .entry(msg.local_user_id.0)
-            .or_default();
+  type Result = ();
+  fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Context<Self>) -> Self::Result {
+    // Track room membership and broadcast join
+    let rooms = self.rooms_by_user.entry(msg.local_user_id.0).or_default();
 
-        if rooms.insert(msg.room_id.clone()) {
-            let topic = format!("room:{}", msg.room_id);
-            let payload = json!({
-                "type": "presence:diff",
-                "room_id": msg.room_id,
-                "joins": [{"user_id": msg.local_user_id.0, "at": msg.started_at} ],
-                "leaves": []
-            });
-            self.issue_async::<SystemBroker, _>(EmitTopics { items: vec![(topic, ChatEvent::Update, payload)]});
-        }
+    if rooms.insert(msg.room_id.clone()) {
+      let topic = format!("room:{}", msg.room_id);
+      let payload = json!({
+          "type": "presence:diff",
+          "room_id": msg.room_id,
+          "joins": [{"user_id": msg.local_user_id.0, "at": msg.started_at} ],
+          "leaves": []
+      });
+      self.issue_async::<SystemBroker, _>(EmitTopics {
+        items: vec![(topic, ChatEvent::ChatsSignal, payload)],
+      });
     }
+  }
 }
 
 impl Handler<OnlineLeave> for PresenceManager {
-    type Result = ();
-    fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Context<Self>) -> Self::Result {
-        let should_broadcast = if let Some(rooms) = self.rooms_by_user.get_mut(&msg.local_user_id.0) {
-            rooms.remove(&msg.room_id)
-        } else {
-            false
-        };
+  type Result = ();
+  fn handle(&mut self, msg: OnlineLeave, _ctx: &mut Context<Self>) -> Self::Result {
+    let should_broadcast = if let Some(rooms) = self.rooms_by_user.get_mut(&msg.local_user_id.0) {
+      rooms.remove(&msg.room_id)
+    } else {
+      false
+    };
 
-        if should_broadcast {
-            let topic = format!("room:{}", msg.room_id);
-            let payload = json!({
-                "type": "presence:diff",
-                "room_id": msg.room_id,
-                "joins": [],
-                "leaves": [{
-                    "user_id": msg.local_user_id.0,
-                    "last_seen": msg.left_at
-                }]
-            });
-            self.issue_async::<SystemBroker, _>(EmitTopics {
-                items: vec![(topic, ChatEvent::Update, payload)]
-            });
-        }
-
-        // Clean up empty user entry
-        if let Some(rooms) = self.rooms_by_user.get(&msg.local_user_id.0) {
-            if rooms.is_empty() {
-                self.rooms_by_user.remove(&msg.local_user_id.0);
-            }
-        }
+    if should_broadcast {
+      let topic = format!("room:{}", msg.room_id);
+      let payload = json!({
+          "type": "presence:diff",
+          "room_id": msg.room_id,
+          "joins": [],
+          "leaves": [{
+              "user_id": msg.local_user_id.0,
+              "last_seen": msg.left_at
+          }]
+      });
+      self.issue_async::<SystemBroker, _>(EmitTopics {
+        items: vec![(topic, ChatEvent::ChatsSignal, payload)],
+      });
     }
+
+    // Clean up empty user entry
+    if let Some(rooms) = self.rooms_by_user.get(&msg.local_user_id.0) {
+      if rooms.is_empty() {
+        self.rooms_by_user.remove(&msg.local_user_id.0);
+      }
+    }
+  }
 }
 
 impl Handler<OnlineStopped> for PresenceManager {
-    type Result = ();
-    fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Context<Self>) -> Self::Result {
-        // Broadcast leaves to all rooms this user was active in
-        if let Some(rooms) = self.rooms_by_user.remove(&msg.local_user_id.0) {
-            let stopped_at = msg.stopped_at;
-            let items: Vec<(String, ChatEvent, serde_json::Value)> = rooms
-                .into_iter()
-                .map(|room_id| {
-                    let topic = format!("room:{}", room_id);
-                    let payload = json!({
-                        "type": "presence:diff",
-                        "room_id": room_id,
-                        "joins": [],
-                        "leaves": [{"user_id": msg.local_user_id.0, "last_seen": stopped_at} ]
-                    });
-                    (topic, ChatEvent::Update, payload)
-                })
-                .collect();
-            if !items.is_empty() {
-                self.issue_async::<SystemBroker, _>(EmitTopics { items });
-            }
-        }
-        // tracing::info!(local_user_id = msg.local_user_id, ts = %msg.stopped_at, "presence: online_stopped(event)");
+  type Result = ();
+  fn handle(&mut self, msg: OnlineStopped, _ctx: &mut Context<Self>) -> Self::Result {
+    // Broadcast leaves to all rooms this user was active in
+    if let Some(rooms) = self.rooms_by_user.remove(&msg.local_user_id.0) {
+      let stopped_at = msg.stopped_at;
+      let items: Vec<(String, ChatEvent, serde_json::Value)> = rooms
+        .into_iter()
+        .map(|room_id| {
+          let topic = format!("room:{}", room_id);
+          let payload = json!({
+              "type": "presence:diff",
+              "room_id": room_id,
+              "joins": [],
+              "leaves": [{"user_id": msg.local_user_id.0, "last_seen": stopped_at} ]
+          });
+          (topic, ChatEvent::ChatsSignal, payload)
+        })
+        .collect();
+      if !items.is_empty() {
+        self.issue_async::<SystemBroker, _>(EmitTopics { items });
+      }
     }
+  }
+}
+
+async fn emit_presence_to_contacts(
+  redis: &mut RedisClient,
+  user_id: i32,
+  payload: serde_json::Value,
+) -> FastJobResult<()> {
+  let key = format!("contacts:user:{}", user_id);
+
+  let contact_ids = redis.smembers(&key).await?;
+
+  if contact_ids.is_empty() {
+    return Ok(());
+  }
+
+  let items = contact_ids
+    .into_iter()
+    .map(|cid| {
+      (
+        format!("user:{}:events", cid),
+        ChatEvent::ChatsSignal,
+        payload.clone(),
+      )
+    })
+    .collect::<Vec<_>>();
+
+  Broker::<SystemBroker>::issue_async(EmitTopics { items });
+
+  Ok(())
 }
 
 impl Handler<GlobalOnline> for PresenceManager {
-    type Result = ResponseFuture<()>;
-    fn handle(&mut self, msg: GlobalOnline, _ctx: &mut Context<Self>) -> Self::Result {
-        let redis = self.redis.clone();
-        let ttl = self.heartbeat_ttl.as_secs() as usize;
-        let user_id = msg.local_user_id.0;
-        let conn_id = msg.connection_id.clone();
-        let started_at = msg.at;
+  type Result = ResponseFuture<()>;
 
-        Box::pin(async move {
-            if let Some(mut client) = redis {
-                let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
-                // Set connection key with TTL
-                let _ = client.set_value_with_expiry(&conn_key, 1, ttl).await;
+  fn handle(&mut self, msg: GlobalOnline, _ctx: &mut Context<Self>) -> Self::Result {
+    let redis = self.redis.clone();
+    let db_pool = self.pool.clone();
+    let ttl = self.heartbeat_ttl.as_secs() as usize;
+    let user_id = msg.local_user_id.0;
+    let conn_id = msg.connection_id.clone();
+    let started_at = msg.at;
 
-                // Check if this is the first connection
-                let pattern = format!("presence:user:{}:conn:*", user_id);
-                if let Ok(keys) = client.keys(&pattern).await {
-                    if keys.len() == 1 {
-                        // First connection -> Broadcast online
-                        Broker::<SystemBroker>::issue_async(EmitTopics {
-                            items: vec![(
-                                format!("presence:user:{}", user_id),
-                                ChatEvent::Update,
-                                json!({
-                                    "type": "presence",
-                                    "user_id": user_id,
-                                    "status": "online",
-                                    "at": started_at
-                                })
-                            )]
-                        });
-                    }
-                }
-            }
+    Box::pin(async move {
+      let Some(mut client) = redis else { return };
+
+      ensure_contacts_loaded(&mut client, db_pool, msg.local_user_id).await;
+
+      let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
+
+      // set connection with TTL
+      let _ = client.set_value_with_expiry(&conn_key, 1, ttl).await;
+
+      let pattern = format!("presence:user:{}:conn:*", user_id);
+      let Ok(keys) = client.keys(&pattern).await else {
+        return;
+      };
+
+      // FIRST connection only
+      if keys.len() == 1 {
+        let payload = serde_json::to_value(ChatsSignalPayload::GlobalPresence {
+          version: 1,
+          user_id: msg.local_user_id,
+          status: PresenceStatus::Online,
+          at: started_at,
+          last_seen: None,
         })
-    }
+        .unwrap();
+
+        let _ = emit_presence_to_contacts(&mut client, user_id, payload).await;
+      }
+    })
+  }
 }
 
 impl Handler<GlobalOffline> for PresenceManager {
-    type Result = ResponseFuture<()>;
-    fn handle(&mut self, msg: GlobalOffline, _ctx: &mut Context<Self>) -> Self::Result {
-        let redis = self.redis.clone();
-        let user_id = msg.local_user_id.0;
-        let conn_id = msg.connection_id.clone();
+  type Result = ResponseFuture<()>;
 
-        Box::pin(async move {
-            if let Some(mut client) = redis {
-                let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
-                let _ = client.delete_key(&conn_key).await;
+  fn handle(&mut self, msg: GlobalOffline, _ctx: &mut Context<Self>) -> Self::Result {
+    let redis = self.redis.clone();
+    let user_id = msg.local_user_id.0;
+    let conn_id = msg.connection_id.clone();
 
-                // Check if this was the last connection
-                let pattern = format!("presence:user:{}:conn:*", user_id);
-                if let Ok(keys) = client.keys(&pattern).await {
-                    if keys.is_empty() {
-                        // Last connection -> Broadcast offline
-                        Broker::<SystemBroker>::issue_async(EmitTopics {
-                            items: vec![(
-                                format!("presence:user:{}", user_id),
-                                ChatEvent::Update,
-                                json!({
-                                    "type": "presence",
-                                    "user_id": user_id,
-                                    "status": "offline",
-                                    "last_seen": Utc::now()
-                                })
-                            )]
-                        });
-                    }
-                }
-            }
+    Box::pin(async move {
+      let Some(mut client) = redis else { return };
+
+      let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
+      let _ = client.delete_key(&conn_key).await;
+
+      let pattern = format!("presence:user:{}:conn:*", user_id);
+      let Ok(keys) = client.keys(&pattern).await else {
+        return;
+      };
+
+      // LAST connection only
+      if keys.is_empty() {
+        let payload = serde_json::to_value(ChatsSignalPayload::GlobalPresence {
+          version: 1,
+          user_id: msg.local_user_id,
+          status: PresenceStatus::Offline,
+          at: Utc::now(),
+          last_seen: Some(Utc::now()),
         })
-    }
+        .unwrap();
+
+        let _ = emit_presence_to_contacts(&mut client, user_id, payload).await;
+      }
+    })
+  }
 }
 
 impl Handler<Heartbeat> for PresenceManager {
-    type Result = ();
-    fn handle(&mut self, msg: Heartbeat, _ctx: &mut Context<Self>) -> Self::Result {
-        if let Some(mut client) = self.redis.clone() {
-            let ttl = self.heartbeat_ttl.as_secs() as usize;
-            let conn_key = format!("presence:user:{}:conn:{}", msg.local_user_id.0, msg.connection_id);
-            actix::spawn(async move {
-                let _ = client.expire(&conn_key, ttl).await;
-            });
-        }
+  type Result = ();
+  fn handle(&mut self, msg: Heartbeat, _ctx: &mut Context<Self>) -> Self::Result {
+    if let Some(mut client) = self.redis.clone() {
+      let ttl = self.heartbeat_ttl.as_secs() as usize;
+      let conn_key = format!(
+        "presence:user:{}:conn:{}",
+        msg.local_user_id.0, msg.connection_id
+      );
+      actix::spawn(async move {
+        let _ = client.expire(&conn_key, ttl).await;
+      });
     }
+  }
 }
 
 impl Handler<IsUserOnline> for PresenceManager {
-    type Result = ResponseFuture<bool>;
-    fn handle(&mut self, msg: IsUserOnline, _ctx: &mut Context<Self>) -> Self::Result {
-        let client = self.redis.clone();
-        Box::pin(async move {
-            if let Some(mut client) = client {
-                let pattern = format!("presence:user:{}:conn:*", msg.local_user_id.0);
-                if let Ok(keys) = client.keys(&pattern).await {
-                    return !keys.is_empty();
-                }
-            }
-            false
-        })
-    }
+  type Result = ResponseFuture<bool>;
+  fn handle(&mut self, msg: IsUserOnline, _ctx: &mut Context<Self>) -> Self::Result {
+    let client = self.redis.clone();
+    Box::pin(async move {
+      if let Some(mut client) = client {
+        let pattern = format!("presence:user:{}:conn:*", msg.local_user_id.0);
+        if let Ok(keys) = client.keys(&pattern).await {
+          return !keys.is_empty();
+        }
+      }
+      false
+    })
+  }
 }
 
 impl Handler<OnlineCount> for PresenceManager {
-    type Result = ResponseFuture<usize>;
-    fn handle(&mut self, _msg: OnlineCount, _ctx: &mut Context<Self>) -> Self::Result {
-        let client = self.redis.clone();
-        Box::pin(async move {
-            if let Some(mut client) = client {
-                // This is a bit expensive but accurate for global online count across all devices
-                // We want count of unique users who have at least one connection key
-                let pattern = "presence:user:*:conn:*".to_string();
-                if let Ok(keys) = client.keys(&pattern).await {
-                    let unique_users: HashSet<String> = keys
-                        .into_iter()
-                        .filter_map(|k| k.split(':').nth(2).map(|s| s.to_string()))
-                        .collect();
-                    return unique_users.len();
-                }
-            }
-            0
-        })
-    }
+  type Result = ResponseFuture<usize>;
+  fn handle(&mut self, _msg: OnlineCount, _ctx: &mut Context<Self>) -> Self::Result {
+    let client = self.redis.clone();
+    Box::pin(async move {
+      if let Some(mut client) = client {
+        // This is a bit expensive but accurate for global online count across all devices
+        // We want count of unique users who have at least one connection key
+        let pattern = "presence:user:*:conn:*".to_string();
+        if let Ok(keys) = client.keys(&pattern).await {
+          let unique_users: HashSet<String> = keys
+            .into_iter()
+            .filter_map(|k| k.split(':').nth(2).map(|s| s.to_string()))
+            .collect();
+          return unique_users.len();
+        }
+      }
+      0
+    })
+  }
+}
+
+impl Handler<GetPresenceSnapshot> for PresenceManager {
+  type Result = ResponseFuture<FastJobResult<Vec<PresenceSnapshotItem>>>;
+
+  fn handle(&mut self, msg: GetPresenceSnapshot, _ctx: &mut Context<Self>) -> Self::Result {
+    let redis = self.redis.clone();
+    let requester_id = msg.local_user_id.0;
+
+    Box::pin(async move {
+      let Some(mut redis) = redis else {
+        return Ok(Vec::new());
+      };
+
+      // get contacts
+      let contacts_key = format!("contacts:user:{}", requester_id);
+      let contacts: Vec<String> = redis.smembers(&contacts_key).await?;
+
+      let mut items = Vec::with_capacity(contacts.len());
+      let now = Utc::now();
+
+      // presence check (same logic as IsUserOnline)
+      for cid in contacts {
+        let Ok(cid) = cid.parse::<i32>() else {
+          continue;
+        };
+
+        let pattern = format!("presence:user:{}:conn:*", cid);
+        let online = redis
+          .keys(&pattern)
+          .await
+          .map(|k| !k.is_empty())
+          .unwrap_or(false);
+
+        if online {
+          items.push(PresenceSnapshotItem {
+            user_id: LocalUserId(cid),
+            status: PresenceStatus::Online,
+            at: now,
+            last_seen: None,
+          });
+        }
+      }
+
+      Ok(items)
+    })
+  }
 }

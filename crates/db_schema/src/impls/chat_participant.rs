@@ -6,11 +6,11 @@ use crate::{
   source::chat_room::ChatRoom,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::{chat_participant, chat_room};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::{insert_into, update};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::{chat_participant, chat_room};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for ChatParticipant {
   type InsertForm = ChatParticipantInsertForm;
@@ -19,12 +19,12 @@ impl Crud for ChatParticipant {
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    
+
     insert_into(chat_participant::table)
-        .values(form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntCreateChatParticipant)
+      .values(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntCreateChatParticipant)
   }
 
   async fn update(
@@ -33,12 +33,12 @@ impl Crud for ChatParticipant {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    
+
     update(chat_participant::table.find(id))
-        .set(form)
-        .get_result::<Self>(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatParticipant)
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateChatParticipant)
   }
 }
 
@@ -86,7 +86,10 @@ impl ChatParticipant {
 
     let query = chat_participant::table
       .filter(chat_participant::room_id.eq_any(ids))
-      .order((chat_participant::room_id.asc(), chat_participant::joined_at.asc()));
+      .order((
+        chat_participant::room_id.asc(),
+        chat_participant::joined_at.asc(),
+      ));
 
     let rows = diesel_async::RunQueryDsl::load(query, conn)
       .await
@@ -98,7 +101,7 @@ impl ChatParticipant {
   /// Ensure a participant record exists for (room_id, member_id). If not, insert it.
   pub async fn ensure_participant(
     pool: &mut DbPool<'_>,
-    chat_participant_form: &ChatParticipantInsertForm
+    chat_participant_form: &ChatParticipantInsertForm,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
@@ -111,5 +114,51 @@ impl ChatParticipant {
       .with_fastjob_type(FastJobErrorType::CouldntEnsureParticipant)?;
 
     Ok(())
+  }
+
+  /// Load all rooms the user participates in,
+  /// and all members for those rooms.
+  ///
+  /// Used for Redis contact sync (DB → Redis).
+  pub async fn load_user_rooms_and_members(
+    pool: &mut DbPool<'_>,
+    user_id: LocalUserId,
+  ) -> FastJobResult<(Vec<ChatRoomId>, Vec<(ChatRoomId, Vec<LocalUserId>)>)> {
+    let conn = &mut get_conn(pool).await?;
+
+    // Load all room_ids for this user
+    let rooms: Vec<ChatRoomId> = chat_participant::table
+      .filter(chat_participant::member_id.eq(user_id))
+      .select(chat_participant::room_id)
+      .load(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntListRoomForUser)?;
+
+    if rooms.is_empty() {
+      return Ok((Vec::new(), Vec::new()));
+    }
+
+    // Load all participants for those rooms
+    let participants: Vec<ChatParticipant> = chat_participant::table
+      .filter(chat_participant::room_id.eq_any(&rooms))
+      .order((
+        chat_participant::room_id.asc(),
+        chat_participant::joined_at.asc(),
+      ))
+      .load(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntListRoomForUser)?;
+
+    // Group members by room
+    use std::collections::HashMap;
+    let mut map: HashMap<ChatRoomId, Vec<LocalUserId>> = HashMap::new();
+
+    for p in participants {
+      map.entry(p.room_id).or_default().push(p.member_id);
+    }
+
+    let members_by_room = map.into_iter().collect();
+
+    Ok((rooms, members_by_room))
   }
 }

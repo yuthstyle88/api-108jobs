@@ -39,7 +39,7 @@ use std::time::Duration;
 
 use app_108jobs_routes::utils::scheduled_tasks::setup;
 use app_108jobs_ws::broker::manager::PhoenixManager;
-use app_108jobs_ws::presence::PresenceManager;
+use app_108jobs_ws::presence::{AttachPhoenix, PresenceManager};
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
@@ -208,6 +208,10 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   )
   .await
   .start();
+
+  presence_manager.do_send(AttachPhoenix {
+    addr: phoenix_manager.clone(),
+  });
 
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;

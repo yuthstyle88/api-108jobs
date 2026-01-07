@@ -1,21 +1,24 @@
 use crate::bridge_message::{GlobalOffline, GlobalOnline};
 use crate::broker::bridge_message::EmitTopics;
-use crate::broker::manager::GetPresenceSnapshot;
+use crate::broker::manager::{GetPresenceSnapshot, PhoenixManager};
 use crate::protocol::api::{ChatEvent, ChatsSignalPayload, PresenceSnapshotItem, PresenceStatus};
-use actix::ResponseFuture;
 use actix::{Actor, Context, Handler, Message};
-use actix_broker::{Broker, BrokerIssue, SystemBroker};
+use actix::{Addr, ResponseFuture};
+use actix_broker::{BrokerIssue, SystemBroker};
 use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
 use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
 use app_108jobs_utils::error::FastJobResult;
 use app_108jobs_utils::redis::{AsyncCommands, RedisClient};
+use app_108jobs_utils::utils::helper::{
+  contacts_key, presence_conn_count_key, presence_conn_key, presence_conn_pattern, rooms_key,
+  user_events_topic,
+};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing;
-use app_108jobs_utils::utils::helper::contacts_key;
 
 /// ===== PresenceManager Actor =====
 
@@ -28,6 +31,7 @@ pub struct PresenceManager {
   pool: ActualDbPool,
   /// Track which rooms each user is active in (for broadcasting presence to partners)
   rooms_by_user: std::collections::HashMap<i32, HashSet<ChatRoomId>>,
+  phoenix_addr: Option<Addr<PhoenixManager>>,
 }
 
 /// ===== Presence messages =====
@@ -72,6 +76,20 @@ pub struct IsUserOnline {
 #[rtype(result = "usize")]
 pub struct OnlineCount;
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct AttachPhoenix {
+  pub addr: Addr<PhoenixManager>,
+}
+
+impl Handler<AttachPhoenix> for PresenceManager {
+  type Result = ();
+
+  fn handle(&mut self, msg: AttachPhoenix, _: &mut Context<Self>) {
+    self.phoenix_addr = Some(msg.addr);
+  }
+}
+
 async fn ensure_contacts_loaded(
   redis: &mut RedisClient,
   db_pool: ActualDbPool,
@@ -112,8 +130,8 @@ pub async fn sync_user_contacts_from_db(
   rooms: Vec<ChatRoomId>,
   members_by_room: Vec<(ChatRoomId, Vec<LocalUserId>)>,
 ) -> FastJobResult<()> {
-  let user_rooms_key = format!("rooms:user:{}", user_id.0);
-  let user_contacts_key = format!("contacts:user:{}", user_id.0);
+  let user_rooms_key = rooms_key(user_id.0);
+  let user_contacts_key = contacts_key(user_id.0);
 
   // Optional: clear stale keys before rebuilding
   // (safe because this is cold-sync only)
@@ -150,6 +168,7 @@ impl PresenceManager {
       redis,
       pool,
       rooms_by_user: Default::default(),
+      phoenix_addr: None,
     }
   }
 }
@@ -253,13 +272,12 @@ impl Handler<OnlineStopped> for PresenceManager {
 }
 
 async fn emit_presence_to_contacts(
+  phoenix: &Addr<PhoenixManager>,
   redis: &mut RedisClient,
   user_id: i32,
   payload: serde_json::Value,
 ) -> FastJobResult<()> {
-  let key = contacts_key(user_id);
-
-  let contact_ids = redis.smembers(&key).await?;
+  let contact_ids = redis.smembers(&contacts_key(user_id)).await?;
 
   if contact_ids.is_empty() {
     return Ok(());
@@ -269,15 +287,14 @@ async fn emit_presence_to_contacts(
     .into_iter()
     .map(|cid| {
       (
-        format!("user:{}:events", cid),
+        user_events_topic(&cid),
         ChatEvent::ChatsSignal,
         payload.clone(),
       )
     })
-    .collect::<Vec<_>>();
+    .collect();
 
-  Broker::<SystemBroker>::issue_async(EmitTopics { items });
-
+  phoenix.do_send(EmitTopics { items });
   Ok(())
 }
 
@@ -291,20 +308,23 @@ impl Handler<GlobalOnline> for PresenceManager {
     let user_id = msg.local_user_id.0;
     let conn_id = msg.connection_id.clone();
     let started_at = msg.at;
+    let phoenix = self.phoenix_addr.clone();
 
     Box::pin(async move {
-      let Some(mut client) = redis else { return };
+      let (Some(mut client), Some(phoenix)) = (redis, phoenix) else {
+        return;
+      };
 
       ensure_contacts_loaded(&mut client, db_pool, msg.local_user_id).await;
 
-      let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
+      let conn_key = presence_conn_key(user_id, &conn_id);
 
       // set connection with TTL
       let _ = client.set_value_with_expiry(&conn_key, 1, ttl).await;
 
       let count: i64 = client
         .connection
-        .incr(format!("presence:user:{}:conn_count", user_id), 1)
+        .incr(presence_conn_count_key(user_id), 1)
         .await
         .unwrap_or(0);
 
@@ -319,7 +339,7 @@ impl Handler<GlobalOnline> for PresenceManager {
         })
         .unwrap();
 
-        let _ = emit_presence_to_contacts(&mut client, user_id, payload).await;
+        let _ = emit_presence_to_contacts(&phoenix, &mut client, user_id, payload).await;
       }
     })
   }
@@ -332,16 +352,19 @@ impl Handler<GlobalOffline> for PresenceManager {
     let redis = self.redis.clone();
     let user_id = msg.local_user_id.0;
     let conn_id = msg.connection_id.clone();
+    let phoenix = self.phoenix_addr.clone();
 
     Box::pin(async move {
-      let Some(mut client) = redis else { return };
+      let (Some(mut client), Some(phoenix)) = (redis, phoenix) else {
+        return;
+      };
 
-      let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
+      let conn_key = presence_conn_key(user_id, &conn_id);
       let _ = client.delete_key(&conn_key).await;
 
       let count: i64 = client
         .connection
-        .decr(format!("presence:user:{}:conn_count", user_id), 1)
+        .decr(presence_conn_count_key(user_id), 1)
         .await
         .unwrap_or(0);
 
@@ -356,7 +379,7 @@ impl Handler<GlobalOffline> for PresenceManager {
         })
         .unwrap();
 
-        let _ = emit_presence_to_contacts(&mut client, user_id, payload).await;
+        let _ = emit_presence_to_contacts(&phoenix, &mut client, user_id, payload).await;
       }
     })
   }
@@ -367,10 +390,7 @@ impl Handler<Heartbeat> for PresenceManager {
   fn handle(&mut self, msg: Heartbeat, _ctx: &mut Context<Self>) -> Self::Result {
     if let Some(mut client) = self.redis.clone() {
       let ttl = self.heartbeat_ttl.as_secs() as usize;
-      let conn_key = format!(
-        "presence:user:{}:conn:{}",
-        msg.local_user_id.0, msg.connection_id
-      );
+      let conn_key = presence_conn_key(msg.local_user_id.0, &msg.connection_id);
       actix::spawn(async move {
         let _ = client.expire(&conn_key, ttl).await;
       });
@@ -387,35 +407,13 @@ impl Handler<IsUserOnline> for PresenceManager {
     Box::pin(async move {
       if let Some(mut client) = redis {
         client
-          .get_value::<i64>(&format!("presence:user:{}:conn_count", msg.local_user_id.0))
+          .get_value::<i64>(&presence_conn_count_key(msg.local_user_id.0))
           .await
           .unwrap_or(Some(0))
           > Some(0)
       } else {
         false
       }
-    })
-  }
-}
-
-impl Handler<OnlineCount> for PresenceManager {
-  type Result = ResponseFuture<usize>;
-  fn handle(&mut self, _msg: OnlineCount, _ctx: &mut Context<Self>) -> Self::Result {
-    let client = self.redis.clone();
-    Box::pin(async move {
-      if let Some(mut client) = client {
-        // This is a bit expensive but accurate for global online count across all devices
-        // We want count of unique users who have at least one connection key
-        let pattern = "presence:user:*:conn:*".to_string();
-        if let Ok(keys) = client.keys(&pattern).await {
-          let unique_users: HashSet<String> = keys
-            .into_iter()
-            .filter_map(|k| k.split(':').nth(2).map(|s| s.to_string()))
-            .collect();
-          return unique_users.len();
-        }
-      }
-      0
     })
   }
 }
@@ -445,7 +443,7 @@ impl Handler<GetPresenceSnapshot> for PresenceManager {
           continue;
         };
 
-        let pattern = format!("presence:user:{}:conn:*", cid);
+        let pattern = presence_conn_pattern(cid);
         let online = redis
           .keys(&pattern)
           .await

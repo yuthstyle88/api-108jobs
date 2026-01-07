@@ -23,3 +23,8 @@ pub fn lang_to_country_code(lang: Option<&str>) -> Option<String> {
       }
    })
 }
+
+#[inline]
+pub fn contacts_key(user_id: i32) -> String {
+   format!("contacts:user:{}", user_id)
+}

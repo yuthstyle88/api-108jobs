@@ -337,6 +337,7 @@ pub enum FastJobErrorType {
   CannotDeleteDefaultBankAccount,
     ReachedMax3BankAccounts,
     CouldntUpdateChatUnread,
+    RedisPipelineFailed,
 }
 
 cfg_if! {

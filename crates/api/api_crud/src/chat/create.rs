@@ -1,5 +1,4 @@
 use actix_web::web::{Data, Json};
-use chrono::Utc;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::newtypes::ChatRoomId;
 use app_108jobs_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
@@ -9,6 +8,8 @@ use app_108jobs_db_views_chat::api::{ChatRoomResponse, CreateChatRoomRequest};
 use app_108jobs_db_views_chat::ChatRoomView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::utils::helper::contacts_key;
+use chrono::Utc;
 
 /// POST /api/v4/chat/rooms
 /// Create (or get) a direct-message chat room for two users, and ensure both are participants.
@@ -78,6 +79,18 @@ pub async fn create_chat_room(
     };
     ChatParticipant::ensure_participant(&mut pool, &form2).await?;
   }
+
+  // --- Update Redis contacts ---
+  let mut redis = context.redis().clone();
+
+  let current_uid = current_luid.0;
+  let partner_uid = partner_luid.0;
+
+  // current user sees partner
+  let _ = redis.sadd(&contacts_key(current_uid), partner_uid).await;
+
+  // partner sees current user
+  let _ = redis.sadd(&contacts_key(partner_uid), current_uid).await;
 
   let view = ChatRoomView::read(&mut pool, room_id.clone()).await?;
 

@@ -9,12 +9,13 @@ use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
 use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
 use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
 use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::redis::{AsyncCommands, RedisClient};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing;
+use app_108jobs_utils::utils::helper::contacts_key;
 
 /// ===== PresenceManager Actor =====
 
@@ -165,6 +166,28 @@ impl Actor for PresenceManager {
   }
 }
 
+fn presence_diff_join(room_id: ChatRoomId, user_id: i32, at: DateTime<Utc>) -> serde_json::Value {
+  json!({
+    "type": "presence:diff",
+    "room_id": room_id,
+    "joins": [{ "user_id": user_id, "at": at }],
+    "leaves": []
+  })
+}
+
+fn presence_diff_leave(
+  room_id: ChatRoomId,
+  user_id: i32,
+  last_seen: DateTime<Utc>,
+) -> serde_json::Value {
+  json!({
+    "type": "presence:diff",
+    "room_id": room_id,
+    "joins": [],
+    "leaves": [{ "user_id": user_id, "last_seen": last_seen }]
+  })
+}
+
 impl Handler<OnlineJoin> for PresenceManager {
   type Result = ();
   fn handle(&mut self, msg: OnlineJoin, _ctx: &mut Context<Self>) -> Self::Result {
@@ -173,12 +196,7 @@ impl Handler<OnlineJoin> for PresenceManager {
 
     if rooms.insert(msg.room_id.clone()) {
       let topic = format!("room:{}", msg.room_id);
-      let payload = json!({
-          "type": "presence:diff",
-          "room_id": msg.room_id,
-          "joins": [{"user_id": msg.local_user_id.0, "at": msg.started_at} ],
-          "leaves": []
-      });
+      let payload = presence_diff_join(msg.room_id, msg.local_user_id.0, msg.started_at);
       self.issue_async::<SystemBroker, _>(EmitTopics {
         items: vec![(topic, ChatEvent::ChatsSignal, payload)],
       });
@@ -197,15 +215,7 @@ impl Handler<OnlineLeave> for PresenceManager {
 
     if should_broadcast {
       let topic = format!("room:{}", msg.room_id);
-      let payload = json!({
-          "type": "presence:diff",
-          "room_id": msg.room_id,
-          "joins": [],
-          "leaves": [{
-              "user_id": msg.local_user_id.0,
-              "last_seen": msg.left_at
-          }]
-      });
+      let payload = presence_diff_leave(msg.room_id, msg.local_user_id.0, msg.left_at);
       self.issue_async::<SystemBroker, _>(EmitTopics {
         items: vec![(topic, ChatEvent::ChatsSignal, payload)],
       });
@@ -230,12 +240,8 @@ impl Handler<OnlineStopped> for PresenceManager {
         .into_iter()
         .map(|room_id| {
           let topic = format!("room:{}", room_id);
-          let payload = json!({
-              "type": "presence:diff",
-              "room_id": room_id,
-              "joins": [],
-              "leaves": [{"user_id": msg.local_user_id.0, "last_seen": stopped_at} ]
-          });
+          let payload = presence_diff_leave(room_id, msg.local_user_id.0, stopped_at);
+
           (topic, ChatEvent::ChatsSignal, payload)
         })
         .collect();
@@ -251,7 +257,7 @@ async fn emit_presence_to_contacts(
   user_id: i32,
   payload: serde_json::Value,
 ) -> FastJobResult<()> {
-  let key = format!("contacts:user:{}", user_id);
+  let key = contacts_key(user_id);
 
   let contact_ids = redis.smembers(&key).await?;
 
@@ -296,13 +302,14 @@ impl Handler<GlobalOnline> for PresenceManager {
       // set connection with TTL
       let _ = client.set_value_with_expiry(&conn_key, 1, ttl).await;
 
-      let pattern = format!("presence:user:{}:conn:*", user_id);
-      let Ok(keys) = client.keys(&pattern).await else {
-        return;
-      };
+      let count: i64 = client
+        .connection
+        .incr(format!("presence:user:{}:conn_count", user_id), 1)
+        .await
+        .unwrap_or(0);
 
       // FIRST connection only
-      if keys.len() == 1 {
+      if count == 1 {
         let payload = serde_json::to_value(ChatsSignalPayload::GlobalPresence {
           version: 1,
           user_id: msg.local_user_id,
@@ -332,13 +339,14 @@ impl Handler<GlobalOffline> for PresenceManager {
       let conn_key = format!("presence:user:{}:conn:{}", user_id, conn_id);
       let _ = client.delete_key(&conn_key).await;
 
-      let pattern = format!("presence:user:{}:conn:*", user_id);
-      let Ok(keys) = client.keys(&pattern).await else {
-        return;
-      };
+      let count: i64 = client
+        .connection
+        .decr(format!("presence:user:{}:conn_count", user_id), 1)
+        .await
+        .unwrap_or(0);
 
       // LAST connection only
-      if keys.is_empty() {
+      if count <= 0 {
         let payload = serde_json::to_value(ChatsSignalPayload::GlobalPresence {
           version: 1,
           user_id: msg.local_user_id,
@@ -372,16 +380,20 @@ impl Handler<Heartbeat> for PresenceManager {
 
 impl Handler<IsUserOnline> for PresenceManager {
   type Result = ResponseFuture<bool>;
+
   fn handle(&mut self, msg: IsUserOnline, _ctx: &mut Context<Self>) -> Self::Result {
-    let client = self.redis.clone();
+    let redis = self.redis.clone();
+
     Box::pin(async move {
-      if let Some(mut client) = client {
-        let pattern = format!("presence:user:{}:conn:*", msg.local_user_id.0);
-        if let Ok(keys) = client.keys(&pattern).await {
-          return !keys.is_empty();
-        }
+      if let Some(mut client) = redis {
+        client
+          .get_value::<i64>(&format!("presence:user:{}:conn_count", msg.local_user_id.0))
+          .await
+          .unwrap_or(Some(0))
+          > Some(0)
+      } else {
+        false
       }
-      false
     })
   }
 }
@@ -421,7 +433,7 @@ impl Handler<GetPresenceSnapshot> for PresenceManager {
       };
 
       // get contacts
-      let contacts_key = format!("contacts:user:{}", requester_id);
+      let contacts_key = contacts_key(requester_id);
       let contacts: Vec<String> = redis.smembers(&contacts_key).await?;
 
       let mut items = Vec::with_capacity(contacts.len());

@@ -53,6 +53,10 @@ pub enum ChatEvent {
     TypingStart,
     #[serde(rename = "typing:stop")]
     TypingStop,
+    #[serde(rename = "globalOnline")]
+    GlobalOnline,
+    #[serde(rename = "globalOffline")]
+    GlobalOffline,
     #[serde(other)]
     Unknown,
 }
@@ -189,12 +193,70 @@ pub enum ConvertError {
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase", tag = "kind")]
+pub enum ChatsSignalPayload {
+    /// Normal chat-related signal
+    #[serde(rename = "chat", rename_all = "camelCase")]
+    Chat {
+        version: i32,
+        room_id: ChatRoomId,
+
+        last_message_id: Option<String>,
+        last_message_at: Option<DateTime<Utc>>,
+        unread_count: i64,
+        sender_id: Option<LocalUserId>,
+    },
+
+    /// Presence updates (room-level or user-level)
+    #[serde(rename = "presence", rename_all = "camelCase")]
+    Presence {
+        version: i32,
+
+        /// Present for room-scoped presence
+        room_id: Option<ChatRoomId>,
+
+        /// Presence diff
+        joins: Vec<PresenceJoin>,
+        leaves: Vec<PresenceLeave>,
+    },
+
+    /// Global presence (online/offline)
+    #[serde(rename = "globalPresence", rename_all = "camelCase")]
+    GlobalPresence {
+        version: i32,
+        user_id: LocalUserId,
+        status: PresenceStatus,
+        at: DateTime<Utc>,
+        last_seen: Option<DateTime<Utc>>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ChatsSignalPayload {
-    pub version: i32,
-    pub room_id: ChatRoomId,
-    pub last_message_id: Option<String>,
-    pub last_message_at: Option<DateTime<Utc>>,
-    pub unread_count: i64,
-    pub sender_id: Option<LocalUserId>,
+pub struct PresenceJoin {
+    pub user_id: LocalUserId,
+    pub at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PresenceLeave {
+    pub user_id: LocalUserId,
+    pub last_seen: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PresenceStatus {
+    Online,
+    Offline,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PresenceSnapshotItem {
+    pub user_id: LocalUserId,
+    pub status: PresenceStatus,
+    pub at: DateTime<Utc>,
+    pub last_seen: Option<DateTime<Utc>>,
 }

@@ -130,3 +130,4 @@ pub struct UnreadSnapshotItem {
   pub last_message_id: Option<String>,
   pub last_message_at: Option<DateTime<Utc>>,
 }
+

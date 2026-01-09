@@ -66,6 +66,13 @@ pub struct SerialId(pub i64);
 /// The person id.
 pub struct PersonId(pub i32);
 
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The person id.
+pub struct RiderId(pub i32);
+
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -74,7 +81,7 @@ pub struct PersonId(pub i32);
 pub struct CommentId(pub i32);
 
 impl fmt::Display for CommentId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }

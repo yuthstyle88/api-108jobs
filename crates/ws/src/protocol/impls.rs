@@ -66,6 +66,8 @@ impl ChatEvent {
       ChatEvent::TypingStop => "typing:stop",
       ChatEvent::Update => "chat:update",
       ChatEvent::ChatsSignal => "chats:signal",
+      ChatEvent::GlobalOnline => "globalOnline",
+      ChatEvent::GlobalOffline => "globalOffline",
       ChatEvent::Unknown => "unknown",
     }
   }

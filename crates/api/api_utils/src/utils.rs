@@ -5,9 +5,6 @@ use crate::{
 };
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use chrono::{DateTime, Days, Local, TimeZone, Utc};
-use diesel_async::AsyncPgConnection;
-use enum_map::{enum_map, EnumMap};
 use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
 use app_108jobs_db_schema::source::actor_language::SiteLanguage;
 use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
@@ -57,6 +54,9 @@ use app_108jobs_utils::{
   },
   CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT,
 };
+use chrono::{DateTime, Days, Local, TimeZone, Utc};
+use diesel_async::AsyncPgConnection;
+use enum_map::{enum_map, EnumMap};
 use moka::future::Cache;
 use rand::Rng;
 use regex::{escape, Regex, RegexSet};
@@ -934,7 +934,7 @@ pub async fn flush_room_and_update_last_message(
     last_message_at: Some(Some(latest_at)),
     ..Default::default()
   };
-  
+
   let _ = ChatRoom::update(pool, room_id.clone(), &chat_room_update_form).await?;
 
   // 5. Clean up Redis

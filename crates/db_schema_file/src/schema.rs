@@ -109,6 +109,14 @@ pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "citext"))]
   pub struct Citext;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "vehicle_type"))]
+  pub struct VehicleType;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "rider_verification_status"))]
+  pub struct RiderVerificationStatus;
 }
 
 diesel::table! {
@@ -277,7 +285,6 @@ diesel::table! {
         updated_at -> Timestamptz,
     }
 }
-
 
 diesel::table! {
     chat_message (id) {
@@ -1402,6 +1409,47 @@ diesel::table! {
         reason -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::VehicleType;
+    use crate::schema::sql_types::RiderVerificationStatus;
+
+    rider (id) {
+        id -> Int4,
+
+        // References
+        user_id -> Int4,
+        person_id -> Int4,
+
+        // Vehicle
+        vehicle_type -> VehicleType,
+        vehicle_plate_number -> Nullable<Varchar>,
+        license_number -> Nullable<Varchar>,
+        license_expiry_date -> Nullable<Timestamptz>,
+
+        // Verification
+        is_verified -> Bool,
+        is_active -> Bool,
+        verification_status -> RiderVerificationStatus,
+
+        // Performance
+        rating -> Float8,
+        completed_jobs -> Int4,
+        total_jobs -> Int4,
+        total_earnings -> Float8,
+        pending_earnings -> Float8,
+
+        // Availability
+        is_online -> Bool,
+        accepting_jobs -> Bool,
+
+        // Timestamps
+        joined_at -> Nullable<Timestamptz>,
+        last_active_at -> Nullable<Timestamptz>,
+        verified_at -> Nullable<Timestamptz>,
     }
 }
 

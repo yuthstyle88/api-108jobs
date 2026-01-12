@@ -54,7 +54,7 @@ pub mod pending_sender_ack;
 pub mod chat_unread;
 pub mod top_up_request;
 pub mod withdraw_request;
-mod rider;
+pub mod rider;
 
 /// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
 ///

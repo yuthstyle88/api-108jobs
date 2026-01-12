@@ -1,0 +1,42 @@
+[package]
+name = "app_108jobs_db_views_rider"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+full = [
+    "app_108jobs_utils",
+    "diesel",
+    "diesel-async",
+    "i-love-jesus",
+    "app_108jobs_db_schema/full",
+    "app_108jobs_db_schema_file/full",
+]
+
+ts-rs = [
+    "dep:ts-rs",
+    "app_108jobs_db_schema/ts-rs",
+    "app_108jobs_db_schema_file/ts-rs",
+]
+
+[dependencies]
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_db_schema_file = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+diesel = { workspace = true, optional = true }
+diesel-async = { workspace = true, optional = true }
+serde = { workspace = true }
+i-love-jesus = { workspace = true, optional = true }
+chrono = { workspace = true }
+serde_with = { workspace = true }
+
+
+[lints]
+workspace = true

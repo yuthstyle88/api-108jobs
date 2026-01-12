@@ -86,6 +86,7 @@ members = [
     "crates/ws",
     "crates/email",
     "crates/workflow",
+    "crates/db_views/rider",
 ]
 
 [workspace.lints.clippy]
@@ -155,6 +156,7 @@ app_108jobs_ws = { version = "=1.0.0-alpha.5", path = "./crates/ws" }
 app_108jobs_workflow = { version = "=1.0.0-alpha.5", path = "./crates/workflow" }
 app_108jobs_db_views_chat = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat" }
 app_108jobs_db_views_chat_pending_ack = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat_pending_ack" }
+app_108jobs_db_views_rider = { version = "=1.0.0-alpha.5", path = "./crates/db_views/rider" }
 diesel = { version = "2.2.10", features = [
     "chrono",
     "postgres",

@@ -18,7 +18,7 @@ app_108jobs_db_views_comment = { workspace = true, features = ["full"] }
 app_108jobs_db_views_category = { workspace = true, features = ["full"] }
 app_108jobs_db_views_post = { workspace = true, features = ["full"] }
 app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
-app_108jobs_db_views_person = { workspace = true, features = ["full"] }
+app_108jobs_db_views_rider = { workspace = true, features = ["full"] }
 app_108jobs_db_views_custom_emoji = { workspace = true, features = ["full"] }
 app_108jobs_db_views_registration_applications = { workspace = true, features = [
     "full",

@@ -8,7 +8,6 @@ use strum::{Display, EnumIter};
 #[cfg_attr(feature = "ts-rs", ts(export))]
 #[serde(tag = "error", content = "message", rename_all = "camelCase")]
 #[non_exhaustive]
-// TODO: order these based on the crate they belong to (utils, federation, db, api)
 pub enum FastJobErrorType {
   BlockKeywordTooShort,
   BlockKeywordTooLong,
@@ -338,6 +337,9 @@ pub enum FastJobErrorType {
     ReachedMax3BankAccounts,
     CouldntUpdateChatUnread,
     RedisPipelineFailed,
+    CouldntCreateRider,
+  CouldntUpdateRider,
+  RiderAlreadyExists,
 }
 
 cfg_if! {

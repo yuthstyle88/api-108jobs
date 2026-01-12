@@ -20,7 +20,7 @@ pub async fn setup(context: Data<FastJobContext>) -> FastJobResult<()> {
 
   let context_1 = context.clone();
   // Check expired wallet topups every 10 minutes
-  scheduler.every(CTimeUnits::minutes(10)).run(move || {
+  scheduler.every(CTimeUnits::minutes(30)).run(move || {
     let context = context_1.clone();
 
     async move {

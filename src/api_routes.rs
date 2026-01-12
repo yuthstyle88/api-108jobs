@@ -93,6 +93,9 @@ use app_108jobs_api_crud::chat::read::get_chat_room;
 use app_108jobs_api_crud::oauth_provider::create::create_oauth_provider;
 use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
 use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
+use app_108jobs_api_crud::rider::create::create_rider;
+use app_108jobs_api_crud::rider::list::list_riders;
+use app_108jobs_api_crud::rider::read::get_rider;
 use app_108jobs_api_crud::site::read::health;
 use app_108jobs_api_crud::{
   category::update::update_category,
@@ -443,6 +446,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/reviews")
             .route("", post().to(submit_user_review))
             .route("", get().to(list_user_reviews)),
+        )
+        .service(
+          scope("/riders")
+            .route("", get().to(list_riders))
+            .route("", post().to(create_rider))
+            .route("/{id}", get().to(get_rider)),
         )
         .service(
           scope("/custom-emoji")

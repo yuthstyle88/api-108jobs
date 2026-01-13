@@ -2,7 +2,7 @@ use crate::RiderView;
 
 use app_108jobs_db_schema::utils::paginate;
 use app_108jobs_db_schema::{
-  newtypes::{PaginationCursor, RiderId},
+  newtypes::{LocalUserId, PaginationCursor, RiderId},
   source::rider::{rider_keys as key, Rider},
   traits::PaginationCursorBuilder,
   utils::{get_conn, Commented, DbPool},
@@ -45,6 +45,24 @@ impl RiderView {
 
     Commented::new(query)
       .text("RiderView::read")
+      .first(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  /// Read a rider by the owning local user id
+  pub async fn read_by_user_id(
+    pool: &mut DbPool<'_>,
+    user_id: LocalUserId,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    let query = Self::joins()
+      .filter(rider::user_id.eq(user_id))
+      .select(Self::as_select());
+
+    Commented::new(query)
+      .text("RiderView::read_by_user_id")
       .first(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)

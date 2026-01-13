@@ -1,20 +1,20 @@
 -- Enums
 CREATE TYPE vehicle_type AS ENUM (
-    'motorcycle',
-    'bicycle',
-    'car'
+    'Motorcycle',
+    'Bicycle',
+    'Car'
 );
 
 CREATE TYPE rider_verification_status AS ENUM (
-    'pending',
-    'verified',
-    'rejected'
+    'Pending',
+    'Verified',
+    'Rejected'
 );
 
 -- Table
 CREATE TABLE rider
 (
-    id                   INT PRIMARY KEY,
+    id                   SERIAL PRIMARY KEY,
 
     -- References
     user_id              INT                       NOT NULL
@@ -34,7 +34,7 @@ CREATE TABLE rider
     -- Verification
     is_verified          BOOLEAN                   NOT NULL DEFAULT FALSE,
     is_active            BOOLEAN                   NOT NULL DEFAULT TRUE,
-    verification_status  rider_verification_status NOT NULL DEFAULT 'pending',
+    verification_status  rider_verification_status NOT NULL DEFAULT 'Pending',
 
     -- Performance
     rating               DOUBLE PRECISION          NOT NULL DEFAULT 0,

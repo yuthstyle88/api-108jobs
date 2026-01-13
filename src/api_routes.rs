@@ -450,8 +450,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/riders")
             .route("", get().to(list_riders))
-            .route("", post().to(create_rider))
-            .route("/{id}", get().to(get_rider)),
+            .route("/profile", post().to(create_rider))
+            .route("/profile", get().to(get_rider)) // this is for get current rider profile
+            .route("/profile/{id}", get().to(get_rider)),
         )
         .service(
           scope("/custom-emoji")

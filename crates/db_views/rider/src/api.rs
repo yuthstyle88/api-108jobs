@@ -1,7 +1,6 @@
 use crate::RiderView;
 use app_108jobs_db_schema::newtypes::PaginationCursor;
 use app_108jobs_db_schema::newtypes::RiderId;
-use app_108jobs_db_schema::source::rider::Rider;
 use app_108jobs_db_schema_file::enums::VehicleType;
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
@@ -14,12 +13,6 @@ pub struct CreateRiderRequest {
   pub vehicle_plate_number: Option<String>,
   pub license_number: Option<String>,
   pub license_expiry_date: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateRiderResponse {
-  pub rider: Rider,
 }
 
 #[derive(Debug)]

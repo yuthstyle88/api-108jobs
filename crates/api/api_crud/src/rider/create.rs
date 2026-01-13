@@ -5,7 +5,8 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_schema::source::rider::{Rider, RiderInsertForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::RiderVerificationStatus;
-use app_108jobs_db_views_rider::api::{CreateRider, CreateRiderRequest, CreateRiderResponse};
+use app_108jobs_db_views_rider::api::{CreateRider, CreateRiderRequest};
+use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
 
@@ -13,7 +14,7 @@ pub async fn create_rider(
   data: Json<CreateRiderRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CreateRiderResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let data: CreateRider = data.into_inner().try_into()?;
 
   if Rider::exists_for_user(&mut context.pool(), local_user_view.local_user.id).await? {
@@ -48,7 +49,7 @@ pub async fn create_rider(
     )
   };
 
-  let rider = Rider::create(&mut context.pool(), &rider_form).await?;
+  let _ = Rider::create(&mut context.pool(), &rider_form).await?;
 
-  Ok(Json(CreateRiderResponse { rider }))
+  Ok(Json(SuccessResponse::default()))
 }

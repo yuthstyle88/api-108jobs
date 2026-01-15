@@ -1,19 +1,19 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_api_utils::utils::is_admin;
+use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::newtypes::PaginationCursor;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::{api::{ListRiders, ListRidersResponse}, RiderView};
+use app_108jobs_db_views_rider::api::ListRidersQuery;
+use app_108jobs_db_views_rider::{api::ListRidersResponse, RiderView};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_riders(
-  data: Query<ListRiders>,
+  data: Query<ListRidersQuery>,
   context: Data<FastJobContext>,
-  local_user_view: Option<LocalUserView>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListRidersResponse>> {
-  // Private instance guard
-  let site_view = context.site_config().get().await?.site_view;
-  check_private_instance(&local_user_view, &site_view.local_site)?;
+  is_admin(&local_user_view)?;
 
   // Decode cursor to model if provided
   let cursor_data = if let Some(cursor) = &data.page_cursor {
@@ -27,7 +27,7 @@ pub async fn list_riders(
     cursor_data,
     data.page_back,
     data.limit,
-    data.online_only,
+    data.verified,
   )
   .await?;
 

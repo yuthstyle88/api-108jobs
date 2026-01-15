@@ -1,5 +1,6 @@
 use crate::RiderView;
 
+use app_108jobs_db_schema::newtypes::DecodedCursor;
 use app_108jobs_db_schema::utils::paginate;
 use app_108jobs_db_schema::{
   newtypes::{LocalUserId, PaginationCursor, RiderId},
@@ -18,17 +19,25 @@ impl PaginationCursorBuilder for RiderView {
   type CursorData = Rider;
 
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('R', self.rider.id.0)
+    PaginationCursor::v2_i32(self.rider.id.0)
   }
 
   async fn from_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
-    let id = cursor.first_id()?;
+    let decoded = cursor.decode()?;
+
+    let id = match decoded {
+      DecodedCursor::I32(id) => id,
+      DecodedCursor::I64(id) => id as i32,
+      DecodedCursor::Composite(parts) => parts[0].1,
+    };
+
     Rider::read(pool, RiderId(id)).await
   }
 }
+
 impl RiderView {
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins() -> _ {
@@ -51,10 +60,7 @@ impl RiderView {
   }
 
   /// Read a rider by the owning local user id
-  pub async fn read_by_user_id(
-    pool: &mut DbPool<'_>,
-    user_id: LocalUserId,
-  ) -> FastJobResult<Self> {
+  pub async fn read_by_user_id(pool: &mut DbPool<'_>, user_id: LocalUserId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let query = Self::joins()
@@ -73,7 +79,7 @@ impl RiderView {
     cursor_data: Option<Rider>,
     page_back: Option<bool>,
     limit: Option<i64>,
-    online_only: Option<bool>,
+    verified: Option<bool>,
   ) -> FastJobResult<Vec<RiderView>> {
     use app_108jobs_db_schema_file::schema::rider;
 
@@ -86,10 +92,10 @@ impl RiderView {
       .limit(limit)
       .into_boxed();
 
-    // Online filter
-    if online_only.unwrap_or(false) {
-      query = query.filter(rider::is_online.eq(true));
-    }
+    // is_verified filter
+    let is_verified = verified.unwrap_or(false);
+
+    query = query.filter(rider::is_verified.eq(is_verified));
 
     // Active riders only
     query = query.filter(rider::is_active.eq(true));

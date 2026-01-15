@@ -5,6 +5,7 @@ use app_108jobs_db_schema_file::enums::VehicleType;
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,17 +49,28 @@ pub struct GetRiderResponse {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ListRiders {
+pub struct ListRidersQuery {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
-  pub online_only: Option<bool>,
+  pub verified: Option<bool>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ListRidersResponse {
   pub riders: Vec<RiderView>,
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdminVerifyRiderRequest {
+  pub rider_id: RiderId,
+  /// approve = true will mark rider as verified; false will reject
+  pub approve: bool,
+  /// Optional reason when rejecting
+  pub reason: Option<String>,
 }

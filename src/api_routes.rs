@@ -96,6 +96,7 @@ use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
 use app_108jobs_api_crud::rider::create::create_rider;
 use app_108jobs_api_crud::rider::list::list_riders;
 use app_108jobs_api_crud::rider::read::get_rider;
+use app_108jobs_api_crud::rider::update::admin_verify_rider;
 use app_108jobs_api_crud::site::read::health;
 use app_108jobs_api_crud::{
   category::update::update_category,
@@ -429,6 +430,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/bank-account")
                 .route("/list", get().to(admin_list_bank_accounts))
                 .route("/verify", post().to(admin_verify_bank_account)),
+            )
+            .service(
+              scope("/riders")
+                .route("/list", get().to(list_riders))
+                .route("/verify", post().to(admin_verify_rider)),
             ),
         )
         .service(
@@ -449,7 +455,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         .service(
           scope("/riders")
-            .route("", get().to(list_riders))
             .route("/profile", post().to(create_rider))
             .route("/profile", get().to(get_rider)) // this is for get current rider profile
             .route("/profile/{id}", get().to(get_rider)),

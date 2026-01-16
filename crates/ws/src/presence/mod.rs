@@ -11,7 +11,7 @@ use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
 use app_108jobs_utils::error::FastJobResult;
 use app_108jobs_utils::redis::{AsyncCommands, RedisClient};
 use app_108jobs_utils::utils::helper::{
-  contacts_key, presence_conn_count_key, presence_conn_key, presence_conn_pattern, rooms_key,
+  contacts_key, presence_conn_count_key, presence_conn_key, rooms_key,
   user_events_topic,
 };
 use chrono::{DateTime, Utc};
@@ -443,12 +443,12 @@ impl Handler<GetPresenceSnapshot> for PresenceManager {
           continue;
         };
 
-        let pattern = presence_conn_pattern(cid);
+        // Use the same approach as IsUserOnline: check the aggregated connection count key
         let online = redis
-          .keys(&pattern)
+          .get_value::<i64>(&presence_conn_count_key(cid))
           .await
-          .map(|k| !k.is_empty())
-          .unwrap_or(false);
+          .unwrap_or(Some(0))
+          > Some(0);
 
         if online {
           items.push(PresenceSnapshotItem {

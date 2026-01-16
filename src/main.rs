@@ -1,5 +1,5 @@
 use clap::Parser;
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
 };

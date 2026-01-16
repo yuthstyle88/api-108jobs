@@ -5,10 +5,10 @@ use crate::{
 
 use crate::fake_trait::{Actor, Object};
 use actix_web::web::Data;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::category::Category;
-use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::error::FastJobError;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::category::Category;
+use app_108jobs_db_schema_file::enums::ActorType;
+use app_108jobs_utils::error::FastJobError;
 use once_cell::sync::OnceCell;
 use std::ops::Deref;
 use url::Url;

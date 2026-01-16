@@ -1,4 +1,4 @@
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   category::{Category, CategoryActions},
   instance::InstanceActions,
   tag::TagsView,
@@ -8,7 +8,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{category_post_tags_fragment, local_user_category_can_mod},
+  app_108jobs_db_schema::utils::queries::{category_post_tags_fragment, local_user_category_can_mod},
 };
 
 pub mod api;

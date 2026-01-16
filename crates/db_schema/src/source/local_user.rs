@@ -3,11 +3,11 @@ use crate::{
   sensitive::SensitiveString,
 };
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::{
+use app_108jobs_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, VoteShow,
 };
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::local_user;
+use app_108jobs_db_schema_file::schema::local_user;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

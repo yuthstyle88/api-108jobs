@@ -54,12 +54,13 @@ pub mod pending_sender_ack;
 pub mod chat_unread;
 pub mod top_up_request;
 pub mod withdraw_request;
+pub mod rider;
 
 /// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
 ///
 /// This is necessary so they can be successfully deserialized from API responses, even though the
-/// value is not sent by Lemmy. Necessary for crates which rely on Rust API such as
-/// lemmy-stats-crawler.
+/// value is not sent by app_108jobs. Necessary for crates which rely on Rust API such as
+/// app_108jobs-stats-crawler.
 #[allow(clippy::expect_used)]
 fn placeholder_apub_url() -> DbUrl {
   DbUrl(Box::new(

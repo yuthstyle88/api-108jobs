@@ -2,15 +2,15 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use lemmy_api_utils::{claims::Claims, context::FastJobContext};
-use lemmy_db_schema::source::{
+use app_108jobs_api_utils::{claims::Claims, context::FastJobContext};
+use app_108jobs_db_schema::source::{
   email_verification::EmailVerification,
   local_user::{LocalUser, LocalUserUpdateForm},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{VerifyEmail, VerifyEmailSuccessResponse};
-use lemmy_email::account::send_email_verified_email;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{VerifyEmail, VerifyEmailSuccessResponse};
+use app_108jobs_email::account::send_email_verified_email;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn verify_email(
   data: Json<VerifyEmail>,

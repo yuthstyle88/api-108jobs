@@ -1,9 +1,9 @@
 use crate::ModlogCombinedView;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     newtypes::{CommentId, CategoryId, PaginationCursor, PersonId, PostId},
     ModlogActionType,
 };
-use lemmy_db_schema_file::enums::ListingType;
+use app_108jobs_db_schema_file::enums::ListingType;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

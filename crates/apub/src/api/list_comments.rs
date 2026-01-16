@@ -3,20 +3,20 @@ use actix_web::web::Data;
 
 use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};
 use actix_web::web::{Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::check_private_instance};
-use lemmy_apub_objects::objects::category::ApubCategory;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_apub_objects::objects::category::ApubCategory;
+use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{comment::Comment, category::Category},
   traits::{Crud, PaginationCursorBuilder},
 };
-use lemmy_db_views_comment::{
+use app_108jobs_db_views_comment::{
   api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},
   impls::CommentQuery,
   CommentView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,

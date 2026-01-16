@@ -62,7 +62,7 @@ BEGIN
 END
 $$;
 
--- to be able to join person on the trigger above, we need to run it before the person is deleted: https://github.com/LemmyNet/lemmy/pull/4166#issuecomment-1874095856
+-- to be able to join person on the trigger above, we need to run it before the person is deleted: https://github.com/app_108jobsNet/app_108jobs/pull/4166#issuecomment-1874095856
 CREATE FUNCTION delete_follow_before_person ()
     RETURNS TRIGGER
     LANGUAGE plpgsql

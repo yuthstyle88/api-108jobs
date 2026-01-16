@@ -1,3 +1,3 @@
-pub use lemmy_db_views_wallet::{
+pub use app_108jobs_db_views_wallet::{
   api::{WalletOperationResponse, AdminWalletOperationResponse}
 };

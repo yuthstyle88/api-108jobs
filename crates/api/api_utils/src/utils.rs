@@ -5,17 +5,14 @@ use crate::{
 };
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use chrono::{DateTime, Days, Local, TimeZone, Utc};
-use diesel_async::AsyncPgConnection;
-use enum_map::{enum_map, EnumMap};
-use lemmy_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
-use lemmy_db_schema::source::actor_language::SiteLanguage;
-use lemmy_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
-use lemmy_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
-use lemmy_db_schema::source::language::Language;
-use lemmy_db_schema::source::user_bank_account::BankAccount;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
+use app_108jobs_db_schema::source::actor_language::SiteLanguage;
+use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
+use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
+use app_108jobs_db_schema::source::language::Language;
+use app_108jobs_db_schema::source::user_bank_account::BankAccount;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::{
   newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId, PostId},
   source::{
     category::{Category, CategoryActions},
@@ -35,18 +32,18 @@ use lemmy_db_schema::{
   traits::{Crud, Likeable, ReadComments},
   utils::DbPool,
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_image::LocalImageView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_person::PersonView;
-use lemmy_db_views_site::SiteView;
-use lemmy_db_views_wallet::api::{
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db_views_local_image::LocalImageView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::PersonView;
+use app_108jobs_db_views_site::SiteView;
+use app_108jobs_db_views_wallet::api::{
   ListTopUpRequestQuery, ListTopUpRequestResponse, ListWithdrawRequestQuery,
   ListWithdrawRequestResponse,
 };
-use lemmy_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
-use lemmy_utils::redis::RedisClient;
-use lemmy_utils::{
+use app_108jobs_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
+use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
   settings::{structs::PictrsImageMode, SETTINGS},
@@ -57,6 +54,9 @@ use lemmy_utils::{
   },
   CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT,
 };
+use chrono::{DateTime, Days, Local, TimeZone, Utc};
+use diesel_async::AsyncPgConnection;
+use enum_map::{enum_map, EnumMap};
 use moka::future::Cache;
 use rand::Rng;
 use regex::{escape, Regex, RegexSet};
@@ -264,7 +264,7 @@ pub async fn get_url_blocklist(context: &FastJobContext) -> FastJobResult<RegexS
 
         // The urls are already validated on saving, so just escape them.
         // If this regex creation changes it must be synced with
-        // lemmy_utils::utils::markdown::create_url_blocklist_test_regex_set.
+        // app_108jobs_utils::utils::markdown::create_url_blocklist_test_regex_set.
         let regexes = urls.iter().map(|url| format!(r"\b{}\b", escape(&url.url)));
 
         let set = RegexSet::new(regexes)?;
@@ -934,7 +934,7 @@ pub async fn flush_room_and_update_last_message(
     last_message_at: Some(Some(latest_at)),
     ..Default::default()
   };
-  
+
   let _ = ChatRoom::update(pool, room_id.clone(), &chat_room_update_form).await?;
 
   // 5. Clean up Redis
@@ -947,7 +947,7 @@ pub async fn flush_room_and_update_last_message(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use lemmy_utils::utils::validation::password_length_check;
+  use app_108jobs_utils::utils::validation::password_length_check;
   use pretty_assertions::assert_eq;
 
   #[test]

@@ -1,6 +1,6 @@
 use crate::sensitive::SensitiveString;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::secret;
+use app_108jobs_db_schema_file::schema::secret;
 
 #[derive(Clone, Default)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

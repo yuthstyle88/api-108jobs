@@ -8,8 +8,8 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::newtypes::LanguageId;
-use lemmy_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
+use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
   combined::search::{search_combined_keys as key, SearchCombined},
   site::Site,
 }, traits::{InternalToCombinedView, PaginationCursorBuilder}, utils::{
@@ -22,9 +22,9 @@ use lemmy_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, Perso
   },
   seconds_to_pg_interval, DbPool,
 }, SearchSortType::{self, *}, SearchType};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType};
-use lemmy_db_schema_file::schema::{category, comment, person, post, search_combined};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
+use app_108jobs_db_schema_file::schema::{category, comment, person, post, search_combined};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -121,7 +121,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
       SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
     };
-    // Simple: just prefix + hex id (old Lemmy style)
+    // Simple: just prefix + hex id (old app_108jobs style)
     PaginationCursor(format!("{}{:x}", prefix, id))
   }
 
@@ -373,8 +373,8 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::SearchCombinedQuery, LocalUserView, SearchCombinedView};
-  use lemmy_db_schema::newtypes::DbUrl;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::{
     assert_length,
     source::{
       category::{category, CategoryInsertForm},
@@ -389,7 +389,7 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     SearchSortType, SearchType,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
@@ -431,10 +431,10 @@ mod tests {
     };
 
     let category_form = CategoryInsertForm {
-      description: Some("ask lemmy things".into()),
+      description: Some("ask app_108jobs things".into()),
       ..CategoryInsertForm::new(
         instance.id,
-        "asklemmy".to_string(),
+        "askapp_108jobs".to_string(),
         "Ask FastJob".to_owned(),
       )
     };
@@ -754,13 +754,13 @@ mod tests {
 
     assert_length!(1, category_search_by_name);
     if let SearchCombinedView::category(v) = &category_search_by_name[0] {
-      // The asklemmy category
+      // The askapp_108jobs category
       assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
 
-    // Test title only search to make sure 'ask lemmy things' doesn't get returned
+    // Test title only search to make sure 'ask app_108jobs things' doesn't get returned
     // Using a term
     let category_search_title_only = SearchCombinedQuery {
       search_term: Some("things".into()),

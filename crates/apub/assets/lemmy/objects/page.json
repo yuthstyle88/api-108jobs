@@ -1,9 +1,9 @@
 {
-  "id": "https://enterprise.lemmy.ml/post/55143",
+  "id": "https://enterprise.app_108jobs.ml/post/55143",
   "type": "Page",
-  "attributedTo": "https://enterprise.lemmy.ml/u/picard",
+  "attributedTo": "https://enterprise.app_108jobs.ml/u/picard",
   "to": [
-    "https://enterprise.lemmy.ml/c/tenforward",
+    "https://enterprise.app_108jobs.ml/c/tenforward",
     "https://www.w3.org/ns/activitystreams#Public"
   ],
   "name": "Post title",
@@ -16,12 +16,12 @@
   "attachment": [
     {
       "type": "Link",
-      "href": "https://enterprise.lemmy.ml/pictrs/image/eOtYb9iEiB.png"
+      "href": "https://enterprise.app_108jobs.ml/pictrs/image/eOtYb9iEiB.png"
     }
   ],
   "image": {
     "type": "Image",
-    "url": "https://enterprise.lemmy.ml/pictrs/image/eOtYb9iEiB.png"
+    "url": "https://enterprise.app_108jobs.ml/pictrs/image/eOtYb9iEiB.png"
   },
   "sensitive": false,
   "language": {

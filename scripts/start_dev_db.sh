@@ -7,9 +7,9 @@ export PGHOST="$PWD/target"
 export ENCODED_HOST=$(printf $PGHOST | jq -sRr @uri)
 
 export PGUSER=postgres
-export DATABASE_URL="postgresql://lemmy:password@$ENCODED_HOST/lemmy"
-export LEMMY_DATABASE_URL=$DATABASE_URL
-export PGDATABASE=lemmy
+export DATABASE_URL="postgresql://app_108jobs:password@$ENCODED_HOST/app_108jobs"
+export app_108jobs_DATABASE_URL=$DATABASE_URL
+export PGDATABASE=app_108jobs
 
 # If cluster exists, stop the server and delete the cluster
 if [[ -d $PGDATA ]]; then
@@ -51,5 +51,5 @@ pg_ctl init --silent --options="--username=postgres --auth=trust --no-instructio
 pg_ctl start --silent --options="${config_args[*]}"
 
 # Setup database
-PGDATABASE=postgres psql --quiet -c "CREATE USER lemmy WITH PASSWORD 'password' SUPERUSER;"
-PGDATABASE=postgres psql --quiet -c "CREATE DATABASE lemmy WITH OWNER lemmy;"
+PGDATABASE=postgres psql --quiet -c "CREATE USER app_108jobs WITH PASSWORD 'password' SUPERUSER;"
+PGDATABASE=postgres psql --quiet -c "CREATE DATABASE app_108jobs WITH OWNER app_108jobs;"

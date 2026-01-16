@@ -23,7 +23,7 @@ pub struct Person {
   /// username, set at account creation and usually fixed after that
   pub(crate) preferred_username: String,
   pub(crate) inbox: Url,
-  /// mandatory field in activitypub, lemmy currently serves an empty outbox
+  /// mandatory field in activitypub, app_108jobs currently serves an empty outbox
   pub(crate) outbox: Url,
   pub(crate) public_key: PublicKey,
 

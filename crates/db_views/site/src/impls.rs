@@ -2,16 +2,16 @@ use crate::api::{GetSiteResponse, Login, LoginRequest, SiteSnapshot};
 use crate::{api::UserSettingsBackup, SiteView};
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::sensitive::SensitiveString;
-use lemmy_db_schema::utils::get_required_sensitive;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db_schema::utils::get_required_sensitive;
+use app_108jobs_db_schema::{
     impls::local_user::UserBackupLists,
     utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{instance, local_site, local_site_rate_limit, site};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::utils::validation::password_length_check;
-use lemmy_utils::{build_cache, error::{FastJobError, FastJobErrorType, FastJobResult}, CacheLock};
+use app_108jobs_db_schema_file::schema::{instance, local_site, local_site_rate_limit, site};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::utils::validation::password_length_check;
+use app_108jobs_utils::{build_cache, error::{FastJobError, FastJobErrorType, FastJobResult}, CacheLock};
 use std::sync::{Arc, LazyLock};
 
 impl SiteView {

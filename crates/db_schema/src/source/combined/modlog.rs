@@ -22,7 +22,7 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::modlog_combined;
+use app_108jobs_db_schema_file::schema::modlog_combined;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Serialize, Deserialize, Debug, Clone)]

@@ -1,19 +1,19 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{
   source::{
     custom_emoji::{CustomEmoji, CustomEmojiInsertForm},
     custom_emoji_keyword::{CustomEmojiKeyword, CustomEmojiKeywordInsertForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_custom_emoji::{
+use app_108jobs_db_views_custom_emoji::{
   api::{CreateCustomEmoji, CustomEmojiResponse},
   CustomEmojiView,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn create_custom_emoji(
   data: Json<CreateCustomEmoji>,

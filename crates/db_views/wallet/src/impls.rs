@@ -3,24 +3,24 @@ use crate::{TopUpRequestView, WalletView, WithdrawRequestView};
 use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId};
-use lemmy_db_schema::source::top_up_request::top_up_requests_keys as t_key;
-use lemmy_db_schema::source::top_up_request::TopUpRequest;
-use lemmy_db_schema::source::wallet::Wallet;
-use lemmy_db_schema::source::withdraw_request::withdraw_requests_keys as w_key;
-use lemmy_db_schema::source::withdraw_request::WithdrawRequest;
-use lemmy_db_schema::traits::{Crud, PaginationCursorBuilder};
-use lemmy_db_schema::utils::{limit_fetch, paginate};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId};
+use app_108jobs_db_schema::source::top_up_request::top_up_requests_keys as t_key;
+use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
+use app_108jobs_db_schema::source::wallet::Wallet;
+use app_108jobs_db_schema::source::withdraw_request::withdraw_requests_keys as w_key;
+use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
+use app_108jobs_db_schema::traits::{Crud, PaginationCursorBuilder};
+use app_108jobs_db_schema::utils::{limit_fetch, paginate};
+use app_108jobs_db_schema::{
   newtypes::WalletId,
   source::wallet::WalletModel,
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   local_user, top_up_requests, user_bank_accounts, wallet, withdraw_requests,
 };
-use lemmy_utils::apply_date_filters;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::apply_date_filters;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl WalletView {
   pub async fn read(pool: &mut DbPool<'_>, wallet_id: WalletId) -> Result<Self, Error> {
@@ -94,7 +94,7 @@ impl TopUpRequestView {
     params: ListTopUpRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
     use diesel::prelude::*;
-    use lemmy_db_schema_file::schema::top_up_requests;
+    use app_108jobs_db_schema_file::schema::top_up_requests;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(params.limit)?;
@@ -193,7 +193,7 @@ impl WithdrawRequestView {
     params: ListWithdrawRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
     use diesel::prelude::*;
-    use lemmy_db_schema_file::schema::withdraw_requests;
+    use app_108jobs_db_schema_file::schema::withdraw_requests;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(params.limit)?;

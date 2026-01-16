@@ -1,12 +1,12 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::utils::check_category_deleted_removed;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     category::Category,
     local_user::LocalUser,
@@ -16,9 +16,9 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Reportable},
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::{PostResponse, RemovePost};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::{PostResponse, RemovePost};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn remove_post(
   data: Json<RemovePost>,

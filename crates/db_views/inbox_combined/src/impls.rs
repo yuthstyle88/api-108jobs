@@ -7,7 +7,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases::{self},
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
@@ -24,11 +24,11 @@ use lemmy_db_schema::{
   },
   InboxDataType,
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   comment, comment_reply, inbox_combined, instance_actions, person, person_actions,
   person_comment_mention, person_post_mention, post,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl InboxCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -380,7 +380,7 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     assert_length,
     source::{
         comment::{Comment, CommentInsertForm},
@@ -396,10 +396,10 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     InboxDataType,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,

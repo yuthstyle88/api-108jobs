@@ -3,14 +3,14 @@ use crate::site::{application_question_check, site_default_post_listing_type_che
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
     get_url_blocklist, is_admin, local_site_rate_limit_to_rate_limit_config, process_markdown_opt,
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     actor_language::SiteLanguage,
     local_site::{LocalSite, LocalSiteUpdateForm},
@@ -22,13 +22,13 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use lemmy_db_schema_file::enums::RegistrationMode;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::{
   api::{EditSite, SiteResponse},
   SiteView,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::FastJobResult,
   utils::{
     slurs::check_slurs_opt,
@@ -138,7 +138,7 @@ pub async fn update_site(
 
   if let Some(url_blocklist) = data.blocked_urls.clone() {
     // If this validation changes it must be synced with
-    // lemmy_utils::utils::markdown::create_url_blocklist_test_regex_set.
+    // app_108jobs_utils::utils::markdown::create_url_blocklist_test_regex_set.
     let parsed_urls = check_urls_are_valid(&url_blocklist)?;
     LocalSiteUrlBlocklist::replace(&mut context.pool(), parsed_urls).await?;
   }
@@ -216,10 +216,10 @@ fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> Fast
 #[cfg(test)]
 mod tests {
   use crate::site::update::validate_update_payload;
-  use lemmy_db_schema::source::local_site::LocalSite;
-  use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use lemmy_db_views_site::api::EditSite;
-  use lemmy_utils::error::FastJobErrorType;
+  use app_108jobs_db_schema::source::local_site::LocalSite;
+  use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use app_108jobs_db_views_site::api::EditSite;
+  use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_update_payload() {

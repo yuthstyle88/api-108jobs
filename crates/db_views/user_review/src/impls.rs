@@ -1,16 +1,16 @@
 use crate::UserReviewView;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, UserReviewId, WorkflowId},
   source::user_review::UserReview,
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
-use lemmy_db_schema::newtypes::DecodedCursor;
-use lemmy_db_schema_file::schema::{person, user_review, workflow};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema::newtypes::DecodedCursor;
+use app_108jobs_db_schema_file::schema::{person, user_review, workflow};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for UserReviewView {
   type CursorData = UserReview;

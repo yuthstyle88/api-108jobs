@@ -6,7 +6,7 @@ use diesel::{
   sql_types, ExpressionMethods, IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
       category::{category, CategoryInsertForm},
       instance::Instance,
@@ -16,8 +16,8 @@ use lemmy_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{build_db_pool, get_conn, now},
 };
-use lemmy_db_schema_file::{enums::PostSortType, schema::post};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
+use app_108jobs_utils::error::FastJobResult;
 use serial_test::serial;
 use std::{fmt::Display, num::NonZeroU32, str::FromStr};
 use url::Url;
@@ -32,7 +32,7 @@ struct CmdArgs {
 }
 
 fn get_option<T: FromStr + Display>(suffix: &str, default: T) -> Result<T, T::Err> {
-  let name = format!("LEMMY_{suffix}");
+  let name = format!("app_108jobs_{suffix}");
   if let Some(value) = std::env::var_os(&name) {
     value.to_string_lossy().parse()
   } else {

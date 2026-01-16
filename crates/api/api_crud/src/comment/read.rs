@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   build_response::build_comment_response, context::FastJobContext, utils::check_private_instance,
 };
-use lemmy_db_views_comment::api::{CommentResponse, GetComment};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_comment::api::{CommentResponse, GetComment};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_comment(
   data: Query<GetComment>,

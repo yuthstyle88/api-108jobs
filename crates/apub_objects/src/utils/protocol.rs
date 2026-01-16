@@ -1,5 +1,5 @@
 
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::{DbUrl},
 };
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ pub struct Source {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum AttributedTo {
-  Lemmy(PersonOrGroupModerators),
+  App108Jobs(PersonOrGroupModerators),
   Peertube(Vec<AttributedToPeertube>),
 }
 
@@ -37,7 +37,7 @@ pub struct AttributedToPeertube {
 impl AttributedTo {
   pub fn url(self) -> Option<DbUrl> {
     match self {
-      AttributedTo::Lemmy(l) => Some(l.moderators().into()),
+      AttributedTo::App108Jobs(l) => Some(l.moderators().into()),
       AttributedTo::Peertube(_) => None,
     }
   }

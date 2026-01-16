@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json};
 use chrono::Utc;
-use lemmy_api_common::account::DeleteItemRequest;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::LanguageProfileId;
-use lemmy_db_schema::source::language_profile::{LanguageProfile, LanguageProfileItem, LanguageProfileResponse, LanguageProfileUpdateForm, ListLanguageProfilesResponse, SaveLanguageProfiles};
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_common::account::DeleteItemRequest;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::LanguageProfileId;
+use app_108jobs_db_schema::source::language_profile::{LanguageProfile, LanguageProfileItem, LanguageProfileResponse, LanguageProfileUpdateForm, ListLanguageProfilesResponse, SaveLanguageProfiles};
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 pub async fn save_language_profiles(
   data: Json<SaveLanguageProfiles>,
@@ -18,7 +18,7 @@ pub async fn save_language_profiles(
   // Validate level_id for all language profiles
   for lp in &data.language_profiles {
     if lp.level_id < 1 || lp.level_id > 3 {
-      return Err(lemmy_utils::error::FastJobErrorType::InvalidField(
+      return Err(app_108jobs_utils::error::FastJobErrorType::InvalidField(
         "Language level must be 1 (Low), 2 (Medium), or 3 (High)".to_string()
       ).into());
     }
@@ -75,7 +75,7 @@ pub async fn update_language_profile(
 ) -> FastJobResult<Json<LanguageProfileResponse>> {
   // Validate level_id
   if data.level_id < 1 || data.level_id > 3 {
-    return Err(lemmy_utils::error::FastJobErrorType::InvalidField(
+    return Err(app_108jobs_utils::error::FastJobErrorType::InvalidField(
       "Language level must be 1 (Low), 2 (Medium), or 3 (High)".to_string()
     ).into());
   }

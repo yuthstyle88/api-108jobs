@@ -1,5 +1,5 @@
 -- This adds on conflict do nothing triggers to all the insert_intos
--- Github issue: https://github.com/LemmyNet/lemmy/issues/1179
+-- Github issue: https://github.com/app_108jobsNet/app_108jobs/issues/1179
 CREATE OR REPLACE FUNCTION refresh_category ()
     RETURNS TRIGGER
     LANGUAGE plpgsql

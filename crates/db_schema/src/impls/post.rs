@@ -29,11 +29,11 @@ use diesel::dsl::{exists, select};
 use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::PostNotifications,
   schema::{category, person, post, post_actions},
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -595,7 +595,7 @@ mod tests {
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
   use chrono::DateTime;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;

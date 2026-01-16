@@ -13,8 +13,8 @@ use diesel::{
   dsl::insert_into, expression::SelectableHelper, update, ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{comment, comment_actions, category, post};
-use lemmy_utils::{
+use app_108jobs_db_schema_file::schema::{comment, comment_actions, category, post};
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };

@@ -5,7 +5,7 @@ use diesel::pg::Pg;
 use diesel_async::RunQueryDsl;
 use diesel_ltree::nlevel;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, PaginationCursor, PersonId},
   source::{
@@ -24,12 +24,12 @@ use lemmy_db_schema::{
   },
   CategorySortType,
 };
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{category, category_actions},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use lemmy_utils::utils::validation::get_required_trimmed;
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::utils::validation::get_required_trimmed;
 
 impl CategoryView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -95,7 +95,7 @@ pub struct CategoryQuery<'a> {
 
 impl CategoryQuery<'_> {
   pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CategoryView>> {
-    use lemmy_db_schema::CategorySortType::*;
+    use app_108jobs_db_schema::CategorySortType::*;
     let conn = &mut get_conn(pool).await?;
     let o = self;
     let limit = limit_fetch(o.limit)?;
@@ -204,7 +204,7 @@ impl TryFrom<CreateCategoryRequest> for CreateCategory {
 #[allow(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::CategoryQuery, CategoryView};
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     source::{
         category::{Category, CategoryInsertForm, CategoryUpdateForm},
         instance::Instance,
@@ -216,8 +216,8 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     CategorySortType,
   };
-  use lemmy_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
-  use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+  use app_108jobs_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
+  use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use serial_test::serial;
   use std::collections::HashSet;
   use url::Url;

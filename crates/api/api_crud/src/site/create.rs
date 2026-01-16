@@ -3,7 +3,7 @@ use crate::site::{application_question_check, site_default_post_listing_type_che
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
     generate_inbox_url,
@@ -14,7 +14,7 @@ use lemmy_api_utils::{
     slur_regex,
   },
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::DbUrl,
   source::{
     local_site::{LocalSite, LocalSiteUpdateForm},
@@ -24,12 +24,12 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::diesel_string_update,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::{
   api::{CreateSite, SiteResponse},
   SiteView,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::{
     slurs::check_slurs,
@@ -180,10 +180,10 @@ fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> 
 #[cfg(test)]
 mod tests {
   use crate::site::create::validate_create_payload;
-  use lemmy_db_schema::source::local_site::LocalSite;
-  use lemmy_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use lemmy_db_views_site::api::CreateSite;
-  use lemmy_utils::error::FastJobErrorType;
+  use app_108jobs_db_schema::source::local_site::LocalSite;
+  use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use app_108jobs_db_views_site::api::CreateSite;
+  use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_create_payload() {

@@ -6,8 +6,8 @@ use crate::{
 };
 use diesel::{delete, dsl::exists, insert_into, select};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::login_token::{dsl::login_token, user_id};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::login_token::{dsl::login_token, user_id};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LoginToken {
   pub async fn create(pool: &mut DbPool<'_>, form: LoginTokenCreateForm) -> FastJobResult<Self> {

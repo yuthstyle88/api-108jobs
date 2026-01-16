@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_email"
+name = "app_108jobs_email"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_email"
+name = "app_108jobs_email"
 path = "src/lib.rs"
 doctest = false
 
@@ -19,10 +19,10 @@ doctest = false
 workspace = true
 
 [dependencies]
-lemmy_utils = { workspace = true, features = ["full"] }
-lemmy_db_schema = { workspace = true, features = ["full"] }
-lemmy_db_views_local_user = { workspace = true, features = ["full"] }
-lemmy_db_schema_file = { workspace = true }
+app_108jobs_utils = { workspace = true, features = ["full"] }
+app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_schema_file = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 rosetta-i18n = { workspace = true }

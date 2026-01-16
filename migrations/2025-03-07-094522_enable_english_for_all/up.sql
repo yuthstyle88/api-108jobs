@@ -1,5 +1,5 @@
 -- enable english for all users on instances with all languages enabled.
--- Fix for https://github.com/LemmyNet/lemmy/pull/5485
+-- Fix for https://github.com/app_108jobsNet/app_108jobs/pull/5485
 DO $$
 BEGIN
     IF (

@@ -1,6 +1,6 @@
 #[cfg(feature = "full")]
 use diesel::Queryable;
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   custom_emoji::CustomEmoji,
   custom_emoji_keyword::CustomEmojiKeyword,
 };

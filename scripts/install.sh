@@ -4,7 +4,7 @@ set -e
 # Set the database variable to the default first.
 # Don't forget to change this string to your actual database parameters
 # if you don't plan to initialize the database in this script.
-export LEMMY_DATABASE_URL=postgres://lemmy:password@localhost:5432/lemmy
+export app_108jobs_DATABASE_URL=postgres://app_108jobs:password@localhost:5432/app_108jobs
 
 # Set other environment variables
 export JWT_SECRET=changeme

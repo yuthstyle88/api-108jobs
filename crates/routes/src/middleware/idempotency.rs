@@ -7,8 +7,8 @@ use actix_web::{
   HttpResponse,
 };
 use futures_util::future::LocalBoxFuture;
-use lemmy_db_schema::newtypes::LocalUserId;
-use lemmy_db_views_local_user::LocalUserView;
+use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_db_views_local_user::LocalUserView;
 use std::{
   collections::HashSet,
   future::{ready, Ready},

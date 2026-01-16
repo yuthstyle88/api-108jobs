@@ -1,6 +1,6 @@
-use lemmy_db_schema::newtypes::CategoryId;
-use lemmy_db_schema::source::{local_site::LocalSite, local_user::LocalUser};
-use lemmy_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
+use app_108jobs_db_schema::newtypes::CategoryId;
+use app_108jobs_db_schema::source::{local_site::LocalSite, local_user::LocalUser};
+use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
 pub mod list_comments;
 pub mod list_person_content;

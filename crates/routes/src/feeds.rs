@@ -1,21 +1,21 @@
 use actix_web::{error::ErrorBadRequest, web, Error, HttpRequest, HttpResponse, Result};
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_private_instance, local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{category::Category, person::Person},
   traits::ApubActor,
   PersonContentType,
 };
-use lemmy_db_schema_file::enums::{ListingType, PostSortType};
-use lemmy_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
-use lemmy_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
-use lemmy_db_views_person_content_combined::impls::PersonContentCombinedQuery;
-use lemmy_db_views_post::{impls::PostQuery, PostView};
-use lemmy_utils::{
+use app_108jobs_db_schema_file::enums::{ListingType, PostSortType};
+use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
+use app_108jobs_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
+use app_108jobs_db_views_person_content_combined::impls::PersonContentCombinedQuery;
+use app_108jobs_db_views_post::{impls::PostQuery, PostView};
+use app_108jobs_utils::{
   cache_header::cache_1hour,
   error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::structs::Settings,

@@ -5,7 +5,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{sql_types::Nullable, AsExpression, FromSqlRow},
-  lemmy_db_schema_file::schema::tag,
+  app_108jobs_db_schema_file::schema::tag,
 };
 
 #[skip_serializing_none]

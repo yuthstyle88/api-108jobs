@@ -14,7 +14,7 @@ use diesel_async::{
   AsyncPgConnection,
   RunQueryDsl,
 };
-use lemmy_utils::{
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
@@ -275,7 +275,7 @@ pub trait Blockable {
   fn read_blocks_for_person(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
-    // Note: cant use lemmyresult because of try_pool
+    // Note: cant use app_108jobsresult because of try_pool
   ) -> impl Future<Output = FastJobResult<Vec<Self::ObjectType>>> + Send
   where
     Self: Sized;

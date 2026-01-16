@@ -12,7 +12,7 @@ use crate::newtypes::{
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   admin_allow_instance,
   admin_block_instance,
   admin_purge_comment,

@@ -7,8 +7,8 @@ use crate::{
 use diesel::{insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema_file::schema::tagline;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::tagline;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for Tagline {
   type InsertForm = TaglineInsertForm;

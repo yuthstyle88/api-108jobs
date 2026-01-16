@@ -1,20 +1,20 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_common::bank_account::BankAccountOperationResponse;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::ensure_bank_account_unique_for_user;
-use lemmy_db_schema::source::bank::{Bank, BanksResponse};
-use lemmy_db_schema::source::user_bank_account::{
+use app_108jobs_api_common::bank_account::BankAccountOperationResponse;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::ensure_bank_account_unique_for_user;
+use app_108jobs_db_schema::source::bank::{Bank, BanksResponse};
+use app_108jobs_db_schema::source::user_bank_account::{
   BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm,
 };
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_bank_account::api::{
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_views_bank_account::api::{
   BankAccountForm, CreateBankAccount, DeleteBankAccount, GetBankAccounts, ListBankAccountsResponse,
   SetDefaultBankAccount, UpdateBankAccount,
 };
-use lemmy_db_views_bank_account::BankAccountView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_bank_account::BankAccountView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn create_bank_account(
   data: Json<BankAccountForm>,

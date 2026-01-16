@@ -14,9 +14,9 @@ cd "$CWD/../"
 # IE, when the third semver is a number, not '2-rc'
 if [ ! -z "${third_semver##*[!0-9]*}" ]; then
   pushd docker
-  sed -i "s/dessalines\/lemmy:.*/dessalines\/lemmy:$new_tag/" docker-compose.yml
-  sed -i "s/dessalines\/lemmy-ui:.*/dessalines\/lemmy-ui:$new_tag/" docker-compose.yml
-  sed -i "s/dessalines\/lemmy-ui:.*/dessalines\/lemmy-ui:$new_tag/" federation/docker-compose.yml
+  sed -i "s/dessalines\/app_108jobs:.*/dessalines\/app_108jobs:$new_tag/" docker-compose.yml
+  sed -i "s/dessalines\/app_108jobs-ui:.*/dessalines\/app_108jobs-ui:$new_tag/" docker-compose.yml
+  sed -i "s/dessalines\/app_108jobs-ui:.*/dessalines\/app_108jobs-ui:$new_tag/" federation/docker-compose.yml
   git add docker-compose.yml
   git add federation/docker-compose.yml
   popd
@@ -46,5 +46,5 @@ git push origin $new_tag
 git push
 
 # Pushing to any ansible deploys
-# cd ../../../lemmy-ansible || exit
+# cd ../../../app_108jobs-ansible || exit
 # ansible-playbook -i prod playbooks/site.yml --vault-password-file vault_pass

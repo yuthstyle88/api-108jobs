@@ -8,12 +8,12 @@ use diesel::{
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{PersonId, PostReportId},
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
     category,
     category_actions,
     local_user,
@@ -23,7 +23,7 @@ use lemmy_db_schema_file::schema::{
     post_actions,
     post_report,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PostReportView {
   #[diesel::dsl::auto_type(no_type_alias)]

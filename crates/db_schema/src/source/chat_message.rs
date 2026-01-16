@@ -1,7 +1,7 @@
 use crate::newtypes::{ChatMessageId, ChatRoomId, LocalUserId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::chat_message;
+use app_108jobs_db_schema_file::schema::chat_message;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

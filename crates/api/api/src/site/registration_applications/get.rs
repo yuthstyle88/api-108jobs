@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_registration_applications::{
   api::{GetRegistrationApplication, RegistrationApplicationResponse},
   RegistrationApplicationView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 /// Lists registration applications, filterable by undenied only.
 pub async fn get_registration_application(

@@ -12,14 +12,14 @@ static DEFAULT_CONFIG_FILE: &str = "config/config.hjson";
 
 #[allow(clippy::expect_used)]
 pub static SETTINGS: LazyLock<Settings> = LazyLock::new(|| {
-  if env::var("LEMMY_INITIALIZE_WITH_DEFAULT_SETTINGS").is_ok() {
+  if env::var("app_108jobs_INITIALIZE_WITH_DEFAULT_SETTINGS").is_ok() {
     println!(
-      "LEMMY_INITIALIZE_WITH_DEFAULT_SETTINGS was set, any configuration file has been ignored."
+      "app_108jobs_INITIALIZE_WITH_DEFAULT_SETTINGS was set, any configuration file has been ignored."
     );
-    println!("Use with other environment variables to configure this instance further; e.g. LEMMY_DATABASE_URL.");
+    println!("Use with other environment variables to configure this instance further; e.g. app_108jobs_DATABASE_URL.");
     Settings::default()
   } else {
-    Settings::init().expect("Failed to load settings file, see documentation (https://join-lemmy.org/docs/en/administration/configuration.html).")
+    Settings::init().expect("Failed to load settings file, see documentation (https://join-app_108jobs.org/docs/en/administration/configuration.html).")
   }
 });
 
@@ -35,12 +35,12 @@ static WEBFINGER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 impl Settings {
   /// Reads config from configuration file.
   ///
-  /// Note: The env var `LEMMY_DATABASE_URL` is parsed in
-  /// `lemmy_db_schema/src/lib.rs::get_database_url_from_env()`
+  /// Note: The env var `app_108jobs_DATABASE_URL` is parsed in
+  /// `app_108jobs_db_schema/src/lib.rs::get_database_url_from_env()`
   /// Warning: Only call this once.
   pub(crate) fn init() -> FastJobResult<Self> {
     let path =
-      env::var("LEMMY_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string());
+      env::var("app_108jobs_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string());
     let plain = fs::read_to_string(path)?;
     let config = from_str::<Settings>(&plain)?;
     if config.hostname == "unset" {
@@ -51,7 +51,7 @@ impl Settings {
   }
 
   pub fn get_database_url(&self) -> String {
-    if let Ok(url) = env::var("LEMMY_DATABASE_URL") {
+    if let Ok(url) = env::var("app_108jobs_DATABASE_URL") {
       url
     } else {
       self.database.connection.clone()
@@ -67,15 +67,15 @@ impl Settings {
     }
   }
 
-  /// Returns something like `http://localhost` or `https://lemmy.ml`,
+  /// Returns something like `http://localhost` or `https://app_108jobs.ml`,
   /// with the correct protocol and hostname.
   pub fn get_protocol_and_hostname(&self) -> String {
     format!("{}://{}", self.get_protocol_string(), self.hostname)
   }
 
   /// When running the federation test setup in `api_tests/` or `docker/federation`, the `hostname`
-  /// variable will be like `lemmy-alpha:8541`. This method removes the port and returns
-  /// `lemmy-alpha` instead. It has no effect in production.
+  /// variable will be like `app_108jobs-alpha:8541`. This method removes the port and returns
+  /// `app_108jobs-alpha` instead. It has no effect in production.
   pub fn get_hostname_without_port(&self) -> Result<String, anyhow::Error> {
     Ok(
       (*self

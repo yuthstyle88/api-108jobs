@@ -1,15 +1,15 @@
 use crate::context::FastJobContext;
 use crate::utils::check_category_deleted_removed;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::TagId,
   source::{
     post::Post,
     post_tag::{PostTag, PostTagForm},
   },
 };
-use lemmy_db_views_category::CategoryView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::collections::HashSet;
 
 pub async fn update_post_tags(

@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::{
+use app_108jobs_db_schema::newtypes::{
   CommentReplyId,
   PersonCommentMentionId,
   PersonPostMentionId,

@@ -1,5 +1,6 @@
-use crate::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
-use lemmy_utils::error::FastJobError;
+use crate::protocol::api::{AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent, HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload, SyncPendingPayload};
+use crate::bridge_message::{GlobalOffline, GlobalOnline};
+use app_108jobs_utils::error::FastJobError;
 
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -65,6 +66,8 @@ impl ChatEvent {
       ChatEvent::TypingStop => "typing:stop",
       ChatEvent::Update => "chat:update",
       ChatEvent::ChatsSignal => "chats:signal",
+      ChatEvent::GlobalOnline => "globalOnline",
+      ChatEvent::GlobalOffline => "globalOffline",
       ChatEvent::Unknown => "unknown",
     }
   }
@@ -120,6 +123,9 @@ pub enum AnyIncomingEvent {
 
   #[serde(rename = "chat:update")]
   Update(GenericIncomingEvent<MessageModel>),
+
+  GlobalOnline(GlobalOnline),
+  GlobalOffline(GlobalOffline),
 
   // --- Fallback ---
   #[serde(other)]

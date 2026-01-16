@@ -1,13 +1,13 @@
 {
-  "actor": "http://enterprise.lemmy.ml/u/lemmy_beta",
-  "to": ["http://ds9.lemmy.ml/u/lemmy_alpha"],
+  "actor": "http://enterprise.app_108jobs.ml/u/app_108jobs_beta",
+  "to": ["http://ds9.app_108jobs.ml/u/app_108jobs_alpha"],
   "object": {
-    "actor": "http://enterprise.lemmy.ml/u/lemmy_beta",
-    "to": ["http://enterprise.lemmy.ml/u/lemmy_beta"],
-    "object": "http://enterprise.lemmy.ml/private_message/1",
+    "actor": "http://enterprise.app_108jobs.ml/u/app_108jobs_beta",
+    "to": ["http://enterprise.app_108jobs.ml/u/app_108jobs_beta"],
+    "object": "http://enterprise.app_108jobs.ml/private_message/1",
     "type": "Delete",
-    "id": "http://enterprise.lemmy.ml/activities/delete/616c41be-04ed-4bd4-b865-30712186b122"
+    "id": "http://enterprise.app_108jobs.ml/activities/delete/616c41be-04ed-4bd4-b865-30712186b122"
   },
   "type": "Undo",
-  "id": "http://enterprise.lemmy.ml/activities/undo/35e5b337-014c-4bbe-8d63-6fac96f51409"
+  "id": "http://enterprise.app_108jobs.ml/activities/undo/35e5b337-014c-4bbe-8d63-6fac96f51409"
 }

@@ -15,20 +15,20 @@
   "object": "https://greenish.red/objects/38e2b983-ebf5-4387-9bc2-3b80305469c9",
   "tag": [
     {
-      "href": "https://voyager.lemmy.ml/c/main",
-      "name": "@main@voyager.lemmy.ml",
+      "href": "https://voyager.app_108jobs.ml/c/main",
+      "name": "@main@voyager.app_108jobs.ml",
       "type": "Mention"
     },
     {
-      "href": "https://voyager.lemmy.ml/u/dess_voy_41u2",
-      "name": "@dess_voy_41u2@voyager.lemmy.ml",
+      "href": "https://voyager.app_108jobs.ml/u/dess_voy_41u2",
+      "name": "@dess_voy_41u2@voyager.app_108jobs.ml",
       "type": "Mention"
     }
   ],
   "to": [
     "https://greenish.red/users/vpzom/followers",
-    "https://voyager.lemmy.ml/c/main",
-    "https://voyager.lemmy.ml/u/dess_voy_41u2",
+    "https://voyager.app_108jobs.ml/c/main",
+    "https://voyager.app_108jobs.ml/u/dess_voy_41u2",
     "https://www.w3.org/ns/activitystreams#Public"
   ],
   "type": "Delete"

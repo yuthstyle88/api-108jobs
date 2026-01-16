@@ -6,7 +6,7 @@ use std::fmt::Debug;
 #[cfg(feature = "full")]
 use {
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{image_details, local_image, remote_image},
+  app_108jobs_db_schema_file::schema::{image_details, local_image, remote_image},
 };
 
 #[skip_serializing_none]
@@ -41,7 +41,7 @@ pub struct LocalImageForm {
 }
 
 /// Stores all images which are hosted on remote domains. When attempting to proxy an image, it
-/// is checked against this table to avoid Lemmy being used as a general purpose proxy.
+/// is checked against this table to avoid app_108jobs being used as a general purpose proxy.
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

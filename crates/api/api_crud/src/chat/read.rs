@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json, Path};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::newtypes::ChatRoomId;
-use lemmy_db_views_chat::api::ChatRoomResponse;
-use lemmy_db_views_chat::ChatRoomView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_db_views_chat::api::ChatRoomResponse;
+use app_108jobs_db_views_chat::ChatRoomView;
+use app_108jobs_utils::error::FastJobResult;
 
 /// GET /api/v4/chat/rooms/{id}
 /// Returns the chat room along with its participants, last message (if any), and current workflow status (if any and not completed/cancelled).

@@ -1,4 +1,4 @@
-use lemmy_db_schema::newtypes::LocalUserId;
+use app_108jobs_db_schema::newtypes::LocalUserId;
 use serde::Serialize;
 use url::Url;
 

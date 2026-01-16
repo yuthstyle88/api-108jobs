@@ -7,7 +7,7 @@ use actix_web::web::Data;
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
     post::{Post, PostUpdateForm},
@@ -15,8 +15,8 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_post::api::{LinkMetadata, OpenGraphData};
-use lemmy_utils::{
+use app_108jobs_db_views_post::api::{LinkMetadata, OpenGraphData};
+use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::{PictrsImageMode, Settings},
   REQWEST_TIMEOUT,
@@ -135,7 +135,7 @@ pub async fn fetch_link_metadata(
 
     if is_html {
       // Can't use .text() here, because it only checks the content header, not the actual bytes
-      // https://github.com/LemmyNet/lemmy/issues/1964
+      // https://github.com/app_108jobsNet/app_108jobs/issues/1964
       // So we want to do deep inspection of the actually returned bytes but need to be careful
       // not spend too much time parsing binary data as HTML
       // only take first bytes regardless of how many bytes the server returns
@@ -192,7 +192,7 @@ async fn collect_bytes_until_limit(
 ///
 /// TODO: `federated_thumbnail` param can be removed once we federate full metadata and can
 ///       write it to db directly, without calling this function.
-///       https://github.com/LemmyNet/lemmy/issues/4598
+///       https://github.com/app_108jobsNet/app_108jobs/issues/4598
 pub async fn generate_post_link_metadata(
   post: Post,
   custom_thumbnail: Option<Url>,
@@ -450,7 +450,7 @@ pub async fn delete_image_alias(alias: &str, context: &FastJobContext) -> FastJo
     .await?
     .error_for_status()?;
 
-  // Delete db row if any (old Lemmy versions didn't generate this).
+  // Delete db row if any (old app_108jobs versions didn't generate this).
   LocalImage::delete_by_alias(&mut context.pool(), alias)
     .await
     .ok();
@@ -573,7 +573,7 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Fast
 #[cfg(test)]
 mod tests {
   use crate::request::extract_opengraph_data;
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use url::Url;
 

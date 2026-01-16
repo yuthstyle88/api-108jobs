@@ -30,10 +30,10 @@ pub struct Group {
   pub summary: Option<String>,
   pub icon: Option<String>,
   pub image: Option<String>,
-  // lemmy extension
+  // app_108jobs extension
   pub sensitive: Option<bool>,
   pub attributed_to: Option<AttributedTo>,
-  // lemmy extension
+  // app_108jobs extension
   pub posting_restricted_to_mods: Option<bool>,
   pub outbox: Url,
   pub endpoints: Option<Endpoints>,

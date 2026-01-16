@@ -1,4 +1,4 @@
-pub use lemmy_db_schema::{
+pub use app_108jobs_db_schema::{
   newtypes::{
     AdminAllowInstanceId,
     AdminBlockInstanceId,
@@ -47,7 +47,7 @@ pub use lemmy_db_schema::{
   },
   ModlogActionType,
 };
-pub use lemmy_db_views_modlog_combined::{
+pub use app_108jobs_db_views_modlog_combined::{
   api::{GetModlog, GetModlogResponse},
   AdminAllowInstanceView,
   AdminBlockInstanceView,

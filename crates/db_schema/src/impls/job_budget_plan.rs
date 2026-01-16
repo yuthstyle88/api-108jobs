@@ -13,11 +13,11 @@ use diesel::OptionalExtension;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::job_budget_plan;
+use app_108jobs_db_schema_file::schema::job_budget_plan;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::job_budget_plan::dsl as jbp;
+use app_108jobs_db_schema_file::schema::job_budget_plan::dsl as jbp;
 #[cfg(feature = "full")]
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use crate::newtypes::PostId;
 
 #[cfg(feature = "full")]

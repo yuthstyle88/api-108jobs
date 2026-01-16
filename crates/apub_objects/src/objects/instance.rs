@@ -4,14 +4,14 @@ use crate::{
 };
 
 use crate::fake_trait::{Actor, Object};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{
   sensitive::SensitiveString,
   source::site::Site
   ,
 };
-use lemmy_db_schema_file::enums::ActorType;
-use lemmy_utils::error::{FastJobError};
+use app_108jobs_db_schema_file::enums::ActorType;
+use app_108jobs_utils::error::{FastJobError};
 use std::ops::Deref;
 use url::Url;
 

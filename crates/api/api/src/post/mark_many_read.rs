@@ -1,11 +1,11 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{source::post::PostActions, traits::Readable};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::api::MarkManyPostsAsRead;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::{error::FastJobResult, utils::validation::check_api_elements_count};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{source::post::PostActions, traits::Readable};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::MarkManyPostsAsRead;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::{error::FastJobResult, utils::validation::check_api_elements_count};
 
 pub async fn mark_posts_as_read(
   data: Json<MarkManyPostsAsRead>,

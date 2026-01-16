@@ -187,7 +187,7 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
   let mut conn = PgConnection::establish(db_url)?;
 
   // If possible, skip getting a lock and recreating the "r" schema, so
-  // lemmy_server processes in a horizontally scaled setup can start without causing locks
+  // app_108jobs_server processes in a horizontally scaled setup can start without causing locks
   if !options.revert
     && options.run
     && options.limit.is_none()

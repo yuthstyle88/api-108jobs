@@ -1,7 +1,7 @@
 use crate::context::FastJobContext;
 use either::Either;
 use futures::future::BoxFuture;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     newtypes::{CategoryId, PersonId},
     source::{
     comment::Comment,
@@ -13,8 +13,8 @@ use lemmy_db_schema::{
 };
 
 use actix_web::web::Data;
-use lemmy_db_views_post::api::DeletePost;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_post::api::DeletePost;
+use app_108jobs_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
 use tokio::{
   sync::{
@@ -28,7 +28,7 @@ use tokio::{
 type MatchOutgoingActivitiesBoxed =
   Box<for<'a> fn(SendActivityData, &'a Data<FastJobContext>) -> BoxFuture<'a, FastJobResult<()>>>;
 
-/// This static is necessary so that the api_common crates don't need to depend on lemmy_apub
+/// This static is necessary so that the api_common crates don't need to depend on app_108jobs_apub
 pub static MATCH_OUTGOING_ACTIVITIES: OnceLock<MatchOutgoingActivitiesBoxed> = OnceLock::new();
 
 #[derive(Debug)]

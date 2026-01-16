@@ -6,8 +6,8 @@ use diesel::dsl::{insert_into, now, update};
 use diesel::prelude::*;
 use diesel::upsert::excluded;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::chat_unread;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult, FastJobErrorExt};
+use app_108jobs_db_schema_file::schema::chat_unread;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult, FastJobErrorExt};
 use diesel::sql_types::{Integer, Nullable, Timestamptz, Text, Varchar};
 use diesel::sql_query;
 

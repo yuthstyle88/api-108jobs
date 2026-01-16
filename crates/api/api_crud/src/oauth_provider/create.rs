@@ -1,13 +1,13 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{
   source::oauth_provider::{OAuthProvider, OAuthProviderInsertForm},
   traits::Crud,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::CreateOAuthProvider;
-use lemmy_utils::error::FastJobError;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::CreateOAuthProvider;
+use app_108jobs_utils::error::FastJobError;
 use url::Url;
 pub async fn create_oauth_provider(
   data: Json<CreateOAuthProvider>,

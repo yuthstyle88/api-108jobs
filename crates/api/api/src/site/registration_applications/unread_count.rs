@@ -1,10 +1,10 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_registration_applications::RegistrationApplicationView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_registration_applications::RegistrationApplicationView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_unread_registration_application_count(
   context: Data<FastJobContext>,

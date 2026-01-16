@@ -1,7 +1,7 @@
 use crate::newtypes::{CommentId, CommentReplyId, PersonId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::comment_reply;
+use app_108jobs_db_schema_file::schema::comment_reply;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

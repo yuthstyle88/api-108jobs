@@ -1,18 +1,18 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use chrono::Utc;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::{check_category_deleted_removed, is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
+use app_108jobs_db_schema::{
   source::{
     category::Category,
     tag::{Tag, TagInsertForm, TagUpdateForm},
   },
   traits::Crud,
 };
-use lemmy_db_views_category::api::{CreateCategoryTag, DeleteCategoryTag, UpdateCategoryTag};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::{error::FastJobResult, utils::validation::tag_name_length_check};
+use app_108jobs_db_views_category::api::{CreateCategoryTag, DeleteCategoryTag, UpdateCategoryTag};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::{error::FastJobResult, utils::validation::tag_name_length_check};
 
 pub async fn create_category_tag(
   data: Json<CreateCategoryTag>,

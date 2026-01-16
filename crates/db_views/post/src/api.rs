@@ -1,6 +1,6 @@
 use crate::PostView;
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::{newtypes::{
+use app_108jobs_db_schema::{newtypes::{
   CommentId,
   CategoryId,
   DbUrl,
@@ -9,9 +9,9 @@ use lemmy_db_schema::{newtypes::{
   PostId,
   TagId,
 }, PostFeatureType};
-use lemmy_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
-use lemmy_db_views_category::CategoryView;
-use lemmy_db_views_vote::VoteView;
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
+use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -7,14 +7,13 @@ use actix_web::{
   web::{scope, Data},
   App, HttpResponse, HttpServer,
 };
-use clap::{Parser, Subcommand};
-use lemmy_api_utils::site_snapshot::CachedSiteConfigProvider;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::site_snapshot::CachedSiteConfigProvider;
+use app_108jobs_api_utils::{
   context::FastJobContext, request::client_builder,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
-use lemmy_db_schema::{source::secret::Secret, utils::build_db_pool};
-use lemmy_routes::{
+use app_108jobs_db_schema::{source::secret::Secret, utils::build_db_pool};
+use app_108jobs_routes::{
   feeds,
   middleware::{
     idempotency::{IdempotencyMiddleware, IdempotencySet},
@@ -27,18 +26,20 @@ use lemmy_routes::{
     setup_local_site::setup_local_site,
   },
 };
-use lemmy_utils::redis::RedisClient;
-use lemmy_utils::{
+use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{
   error::FastJobResult,
   rate_limit::RateLimit,
   response::jsonify_plain_text_errors,
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
+use clap::{Parser, Subcommand};
 use std::time::Duration;
 
-use lemmy_routes::utils::scheduled_tasks::setup;
-use lemmy_ws::broker::{phoenix_manager::PhoenixManager, presence_manager::PresenceManager};
+use app_108jobs_routes::utils::scheduled_tasks::setup;
+use app_108jobs_ws::broker::manager::PhoenixManager;
+use app_108jobs_ws::presence::{AttachPhoenix, PresenceManager};
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
@@ -65,21 +66,29 @@ static GLOBAL: MiMalloc = MiMalloc;
 pub struct CmdArgs {
   /// Don't run scheduled tasks.
   ///
-  /// If you are running multiple Lemmy server processes, you probably want to disable scheduled
+  /// If you are running multiple app_108jobs server processes, you probably want to disable scheduled
   /// tasks on all but one of the processes, to avoid running the tasks more often than intended.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_SCHEDULED_TASKS")]
+  #[arg(
+    long,
+    default_value_t = false,
+    env = "app_108jobs_DISABLE_SCHEDULED_TASKS"
+  )]
   disable_scheduled_tasks: bool,
   /// Disables the HTTP server.
   ///
-  /// This can be used to run a Lemmy server process that only performs scheduled tasks or activity
+  /// This can be used to run a app_108jobs server process that only performs scheduled tasks or activity
   /// sending.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_HTTP_SERVER")]
+  #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_HTTP_SERVER")]
   disable_http_server: bool,
   /// Disable sending outgoing ActivityPub messages.
   ///
   /// Only pass this for horizontally scaled setups.
-  /// See https://join-lemmy.org/docs/administration/horizontal_scaling.html for details.
-  #[arg(long, default_value_t = false, env = "LEMMY_DISABLE_ACTIVITY_SENDING")]
+  /// See https://join-app_108jobs.org/docs/administration/horizontal_scaling.html for details.
+  #[arg(
+    long,
+    default_value_t = false,
+    env = "app_108jobs_DISABLE_ACTIVITY_SENDING"
+  )]
   disable_activity_sending: bool,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
@@ -108,7 +117,7 @@ enum MigrationSubcommand {
   Revert,
 }
 
-/// Placing the main function in lib.rs allows other crates to import it and embed Lemmy
+/// Placing the main function in lib.rs allows other crates to import it and embed app_108jobs
 pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   if let Some(CmdSubcommand::Migration {
     subcommand,
@@ -117,8 +126,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   }) = args.subcommand
   {
     let mut options = match subcommand {
-      MigrationSubcommand::Run => lemmy_db_schema_setup::Options::default().run(),
-      MigrationSubcommand::Revert => lemmy_db_schema_setup::Options::default().revert(),
+      MigrationSubcommand::Run => app_108jobs_db_schema_setup::Options::default().run(),
+      MigrationSubcommand::Revert => app_108jobs_db_schema_setup::Options::default().revert(),
     }
     .print_output();
 
@@ -126,7 +135,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
       options = options.limit(number);
     }
 
-    lemmy_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
+    app_108jobs_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
 
     return Ok(());
   }
@@ -178,7 +187,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   let heartbeat_ttl = Duration::from_secs(45);
   // Start a lightweight system broker for broadcasting presence events
   let presence_manager =
-    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone())).start();
+    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()), pool.clone()).start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -200,6 +209,10 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   .await
   .start();
 
+  presence_manager.do_send(AttachPhoenix {
+    addr: phoenix_manager.clone(),
+  });
+
   if let Some(prometheus) = SETTINGS.prometheus.clone() {
     serve_prometheus(prometheus, context.clone())?;
   }
@@ -211,6 +224,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
     Some(create_http_server(
       context.clone(),
       phoenix_manager,
+      presence_manager,
       SETTINGS.clone(),
     )?)
   } else {
@@ -265,6 +279,7 @@ fn create_startup_server() -> FastJobResult<ServerHandle> {
 fn create_http_server(
   context: FastJobContext,
   phoenix_manager: Addr<PhoenixManager>,
+  presence_manager: Addr<PresenceManager>,
   settings: Settings,
 ) -> FastJobResult<ServerHandle> {
   // These must come before HttpServer creation so they can collect data across threads.
@@ -306,7 +321,8 @@ fn create_http_server(
       ))
       // Application data - these don't affect middleware order
       .app_data(Data::new(context.clone()))
-      .app_data(Data::new(phoenix_manager.clone()));
+      .app_data(Data::new(phoenix_manager.clone()))
+      .app_data(Data::new(presence_manager.clone()));
 
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))

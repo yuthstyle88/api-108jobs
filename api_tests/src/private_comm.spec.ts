@@ -1,6 +1,6 @@
 jest.setTimeout(120000);
 
-import { FollowCommunity, LemmyError, LemmyHttp } from "lemmy-js-client";
+import { FollowCommunity, app_108jobsError, app_108jobsHttp } from "app_108jobs-js-client";
 import {
   alpha,
   setupLogins,
@@ -142,13 +142,13 @@ test("Only followers can view and interact with private category content", async
     await resolveCommunity(user, community.community_view.community.ap_id)
   )?.community;
   await expect(resolvePost(user, post0.post_view.post)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
   await expect(
     resolveComment(user, comment.comment_view.comment),
-  ).rejects.toStrictEqual(new LemmyError("not_found"));
+  ).rejects.toStrictEqual(new app_108jobsError("not_found"));
   await expect(createPost(user, betaCommunity!.id)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
 
   // follow the category and approve
@@ -333,7 +333,7 @@ test("Fetch remote content in private category", async () => {
 
   // cannot fetch post yet
   await expect(resolvePost(gamma, post.post_view.post)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
   // follow category and approve
   await gamma.followCommunity(follow_form);
@@ -355,7 +355,7 @@ test("Fetch remote content in private category", async () => {
   );
 });
 
-async function approveFollower(user: LemmyHttp, community_id: number) {
+async function approveFollower(user: app_108jobsHttp, community_id: number) {
   let pendingFollows1 = await waitUntil(
     () => listCommunityPendingFollows(user),
     f => f.items.length == 1,

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   category::{Category, CategoryActions},
   images::ImageDetails,
   instance::InstanceActions,
@@ -14,18 +14,18 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     creator_banned_from_category,
     creator_banned_within_category,
   },
-  lemmy_db_schema::utils::queries::{
+  app_108jobs_db_schema::utils::queries::{
     creator_is_moderator,
     local_user_can_mod_post,
     post_creator_is_admin,
     post_tags_fragment,
   },
 };
-use lemmy_db_schema::newtypes::{LanguageId, PersonId, PostId};
+use app_108jobs_db_schema::newtypes::{LanguageId, PersonId, PostId};
 
 pub mod api;
 #[cfg(feature = "full")]

@@ -15,7 +15,7 @@ use strum::{Display, EnumString};
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 // TODO add the controversial and scaled rankings to the doc below
-/// The post sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The post sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 pub enum PostSortType {
   #[default]
   Active,
@@ -40,7 +40,7 @@ pub enum PostSortType {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// The comment sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The comment sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 pub enum CommentSortType {
   #[default]
   Hot,
@@ -366,4 +366,42 @@ pub enum WithdrawStatus {
   Rejected,
   /// Completed
   Completed,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::VehicleType"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Enum type for vehicle
+pub enum VehicleType {
+  #[default]
+  Motorcycle,
+  Bicycle,
+  Car,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::RiderVerificationStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Enum type for rider verification status
+pub enum RiderVerificationStatus {
+  #[default]
+  Pending,
+  Verified,
+  Rejected,
 }

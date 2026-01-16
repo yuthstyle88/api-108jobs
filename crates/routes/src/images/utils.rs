@@ -9,9 +9,9 @@ use actix_web::{
 use diesel::NotFound;
 use futures::stream::{Stream, StreamExt};
 use http::HeaderValue;
-use lemmy_api_utils::{context::FastJobContext, request::delete_image_alias};
-use lemmy_db_schema::newtypes::DbUrl;
-use lemmy_utils::{error::FastJobResult, REQWEST_TIMEOUT};
+use app_108jobs_api_utils::{context::FastJobContext, request::delete_image_alias};
+use app_108jobs_db_schema::newtypes::DbUrl;
+use app_108jobs_utils::{error::FastJobResult, REQWEST_TIMEOUT};
 use reqwest_middleware::RequestBuilder;
 
 pub(super) fn adapt_request(

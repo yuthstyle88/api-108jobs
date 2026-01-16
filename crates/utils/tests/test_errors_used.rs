@@ -1,4 +1,4 @@
-use lemmy_utils::error::FastJobErrorType;
+use app_108jobs_utils::error::FastJobErrorType;
 use std::{env::current_dir, process::Command};
 use strum::IntoEnumIterator;
 

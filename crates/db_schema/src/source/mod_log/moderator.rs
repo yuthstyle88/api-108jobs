@@ -17,9 +17,9 @@ use crate::newtypes::{
     PostId,
 };
 use chrono::{DateTime, Utc};
-use lemmy_db_schema_file::enums::CategoryVisibility;
+use app_108jobs_db_schema_file::enums::CategoryVisibility;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   mod_add,
   mod_add_category,
   mod_ban,

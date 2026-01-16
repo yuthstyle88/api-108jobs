@@ -1,14 +1,14 @@
 use actix_web::web::Json;
 use actix_web::web::{Data, Query};
-use lemmy_api_utils::{context::FastJobContext, utils::is_admin};
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::{
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::{
   api::{AdminListUsers, AdminListUsersResponse},
   impls::LocalUserQuery,
   LocalUserView,
 };
-use lemmy_db_views_person::PersonView;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_views_person::PersonView;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn admin_list_users(
   query: Query<AdminListUsers>,

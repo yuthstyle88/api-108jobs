@@ -1,21 +1,21 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use either::Either;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::is_admin,
 };
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{category_report::CategoryReport, site::Site},
   traits::Reportable,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_reports::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_reports::{
   api::{CategoryReportResponse, ResolveCategoryReport},
   CategoryReportView,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn resolve_category_report(
   data: Json<ResolveCategoryReport>,

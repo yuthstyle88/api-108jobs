@@ -7,7 +7,7 @@ use {
   crate::newtypes::LtreeDef,
   diesel_ltree::Ltree,
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{comment, comment_actions},
+  app_108jobs_db_schema_file::schema::{comment, comment_actions},
 };
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# By default, this script runs against `http://127.0.0.1:8536`, but you can pass a different Lemmy instance,
+# By default, this script runs against `http://127.0.0.1:8536`, but you can pass a different app_108jobs instance,
 # eg `./api_benchmark.sh "https://example.com"`.
 DOMAIN=${1:-"http://127.0.0.1:8536"}
 

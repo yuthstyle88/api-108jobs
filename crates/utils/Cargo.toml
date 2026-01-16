@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_utils"
+name = "app_108jobs_utils"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,12 +10,12 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "lemmy_utils"
+name = "app_108jobs_utils"
 path = "src/lib.rs"
 doctest = false
 
 [[bin]]
-name = "lemmy_util_bin"
+name = "app_108jobs_util_bin"
 path = "src/main.rs"
 required-features = ["full"]
 

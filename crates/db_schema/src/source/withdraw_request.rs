@@ -2,13 +2,13 @@ use crate::newtypes::{BankAccountId, Coin, LocalUserId, WalletId, WithdrawReques
 use chrono::{DateTime, Utc};
 
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::enums::WithdrawStatus;
+use app_108jobs_db_schema_file::enums::WithdrawStatus;
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[cfg(feature = "full")]
-use {i_love_jesus::CursorKeysModule, lemmy_db_schema_file::schema::withdraw_requests};
+use {i_love_jesus::CursorKeysModule, app_108jobs_db_schema_file::schema::withdraw_requests};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

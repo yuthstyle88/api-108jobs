@@ -3,7 +3,7 @@ ansible/inventory
 ansible/passwords/
 
 # docker build files
-docker/lemmy_mine.hjson
+docker/app_108jobs_mine.hjson
 docker/dev/env_deploy.sh
 docker/volumes
 

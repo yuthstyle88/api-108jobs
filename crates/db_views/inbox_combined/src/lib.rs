@@ -1,4 +1,4 @@
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{
     combined::inbox::InboxCombined,
@@ -20,7 +20,7 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   diesel::{Queryable, Selectable},
-  lemmy_db_schema::{
+  app_108jobs_db_schema::{
     utils::queries::{
       creator_banned,
       creator_is_admin,

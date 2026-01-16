@@ -13,7 +13,7 @@ pub mod sensitive;
 pub mod test_data;
 #[cfg(feature = "full")]
 pub mod aliases {
-  use lemmy_db_schema_file::schema::{category_actions, instance_actions, local_user, person};
+  use app_108jobs_db_schema_file::schema::{category_actions, instance_actions, local_user, person};
   diesel::alias!(
     category_actions as creator_category_actions: CreatorcategoryActions,
     instance_actions as creator_home_instance_actions: CreatorHomeInstanceActions,
@@ -35,7 +35,7 @@ use strum::{Display, EnumString};
 #[cfg(feature = "full")]
 use {
     diesel::query_source::AliasedField,
-    lemmy_db_schema_file::schema::{category_actions, instance_actions, person},
+    app_108jobs_db_schema_file::schema::{category_actions, instance_actions, person},
 };
 
 #[derive(
@@ -51,7 +51,7 @@ pub enum SearchSortType {
   Old,
 }
 
-/// The category sort types. See here for descriptions: https://join-lemmy.org/docs/en/users/03-votes-and-ranking.html
+/// The category sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]

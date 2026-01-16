@@ -5,14 +5,14 @@ use crate::{
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use diesel_ltree::Ltree;
-use lemmy_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
+use app_108jobs_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   crate::newtypes::LtreeDef,
   i_love_jesus::CursorKeysModule,
-  lemmy_db_schema_file::schema::{category, category_actions},
+  app_108jobs_db_schema_file::schema::{category, category_actions},
 };
 
 #[skip_serializing_none]

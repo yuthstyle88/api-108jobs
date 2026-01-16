@@ -1,7 +1,7 @@
 use diesel::{Queryable, Selectable};
-use lemmy_db_schema::source::person::Person;
-use lemmy_db_schema::source::user_review::UserReview;
-use lemmy_db_schema::source::workflow::Workflow;
+use app_108jobs_db_schema::source::person::Person;
+use app_108jobs_db_schema::source::user_review::UserReview;
+use app_108jobs_db_schema::source::workflow::Workflow;
 use serde::{Deserialize, Serialize};
 
 pub mod api;

@@ -1,7 +1,7 @@
 use crate::newtypes::{CategoryId, CategoryReportId, DbUrl, PersonId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::category_report;
+use app_108jobs_db_schema_file::schema::category_report;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -3,7 +3,7 @@
 --
 -- Also connect the thumbnail to a post id.
 --
--- See https://github.com/LemmyNet/lemmy/issues/5564
+-- See https://github.com/app_108jobsNet/app_108jobs/issues/5564
 ALTER TABLE local_image
     ADD COLUMN person_id int REFERENCES person (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE,
     ADD COLUMN thumbnail_for_post_id int REFERENCES post (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE;

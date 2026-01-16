@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::user_review::UserReview;
-use lemmy_db_schema::source::workflow::Workflow;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_user_review::api::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::user_review::UserReview;
+use app_108jobs_db_schema::source::workflow::Workflow;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_user_review::api::{
   ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
   ValidSubmitUserReview,
 };
-use lemmy_db_views_user_review::UserReviewView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_user_review::UserReviewView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn submit_user_review(
   data: Json<SubmitUserReviewForm>,

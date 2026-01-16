@@ -1,7 +1,7 @@
 use crate::BankAccountView;
-use lemmy_db_schema::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
-use lemmy_utils::error::{FastJobError, FastJobErrorType};
-use lemmy_utils::utils::validation::validate_bank_account;
+use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorType};
+use app_108jobs_utils::utils::validation::validate_bank_account;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

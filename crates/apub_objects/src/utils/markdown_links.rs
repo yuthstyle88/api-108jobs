@@ -1,4 +1,4 @@
-use lemmy_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
+use app_108jobs_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 
 

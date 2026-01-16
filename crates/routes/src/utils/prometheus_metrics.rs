@@ -1,7 +1,7 @@
 use actix_web::{rt::System, web, App, HttpServer};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_utils::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   settings::structs::PrometheusConfig,
 };
@@ -12,7 +12,7 @@ use tracing::error;
 /// Creates a middleware that populates http metrics for each path, method, and status code
 pub fn new_prometheus_metrics() -> FastJobResult<PrometheusMetrics> {
   Ok(
-    PrometheusMetricsBuilder::new("lemmy_api")
+    PrometheusMetricsBuilder::new("app_108jobs_api")
       .registry(default_registry().clone())
       .build()
       .map_err(|e| FastJobErrorType::Unknown(format!("Should always be buildable: {e}")))?,
@@ -20,7 +20,7 @@ pub fn new_prometheus_metrics() -> FastJobResult<PrometheusMetrics> {
 }
 
 struct PromContext {
-  lemmy: FastJobContext,
+  app_108jobs: FastJobContext,
   db_pool_metrics: DbPoolMetrics,
 }
 
@@ -30,9 +30,9 @@ struct DbPoolMetrics {
   available: Gauge,
 }
 
-pub fn serve_prometheus(config: PrometheusConfig, lemmy_context: FastJobContext) -> FastJobResult<()> {
+pub fn serve_prometheus(config: PrometheusConfig, app_108jobs_context: FastJobContext) -> FastJobResult<()> {
   let context = Arc::new(PromContext {
-    lemmy: lemmy_context,
+    app_108jobs: app_108jobs_context,
     db_pool_metrics: create_db_pool_metrics()?,
   });
 
@@ -74,19 +74,19 @@ async fn metrics(context: web::Data<Arc<PromContext>>) -> FastJobResult<String> 
   Ok(output)
 }
 
-// create lemmy_db_pool_* metrics and register them with the default registry
+// create app_108jobs_db_pool_* metrics and register them with the default registry
 fn create_db_pool_metrics() -> FastJobResult<DbPoolMetrics> {
   let metrics = DbPoolMetrics {
     max_size: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_max_connections",
+      "app_108jobs_db_pool_max_connections",
       "Maximum number of connections in the pool",
     ))?,
     size: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_connections",
+      "app_108jobs_db_pool_connections",
       "Current number of connections in the pool",
     ))?,
     available: Gauge::with_opts(Opts::new(
-      "lemmy_db_pool_available_connections",
+      "app_108jobs_db_pool_available_connections",
       "Number of available connections in the pool",
     ))?,
   };
@@ -102,7 +102,7 @@ fn create_db_pool_metrics() -> FastJobResult<DbPoolMetrics> {
 /// https://stackoverflow.com/q/35974890
 #[allow(clippy::as_conversions)]
 fn collect_db_pool_metrics(context: &PromContext) {
-  let pool_status = context.lemmy.inner_pool().status();
+  let pool_status = context.app_108jobs.inner_pool().status();
   context
     .db_pool_metrics
     .max_size

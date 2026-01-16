@@ -80,7 +80,7 @@ ALTER TABLE category
 
 
 -- Move all the extra site settings-type columns to a local_site table
--- Add a lot of other fields currently in the lemmy.hjson
+-- Add a lot of other fields currently in the app_108jobs.hjson
 CREATE TABLE local_site (
     id serial PRIMARY KEY,
     site_id int REFERENCES site ON UPDATE CASCADE ON DELETE CASCADE NOT NULL UNIQUE,
@@ -99,7 +99,7 @@ CREATE TABLE local_site (
     legal_information text,
     hide_modlog_mod_names boolean DEFAULT TRUE NOT NULL,
     application_email_admins boolean DEFAULT FALSE NOT NULL,
-    -- Fields from lemmy.hjson
+    -- Fields from app_108jobs.hjson
     slur_filter_regex text,
     actor_name_max_length int DEFAULT 20 NOT NULL,
     captcha_enabled boolean DEFAULT FALSE NOT NULL,

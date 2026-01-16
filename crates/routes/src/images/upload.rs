@@ -1,7 +1,7 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
-use lemmy_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
-use lemmy_db_schema::{
+use app_108jobs_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
+use app_108jobs_db_schema::{
   source::{
     category::{Category, CategoryUpdateForm},
     images::{LocalImage, LocalImageForm},
@@ -10,10 +10,10 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_category::api::CategoryIdQuery;
-use lemmy_db_views_local_image::api::UploadImageResponse;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_category::api::CategoryIdQuery;
+use app_108jobs_db_views_local_image::api::UploadImageResponse;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Body;
 use std::time::Duration;
 use UploadType::*;
@@ -211,7 +211,7 @@ pub async fn do_upload_image(
 
   let mut images = res.json::<PictrsResponse>().await?;
   for image in &images.files {
-    // Pictrs allows uploading multiple images in a single request. Lemmy doesnt need this,
+    // Pictrs allows uploading multiple images in a single request. app_108jobs doesnt need this,
     // but still a user may upload multiple and so we need to store all links in db for
     // to allow deletion via web ui.
     let form = LocalImageForm {

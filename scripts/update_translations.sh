@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-pushd ../../lemmy-website
+pushd ../../app_108jobs-website
 git fetch weblate
 git merge weblate/main
 git push

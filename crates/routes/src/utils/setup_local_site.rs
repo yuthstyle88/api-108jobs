@@ -4,17 +4,17 @@ use diesel::{
   query_builder::AsQuery,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
-use lemmy_api_utils::plugins::plugin_metadata;
-use lemmy_api_utils::utils::generate_inbox_url;
-use lemmy_db_schema::source::actor_language::SiteLanguage;
-use lemmy_db_schema::source::language::Language;
-use lemmy_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
-use lemmy_db_schema::source::oauth_provider::OAuthProvider;
-use lemmy_db_schema::source::tagline::Tagline;
-use lemmy_db_schema::source::wallet::WalletModel;
-use lemmy_db_schema::source::coin::{CoinModel, CoinModelInsertForm};
-use lemmy_db_schema::newtypes::Coin;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::plugins::plugin_metadata;
+use app_108jobs_api_utils::utils::generate_inbox_url;
+use app_108jobs_db_schema::source::actor_language::SiteLanguage;
+use app_108jobs_db_schema::source::language::Language;
+use app_108jobs_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
+use app_108jobs_db_schema::source::oauth_provider::OAuthProvider;
+use app_108jobs_db_schema::source::tagline::Tagline;
+use app_108jobs_db_schema::source::wallet::WalletModel;
+use app_108jobs_db_schema::source::coin::{CoinModel, CoinModelInsertForm};
+use app_108jobs_db_schema::newtypes::Coin;
+use app_108jobs_db_schema::{
   source::{
     instance::Instance,
     local_site::{LocalSite, LocalSiteInsertForm},
@@ -26,11 +26,11 @@ use lemmy_db_schema::{
   traits::{ApubActor, Crud},
   utils::{get_conn, DbPool},
 };
-use lemmy_db_schema_file::schema::local_site;
-use lemmy_db_views_person::impls::PersonQuery;
-use lemmy_db_views_site::api::SiteSnapshot;
-use lemmy_db_views_site::SiteView;
-use lemmy_utils::{
+use app_108jobs_db_schema_file::schema::local_site;
+use app_108jobs_db_views_person::impls::PersonQuery;
+use app_108jobs_db_views_site::api::SiteSnapshot;
+use app_108jobs_db_views_site::SiteView;
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   VERSION,

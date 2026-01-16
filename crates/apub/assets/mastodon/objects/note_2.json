@@ -26,16 +26,16 @@
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
   "cc": [
     "https://floss.social/users/kde/followers",
-    "https://lemmy.kde.social/c/kde",
-    "https://lemmy.kde.social/c/kde/followers"
+    "https://app_108jobs.kde.social/c/kde",
+    "https://app_108jobs.kde.social/c/kde/followers"
   ],
   "sensitive": false,
   "atomUri": "https://floss.social/users/kde/statuses/113306831140126616",
   "inReplyToAtomUri": "https://floss.social/users/kde/statuses/113306824627995724",
   "conversation": "tag:floss.social,2024-10-14:objectId=71424279:objectType=Conversation",
-  "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://lemmy.kde.social/c/kde\" class=\"u-url mention\">@<span>kde@lemmy.kde.social</span></a></span> </p><p>We also need funding 💶 to keep the gears turning! Please support us with a donation:</p><p><a href=\"https://kde.org/donate/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">kde.org/donate/</span><span class=\"invisible\"></span></a></p><p>[3/3]</p>",
+  "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://app_108jobs.kde.social/c/kde\" class=\"u-url mention\">@<span>kde@app_108jobs.kde.social</span></a></span> </p><p>We also need funding 💶 to keep the gears turning! Please support us with a donation:</p><p><a href=\"https://kde.org/donate/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">kde.org/donate/</span><span class=\"invisible\"></span></a></p><p>[3/3]</p>",
   "contentMap": {
-    "en": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://lemmy.kde.social/c/kde\" class=\"u-url mention\">@<span>kde@lemmy.kde.social</span></a></span> </p><p>We also need funding 💶 to keep the gears turning! Please support us with a donation:</p><p><a href=\"https://kde.org/donate/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">kde.org/donate/</span><span class=\"invisible\"></span></a></p><p>[3/3]</p>"
+    "en": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://app_108jobs.kde.social/c/kde\" class=\"u-url mention\">@<span>kde@app_108jobs.kde.social</span></a></span> </p><p>We also need funding 💶 to keep the gears turning! Please support us with a donation:</p><p><a href=\"https://kde.org/donate/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">kde.org/donate/</span><span class=\"invisible\"></span></a></p><p>[3/3]</p>"
   },
   "attachment": [
     {
@@ -52,8 +52,8 @@
   "tag": [
     {
       "type": "Mention",
-      "href": "https://lemmy.kde.social/c/kde",
-      "name": "@kde@lemmy.kde.social"
+      "href": "https://app_108jobs.kde.social/c/kde",
+      "name": "@kde@app_108jobs.kde.social"
     }
   ],
   "replies": {

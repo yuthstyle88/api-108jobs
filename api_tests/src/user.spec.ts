@@ -1,6 +1,6 @@
 jest.setTimeout(120000);
 
-import { PersonView } from "../lemmy-js-client/dist/types/PersonView";
+import { PersonView } from "../app_108jobs-js-client/dist/types/PersonView";
 import {
   alpha,
   beta,
@@ -27,12 +27,12 @@ import {
 } from "./shared";
 import {
   EditSite,
-  LemmyError,
-  LemmyHttp,
+  app_108jobsError,
+  app_108jobsHttp,
   SaveUserSettings,
   UploadImage,
-} from "lemmy-js-client";
-import { GetPosts } from "../lemmy-js-client/dist/types/GetPosts";
+} from "app_108jobs-js-client";
+import { GetPosts } from "../app_108jobs-js-client/dist/types/GetPosts";
 
 beforeAll(setupLogins);
 afterAll(unfollows);
@@ -54,7 +54,7 @@ test("Create user", async () => {
 
   let myUser = await getMyUser(user);
   expect(myUser).toBeDefined();
-  apShortname = `${myUser.local_user_view.person.name}@lemmy-alpha:8541`;
+  apShortname = `${myUser.local_user_view.person.name}@app_108jobs-alpha:8541`;
 });
 
 test("Set some user settings, check that they are federated", async () => {
@@ -79,7 +79,7 @@ test("Delete user", async () => {
   let person_id = user_profile.local_user_view.person.id;
 
   // make a local post and comment
-  let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(user, "main@app_108jobs-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha category";
   }
@@ -104,10 +104,10 @@ test("Delete user", async () => {
 
   await deleteUser(user);
   await expect(getMyUser(user)).rejects.toStrictEqual(
-    new LemmyError("incorrect_login"),
+    new app_108jobsError("incorrect_login"),
   );
   await expect(getPersonDetails(user, person_id)).rejects.toStrictEqual(
-    new LemmyError("not_found"),
+    new app_108jobsError("not_found"),
   );
 
   // check that posts and comments are marked as deleted on other instances.
@@ -126,16 +126,16 @@ test("Delete user", async () => {
   expect(comment.comment_view.comment.deleted).toBe(true);
   await expect(
     getPersonDetails(user, remoteComment.creator_id),
-  ).rejects.toStrictEqual(new LemmyError("not_found"));
+  ).rejects.toStrictEqual(new app_108jobsError("not_found"));
 });
 
 test("Requests with invalid auth should be treated as unauthenticated", async () => {
-  let invalid_auth = new LemmyHttp(alphaUrl, {
+  let invalid_auth = new app_108jobsHttp(alphaUrl, {
     headers: { Authorization: "Bearer foobar" },
     fetchFunction,
   });
   await expect(getMyUser(invalid_auth)).rejects.toStrictEqual(
-    new LemmyError("incorrect_login"),
+    new app_108jobsError("incorrect_login"),
   );
   let site = await getSite(invalid_auth);
   expect(site.site_view).toBeDefined();
@@ -152,7 +152,7 @@ test("Create user with Arabic name", async () => {
 
   let my_user = await getMyUser(user);
   expect(my_user).toBeDefined();
-  apShortname = `${my_user.local_user_view.person.name}@lemmy-alpha:8541`;
+  apShortname = `${my_user.local_user_view.person.name}@app_108jobs-alpha:8541`;
 
   let betaPerson1 = await resolvePerson(beta, apShortname);
   expect(betaPerson1!.person.name).toBe(name);
@@ -167,11 +167,11 @@ test("Create user with accept-language", async () => {
   };
   await alpha.editSite(edit);
 
-  let lemmy_http = new LemmyHttp(alphaUrl, {
+  let app_108jobs_http = new app_108jobsHttp(alphaUrl, {
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language#syntax
     headers: { "Accept-Language": "fr-CH, en;q=0.8, *;q=0.5" },
   });
-  let user = await registerUser(lemmy_http, alphaUrl);
+  let user = await registerUser(app_108jobs_http, alphaUrl);
 
   let my_user = await getMyUser(user);
   expect(my_user).toBeDefined();
@@ -230,7 +230,7 @@ test("Make sure banned user can delete their account", async () => {
   let myUser = await getMyUser(user);
 
   // make a local post
-  let alphaCommunity = await resolveCommunity(user, "main@lemmy-alpha:8541");
+  let alphaCommunity = await resolveCommunity(user, "main@app_108jobs-alpha:8541");
   if (!alphaCommunity) {
     throw "Missing alpha category";
   }

@@ -8,13 +8,13 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   aliases::creator_category_actions,
   newtypes::{CommentId, PaginationCursor, PersonId, PostId},
   source::{comment::CommentActions, post::PostActions},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
     comment,
     comment_actions,
     category_actions,
@@ -22,7 +22,7 @@ use lemmy_db_schema_file::schema::{
     post,
     post_actions,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl VoteView {
   pub fn to_post_actions_cursor(&self) -> PaginationCursor {
@@ -56,7 +56,7 @@ impl VoteView {
     page_back: Option<bool>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
-    use lemmy_db_schema::source::post::post_actions_keys as key;
+    use app_108jobs_db_schema::source::post::post_actions_keys as key;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
@@ -131,7 +131,7 @@ impl VoteView {
     page_back: Option<bool>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
-    use lemmy_db_schema::source::comment::comment_actions_keys as key;
+    use app_108jobs_db_schema::source::comment::comment_actions_keys as key;
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
@@ -179,7 +179,7 @@ impl VoteView {
 #[cfg(test)]
 mod tests {
   use crate::VoteView;
-  use lemmy_db_schema::{
+  use app_108jobs_db_schema::{
     source::{
         comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
         category::{Category, CategoryInsertForm},
@@ -190,10 +190,10 @@ mod tests {
     traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use lemmy_db_schema::newtypes::DbUrl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]

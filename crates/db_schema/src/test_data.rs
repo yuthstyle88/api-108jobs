@@ -8,7 +8,7 @@ use crate::{
   traits::Crud,
   utils::DbPool,
 };
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_utils::error::FastJobResult;
 
 pub struct TestData {
   pub instance: Instance,

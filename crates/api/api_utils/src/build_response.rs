@@ -1,6 +1,6 @@
 use crate::context::FastJobContext;
 use actix_web::web::Json;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     newtypes::{CommentId, CategoryId, InstanceId, PostId},
     source::{
       actor_language::CategoryLanguage,
@@ -13,12 +13,12 @@ use lemmy_db_schema::{
   },
     traits::Crud,
 };
-use lemmy_db_views_comment::{api::CommentResponse, CommentView};
-use lemmy_db_views_category::api::ListCategoriesTreeResponse;
-use lemmy_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_post::{api::PostResponse, PostView};
-use lemmy_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
+use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
+use app_108jobs_db_views_category::api::ListCategoriesTreeResponse;
+use app_108jobs_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::{api::PostResponse, PostView};
+use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
 

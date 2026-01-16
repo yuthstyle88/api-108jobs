@@ -5,8 +5,8 @@ use crate::{
 };
 use diesel::{insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{oauth_account, oauth_account::dsl::local_user_id};
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::{oauth_account, oauth_account::dsl::local_user_id};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl OAuthAccount {
   pub async fn create(pool: &mut DbPool<'_>, form: &OAuthAccountInsertForm) -> FastJobResult<Self> {

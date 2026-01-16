@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::{person, person_actions};
+use app_108jobs_db_schema_file::schema::{person, person_actions};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use serde_with::skip_serializing_none;

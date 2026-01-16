@@ -1,6 +1,6 @@
 {
-  "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
-  "object": "http://ds9.lemmy.ml/comment/1",
+  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
+  "object": "http://ds9.app_108jobs.ml/comment/1",
   "type": "Like",
-  "id": "http://ds9.lemmy.ml/activities/like/fd61d070-7382-46a9-b2b7-6bb253732877"
+  "id": "http://ds9.app_108jobs.ml/activities/like/fd61d070-7382-46a9-b2b7-6bb253732877"
 }

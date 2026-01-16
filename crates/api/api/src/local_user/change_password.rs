@@ -3,12 +3,12 @@ use actix_web::{
   HttpRequest,
 };
 use bcrypt::verify;
-use lemmy_api_utils::{claims::Claims, context::FastJobContext};
-use lemmy_db_schema::source::{local_user::LocalUser, login_token::LoginToken};
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{ChangePassword, LoginResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
-use lemmy_utils::utils::validation::password_length_check;
+use app_108jobs_api_utils::{claims::Claims, context::FastJobContext};
+use app_108jobs_db_schema::source::{local_user::LocalUser, login_token::LoginToken};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{ChangePassword, LoginResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::utils::validation::password_length_check;
 
 pub async fn change_password(
   data: Json<ChangePassword>,

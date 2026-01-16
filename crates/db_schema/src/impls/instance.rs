@@ -20,17 +20,17 @@ use diesel::{
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::{
+use app_108jobs_db_schema_file::schema::{
   instance,
   instance_actions,
 };
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Instance {
   /// Attempt to read Instance column for the given domain. If it doesn't exist, insert a new one.
   /// There is no need for update as the domain of an existing instance cant change.
   pub async fn read_or_create(pool: &mut DbPool<'_>, domain_: String) -> FastJobResult<Self> {
-    use lemmy_db_schema_file::schema::instance::domain;
+    use app_108jobs_db_schema_file::schema::instance::domain;
     let conn = &mut get_conn(pool).await?;
 
     // First try to read the instance row and return directly if found

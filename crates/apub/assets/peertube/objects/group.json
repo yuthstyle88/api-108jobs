@@ -16,8 +16,8 @@
         "@type": "sc:Text",
         "@id": "pt:support"
       },
-      "lemmy": "https://join-lemmy.org/ns#",
-      "postingRestrictedToMods": "lemmy:postingRestrictedToMods"
+      "app_108jobs": "https://join-app_108jobs.org/ns#",
+      "postingRestrictedToMods": "app_108jobs:postingRestrictedToMods"
     }
   ],
   "type": "Group",

@@ -1,6 +1,6 @@
 use actix_web::web::Data;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};

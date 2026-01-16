@@ -1,5 +1,5 @@
 use crate::{send_email, user_email, user_language};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
   source::{
     email_verification::{EmailVerification, EmailVerificationForm},
     local_site::LocalSite,
@@ -7,9 +7,9 @@ use lemmy_db_schema::{
   },
   utils::DbPool,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::utils::helper::rand_number5;
-use lemmy_utils::{
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::utils::helper::rand_number5;
+use app_108jobs_utils::{
   error::FastJobResult, settings::structs::Settings, utils::markdown::markdown_to_html,
 };
 

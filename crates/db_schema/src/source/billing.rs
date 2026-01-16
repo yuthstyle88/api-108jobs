@@ -1,8 +1,8 @@
 use crate::newtypes::{BillingId, ChatRoomId, Coin, CommentId, DbUrl, LocalUserId, PostId};
 use chrono::{DateTime, NaiveDate, Utc};
-use lemmy_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
+use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::billing;
+use app_108jobs_db_schema_file::schema::billing;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]

@@ -1,10 +1,10 @@
 use crate::{CategoryNodeView, CategoryView};
-use lemmy_db_schema::{
+use app_108jobs_db_schema::{
     newtypes::{CategoryId, LanguageId, PaginationCursor, TagId},
     source::site::Site,
     CategorySortType,
 };
-use lemmy_db_schema_file::enums::{CategoryVisibility, ListingType};
+use app_108jobs_db_schema_file::enums::{CategoryVisibility, ListingType};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

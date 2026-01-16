@@ -1,26 +1,26 @@
 use actix_web::{guard, web::*};
-use lemmy_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
-use lemmy_api::admin::wallet::{
+use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
+use app_108jobs_api::admin::wallet::{
   admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
   admin_top_up_wallet, admin_withdraw_wallet,
 };
-use lemmy_api::chat::list::list_chat_rooms;
-use lemmy_api::local_user::bank_account::{
+use app_108jobs_api::chat::list::list_chat_rooms;
+use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account, update_bank_account,
 };
-use lemmy_api::local_user::exchange::exchange_key;
-use lemmy_api::local_user::list_top_up_requests::list_top_up_requests;
-use lemmy_api::local_user::profile::visit_profile;
-use lemmy_api::local_user::review::{list_user_reviews, submit_user_review};
-use lemmy_api::local_user::update_term::update_term;
-use lemmy_api::local_user::wallet::get_wallet;
-use lemmy_api::local_user::withdraw::{list_withdraw_requests, submit_withdraw};
-use lemmy_api::local_user::workflow::{
+use app_108jobs_api::local_user::exchange::exchange_key;
+use app_108jobs_api::local_user::list_top_up_requests::list_top_up_requests;
+use app_108jobs_api::local_user::profile::visit_profile;
+use app_108jobs_api::local_user::review::{list_user_reviews, submit_user_review};
+use app_108jobs_api::local_user::update_term::update_term;
+use app_108jobs_api::local_user::wallet::get_wallet;
+use app_108jobs_api::local_user::withdraw::{list_withdraw_requests, submit_withdraw};
+use app_108jobs_api::local_user::workflow::{
   approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
   request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
 };
-use lemmy_api::{
+use app_108jobs_api::{
   category::{
     random::get_random_category,
     tag::{create_category_tag, delete_category_tag, update_category_tag},
@@ -87,14 +87,18 @@ use lemmy_api::{
     },
   },
 };
-use lemmy_api_crud::category::list::list_categories;
-use lemmy_api_crud::chat::create::create_chat_room;
-use lemmy_api_crud::chat::read::get_chat_room;
-use lemmy_api_crud::oauth_provider::create::create_oauth_provider;
-use lemmy_api_crud::oauth_provider::delete::delete_oauth_provider;
-use lemmy_api_crud::oauth_provider::update::update_oauth_provider;
-use lemmy_api_crud::site::read::health;
-use lemmy_api_crud::{
+use app_108jobs_api_crud::category::list::list_categories;
+use app_108jobs_api_crud::chat::create::create_chat_room;
+use app_108jobs_api_crud::chat::read::get_chat_room;
+use app_108jobs_api_crud::oauth_provider::create::create_oauth_provider;
+use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
+use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
+use app_108jobs_api_crud::rider::create::create_rider;
+use app_108jobs_api_crud::rider::list::list_riders;
+use app_108jobs_api_crud::rider::read::get_rider;
+use app_108jobs_api_crud::rider::update::admin_verify_rider;
+use app_108jobs_api_crud::site::read::health;
+use app_108jobs_api_crud::{
   category::update::update_category,
   comment::{
     create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
@@ -118,13 +122,13 @@ use lemmy_api_crud::{
     my_user::get_my_user,
   },
 };
-use lemmy_apub::api::list_comments::list_comments;
-use lemmy_apub::api::list_posts::list_posts;
-use lemmy_apub::api::search::search;
-use lemmy_routes::files::delete::delete_file;
-use lemmy_routes::files::download::get_file;
-use lemmy_routes::files::upload::upload_file;
-use lemmy_routes::images::{
+use app_108jobs_apub::api::list_comments::list_comments;
+use app_108jobs_apub::api::list_posts::list_posts;
+use app_108jobs_apub::api::search::search;
+use app_108jobs_routes::files::delete::delete_file;
+use app_108jobs_routes::files::download::get_file;
+use app_108jobs_routes::files::upload::upload_file;
+use app_108jobs_routes::images::{
   delete::{
     delete_category_banner, delete_category_icon, delete_image, delete_image_admin,
     delete_site_banner, delete_site_icon, delete_user_avatar, delete_user_banner,
@@ -136,11 +140,12 @@ use lemmy_routes::images::{
     upload_site_icon, upload_user_avatar, upload_user_banner,
   },
 };
-use lemmy_routes::payments::create_qrcode::create_qrcode;
-use lemmy_routes::payments::inquire::inquire_qrcode;
-use lemmy_utils::rate_limit::RateLimit;
-use lemmy_ws::handler::{
-  get_history, get_last_read, get_peer_status, get_unread_snapshot, phoenix_ws,
+use app_108jobs_routes::payments::create_qrcode::create_qrcode;
+use app_108jobs_routes::payments::inquire::inquire_qrcode;
+use app_108jobs_utils::rate_limit::RateLimit;
+use app_108jobs_ws::server::handler::{
+  get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
+  phoenix_ws,
 };
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
@@ -425,6 +430,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/bank-account")
                 .route("/list", get().to(admin_list_bank_accounts))
                 .route("/verify", post().to(admin_verify_bank_account)),
+            )
+            .service(
+              scope("/riders")
+                .route("/list", get().to(list_riders))
+                .route("/verify", post().to(admin_verify_rider)),
             ),
         )
         .service(
@@ -435,12 +445,19 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/rooms/{id}", get().to(get_chat_room))
             .route("/last-read", get().to(get_last_read))
             .route("/get-peer-status", get().to(get_peer_status))
-            .route("/unread-snapshot", get().to(get_unread_snapshot)),
+            .route("/unread-snapshot", get().to(get_unread_snapshot))
+            .route("/presence-snapshot", get().to(get_presence_snapshot)),
         )
         .service(
           scope("/reviews")
             .route("", post().to(submit_user_review))
             .route("", get().to(list_user_reviews)),
+        )
+        .service(
+          scope("/riders")
+            .route("/profile", post().to(create_rider))
+            .route("/profile", get().to(get_rider)) // this is for get current rider profile
+            .route("/profile/{id}", get().to(get_rider)),
         )
         .service(
           scope("/custom-emoji")

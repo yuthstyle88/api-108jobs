@@ -9,7 +9,7 @@ import {
   GetCommunityPendingFollowsCountResponse,
   GetUnreadCountResponse,
   InstanceId,
-  LemmyHttp,
+  app_108jobsHttp,
   ListCommunityPendingFollows,
   ListCommunityPendingFollowsResponse,
   ListReports,
@@ -32,63 +32,63 @@ import {
   CommunityView,
   CommentView,
   PersonView,
-} from "lemmy-js-client";
-import { CreatePost } from "../lemmy-js-client/dist/types/CreatePost";
-import { DeletePost } from "../lemmy-js-client/dist/types/DeletePost";
-import { EditPost } from "../lemmy-js-client/dist/types/EditPost";
-import { EditSite } from "../lemmy-js-client/dist/types/EditSite";
-import { AdminAllowInstanceParams } from "../lemmy-js-client/dist/types/AdminAllowInstanceParams";
-import { FeaturePost } from "../lemmy-js-client/dist/types/FeaturePost";
-import { GetComments } from "../lemmy-js-client/dist/types/GetComments";
-import { GetCommentsResponse } from "../lemmy-js-client/dist/types/GetCommentsResponse";
-import { GetPost } from "../lemmy-js-client/dist/types/GetPost";
-import { GetPostResponse } from "../lemmy-js-client/dist/types/GetPostResponse";
-import { LockPost } from "../lemmy-js-client/dist/types/LockPost";
-import { Login } from "../lemmy-js-client/dist/types/Login";
-import { Post } from "../lemmy-js-client/dist/types/Post";
-import { PostResponse } from "../lemmy-js-client/dist/types/PostResponse";
-import { RemovePost } from "../lemmy-js-client/dist/types/RemovePost";
-import { ResolveObject } from "../lemmy-js-client/dist/types/ResolveObject";
-import { Search } from "../lemmy-js-client/dist/types/Search";
-import { Comment } from "../lemmy-js-client/dist/types/Comment";
-import { BanPersonResponse } from "../lemmy-js-client/dist/types/BanPersonResponse";
-import { BanPerson } from "../lemmy-js-client/dist/types/BanPerson";
-import { BanFromCommunityResponse } from "../lemmy-js-client/dist/types/BanFromCommunityResponse";
-import { BanFromCommunity } from "../lemmy-js-client/dist/types/BanFromCommunity";
-import { CommunityResponse } from "../lemmy-js-client/dist/types/CommunityResponse";
-import { FollowCommunity } from "../lemmy-js-client/dist/types/FollowCommunity";
-import { CreatePostLike } from "../lemmy-js-client/dist/types/CreatePostLike";
-import { CommentResponse } from "../lemmy-js-client/dist/types/CommentResponse";
-import { CreateComment } from "../lemmy-js-client/dist/types/CreateComment";
-import { EditComment } from "../lemmy-js-client/dist/types/EditComment";
-import { DeleteComment } from "../lemmy-js-client/dist/types/DeleteComment";
-import { RemoveComment } from "../lemmy-js-client/dist/types/RemoveComment";
-import { CreateCommentLike } from "../lemmy-js-client/dist/types/CreateCommentLike";
-import { CreateCommunity } from "../lemmy-js-client/dist/types/CreateCommunity";
-import { GetCommunity } from "../lemmy-js-client/dist/types/GetCommunity";
-import { DeleteCommunity } from "../lemmy-js-client/dist/types/DeleteCommunity";
-import { RemoveCommunity } from "../lemmy-js-client/dist/types/RemoveCommunity";
-import { PrivateMessageResponse } from "../lemmy-js-client/dist/types/PrivateMessageResponse";
-import { CreatePrivateMessage } from "../lemmy-js-client/dist/types/CreatePrivateMessage";
-import { EditPrivateMessage } from "../lemmy-js-client/dist/types/EditPrivateMessage";
-import { DeletePrivateMessage } from "../lemmy-js-client/dist/types/DeletePrivateMessage";
-import { LoginResponse } from "../lemmy-js-client/dist/types/LoginResponse";
-import { Register } from "../lemmy-js-client/dist/types/Register";
-import { SaveUserSettings } from "../lemmy-js-client/dist/types/SaveUserSettings";
-import { DeleteAccount } from "../lemmy-js-client/dist/types/DeleteAccount";
-import { GetSiteResponse } from "../lemmy-js-client/dist/types/GetSiteResponse";
-import { PostReportResponse } from "../lemmy-js-client/dist/types/PostReportResponse";
-import { CreatePostReport } from "../lemmy-js-client/dist/types/CreatePostReport";
-import { CommentReportResponse } from "../lemmy-js-client/dist/types/CommentReportResponse";
-import { CreateCommentReport } from "../lemmy-js-client/dist/types/CreateCommentReport";
-import { CommunityReportResponse } from "../lemmy-js-client/dist/types/CommunityReportResponse";
-import { CreateCommunityReport } from "../lemmy-js-client/dist/types/CreateCommunityReport";
-import { GetPostsResponse } from "../lemmy-js-client/dist/types/GetPostsResponse";
-import { GetPosts } from "../lemmy-js-client/dist/types/GetPosts";
-import { GetPersonDetailsResponse } from "../lemmy-js-client/dist/types/GetPersonDetailsResponse";
-import { GetPersonDetails } from "../lemmy-js-client/dist/types/GetPersonDetails";
-import { ListingType } from "../lemmy-js-client/dist/types/ListingType";
-import { GetCommunityPendingFollowsCountI } from "../lemmy-js-client/dist/other_types";
+} from "app_108jobs-js-client";
+import { CreatePost } from "../app_108jobs-js-client/dist/types/CreatePost";
+import { DeletePost } from "../app_108jobs-js-client/dist/types/DeletePost";
+import { EditPost } from "../app_108jobs-js-client/dist/types/EditPost";
+import { EditSite } from "../app_108jobs-js-client/dist/types/EditSite";
+import { AdminAllowInstanceParams } from "../app_108jobs-js-client/dist/types/AdminAllowInstanceParams";
+import { FeaturePost } from "../app_108jobs-js-client/dist/types/FeaturePost";
+import { GetComments } from "../app_108jobs-js-client/dist/types/GetComments";
+import { GetCommentsResponse } from "../app_108jobs-js-client/dist/types/GetCommentsResponse";
+import { GetPost } from "../app_108jobs-js-client/dist/types/GetPost";
+import { GetPostResponse } from "../app_108jobs-js-client/dist/types/GetPostResponse";
+import { LockPost } from "../app_108jobs-js-client/dist/types/LockPost";
+import { Login } from "../app_108jobs-js-client/dist/types/Login";
+import { Post } from "../app_108jobs-js-client/dist/types/Post";
+import { PostResponse } from "../app_108jobs-js-client/dist/types/PostResponse";
+import { RemovePost } from "../app_108jobs-js-client/dist/types/RemovePost";
+import { ResolveObject } from "../app_108jobs-js-client/dist/types/ResolveObject";
+import { Search } from "../app_108jobs-js-client/dist/types/Search";
+import { Comment } from "../app_108jobs-js-client/dist/types/Comment";
+import { BanPersonResponse } from "../app_108jobs-js-client/dist/types/BanPersonResponse";
+import { BanPerson } from "../app_108jobs-js-client/dist/types/BanPerson";
+import { BanFromCommunityResponse } from "../app_108jobs-js-client/dist/types/BanFromCommunityResponse";
+import { BanFromCommunity } from "../app_108jobs-js-client/dist/types/BanFromCommunity";
+import { CommunityResponse } from "../app_108jobs-js-client/dist/types/CommunityResponse";
+import { FollowCommunity } from "../app_108jobs-js-client/dist/types/FollowCommunity";
+import { CreatePostLike } from "../app_108jobs-js-client/dist/types/CreatePostLike";
+import { CommentResponse } from "../app_108jobs-js-client/dist/types/CommentResponse";
+import { CreateComment } from "../app_108jobs-js-client/dist/types/CreateComment";
+import { EditComment } from "../app_108jobs-js-client/dist/types/EditComment";
+import { DeleteComment } from "../app_108jobs-js-client/dist/types/DeleteComment";
+import { RemoveComment } from "../app_108jobs-js-client/dist/types/RemoveComment";
+import { CreateCommentLike } from "../app_108jobs-js-client/dist/types/CreateCommentLike";
+import { CreateCommunity } from "../app_108jobs-js-client/dist/types/CreateCommunity";
+import { GetCommunity } from "../app_108jobs-js-client/dist/types/GetCommunity";
+import { DeleteCommunity } from "../app_108jobs-js-client/dist/types/DeleteCommunity";
+import { RemoveCommunity } from "../app_108jobs-js-client/dist/types/RemoveCommunity";
+import { PrivateMessageResponse } from "../app_108jobs-js-client/dist/types/PrivateMessageResponse";
+import { CreatePrivateMessage } from "../app_108jobs-js-client/dist/types/CreatePrivateMessage";
+import { EditPrivateMessage } from "../app_108jobs-js-client/dist/types/EditPrivateMessage";
+import { DeletePrivateMessage } from "../app_108jobs-js-client/dist/types/DeletePrivateMessage";
+import { LoginResponse } from "../app_108jobs-js-client/dist/types/LoginResponse";
+import { Register } from "../app_108jobs-js-client/dist/types/Register";
+import { SaveUserSettings } from "../app_108jobs-js-client/dist/types/SaveUserSettings";
+import { DeleteAccount } from "../app_108jobs-js-client/dist/types/DeleteAccount";
+import { GetSiteResponse } from "../app_108jobs-js-client/dist/types/GetSiteResponse";
+import { PostReportResponse } from "../app_108jobs-js-client/dist/types/PostReportResponse";
+import { CreatePostReport } from "../app_108jobs-js-client/dist/types/CreatePostReport";
+import { CommentReportResponse } from "../app_108jobs-js-client/dist/types/CommentReportResponse";
+import { CreateCommentReport } from "../app_108jobs-js-client/dist/types/CreateCommentReport";
+import { CommunityReportResponse } from "../app_108jobs-js-client/dist/types/CommunityReportResponse";
+import { CreateCommunityReport } from "../app_108jobs-js-client/dist/types/CreateCommunityReport";
+import { GetPostsResponse } from "../app_108jobs-js-client/dist/types/GetPostsResponse";
+import { GetPosts } from "../app_108jobs-js-client/dist/types/GetPosts";
+import { GetPersonDetailsResponse } from "../app_108jobs-js-client/dist/types/GetPersonDetailsResponse";
+import { GetPersonDetails } from "../app_108jobs-js-client/dist/types/GetPersonDetails";
+import { ListingType } from "../app_108jobs-js-client/dist/types/ListingType";
+import { GetCommunityPendingFollowsCountI } from "../app_108jobs-js-client/dist/other_types";
 
 export const fetchFunction = fetch;
 export const imageFetchLimit = 50;
@@ -102,42 +102,42 @@ export const gammaUrl = "http://127.0.0.1:8561";
 export const deltaUrl = "http://127.0.0.1:8571";
 export const epsilonUrl = "http://127.0.0.1:8581";
 
-export const alpha = new LemmyHttp(alphaUrl, { fetchFunction });
-export const alphaImage = new LemmyHttp(alphaUrl);
-export const beta = new LemmyHttp(betaUrl, { fetchFunction });
-export const gamma = new LemmyHttp(gammaUrl, { fetchFunction });
-export const delta = new LemmyHttp(deltaUrl, { fetchFunction });
-export const epsilon = new LemmyHttp(epsilonUrl, { fetchFunction });
+export const alpha = new app_108jobsHttp(alphaUrl, { fetchFunction });
+export const alphaImage = new app_108jobsHttp(alphaUrl);
+export const beta = new app_108jobsHttp(betaUrl, { fetchFunction });
+export const gamma = new app_108jobsHttp(gammaUrl, { fetchFunction });
+export const delta = new app_108jobsHttp(deltaUrl, { fetchFunction });
+export const epsilon = new app_108jobsHttp(epsilonUrl, { fetchFunction });
 
-const password = "lemmylemmy";
+const password = "app_108jobsapp_108jobs";
 
 export async function setupLogins() {
   let formAlpha: Login = {
-    username_or_email: "lemmy_alpha",
+    username_or_email: "app_108jobs_alpha",
     password,
   };
   let resAlpha = alpha.login(formAlpha);
 
   let formBeta: Login = {
-    username_or_email: "lemmy_beta",
+    username_or_email: "app_108jobs_beta",
     password,
   };
   let resBeta = beta.login(formBeta);
 
   let formGamma: Login = {
-    username_or_email: "lemmy_gamma",
+    username_or_email: "app_108jobs_gamma",
     password,
   };
   let resGamma = gamma.login(formGamma);
 
   let formDelta: Login = {
-    username_or_email: "lemmy_delta",
+    username_or_email: "app_108jobs_delta",
     password,
   };
   let resDelta = delta.login(formDelta);
 
   let formEpsilon: Login = {
-    username_or_email: "lemmy_epsilon",
+    username_or_email: "app_108jobs_epsilon",
     password,
   };
   let resEpsilon = epsilon.login(formEpsilon);
@@ -173,22 +173,22 @@ export async function setupLogins() {
   await epsilon.editSite(editSiteForm);
 
   // Set the blocks for each
-  await allowInstance(alpha, "lemmy-beta");
-  await allowInstance(alpha, "lemmy-gamma");
-  await allowInstance(alpha, "lemmy-delta");
-  await allowInstance(alpha, "lemmy-epsilon");
+  await allowInstance(alpha, "app_108jobs-beta");
+  await allowInstance(alpha, "app_108jobs-gamma");
+  await allowInstance(alpha, "app_108jobs-delta");
+  await allowInstance(alpha, "app_108jobs-epsilon");
 
-  await allowInstance(beta, "lemmy-alpha");
-  await allowInstance(beta, "lemmy-gamma");
-  await allowInstance(beta, "lemmy-delta");
-  await allowInstance(beta, "lemmy-epsilon");
+  await allowInstance(beta, "app_108jobs-alpha");
+  await allowInstance(beta, "app_108jobs-gamma");
+  await allowInstance(beta, "app_108jobs-delta");
+  await allowInstance(beta, "app_108jobs-epsilon");
 
-  await allowInstance(gamma, "lemmy-alpha");
-  await allowInstance(gamma, "lemmy-beta");
-  await allowInstance(gamma, "lemmy-delta");
-  await allowInstance(gamma, "lemmy-epsilon");
+  await allowInstance(gamma, "app_108jobs-alpha");
+  await allowInstance(gamma, "app_108jobs-beta");
+  await allowInstance(gamma, "app_108jobs-delta");
+  await allowInstance(gamma, "app_108jobs-epsilon");
 
-  await allowInstance(delta, "lemmy-beta");
+  await allowInstance(delta, "app_108jobs-beta");
 
   // Create the main alpha/beta communities
   // Ignore thrown errors of duplicates
@@ -205,7 +205,7 @@ export async function setupLogins() {
   }
 }
 
-export async function allowInstance(api: LemmyHttp, instance: string) {
+export async function allowInstance(api: app_108jobsHttp, instance: string) {
   const params: AdminAllowInstanceParams = {
     instance,
     allow: true,
@@ -219,7 +219,7 @@ export async function allowInstance(api: LemmyHttp, instance: string) {
 }
 
 export async function createPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: number,
   url: string = "https://example.com/",
   body = randomString(10),
@@ -240,7 +240,7 @@ export async function createPost(
 }
 
 export async function editPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post: Post,
 ): Promise<PostResponse> {
   let name = "A jest test federated post, updated";
@@ -252,7 +252,7 @@ export async function editPost(
 }
 
 export async function createPostWithThumbnail(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: number,
   url: string,
   custom_thumbnail: string,
@@ -267,7 +267,7 @@ export async function createPostWithThumbnail(
 }
 
 export async function deletePost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   deleted: boolean,
   post: Post,
 ): Promise<PostResponse> {
@@ -279,7 +279,7 @@ export async function deletePost(
 }
 
 export async function removePost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   removed: boolean,
   post: Post,
 ): Promise<PostResponse> {
@@ -291,7 +291,7 @@ export async function removePost(
 }
 
 export async function featurePost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   featured: boolean,
   post: Post,
 ): Promise<PostResponse> {
@@ -304,7 +304,7 @@ export async function featurePost(
 }
 
 export async function lockPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   locked: boolean,
   post: Post,
 ): Promise<PostResponse> {
@@ -316,7 +316,7 @@ export async function lockPost(
 }
 
 export async function resolvePost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post: Post,
 ): Promise<PostView | undefined> {
   let form: ResolveObject = {
@@ -329,7 +329,7 @@ export async function resolvePost(
 }
 
 export async function searchPostLocal(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post: Post,
 ): Promise<PostView | undefined> {
   let form: Search = {
@@ -344,7 +344,7 @@ export async function searchPostLocal(
 
 /// wait for a post to appear locally without pulling it
 export async function waitForPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post: Post,
   checker: (t: PostView | undefined) => boolean = p => !!p,
 ) {
@@ -355,7 +355,7 @@ export async function waitForPost(
 }
 
 export async function getPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post_id: number,
 ): Promise<GetPostResponse> {
   let form: GetPost = {
@@ -365,7 +365,7 @@ export async function getPost(
 }
 
 export async function getComments(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post_id?: number,
   listingType: ListingType = "All",
 ): Promise<GetCommentsResponse> {
@@ -379,13 +379,13 @@ export async function getComments(
 }
 
 export async function getUnreadCount(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
 ): Promise<GetUnreadCountResponse> {
   return api.getUnreadCount();
 }
 
 export async function listInbox(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   type_?: InboxDataType,
   unread_only: boolean = false,
 ): Promise<ListInboxResponse> {
@@ -397,7 +397,7 @@ export async function listInbox(
 }
 
 export async function resolveComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   comment: Comment,
 ): Promise<CommentView | undefined> {
   let form: ResolveObject = {
@@ -410,11 +410,11 @@ export async function resolveComment(
 }
 
 export async function resolveBetaCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
 ): Promise<CommunityView | undefined> {
   // Use short-hand search url
   let form: ResolveObject = {
-    q: "!main@lemmy-beta:8551",
+    q: "!main@app_108jobs-beta:8551",
   };
   return api
     .resolveObject(form)
@@ -423,7 +423,7 @@ export async function resolveBetaCommunity(
 }
 
 export async function resolveCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   q: string,
 ): Promise<CommunityView | undefined> {
   let form: ResolveObject = {
@@ -436,7 +436,7 @@ export async function resolveCommunity(
 }
 
 export async function resolvePerson(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   apShortname: string,
 ): Promise<PersonView | undefined> {
   let form: ResolveObject = {
@@ -449,12 +449,12 @@ export async function resolvePerson(
 }
 
 export async function banPersonFromSite(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   person_id: number,
   ban: boolean,
   remove_or_restore_data: boolean,
 ): Promise<BanPersonResponse> {
-  // Make sure lemmy-beta/c/main is cached on lemmy_alpha
+  // Make sure app_108jobs-beta/c/main is cached on app_108jobs_alpha
   let form: BanPerson = {
     person_id,
     ban,
@@ -464,7 +464,7 @@ export async function banPersonFromSite(
 }
 
 export async function banPersonFromCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   person_id: number,
   community_id: number,
   remove_or_restore_data: boolean,
@@ -480,7 +480,7 @@ export async function banPersonFromCommunity(
 }
 
 export async function followCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   follow: boolean,
   community_id: number,
 ): Promise<CommunityResponse> {
@@ -502,7 +502,7 @@ export async function followCommunity(
 }
 
 export async function likePost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   score: number,
   post: Post,
 ): Promise<PostResponse> {
@@ -515,7 +515,7 @@ export async function likePost(
 }
 
 export async function createComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post_id: number,
   parent_id?: number,
   content = "a jest test comment",
@@ -529,7 +529,7 @@ export async function createComment(
 }
 
 export async function editComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   comment_id: number,
   content = "A jest test federated comment update",
 ): Promise<CommentResponse> {
@@ -541,7 +541,7 @@ export async function editComment(
 }
 
 export async function deleteComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   deleted: boolean,
   comment_id: number,
 ): Promise<CommentResponse> {
@@ -553,7 +553,7 @@ export async function deleteComment(
 }
 
 export async function removeComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   removed: boolean,
   comment_id: number,
 ): Promise<CommentResponse> {
@@ -565,7 +565,7 @@ export async function removeComment(
 }
 
 export async function likeComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   score: number,
   comment: Comment,
 ): Promise<CommentResponse> {
@@ -577,7 +577,7 @@ export async function likeComment(
 }
 
 export async function createCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   name_: string = randomString(10),
   visibility: CommunityVisibility = "Public",
 ): Promise<CommunityResponse> {
@@ -592,14 +592,14 @@ export async function createCommunity(
 }
 
 export async function editCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   form: EditCommunity,
 ): Promise<CommunityResponse> {
   return api.editCommunity(form);
 }
 
 export async function getCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   id: number,
 ): Promise<CommunityResponse> {
   let form: GetCommunity = {
@@ -609,7 +609,7 @@ export async function getCommunity(
 }
 
 export async function getCommunityByName(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   name: string,
 ): Promise<CommunityResponse> {
   let form: GetCommunity = {
@@ -619,7 +619,7 @@ export async function getCommunityByName(
 }
 
 export async function deleteCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   deleted: boolean,
   community_id: number,
 ): Promise<CommunityResponse> {
@@ -631,7 +631,7 @@ export async function deleteCommunity(
 }
 
 export async function removeCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   removed: boolean,
   community_id: number,
 ): Promise<CommunityResponse> {
@@ -643,7 +643,7 @@ export async function removeCommunity(
 }
 
 export async function createPrivateMessage(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   recipient_id: number,
 ): Promise<PrivateMessageResponse> {
   let content = "A jest test federated private message";
@@ -655,7 +655,7 @@ export async function createPrivateMessage(
 }
 
 export async function editPrivateMessage(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   private_message_id: number,
 ): Promise<PrivateMessageResponse> {
   let updatedContent = "A jest test federated private message edited";
@@ -667,7 +667,7 @@ export async function editPrivateMessage(
 }
 
 export async function deletePrivateMessage(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   deleted: boolean,
   private_message_id: number,
 ): Promise<PrivateMessageResponse> {
@@ -679,10 +679,10 @@ export async function deletePrivateMessage(
 }
 
 export async function registerUser(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   url: string,
   username: string = randomString(5),
-): Promise<LemmyHttp> {
+): Promise<app_108jobsHttp> {
   let form: Register = {
     username,
     password,
@@ -692,14 +692,14 @@ export async function registerUser(
   let login_response = await api.register(form);
 
   expect(login_response.jwt).toBeDefined();
-  let lemmy_http = new LemmyHttp(url, {
+  let app_108jobs_http = new app_108jobsHttp(url, {
     headers: { Authorization: `Bearer ${login_response.jwt ?? ""}` },
   });
-  return lemmy_http;
+  return app_108jobs_http;
 }
 
 export async function loginUser(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   username: string,
 ): Promise<LoginResponse> {
   let form: Login = {
@@ -710,7 +710,7 @@ export async function loginUser(
 }
 
 export async function saveUserSettingsBio(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
 ): Promise<SuccessResponse> {
   let form: SaveUserSettings = {
     self_promotion: true,
@@ -727,7 +727,7 @@ export async function saveUserSettingsBio(
 }
 
 export async function saveUserSettingsFederated(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
 ): Promise<SuccessResponse> {
   let bio = "a changed bio";
   let form: SaveUserSettings = {
@@ -745,14 +745,14 @@ export async function saveUserSettingsFederated(
 }
 
 export async function saveUserSettings(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   form: SaveUserSettings,
 ): Promise<SuccessResponse> {
   return api.saveUserSettings(form);
 }
 
 export async function getPersonDetails(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   person_id: number,
 ): Promise<GetPersonDetailsResponse> {
   let form: GetPersonDetails = {
@@ -762,7 +762,7 @@ export async function getPersonDetails(
 }
 
 export async function listPersonContent(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   person_id: number,
   type_?: PersonContentType,
 ): Promise<ListPersonContentResponse> {
@@ -773,7 +773,7 @@ export async function listPersonContent(
   return api.listPersonContent(form);
 }
 
-export async function deleteUser(api: LemmyHttp): Promise<SuccessResponse> {
+export async function deleteUser(api: app_108jobsHttp): Promise<SuccessResponse> {
   let form: DeleteAccount = {
     delete_content: true,
     password,
@@ -781,15 +781,15 @@ export async function deleteUser(api: LemmyHttp): Promise<SuccessResponse> {
   return api.deleteAccount(form);
 }
 
-export async function getSite(api: LemmyHttp): Promise<GetSiteResponse> {
+export async function getSite(api: app_108jobsHttp): Promise<GetSiteResponse> {
   return api.getSite();
 }
 
-export async function getMyUser(api: LemmyHttp): Promise<MyUserInfo> {
+export async function getMyUser(api: app_108jobsHttp): Promise<MyUserInfo> {
   return api.getMyUser();
 }
 
-export async function unfollowRemotes(api: LemmyHttp): Promise<MyUserInfo> {
+export async function unfollowRemotes(api: app_108jobsHttp): Promise<MyUserInfo> {
   // Unfollow all remote communities
   let my_user = await getMyUser(api);
   let remoteFollowed =
@@ -801,7 +801,7 @@ export async function unfollowRemotes(api: LemmyHttp): Promise<MyUserInfo> {
   return await getMyUser(api);
 }
 
-export async function followBeta(api: LemmyHttp): Promise<CommunityResponse> {
+export async function followBeta(api: app_108jobsHttp): Promise<CommunityResponse> {
   let betaCommunity = await resolveBetaCommunity(api);
   if (betaCommunity) {
     let follow = await followCommunity(api, true, betaCommunity.community.id);
@@ -812,7 +812,7 @@ export async function followBeta(api: LemmyHttp): Promise<CommunityResponse> {
 }
 
 export async function reportPost(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   post_id: number,
   reason: string,
 ): Promise<PostReportResponse> {
@@ -824,7 +824,7 @@ export async function reportPost(
 }
 
 export async function reportCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: number,
   reason: string,
 ): Promise<CommunityReportResponse> {
@@ -836,7 +836,7 @@ export async function reportCommunity(
 }
 
 export async function listReports(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   show_community_rule_violations: boolean = false,
 ): Promise<ListReportsResponse> {
   let form: ListReports = { show_community_rule_violations };
@@ -844,7 +844,7 @@ export async function listReports(
 }
 
 export async function reportComment(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   comment_id: number,
   reason: string,
 ): Promise<CommentReportResponse> {
@@ -856,7 +856,7 @@ export async function reportComment(
 }
 
 export async function reportPrivateMessage(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   private_message_id: number,
   reason: string,
 ): Promise<PrivateMessageReportResponse> {
@@ -868,7 +868,7 @@ export async function reportPrivateMessage(
 }
 
 export function getPosts(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   listingType?: ListingType,
   community_id?: number,
 ): Promise<GetPostsResponse> {
@@ -881,7 +881,7 @@ export function getPosts(
 }
 
 export function userBlockInstance(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   instance_id: InstanceId,
   block: boolean,
 ): Promise<SuccessResponse> {
@@ -893,7 +893,7 @@ export function userBlockInstance(
 }
 
 export function blockCommunity(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: CommunityId,
   block: boolean,
 ): Promise<BlockCommunityResponse> {
@@ -905,7 +905,7 @@ export function blockCommunity(
 }
 
 export function listCommunityPendingFollows(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
 ): Promise<ListCommunityPendingFollowsResponse> {
   let form: ListCommunityPendingFollows = {
     pending_only: true,
@@ -916,7 +916,7 @@ export function listCommunityPendingFollows(
 }
 
 export function getCommunityPendingFollowsCount(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: CommunityId,
 ): Promise<GetCommunityPendingFollowsCountResponse> {
   let form: GetCommunityPendingFollowsCountI = { community_id };
@@ -924,7 +924,7 @@ export function getCommunityPendingFollowsCount(
 }
 
 export function approveCommunityPendingFollow(
-  api: LemmyHttp,
+  api: app_108jobsHttp,
   community_id: CommunityId,
   follower_id: PersonId,
   approve: boolean = true,
@@ -936,7 +936,7 @@ export function approveCommunityPendingFollow(
   };
   return api.approveCommunityPendingFollow(form);
 }
-export function getModlog(api: LemmyHttp): Promise<GetModlogResponse> {
+export function getModlog(api: app_108jobsHttp): Promise<GetModlogResponse> {
   let form: GetModlog = {};
   return api.getModlog(form);
 }
@@ -964,7 +964,7 @@ export function randomString(length: number): string {
   return result;
 }
 
-export async function deleteAllMedia(api: LemmyHttp) {
+export async function deleteAllMedia(api: app_108jobsHttp) {
   const imagesRes = await api.listMediaAdmin({
     limit: imageFetchLimit,
   });
@@ -997,7 +997,7 @@ export async function unfollows() {
   ]);
 }
 
-export async function purgeAllPosts(api: LemmyHttp) {
+export async function purgeAllPosts(api: app_108jobsHttp) {
   // The best way to get all federated items, is to find the posts
   let res = await api.getPosts({ type_: "All", limit: 50 });
   await Promise.allSettled(

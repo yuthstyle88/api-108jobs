@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# IMPORTANT NOTE: this script does not use the normal LEMMY_DATABASE_URL format
+# IMPORTANT NOTE: this script does not use the normal app_108jobs_DATABASE_URL format
 #   it is expected that this script is called by run-federation-test.sh script.
 set -e
 
-if [ -z "$LEMMY_LOG_LEVEL" ]; then
-  LEMMY_LOG_LEVEL=info
+if [ -z "$app_108jobs_LOG_LEVEL" ]; then
+  app_108jobs_LOG_LEVEL=info
 fi
 
 export RUST_BACKTRACE=1
-export RUST_LOG="warn,lemmy_server=$LEMMY_LOG_LEVEL,lemmy_federate=$LEMMY_LOG_LEVEL,lemmy_api=$LEMMY_LOG_LEVEL,lemmy_api_common=$LEMMY_LOG_LEVEL,lemmy_api_crud=$LEMMY_LOG_LEVEL,lemmy_apub=$LEMMY_LOG_LEVEL,lemmy_db_schema=$LEMMY_LOG_LEVEL,lemmy_db_views=$LEMMY_LOG_LEVEL,lemmy_routes=$LEMMY_LOG_LEVEL,lemmy_utils=$LEMMY_LOG_LEVEL,lemmy_websocket=$LEMMY_LOG_LEVEL"
+export RUST_LOG="warn,app_108jobs_server=$app_108jobs_LOG_LEVEL,app_108jobs_federate=$app_108jobs_LOG_LEVEL,app_108jobs_api=$app_108jobs_LOG_LEVEL,app_108jobs_api_common=$app_108jobs_LOG_LEVEL,app_108jobs_api_crud=$app_108jobs_LOG_LEVEL,app_108jobs_apub=$app_108jobs_LOG_LEVEL,app_108jobs_db_schema=$app_108jobs_LOG_LEVEL,app_108jobs_db_views=$app_108jobs_LOG_LEVEL,app_108jobs_routes=$app_108jobs_LOG_LEVEL,app_108jobs_utils=$app_108jobs_LOG_LEVEL,app_108jobs_websocket=$app_108jobs_LOG_LEVEL"
 
-export LEMMY_TEST_FAST_FEDERATION=1 # by default, the persistent federation queue has delays in the scale of 30s-5min
+export app_108jobs_TEST_FAST_FEDERATION=1 # by default, the persistent federation queue has delays in the scale of 30s-5min
 
 PICTRS_PATH="api_tests/pict-rs"
 PICTRS_EXPECTED_HASH="7f7ac2a45ef9b13403ee139b7512135be6b060ff2f6460e0c800e18e1b49d2fd  api_tests/pict-rs"
@@ -39,26 +39,26 @@ fi
   filesystem -p /tmp/pictrs/files \
   sled -p /tmp/pictrs/sled-repo 2>&1 &
 
-for INSTANCE in lemmy_alpha lemmy_beta lemmy_gamma lemmy_delta lemmy_epsilon; do
-  echo "DB URL: ${LEMMY_DATABASE_URL} INSTANCE: $INSTANCE"
-  psql "${LEMMY_DATABASE_URL}/lemmy" -c "DROP DATABASE IF EXISTS $INSTANCE"
+for INSTANCE in app_108jobs_alpha app_108jobs_beta app_108jobs_gamma app_108jobs_delta app_108jobs_epsilon; do
+  echo "DB URL: ${app_108jobs_DATABASE_URL} INSTANCE: $INSTANCE"
+  psql "${app_108jobs_DATABASE_URL}/app_108jobs" -c "DROP DATABASE IF EXISTS $INSTANCE"
   echo "create database"
-  psql "${LEMMY_DATABASE_URL}/lemmy" -c "CREATE DATABASE $INSTANCE"
+  psql "${app_108jobs_DATABASE_URL}/app_108jobs" -c "CREATE DATABASE $INSTANCE"
 done
 
 if [ -z "$DO_WRITE_HOSTS_FILE" ]; then
-  if ! grep -q lemmy-alpha /etc/hosts; then
+  if ! grep -q app_108jobs-alpha /etc/hosts; then
     echo "Please add the following to your /etc/hosts file, then press enter:
 
-      127.0.0.1       lemmy-alpha
-      127.0.0.1       lemmy-beta
-      127.0.0.1       lemmy-gamma
-      127.0.0.1       lemmy-delta
-      127.0.0.1       lemmy-epsilon"
+      127.0.0.1       app_108jobs-alpha
+      127.0.0.1       app_108jobs-beta
+      127.0.0.1       app_108jobs-gamma
+      127.0.0.1       app_108jobs-delta
+      127.0.0.1       app_108jobs-epsilon"
     read -p ""
   fi
 else
-  for INSTANCE in lemmy-alpha lemmy-beta lemmy-gamma lemmy-delta lemmy-epsilon; do
+  for INSTANCE in app_108jobs-alpha app_108jobs-beta app_108jobs-gamma app_108jobs-delta app_108jobs-epsilon; do
     echo "127.0.0.1 $INSTANCE" >>/etc/hosts
   done
 fi
@@ -69,39 +69,39 @@ LOG_DIR=target/log
 mkdir -p $LOG_DIR
 
 echo "start alpha"
-LEMMY_CONFIG_LOCATION=./docker/federation/lemmy_alpha.hjson \
-  LEMMY_DATABASE_URL="${LEMMY_DATABASE_URL}/lemmy_alpha" \
-  target/lemmy_server >$LOG_DIR/lemmy_alpha.out 2>&1 &
+app_108jobs_CONFIG_LOCATION=./docker/federation/app_108jobs_alpha.hjson \
+  app_108jobs_DATABASE_URL="${app_108jobs_DATABASE_URL}/app_108jobs_alpha" \
+  target/app_108jobs_server >$LOG_DIR/app_108jobs_alpha.out 2>&1 &
 
 echo "start beta"
-LEMMY_CONFIG_LOCATION=./docker/federation/lemmy_beta.hjson \
-  LEMMY_DATABASE_URL="${LEMMY_DATABASE_URL}/lemmy_beta" \
-  target/lemmy_server >$LOG_DIR/lemmy_beta.out 2>&1 &
+app_108jobs_CONFIG_LOCATION=./docker/federation/app_108jobs_beta.hjson \
+  app_108jobs_DATABASE_URL="${app_108jobs_DATABASE_URL}/app_108jobs_beta" \
+  target/app_108jobs_server >$LOG_DIR/app_108jobs_beta.out 2>&1 &
 
 echo "start gamma"
-LEMMY_CONFIG_LOCATION=./docker/federation/lemmy_gamma.hjson \
-  LEMMY_DATABASE_URL="${LEMMY_DATABASE_URL}/lemmy_gamma" \
-  target/lemmy_server >$LOG_DIR/lemmy_gamma.out 2>&1 &
+app_108jobs_CONFIG_LOCATION=./docker/federation/app_108jobs_gamma.hjson \
+  app_108jobs_DATABASE_URL="${app_108jobs_DATABASE_URL}/app_108jobs_gamma" \
+  target/app_108jobs_server >$LOG_DIR/app_108jobs_gamma.out 2>&1 &
 
 echo "start delta"
-LEMMY_CONFIG_LOCATION=./docker/federation/lemmy_delta.hjson \
-  LEMMY_DATABASE_URL="${LEMMY_DATABASE_URL}/lemmy_delta" \
-  target/lemmy_server >$LOG_DIR/lemmy_delta.out 2>&1 &
+app_108jobs_CONFIG_LOCATION=./docker/federation/app_108jobs_delta.hjson \
+  app_108jobs_DATABASE_URL="${app_108jobs_DATABASE_URL}/app_108jobs_delta" \
+  target/app_108jobs_server >$LOG_DIR/app_108jobs_delta.out 2>&1 &
 
 echo "start epsilon"
-LEMMY_CONFIG_LOCATION=./docker/federation/lemmy_epsilon.hjson \
-  LEMMY_PLUGIN_PATH=api_tests/plugins \
-  LEMMY_DATABASE_URL="${LEMMY_DATABASE_URL}/lemmy_epsilon" \
-  target/lemmy_server >$LOG_DIR/lemmy_epsilon.out 2>&1 &
+app_108jobs_CONFIG_LOCATION=./docker/federation/app_108jobs_epsilon.hjson \
+  app_108jobs_PLUGIN_PATH=api_tests/plugins \
+  app_108jobs_DATABASE_URL="${app_108jobs_DATABASE_URL}/app_108jobs_epsilon" \
+  target/app_108jobs_server >$LOG_DIR/app_108jobs_epsilon.out 2>&1 &
 
 echo "wait for all instances to start"
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'lemmy-alpha:8541/api/v4/site')" != "200" ]]; do sleep 1; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'app_108jobs-alpha:8541/api/v4/site')" != "200" ]]; do sleep 1; done
 echo "alpha started"
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'lemmy-beta:8551/api/v4/site')" != "200" ]]; do sleep 1; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'app_108jobs-beta:8551/api/v4/site')" != "200" ]]; do sleep 1; done
 echo "beta started"
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'lemmy-gamma:8561/api/v4/site')" != "200" ]]; do sleep 1; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'app_108jobs-gamma:8561/api/v4/site')" != "200" ]]; do sleep 1; done
 echo "gamma started"
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'lemmy-delta:8571/api/v4/site')" != "200" ]]; do sleep 1; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'app_108jobs-delta:8571/api/v4/site')" != "200" ]]; do sleep 1; done
 echo "delta started"
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'lemmy-epsilon:8581/api/v4/site')" != "200" ]]; do sleep 1; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'app_108jobs-epsilon:8581/api/v4/site')" != "200" ]]; do sleep 1; done
 echo "epsilon started. All started"

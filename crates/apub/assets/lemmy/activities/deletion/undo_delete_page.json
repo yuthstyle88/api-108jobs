@@ -1,15 +1,15 @@
 {
-  "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
+  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
   "to": ["https://www.w3.org/ns/activitystreams#Public"],
   "object": {
-    "actor": "http://ds9.lemmy.ml/u/lemmy_alpha",
+    "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
     "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    "object": "http://ds9.lemmy.ml/post/1",
-    "cc": ["http://enterprise.lemmy.ml/c/main"],
+    "object": "http://ds9.app_108jobs.ml/post/1",
+    "cc": ["http://enterprise.app_108jobs.ml/c/main"],
     "type": "Delete",
-    "id": "http://ds9.lemmy.ml/activities/delete/b13cca96-7737-41e1-9769-8fbf972b3509"
+    "id": "http://ds9.app_108jobs.ml/activities/delete/b13cca96-7737-41e1-9769-8fbf972b3509"
   },
-  "cc": ["http://enterprise.lemmy.ml/c/main"],
+  "cc": ["http://enterprise.app_108jobs.ml/c/main"],
   "type": "Undo",
-  "id": "http://ds9.lemmy.ml/activities/undo/5e939cfb-b8a1-4de8-950f-9d684e9162b9"
+  "id": "http://ds9.app_108jobs.ml/activities/undo/5e939cfb-b8a1-4de8-950f-9d684e9162b9"
 }

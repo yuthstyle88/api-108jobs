@@ -1,14 +1,14 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::{
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::{
   source::comment_reply::{CommentReply, CommentReplyUpdateForm},
   traits::Crud,
 };
-use lemmy_db_views_inbox_combined::api::MarkCommentReplyAsRead;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_inbox_combined::api::MarkCommentReplyAsRead;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn mark_reply_as_read(
   data: Json<MarkCommentReplyAsRead>,

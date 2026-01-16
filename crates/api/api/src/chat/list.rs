@@ -1,14 +1,14 @@
 use actix_web::web::{Data, Json, Query};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_api_utils::utils::flush_room_and_update_last_message;
-use lemmy_db_schema::newtypes::ChatRoomId;
-use lemmy_db_schema::traits::PaginationCursorBuilder;
-use lemmy_db_schema::utils::DbPool;
-use lemmy_db_views_chat::api::{ListUserChatRooms, ListUserChatRoomsResponse};
-use lemmy_db_views_chat::ChatRoomView;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobResult;
-use lemmy_utils::redis::RedisClient;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
+use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_views_chat::api::{ListUserChatRooms, ListUserChatRoomsResponse};
+use app_108jobs_db_views_chat::ChatRoomView;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::redis::RedisClient;
 use tracing::{error, warn};
 
 pub async fn list_chat_rooms(

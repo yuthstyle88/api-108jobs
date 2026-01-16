@@ -1,20 +1,20 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
 use bcrypt::verify;
-use lemmy_api_utils::{
+use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::purge_user_account,
 };
-use lemmy_db_schema::source::{
+use app_108jobs_db_schema::source::{
   category::CategoryActions,
   login_token::LoginToken,
   oauth_account::OAuthAccount,
   person::Person,
 };
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::{DeleteAccount, SuccessResponse};
-use lemmy_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{DeleteAccount, SuccessResponse};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_account(
   data: Json<DeleteAccount>,

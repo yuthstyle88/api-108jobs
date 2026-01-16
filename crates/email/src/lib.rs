@@ -2,10 +2,10 @@
 #![allow(dead_code)]
 #![allow(mismatched_lifetime_syntaxes)]
 
-use lemmy_db_schema::sensitive::SensitiveString;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_utils::error::FastJobError;
-use lemmy_utils::{
+use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::FastJobError;
+use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };

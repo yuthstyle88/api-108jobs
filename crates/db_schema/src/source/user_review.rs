@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use lemmy_db_schema_file::schema::user_review;
+use app_108jobs_db_schema_file::schema::user_review;
 
 /// Need use PersonId instead of LocalUserId because Person is public info can be (this feature is public)
 #[skip_serializing_none]

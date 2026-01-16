@@ -4,8 +4,8 @@ use crate::{
 };
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
-use lemmy_db_schema_file::schema::local_site;
-use lemmy_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::local_site;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalSite {
   pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> FastJobResult<Self> {
@@ -50,7 +50,7 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use lemmy_utils::error::FastJobResult;
+  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json, Path};
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::source::person::{Person, PersonUpdateForm, SaveUserProfileForm};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::source::person::{Person, PersonUpdateForm, SaveUserProfileForm};
 
-use lemmy_db_schema::traits::Crud;
-use lemmy_db_views_local_user::LocalUserView;
-use lemmy_db_views_site::api::SuccessResponse;
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
-use lemmy_db_views_person::api::VisitProfileResponse;
+use app_108jobs_db_views_person::api::VisitProfileResponse;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProfileResponse;

@@ -4,10 +4,10 @@ use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, Sele
 use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
-use lemmy_db_schema::impls::local_user::LocalUserOptionHelper;
-use lemmy_db_schema::newtypes::CategoryId;
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_db_schema::{
+use app_108jobs_db_schema::impls::local_user::LocalUserOptionHelper;
+use app_108jobs_db_schema::newtypes::CategoryId;
+use app_108jobs_db_schema::source::local_user::LocalUser;
+use app_108jobs_db_schema::{
   newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
     comment::{comment_keys as key, Comment},
@@ -25,14 +25,14 @@ use lemmy_db_schema::{
     seconds_to_pg_interval, DbPool,
   },
 };
-use lemmy_db_schema_file::{
+use app_108jobs_db_schema_file::{
     enums::{
     CommentSortType::{self, *},
     CategoryFollowerState, CategoryVisibility, ListingType,
   },
     schema::{comment, category, category_actions, person, post},
 };
-use lemmy_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;

@@ -3,24 +3,24 @@ use chrono::Utc;
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};
 use diesel::{dsl::IntervalDsl, sql_query, BoolExpressionMethods, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use lemmy_api_utils::context::FastJobContext;
-use lemmy_db_schema::utils::{get_conn, now, DbPool};
-use lemmy_db_schema_file::enums::TopUpStatus;
-use lemmy_db_schema_file::schema::captcha_answer;
-use lemmy_db_schema_file::schema::top_up_requests::dsl::top_up_requests;
-use lemmy_db_schema_file::schema::top_up_requests::{cs_ext_expiry_time, id, status};
-use lemmy_utils::error::FastJobResult;
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::utils::{get_conn, now, DbPool};
+use app_108jobs_db_schema_file::enums::TopUpStatus;
+use app_108jobs_db_schema_file::schema::captcha_answer;
+use app_108jobs_db_schema_file::schema::top_up_requests::dsl::top_up_requests;
+use app_108jobs_db_schema_file::schema::top_up_requests::{cs_ext_expiry_time, id, status};
+use app_108jobs_utils::error::FastJobResult;
 use std::time::Duration;
 use tracing::{info, warn};
 
-/// Schedules various cleanup tasks for lemmy in a background thread
+/// Schedules various cleanup tasks for app_108jobs in a background thread
 pub async fn setup(context: Data<FastJobContext>) -> FastJobResult<()> {
   // https://github.com/mdsherry/clokwerk/issues/38
   let mut scheduler = AsyncScheduler::with_tz(Utc);
 
   let context_1 = context.clone();
   // Check expired wallet topups every 10 minutes
-  scheduler.every(CTimeUnits::minutes(10)).run(move || {
+  scheduler.every(CTimeUnits::minutes(30)).run(move || {
     let context = context_1.clone();
 
     async move {

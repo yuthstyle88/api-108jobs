@@ -340,6 +340,13 @@ pub enum FastJobErrorType {
     CouldntCreateRider,
   CouldntUpdateRider,
   RiderAlreadyExists,
+    InvalidData,
+  CouldntCreateDeliveryLocation,
+  CouldntUpdateDeliveryLocation,
+  CouldntCreateDeliveryLocationHistory,
+  InvalidLatitudeOrLongitude,
+  CouldntCreateDeliveryDetails,
+  CouldntUpdateDeliveryDetails,
 }
 
 cfg_if! {

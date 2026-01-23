@@ -1,6 +1,6 @@
 use crate::newtypes::{CategoryId, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, PostNotifications};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -88,6 +88,7 @@ pub struct Post {
   pub budget: f64,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  pub post_kind: PostKind,
   pub pending: bool,
 }
 
@@ -152,6 +153,8 @@ pub struct PostInsertForm {
   pub deadline: Option<DateTime<Utc>>,
   #[new(default)]
   pub is_english_required: bool,
+  #[new(default)]
+  pub post_kind: Option<PostKind>,
   #[new(default)]
   pub pending: Option<bool>,
 }

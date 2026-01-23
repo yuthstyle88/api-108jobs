@@ -405,3 +405,44 @@ pub enum RiderVerificationStatus {
   Verified,
   Rejected,
 }
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::PostKind"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Kind of post: Normal or Delivery
+pub enum PostKind {
+  #[default]
+  Normal,
+  Delivery,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::DeliveryStatus"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Delivery workflow status
+pub enum DeliveryStatus {
+  #[default]
+  Pending,
+  Assigned,
+  EnRouteToPickup,
+  PickedUp,
+  EnRouteToDropoff,
+  Delivered,
+  Cancelled,
+}

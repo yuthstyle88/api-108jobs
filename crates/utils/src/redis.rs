@@ -49,6 +49,17 @@ impl RedisClient {
 
   // === Basic Operations ===
 
+  /// Publish a text payload to a Redis pub/sub channel
+  pub async fn publish(&mut self, channel: &str, payload: &str) -> FastJobResult<()> {
+    let _: () = redis::cmd("PUBLISH")
+      .arg(channel)
+      .arg(payload)
+      .query_async(&mut self.connection)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+    Ok(())
+  }
+
   pub async fn set_value_with_expiry<T: serde::Serialize>(
     &mut self,
     key: &str,

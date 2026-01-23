@@ -9,7 +9,7 @@ use app_108jobs_db_schema::{newtypes::{
   PostId,
   TagId,
 }, PostFeatureType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -43,6 +43,9 @@ pub struct CreatePost {
   pub budget: f64,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  // NEW: kind and optional delivery payload (carried through to handler layer)
+  pub post_kind: PostKind,
+  pub delivery_details: Option<DeliveryDetailsPayload>,
 }
 
 #[skip_serializing_none]
@@ -71,6 +74,9 @@ pub struct CreatePostRequest {
   pub budget: f64,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  // NEW
+  pub post_kind: Option<PostKind>,
+  pub delivery_details: Option<DeliveryDetailsPayload>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -353,6 +359,43 @@ pub struct OpenGraphData {
 #[serde(rename_all = "camelCase")]
 pub struct PostResponse {
   pub post_view: PostView,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeliveryDetailsPayload {
+  // Locations
+  pub pickup_address: String,
+  pub pickup_lat: Option<f64>,
+  pub pickup_lng: Option<f64>,
+  pub dropoff_address: String,
+  pub dropoff_lat: Option<f64>,
+  pub dropoff_lng: Option<f64>,
+
+  // Package
+  pub package_description: Option<String>,
+  pub package_weight_kg: Option<f64>,
+  pub package_size: Option<String>,
+  pub fragile: Option<bool>,
+  pub requires_signature: Option<bool>,
+
+  // Constraints
+  pub vehicle_required: Option<app_108jobs_db_schema_file::enums::VehicleType>,
+  pub latest_pickup_at: Option<DateTime<Utc>>,
+  pub latest_dropoff_at: Option<DateTime<Utc>>,
+
+  // Contacts
+  pub sender_name: Option<String>,
+  pub sender_phone: Option<String>,
+  pub receiver_name: Option<String>,
+  pub receiver_phone: Option<String>,
+
+  // Payment options
+  pub cash_on_delivery: Option<bool>,
+  pub cod_amount: Option<f64>,
 }
 
 #[skip_serializing_none]

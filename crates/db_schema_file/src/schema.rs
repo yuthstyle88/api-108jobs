@@ -53,6 +53,14 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
 
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_kind"))]
+  pub struct PostKind;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "delivery_status"))]
+  pub struct DeliveryStatus;
+
   #[derive(
     diesel::query_builder::QueryId,
     diesel::sql_types::SqlType,
@@ -963,6 +971,7 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::JobTypeEnum;
     use super::sql_types::IntendedUseEnum;
+    use super::sql_types::PostKind;
 
     post (id) {
         id -> Int4,
@@ -1009,7 +1018,69 @@ diesel::table! {
         budget -> Float8,
         deadline -> Nullable<Timestamptz>,
         is_english_required -> Bool,
+        post_kind -> PostKind,
         pending  -> Bool,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::DeliveryStatus;
+    use super::sql_types::VehicleType;
+
+    delivery_details (id) {
+        id -> Int4,
+        post_id -> Int4,
+        pickup_address -> Text,
+        pickup_lat -> Nullable<Float8>,
+        pickup_lng -> Nullable<Float8>,
+        dropoff_address -> Text,
+        dropoff_lat -> Nullable<Float8>,
+        dropoff_lng -> Nullable<Float8>,
+        package_description -> Nullable<Text>,
+        package_weight_kg -> Nullable<Float8>,
+        package_size -> Nullable<Varchar>,
+        fragile -> Bool,
+        requires_signature -> Bool,
+        vehicle_required -> Nullable<VehicleType>,
+        latest_pickup_at -> Nullable<Timestamptz>,
+        latest_dropoff_at -> Nullable<Timestamptz>,
+        sender_name -> Nullable<Varchar>,
+        sender_phone -> Nullable<Varchar>,
+        receiver_name -> Nullable<Varchar>,
+        receiver_phone -> Nullable<Varchar>,
+        cash_on_delivery -> Bool,
+        cod_amount -> Nullable<Float8>,
+        status -> DeliveryStatus,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    delivery_location_current (post_id) {
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    delivery_location_history (id) {
+        id -> Int8,
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        recorded_at -> Timestamptz,
     }
 }
 
@@ -1585,6 +1656,11 @@ diesel::joinable!(top_up_requests -> local_user (local_user_id));
 diesel::joinable!(withdraw_requests -> local_user (local_user_id));
 diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id));
 diesel::joinable!(rider -> person (person_id));
+diesel::joinable!(delivery_details -> post (post_id));
+diesel::joinable!(delivery_location_current -> post (post_id));
+diesel::joinable!(delivery_location_current -> rider (rider_id));
+diesel::joinable!(delivery_location_history -> post (post_id));
+diesel::joinable!(delivery_location_history -> rider (rider_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1670,5 +1746,8 @@ diesel::allow_tables_to_appear_in_same_query!(
   identity_cards,
   top_up_requests,
   withdraw_requests,
-  rider
+  rider,
+  delivery_details,
+  delivery_location_current,
+  delivery_location_history
 );

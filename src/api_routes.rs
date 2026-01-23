@@ -147,6 +147,8 @@ use app_108jobs_ws::server::handler::{
   get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
   phoenix_ws,
 };
+use app_108jobs_api::delivery::location::post_location as post_delivery_location;
+use app_108jobs_ws::server::handler::delivery_location_ws;
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
@@ -226,6 +228,16 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               "/disable-notifications",
               post().to(update_post_notifications),
             ),
+        )
+        // Deliveries (rider location tracking)
+        .service(
+          scope("/deliveries")
+            .route("/{postId}/location", post().to(post_delivery_location))
+        )
+        // WS endpoints
+        .service(
+          scope("/ws")
+            .route("/deliveries/{postId}/location", get().to(delivery_location_ws))
         )
         // Comment
         .service(

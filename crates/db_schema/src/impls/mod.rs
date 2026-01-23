@@ -48,4 +48,7 @@ pub mod chat_unread;
 pub mod pending_sender_ack;
 pub mod top_up_request;
 pub mod withdraw_request;
-mod rider;
+pub mod rider;
+pub mod delivery_location_current;
+pub mod delivery_location_history;
+pub mod delivery_details;

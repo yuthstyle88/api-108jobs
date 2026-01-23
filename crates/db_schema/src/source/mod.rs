@@ -55,6 +55,9 @@ pub mod chat_unread;
 pub mod top_up_request;
 pub mod withdraw_request;
 pub mod rider;
+pub mod delivery_details;
+pub mod delivery_location_current;
+pub mod delivery_location_history;
 
 /// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
 ///

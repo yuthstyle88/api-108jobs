@@ -35,7 +35,7 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind};
 use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,
@@ -557,6 +557,9 @@ impl TryFrom<CreatePostRequest> for CreatePost {
     let raw_url = format!("{}/post/{}", domain, slugify(data.name.clone()));
     let url = Url::parse(&raw_url)?;
 
+    // Determine post kind, defaulting to Normal for backward compatibility
+    let post_kind = data.post_kind.unwrap_or(PostKind::Normal);
+
     Ok(CreatePost {
       name: data.name,
       category_id: data.category_id,
@@ -575,6 +578,8 @@ impl TryFrom<CreatePostRequest> for CreatePost {
       job_type: data.job_type,
       is_english_required: data.is_english_required,
       ap_id: Some(url.into()),
+      post_kind,
+      delivery_details: data.delivery_details,
     })
   }
 }
@@ -594,6 +599,48 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
       return Err(FastJobErrorType::InvalidField(
         "deadline must be in the future".to_string(),
       ))?;
+    }
+  }
+
+  // Delivery-specific validation (request level only)
+  if let Some(kind) = data.post_kind {
+    if matches!(kind, PostKind::Delivery) {
+      let dd = data
+        .delivery_details
+        .as_ref()
+        .ok_or(FastJobErrorType::InvalidField(
+          "delivery_details required for Delivery post".to_string(),
+        ))?;
+      if dd.pickup_address.trim().is_empty() || dd.dropoff_address.trim().is_empty() {
+        return Err(FastJobErrorType::InvalidField(
+          "pickup_address and dropoff_address are required".to_string(),
+        ))?;
+      }
+      if let Some(true) = dd.cash_on_delivery {
+        if dd.cod_amount.unwrap_or(0.0) <= 0.0 {
+          return Err(FastJobErrorType::InvalidField(
+            "cod_amount must be > 0 when cash_on_delivery is true".to_string(),
+          ))?;
+        }
+      }
+      // Basic sanity on lat/lng if present
+      let ok = |lat: f64, lng: f64| lat.is_finite() && lng.is_finite() && lat.abs() <= 90.0 && lng.abs() <= 180.0;
+      if let (Some(lat), Some(lng)) = (dd.pickup_lat, dd.pickup_lng) {
+        if !ok(lat, lng) {
+          return Err(FastJobErrorType::InvalidField("invalid pickup lat/lng".to_string()))?;
+        }
+      }
+      if let (Some(lat), Some(lng)) = (dd.dropoff_lat, dd.dropoff_lng) {
+        if !ok(lat, lng) {
+          return Err(FastJobErrorType::InvalidField("invalid dropoff lat/lng".to_string()))?;
+        }
+      }
+    } else {
+      if data.delivery_details.is_some() {
+        return Err(FastJobErrorType::InvalidField(
+          "delivery_details not allowed for Normal post".to_string(),
+        ))?;
+      }
     }
   }
   Ok(())

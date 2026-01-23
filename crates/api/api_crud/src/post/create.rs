@@ -11,15 +11,19 @@ use app_108jobs_api_utils::{
     process_markdown_opt, slur_regex,
   },
 };
+use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm};
 use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
+use app_108jobs_db_schema_file::enums::{DeliveryStatus, PostKind};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
+use app_108jobs_utils::error::FastJobErrorExt2;
+use app_108jobs_utils::error::FastJobErrorType;
 use app_108jobs_utils::{
   error::FastJobResult,
   utils::{
@@ -104,6 +108,7 @@ pub async fn create_post(
     intended_use: data.intended_use,
     deadline: data.deadline,
     is_english_required: data.is_english_required,
+    post_kind: Some(data.post_kind),
     ..PostInsertForm::new(
       data.name.trim().to_string(),
       local_user_view.person.id,
@@ -112,6 +117,46 @@ pub async fn create_post(
   };
 
   let inserted_post = Post::create(&mut context.pool(), &post_form).await?;
+
+  // If this is a Delivery post, persist delivery_details in its table
+  if data.post_kind == PostKind::Delivery {
+    let dd = data
+      .delivery_details
+      .as_ref()
+      .ok_or(FastJobErrorType::InvalidField(
+        "delivery_details required for Delivery post".to_string(),
+      ))?;
+
+    // Build insert form using struct literal; derive_new::new() only accepts required fields
+    let dd_form = DeliveryDetailsInsertForm {
+      post_id: inserted_post.id,
+      pickup_address: dd.pickup_address.clone(),
+      pickup_lat: dd.pickup_lat,
+      pickup_lng: dd.pickup_lng,
+      dropoff_address: dd.dropoff_address.clone(),
+      dropoff_lat: dd.dropoff_lat,
+      dropoff_lng: dd.dropoff_lng,
+      package_description: dd.package_description.clone(),
+      package_weight_kg: dd.package_weight_kg,
+      package_size: dd.package_size.clone(),
+      fragile: dd.fragile,
+      requires_signature: dd.requires_signature,
+      vehicle_required: dd.vehicle_required,
+      latest_pickup_at: dd.latest_pickup_at,
+      latest_dropoff_at: dd.latest_dropoff_at,
+      sender_name: dd.sender_name.clone(),
+      sender_phone: dd.sender_phone.clone(),
+      receiver_name: dd.receiver_name.clone(),
+      receiver_phone: dd.receiver_phone.clone(),
+      cash_on_delivery: dd.cash_on_delivery,
+      cod_amount: dd.cod_amount,
+      status: Some(DeliveryStatus::Pending),
+    };
+
+    DeliveryDetails::create(&mut context.pool(), &dd_form)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
+  }
 
   if let Some(tags) = &data.tags {
     update_post_tags(

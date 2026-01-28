@@ -1,165 +1,148 @@
 <div align="center">
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/app_108jobsNet/app_108jobs.svg)](https://github.com/app_108jobsNet/app_108jobs/releases)
-[![Build Status](https://woodpecker.join-app_108jobs.org/api/badges/app_108jobsNet/app_108jobs/status.svg)](https://woodpecker.join-app_108jobs.org/app_108jobsNet/app_108jobs)
-[![GitHub issues](https://img.shields.io/github/issues-raw/app_108jobsNet/app_108jobs.svg)](https://github.com/app_108jobsNet/app_108jobs/issues)
-[![Docker Pulls](https://img.shields.io/docker/pulls/dessalines/app_108jobs.svg)](https://cloud.docker.com/repository/docker/dessalines/app_108jobs/)
-[![Translation status](http://weblate.join-app_108jobs.org/widgets/app_108jobs/-/app_108jobs/svg-badge.svg)](http://weblate.join-app_108jobs.org/engage/app_108jobs/)
-[![License](https://img.shields.io/github/license/app_108jobsNet/app_108jobs.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/app_108jobsNet/app_108jobs?style=social)](https://github.com/app_108jobsNet/app_108jobs/stargazers)
-<a href="https://endsoftwarepatents.org/innovating-without-patents"><img style="height: 20px;" src="https://static.fsf.org/nosvn/esp/logos/patent-free.svg"></a>
+# 108Jobs
+
+**A Freelance Job Marketplace Platform for Thailand**
+
+[![GitHub](https://img.shields.io/github/license/yuthstyle88/api-108jobs)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.81%2B-orange.svg)](https://www.rust-lang.org)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
 
 </div>
 
-<p align="center">
-  <span>English</span> |
-  <a href="readmes/README.es.md">Español</a> |
-  <a href="readmes/README.ru.md">Русский</a> |
-  <a href="readmes/README.zh.hans.md">汉语</a> |
-  <a href="readmes/README.zh.hant.md">漢語</a> |
-  <a href="readmes/README.ja.md">日本語</a>
-</p>
+## About 108Jobs
 
-<p align="center">
-  <a href="https://join-app_108jobs.org/" rel="noopener">
- <img width=200px height=200px src="https://raw.githubusercontent.com/app_108jobsNet/app_108jobs-ui/main/src/assets/icons/favicon.svg"></a>
+108Jobs is a comprehensive freelance job marketplace platform built for the Thai market. It connects employers with talented freelancers, offering a complete solution for posting jobs, finding work, managing projects, and handling payments securely.
 
- <h3 align="center"><a href="https://join-app_108jobs.org">app_108jobs</a></h3>
-  <p align="center">
-    A link aggregator and forum for the fediverse.
-    <br />
-    <br />
-    <a href="https://join-app_108jobs.org">Join app_108jobs</a>
-    ·
-    <a href="https://join-app_108jobs.org/docs/index.html">Documentation</a>
-    ·
-    <a href="https://matrix.to/#/#app_108jobs-space:matrix.org">Matrix Chat</a>
-    ·
-    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/app_108jobsNet/app_108jobs/issues">Request Feature</a>
-    ·
-    <a href="https://github.com/app_108jobsNet/app_108jobs/blob/main/RELEASES.md">Releases</a>
-    ·
-    <a href="https://join-app_108jobs.org/docs/code_of_conduct.html">Code of Conduct</a>
-  </p>
-</p>
+### Key Features
 
-## About The Project
+**For Employers:**
+- Post job listings and find qualified freelancers
+- Review freelancer profiles and ratings
+- Manage projects through workflow stages
+- Secure payment escrow system
+- Real-time chat with freelancers
+- Track delivery progress (for delivery jobs)
 
-| Desktop                                                                                                         | Mobile                                                                                                      |
-| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![desktop](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/main_screen_2.webp) | ![mobile](https://raw.githubusercontent.com/app_108jobsNet/joinapp_108jobs-site/main/src/assets/images/mobile_pic.webp) |
+**For Freelancers:**
+- Browse and apply to job opportunities
+- Build a professional profile with portfolio
+- Receive payment securely through the platform
+- Chat with employers
+- Track work progress and submit deliverables
+- Get rated and build reputation
 
-[app_108jobs](https://github.com/app_108jobsNet/app_108jobs) is similar to sites like [Reddit](https://reddit.com), [Lobste.rs](https://lobste.rs), or [Hacker News](https://news.ycombinator.com/): you subscribe to forums you're interested in, post links and discussions, then vote, and comment on them. Behind the scenes, it is very different; anyone can easily run a server, and all these servers are federated (think email), and connected to the same universe, called the [Fediverse](https://en.wikipedia.org/wiki/Fediverse).
-
-For a link aggregator, this means a user registered on one server can subscribe to forums on any other server, and can have discussions with users registered elsewhere.
-
-It is an easily self-hostable, decentralized alternative to Reddit and other link aggregators, outside of their corporate control and meddling.
-
-Each app_108jobs server can set its own moderation policy; appointing site-wide admins, and community moderators to keep out the trolls, and foster a healthy, non-toxic environment where all can feel comfortable contributing.
-
-### Why's it called app_108jobs?
-
-- Lead singer from [Motörhead](https://invidio.us/watch?v=3mbvWn1EY6g).
-- The old school [video game](<https://en.wikipedia.org/wiki/Lemmings_(video_game)>).
-- The [Koopa from Super Mario](https://www.mariowiki.com/app_108jobs_Koopa).
-- The [furry rodents](http://sunchild.fpwc.org/lemming-the-little-giant-of-the-north/).
+**For Delivery Riders:**
+- Real-time location tracking
+- Delivery job management
+- Mobile-friendly interface
 
 ### Built With
 
-- [Rust](https://www.rust-lang.org)
-- [Actix](https://actix.rs/)
-- [Diesel](http://diesel.rs/)
-- [Inferno](https://infernojs.org)
-- [Typescript](https://www.typescriptlang.org/)
+- **Backend**: Rust, Actix-web, Diesel ORM
+- **Database**: PostgreSQL
+- **Real-time**: WebSocket support for live updates
+- **Email**: Built-in email notifications with multi-language support (Thai, English, Vietnamese)
+- **Payments**: Integration with SCB (Siam Commercial Bank)
 
-## Features
+## Project Structure
 
-- Open source, [AGPL License](/LICENSE).
-- Self hostable, easy to deploy.
-  - Comes with [Docker](https://join-app_108jobs.org/docs/administration/install_docker.html) and [Ansible](https://join-app_108jobs.org/docs/administration/install_ansible.html).
-- Clean, mobile-friendly interface.
-  - Only a minimum of a username and password is required to sign up!
-  - User avatar support.
-  - Live-updating Comment threads.
-  - Full vote scores `(+/-)` like old Reddit.
-  - Themes, including light, dark, and solarized.
-  - Emojis with autocomplete support. Start typing `:`
-  - User tagging using `@`, Community tagging using `!`.
-  - Integrated image uploading in both posts and comments.
-  - A post can consist of a title and any combination of self text, a URL, or nothing else.
-  - Notifications, on comment replies and when you're tagged.
-    - Notifications can be sent via email.
-    - Private messaging support.
-  - i18n / internationalization support.
-  - RSS / Atom feeds for `All`, `Subscribed`, `Inbox`, `User`, and `Community`.
-- Cross-posting support.
-  - A _similar post search_ when creating new posts. Great for question / answer communities.
-- Moderation abilities.
-  - Public Moderation Logs.
-  - Can sticky posts to the top of communities.
-  - Both site admins, and community moderators, who can appoint other moderators.
-  - Can lock, remove, and restore posts and comments.
-  - Can ban and unban users from communities and the site.
-  - Can transfer site and communities to others.
-- Can fully erase your data, replacing all posts and comments.
-- NSFW post / community support.
-- High performance.
-  - Server is written in rust.
-  - Supports arm64 / Raspberry Pi.
+```
+.
+├── crates/
+│   ├── email/          # Email notification module
+│   ├── api/            # API endpoints
+│   ├── db_schema/      # Database models and schema
+│   ├── db_views/       # Database views for common queries
+│   ├── utils/          # Shared utilities and error handling
+│   ├── routes/         # HTTP route handlers
+│   ├── ws/             # WebSocket support
+│   └── workflow/       # Business logic for job workflows
+├── migrations/         # Database migrations
+└── src/               # Main application entry point
+```
 
 ## Installation
 
-- [app_108jobs Administration Docs](https://join-app_108jobs.org/docs/administration/administration.html)
+### Prerequisites
 
-## app_108jobs Projects
+- Rust 1.81 or later
+- PostgreSQL 14 or later
+- Redis (for caching and pub/sub)
 
-- [awesome-app_108jobs - A community driven list of apps and tools for app_108jobs](https://github.com/dbeley/awesome-app_108jobs)
+### Development Setup
 
-## Support / Donate
+1. Clone the repository:
+```bash
+git clone https://github.com/yuthstyle88/api-108jobs.git
+cd api-108jobs
+```
 
-app_108jobs is free, open-source software, meaning no advertising, monetizing, or venture capital, ever. Your donations directly support full-time development of the project.
+2. Set up environment variables:
+```bash
+cp config/default.hoi config/config.hoi
+# Edit config/config.hoi with your database and email settings
+```
 
-app_108jobs is made possible by a generous grant from the [NLnet foundation](https://nlnet.nl/).
+3. Run database migrations:
+```bash
+cargo run --release -- migration run
+```
 
-- [Support on Liberapay](https://liberapay.com/app_108jobs).
-- [Support on Ko-fi](https://ko-fi.com/app_108jobsnet).
-- [Support on OpenCollective](https://opencollective.com/app_108jobs).
-- [Support on Patreon](https://www.patreon.com/dessalines).
+4. Start the server:
+```bash
+cargo run --release
+```
 
-### Crypto
+The API server will start on `http://localhost:8080` by default.
 
-- bitcoin: `1Hefs7miXS5ff5Ck5xvmjKjXf5242KzRtK`
-- ethereum: `0x400c96c96acbC6E7B3B43B1dc1BB446540a88A01`
-- monero: `41taVyY6e1xApqKyMVDRVxJ76sPkfZhALLTjRvVKpaAh2pBd4wv9RgYj1tSPrx8wc6iE1uWUfjtQdTmTy2FGMeChGVKPQuV`
+## Email Module
+
+The `crates/email` crate is a standalone email library that can be used independently:
+
+```toml
+[dependencies]
+app_108jobs_email = { path = "./crates/email" }
+```
+
+```rust
+use app_108jobs_email::{account, admin, notifications};
+
+// Send password reset email
+account::send_password_reset_email(&user, &mut pool, &settings).await?;
+
+// Send application notification to admins
+admin::send_new_applicant_email_to_admins("username", &mut pool, &settings).await?;
+
+// Send notification
+notifications::send_mention_email(&user, content, &person, link, &settings).await;
+```
+
+## API Documentation
+
+API documentation is available at `/docs` endpoint when running the server (if enabled).
 
 ## Contributing
 
-Read the following documentation to setup the development environment and start coding:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- [Contributing instructions](https://join-app_108jobs.org/docs/contributors/01-overview.html)
-- [Docker Development](https://join-app_108jobs.org/docs/contributors/03-docker-development.html)
-- [Local Development](https://join-app_108jobs.org/docs/contributors/02-local-development.html)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-When working on an issue or pull request, you can comment with any questions you may have so that maintainers can answer them. You can also join the [Matrix Development Chat](https://matrix.to/#/#app_108jobsdev:matrix.org) for general assistance.
+## License
 
-### Translations
+This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-- If you want to help with translating, take a look at [Weblate](https://weblate.join-app_108jobs.org/projects/app_108jobs/). You can also help by [translating the documentation](https://github.com/app_108jobsNet/app_108jobs-docs#adding-a-new-language).
+## Support
 
-## Community
-
-- [Matrix Space](https://matrix.to/#/#app_108jobs-space:matrix.org)
-- [app_108jobs Forum](https://app_108jobs.ml/c/app_108jobs)
-- [app_108jobs Support Forum](https://app_108jobs.ml/c/app_108jobs_support)
-
-## Code Mirrors
-
-- [GitHub](https://github.com/app_108jobsNet/app_108jobs)
-- [Gitea](https://git.join-app_108jobs.org/app_108jobsNet/app_108jobs)
-- [Codeberg](https://codeberg.org/app_108jobsNet/app_108jobs)
+For support, please email support@108jobs.com or open an issue in this repository.
 
 ## Credits
 
-Logo made by Andy Cuccaro (@andycuccaro) under the CC-BY-SA 4.0 license.
+- **Original Project**: Based on Lemmy (fediverse link aggregator)
+- **Adapted for**: 108Jobs - Thai Freelance Marketplace
+- **Repository**: https://github.com/yuthstyle88/api-108jobs
+- **Website**: https://108jobs.com

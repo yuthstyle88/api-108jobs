@@ -34,7 +34,7 @@ impl CommentReportView {
 
     let post_join = post::table.on(comment::post_id.eq(post::id));
 
-    let category_join = category::table.on(post::category_id.eq(category::id));
+    let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
     let report_creator_join = person::table.on(comment_report::creator_id.eq(person::id));
 
@@ -57,6 +57,7 @@ impl CommentReportView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -73,6 +74,7 @@ impl CommentReportView {
 
     let category_actions_join = category_actions::table.on(
         category_actions::category_id
+        .nullable()
         .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),
     );
@@ -80,7 +82,7 @@ impl CommentReportView {
     comment_report::table
       .inner_join(comment::table)
       .inner_join(post_join)
-      .inner_join(category_join)
+      .left_join(category_join)
       .inner_join(report_creator_join)
       .inner_join(comment_creator_join)
       .left_join(comment_actions_join)

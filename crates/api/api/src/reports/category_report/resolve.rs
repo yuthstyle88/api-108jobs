@@ -15,7 +15,7 @@ use app_108jobs_db_views_reports::{
   api::{CategoryReportResponse, ResolveCategoryReport},
   CategoryReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn resolve_category_report(
   data: Json<ResolveCategoryReport>,
@@ -34,9 +34,13 @@ pub async fn resolve_category_report(
 
   let category_report_view =
     CategoryReportView::read(&mut context.pool(), report_id, person_id).await?;
+  let category = category_report_view
+    .category
+    .as_ref()
+    .ok_or(FastJobErrorType::NotFound)?;
   let site = Site::read_from_instance_id(
     &mut context.pool(),
-    category_report_view.category.instance_id,
+    category.instance_id,
   )
   .await?;
 

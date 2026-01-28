@@ -737,7 +737,13 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
 
   for p in posts {
     let post_url = p.post.local_url(settings)?;
-    let category_url = &p.category.actor_url(settings)?;
+    // Handle posts without categories (e.g., delivery posts)
+    let category_display = if let Some(ref category) = p.category {
+      let category_url = category.actor_url(settings)?;
+      format!("<a href=\"{}\">{}</a>", category_url, &category.name)
+    } else {
+      "(no category)".to_string()
+    };
     let dublin_core_ext = Some(DublinCoreExtension {
       creators: vec![],
       ..DublinCoreExtension::default()
@@ -746,11 +752,10 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
       permalink: true,
       value: post_url.to_string(),
     });
-    let mut description = format!("submitted by <a href=\"{}\">{}</a> to <a href=\"{}\">{}</a><br>{} points | <a href=\"{}\">{} comments</a>",
+    let mut description = format!("submitted by <a href=\"{}\">{}</a> to {}<br>{} points | <a href=\"{}\">{} comments</a>",
     p.creator.actor_url(settings)?,
     &p.creator.name,
-    category_url,
-    &p.category.name,
+    category_display,
     p.post.score,
     post_url,
     p.post.comments);

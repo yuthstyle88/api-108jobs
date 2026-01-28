@@ -36,7 +36,12 @@ pub async fn distinguish_comment(
     Err(FastJobErrorType::NoCommentEditAllowed)?
   }
 
-  check_category_deleted_removed(&orig_comment.category)?;
+  check_category_deleted_removed(
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?,
+  )?;
 
   // Update the Comment
   let form = CommentUpdateForm {

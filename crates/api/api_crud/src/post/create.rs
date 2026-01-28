@@ -13,7 +13,7 @@ use app_108jobs_api_utils::{
 };
 use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm};
 use app_108jobs_db_schema::{
-  impls::actor_language::validate_post_language,
+  impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
@@ -69,29 +69,37 @@ pub async fn create_post(
     is_valid_body_field(body, true)?;
   }
 
-  let category_view = CategoryView::read(
-    &mut context.pool(),
-    data.category_id,
-    Some(&local_user_view.local_user),
-  )
-  .await?;
-  let category = &category_view.category;
-  check_category_deleted_removed(&category)?;
+  // For posts with a category (normal posts, or delivery posts with explicit category)
+  let (category_view, self_promotion, language_id) = if let Some(category_id) = data.category_id {
+    let category_view = CategoryView::read(
+      &mut context.pool(),
+      category_id,
+      Some(&local_user_view.local_user),
+    )
+    .await?;
+    let category = &category_view.category;
+    check_category_deleted_removed(&category)?;
 
-  // Ensure that all posts in NSFW communities are marked as NSFW
-  let self_promotion = if category.self_promotion {
-    Some(true)
+    // Ensure that all posts in NSFW communities are marked as NSFW
+    let self_promotion = if category.self_promotion {
+      Some(true)
+    } else {
+      data.self_promotion
+    };
+
+    let language_id = validate_post_language(
+      &mut context.pool(),
+      data.language_id,
+      category_id,
+      local_user_view.local_user.id,
+    )
+    .await?;
+
+    (Some(category_view), self_promotion, language_id)
   } else {
-    data.self_promotion
+    // For delivery posts without a category, use default values
+    (None, data.self_promotion, data.language_id.unwrap_or(UNDETERMINED_ID))
   };
-
-  let language_id = validate_post_language(
-    &mut context.pool(),
-    data.language_id,
-    data.category_id,
-    local_user_view.local_user.id,
-  )
-  .await?;
 
   let scheduled_publish_time_at =
     convert_published_time(data.scheduled_publish_time_at, &local_user_view, &context).await?;
@@ -109,10 +117,10 @@ pub async fn create_post(
     deadline: data.deadline,
     is_english_required: data.is_english_required,
     post_kind: Some(data.post_kind),
+    category_id: data.category_id,
     ..PostInsertForm::new(
       data.name.trim().to_string(),
       local_user_view.person.id,
-      data.category_id,
     )
   };
 
@@ -158,11 +166,12 @@ pub async fn create_post(
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
   }
 
-  if let Some(tags) = &data.tags {
+  // Tags are only supported for posts with a category
+  if let (Some(tags), Some(category_view)) = (&data.tags, category_view.as_ref()) {
     update_post_tags(
       &context,
       &inserted_post,
-      &category_view,
+      category_view,
       tags,
       &local_user_view,
     )

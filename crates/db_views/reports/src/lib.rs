@@ -48,7 +48,7 @@ pub struct CommentReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full",
@@ -84,7 +84,7 @@ pub struct CategoryReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_report: CategoryReport,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
 }
@@ -103,7 +103,7 @@ pub struct PostReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full",

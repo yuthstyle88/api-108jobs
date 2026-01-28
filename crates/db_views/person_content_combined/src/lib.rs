@@ -5,6 +5,7 @@ use app_108jobs_db_schema::{
     comment::{Comment, CommentActions},
     category::{Category, CategoryActions},
     images::ImageDetails,
+    delivery_details::DeliveryDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
@@ -59,6 +60,8 @@ pub(crate) struct PersonContentCombinedViewInternal {
   pub comment_actions: Option<CommentActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub delivery_details: Option<DeliveryDetails>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = creator_is_admin()

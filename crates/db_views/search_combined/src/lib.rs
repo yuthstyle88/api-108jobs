@@ -6,6 +6,7 @@ use app_108jobs_db_schema::{
     category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
+    delivery_details::DeliveryDetails,
     person::{Person, PersonActions},
     post::{Post, PostActions},
     tag::TagsView,
@@ -13,7 +14,7 @@ use app_108jobs_db_schema::{
     SearchSortType,
     SearchType,
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind};
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_person::PersonView;
@@ -65,6 +66,8 @@ pub(crate) struct SearchCombinedViewInternal {
   pub comment_actions: Option<CommentActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub delivery_details: Option<DeliveryDetails>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = creator_is_admin()
@@ -154,6 +157,7 @@ pub struct Search {
   /// Maximum budget in your preferred currency
   pub budget_max: Option<i64>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

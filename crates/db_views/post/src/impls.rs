@@ -1,16 +1,6 @@
 use crate::api::EditPost;
 use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
 use crate::{PostPreview, PostView};
-use diesel::{
-  self, debug_query,
-  dsl::{exists, not},
-  pg::Pg,
-  query_builder::AsQuery,
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
-  TextExpressionMethods,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::{asc_if, SortDirection};
 use app_108jobs_db_schema::newtypes::LanguageId;
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
@@ -41,11 +31,24 @@ use app_108jobs_db_schema_file::{
     CategoryFollowerState, CategoryVisibility, ListingType,
     PostSortType::{self, *},
   },
-  schema::{category, category_actions, local_user_language, person, post, post_actions},
+  schema::{
+    category, category_actions, delivery_details, local_user_language, person, post, post_actions,
+  },
 };
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_utils::settings::SETTINGS;
 use app_108jobs_utils::utils::validation::is_valid_post_title;
+use diesel::JoinOnDsl;
+use diesel::{
+  self, debug_query,
+  dsl::{exists, not},
+  pg::Pg,
+  query_builder::AsQuery,
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  TextExpressionMethods,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::{asc_if, SortDirection};
 use slug::slugify;
 use tracing::debug;
 #[cfg(feature = "full")]
@@ -84,8 +87,9 @@ impl PostView {
 
     post::table
       .inner_join(person::table)
-      .inner_join(category::table)
+      .left_join(category::table) // Changed to left_join for nullable category_id (delivery posts)
       .left_join(image_details_join())
+      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
       .left_join(my_category_actions_join)
       .left_join(my_person_actions_join)
       .left_join(my_post_actions_join)
@@ -254,6 +258,7 @@ pub struct PostQuery<'a> {
   pub budget_min: Option<i64>,
   pub budget_max: Option<i64>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
   pub cursor_data: Option<Post>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -331,6 +336,13 @@ impl PostQuery<'_> {
       .select(PostView::as_select())
       .limit(limit)
       .into_boxed();
+
+    // if has post kind -> Delivery else -> Normal
+    let kind = match o.post_kind {
+      Some(_) => PostKind::Delivery,
+      None => PostKind::Normal,
+    };
+    query = query.filter(post::post_kind.eq(kind));
 
     // hide posts from deleted communities
     query = query.filter(category::deleted.eq(false));
@@ -602,6 +614,13 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
     }
   }
 
+  // For non-delivery posts, category_id is required
+  if !matches!(data.post_kind, Some(PostKind::Delivery)) && data.category_id.is_none() {
+    return Err(FastJobErrorType::InvalidField(
+      "category_id is required for non-delivery posts".to_string(),
+    ))?;
+  }
+
   // Delivery-specific validation (request level only)
   if let Some(kind) = data.post_kind {
     if matches!(kind, PostKind::Delivery) {
@@ -624,15 +643,21 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
         }
       }
       // Basic sanity on lat/lng if present
-      let ok = |lat: f64, lng: f64| lat.is_finite() && lng.is_finite() && lat.abs() <= 90.0 && lng.abs() <= 180.0;
+      let ok = |lat: f64, lng: f64| {
+        lat.is_finite() && lng.is_finite() && lat.abs() <= 90.0 && lng.abs() <= 180.0
+      };
       if let (Some(lat), Some(lng)) = (dd.pickup_lat, dd.pickup_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField("invalid pickup lat/lng".to_string()))?;
+          return Err(FastJobErrorType::InvalidField(
+            "invalid pickup lat/lng".to_string(),
+          ))?;
         }
       }
       if let (Some(lat), Some(lng)) = (dd.dropoff_lat, dd.dropoff_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField("invalid dropoff lat/lng".to_string()))?;
+          return Err(FastJobErrorType::InvalidField(
+            "invalid dropoff lat/lng".to_string(),
+          ))?;
         }
       }
     } else {
@@ -710,8 +735,6 @@ mod tests {
     impls::{PostQuery, PostSortType},
     PostView,
   };
-  use chrono::Utc;
-  use diesel_async::SimpleAsyncConnection;
   use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
@@ -740,6 +763,8 @@ mod tests {
   use app_108jobs_db_schema_file::enums::categoryVisibility;
   use app_108jobs_db_views_local_user::LocalUserView;
   use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+  use chrono::Utc;
+  use diesel_async::SimpleAsyncConnection;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use std::{

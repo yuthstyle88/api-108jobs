@@ -273,12 +273,16 @@ impl Post {
     // https://github.com/diesel-rs/diesel/issues/1478
     // Just select the metrics we need manually, for now, since its a single post anyway
 
+    // Use left_join since post.category_id is now nullable (for delivery posts)
+    // Posts without categories will have 0 interactions_month for their scaled_rank
     let interactions_month = category::table
       .select(category::interactions_month)
-      .inner_join(post::table.on(category::id.eq(post::category_id)))
+      .left_join(post::table.on(category::id.nullable().eq(post::category_id)))
       .filter(post::id.eq(post_id))
+      .filter(post::category_id.is_not_null()) // Only get interactions for posts with categories
       .first::<i64>(conn)
-      .await?;
+      .await
+      .unwrap_or(0);
 
     diesel::update(post::table.find(post_id))
       .set((

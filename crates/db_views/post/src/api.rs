@@ -9,7 +9,7 @@ use app_108jobs_db_schema::{newtypes::{
   PostId,
   TagId,
 }, PostFeatureType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType, VehicleType};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,8 @@ use serde_with::skip_serializing_none;
 /// Create a post.
 pub struct CreatePost {
   pub name: String,
-  pub category_id: CategoryId,
+  /// Category ID (optional for delivery posts, resolved in handler)
+  pub category_id: Option<CategoryId>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
   pub body: Option<String>,
@@ -56,7 +57,8 @@ pub struct CreatePost {
 #[serde(rename_all = "camelCase")]
 pub struct CreatePostRequest {
   pub name: String,
-  pub category_id: CategoryId,
+  /// Category ID (optional for delivery posts, will use default)
+  pub category_id: Option<CategoryId>,
   /// Portfolio url
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -198,7 +200,7 @@ pub struct GetPost {
 #[serde(rename_all = "camelCase")]
 pub struct GetPostResponse {
   pub post_view: PostView,
-  pub category_view: CategoryView,
+  pub category_view: Option<CategoryView>,
   /// A list of cross-posts, or other times / communities this link has been posted to.
   pub cross_posts: Vec<PostView>,
 }
@@ -234,6 +236,7 @@ pub struct GetPosts {
   /// Maximum budget in your preferred currency
   pub budget_max: Option<i64>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -383,7 +386,7 @@ pub struct DeliveryDetailsPayload {
   pub requires_signature: Option<bool>,
 
   // Constraints
-  pub vehicle_required: Option<app_108jobs_db_schema_file::enums::VehicleType>,
+  pub vehicle_required: Option<VehicleType>,
   pub latest_pickup_at: Option<DateTime<Utc>>,
   pub latest_dropoff_at: Option<DateTime<Utc>>,
 

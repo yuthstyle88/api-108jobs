@@ -5,6 +5,7 @@ use app_108jobs_api::admin::wallet::{
   admin_top_up_wallet, admin_withdraw_wallet,
 };
 use app_108jobs_api::chat::list::list_chat_rooms;
+use app_108jobs_api::delivery::location::post_location as post_delivery_location;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account, update_bank_account,
@@ -143,16 +144,20 @@ use app_108jobs_routes::images::{
 use app_108jobs_routes::payments::create_qrcode::create_qrcode;
 use app_108jobs_routes::payments::inquire::inquire_qrcode;
 use app_108jobs_utils::rate_limit::RateLimit;
+use app_108jobs_ws::server::handler::delivery_location_ws;
 use app_108jobs_ws::server::handler::{
   get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
   phoenix_ws,
 };
-use app_108jobs_api::delivery::location::post_location as post_delivery_location;
-use app_108jobs_ws::server::handler::delivery_location_ws;
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
     .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
+    // WS endpoints for delivery tracking
+    .service(scope("/ws").route(
+      "/deliveries/{postId}/location",
+      get().to(delivery_location_ws),
+    ))
     .service(
       scope("/api/v4")
         // .wrap(rate_limit.message())
@@ -231,17 +236,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         )
         // Deliveries (rider location tracking)
         .service(
-          scope("/deliveries")
-            .route("/{postId}/location", post().to(post_delivery_location))
-        )
-        // WS endpoints
-        .service(
-          scope("/ws")
-            .route("/deliveries/{postId}/location", get().to(delivery_location_ws))
+          scope("/deliveries").route("/{postId}/location", post().to(post_delivery_location)),
         )
         // Comment
         .service(
-          // Handle POST to /comment separately to add the comment() rate limitter
+          // Handle POST to /comment separately to add the comment() rate limiter
           resource("/comment")
             .guard(guard::Post())
             // .wrap(rate_limit.comment())

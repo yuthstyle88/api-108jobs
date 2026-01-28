@@ -18,7 +18,7 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 
 pub async fn like_comment(
@@ -57,7 +57,7 @@ pub async fn like_comment(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      category: orig_comment.category,
+      category: orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
       previous_score,
       new_score: data.score,
     },

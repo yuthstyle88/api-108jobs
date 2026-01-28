@@ -18,7 +18,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{FeaturePost, PostResponse};
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn feature_post(
   data: Json<FeaturePost>,
@@ -28,7 +28,11 @@ pub async fn feature_post(
   let post_id = data.post_id;
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
 
-  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
+  // Feature only works for posts with categories
+  let category_id = orig_post
+    .category_id
+    .ok_or(FastJobErrorType::NotFound)?;
+  let category = Category::read(&mut context.pool(), category_id).await?;
   check_category_deleted_removed(&category)?;
 
   if data.feature_type == PostFeatureType::Local {

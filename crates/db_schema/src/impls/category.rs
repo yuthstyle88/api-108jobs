@@ -189,7 +189,7 @@ impl Category {
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     for p in &posts {
-      debug_assert!(p.category_id == category_id);
+      debug_assert!(p.category_id == Some(category_id));
     }
     // Mark the given posts as featured and all other posts as not featured.
     let post_ids = posts.iter().map(|p| p.id);

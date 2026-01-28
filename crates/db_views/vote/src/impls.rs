@@ -64,6 +64,7 @@ impl VoteView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -138,6 +139,7 @@ impl VoteView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions

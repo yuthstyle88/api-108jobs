@@ -1,5 +1,5 @@
 use crate::{
-  diesel::OptionalExtension,
+  diesel::{OptionalExtension, NullableExpressionMethods},
   newtypes::{CommentId, CategoryId, DbUrl, InstanceId, PersonId},
   source::comment::{
     Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentSavedForm,
@@ -109,12 +109,14 @@ impl Comment {
     instance_id: InstanceId,
   ) -> FastJobResult<Vec<CommentId>> {
     let conn = &mut get_conn(pool).await?;
-    let category_join = category::table.on(post::category_id.eq(category::id));
+    // Use nullable().eq() to compare nullable post.category_id with category.id
+    let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
     comment::table
       .inner_join(post::table)
       .inner_join(category_join)
       .filter(comment::creator_id.eq(creator_id))
+      .filter(post::category_id.is_not_null()) // Only include comments on posts with categories
       .filter(category::instance_id.eq(instance_id))
       .select(comment::id)
       .load::<CommentId>(conn)

@@ -161,24 +161,24 @@ impl ModlogCombinedViewInternal {
         .or(
           mod_feature_post::id
             .is_not_null()
-            .and(post::category_id.eq(category::id)),
+            .and(post::category_id.is_null().or(category::id.nullable().eq(post::category_id))),
         )
         .or(mod_change_category_visibility::category_id.eq(category::id))
         .or(
           mod_lock_post::id
             .is_not_null()
-            .and(post::category_id.eq(category::id)),
+            .and(post::category_id.is_null().or(category::id.nullable().eq(post::category_id))),
         )
         .or(
           mod_remove_comment::id
             .is_not_null()
-            .and(post::category_id.eq(category::id)),
+            .and(post::category_id.is_null().or(category::id.nullable().eq(post::category_id))),
         )
         .or(mod_remove_category::category_id.eq(category::id))
         .or(
           mod_remove_post::id
             .is_not_null()
-            .and(post::category_id.eq(category::id)),
+            .and(post::category_id.is_null().or(category::id.nullable().eq(post::category_id))),
         )
         .or(mod_transfer_category::category_id.eq(category::id)),
     );
@@ -475,13 +475,11 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
         admin_purge_person,
         admin: v.moderator,
       }))
-    } else if let (Some(admin_purge_post), Some(category)) =
-      (v.admin_purge_post, v.category.clone())
-    {
+    } else if let Some(admin_purge_post) = v.admin_purge_post {
       Some(ModlogCombinedView::AdminPurgePost(AdminPurgePostView {
         admin_purge_post,
         admin: v.moderator,
-        category,
+        category: v.category.clone(),
       }))
     } else if let (Some(mod_add), Some(other_person)) = (v.mod_add, v.other_person.clone()) {
       Some(ModlogCombinedView::ModAdd(ModAddView {
@@ -519,17 +517,16 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_feature_post), Some(other_person), Some(category), Some(post)) = (
+    } else if let (Some(mod_feature_post), Some(other_person), Some(post)) = (
       v.mod_feature_post,
       v.other_person.clone(),
-      v.category.clone(),
       v.post.clone(),
     ) {
       Some(ModlogCombinedView::ModFeaturePost(ModFeaturePostView {
         mod_feature_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
     } else if let (Some(mod_change_category_visibility), Some(category)) =
@@ -542,29 +539,26 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_lock_post), Some(other_person), Some(category), Some(post)) = (
+    } else if let (Some(mod_lock_post), Some(other_person), Some(post)) = (
       v.mod_lock_post,
       v.other_person.clone(),
-      v.category.clone(),
       v.post.clone(),
     ) {
       Some(ModlogCombinedView::ModLockPost(ModLockPostView {
         mod_lock_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
     } else if let (
       Some(mod_remove_comment),
       Some(other_person),
-      Some(category),
       Some(post),
       Some(comment),
     ) = (
       v.mod_remove_comment,
       v.other_person.clone(),
-      v.category.clone(),
       v.post.clone(),
       v.comment,
     ) {
@@ -572,7 +566,7 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
         mod_remove_comment,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
         comment,
       }))
@@ -586,17 +580,16 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_remove_post), Some(other_person), Some(category), Some(post)) = (
+    } else if let (Some(mod_remove_post), Some(other_person), Some(post)) = (
       v.mod_remove_post,
       v.other_person.clone(),
-      v.category.clone(),
       v.post.clone(),
     ) {
       Some(ModlogCombinedView::ModRemovePost(ModRemovePostView {
         mod_remove_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
     } else if let (Some(mod_transfer_category), Some(other_person), Some(category)) = (

@@ -30,7 +30,8 @@ pub struct Post {
   /// An optional post body, in markdown.
   pub body: Option<String>,
   pub creator_id: PersonId,
-  pub category_id: CategoryId,
+  /// Category ID (nullable for delivery posts, which rely on post_kind for distinction)
+  pub category_id: Option<CategoryId>,
   /// Whether the post is removed.
   pub removed: bool,
   /// Whether the post is locked.
@@ -102,7 +103,9 @@ pub struct Post {
 pub struct PostInsertForm {
   pub name: String,
   pub creator_id: PersonId,
-  pub category_id: CategoryId,
+  /// Category ID (nullable for delivery posts, which rely on post_kind for distinction)
+  #[new(default)]
+  pub category_id: Option<CategoryId>,
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]

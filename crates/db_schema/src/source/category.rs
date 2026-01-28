@@ -9,7 +9,7 @@ use app_108jobs_db_schema_file::enums::{CategoryFollowerState, CategoryVisibilit
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {
+pub use {
   crate::newtypes::LtreeDef,
   i_love_jesus::CursorKeysModule,
   app_108jobs_db_schema_file::schema::{category, category_actions},

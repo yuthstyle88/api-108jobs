@@ -22,8 +22,8 @@ use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor,
   },
   seconds_to_pg_interval, DbPool,
 }, SearchSortType::{self, *}, SearchType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
-use app_108jobs_db_schema_file::schema::{category, comment, person, post, search_combined};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::schema::{category, comment, delivery_details, person, post, search_combined};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
@@ -65,7 +65,7 @@ impl SearchCombinedViewInternal {
     let category_join = category::table.on(
       search_combined::category_id
         .eq(category::id.nullable())
-        .or(post::category_id.eq(category::id))
+        .or(category::id.nullable().eq(post::category_id))
         .and(not(category::removed))
         .and(not(category::local_removed))
         .and(not(category::deleted)),
@@ -97,6 +97,7 @@ impl SearchCombinedViewInternal {
       .left_join(my_person_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(image_details_join())
+      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
 }
 
@@ -170,6 +171,7 @@ pub struct SearchCombinedQuery {
   pub budget_min: Option<i64>,
   pub budget_max: Option<i64>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -251,14 +253,20 @@ impl SearchCombinedQuery {
       let _ = item_creator.ne(my_id);
     };
 
-    // Type
     query = match self.type_.unwrap_or_default() {
       SearchType::All => query,
       SearchType::Posts => query.filter(is_post),
       SearchType::Comments => query.filter(is_comment),
-      SearchType::Communities => query.filter(is_category),
+      SearchType::Categories => query.filter(is_category),
       SearchType::Users => query.filter(is_person),
     };
+
+    // if has post kind -> Delivery else -> Normal
+    let kind = match self.post_kind {
+      Some(_) => PostKind::Delivery,
+      None => PostKind::Normal,
+    };
+    query = query.filter(post::post_kind.eq(kind));
 
     // Filter by the time range
     if let Some(time_range_seconds) = self.time_range_seconds {
@@ -291,7 +299,7 @@ impl SearchCombinedQuery {
       .await?;
 
     // Map the query results to the enum
-    let out = res
+    let out: Vec<SearchCombinedView> = res
       .into_iter()
       .filter_map(InternalToCombinedView::map_to_enum)
       .collect();
@@ -307,16 +315,15 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment), Some(creator), Some(post), Some(category)) = (
+    if let (Some(comment), Some(creator), Some(post)) = (
       v.comment,
       v.item_creator.clone(),
       v.post.clone(),
-      v.category.clone(),
     ) {
       Some(SearchCombinedView::Comment(CommentView {
         comment,
         post,
-        category,
+        category: v.category,
         creator,
         category_actions: v.category_actions,
         instance_actions: v.instance_actions,
@@ -329,15 +336,16 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         creator_is_moderator: v.creator_is_moderator,
         creator_banned_from_category: v.creator_banned_from_category,
       }))
-    } else if let (Some(post), Some(creator), Some(category)) =
-      (v.post, v.item_creator.clone(), v.category.clone())
+    } else if let (Some(post), Some(creator)) =
+      (v.post, v.item_creator.clone())
     {
       Some(SearchCombinedView::Post(PostView {
         post,
-        category,
+        category: v.category,
         creator,
         creator_is_admin: v.item_creator_is_admin,
         image_details: v.image_details,
+        delivery_details: v.delivery_details,
         category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         person_actions: v.person_actions,
@@ -373,7 +381,6 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::SearchCombinedQuery, LocalUserView, SearchCombinedView};
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
     source::{

@@ -83,7 +83,7 @@ pub enum SearchType {
   All,
   Comments,
   Posts,
-  Communities,
+  Categories,
   Users,
 }
 

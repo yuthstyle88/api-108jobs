@@ -36,7 +36,12 @@ pub async fn delete_comment(
     Err(FastJobErrorType::CouldntUpdateComment)?
   }
 
-  check_category_deleted_removed(&orig_comment.category)?;
+  check_category_deleted_removed(
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?,
+  )?;
 
   // Verify that only the creator can delete
   if local_user_view.person.id != orig_comment.creator.id {
@@ -59,7 +64,7 @@ pub async fn delete_comment(
     SendActivityData::DeleteComment(
       updated_comment,
       local_user_view.person.clone(),
-      orig_comment.category,
+      orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
     ),
     &context,
   )?;

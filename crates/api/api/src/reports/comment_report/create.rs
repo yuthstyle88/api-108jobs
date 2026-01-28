@@ -17,7 +17,7 @@ use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, CreateCommentReport},
   CommentReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(
@@ -59,7 +59,7 @@ pub async fn create_comment_report(
   ActivityChannel::submit_activity(
     SendActivityData::CreateReport {
       actor: local_user_view.person,
-      receiver: Either::Right(comment_view.category),
+      receiver: Either::Right(comment_view.category.ok_or(FastJobErrorType::NotFound)?),
       reason: data.reason.clone(),
     },
     &context,

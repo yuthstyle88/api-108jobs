@@ -30,8 +30,11 @@ pub async fn delete_post(
     Err(FastJobErrorType::CouldntUpdatePost)?
   }
 
-  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
-  check_category_deleted_removed(&category)?;
+  // Check category if present
+  if let Some(category_id) = orig_post.category_id {
+    let category = Category::read(&mut context.pool(), category_id).await?;
+    check_category_deleted_removed(&category)?;
+  }
 
   // Verify that only the creator can delete
   if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {

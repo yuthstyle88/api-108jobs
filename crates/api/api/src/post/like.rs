@@ -19,7 +19,7 @@ use app_108jobs_db_views_post::{
   api::{CreatePostLike, PostResponse},
   PostView,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 
 pub async fn like_post(
@@ -59,7 +59,7 @@ pub async fn like_post(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      category: orig_post.category.clone(),
+      category: orig_post.category.clone().ok_or(FastJobErrorType::NotFound)?,
       previous_score,
       new_score: data.score,
     },

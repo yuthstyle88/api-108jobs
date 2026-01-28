@@ -51,7 +51,8 @@ pub async fn create_comment(
   .await?;
 
   let post = post_view.post;
-  let category_id = post_view.category.id;
+  let category = post_view.category.ok_or(FastJobErrorType::NotFound)?;
+  let category_id = category.id;
 
   check_post_deleted_or_removed(&post)?;
 

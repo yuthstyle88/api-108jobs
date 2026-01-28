@@ -38,7 +38,11 @@ pub async fn remove_comment(
 
   LocalUser::is_higher_mod_or_admin_check(
     &mut context.pool(),
-    orig_comment.category.id,
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?
+      .id,
     local_user_view.person.id,
     vec![orig_comment.creator.id],
   )
@@ -80,7 +84,7 @@ pub async fn remove_comment(
     SendActivityData::RemoveComment {
       comment: updated_comment,
       moderator: local_user_view.person.clone(),
-      category: orig_comment.category,
+      category: orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
       reason: data.reason.clone(),
     },
     &context,

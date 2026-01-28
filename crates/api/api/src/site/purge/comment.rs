@@ -16,7 +16,7 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_comment::{api::PurgeComment, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn purge_comment(
   data: Json<PurgeComment>,
@@ -64,7 +64,7 @@ pub async fn purge_comment(
     SendActivityData::RemoveComment {
       comment: comment_view.comment,
       moderator: local_user_view.person.clone(),
-      category: comment_view.category,
+      category: comment_view.category.ok_or(FastJobErrorType::NotFound)?,
       reason: data.reason.clone(),
     },
     &context,

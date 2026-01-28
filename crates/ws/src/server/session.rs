@@ -2,13 +2,15 @@ use crate::bridge_message::{BridgeMessage, GlobalOffline, GlobalOnline, Outbound
 use crate::protocol::api::{ChatEvent, IncomingEvent};
 use crate::protocol::impls::AnyIncomingEvent;
 use crate::protocol::phx_helper::{is_base64_like, parse_phx, phx_push, phx_reply};
-use actix::{Actor, Handler, StreamHandler};
+use actix::{Actor, ActorContext, AsyncContext, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId, PostId};
 use app_108jobs_utils::crypto;
 use chrono::Utc;
 use serde_json::Value;
+use std::time::Duration;
 use uuid::Uuid;
 
 // ===== actor =====
@@ -183,6 +185,110 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
       }
       Ok(ws::Message::Ping(b)) => ctx.pong(&b),
       Ok(ws::Message::Close(r)) => ctx.close(r),
+      _ => {}
+    }
+  }
+}
+
+pub struct DeliveryLocationSession {
+  post_id: PostId,
+  ctx: FastJobContext,
+  last_sent: Option<String>,
+}
+
+impl DeliveryLocationSession {
+  pub(crate) fn new(post_id: PostId, ctx: FastJobContext) -> Self {
+    Self {
+      post_id,
+      ctx,
+      last_sent: None,
+    }
+  }
+}
+
+impl Actor for DeliveryLocationSession {
+  type Context = ws::WebsocketContext<Self>;
+
+  fn started(&mut self, ctx: &mut Self::Context) {
+    // Emit last known + start a lightweight polling loop (imitate existing utils style)
+    let key = format!("delivery:current:{}", self.post_id);
+    let mut redis = self.ctx.redis().clone();
+    let addr = ctx.address();
+    actix::spawn(async move {
+      // One-time fetch of last known
+      if let Ok(Some::<Value>(val)) = redis.get_value(&key).await {
+        if let Ok(text) = serde_json::to_string(&val) {
+          addr.do_send(EmitRaw(text));
+        }
+      }
+    });
+
+    // Poll every 2 seconds for changes (can be replaced with pub/sub helper later)
+    let mut redis = self.ctx.redis().clone();
+    let post_id = self.post_id;
+    let addr = ctx.address();
+    actix::spawn(async move {
+      let mut tick = tokio::time::interval(Duration::from_secs(2));
+      let mut last: Option<String> = None;
+      loop {
+        tick.tick().await;
+        let key = format!("delivery:current:{}", post_id);
+        if let Ok(Some::<Value>(val)) = redis.get_value(&key).await {
+          if let Ok(text) = serde_json::to_string(&val) {
+            if last.as_deref() != Some(&text) {
+              last = Some(text.clone());
+              addr.do_send(EmitMaybe { payload: text });
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+#[derive(actix::Message)]
+#[rtype(result = "()")]
+struct EmitRaw(String);
+
+impl Handler<EmitRaw> for DeliveryLocationSession {
+  type Result = ();
+  fn handle(&mut self, msg: EmitRaw, ctx: &mut Self::Context) -> Self::Result {
+    ctx.text(msg.0);
+  }
+}
+
+#[derive(actix::Message)]
+#[rtype(result = "()")]
+struct EmitMaybe {
+  payload: String,
+}
+
+impl Handler<EmitMaybe> for DeliveryLocationSession {
+  type Result = ();
+  fn handle(&mut self, msg: EmitMaybe, ctx: &mut Self::Context) -> Self::Result {
+    if self.last_sent.as_deref() != Some(&msg.payload) {
+      self.last_sent = Some(msg.payload.clone());
+      ctx.text(msg.payload);
+    }
+  }
+}
+
+// ============ Delivery location WS (employer/rider viewer) ============
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for DeliveryLocationSession {
+  fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+    match item {
+      Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+      Ok(ws::Message::Pong(_)) => {}
+      Ok(ws::Message::Text(_)) => {}
+      Ok(ws::Message::Binary(_)) => {}
+      Ok(ws::Message::Close(reason)) => {
+        ctx.close(reason);
+        ctx.stop();
+      }
+      Ok(ws::Message::Nop) => {}
+      Err(_) => {
+        ctx.stop();
+      }
       _ => {}
     }
   }

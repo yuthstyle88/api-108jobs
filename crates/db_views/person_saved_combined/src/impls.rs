@@ -42,7 +42,7 @@ use app_108jobs_db_schema::{
   },
   PersonContentType,
 };
-use app_108jobs_db_schema_file::schema::{comment, person, person_saved_combined, post};
+use app_108jobs_db_schema_file::schema::{comment, delivery_details, person, person_saved_combined, post};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 #[derive(Default)]
@@ -147,6 +147,7 @@ impl PersonSavedCombinedViewInternal {
       .left_join(my_person_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(image_details_join())
+      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
 }
 
@@ -218,7 +219,7 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
       Some(PersonSavedCombinedView::Comment(CommentView {
         comment,
         post: v.post,
-        category: v.category,
+        category: Some(v.category),
         creator: v.item_creator,
         category_actions: v.category_actions,
         comment_actions: v.comment_actions,
@@ -234,9 +235,10 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
     } else {
       Some(PersonSavedCombinedView::Post(PostView {
         post: v.post,
-        category: v.category,
+        category: Some(v.category),
         creator: v.item_creator,
         image_details: v.image_details,
+        delivery_details: v.delivery_details,
         category_actions: v.category_actions,
         post_actions: v.post_actions,
         person_actions: v.person_actions,

@@ -3,6 +3,7 @@ use app_108jobs_db_schema::source::{
   category::{Category, CategoryActions},
   images::ImageDetails,
   instance::InstanceActions,
+  delivery_details::DeliveryDetails,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   tag::TagsView,
@@ -43,10 +44,13 @@ pub struct PostView {
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
+  /// Category is optional for delivery posts (which rely on post_kind for distinction)
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub delivery_details: Option<DeliveryDetails>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]

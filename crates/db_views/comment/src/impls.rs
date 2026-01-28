@@ -1,6 +1,6 @@
 use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
-use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
+use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
@@ -52,7 +52,7 @@ impl PaginationCursorBuilder for CommentView {
 impl CommentView {
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
-    let category_join = category::table.on(post::category_id.eq(category::id));
+    let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
     let my_category_actions_join: my_category_actions_join =
       my_category_actions_join(my_person_id);
@@ -67,7 +67,7 @@ impl CommentView {
     comment::table
       .inner_join(person::table)
       .inner_join(post::table)
-      .inner_join(category_join)
+      .left_join(category_join)
       .left_join(my_category_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(my_person_actions_join)

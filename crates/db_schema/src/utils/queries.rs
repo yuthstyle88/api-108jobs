@@ -263,7 +263,8 @@ pub fn filter_not_unlisted_or_is_subscribed() -> _ {
 
 #[diesel::dsl::auto_type]
 pub fn category_join() -> _ {
-  category::table.on(post::category_id.eq(category::id))
+  // Use nullable().eq() since post.category_id is now nullable (for delivery posts)
+  category::table.on(category::id.nullable().eq(post::category_id))
 }
 
 #[diesel::dsl::auto_type]

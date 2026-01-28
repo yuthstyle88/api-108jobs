@@ -16,7 +16,7 @@ use app_108jobs_api_utils::{
   },
 };
 use app_108jobs_db_schema::{
-  impls::actor_language::validate_post_language,
+  impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
@@ -97,8 +97,9 @@ pub async fn update_post(
 
   if let Some(tags) = &data.tags {
     // post view does not include categoryview.post_tags
+    let category = orig_post.category.ok_or(FastJobErrorType::NotFound)?;
     let category_view =
-      CategoryView::read(&mut context.pool(), orig_post.category.id, None).await?;
+      CategoryView::read(&mut context.pool(), category.id, None).await?;
     update_post_tags(
       &context,
       &orig_post.post,
@@ -114,13 +115,18 @@ pub async fn update_post(
     Err(FastJobErrorType::NoPostEditAllowed)?
   }
 
-  let language_id = validate_post_language(
-    &mut context.pool(),
-    data.language_id,
-    orig_post.post.category_id,
-    local_user_view.local_user.id,
-  )
-  .await?;
+  let language_id = if let Some(category_id) = orig_post.post.category_id {
+    validate_post_language(
+      &mut context.pool(),
+      data.language_id,
+      category_id,
+      local_user_view.local_user.id,
+    )
+    .await?
+  } else {
+    // For delivery posts without a category, use default language
+    data.language_id.unwrap_or(UNDETERMINED_ID)
+  };
 
   // handle changes to scheduled_publish_time
   let scheduled_publish_time_at = match (

@@ -66,6 +66,7 @@ pub async fn list_posts(
     budget_min: data.budget_min,
     budget_max: data.budget_max,
     requires_english: data.requires_english,
+    post_kind: data.post_kind,
     cursor_data,
     page_back,
   }

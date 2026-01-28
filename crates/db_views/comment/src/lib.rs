@@ -48,7 +48,7 @@ pub struct CommentView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]

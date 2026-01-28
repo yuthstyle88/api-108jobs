@@ -125,7 +125,8 @@ pub struct ModLockPostView {
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub category: Category,
+  /// Category is optional for posts without categories (e.g., delivery posts)
+  pub category: Option<Category>,
 }
 
 #[skip_serializing_none]
@@ -142,7 +143,8 @@ pub struct ModRemoveCommentView {
   pub other_person: Person,
   pub comment: Comment,
   pub post: Post,
-  pub category: Category,
+  /// Category is optional for posts without categories (e.g., delivery posts)
+  pub category: Option<Category>,
 }
 
 #[skip_serializing_none]
@@ -171,7 +173,8 @@ pub struct ModRemovePostView {
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub category: Category,
+  /// Category is optional for posts without categories (e.g., delivery posts)
+  pub category: Option<Category>,
 }
 
 #[skip_serializing_none]
@@ -186,7 +189,8 @@ pub struct ModFeaturePostView {
   pub moderator: Option<Person>,
   pub other_person: Person,
   pub post: Post,
-  pub category: Category,
+  /// Category is optional for posts without categories (e.g., delivery posts)
+  pub category: Option<Category>,
 }
 
 #[skip_serializing_none]
@@ -250,7 +254,8 @@ pub struct AdminPurgePersonView {
 pub struct AdminPurgePostView {
   pub admin_purge_post: AdminPurgePost,
   pub admin: Option<Person>,
-  pub category: Category,
+  /// Category is optional for posts without categories (e.g., delivery posts)
+  pub category: Option<Category>,
 }
 
 #[skip_serializing_none]

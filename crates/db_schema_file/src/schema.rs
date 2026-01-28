@@ -981,7 +981,7 @@ diesel::table! {
         url -> Nullable<Varchar>,
         body -> Nullable<Text>,
         creator_id -> Int4,
-        category_id -> Int4,
+        category_id -> Nullable<Int4>,
         removed -> Bool,
         locked -> Bool,
         published_at -> Timestamptz,

@@ -73,12 +73,18 @@ pub async fn get_post(
   }
 
   // Necessary for the sidebar subscribed
-  let category_view = CategoryView::read(
-    &mut context.pool(),
-    category_id,
-    local_user.as_ref(),
-  )
-  .await?;
+  let category_view = if let Some(cid) = category_id {
+    Some(
+      CategoryView::read(
+        &mut context.pool(),
+        cid,
+        local_user.as_ref(),
+      )
+      .await?,
+    )
+  } else {
+    None
+  };
 
   // Fetch the cross_posts
   let cross_posts = if let Some(url) = &post_view.post.url {

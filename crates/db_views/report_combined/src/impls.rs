@@ -11,6 +11,7 @@ use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
   JoinOnDsl,
+  NullableExpressionMethods,
   PgExpressionMethods,
   QueryDsl,
   SelectableHelper,
@@ -57,7 +58,8 @@ impl ReportCombinedViewInternal {
 
     let category_actions_join = category_actions::table.on(
         category_actions::category_id
-        .eq(category::id)
+        .nullable()
+        .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),
     );
 
@@ -77,7 +79,7 @@ impl ReportCombinedViewInternal {
     let category_join = category::table.on(
       category_report::category_id
         .eq(category::id)
-        .or(post::category_id.eq(category::id)),
+        .or(category::id.nullable().eq(post::category_id)),
     );
 
     let local_user_join = local_user::table.on(
@@ -89,6 +91,7 @@ impl ReportCombinedViewInternal {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -360,7 +363,7 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
       Some(ReportCombinedView::Post(PostReportView {
         post_report,
         post,
-        category,
+        category: Some(category),
         post_creator,
         creator: v.report_creator,
         category_actions: v.category_actions,
@@ -385,7 +388,7 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
         comment_report,
         comment,
         post,
-        category,
+        category: Some(category),
         creator: v.report_creator,
         comment_creator,
         category_actions: v.category_actions,
@@ -396,7 +399,7 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
     } else if let (Some(category), Some(category_report)) = (v.category, v.category_report) {
       Some(ReportCombinedView::Category(CategoryReportView {
         category_report,
-        category,
+        category: Some(category),
         creator: v.report_creator,
       }))
     } else {

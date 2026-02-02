@@ -1052,6 +1052,11 @@ diesel::table! {
         cash_on_delivery -> Bool,
         cod_amount -> Nullable<Float8>,
         status -> DeliveryStatus,
+        cancellation_reason -> Nullable<Text>,
+        assigned_rider_id -> Nullable<Int4>,
+        assigned_at -> Nullable<Timestamptz>,
+        assigned_by_person_id -> Nullable<Int4>,
+        linked_comment_id -> Nullable<Int4>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

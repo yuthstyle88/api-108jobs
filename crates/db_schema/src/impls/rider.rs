@@ -1,5 +1,5 @@
 use crate::{
-  newtypes::RiderId,
+  newtypes::{PersonId, RiderId},
   source::rider::{Rider, RiderInsertForm, RiderUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
@@ -8,7 +8,7 @@ use crate::{
 use diesel::dsl::{exists, select};
 use diesel::{
   dsl::{insert_into, update},
-  ExpressionMethods, QueryDsl, SelectableHelper,
+  ExpressionMethods, QueryDsl, SelectableHelper, OptionalExtension,
 };
 use diesel_async::RunQueryDsl;
 
@@ -56,6 +56,23 @@ impl Rider {
       .first(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  pub async fn get_by_person_id(
+    pool: &mut DbPool<'_>,
+    person_id: PersonId,
+  ) -> FastJobResult<Option<Self>> {
+    let conn = &mut get_conn(pool).await?;
+
+    let result = rider::table
+      .filter(rider::person_id.eq(person_id.0))
+      .filter(rider::is_active.eq(true))
+      .first::<Self>(conn)
+      .await
+      .optional()
+      .map_err(|_| FastJobErrorType::DatabaseError)?;
+
+    Ok(result)
   }
 
   pub async fn exists_for_user(

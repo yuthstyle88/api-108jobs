@@ -1,5 +1,5 @@
 use crate::{
-    newtypes::{DeliveryDetailsId, PersonId, PostId, RiderId},
+    newtypes::{CommentId, DeliveryDetailsId, PersonId, PostId, RiderId},
     source::delivery_details::{
         DeliveryDetails,
         DeliveryDetailsInsertForm,
@@ -10,8 +10,10 @@ use crate::{
 };
 
 use diesel::dsl::{insert_into, update};
+use diesel::ExpressionMethods;
 use diesel::QueryDsl;
 use diesel_async::RunQueryDsl;
+use chrono::{DateTime, Utc};
 
 use app_108jobs_db_schema_file::schema::delivery_details;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -108,5 +110,306 @@ impl DeliveryDetails {
         } else {
             Err(FastJobErrorType::InvalidField("not a rider".to_string()).into())
         }
+    }
+
+    /// Check if a status transition is valid.
+    /// Returns true if the transition is allowed, false otherwise.
+    pub fn can_transition_to(&self, new_status: DeliveryStatus) -> bool {
+        use DeliveryStatus::*;
+
+        // Terminal states cannot be transitioned from
+        if matches!(self.status, Cancelled | Delivered) {
+            return false;
+        }
+
+        match (self.status, new_status) {
+            // Valid forward transitions
+            (Pending, Assigned) => true,
+            (Assigned, EnRouteToPickup) => true,
+            (EnRouteToPickup, PickedUp) => true,
+            (PickedUp, EnRouteToDropoff) => true,
+            (EnRouteToDropoff, Delivered) => true,
+
+            // Cancellation is allowed from any non-terminal state
+            (Pending, Cancelled) => true,
+            (Assigned, Cancelled) => true,
+            (EnRouteToPickup, Cancelled) => true,
+            (PickedUp, Cancelled) => true,
+            (EnRouteToDropoff, Cancelled) => true,
+
+            // Same status is idempotent
+            (s, new_s) if s == new_s => true,
+
+            // All other transitions are invalid
+            _ => false,
+        }
+    }
+
+    /// Update the status of a delivery by post_id.
+    /// This automatically updates the updated_at timestamp.
+    /// If the status is set to Cancelled, the cancellation reason will also be saved.
+    pub async fn update_status(
+        pool: &mut DbPool<'_>,
+        post_id: PostId,
+        new_status: DeliveryStatus,
+        cancellation_reason: Option<String>,
+    ) -> FastJobResult<Self> {
+        use diesel::ExpressionMethods;
+
+        let conn = &mut get_conn(pool).await?;
+
+        // First, fetch the current delivery details
+        let current_delivery = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0))
+            .first::<Self>(conn)
+            .await
+            .map_err(|_| FastJobErrorType::NotFound)?;
+
+        // Validate the status transition
+        if !current_delivery.can_transition_to(new_status) {
+            return Err(FastJobErrorType::InvalidField(format!(
+                "Cannot transition from {:?} to {:?}",
+                current_delivery.status, new_status
+            ))
+            .into());
+        }
+
+        // Determine the cancellation reason to save
+        // If cancelling, use the provided reason or clear it if not cancelling
+        let reason_to_save = match new_status {
+            DeliveryStatus::Cancelled => cancellation_reason,
+            _ => None, // Clear reason for non-cancelled statuses
+        };
+
+        // Perform the update
+        let updated_delivery = update(delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0)))
+            .set((
+                delivery_details::dsl::status.eq(new_status),
+                delivery_details::dsl::cancellation_reason.eq(reason_to_save),
+                delivery_details::dsl::updated_at.eq(Utc::now()),
+            ))
+            .get_result::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(updated_delivery)
+    }
+
+    /// Get delivery details by post_id.
+    pub async fn get_by_post_id(
+        pool: &mut DbPool<'_>,
+        post_id: PostId,
+    ) -> FastJobResult<Self> {
+        let conn = &mut get_conn(pool).await?;
+
+        delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id))
+            .first::<Self>(conn)
+            .await
+            .map_err(|_| FastJobErrorType::NotFound.into())
+    }
+
+    /// Get all active deliveries (in progress: Assigned, EnRouteToPickup, PickedUp, EnRouteToDropoff).
+    pub async fn get_all_active(
+        pool: &mut DbPool<'_>,
+    ) -> FastJobResult<Vec<Self>> {
+        use diesel::QueryDsl;
+        let conn = &mut get_conn(pool).await?;
+
+        let results = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::status.eq_any(vec![
+                DeliveryStatus::Assigned,
+                DeliveryStatus::EnRouteToPickup,
+                DeliveryStatus::PickedUp,
+                DeliveryStatus::EnRouteToDropoff,
+            ]))
+            .order(delivery_details::dsl::created_at.desc())
+            .load::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(results)
+    }
+
+    /// Assign a rider to a delivery from a comment/proposal.
+    /// This links a rider to a delivery post, tracking who made the assignment
+    /// and which comment (proposal) led to the assignment.
+    pub async fn assign_from_comment(
+        pool: &mut DbPool<'_>,
+        post_id: PostId,
+        rider_id: RiderId,
+        assigned_by_person_id: PersonId,
+        comment_id: CommentId,
+        sender_name: String,
+        sender_phone: String,
+        receiver_name: String,
+        receiver_phone: String,
+    ) -> FastJobResult<Self> {
+        use diesel::ExpressionMethods;
+
+        let conn = &mut get_conn(pool).await?;
+
+        // First, fetch the current delivery details to validate
+        let current_delivery = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0))
+            .first::<Self>(conn)
+            .await
+            .map_err(|_| FastJobErrorType::NotFound)?;
+
+        // Can only assign from Pending status
+        if current_delivery.status != DeliveryStatus::Pending {
+            return Err(FastJobErrorType::InvalidField(format!(
+                "Cannot assign from status {:?}, must be Pending",
+                current_delivery.status
+            ))
+            .into());
+        }
+
+        // Validate required fields are not empty
+        if sender_name.trim().is_empty() {
+            return Err(FastJobErrorType::InvalidField("sender_name is required".to_string()).into());
+        }
+        if sender_phone.trim().is_empty() {
+            return Err(FastJobErrorType::InvalidField("sender_phone is required".to_string()).into());
+        }
+        if receiver_name.trim().is_empty() {
+            return Err(FastJobErrorType::InvalidField("receiver_name is required".to_string()).into());
+        }
+        if receiver_phone.trim().is_empty() {
+            return Err(FastJobErrorType::InvalidField("receiver_phone is required".to_string()).into());
+        }
+
+        // Perform the assignment and status update with sender/receiver info
+        let updated_delivery = update(delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0)))
+            .set((
+                delivery_details::dsl::assigned_rider_id.eq(rider_id.0),
+                delivery_details::dsl::assigned_at.eq(Utc::now()),
+                delivery_details::dsl::assigned_by_person_id.eq(assigned_by_person_id.0),
+                delivery_details::dsl::linked_comment_id.eq(comment_id.0),
+                delivery_details::dsl::sender_name.eq(sender_name),
+                delivery_details::dsl::sender_phone.eq(sender_phone),
+                delivery_details::dsl::receiver_name.eq(receiver_name),
+                delivery_details::dsl::receiver_phone.eq(receiver_phone),
+                delivery_details::dsl::status.eq(DeliveryStatus::Assigned),
+                delivery_details::dsl::updated_at.eq(Utc::now()),
+            ))
+            .get_result::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(updated_delivery)
+    }
+
+    /// Unassign a rider from a delivery, returning it to Pending status.
+    /// Only the assigner (employer) or an admin can unassign.
+    pub async fn unassign_rider(
+        pool: &mut DbPool<'_>,
+        post_id: PostId,
+        person_id: PersonId,
+    ) -> FastJobResult<Self> {
+        use diesel::ExpressionMethods;
+
+        let conn = &mut get_conn(pool).await?;
+
+        // Fetch current delivery
+        let current_delivery = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0))
+            .first::<Self>(conn)
+            .await
+            .map_err(|_| FastJobErrorType::NotFound)?;
+
+        // Verify the person is either the assigner or an admin (you may want to add admin check)
+        if current_delivery.assigned_by_person_id != Some(person_id) {
+            return Err(FastJobErrorType::InvalidField(
+                "Only the assigner can unassign".to_string(),
+            )
+            .into());
+        }
+
+        // Can only unassign from Assigned status (before work begins)
+        if current_delivery.status != DeliveryStatus::Assigned {
+            return Err(FastJobErrorType::InvalidField(format!(
+                "Cannot unassign from status {:?}, must be Assigned",
+                current_delivery.status
+            ))
+            .into());
+        }
+
+        // Perform the unassignment
+        let updated_delivery = update(delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::post_id.eq(post_id.0)))
+            .set((
+                delivery_details::dsl::assigned_rider_id.eq(Option::<i32>::None),
+                delivery_details::dsl::assigned_at.eq(Option::<DateTime<Utc>>::None),
+                delivery_details::dsl::assigned_by_person_id.eq(Option::<i32>::None),
+                delivery_details::dsl::linked_comment_id.eq(Option::<i32>::None),
+                delivery_details::dsl::status.eq(DeliveryStatus::Pending),
+                delivery_details::dsl::updated_at.eq(Utc::now()),
+            ))
+            .get_result::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(updated_delivery)
+    }
+
+    /// Get the active delivery assignment for a specific rider.
+    /// Returns the delivery if the rider has an active assignment.
+    pub async fn get_active_for_rider(
+        pool: &mut DbPool<'_>,
+        rider_id: RiderId,
+    ) -> FastJobResult<Option<Self>> {
+        use diesel::QueryDsl;
+        let conn = &mut get_conn(pool).await?;
+
+        let result = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::assigned_rider_id.eq(rider_id.0))
+            .filter(delivery_details::dsl::status.eq_any(vec![
+                DeliveryStatus::Assigned,
+                DeliveryStatus::EnRouteToPickup,
+                DeliveryStatus::PickedUp,
+                DeliveryStatus::EnRouteToDropoff,
+            ]))
+            .first::<Self>(conn)
+            .await
+            .ok();
+
+        Ok(result)
+    }
+
+    /// Get all completed deliveries (status = Delivered).
+    pub async fn get_all_completed(
+        pool: &mut DbPool<'_>,
+    ) -> FastJobResult<Vec<Self>> {
+        use diesel::QueryDsl;
+        let conn = &mut get_conn(pool).await?;
+
+        let results = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::status.eq(DeliveryStatus::Delivered))
+            .order(delivery_details::dsl::created_at.desc())
+            .load::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(results)
+    }
+
+    /// Get all cancelled deliveries (status = Cancelled).
+    pub async fn get_all_cancelled(
+        pool: &mut DbPool<'_>,
+    ) -> FastJobResult<Vec<Self>> {
+        use diesel::QueryDsl;
+        let conn = &mut get_conn(pool).await?;
+
+        let results = delivery_details::dsl::delivery_details
+            .filter(delivery_details::dsl::status.eq(DeliveryStatus::Cancelled))
+            .order(delivery_details::dsl::created_at.desc())
+            .load::<Self>(conn)
+            .await
+            .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+        Ok(results)
     }
 }

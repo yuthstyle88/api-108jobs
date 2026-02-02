@@ -7,16 +7,17 @@ use app_108jobs_api_utils::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
-use app_108jobs_db_schema::newtypes::{PersonId, PostId};
-use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::{
-  impls::actor_language::validate_post_language,
+  impls::actor_language::{validate_post_language, UNDETERMINED_ID},
+  newtypes::{PersonId, PostId},
   source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+  traits::Crud,
   traits::Likeable,
   utils::DbPool,
 };
 use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
 use app_108jobs_db_schema_file::schema::comment::dsl::comment;
+use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
@@ -51,8 +52,24 @@ pub async fn create_comment(
   .await?;
 
   let post = post_view.post;
-  let category = post_view.category.ok_or(FastJobErrorType::NotFound)?;
-  let category_id = category.id;
+
+  // Handle delivery posts which have no category
+  let language_id = if let Some(category) = post_view.category {
+    // Normal post with a category - validate language
+    validate_post_language(
+      &mut context.pool(),
+      data.language_id,
+      category.id,
+      local_user_view.local_user.id,
+    )
+    .await?
+  } else if post.post_kind == PostKind::Delivery {
+    // Delivery post without a category - use provided language or UNDETERMINED_ID
+    data.language_id.unwrap_or(UNDETERMINED_ID)
+  } else {
+    // Non-delivery post without a category should not happen
+    return Err(FastJobErrorType::NotFound)?;
+  };
 
   check_post_deleted_or_removed(&post)?;
 
@@ -60,14 +77,6 @@ pub async fn create_comment(
   if post.locked {
     Err(FastJobErrorType::Locked)?
   }
-
-  let language_id = validate_post_language(
-    &mut context.pool(),
-    data.language_id,
-    category_id,
-    local_user_view.local_user.id,
-  )
-  .await?;
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {

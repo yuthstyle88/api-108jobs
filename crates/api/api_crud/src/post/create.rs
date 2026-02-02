@@ -138,10 +138,14 @@ pub async fn create_post(
     // Build insert form using struct literal; derive_new::new() only accepts required fields
     let dd_form = DeliveryDetailsInsertForm {
       post_id: inserted_post.id,
-      pickup_address: dd.pickup_address.clone(),
+      pickup_address: dd.pickup_address.clone().ok_or(FastJobErrorType::InvalidField(
+        "pickup_address is required".to_string(),
+      ))?,
       pickup_lat: dd.pickup_lat,
       pickup_lng: dd.pickup_lng,
-      dropoff_address: dd.dropoff_address.clone(),
+      dropoff_address: dd.dropoff_address.clone().ok_or(FastJobErrorType::InvalidField(
+        "dropoff_address is required".to_string(),
+      ))?,
       dropoff_lat: dd.dropoff_lat,
       dropoff_lng: dd.dropoff_lng,
       package_description: dd.package_description.clone(),

@@ -19,7 +19,7 @@ use app_108jobs_db_schema::{
   },
 };
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode, VoteShow,
+  CommentSortType, ListingType, PostKind, PostListingMode, PostSortType, RegistrationMode, VoteShow,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::{PersonView};
@@ -740,6 +740,7 @@ pub struct ListPersonCreated {
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
+  pub post_kind: Option<PostKind>,
 }
 
 #[skip_serializing_none]

@@ -25,7 +25,7 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::enums::{DeliveryStatus, IntendedUse, JobType, PostKind};
 use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,
@@ -33,6 +33,7 @@ use app_108jobs_db_schema_file::{
   },
   schema::{
     category, category_actions, delivery_details, local_user_language, person, post, post_actions,
+    rider,
   },
 };
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -110,12 +111,10 @@ impl PostView {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
 
-    let mut query = Self::joins(my_person_id, local_instance_id)
+    let query = Self::joins(my_person_id, local_instance_id)
       .filter(post::id.eq(post_id))
       .select(Self::as_select())
       .into_boxed();
-
-    query = my_local_user.visible_communities_only(query);
 
     Commented::new(query)
       .text("PostView::read")
@@ -203,6 +202,7 @@ impl PostView {
     page_back: Option<bool>,
     limit: Option<i64>,
     no_limit: Option<bool>,
+    post_kind: Option<PostKind>,
   ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -219,6 +219,10 @@ impl PostView {
 
     if let Some(language_id) = language_id {
       query = query.filter(post::language_id.eq(language_id));
+    }
+
+    if let Some(post_kind) = post_kind {
+      query = query.filter(post::post_kind.eq(post_kind));
     }
 
     // Sorting by published_at (newest to oldest), tie-breaker by id
@@ -462,6 +466,26 @@ impl PostQuery<'_> {
         .filter(post::removed.eq(false));
     }
 
+    // Hide assigned/in-progress delivery posts from public listings
+    // Only show Pending deliveries to public
+    // Show all deliveries to the employer (creator) and the assigned rider
+    if let Some(person_id) = my_person_id {
+      // User is logged in - show assigned/in-progress deliveries only if they are the creator or assigned rider
+      query = query.filter(
+        delivery_details::status
+          .eq(DeliveryStatus::Pending)
+          .or(post::creator_id.eq(person_id))
+          .or(exists(
+            rider::table.filter(
+              rider::id.nullable().eq(delivery_details::assigned_rider_id).and(rider::person_id.eq(person_id)),
+            ),
+          )),
+      );
+    } else {
+      // Not logged in - only show pending (unassigned) deliveries
+      query = query.filter(delivery_details::status.eq(DeliveryStatus::Pending));
+    }
+
     // Dont filter blocks or missing languages for moderator view type
     if o.listing_type.unwrap_or_default() != ListingType::ModeratorView {
       // Filter out the rows with missing languages if user is logged in
@@ -630,7 +654,9 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
         .ok_or(FastJobErrorType::InvalidField(
           "delivery_details required for Delivery post".to_string(),
         ))?;
-      if dd.pickup_address.trim().is_empty() || dd.dropoff_address.trim().is_empty() {
+      if dd.pickup_address.as_ref().map_or(true, |s| s.trim().is_empty())
+        || dd.dropoff_address.as_ref().map_or(true, |s| s.trim().is_empty())
+      {
         return Err(FastJobErrorType::InvalidField(
           "pickup_address and dropoff_address are required".to_string(),
         ))?;
@@ -699,6 +725,7 @@ impl TryFrom<EditPostRequest> for EditPost {
       intended_use: data.intended_use,
       job_type: data.job_type,
       is_english_required: data.is_english_required,
+      delivery_details: data.delivery_details,
     })
   }
 }

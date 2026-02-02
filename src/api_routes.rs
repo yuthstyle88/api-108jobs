@@ -5,7 +5,12 @@ use app_108jobs_api::admin::wallet::{
   admin_top_up_wallet, admin_withdraw_wallet,
 };
 use app_108jobs_api::chat::list::list_chat_rooms;
+use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
+use app_108jobs_api::delivery::list::{
+  get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
+};
 use app_108jobs_api::delivery::location::post_location as post_delivery_location;
+use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account, update_bank_account,
@@ -234,9 +239,15 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               post().to(update_post_notifications),
             ),
         )
-        // Deliveries (rider location tracking)
+        // Deliveries (rider location tracking & status updates)
         .service(
-          scope("/deliveries").route("/{postId}/location", post().to(post_delivery_location)),
+          scope("/deliveries")
+            .route("/active", get().to(get_active_deliveries))
+            .route("/completed", get().to(get_completed_deliveries))
+            .route("/cancelled", get().to(get_cancelled_deliveries))
+            .route("/{postId}/location", post().to(post_delivery_location))
+            .route("/{postId}/status", put().to(update_delivery_status))
+            .route("/{postId}/assign", post().to(assign_delivery_from_proposal)),
         )
         // Comment
         .service(

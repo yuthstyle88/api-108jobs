@@ -1,15 +1,15 @@
-use crate::newtypes::{DeliveryDetailsId, PostId};
+use crate::newtypes::{CommentId, DeliveryDetailsId, PersonId, PostId, RiderId};
 use crate::utils;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema_file::{enums::DeliveryStatus, schema::delivery_details},
+  app_108jobs_db_schema_file::schema::delivery_details,
   diesel::prelude::*,
   diesel_async::RunQueryDsl,
 };
-use app_108jobs_db_schema_file::enums::VehicleType;
+use app_108jobs_db_schema_file::enums::{DeliveryStatus, VehicleType};
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -47,6 +47,11 @@ pub struct DeliveryDetails {
   pub cash_on_delivery: bool,
   pub cod_amount: Option<f64>,
   pub status: DeliveryStatus,
+  pub cancellation_reason: Option<String>,
+  pub assigned_rider_id: Option<RiderId>,
+  pub assigned_at: Option<DateTime<Utc>>,
+  pub assigned_by_person_id: Option<PersonId>,
+  pub linked_comment_id: Option<CommentId>,
   pub created_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
 }
@@ -82,7 +87,7 @@ pub struct DeliveryDetailsInsertForm {
 
   // Constraints
   #[new(default)]
-  pub vehicle_required: Option<app_108jobs_db_schema_file::enums::VehicleType>,
+  pub vehicle_required: Option<VehicleType>,
   #[new(default)]
   pub latest_pickup_at: Option<DateTime<Utc>>,
   #[new(default)]
@@ -167,7 +172,92 @@ pub struct DeliveryDetailsUpdateForm {
 
   // Status
   pub status: Option<DeliveryStatus>,
+  pub cancellation_reason: Option<Option<String>>,
+
+  // Assignment
+  pub assigned_rider_id: Option<Option<RiderId>>,
+  pub assigned_at: Option<Option<DateTime<Utc>>>,
+  pub assigned_by_person_id: Option<Option<PersonId>>,
+  pub linked_comment_id: Option<Option<CommentId>>,
 
   // Metadata
   pub updated_at: Option<DateTime<Utc>>,
+}
+
+/// Payload for updating delivery details via API.
+/// This is a flattened version without nested Option<> for easier API usage.
+/// Only fields that should be updatable after post creation are included.
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct DeliveryDetailsPayload {
+  // Locations
+  pub pickup_address: Option<String>,
+  pub pickup_lat: Option<f64>,
+  pub pickup_lng: Option<f64>,
+  pub dropoff_address: Option<String>,
+  pub dropoff_lat: Option<f64>,
+  pub dropoff_lng: Option<f64>,
+
+  // Package
+  pub package_description: Option<String>,
+  pub package_weight_kg: Option<f64>,
+  pub package_size: Option<String>,
+  pub fragile: Option<bool>,
+  pub requires_signature: Option<bool>,
+
+  // Constraints
+  pub vehicle_required: Option<VehicleType>,
+  pub latest_pickup_at: Option<DateTime<Utc>>,
+  pub latest_dropoff_at: Option<DateTime<Utc>>,
+
+  // Contacts
+  pub sender_name: Option<String>,
+  pub sender_phone: Option<String>,
+  pub receiver_name: Option<String>,
+  pub receiver_phone: Option<String>,
+
+  // Payment
+  pub cash_on_delivery: Option<bool>,
+  pub cod_amount: Option<f64>,
+}
+
+#[cfg(feature = "full")]
+impl DeliveryDetailsPayload {
+  /// Convert the payload to DeliveryDetailsUpdateForm.
+  /// This wraps fields in Option<> where needed for the update form.
+  pub fn to_update_form(self) -> DeliveryDetailsUpdateForm {
+    DeliveryDetailsUpdateForm {
+      pickup_address: self.pickup_address,
+      pickup_lat: self.pickup_lat.map(Some),
+      pickup_lng: self.pickup_lng.map(Some),
+      dropoff_address: self.dropoff_address,
+      dropoff_lat: self.dropoff_lat.map(Some),
+      dropoff_lng: self.dropoff_lng.map(Some),
+      package_description: self.package_description.map(Some),
+      package_weight_kg: self.package_weight_kg.map(Some),
+      package_size: self.package_size.map(Some),
+      fragile: self.fragile,
+      requires_signature: self.requires_signature,
+      vehicle_required: self.vehicle_required.map(Some),
+      latest_pickup_at: self.latest_pickup_at.map(Some),
+      latest_dropoff_at: self.latest_dropoff_at.map(Some),
+      sender_name: self.sender_name.map(Some),
+      sender_phone: self.sender_phone.map(Some),
+      receiver_name: self.receiver_name.map(Some),
+      receiver_phone: self.receiver_phone.map(Some),
+      cash_on_delivery: self.cash_on_delivery,
+      cod_amount: self.cod_amount.map(Some),
+      // The following fields are not editable via post update:
+      status: None,
+      cancellation_reason: None,
+      assigned_rider_id: None,
+      assigned_at: None,
+      assigned_by_person_id: None,
+      linked_comment_id: None,
+      updated_at: Some(Utc::now()),
+    }
+  }
 }

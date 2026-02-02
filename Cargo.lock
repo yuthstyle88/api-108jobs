@@ -565,6 +565,7 @@ dependencies = [
  "app_108jobs_db_views_registration_applications",
  "app_108jobs_db_views_report_combined",
  "app_108jobs_db_views_reports",
+ "app_108jobs_db_views_rider",
  "app_108jobs_db_views_site",
  "app_108jobs_db_views_user_review",
  "app_108jobs_db_views_vote",

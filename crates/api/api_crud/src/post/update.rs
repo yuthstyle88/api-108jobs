@@ -17,10 +17,12 @@ use app_108jobs_api_utils::{
 };
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
+  source::delivery_details::DeliveryDetails,
   source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
+use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::EditPostRequest;
@@ -163,6 +165,26 @@ pub async fn update_post(
 
   let post_id = data.post_id;
   let updated_post = Post::update(&mut context.pool(), post_id, &post_form).await?;
+
+  // Handle delivery details updates for delivery posts
+  if orig_post.post.post_kind == PostKind::Delivery {
+    if let Some(delivery_payload) = data.delivery_details {
+      // Get the current delivery details
+      let current_delivery = DeliveryDetails::get_by_post_id(&mut context.pool(), post_id).await?;
+
+      // Convert payload to update form
+      let delivery_update_form = delivery_payload.to_update_form();
+
+      // Update the delivery details
+      DeliveryDetails::update(&mut context.pool(), current_delivery.id, &delivery_update_form).await?;
+    }
+  } else if data.delivery_details.is_some() {
+    // Delivery details provided but this is not a delivery post
+    return Err(FastJobErrorType::InvalidField(
+      "delivery_details can only be provided for delivery posts".to_string(),
+    )
+    .into());
+  }
 
   send_local_notifs(
     &updated_post,

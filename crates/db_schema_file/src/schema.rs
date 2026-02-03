@@ -1090,6 +1090,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    delivery_rider_rating (id) {
+        id -> Int4,
+        post_id -> Int4,
+        employer_id -> Int4,
+        rider_id -> Int4,
+        rating -> Int2,
+        comment -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::PostNotificationsModeEnum;
 
@@ -1666,6 +1679,8 @@ diesel::joinable!(delivery_location_current -> post (post_id));
 diesel::joinable!(delivery_location_current -> rider (rider_id));
 diesel::joinable!(delivery_location_history -> post (post_id));
 diesel::joinable!(delivery_location_history -> rider (rider_id));
+diesel::joinable!(delivery_rider_rating -> post (post_id));
+diesel::joinable!(delivery_rider_rating -> rider (rider_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1754,5 +1769,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   rider,
   delivery_details,
   delivery_location_current,
-  delivery_location_history
+  delivery_location_history,
+  delivery_rider_rating
 );

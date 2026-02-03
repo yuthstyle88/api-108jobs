@@ -60,7 +60,7 @@ fn is_all_digits(s: &str) -> bool { s.chars().all(|c| c.is_ascii_digit()) }
 
 fn parse_date(s: &str) -> Result<NaiveDate, FastJobErrorType> {
   NaiveDate::parse_from_str(s, "%Y-%m-%d")
-    .map_err(|_| FastJobErrorType::InvalidField("Invalid date format, expected YYYY-MM-DD".into()))
+    .map_err(|_| FastJobErrorType::InvalidDateFormatYYYYMMDD)
 }
 
 pub async fn create_identity_card(

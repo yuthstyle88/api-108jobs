@@ -58,6 +58,7 @@ pub mod rider;
 pub mod delivery_details;
 pub mod delivery_location_current;
 pub mod delivery_location_history;
+pub mod delivery_rider_rating;
 
 /// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
 ///

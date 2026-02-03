@@ -640,9 +640,7 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
 
   // For non-delivery posts, category_id is required
   if !matches!(data.post_kind, Some(PostKind::Delivery)) && data.category_id.is_none() {
-    return Err(FastJobErrorType::InvalidField(
-      "category_id is required for non-delivery posts".to_string(),
-    ))?;
+    return Err(FastJobErrorType::InvalidDeliveryPost)?;
   }
 
   // Delivery-specific validation (request level only)
@@ -651,15 +649,11 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
       let dd = data
         .delivery_details
         .as_ref()
-        .ok_or(FastJobErrorType::InvalidField(
-          "delivery_details required for Delivery post".to_string(),
-        ))?;
+        .ok_or(FastJobErrorType::InvalidDeliveryPost)?;
       if dd.pickup_address.as_ref().map_or(true, |s| s.trim().is_empty())
         || dd.dropoff_address.as_ref().map_or(true, |s| s.trim().is_empty())
       {
-        return Err(FastJobErrorType::InvalidField(
-          "pickup_address and dropoff_address are required".to_string(),
-        ))?;
+        return Err(FastJobErrorType::InvalidDeliveryPost)?;
       }
       if let Some(true) = dd.cash_on_delivery {
         if dd.cod_amount.unwrap_or(0.0) <= 0.0 {

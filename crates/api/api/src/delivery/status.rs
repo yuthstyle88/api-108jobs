@@ -36,10 +36,7 @@ pub async fn update_delivery_status(
   if new_status == DeliveryStatus::Cancelled
     && data.reason.as_ref().map_or(true, |r| r.trim().is_empty())
   {
-    return Err(
-      FastJobErrorType::InvalidField("reason is required when cancelling a delivery".to_string())
-        .into(),
-    );
+    return Err(FastJobErrorType::ReasonIsRequiredWhenCancelling.into());
   }
 
   // Verify authorization: user must be admin OR the assigned rider
@@ -54,12 +51,7 @@ pub async fn update_delivery_status(
   };
 
   if !is_admin && !is_rider {
-    return Err(
-      FastJobErrorType::InvalidField(
-        "you must be the assigned rider or an admin to update delivery status".to_string(),
-      )
-      .into(),
-    );
+    return Err(FastJobErrorType::NotAnActiveRider.into());
   }
 
   // Get current delivery to check if status is actually changing

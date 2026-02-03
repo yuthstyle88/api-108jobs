@@ -19,7 +19,7 @@ pub async fn submit_user_review(
   let validated: ValidSubmitUserReview = match data.into_inner().try_into() {
     Ok(v) => v,
     Err(msg) => {
-      return Err(FastJobErrorType::InvalidField(msg).into());
+      return Err(FastJobErrorType::RatingMustBeBetween1And5.into());
     }
   };
   let reviewer_person_id = local_user_view.person.id;

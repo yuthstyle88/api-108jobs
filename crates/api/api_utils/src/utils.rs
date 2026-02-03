@@ -944,6 +944,68 @@ pub async fn flush_room_and_update_last_message(
   Ok(())
 }
 
+/// Verify that the user is the post creator (employer).
+///
+/// Returns an error if the person is not the creator of the post.
+pub async fn verify_post_creator(
+  pool: &mut DbPool<'_>,
+  post_id: PostId,
+  employer_person_id: PersonId,
+) -> FastJobResult<()> {
+  let post = Post::read(pool, post_id).await?;
+
+  if post.creator_id != employer_person_id {
+    return Err(FastJobErrorType::NotPostCreator.into());
+  }
+
+  Ok(())
+}
+
+/// Verify that a comment exists and is on the specified post.
+///
+/// Returns an error if the comment is not on this post.
+pub async fn verify_comment_on_post(
+  pool: &mut DbPool<'_>,
+  comment_id: CommentId,
+  post_id: PostId,
+) -> FastJobResult<Comment> {
+  let comment = Comment::read(pool, comment_id).await?;
+
+  if comment.post_id != post_id {
+    return Err(FastJobErrorType::CommentNotOnDeliveryPost.into());
+  }
+
+  Ok(comment)
+}
+
+/// Verify that a comment's author matches the expected person_id.
+///
+/// Returns an error if the comment author does not match.
+pub fn verify_comment_author(
+  comment: &Comment,
+  expected_person_id: PersonId,
+) -> FastJobResult<()> {
+  if comment.creator_id != expected_person_id.into() {
+    return Err(FastJobErrorType::CommentAuthorMismatch.into());
+  }
+
+  Ok(())
+}
+
+/// Get and verify an active rider by person_id.
+///
+/// Returns the rider if found and active, otherwise returns an error.
+pub async fn get_active_rider_by_person(
+  pool: &mut DbPool<'_>,
+  person_id: PersonId,
+) -> FastJobResult<app_108jobs_db_schema::source::rider::Rider> {
+  use app_108jobs_db_schema::source::rider::Rider;
+
+  Rider::get_by_person_id(pool, person_id)
+    .await?
+    .ok_or(FastJobErrorType::NotAnActiveRider.into())
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

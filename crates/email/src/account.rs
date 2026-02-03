@@ -8,7 +8,7 @@ use app_108jobs_db_schema::{
   utils::DbPool,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::utils::helper::rand_number5;
+use app_108jobs_utils::utils::random::rand_number5;
 use app_108jobs_utils::{
   error::FastJobResult, settings::structs::Settings, utils::markdown::markdown_to_html,
 };

@@ -8,7 +8,7 @@ use app_108jobs_db_views_chat::api::{ChatRoomResponse, CreateChatRoomRequest};
 use app_108jobs_db_views_chat::ChatRoomView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::utils::helper::contacts_key;
+use app_108jobs_utils::utils::keys::contacts_key;
 use chrono::Utc;
 
 /// POST /api/v4/chat/rooms

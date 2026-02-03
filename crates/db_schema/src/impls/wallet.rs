@@ -53,7 +53,7 @@ impl WalletModel {
   /// Compute new balances for a balance operation. Returns (total, available, outstanding)
   fn compute_new_balances(w: &Wallet, op: &BalanceOp, amount: Coin) -> FastJobResult<(Coin, Coin, Coin)> {
     if amount <= 0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into());
+      return Err(FastJobErrorType::AmountMustBePositive.into());
     }
     let (mut t, mut a, mut o) = (w.balance_total, w.balance_available, w.balance_outstanding);
     match op {
@@ -83,7 +83,7 @@ impl WalletModel {
       BalanceOp::Release => {
         // Cancel hold: outstanding -= amount; available += amount; total unchanged
         if o < amount {
-          return Err(FastJobErrorType::InvalidField("Release exceeds outstanding".into()).into());
+          return Err(FastJobErrorType::ReleaseExceedsOutstanding.into());
         }
         o -= amount;
         a += amount;
@@ -91,7 +91,7 @@ impl WalletModel {
       BalanceOp::Capture => {
         // Finalize hold: outstanding -= amount; total -= amount; available unchanged
         if o < amount || t < amount {
-          return Err(FastJobErrorType::InvalidField("Capture exceeds outstanding/total".into()).into());
+          return Err(FastJobErrorType::CaptureExceedsOutstandingOrTotal.into());
         }
         o -= amount;
         t -= amount;
@@ -133,7 +133,7 @@ impl WalletModel {
   #[inline]
   fn validate_positive_amount(amount:  Coin) -> FastJobResult<()> {
     if amount <= 0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()).into());
+      return Err(FastJobErrorType::AmountMustBePositive.into());
     }
     Ok(())
   }
@@ -173,9 +173,7 @@ impl WalletModel {
         Self::withdraw_to_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Transfer => {
-        return Err(FastJobErrorType::InvalidField(
-          "Transfer requires two forms; use transfer_between_wallets with outgoing and incoming entries sharing the same idempotency_key".into(),
-        ).into());
+        return Err(FastJobErrorType::BothFormsMustBeKindTransfer.into());
       }
       TxKind::Reserve => {
         // Move available -> outstanding within the same wallet
@@ -243,7 +241,7 @@ impl WalletModel {
     .optional()?;
     match id {
       Some(wid) => Ok(wid),
-      None => Err(FastJobErrorType::InvalidField("Platform wallet not initialized".into()).into()),
+      None => Err(FastJobErrorType::PlatformWalletNotInitialized.into()),
     }
   }
 
@@ -271,7 +269,7 @@ impl WalletModel {
     let amount = form_out.amount;
     Self::validate_positive_amount(amount)?;
     if !matches!(form_out.kind, TxKind::Transfer) {
-      return Err(FastJobErrorType::InvalidField("hold requires kind=Transfer".into()).into());
+      return Err(FastJobErrorType::HoldRequiresKindTransfer.into());
     }
 
     // Figure out the platform (escrow) wallet id first
@@ -391,24 +389,24 @@ impl WalletModel {
   ) -> FastJobResult<(WalletId, WalletId, Coin)> {
     // both must be Transfer
     if !matches!(form_out.kind, TxKind::Transfer) || !matches!(form_in.kind, TxKind::Transfer) {
-      return Err(FastJobErrorType::InvalidField("Both forms must be kind=Transfer".into()).into());
+      return Err(FastJobErrorType::BothFormsMustBeKindTransfer.into());
     }
     // idempotency must match
     if form_out.idempotency_key != form_in.idempotency_key {
-      return Err(FastJobErrorType::InvalidField("Idempotency key must match for transfer pair".into()).into());
+      return Err(FastJobErrorType::IdempotencyKeyMustMatchForTransferPair.into());
     }
     // wallet ids
     let from = form_out.wallet_id;
     let to   = form_in.wallet_id;
     if from == to {
-      return Err(FastJobErrorType::InvalidField("Cannot transfer to the same wallet".into()).into());
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
     }
     // amounts must match exactly and be positive
     let a_out = form_out.amount;
     let a_in  = form_in.amount;
-    if a_out <= 0 { return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into()); }
+    if a_out <= 0 { return Err(FastJobErrorType::AmountMustBePositive.into()); }
     if a_out != a_in {
-      return Err(FastJobErrorType::InvalidField("Mismatched amounts for transfer pair".into()).into());
+      return Err(FastJobErrorType::MismatchedAmountsForTransferPair.into());
     }
     Ok((from, to, a_out))
   }
@@ -509,7 +507,7 @@ impl WalletModel {
     // basic validation
     Self::validate_positive_amount(amount)?;
     if from_wallet == to_wallet {
-      return Err(FastJobErrorType::InvalidField("Cannot transfer to the same wallet".into()).into());
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
     }
 
     // Direct transfer: decrease from.available & from.total; increase to.available & to.total

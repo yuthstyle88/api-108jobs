@@ -16,7 +16,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{local_user, person, registration_application};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::utils::helper::rand_number5;
+use app_108jobs_utils::utils::random::rand_number5;
 use app_108jobs_utils::utils::validation::is_valid_email;
 
 impl PaginationCursorBuilder for RegistrationApplicationView {

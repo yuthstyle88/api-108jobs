@@ -177,3 +177,54 @@ pub struct MyDeliveryInfo {
   pub assigned_at: Option<DateTime<Utc>>,
   pub linked_comment_id: Option<CommentId>,
 }
+
+/// Request body for rating a rider after delivery completion
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RateRiderRequest {
+  /// The ID of the delivery post
+  pub post_id: PostId,
+  /// The ID of the rider being rated
+  pub rider_id: RiderId,
+  /// Rating from 1 to 5
+  pub rating: i16,
+  /// Optional comment about the rider
+  pub comment: Option<String>,
+}
+
+/// Response after rating a rider
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RateRiderResponse {
+  /// The created/updated rating
+  pub rating: DeliveryRiderRatingData,
+}
+
+/// Data for a delivery rider rating
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DeliveryRiderRatingData {
+  pub id: i32,
+  pub post_id: PostId,
+  pub employer_id: PersonId,
+  pub rider_id: RiderId,
+  pub rating: i16,
+  pub comment: Option<String>,
+  pub created_at: DateTime<Utc>,
+  pub updated_at: Option<DateTime<Utc>>,
+}
+
+/// Response for getting rider ratings
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetRiderRatingsResponse {
+  /// List of ratings for the rider
+  pub ratings: Vec<DeliveryRiderRatingData>,
+  /// Average rating
+  pub average_rating: Option<f64>,
+  /// Total number of ratings
+  pub total_ratings: i32,
+}

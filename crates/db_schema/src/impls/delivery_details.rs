@@ -77,7 +77,7 @@ impl DeliveryDetails {
         .unwrap_or(false);
 
         if !exists_delivery_post {
-            return Err(FastJobErrorType::InvalidField("invalid delivery post".to_string()).into());
+            return Err(FastJobErrorType::InvalidDeliveryPost.into());
         }
 
         // Verify delivery is active (not Delivered/Cancelled)
@@ -92,7 +92,7 @@ impl DeliveryDetails {
         .unwrap_or(false);
 
         if !is_active_delivery {
-            return Err(FastJobErrorType::InvalidField("delivery is not active".to_string()).into());
+            return Err(FastJobErrorType::DeliveryIsNotActive.into());
         }
 
         // Resolve rider by person and ensure active/not rejected
@@ -108,7 +108,7 @@ impl DeliveryDetails {
         if let Some((rid,)) = rider_row {
             Ok(RiderId(rid))
         } else {
-            Err(FastJobErrorType::InvalidField("not a rider".to_string()).into())
+            Err(FastJobErrorType::NotAnActiveRider.into())
         }
     }
 
@@ -259,25 +259,21 @@ impl DeliveryDetails {
 
         // Can only assign from Pending status
         if current_delivery.status != DeliveryStatus::Pending {
-            return Err(FastJobErrorType::InvalidField(format!(
-                "Cannot assign from status {:?}, must be Pending",
-                current_delivery.status
-            ))
-            .into());
+            return Err(FastJobErrorType::CannotUnassignFromStatus.into());
         }
 
         // Validate required fields are not empty
         if sender_name.trim().is_empty() {
-            return Err(FastJobErrorType::InvalidField("sender_name is required".to_string()).into());
+            return Err(FastJobErrorType::SenderNameIsRequired.into());
         }
         if sender_phone.trim().is_empty() {
-            return Err(FastJobErrorType::InvalidField("sender_phone is required".to_string()).into());
+            return Err(FastJobErrorType::SenderPhoneIsRequired.into());
         }
         if receiver_name.trim().is_empty() {
-            return Err(FastJobErrorType::InvalidField("receiver_name is required".to_string()).into());
+            return Err(FastJobErrorType::ReceiverNameIsRequired.into());
         }
         if receiver_phone.trim().is_empty() {
-            return Err(FastJobErrorType::InvalidField("receiver_phone is required".to_string()).into());
+            return Err(FastJobErrorType::ReceiverPhoneIsRequired.into());
         }
 
         // Perform the assignment and status update with sender/receiver info
@@ -322,19 +318,12 @@ impl DeliveryDetails {
 
         // Verify the person is either the assigner or an admin (you may want to add admin check)
         if current_delivery.assigned_by_person_id != Some(person_id) {
-            return Err(FastJobErrorType::InvalidField(
-                "Only the assigner can unassign".to_string(),
-            )
-            .into());
+            return Err(FastJobErrorType::OnlyAssignerCanUnassign.into());
         }
 
         // Can only unassign from Assigned status (before work begins)
         if current_delivery.status != DeliveryStatus::Assigned {
-            return Err(FastJobErrorType::InvalidField(format!(
-                "Cannot unassign from status {:?}, must be Assigned",
-                current_delivery.status
-            ))
-            .into());
+            return Err(FastJobErrorType::CannotUnassignFromStatus.into());
         }
 
         // Perform the unassignment

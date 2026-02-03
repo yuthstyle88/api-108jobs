@@ -46,12 +46,12 @@ impl TryFrom<BankAccountForm> for CreateBankAccount {
     // Validate account number presence and format by country
     let acc_num = data.account_number.trim();
     if acc_num.is_empty() || !validate_bank_account(&data.country_id, acc_num) {
-      return Err(FastJobErrorType::InvalidField("Invalid account number".to_string()).into());
+      return Err(FastJobErrorType::InvalidAccountNumber.into());
     }
 
     // Validate account name
     if data.account_name.trim().is_empty() {
-      return Err(FastJobErrorType::InvalidField("Invalid account name".to_string()).into());
+      return Err(FastJobErrorType::InvalidAccountName.into());
     }
 
     Ok(CreateBankAccount {

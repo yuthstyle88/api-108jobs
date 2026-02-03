@@ -35,7 +35,7 @@ async fn _update_job_plan_step_status(
 
   // Parse installments -> Vec<WorkStep>
   let mut steps: Vec<WorkStep> = serde_json::from_value(plan.installments.clone())
-    .map_err(|_| FastJobErrorType::InvalidField("Invalid installments JSON".into()))?;
+    .map_err(|_| FastJobErrorType::InvalidInstallmentsJson)?;
 
   // Update the matching step's status
   let mut found = false;
@@ -52,7 +52,7 @@ async fn _update_job_plan_step_status(
   }
 
   let phases_json = serde_json::to_value(&steps)
-    .map_err(|_| FastJobErrorType::InvalidField("Invalid installments serialization".into()))?;
+    .map_err(|_| FastJobErrorType::InvalidInstallmentsSerialization)?;
   let update = JobBudgetPlanUpdateForm {
     installments: Some(phases_json),
     updated_at: Some(Some(Utc::now())),
@@ -200,7 +200,7 @@ pub async fn approve_work(
   let form = validated.0;
   let workflow_id = form.workflow_id;
   ChatRoomId::try_from(form.room_id)
-      .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+      .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let billing_id = form.billing_id;
   let site_view = context.site_config().get().await?.site_view;
   let coin_id = site_view
@@ -211,7 +211,7 @@ pub async fn approve_work(
   let platform_wallet_id = match context.site_config().get().await?.admins.first() {
     Some(a) => a.person.wallet_id,
     None => {
-      return Err(FastJobErrorType::InvalidField("No platform admin configured".into()).into());
+      return Err(FastJobErrorType::NoPlatformAdminConfigured.into());
     }
   };
 
@@ -302,7 +302,7 @@ pub async fn start_workflow(
   };
   let form = validated.0;
   let room_id = ChatRoomId::try_from(form.room_id)
-    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+    .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let wf = WorkflowService::start_workflow(
     &mut context.pool(),
     form.post_id,
@@ -349,7 +349,7 @@ pub async fn get_billing_by_room(
 ) -> FastJobResult<Json<Billing>> {
   let mut pool = context.pool();
   let room_id = ChatRoomId::try_from(query.room_id.clone())
-    .map_err(|_| FastJobErrorType::InvalidField("invalid room id format".into()))?;
+    .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let billing_status =  query.billing_status.unwrap_or(BillingStatus::QuotePendingReview);
   let bill_opt =
     Billing::get_by_room_and_status(&mut pool, room_id, billing_status)

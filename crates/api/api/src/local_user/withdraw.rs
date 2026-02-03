@@ -19,7 +19,7 @@ pub async fn submit_withdraw(
   let validated: ValidWithdrawRequest = match data.into_inner().try_into() {
     Ok(v) => v,
     Err(msg) => {
-      return Err(FastJobErrorType::InvalidField(msg).into());
+      return Err(FastJobErrorType::InvalidField(msg.to_string()).into());
     }
   };
 

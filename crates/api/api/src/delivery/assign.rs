@@ -1,17 +1,18 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_api_utils::utils::{
+  get_active_rider_by_person, verify_comment_author, verify_comment_on_post, verify_post_creator,
+};
 use app_108jobs_db_schema::newtypes::PostId;
-use app_108jobs_db_schema::source::comment::Comment;
 use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
-use app_108jobs_db_schema::source::post::Post;
-use app_108jobs_db_schema::source::rider::Rider;
-use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::utils::get_conn;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{AssignDeliveryRequest, DeliveryAssignmentEvent};
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
+use diesel_async::scoped_futures::ScopedFutureExt;
 
 /// POST /api/v4/deliveries/{postId}/assign
 ///
@@ -25,6 +26,8 @@ use chrono::Utc;
 /// The delivery must be in Pending status to be assigned.
 ///
 /// Requires sender and receiver contact information to be provided.
+///
+/// All database operations are performed in a single transaction to ensure atomicity.
 pub async fn assign_delivery_from_proposal(
     path: Path<PostId>,
     context: Data<FastJobContext>,
@@ -40,72 +43,54 @@ pub async fn assign_delivery_from_proposal(
     let receiver_phone = form.receiver_phone.clone();
     let employer_person_id = local_user_view.person.id;
 
-    // Verify the user is the post creator (employer)
-    let post = {
-        let mut pool = context.pool();
-        Post::read(&mut pool, post_id).await?
-    };
+    // Get connection and run all database operations in a transaction
+    let mut pool = context.pool();
+    let conn = &mut get_conn(&mut pool).await?;
 
-    if post.creator_id != employer_person_id {
-        return Err(FastJobErrorType::InvalidField(
-            "Only the post creator can assign a rider".to_string(),
-        )
-        .into());
-    }
+    let (delivery, rider_id) = conn
+        .run_transaction(|conn| {
+            async move {
+                // Convert connection to DbPool for use with Crud functions
+                let mut pool: app_108jobs_db_schema::utils::DbPool<'_> = conn.into();
 
-    // Get the comment to verify it's on this post
-    let comment = {
-        let mut pool = context.pool();
-        Comment::read(&mut pool, comment_id).await?
-    };
+                // Verify the user is the post creator (employer)
+                verify_post_creator(&mut pool, post_id, employer_person_id).await?;
 
-    // Verify the comment is on this post
-    if comment.post_id != post_id {
-        return Err(FastJobErrorType::InvalidField(
-            "Comment is not on this delivery post".to_string(),
-        )
-        .into());
-    }
+                // Get the comment and verify it's on this post
+                let comment = verify_comment_on_post(&mut pool, comment_id, post_id).await?;
 
-    // Verify the comment author matches the provided person_id
-    if comment.creator_id != rider_person_id.into() {
-        return Err(FastJobErrorType::InvalidField(
-            "Comment author must match the provided person_id".to_string(),
-        )
-        .into());
-    }
+                // Verify the comment author matches the provided person_id
+                verify_comment_author(&comment, rider_person_id)?;
 
-    // Get the rider from the person_id
-    let rider = {
-        let mut pool = context.pool();
-        Rider::get_by_person_id(&mut pool, rider_person_id).await?
-            .ok_or(FastJobErrorType::InvalidField(
-                "Person is not an active rider".to_string(),
-            ))?
-    };
-    let rider_id = rider.id;
+                // Get the rider from the person_id
+                let rider = get_active_rider_by_person(&mut pool, rider_person_id).await?;
+                let rider_id = rider.id;
 
-    // Perform the assignment with sender/receiver information
-    let delivery = {
-        let mut pool = context.pool();
-        DeliveryDetails::assign_from_comment(
-            &mut pool,
-            post_id,
-            rider_id,
-            employer_person_id,
-            comment_id,
-            sender_name,
-            sender_phone,
-            receiver_name,
-            receiver_phone,
-        )
-        .await?
-    };
+                // Perform the assignment with sender/receiver information
+                let delivery = DeliveryDetails::assign_from_comment(
+                    &mut pool,
+                    post_id,
+                    rider_id,
+                    employer_person_id,
+                    comment_id,
+                    sender_name,
+                    sender_phone,
+                    receiver_name,
+                    receiver_phone,
+                )
+                .await?;
 
-    // Mark the comment proposal as processed (no longer pending)
-    comment.set_not_pending(&mut context.pool()).await?;
+                // Mark the comment proposal as processed (no longer pending)
+                // This is done within the same transaction to ensure atomicity
+                comment.set_not_pending(&mut pool).await?;
 
-    // Publish event to Redis for WebSocket clients
+                Ok::<_, app_108jobs_utils::error::FastJobError>((delivery, rider_id))
+            }
+            .scope_boxed()
+        })
+        .await?;
+
+    // Publish event to Redis for WebSocket clients (outside transaction)
     let event = DeliveryAssignmentEvent {
         kind: "delivery_assigned",
         post_id,

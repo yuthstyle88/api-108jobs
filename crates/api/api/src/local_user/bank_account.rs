@@ -32,7 +32,7 @@ pub async fn create_bank_account(
   // Verify bank belongs to user's country
   let bank = Bank::read(&mut context.pool(), data.bank_id)
     .await
-    .map_err(|_| FastJobErrorType::InvalidField("Bank not found".to_string()))?;
+    .map_err(|_| FastJobErrorType::BankNotFound)?;
 
   ensure_bank_account_unique_for_user(
     &mut context.pool(),

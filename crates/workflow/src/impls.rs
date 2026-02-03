@@ -205,7 +205,7 @@ async fn cancel_any_on(
           cur.status,
           WorkFlowStatus::Completed | WorkFlowStatus::Cancelled
         ) {
-          return Err(FastJobErrorType::InvalidField("Workflow already finalized".into()).into());
+          return Err(FastJobErrorType::WorkflowAlreadyFinalized.into());
         }
 
         let form = WorkflowUpdateForm {
@@ -328,7 +328,7 @@ async fn reserve_to_escrow(
   description: String,
 ) -> FastJobResult<()> {
   if amount <= Coin(0) {
-    return Err(FastJobErrorType::InvalidField("amount must be positive".into()).into());
+    return Err(FastJobErrorType::AmountMustBePositive.into());
   }
   let tx_form = WalletTransactionInsertForm {
     wallet_id: from_wallet_id,

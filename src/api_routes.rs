@@ -10,6 +10,7 @@ use app_108jobs_api::delivery::list::{
   get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
 };
 use app_108jobs_api::delivery::location::post_location as post_delivery_location;
+use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
 use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -479,7 +480,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/riders")
             .route("/profile", post().to(create_rider))
             .route("/profile", get().to(get_rider)) // this is for get current rider profile
-            .route("/profile/{id}", get().to(get_rider)),
+            .route("/profile/{id}", get().to(get_rider))
+            .route("/rate", post().to(rate_rider))
+            .route("/{riderId}/ratings", get().to(get_rider_ratings)),
         )
         .service(
           scope("/custom-emoji")

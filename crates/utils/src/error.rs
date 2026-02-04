@@ -365,6 +365,9 @@ pub enum FastJobErrorType {
   ReceiverPhoneIsRequired,
   OnlyAssignerCanUnassign,
   CannotUnassignFromStatus,
+  OnlyAssignerCanConfirm,
+  CannotConfirmNonDeliveredDelivery,
+  NoRiderAssigned,
   // Wallet errors
   ReleaseExceedsOutstanding,
   CaptureExceedsOutstandingOrTotal,

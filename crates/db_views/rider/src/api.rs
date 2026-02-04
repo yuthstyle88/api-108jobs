@@ -228,3 +228,23 @@ pub struct GetRiderRatingsResponse {
   /// Total number of ratings
   pub total_ratings: i32,
 }
+
+/// Request to confirm delivery completion and release payment
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ConfirmDeliveryRequest {
+  /// Optional note from employer (not currently used, kept for future)
+  pub note: Option<String>,
+}
+
+/// Response for delivery confirmation
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ConfirmDeliveryResponse {
+  /// The post ID
+  pub post_id: PostId,
+  /// When the employer confirmed (payment released)
+  pub confirmed_at: DateTime<Utc>,
+}

@@ -163,6 +163,11 @@ pub async fn create_post(
       cash_on_delivery: dd.cash_on_delivery,
       cod_amount: dd.cod_amount,
       status: Some(DeliveryStatus::Pending),
+      // Payment tracking fields (not set during post creation)
+      delivery_fee: None,
+      employer_confirmed_at: None,
+      employer_wallet_transaction_id: None,
+      rider_wallet_transaction_id: None,
     };
 
     DeliveryDetails::create(&mut context.pool(), &dd_form)

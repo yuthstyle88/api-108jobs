@@ -18,7 +18,7 @@ pub async fn submit_user_review(
 ) -> FastJobResult<Json<SubmitUserReviewResponse>> {
   let validated: ValidSubmitUserReview = match data.into_inner().try_into() {
     Ok(v) => v,
-    Err(msg) => {
+    Err(_msg) => {
       return Err(FastJobErrorType::RatingMustBeBetween1And5.into());
     }
   };

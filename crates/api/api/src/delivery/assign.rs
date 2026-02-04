@@ -42,6 +42,7 @@ pub async fn assign_delivery_from_proposal(
     let receiver_name = form.receiver_name.clone();
     let receiver_phone = form.receiver_phone.clone();
     let employer_person_id = local_user_view.person.id;
+    let employer_local_user_id = local_user_view.local_user.id;
 
     // Get connection and run all database operations in a transaction
     let mut pool = context.pool();
@@ -66,11 +67,12 @@ pub async fn assign_delivery_from_proposal(
                 let rider = get_active_rider_by_person(&mut pool, rider_person_id).await?;
                 let rider_id = rider.id;
 
-                // Perform the assignment with sender/receiver information
-                let delivery = DeliveryDetails::assign_from_comment(
+                // Perform the assignment with escrow hold and sender/receiver information
+                let delivery = DeliveryDetails::assign_from_comment_with_escrow(
                     &mut pool,
                     post_id,
                     rider_id,
+                    employer_local_user_id,
                     employer_person_id,
                     comment_id,
                     sender_name,

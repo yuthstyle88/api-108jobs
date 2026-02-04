@@ -1057,6 +1057,10 @@ diesel::table! {
         assigned_at -> Nullable<Timestamptz>,
         assigned_by_person_id -> Nullable<Int4>,
         linked_comment_id -> Nullable<Int4>,
+        delivery_fee -> Int4,
+        employer_confirmed_at -> Nullable<Timestamptz>,
+        employer_wallet_transaction_id -> Nullable<Int4>,
+        rider_wallet_transaction_id -> Nullable<Int4>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

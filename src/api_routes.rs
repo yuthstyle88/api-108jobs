@@ -6,6 +6,7 @@ use app_108jobs_api::admin::wallet::{
 };
 use app_108jobs_api::chat::list::list_chat_rooms;
 use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
+use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
 use app_108jobs_api::delivery::list::{
   get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
 };
@@ -248,7 +249,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/cancelled", get().to(get_cancelled_deliveries))
             .route("/{postId}/location", post().to(post_delivery_location))
             .route("/{postId}/status", put().to(update_delivery_status))
-            .route("/{postId}/assign", post().to(assign_delivery_from_proposal)),
+            .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
+            .route("/{postId}/confirm", post().to(confirm_delivery_completion)),
         )
         // Comment
         .service(

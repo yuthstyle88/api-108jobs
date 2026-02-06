@@ -5,11 +5,9 @@ use app_108jobs_db_schema::newtypes::PostId;
 use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::api::{
-  ConfirmDeliveryRequest, ConfirmDeliveryResponse, DeliveryStatusEvent,
-};
+use app_108jobs_db_views_rider::api::DeliveryStatusEvent;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use chrono::Utc;
+use app_108jobs_db_views_site::api::SuccessResponse;
 
 /// POST /api/v4/deliveries/{postId}/confirm
 ///
@@ -25,9 +23,8 @@ use chrono::Utc;
 pub async fn confirm_delivery_completion(
   path: Path<PostId>,
   context: Data<FastJobContext>,
-  _form: Json<ConfirmDeliveryRequest>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<ConfirmDeliveryResponse>> {
+) -> FastJobResult<Json<SuccessResponse>> {
   let post_id = path.into_inner();
   let employer_person_id = local_user_view.person.id;
 
@@ -42,20 +39,9 @@ pub async fn confirm_delivery_completion(
     return Err(FastJobErrorType::CannotConfirmNonDeliveredDelivery.into());
   }
 
-  // Get site config for coin_id and platform wallet
-  let site_view = context.site_config().get().await?.site_view;
-  let coin_id = site_view
-    .clone()
-    .local_site
-    .coin_id
-    .ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-
-  let platform_wallet_id = match context.site_config().get().await?.admins.first() {
-    Some(a) => a.person.wallet_id,
-    None => {
-      return Err(FastJobErrorType::NoPlatformAdminConfigured.into());
-    }
-  };
+  // Get coin_id and platform wallet_id from context helper methods
+  let coin_id = context.get_coin_id().await?;
+  let platform_wallet_id = context.get_platform_wallet_id().await?;
 
   // Confirm completion and release payment
   let updated_delivery = DeliveryDetails::confirm_completion_and_release_payment(
@@ -66,13 +52,6 @@ pub async fn confirm_delivery_completion(
     platform_wallet_id,
   )
   .await?;
-
-  let response = ConfirmDeliveryResponse {
-    post_id,
-    confirmed_at: updated_delivery
-      .employer_confirmed_at
-      .unwrap_or_else(Utc::now),
-  };
 
   // Publish confirmation event to Redis for WebSocket listeners
   let event = DeliveryStatusEvent {
@@ -95,5 +74,5 @@ pub async fn confirm_delivery_completion(
     }
   }
 
-  Ok(Json(response))
+  Ok(Json(SuccessResponse::default()))
 }

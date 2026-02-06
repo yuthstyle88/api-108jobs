@@ -1,5 +1,5 @@
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, PaginationCursor, PersonId},
+    newtypes::{CategoryId, Coin, PaginationCursor, PersonId},
     source::{
     combined::search::SearchCombined,
     comment::{Comment, CommentActions},
@@ -152,10 +152,10 @@ pub struct Search {
   pub self_promotion: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  /// Minimum budget in your preferred currency
-  pub budget_min: Option<i64>,
-  /// Maximum budget in your preferred currency
-  pub budget_max: Option<i64>,
+  /// Minimum budget in cents (Coin type)
+  pub budget_min: Option<Coin>,
+  /// Maximum budget in cents (Coin type)
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   pub page_cursor: Option<PaginationCursor>,

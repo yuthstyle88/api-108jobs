@@ -1,7 +1,7 @@
 use crate::api::EditPost;
 use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
 use crate::{PostPreview, PostView};
-use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
@@ -367,8 +367,8 @@ pub struct PostQuery<'a> {
   pub no_proposals_only: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget_min: Option<i64>,
-  pub budget_max: Option<i64>,
+  pub budget_min: Option<Coin>,
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   pub cursor_data: Option<Post>,
@@ -531,10 +531,10 @@ impl PostQuery<'_> {
     }
 
     if let Some(min) = o.budget_min {
-      query = query.filter(post::budget.ge(min as f64));
+      query = query.filter(post::budget.ge(min));
     }
     if let Some(max) = o.budget_max {
-      query = query.filter(post::budget.le(max as f64));
+      query = query.filter(post::budget.le(max));
     }
 
     // Hide the hidden posts
@@ -730,7 +730,7 @@ impl TryFrom<CreatePostRequest> for CreatePost {
 
 fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
   // Validate budget (now required)
-  if data.budget <= 0f64 {
+  if data.budget <= 0 {
     return Err(FastJobErrorType::InvalidField(
       "budget must be greater than 0".to_string(),
     ))?;
@@ -991,7 +991,6 @@ mod tests {
         ..PostInsertForm::new(
           POST_BY_BLOCKED_PERSON.to_string(),
           inserted_john_person.id,
-          category.id,
         )
       };
       Post::create(pool, &post_from_blocked_person).await?;

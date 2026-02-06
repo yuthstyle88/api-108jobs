@@ -26,7 +26,7 @@ use {
     post_tags_fragment,
   },
 };
-use app_108jobs_db_schema::newtypes::{LanguageId, PersonId, PostId};
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PersonId, PostId};
 
 pub mod api;
 #[cfg(feature = "full")]
@@ -104,7 +104,7 @@ pub struct PostView {
 pub struct PostPreview {
   pub id: PostId,
   pub name: String,
-  pub budget: f64,
+  pub budget: Coin,
   pub language_id: LanguageId,
   pub deadline: Option<DateTime<Utc>>,
   pub creator_id: PersonId,

@@ -237,14 +237,3 @@ pub struct ConfirmDeliveryRequest {
   /// Optional note from employer (not currently used, kept for future)
   pub note: Option<String>,
 }
-
-/// Response for delivery confirmation
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ConfirmDeliveryResponse {
-  /// The post ID
-  pub post_id: PostId,
-  /// When the employer confirmed (payment released)
-  pub confirmed_at: DateTime<Utc>,
-}

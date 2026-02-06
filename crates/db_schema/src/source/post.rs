@@ -1,4 +1,4 @@
-use crate::newtypes::{CategoryId, DbUrl, LanguageId, PersonId, PostId};
+use crate::newtypes::{CategoryId, Coin, DbUrl, LanguageId, PersonId, PostId};
 use chrono::{DateTime, Utc};
 use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, PostNotifications};
 use serde::{Deserialize, Serialize};
@@ -86,7 +86,7 @@ pub struct Post {
   pub unresolved_report_count: i16,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
   pub post_kind: PostKind,
@@ -147,7 +147,7 @@ pub struct PostInsertForm {
   #[new(default)]
   pub scheduled_publish_time_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub budget: f64,
+  pub budget: Coin,
   #[new(default)]
   pub intended_use: IntendedUse,
   #[new(default)]
@@ -187,7 +187,7 @@ pub struct PostUpdateForm {
   pub url_content_type: Option<Option<String>>,
   pub alt_text: Option<Option<String>>,
   pub scheduled_publish_time_at: Option<Option<DateTime<Utc>>>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
   pub deadline: Option<Option<DateTime<Utc>>>,

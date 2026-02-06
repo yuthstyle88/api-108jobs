@@ -2,6 +2,7 @@ use crate::PostView;
 use app_108jobs_db_schema::{
   newtypes::{
     CategoryId,
+    Coin,
     CommentId,
     DbUrl,
     LanguageId,
@@ -45,7 +46,7 @@ pub struct CreatePost {
   pub scheduled_publish_time_at: Option<i64>,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
   // NEW: kind and optional delivery payload (carried through to handler layer)
@@ -77,7 +78,7 @@ pub struct CreatePostRequest {
   pub custom_thumbnail: Option<String>,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
   // NEW
@@ -130,7 +131,7 @@ pub struct EditPost {
   pub tags: Option<Vec<TagId>>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: Option<bool>,
   /// Delivery details for delivery posts. Only applicable when post_kind is Delivery.
@@ -160,7 +161,7 @@ pub struct EditPostRequest {
   pub tags: Option<Vec<TagId>>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: Option<bool>,
   /// Delivery details for delivery posts. Only applicable when post_kind is Delivery.
@@ -239,10 +240,10 @@ pub struct GetPosts {
   pub no_proposals_only: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  /// Minimum budget in your preferred currency
-  pub budget_min: Option<i64>,
-  /// Maximum budget in your preferred currency
-  pub budget_max: Option<i64>,
+  /// Minimum budget in cents (Coin type)
+  pub budget_min: Option<Coin>,
+  /// Maximum budget in cents (Coin type)
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   pub page_cursor: Option<PaginationCursor>,

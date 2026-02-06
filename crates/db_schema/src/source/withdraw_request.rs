@@ -1,5 +1,6 @@
 use crate::newtypes::{BankAccountId, Coin, LocalUserId, WalletId, WithdrawRequestId};
 use chrono::{DateTime, Utc};
+#[cfg(feature = "full")]
 use app_108jobs_db_schema_file::enums::WithdrawStatus;
 
 #[cfg(feature = "full")]
@@ -10,10 +11,10 @@ use serde_with::skip_serializing_none;
 use {i_love_jesus::CursorKeysModule, app_108jobs_db_schema_file::schema::withdraw_requests};
 
 #[skip_serializing_none]
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(
   feature = "full",
-  derive(Queryable, Selectable, Identifiable, CursorKeysModule)
+  derive(Queryable, Selectable, Identifiable, CursorKeysModule, Serialize, Deserialize)
 )]
 #[cfg_attr(feature = "full", diesel(table_name = withdraw_requests))]
 #[cfg_attr(feature = "full", diesel(primary_key(id)))]
@@ -50,6 +51,7 @@ pub struct WithdrawRequestInsertForm {
 #[cfg_attr(feature = "full", derive(Serialize, Deserialize, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = withdraw_requests))]
 pub struct WithdrawRequestUpdateForm {
+  #[cfg(feature = "full")]
   pub status: Option<WithdrawStatus>,
   pub updated_at: Option<DateTime<Utc>>,
   pub reason: Option<Option<String>>,

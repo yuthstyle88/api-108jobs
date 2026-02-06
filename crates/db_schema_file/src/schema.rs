@@ -1015,7 +1015,7 @@ diesel::table! {
         unresolved_report_count -> Int2,
         intended_use -> IntendedUseEnum,
         job_type -> JobTypeEnum,
-        budget -> Float8,
+        budget -> Int4,
         deadline -> Nullable<Timestamptz>,
         is_english_required -> Bool,
         post_kind -> PostKind,

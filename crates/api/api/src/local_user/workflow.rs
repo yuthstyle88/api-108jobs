@@ -202,18 +202,8 @@ pub async fn approve_work(
   ChatRoomId::try_from(form.room_id)
       .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let billing_id = form.billing_id;
-  let site_view = context.site_config().get().await?.site_view;
-  let coin_id = site_view
-    .clone()
-    .local_site
-    .coin_id
-    .ok_or_else(|| anyhow::anyhow!("Coin ID not set"))?;
-  let platform_wallet_id = match context.site_config().get().await?.admins.first() {
-    Some(a) => a.person.wallet_id,
-    None => {
-      return Err(FastJobErrorType::NoPlatformAdminConfigured.into());
-    }
-  };
+  let coin_id = context.get_coin_id().await?;
+  let platform_wallet_id = context.get_platform_wallet_id().await?;
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?

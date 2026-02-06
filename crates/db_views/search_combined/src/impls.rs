@@ -8,7 +8,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
 use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
   combined::search::{search_combined_keys as key, SearchCombined},
   site::Site,
@@ -168,8 +168,8 @@ pub struct SearchCombinedQuery {
   pub time_range_seconds: Option<i32>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget_min: Option<i64>,
-  pub budget_max: Option<i64>,
+  pub budget_min: Option<Coin>,
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   pub cursor_data: Option<SearchCombined>,
@@ -226,11 +226,11 @@ impl SearchCombinedQuery {
     }
 
     if let Some(min) = self.budget_min {
-      query = query.filter(post::budget.ge(min as f64));
+      query = query.filter(post::budget.ge(min));
     }
 
     if let Some(max) = self.budget_max {
-      query = query.filter(post::budget.le(max as f64));
+      query = query.filter(post::budget.le(max));
     }
 
     if let Some(intended_use) = self.intended_use {

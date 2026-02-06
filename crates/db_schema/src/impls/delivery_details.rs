@@ -1,5 +1,5 @@
 use crate::{
-    newtypes::{Coin, CoinId, CommentId, DeliveryDetailsId, LocalUserId, PersonId, PostId, RiderId, WalletId},
+    newtypes::{CoinId, CommentId, DeliveryDetailsId, LocalUserId, PersonId, PostId, RiderId, WalletId},
     source::{
         delivery_details::{
             DeliveryDetails,
@@ -358,9 +358,7 @@ impl DeliveryDetails {
                 let mut pool: DbPool<'_> = conn.into();
                 let post = Post::read(&mut pool, post_id).await?;
 
-                // The delivery fee is the post budget (in smallest currency unit, e.g., cents)
-                // Convert f64 budget to Coin (i32) - assuming budget is in main currency unit
-                let delivery_fee = Coin((post.budget * 100.0) as i32);
+                let delivery_fee = post.budget;
 
                 // Get employer's wallet and hold funds in escrow
                 let employer_wallet = WalletModel::get_by_user(&mut pool, employer_local_user_id).await?;

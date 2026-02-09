@@ -4,6 +4,7 @@ use app_108jobs_api::admin::currency::{
   admin_create_currency, admin_create_pricing_config, admin_get_currency, admin_get_pricing_config,
   admin_list_currencies, admin_list_pricing_configs, admin_update_currency, admin_update_pricing_config,
 };
+use app_108jobs_api::admin::platform::{admin_get_platform_assets, admin_get_platform_balance};
 use app_108jobs_api::admin::wallet::{
   admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
   admin_top_up_wallet, admin_withdraw_wallet,
@@ -487,6 +488,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", get().to(admin_get_pricing_config))
                 .route("", post().to(admin_create_pricing_config))
                 .route("", put().to(admin_update_pricing_config)),
+            )
+            .service(
+              scope("/platform")
+                .route("/assets", get().to(admin_get_platform_assets))
+                .route("/balance", get().to(admin_get_platform_balance)),
             ),
         )
         .service(

@@ -130,6 +130,57 @@ impl WalletModel {
     Ok(w)
   }
 
+  /// Apply a balance operation to the platform wallet WITHOUT balance validation.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  /// Only supports TransferIn and TransferOut operations.
+  async fn apply_op_on_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    id: WalletId,
+    op: BalanceOp,
+    amount: Coin,
+  ) -> FastJobResult<Wallet> {
+    if amount <= 0 {
+      return Err(FastJobErrorType::AmountMustBePositive.into());
+    }
+
+    // 1) Lock current row
+    let current = Self::load_for_update(conn, id).await?;
+
+    // 2) Compute new balances WITHOUT validation (platform wallet can go negative)
+    let (mut t, mut a, o) = (current.balance_total, current.balance_available, current.balance_outstanding);
+    match op {
+      BalanceOp::TransferOut => {
+        // Direct transfer out: can go negative
+        a -= amount;
+        t -= amount;
+        // outstanding unchanged
+      }
+      BalanceOp::TransferIn => {
+        // Direct transfer in
+        a += amount;
+        t += amount;
+        // outstanding unchanged
+      }
+      _ => {
+        return Err(FastJobErrorType::InvalidOperation.into());
+      }
+    }
+
+    // 3) Persist
+    let form = WalletUpdateForm {
+      balance_total: Some(t),
+      balance_available: Some(a),
+      balance_outstanding: Some(o),
+      is_platform: None,
+      updated_at: Some(Utc::now()),
+    };
+    let w = diesel::update(wallet::table.find(id))
+      .set(&form)
+      .get_result::<Wallet>(conn)
+      .await?;
+    Ok(w)
+  }
+
   #[inline]
   fn validate_positive_amount(amount:  Coin) -> FastJobResult<()> {
     if amount <= 0 {
@@ -243,6 +294,42 @@ impl WalletModel {
       Some(wid) => Ok(wid),
       None => Err(FastJobErrorType::PlatformWalletNotInitialized.into()),
     }
+  }
+
+  /// Get the platform wallet (must be pre-seeded by migration). Error if missing.
+  pub async fn get_platform_wallet(pool: &mut DbPool<'_>) -> FastJobResult<Wallet> {
+    let conn = &mut get_conn(pool).await?;
+    let wallet = wallet::table
+      .filter(wallet::is_platform.eq(true))
+      .first::<Wallet>(conn)
+      .await
+      .optional()?;
+    match wallet {
+      Some(w) => Ok(w),
+      None => Err(FastJobErrorType::PlatformWalletNotInitialized.into()),
+    }
+  }
+
+  /// Ensure platform wallet exists (get or create).
+  /// Returns the platform wallet, creating it if it doesn't exist.
+  /// Note: After migration runs, the platform wallet should always exist.
+  pub async fn ensure_platform_wallet(pool: &mut DbPool<'_>) -> FastJobResult<Wallet> {
+    let conn = &mut get_conn(pool).await?;
+
+    // Try to get existing platform wallet
+    let existing = wallet::table
+      .filter(wallet::is_platform.eq(true))
+      .first::<Wallet>(conn)
+      .await
+      .optional()?;
+
+    if let Some(w) = existing {
+      return Ok(w);
+    }
+
+    // Create if doesn't exist (fallback for systems without migration)
+    let wallet = Self::create_for_platform(conn).await?;
+    Ok(wallet)
   }
 
   /// Deposit funds *from platform to user*.
@@ -447,8 +534,8 @@ impl WalletModel {
     conn
       .run_transaction(|conn| {
         async move {
-          // move funds: platform -> user
-          Self::move_funds(conn, platform_wallet_id, form.wallet_id, amount).await?;
+          // move funds: platform -> user (no balance check on platform)
+          Self::deposit_to_user_from_platform(conn, platform_wallet_id, form.wallet_id, amount).await?;
           let _ = CoinModel::update_balance(conn, coin_id, -amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
@@ -480,8 +567,8 @@ impl WalletModel {
     return conn
       .run_transaction(|conn| {
         async move {
-          // move funds: user -> platform
-          Self::move_funds(conn, form.wallet_id, platform_wallet_id, amount).await?;
+          // move funds: user -> platform (no balance check on platform)
+          Self::withdraw_from_user_to_platform(conn, form.wallet_id, platform_wallet_id, amount).await?;
           let _ = CoinModel::update_balance(conn.into(), coin_id, amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
@@ -513,6 +600,46 @@ impl WalletModel {
     // Direct transfer: decrease from.available & from.total; increase to.available & to.total
     let _ = Self::apply_op_on(conn, from_wallet, BalanceOp::TransferOut, amount).await?;
     let _ = Self::apply_op_on(conn, to_wallet,   BalanceOp::TransferIn,  amount).await?;
+    Ok(())
+  }
+
+  /// Move funds from platform wallet to user wallet WITHOUT checking platform balance.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  async fn deposit_to_user_from_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    platform_wallet_id: WalletId,
+    user_wallet_id: WalletId,
+    amount: Coin,
+  ) -> FastJobResult<()> {
+    Self::validate_positive_amount(amount)?;
+    if platform_wallet_id == user_wallet_id {
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
+    }
+
+    // Credit user wallet normally
+    let _ = Self::apply_op_on(conn, user_wallet_id, BalanceOp::TransferIn, amount).await?;
+    // Debit platform wallet WITHOUT balance validation (can go negative)
+    let _ = Self::apply_op_on_platform(conn, platform_wallet_id, BalanceOp::TransferOut, amount).await?;
+    Ok(())
+  }
+
+  /// Move funds from user wallet to platform wallet WITHOUT checking platform balance.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  async fn withdraw_from_user_to_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    user_wallet_id: WalletId,
+    platform_wallet_id: WalletId,
+    amount: Coin,
+  ) -> FastJobResult<()> {
+    Self::validate_positive_amount(amount)?;
+    if platform_wallet_id == user_wallet_id {
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
+    }
+
+    // Debit user wallet normally
+    let _ = Self::apply_op_on(conn, user_wallet_id, BalanceOp::TransferOut, amount).await?;
+    // Credit platform wallet WITHOUT balance validation
+    let _ = Self::apply_op_on_platform(conn, platform_wallet_id, BalanceOp::TransferIn, amount).await?;
     Ok(())
   }
 }

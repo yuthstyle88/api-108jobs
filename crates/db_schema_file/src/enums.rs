@@ -435,14 +435,35 @@ pub enum PostKind {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// Delivery workflow status
+/// Transport workflow status - works for both cargo delivery and taxi rides
+/// Taxi flow: Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
+/// Cargo flow: Pending → Assigned → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
 pub enum DeliveryStatus {
   #[default]
   Pending,
   Assigned,
+  RiderConfirmed,       // Taxi-specific: rider confirms assignment from employer
   EnRouteToPickup,
-  PickedUp,
+  PickedUp,             // Cargo: package picked up | Taxi: customer in car
   EnRouteToDropoff,
   Delivered,
   Cancelled,
+}
+
+#[derive(
+  EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Default, Hash,
+)]
+#[cfg_attr(feature = "full", derive(DbEnum))]
+#[cfg_attr(
+  feature = "full",
+  ExistingTypePath = "crate::schema::sql_types::PaymentMethod"
+)]
+#[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(export))]
+/// Payment method for rides (taxi and cargo)
+pub enum PaymentMethod {
+  #[default]
+  Cash,
+  Coin,
 }

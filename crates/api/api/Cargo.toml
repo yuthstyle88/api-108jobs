@@ -41,6 +41,7 @@ app_108jobs_db_views_report_combined = { workspace = true, features = ["full"] }
 app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
 app_108jobs_db_views_billing = { workspace = true }
 app_108jobs_db_views_bank_account = { workspace = true, features = ["full"] }
+app_108jobs_db_views_currency = { workspace = true }
 app_108jobs_db_views_site = { workspace = true, features = ["full"] }
 app_108jobs_db_views_registration_applications = { workspace = true, features = [
     "full",

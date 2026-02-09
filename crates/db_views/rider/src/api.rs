@@ -1,7 +1,7 @@
 use crate::RiderView;
 use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId};
 use app_108jobs_db_schema::newtypes::RiderId;
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, VehicleType};
+use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -237,3 +237,123 @@ pub struct ConfirmDeliveryRequest {
   /// Optional note from employer (not currently used, kept for future)
   pub note: Option<String>,
 }
+
+// ============================================================================
+// Ride Session API Types (Taxi-style rides with dynamic pricing)
+// ============================================================================
+
+/// Request body for creating a ride session
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateRideSessionRequest {
+  /// The post ID (delivery post)
+  pub post_id: PostId,
+  /// Pricing config ID to use for this ride
+  pub pricing_config_id: Option<i32>,
+  /// Pickup location
+  pub pickup_address: String,
+  pub pickup_lat: Option<f64>,
+  pub pickup_lng: Option<f64>,
+  /// Dropoff location
+  pub dropoff_address: String,
+  pub dropoff_lat: Option<f64>,
+  pub dropoff_lng: Option<f64>,
+  /// Optional pickup note
+  pub pickup_note: Option<String>,
+  /// Payment method: cash or coin
+  pub payment_method: PaymentMethod,
+}
+
+/// Response after creating a ride session
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RideSessionResponse {
+  pub id: i32,
+  pub post_id: PostId,
+  pub rider_id: Option<RiderId>,  // NULL until a rider accepts
+  pub status: DeliveryStatus,
+  pub current_price_coin: i32,
+  pub payment_method: PaymentMethod,
+  pub payment_status: String,
+  pub created_at: DateTime<Utc>,
+}
+
+/// Request body for updating ride meter (real-time price updates)
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateRideMeterRequest {
+  /// Elapsed time in minutes
+  pub elapsed_minutes: i32,
+  /// Distance traveled in km
+  pub distance_km: f64,
+}
+
+/// Response with updated ride meter
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RideMeterResponse {
+  pub session_id: i32,
+  pub current_price_coin: i32,
+  pub elapsed_minutes: i32,
+  pub distance_km: f64,
+  pub breakdown: PricingBreakdown,
+}
+
+/// Pricing breakdown for a ride
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PricingBreakdown {
+  pub base_fare_coin: i32,
+  pub time_charge_coin: i32,
+  pub distance_charge_coin: i32,
+  pub total_coin: i32,
+  /// Display-formatted price in local currency
+  pub formatted_price: String,
+  pub currency_code: String,
+}
+
+/// Request to accept a ride assignment (rider side)
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AcceptRideRequest {
+  pub session_id: i32,
+}
+
+/// Request to confirm ride assignment (rider confirms they're taking this job)
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ConfirmRideRequest {
+  pub session_id: i32,
+}
+
+/// Event published to Redis for ride status updates
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RideStatusEvent {
+  #[serde(rename = "type")]
+  pub kind: &'static str,
+  pub session_id: i32,
+  pub post_id: PostId,
+  pub status: DeliveryStatus,
+  pub updated_at: DateTime<Utc>,
+}
+
+/// Event published to Redis for ride meter updates
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RideMeterEvent {
+  #[serde(rename = "type")]
+  pub kind: &'static str,
+  pub session_id: i32,
+  pub post_id: PostId,
+  pub current_price_coin: i32,
+  pub elapsed_minutes: i32,
+  pub distance_km: f64,
+  pub updated_at: DateTime<Utc>,
+}
+

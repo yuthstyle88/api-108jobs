@@ -53,3 +53,7 @@ pub mod delivery_location_current;
 pub mod delivery_location_history;
 pub mod delivery_details;
 pub mod delivery_rider_rating;
+pub mod currency;
+pub mod pricing_config;
+pub mod ride_session;
+pub mod currency_rate_history;

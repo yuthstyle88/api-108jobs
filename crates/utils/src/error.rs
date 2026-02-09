@@ -390,6 +390,21 @@ pub enum FastJobErrorType {
   BankNotFound,
   InvalidAccountNumber,
   InvalidAccountName,
+  // Currency related errors
+  CouldntCreateCurrency,
+  CouldntUpdateCurrency,
+  CurrencyNotFound,
+  CurrencyCodeAlreadyExists,
+  CannotDeleteDefaultCurrency,
+  // Pricing config related errors
+  CouldntCreatePricingConfig,
+  CouldntUpdatePricingConfig,
+  PricingConfigNotFound,
+  InvalidPricingValues,
+  // Ride session related errors
+  CouldntCreateRideSession,
+  CouldntUpdateRideSession,
+  RideSessionNotFound,
 }
 
 cfg_if! {

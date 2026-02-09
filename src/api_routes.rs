@@ -1,5 +1,9 @@
 use actix_web::{guard, web::*};
 use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
+use app_108jobs_api::admin::currency::{
+  admin_create_currency, admin_create_pricing_config, admin_get_currency, admin_get_pricing_config,
+  admin_list_currencies, admin_list_pricing_configs, admin_update_currency, admin_update_pricing_config,
+};
 use app_108jobs_api::admin::wallet::{
   admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
   admin_top_up_wallet, admin_withdraw_wallet,
@@ -12,6 +16,7 @@ use app_108jobs_api::delivery::list::{
 };
 use app_108jobs_api::delivery::location::post_location as post_delivery_location;
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
+use app_108jobs_api::delivery::ride::{accept_ride_assignment, confirm_ride_assignment, create_ride_session, update_ride_meter};
 use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -252,6 +257,14 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
             .route("/{postId}/confirm", post().to(confirm_delivery_completion)),
         )
+        // Rides (taxi-style rides with dynamic pricing)
+        .service(
+          scope("/rides")
+            .route("/create", post().to(create_ride_session))
+            .route("/{sessionId}/accept", post().to(accept_ride_assignment))
+            .route("/{sessionId}/confirm", post().to(confirm_ride_assignment))
+            .route("/{sessionId}/meter", put().to(update_ride_meter)),
+        )
         // Comment
         .service(
           // Handle POST to /comment separately to add the comment() rate limiter
@@ -460,6 +473,20 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/riders")
                 .route("/list", get().to(list_riders))
                 .route("/verify", post().to(admin_verify_rider)),
+            )
+            .service(
+              scope("/currency")
+                .route("/list", get().to(admin_list_currencies))
+                .route("", get().to(admin_get_currency))
+                .route("", post().to(admin_create_currency))
+                .route("", put().to(admin_update_currency)),
+            )
+            .service(
+              scope("/pricing-config")
+                .route("/list", post().to(admin_list_pricing_configs))
+                .route("", get().to(admin_get_pricing_config))
+                .route("", post().to(admin_create_pricing_config))
+                .route("", put().to(admin_update_pricing_config)),
             ),
         )
         .service(

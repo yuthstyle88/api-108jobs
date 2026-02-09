@@ -82,6 +82,7 @@ members = [
     "crates/db_views/chat",
     "crates/db_views/chat_pending_ack",
     "crates/db_views/user_review",
+    "crates/db_views/currency",
     "crates/routes",
     "crates/ws",
     "crates/email",
@@ -157,6 +158,7 @@ app_108jobs_workflow = { version = "=1.0.0-alpha.5", path = "./crates/workflow" 
 app_108jobs_db_views_chat = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat" }
 app_108jobs_db_views_chat_pending_ack = { version = "=1.0.0-alpha.5", path = "./crates/db_views/chat_pending_ack" }
 app_108jobs_db_views_rider = { version = "=1.0.0-alpha.5", path = "./crates/db_views/rider" }
+app_108jobs_db_views_currency = { version = "=1.0.0-alpha.5", path = "./crates/db_views/currency" }
 diesel = { version = "2.2.10", features = [
     "chrono",
     "postgres",

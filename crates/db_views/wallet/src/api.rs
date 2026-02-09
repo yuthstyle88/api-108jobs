@@ -1,6 +1,6 @@
 use crate::{TopUpRequestView, WithdrawRequestView};
 use app_108jobs_db_schema::newtypes::{
-  BankAccountId, Coin, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
+  BankAccountId, Coin, CurrencyId, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
 };
 use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use serde::{Deserialize, Serialize};
@@ -55,10 +55,10 @@ pub struct WalletOperationResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Admin top up user wallet.
+/// Note: amount is no longer needed here - it's fetched from the TopUpRequest
 pub struct AdminTopUpWallet {
   pub target_user_id: LocalUserId,
   pub qr_id: String,
-  pub amount: Coin,
   pub reason: String,
 }
 
@@ -129,6 +129,7 @@ pub struct SubmitWithdrawRequest {
   pub wallet_id: WalletId,
   pub bank_account_id: BankAccountId,
   pub amount: Coin,
+  pub currency_id: CurrencyId,
   pub reason: String,
 }
 
@@ -152,6 +153,11 @@ impl TryFrom<SubmitWithdrawRequest> for ValidWithdrawRequest {
     // Validate amount
     if value.amount <= 0 {
       return Err("Withdrawal amount must be greater than zero.".to_string());
+    }
+
+    // Validate currency_id
+    if value.currency_id.0 <= 0 {
+      return Err("Currency ID is required and must be valid.".to_string());
     }
 
     // Validate reason

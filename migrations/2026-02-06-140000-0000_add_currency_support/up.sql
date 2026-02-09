@@ -2,10 +2,21 @@
 -- Admin can manage currencies and conversion rates
 
 -- Add RiderConfirmed status to DeliveryStatus enum (for taxi rides)
-ALTER TYPE delivery_status ADD VALUE IF NOT EXISTS 'RiderConfirmed';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'RiderConfirmed' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'delivery_status')) THEN
+        ALTER TYPE delivery_status ADD VALUE 'RiderConfirmed';
+    END IF;
+END $$;
 
 -- Create payment_method enum for rides (taxi and cargo)
-CREATE TYPE payment_method AS ENUM ('cash', 'coin');
+-- Only create if it doesn't exist (for re-runnable migration)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method') THEN
+        CREATE TYPE payment_method AS ENUM ('cash', 'coin');
+    END IF;
+END $$;
 
 -- Currency table with admin-managed rates
 CREATE TABLE currency (
@@ -13,6 +24,10 @@ CREATE TABLE currency (
     code VARCHAR(3) NOT NULL UNIQUE,
     name VARCHAR(50) NOT NULL,
     symbol VARCHAR(10) NOT NULL,
+
+    -- ISO 4217 numeric currency code (for payment gateway mapping)
+    -- 764 = THB, 360 = IDR, 704 = VND, etc.
+    numeric_code INTEGER NOT NULL UNIQUE,
 
     -- CONVERSION RATE (Admin Managed!)
     -- How many units of this currency = 1 Coin
@@ -41,6 +56,9 @@ CREATE TABLE currency (
     rate_last_updated_at TIMESTAMPTZ,
     rate_last_updated_by INTEGER REFERENCES local_user(id)
 );
+
+-- Index for faster lookups by numeric code (payment gateway responses)
+CREATE INDEX idx_currency_numeric_code ON currency(numeric_code);
 
 -- Rate history audit log
 CREATE TABLE currency_rate_history (
@@ -160,9 +178,9 @@ SELECT diesel_manage_updated_at('currency');
 SELECT diesel_manage_updated_at('pricing_config');
 SELECT diesel_manage_updated_at('ride_session');
 
--- Seed default currency (THB)
-INSERT INTO currency (code, name, symbol, coin_to_currency_rate, decimal_places, thousands_separator, decimal_separator, symbol_position, is_default)
-VALUES ('THB', 'Thai Baht', '฿', 1, 2, ',', '.', 'prefix', TRUE);
+-- Seed default currency (THB) with numeric code 764
+INSERT INTO currency (code, name, symbol, numeric_code, coin_to_currency_rate, decimal_places, thousands_separator, decimal_separator, symbol_position, is_default)
+VALUES ('THB', 'Thai Baht', '฿', 764, 1, 2, ',', '.', 'prefix', TRUE);
 
 -- Seed default pricing for THB (50/10/10 stored as Coins)
 -- Base: 50 THB = 5000 Coins

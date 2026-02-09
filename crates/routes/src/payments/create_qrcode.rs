@@ -3,10 +3,12 @@ use actix_web::web::{Data, Json};
 use actix_web::HttpResponse;
 use chrono::{Duration, Utc};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_db_schema::newtypes::Coin;
+use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestInsertForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -89,6 +91,9 @@ pub struct QrCodeData {
   #[serde(rename = "amount")]
   amount: String,
 
+  #[serde(rename = "currencyCode")]
+  currency_code: String,
+
   #[serde(rename = "currencyName")]
   currency_name: String,
 }
@@ -130,10 +135,42 @@ pub async fn create_qrcode(
   if let Some(ref data) = res.data {
     let expiry_time = Utc::now() + Duration::minutes(1);
 
+    // Parse the numeric currency code from SCB response (e.g., "764" for THB)
+    let numeric_code = match data.currency_code.parse::<i32>() {
+      Ok(code) => code,
+      Err(_) => {
+        return Err(FastJobErrorType::InvalidField(format!(
+          "Invalid currency code: {}",
+          data.currency_code
+        ))
+        .into());
+      }
+    };
+
+    // Get currency by numeric code from SCB response
+    let currency = match Currency::get_by_numeric_code(&mut context.pool(), numeric_code).await? {
+      Some(c) => c,
+      None => {
+        return Err(FastJobErrorType::InvalidField(format!(
+          "Unsupported currency code: {} ({})",
+          data.currency_code, data.currency_name
+        ))
+        .into());
+      }
+    };
+
+    // Parse the amount from SCB (in the selected currency, e.g., 100.00 THB)
+    let amount_currency = data.amount.parse().unwrap_or(0.0);
+
+    // Calculate how many Coins the user will get
+    let amount_coin = Coin(currency.currency_to_coins(amount_currency) as i32);
+
     let insert_form = TopUpRequestInsertForm {
       local_user_id: local_user_view.local_user.id,
-      amount: data.amount.parse().unwrap_or(0.0),
-      currency_name: data.currency_name.clone(),
+      amount: amount_currency,
+      currency_id: currency.id,
+      amount_coin,
+      conversion_rate_used: currency.coin_to_currency_rate,
       qr_id: data.qr_code_id.clone(),
       cs_ext_expiry_time: expiry_time,
       paid_at: None,

@@ -77,4 +77,20 @@ impl Currency {
 
     Ok(result)
   }
+
+  /// Find currency by ISO 4217 numeric currency code
+  /// Used for mapping payment gateway responses (SCB, etc.)
+  /// Example: 764 = THB, 360 = IDR, 704 = VND
+  pub async fn get_by_numeric_code(pool: &mut DbPool<'_>, numeric_code: i32) -> FastJobResult<Option<Self>> {
+    let conn = &mut get_conn(pool).await?;
+
+    let result = app_108jobs_db_schema_file::schema::currency::table
+      .filter(app_108jobs_db_schema_file::schema::currency::numeric_code.eq(numeric_code))
+      .first::<Self>(conn)
+      .await
+      .optional()
+      .map_err(|_| FastJobErrorType::DatabaseError)?;
+
+    Ok(result)
+  }
 }

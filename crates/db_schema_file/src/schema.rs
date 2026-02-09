@@ -1481,7 +1481,9 @@ diesel::table! {
         id -> Int4,
         local_user_id -> Int4,
         amount -> Float8,
-        currency_name -> Text,
+        currency_id -> Int4,
+        amount_coin -> Int4,
+        conversion_rate_used -> Int4,
         qr_id -> Text,
         cs_ext_expiry_time -> Timestamptz,
         status -> TopUpStatus,
@@ -1502,6 +1504,9 @@ diesel::table! {
         wallet_id -> Int4,
         user_bank_account_id -> Int4,
         amount -> Int4,
+        currency_id -> Int4,
+        amount_currency -> Float8,
+        conversion_rate_used -> Int4,
         status -> WithdrawStatus,
         reason -> Nullable<Text>,
         created_at -> Timestamptz,
@@ -1679,8 +1684,10 @@ diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
 diesel::joinable!(top_up_requests -> local_user (local_user_id));
+diesel::joinable!(top_up_requests -> currency (currency_id));
 diesel::joinable!(withdraw_requests -> local_user (local_user_id));
 diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id));
+diesel::joinable!(withdraw_requests -> currency (currency_id));
 diesel::joinable!(rider -> person (person_id));
 diesel::joinable!(delivery_details -> post (post_id));
 diesel::joinable!(delivery_location_current -> post (post_id));
@@ -1801,6 +1808,7 @@ diesel::table! {
         code -> Varchar,
         name -> Varchar,
         symbol -> Varchar,
+        numeric_code -> Int4,
         coin_to_currency_rate -> Int4,
         decimal_places -> Int4,
         thousands_separator -> Varchar,

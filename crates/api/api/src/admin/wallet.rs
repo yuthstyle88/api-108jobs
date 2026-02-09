@@ -7,6 +7,7 @@ use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUp
 use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use app_108jobs_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema_file::enums::TopUpStatus;
 use app_108jobs_db_schema_file::enums::WithdrawStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
@@ -15,7 +16,7 @@ use app_108jobs_db_views_wallet::api::{
   ListTopUpRequestResponse, ListWithdrawRequestQuery, ListWithdrawRequestResponse,
   RejectWithdrawalRequest,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use uuid::Uuid;
 
 pub async fn admin_list_top_up_requests(
@@ -38,6 +39,19 @@ pub async fn admin_top_up_wallet(
   // Check if the user is admin
   is_admin(&local_user_view)?;
 
+  // Get the TopUpRequest to find the amount_coin
+  let topup_request = TopUpRequest::get_by_qr_id(&mut context.pool(), &data.qr_id).await?;
+
+  // Check if already transferred
+  if topup_request.transferred {
+    return Err(FastJobErrorType::InvalidField("This top-up request has already been processed".to_string()).into());
+  }
+
+  // Check if payment was successful
+  if topup_request.status != TopUpStatus::Success {
+    return Err(FastJobErrorType::InvalidField("Top-up request is not in Success status".to_string()).into());
+  }
+
   let site_config = context.site_config().get().await?;
   let coin_id = site_config
     .site_view
@@ -46,19 +60,22 @@ pub async fn admin_top_up_wallet(
     .unwrap_or(CoinId(1));
   let platform_wallet_id = site_config
     .admins
-    .first()
+    .get(0)
     .expect("At least one admin must exist to perform admin wallet operations")
     .person
     .wallet_id;
 
   let target_wallet = WalletModel::get_by_user(&mut context.pool(), data.target_user_id).await?;
 
+  // Use the amount_coin stored in the TopUpRequest (calculated at QR creation time)
+  let amount_coin = topup_request.amount_coin;
+
   let form = WalletTransactionInsertForm {
     wallet_id: target_wallet.id,
     reference_type: "admin_top_up".to_string(),
     reference_id: 0,
     kind: TxKind::Deposit,
-    amount: data.amount,
+    amount: amount_coin,
     description: data.reason.clone(),
     counter_user_id: Some(local_user_view.local_user.id),
     idempotency_key: Uuid::new_v4().to_string(),
@@ -84,7 +101,7 @@ pub async fn admin_top_up_wallet(
   Ok(Json(AdminWalletOperationResponse {
     wallet_id: wallet.id,
     new_balance: wallet.balance_total,
-    operation_amount: data.amount,
+    operation_amount: amount_coin,
     reason: data.reason.clone(),
     success: true,
   }))
@@ -107,7 +124,7 @@ pub async fn admin_withdraw_wallet(
     .unwrap_or(CoinId(1));
   let platform_wallet_id = site_config
     .admins
-    .first()
+    .get(0)
     .expect("At least one admin must exist to perform admin wallet operations")
     .person
     .wallet_id;

@@ -1,4 +1,4 @@
-use crate::newtypes::{LocalUserId, TopUpRequestId};
+use crate::newtypes::{Coin, CurrencyId, LocalUserId, TopUpRequestId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::enums::TopUpStatus;
@@ -23,7 +23,9 @@ pub struct TopUpRequest {
   pub id: TopUpRequestId,
   pub local_user_id: LocalUserId,
   pub amount: f64,
-  pub currency_name: String,
+  pub currency_id: CurrencyId,
+  pub amount_coin: Coin,
+  pub conversion_rate_used: i32,
   pub qr_id: String,
   pub cs_ext_expiry_time: DateTime<Utc>,
   pub status: TopUpStatus,
@@ -42,7 +44,9 @@ pub struct TopUpRequest {
 pub struct TopUpRequestInsertForm {
   pub local_user_id: LocalUserId,
   pub amount: f64,
-  pub currency_name: String,
+  pub currency_id: CurrencyId,
+  pub amount_coin: Coin,
+  pub conversion_rate_used: i32,
   pub qr_id: String,
   pub cs_ext_expiry_time: DateTime<Utc>,
   pub paid_at: Option<DateTime<Utc>>,

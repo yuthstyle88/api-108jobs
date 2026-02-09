@@ -61,6 +61,7 @@ pub async fn admin_create_currency(
     code: data.code.clone(),
     name: data.name.clone(),
     symbol: data.symbol.clone(),
+    numeric_code: data.numeric_code,
     coin_to_currency_rate: data.coin_to_currency_rate,
     decimal_places: data.decimal_places,
     thousands_separator: data.thousands_separator.clone(),
@@ -104,6 +105,7 @@ pub async fn admin_update_currency(
   let form = CurrencyUpdateForm {
     name: data.name.clone(),
     symbol: data.symbol.clone(),
+    numeric_code: data.numeric_code,
     coin_to_currency_rate: data.coin_to_currency_rate,
     decimal_places: data.decimal_places,
     thousands_separator: data.thousands_separator.clone(),

@@ -22,6 +22,10 @@ pub struct Currency {
   pub name: String,
   pub symbol: String,
 
+  // ISO 4217 numeric currency code (for payment gateway mapping)
+  // 764 = THB, 360 = IDR, 704 = VND, etc.
+  pub numeric_code: i32,
+
   // Conversion rate: how many currency units = 1 Coin
   // THB: 1 (1 Coin = 0.01 THB, so 100 Coins = 1 THB)
   // IDR: 100 (1 Coin = 100 Rupiah)
@@ -52,6 +56,7 @@ pub struct CurrencyInsertForm {
   pub code: String,
   pub name: String,
   pub symbol: String,
+  pub numeric_code: i32,
   pub coin_to_currency_rate: i32,
   pub decimal_places: i32,
   pub thousands_separator: String,
@@ -68,6 +73,7 @@ pub struct CurrencyInsertForm {
 pub struct CurrencyUpdateForm {
   pub name: Option<String>,
   pub symbol: Option<String>,
+  pub numeric_code: Option<i32>,
   pub coin_to_currency_rate: Option<i32>,
   pub decimal_places: Option<i32>,
   pub thousands_separator: Option<String>,
@@ -89,6 +95,7 @@ pub struct CurrencyInfo {
   pub code: String,
   pub name: String,
   pub symbol: String,
+  pub numeric_code: i32,
   pub coin_to_currency_rate: i32,
   pub decimal_places: i32,
   pub thousands_separator: String,
@@ -104,6 +111,7 @@ impl From<Currency> for CurrencyInfo {
       code: c.code,
       name: c.name,
       symbol: c.symbol,
+      numeric_code: c.numeric_code,
       coin_to_currency_rate: c.coin_to_currency_rate,
       decimal_places: c.decimal_places,
       thousands_separator: c.thousands_separator,

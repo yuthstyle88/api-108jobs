@@ -1,4 +1,4 @@
-use crate::newtypes::{BankAccountId, Coin, LocalUserId, WalletId, WithdrawRequestId};
+use crate::newtypes::{BankAccountId, Coin, CurrencyId, LocalUserId, WalletId, WithdrawRequestId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::enums::WithdrawStatus;
@@ -27,6 +27,9 @@ pub struct WithdrawRequest {
   pub wallet_id: WalletId,
   pub user_bank_account_id: BankAccountId,
   pub amount: Coin,
+  pub currency_id: CurrencyId,
+  pub amount_currency: f64,
+  pub conversion_rate_used: i32,
   pub status: WithdrawStatus,
   pub reason: Option<String>,
   pub created_at: DateTime<Utc>,
@@ -44,6 +47,9 @@ pub struct WithdrawRequestInsertForm {
   pub wallet_id: WalletId,
   pub user_bank_account_id: BankAccountId,
   pub amount: Coin,
+  pub currency_id: CurrencyId,
+  pub amount_currency: f64,
+  pub conversion_rate_used: i32,
   pub reason: Option<String>,
 }
 

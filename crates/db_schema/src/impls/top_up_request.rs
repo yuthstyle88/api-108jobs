@@ -46,6 +46,15 @@ impl Crud for TopUpRequest {
 
 #[cfg(feature = "full")]
 impl TopUpRequest {
+  pub async fn get_by_qr_id(pool: &mut DbPool<'_>, qr_id: &str) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    top_up_requests::table
+      .filter(top_up_requests::qr_id.eq(qr_id))
+      .first::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)
+  }
+
   pub async fn update_by_qr_id(
     pool: &mut DbPool<'_>,
     qr_id: String,

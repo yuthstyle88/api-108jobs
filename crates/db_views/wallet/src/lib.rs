@@ -7,6 +7,9 @@ use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod validator;
+pub use validator::ValidSubmitWithdrawRequest;
+pub use api::{ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest};
 #[cfg(feature = "full")]
 pub mod impls;
 

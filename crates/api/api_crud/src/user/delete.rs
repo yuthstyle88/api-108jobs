@@ -13,11 +13,11 @@ use app_108jobs_db_schema::source::{
   person::Person,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{DeleteAccount, SuccessResponse};
+use app_108jobs_db_views_site::api::{DeleteAccountRequest, SuccessResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_account(
-  data: Json<DeleteAccount>,
+  data: Json<DeleteAccountRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {

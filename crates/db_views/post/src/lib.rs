@@ -31,6 +31,7 @@ use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PersonId, PostId};
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

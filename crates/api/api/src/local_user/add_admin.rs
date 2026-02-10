@@ -9,14 +9,12 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_person::{
-  api::{AddAdmin, AddAdminResponse},
-  impls::PersonQuery,
-};
+use app_108jobs_db_views_person::api::AddAdminRequest;
+use app_108jobs_db_views_person::{api::AddAdminResponse, impls::PersonQuery};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn add_admin(
-  data: Json<AddAdmin>,
+  data: Json<AddAdminRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<AddAdminResponse>> {

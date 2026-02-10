@@ -14,11 +14,11 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::api::{DeletePost, PostResponse};
+use app_108jobs_db_views_post::api::{DeletePostRequest, PostResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_post(
-  data: Json<DeletePost>,
+  data: Json<DeletePostRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {

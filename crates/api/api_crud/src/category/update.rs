@@ -17,7 +17,7 @@ use app_108jobs_db_schema::{
   traits::Crud,
   utils::diesel_string_update,
 };
-use app_108jobs_db_views_category::api::{CategoryResponse, EditCategory};
+use app_108jobs_db_views_category::api::{CategoryResponse, EditCategoryRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
@@ -25,7 +25,7 @@ use app_108jobs_utils::{
 };
 
 pub async fn update_category(
-  data: Json<EditCategory>,
+  data: Json<EditCategoryRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CategoryResponse>> {

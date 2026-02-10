@@ -13,14 +13,12 @@ use app_108jobs_db_schema::{
   traits::Bannable,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_person::{
-  api::{BanPerson, BanPersonResponse},
-  PersonView,
-};
+use app_108jobs_db_views_person::api::BanPersonRequest;
+use app_108jobs_db_views_person::{api::BanPersonResponse, PersonView};
 use app_108jobs_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_site(
-  data: Json<BanPerson>,
+  data: Json<BanPersonRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BanPersonResponse>> {

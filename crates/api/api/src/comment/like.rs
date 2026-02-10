@@ -13,8 +13,9 @@ use app_108jobs_db_schema::{
   },
   traits::Likeable,
 };
+use app_108jobs_db_views_comment::api::CreateCommentLikeRequest;
 use app_108jobs_db_views_comment::{
-  api::{CommentResponse, CreateCommentLike},
+  api::CommentResponse,
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -22,7 +23,7 @@ use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 
 pub async fn like_comment(
-  data: Json<CreateCommentLike>,
+  data: Json<CreateCommentLikeRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {

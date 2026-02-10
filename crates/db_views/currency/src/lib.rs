@@ -5,6 +5,7 @@ use app_108jobs_db_schema::source::local_user::LocalUser;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod validator;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

@@ -15,7 +15,7 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_comment::{
-  api::{CommentResponse, EditComment},
+  api::{CommentResponse, EditCommentRequest},
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -25,7 +25,7 @@ use app_108jobs_utils::{
 };
 
 pub async fn update_comment(
-  data: Json<EditComment>,
+  data: Json<EditCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {

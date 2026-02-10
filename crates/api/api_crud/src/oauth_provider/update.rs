@@ -9,11 +9,11 @@ use app_108jobs_db_schema::{
   utils::diesel_required_string_update,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::EditOAuthProvider;
+use app_108jobs_db_views_site::api::EditOAuthProviderRequest;
 use app_108jobs_utils::error::FastJobError;
 
 pub async fn update_oauth_provider(
-  data: Json<EditOAuthProvider>,
+  data: Json<EditOAuthProviderRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> Result<Json<OAuthProvider>, FastJobError> {

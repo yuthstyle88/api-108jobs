@@ -1,19 +1,12 @@
 use crate::PostView;
 use app_108jobs_db_schema::{
-  newtypes::{
-    CategoryId,
-    Coin,
-    CommentId,
-    DbUrl,
-    LanguageId,
-    PaginationCursor,
-    PostId,
-    TagId,
-  },
+  newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
   source::delivery_details::DeliveryDetailsPayload,
   PostFeatureType,
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType};
+use app_108jobs_db_schema_file::enums::{
+  IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType,
+};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
 use chrono::{DateTime, Utc};
@@ -91,10 +84,19 @@ pub struct CreatePostRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Like a post.
 #[serde(rename_all = "camelCase")]
-pub struct CreatePostLike {
+pub struct CreatePostLikeRequest {
   pub post_id: PostId,
   /// Score must be -1, 0, or 1.
   pub score: i16,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Delete a post.
+pub struct DeletePost {
+  pub post_id: PostId,
+  pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -102,7 +104,7 @@ pub struct CreatePostLike {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete a post.
 #[serde(rename_all = "camelCase")]
-pub struct DeletePost {
+pub struct DeletePostRequest {
   pub post_id: PostId,
   pub deleted: bool,
 }
@@ -179,12 +181,21 @@ pub struct FeaturePost {
   pub feature_type: PostFeatureType,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Disable reply notifications for a post and all comments inside it
+pub struct UpdatePostNotifications {
+  pub post_id: PostId,
+  pub new_state: PostNotifications,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Disable reply notifications for a post and all comments inside it
 #[serde(rename_all = "camelCase")]
-pub struct UpdatePostNotifications {
+pub struct UpdatePostNotificationsRequest {
   pub post_id: PostId,
   pub new_state: PostNotifications,
 }

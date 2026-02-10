@@ -5,10 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 pub struct SubmitUserReviewForm {
     pub reviewee_id: PersonId,
     pub workflow_id: WorkflowId,
@@ -16,19 +15,17 @@ pub struct SubmitUserReviewForm {
     pub comment: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ValidSubmitUserReview(pub SubmitUserReviewForm);
-
-impl TryFrom<SubmitUserReviewForm> for ValidSubmitUserReview {
-    type Error = String;
-    fn try_from(value: SubmitUserReviewForm) -> Result<Self, Self::Error> {
-        if value.rating <= 0 && value.rating > 5 {
-            return Err("Invalid rating".to_string());
-        }
-        Ok(ValidSubmitUserReview(value))
-    }
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct SubmitUserReviewRequest {
+    pub reviewee_id: PersonId,
+    pub workflow_id: WorkflowId,
+    pub rating: i16,
+    pub comment: Option<String>,
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]

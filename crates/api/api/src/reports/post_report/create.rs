@@ -13,7 +13,7 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
 use app_108jobs_db_views_reports::{
-  api::{CreatePostReport, PostReportResponse},
+  api::{CreatePostReportRequest, PostReportResponse},
   PostReportView,
 };
 use app_108jobs_multilang::admin::send_new_report_email_to_admins;
@@ -21,7 +21,7 @@ use app_108jobs_utils::error::FastJobResult;
 
 /// Creates a post report and notifies the moderators of the category
 pub async fn create_post_report(
-  data: Json<CreatePostReport>,
+  data: Json<CreatePostReportRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostReportResponse>> {

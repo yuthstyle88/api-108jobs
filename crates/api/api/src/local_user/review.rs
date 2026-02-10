@@ -4,24 +4,20 @@ use app_108jobs_db_schema::source::user_review::UserReview;
 use app_108jobs_db_schema::source::workflow::Workflow;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_user_review::api::{
-  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
-  ValidSubmitUserReview,
-};
+use app_108jobs_db_views_user_review::api::SubmitUserReviewRequest;
 use app_108jobs_db_views_user_review::UserReviewView;
+use app_108jobs_db_views_user_review::{
+  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewResponse,
+  ValidSubmitUserReviewRequest,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn submit_user_review(
-  data: Json<SubmitUserReviewForm>,
+  data: Json<SubmitUserReviewRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SubmitUserReviewResponse>> {
-  let validated: ValidSubmitUserReview = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(_msg) => {
-      return Err(FastJobErrorType::RatingMustBeBetween1And5.into());
-    }
-  };
+  let validated: ValidSubmitUserReviewRequest = data.into_inner().try_into()?;
   let reviewer_person_id = local_user_view.person.id;
   let reviewee_id = validated.0.reviewee_id;
   let workflow_id = validated.0.workflow_id;
@@ -66,7 +62,6 @@ pub async fn list_user_reviews(
     lim = 100;
   }
   let lim = Some(lim);
-
 
   let results = UserReviewView::list_for_user(
     &mut context.pool(),

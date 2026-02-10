@@ -4,12 +4,25 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Create a custom emoji.
+pub struct CreateCustomEmoji {
+  pub category: String,
+  pub shortcode: String,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub image_url: Url,
+  pub alt_text: String,
+  pub keywords: Vec<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Create a custom emoji.
-pub struct CreateCustomEmoji {
+pub struct CreateCustomEmojiRequest {
   pub category: String,
   pub shortcode: String,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
@@ -32,8 +45,21 @@ pub struct CustomEmojiResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Delete a custom emoji.
-pub struct DeleteCustomEmoji {
+pub struct DeleteCustomEmojiRequest {
   pub id: CustomEmojiId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Edit  a custom emoji.
+pub struct EditCustomEmoji {
+  pub id: CustomEmojiId,
+  pub category: String,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub image_url: Url,
+  pub alt_text: String,
+  pub keywords: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -41,7 +67,7 @@ pub struct DeleteCustomEmoji {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Edit  a custom emoji.
-pub struct EditCustomEmoji {
+pub struct EditCustomEmojiRequest {
   pub id: CustomEmojiId,
   pub category: String,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]

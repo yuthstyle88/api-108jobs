@@ -13,6 +13,21 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Create a new currency (admin only).
+pub struct CreateCurrencyRequest {
+  pub code: String,
+  pub name: String,
+  pub symbol: String,
+  pub numeric_code: i32,
+  pub coin_to_currency_rate: i32,
+  pub decimal_places: i32,
+  pub thousands_separator: String,
+  pub decimal_separator: String,
+  pub symbol_position: String,
+  pub is_default: bool,
+}
+
+/// Internal type for currency creation after validation
+#[derive(Debug, Clone)]
 pub struct CreateCurrency {
   pub code: String,
   pub name: String,
@@ -32,7 +47,7 @@ pub struct CreateCurrency {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Update a currency (admin only).
-pub struct UpdateCurrency {
+pub struct UpdateCurrencyRequest {
   pub currency_id: CurrencyId,
   pub name: Option<String>,
   pub symbol: Option<String>,
@@ -45,6 +60,23 @@ pub struct UpdateCurrency {
   pub is_active: Option<bool>,
   pub is_default: Option<bool>,
   pub reason: Option<String>, // Reason for rate change (if rate is being updated)
+}
+
+/// Internal type for currency update after validation
+#[derive(Debug, Clone)]
+pub struct UpdateCurrency {
+  pub currency_id: CurrencyId,
+  pub name: Option<String>,
+  pub symbol: Option<String>,
+  pub numeric_code: Option<i32>,
+  pub coin_to_currency_rate: Option<i32>,
+  pub decimal_places: Option<i32>,
+  pub thousands_separator: Option<String>,
+  pub decimal_separator: Option<String>,
+  pub symbol_position: Option<String>,
+  pub is_active: Option<bool>,
+  pub is_default: Option<bool>,
+  pub reason: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -85,6 +117,20 @@ pub struct CurrencyListResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Create a new pricing config (admin only).
+pub struct CreatePricingConfigRequest {
+  pub currency_id: CurrencyId,
+  pub name: String,
+  pub base_fare_coin: i32,
+  pub time_charge_per_minute_coin: i32,
+  pub minimum_charge_minutes: i32,
+  pub distance_charge_per_km_coin: i32,
+  pub accepts_cash: bool,
+  pub accepts_coin: bool,
+  pub is_active: bool,
+}
+
+/// Internal type for pricing config creation after validation
+#[derive(Debug, Clone)]
 pub struct CreatePricingConfig {
   pub currency_id: CurrencyId,
   pub name: String,
@@ -103,6 +149,20 @@ pub struct CreatePricingConfig {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Update a pricing config (admin only).
+pub struct UpdatePricingConfigRequest {
+  pub config_id: PricingConfigId,
+  pub name: Option<String>,
+  pub base_fare_coin: Option<i32>,
+  pub time_charge_per_minute_coin: Option<i32>,
+  pub minimum_charge_minutes: Option<i32>,
+  pub distance_charge_per_km_coin: Option<i32>,
+  pub accepts_cash: Option<bool>,
+  pub accepts_coin: Option<bool>,
+  pub is_active: Option<bool>,
+}
+
+/// Internal type for pricing config update after validation
+#[derive(Debug, Clone)]
 pub struct UpdatePricingConfig {
   pub config_id: PricingConfigId,
   pub name: Option<String>,

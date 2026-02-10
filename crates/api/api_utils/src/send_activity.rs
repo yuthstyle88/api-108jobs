@@ -1,19 +1,13 @@
 use crate::context::FastJobContext;
+use app_108jobs_db_schema::{
+  newtypes::{CategoryId, PersonId},
+  source::{category::Category, comment::Comment, person::Person, post::Post, site::Site},
+};
 use either::Either;
 use futures::future::BoxFuture;
-use app_108jobs_db_schema::{
-    newtypes::{CategoryId, PersonId},
-    source::{
-    comment::Comment,
-    category::Category,
-    person::Person,
-    post::Post,
-    site::Site,
-  },
-};
 
 use actix_web::web::Data;
-use app_108jobs_db_views_post::api::DeletePost;
+use app_108jobs_db_views_post::api::DeletePostRequest;
 use app_108jobs_utils::error::FastJobResult;
 use std::sync::{LazyLock, OnceLock};
 use tokio::{
@@ -35,7 +29,7 @@ pub static MATCH_OUTGOING_ACTIVITIES: OnceLock<MatchOutgoingActivitiesBoxed> = O
 pub enum SendActivityData {
   CreatePost(Post),
   UpdatePost(Post),
-  DeletePost(Post, Person, DeletePost),
+  DeletePost(Post, Person, DeletePostRequest),
   RemovePost {
     post: Post,
     moderator: Person,
@@ -89,7 +83,7 @@ pub enum SendActivityData {
     actor: Person,
     report_creator: Person,
     receiver: Either<Site, Category>,
-  }
+  },
 }
 
 // TODO: instead of static, move this into FastJobContext. make sure that stopping the process with
@@ -116,7 +110,10 @@ impl ActivityChannel {
     lock.recv().await
   }
 
-  pub fn submit_activity(data: SendActivityData, _context: &Data<FastJobContext>) -> FastJobResult<()> {
+  pub fn submit_activity(
+    data: SendActivityData,
+    _context: &Data<FastJobContext>,
+  ) -> FastJobResult<()> {
     // could do `ACTIVITY_CHANNEL.keepalive_sender.lock()` instead and get rid of weak_sender,
     // not sure which way is more efficient
     if let Some(sender) = ACTIVITY_CHANNEL.weak_sender.upgrade() {

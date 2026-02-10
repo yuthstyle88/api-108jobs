@@ -22,7 +22,7 @@ pub use app_108jobs_db_views_post::{
 pub mod actions {
   pub use app_108jobs_db_views_post::api::{
     CreatePost,
-    CreatePostLike,
+    CreatePostLikeRequest,
     DeletePost,
     EditPost,
     HidePost,

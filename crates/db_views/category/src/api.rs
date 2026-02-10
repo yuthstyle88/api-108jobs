@@ -83,10 +83,9 @@ pub struct CreateCategoryRequest {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 /// Create a tag for a category.
 pub struct CreateCategoryTag {
   pub category_id: CategoryId,
@@ -94,10 +93,20 @@ pub struct CreateCategoryTag {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Create a tag for a category.
+pub struct CreateCategoryTagRequest {
+  pub category_id: CategoryId,
+  pub display_name: String,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete your own category.
 pub struct DeleteCategory {
   pub category_id: CategoryId,
@@ -109,8 +118,43 @@ pub struct DeleteCategory {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Delete your own category.
+pub struct DeleteCategoryRequest {
+  pub category_id: CategoryId,
+  pub deleted: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Edit a category.
 pub struct EditCategory {
+  pub category_id: CategoryId,
+  /// The unique name.
+  pub name: Option<String>,
+  /// A longer title.
+  pub title: Option<String>,
+  /// A sidebar for the category in markdown.
+  pub sidebar: Option<String>,
+  /// A shorter, one line description of your category.
+  pub description: Option<String>,
+  /// Whether its an NSFW category.
+  pub self_promotion: Option<bool>,
+  /// Whether to restrict posting only to moderators.
+  pub posting_restricted_to_mods: Option<bool>,
+  pub discussion_languages: Option<Vec<LanguageId>>,
+  pub visibility: Option<CategoryVisibility>,
+  /// Whether its new or not.
+  pub is_new: Option<bool>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Edit a category.
+pub struct EditCategoryRequest {
   pub category_id: CategoryId,
   /// The unique name.
   pub name: Option<String>,
@@ -242,10 +286,9 @@ pub struct RemoveCategory {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 /// Update a category tag.
 pub struct UpdateCategoryTag {
   pub tag_id: TagId,
@@ -257,7 +300,27 @@ pub struct UpdateCategoryTag {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Update a category tag.
+pub struct UpdateCategoryTagRequest {
+  pub tag_id: TagId,
+  pub display_name: String,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete a category tag.
 pub struct DeleteCategoryTag {
+  pub tag_id: TagId,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Delete a category tag.
+pub struct DeleteCategoryTagRequest {
   pub tag_id: TagId,
 }

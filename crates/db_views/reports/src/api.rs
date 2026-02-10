@@ -28,15 +28,34 @@ pub struct CategoryReportResponse {
   pub category_report_view: CategoryReportView,
 }
 
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Report a comment.
+pub struct CreateCommentReport {
+  pub comment_id: CommentId,
+  pub reason: String,
+  pub violates_instance_rules: Option<bool>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Report a comment.
 #[serde(rename_all = "camelCase")]
-pub struct CreateCommentReport {
+pub struct CreateCommentReportRequest {
   pub comment_id: CommentId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Create a report for a category.
+pub struct CreateCategoryReport {
+  pub category_id: CategoryId,
+  pub reason: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
@@ -44,9 +63,19 @@ pub struct CreateCommentReport {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create a report for a category.
 #[serde(rename_all = "camelCase")]
-pub struct CreateCategoryReport {
+pub struct CreateCategoryReportRequest {
   pub category_id: CategoryId,
   pub reason: String,
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Create a post report.
+pub struct CreatePostReport {
+  pub post_id: PostId,
+  pub reason: String,
+  pub violates_instance_rules: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -54,7 +83,7 @@ pub struct CreateCategoryReport {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create a post report.
 #[serde(rename_all = "camelCase")]
-pub struct CreatePostReport {
+pub struct CreatePostReportRequest {
   pub post_id: PostId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,

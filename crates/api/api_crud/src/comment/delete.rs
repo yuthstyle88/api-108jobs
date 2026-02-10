@@ -9,15 +9,13 @@ use app_108jobs_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
 };
-use app_108jobs_db_views_comment::{
-  api::DeleteComment,
-  CommentView,
-};
+use app_108jobs_db_views_comment::api::DeleteCommentRequest;
+use app_108jobs_db_views_comment::{api::DeleteComment, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_comment(
-  data: Json<DeleteComment>,
+  data: Json<DeleteCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<DeleteComment>> {
@@ -59,7 +57,7 @@ pub async fn delete_comment(
     },
   )
   .await?;
-  
+
   ActivityChannel::submit_activity(
     SendActivityData::DeleteComment(
       updated_comment,
@@ -69,10 +67,8 @@ pub async fn delete_comment(
     &context,
   )?;
 
-  Ok(Json(
-    DeleteComment {
-      comment_id,
-      deleted: true,
-    }
-  ))
+  Ok(Json(DeleteComment {
+    comment_id,
+    deleted: true,
+  }))
 }

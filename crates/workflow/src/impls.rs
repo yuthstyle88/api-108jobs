@@ -12,7 +12,7 @@ use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::utils::{get_conn, DbPool};
 use app_108jobs_db_schema_file::enums::BillingStatus::QuotePendingReview;
 use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
-use app_108jobs_db_views_billing::api::ValidCreateInvoice;
+use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
 use app_108jobs_utils::error::FastJobErrorExt2;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use uuid::Uuid;
@@ -615,7 +615,7 @@ impl WorkflowService {
   pub async fn create_quotation(
     pool: &mut DbPool<'_>,
     freelancer_id: LocalUserId,
-    form: ValidCreateInvoice,
+    form: ValidCreateInvoiceRequest,
   ) -> FastJobResult<Billing> {
     let data = form.0.clone();
 

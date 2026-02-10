@@ -1,34 +1,17 @@
+use crate::newtypes::DbUrl;
+use crate::utils::functions::lower;
 use crate::{
-    newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
-    source::post::{
-    Post,
-    PostActions,
-    PostHideForm,
-    PostInsertForm,
-    PostLikeForm,
-    PostReadCommentsForm,
-    PostReadForm,
-    PostSavedForm,
-    PostUpdateForm,
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
+  source::post::{
+    Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadCommentsForm,
+    PostReadForm, PostSavedForm, PostUpdateForm,
   },
-    traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
-    utils::{
+  traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
+  utils::{
     functions::{coalesce, hot_rank, scaled_rank},
-    get_conn,
-    now,
-    uplete,
-    validate_like,
-    DbPool,
-    DELETED_REPLACEMENT_TEXT,
-    FETCH_LIMIT_MAX,
+    get_conn, now, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT, FETCH_LIMIT_MAX,
   },
 };
-use chrono::{DateTime, Utc};
-use diesel::{debug_query, dsl::{count, insert_into, not, update}, expression::SelectableHelper, BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, OptionalExtension, QueryDsl};
-use diesel::dsl::{exists, select};
-use diesel::pg::Pg;
-use diesel_async::RunQueryDsl;
-use tracing::log::debug;
 use app_108jobs_db_schema_file::{
   enums::PostNotifications,
   schema::{category, person, post, post_actions},
@@ -37,9 +20,19 @@ use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
+use chrono::{DateTime, Utc};
+use diesel::dsl::{exists, select};
+use diesel::pg::Pg;
+use diesel::{
+  debug_query,
+  dsl::{count, insert_into, not, update},
+  expression::SelectableHelper,
+  BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl,
+  NullableExpressionMethods, OptionalExtension, QueryDsl,
+};
+use diesel_async::RunQueryDsl;
+use tracing::log::debug;
 use url::Url;
-use crate::newtypes::DbUrl;
-use crate::utils::functions::lower;
 
 impl Crud for Post {
   type InsertForm = PostInsertForm;
@@ -54,9 +47,9 @@ impl Crud for Post {
     let sql_preview = debug_query::<Pg, _>(&query).to_string();
     debug!("SQL preview: {sql_preview}");
     let res = query
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntCreatePost);
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePost);
     res
   }
 
@@ -91,20 +84,19 @@ impl Post {
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(post::table)
-     .values(form)
-     .on_conflict(post::ap_id)
-     .filter_target(coalesce(post::updated_at, post::published_at).lt(timestamp))
-     .do_update()
-     .set(form)
-     .get_result::<Self>(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
+      .values(form)
+      .on_conflict(post::ap_id)
+      .filter_target(coalesce(post::updated_at, post::published_at).lt(timestamp))
+      .do_update()
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
-
   pub async fn list_featured_for_category(
-      pool: &mut DbPool<'_>,
-      the_category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    the_category_id: CategoryId,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     post::table
@@ -139,9 +131,9 @@ impl Post {
   }
 
   async fn creator_post_ids_in_category(
-      pool: &mut DbPool<'_>,
-      creator_id: PersonId,
-      category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    creator_id: PersonId,
+    category_id: CategoryId,
   ) -> FastJobResult<Vec<PostId>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -174,10 +166,10 @@ impl Post {
   }
 
   pub async fn update_removed_for_creator_and_category(
-      pool: &mut DbPool<'_>,
-      creator_id: PersonId,
-      category_id: CategoryId,
-      removed: bool,
+    pool: &mut DbPool<'_>,
+    creator_id: PersonId,
+    category_id: CategoryId,
+    removed: bool,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -234,14 +226,13 @@ impl Post {
     let conn = &mut get_conn(pool).await?;
     let object_id: DbUrl = object_id.into();
     post::table
-     .filter(post::ap_id.eq(object_id))
-     .filter(post::scheduled_publish_time_at.is_null())
-     .first(conn)
-     .await
-     .optional()
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .filter(post::ap_id.eq(object_id))
+      .filter(post::scheduled_publish_time_at.is_null())
+      .first(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
-
 
   pub async fn user_scheduled_post_count(
     person_id: PersonId,
@@ -317,13 +308,13 @@ impl Post {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
       post::table
-          .filter(lower(post::name).eq(name.to_lowercase()))
-          .filter(post::local.eq(true)),
+        .filter(lower(post::name).eq(name.to_lowercase()))
+        .filter(post::local.eq(true)),
     )))
-        .get_result::<bool>(conn)
-        .await?
-        .then_some(())
-        .ok_or(FastJobErrorType::PostNameAlreadyExists.into())
+    .get_result::<bool>(conn)
+    .await?
+    .then_some(())
+    .ok_or(FastJobErrorType::PostNameAlreadyExists.into())
   }
 }
 
@@ -376,9 +367,9 @@ impl Likeable for PostActions {
   }
 
   async fn remove_likes_in_category(
-      pool: &mut DbPool<'_>,
-      person_id: PersonId,
-      category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    person_id: PersonId,
+    category_id: CategoryId,
   ) -> FastJobResult<uplete::Count> {
     let post_ids = Post::creator_post_ids_in_category(pool, person_id, category_id).await?;
 
@@ -424,7 +415,10 @@ impl Readable for PostActions {
     Self::mark_many_as_read(pool, std::slice::from_ref(form)).await
   }
 
-  async fn mark_as_unread(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
+  async fn mark_as_unread(
+    pool: &mut DbPool<'_>,
+    form: &Self::Form,
+  ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
@@ -541,7 +535,10 @@ impl PostActions {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> FastJobResult<Self> {
+  pub async fn from_cursor(
+    cursor: &PaginationCursor,
+    pool: &mut DbPool<'_>,
+  ) -> FastJobResult<Self> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
@@ -579,31 +576,27 @@ impl PostActions {
 
 #[cfg(test)]
 mod tests {
+  use crate::newtypes::Coin;
   use crate::{
     source::{
-        comment::{Comment, CommentInsertForm, CommentUpdateForm},
-        category::{Category, CategoryInsertForm},
-        instance::Instance,
-        person::{Person, PersonInsertForm},
-        post::{
-        Post,
-        PostActions,
-        PostInsertForm,
-        PostLikeForm,
-        PostReadForm,
-        PostSavedForm,
+      category::{Category, CategoryInsertForm},
+      comment::{Comment, CommentInsertForm, CommentUpdateForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::{
+        Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm, PostSavedForm,
         PostUpdateForm,
       },
     },
     traits::{Crud, Likeable, Readable, Saveable},
     utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
   };
-  use chrono::DateTime;
+  use app_108jobs_db_schema_file::enums::PostKind;
   use app_108jobs_utils::error::FastJobResult;
+  use chrono::DateTime;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
-  use crate::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -625,23 +618,15 @@ mod tests {
 
     let inserted_category = Category::create(pool, &new_category).await?;
 
-    let new_post = PostInsertForm::new(
-      "A test post".into(),
-      inserted_person.id,
-      inserted_category.id,
-    );
+    let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
     let inserted_post = Post::create(pool, &new_post).await?;
 
-    let new_post2 = PostInsertForm::new(
-      "A test post 2".into(),
-      inserted_person.id,
-      inserted_category.id,
-    );
+    let new_post2 = PostInsertForm::new("A test post 2".into(), inserted_person.id);
     let inserted_post2 = Post::create(pool, &new_post2).await?;
 
     let new_scheduled_post = PostInsertForm {
       scheduled_publish_time_at: Some(DateTime::from_timestamp_nanos(i64::MAX)),
-      ..PostInsertForm::new("beans".into(), inserted_person.id, inserted_category.id)
+      ..PostInsertForm::new("beans".into(), inserted_person.id)
     };
     let inserted_scheduled_post = Post::create(pool, &new_scheduled_post).await?;
 
@@ -652,7 +637,7 @@ mod tests {
       body: None,
       alt_text: None,
       creator_id: inserted_person.id,
-      category_id: inserted_category.id,
+      category_id: Some(inserted_category.id),
       published_at: inserted_post.published_at,
       removed: false,
       locked: false,
@@ -684,9 +669,10 @@ mod tests {
       unresolved_report_count: 0,
       intended_use: Default::default(),
       job_type: Default::default(),
-      budget: 0.0,
+      budget: Coin(0),
       deadline: None,
       is_english_required: false,
+      post_kind: PostKind::Normal,
       pending: false,
     };
 
@@ -771,11 +757,7 @@ mod tests {
     );
     let inserted_category = Category::create(pool, &new_category).await?;
 
-    let new_post = PostInsertForm::new(
-      "A test post".into(),
-      inserted_person.id,
-      inserted_category.id,
-    );
+    let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
     let inserted_post = Post::create(pool, &new_post).await?;
 
     let comment_form = CommentInsertForm::new(
@@ -790,8 +772,7 @@ mod tests {
       inserted_post.id,
       "A test comment".into(),
     );
-    let inserted_child_comment =
-      Comment::create(pool, &child_comment_form).await?;
+    let inserted_child_comment = Comment::create(pool, &child_comment_form).await?;
 
     let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
 
@@ -870,17 +851,13 @@ mod tests {
     );
     let inserted_category = Category::create(pool, &new_category).await?;
 
-    let new_post = PostInsertForm::new(
-      "A test post".into(),
-      inserted_person.id,
-      inserted_category.id,
-    );
+    let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
     let inserted_post = Post::create(pool, &new_post).await?;
 
     let comment_form = CommentInsertForm::new(
       inserted_person.id,
       inserted_post.id,
-      "A test comment".into()
+      "A test comment".into(),
     );
 
     let inserted_comment = Comment::create(pool, &comment_form).await?;

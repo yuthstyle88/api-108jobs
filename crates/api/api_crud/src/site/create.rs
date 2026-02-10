@@ -26,7 +26,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::{
-  api::{CreateSite, SiteResponse},
+  api::{CreateSiteRequest, SiteResponse},
   SiteView,
 };
 use app_108jobs_utils::{
@@ -44,7 +44,7 @@ use app_108jobs_utils::{
 use url::Url;
 
 pub async fn create_site(
-  data: Json<CreateSite>,
+  data: Json<CreateSiteRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SiteResponse>> {
@@ -138,7 +138,7 @@ pub async fn create_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSite) -> FastJobResult<()> {
+fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSiteRequest) -> FastJobResult<()> {
   // Make sure the site hasn't already been set up...
   if local_site.site_setup {
     Err(FastJobErrorType::SiteAlreadyExists)?
@@ -182,7 +182,7 @@ mod tests {
   use crate::site::create::validate_create_payload;
   use app_108jobs_db_schema::source::local_site::LocalSite;
   use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use app_108jobs_db_views_site::api::CreateSite;
+  use app_108jobs_db_views_site::api::CreateSiteRequest;
   use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
@@ -197,7 +197,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           ..Default::default()
         },
@@ -212,7 +212,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("foo site_name"),
           ..Default::default()
         },
@@ -227,7 +227,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("zeta site_name"),
           slur_filter_regex: Some(String::from("(zeta|alpha)")),
           ..Default::default()
@@ -242,7 +242,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           default_post_listing_type: Some(ListingType::Subscribed),
           ..Default::default()
@@ -257,7 +257,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()
@@ -306,7 +306,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           ..Default::default()
         },
@@ -319,7 +319,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           sidebar: Some(String::new()),
           description: Some(String::new()),
@@ -341,7 +341,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("foo site_name"),
           slur_filter_regex: Some(String::new()),
           ..Default::default()
@@ -356,7 +356,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &CreateSite {
+        &CreateSiteRequest {
           name: String::from("site_name"),
           registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()

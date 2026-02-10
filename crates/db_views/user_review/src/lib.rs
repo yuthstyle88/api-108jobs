@@ -5,6 +5,11 @@ use app_108jobs_db_schema::source::workflow::Workflow;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod validator;
+pub use validator::ValidSubmitUserReviewRequest;
+pub use api::{
+  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
+};
 
 #[cfg(feature = "full")]
 pub mod impls;

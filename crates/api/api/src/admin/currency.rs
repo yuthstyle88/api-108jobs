@@ -1,13 +1,17 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::currency::{Currency, CurrencyInsertForm, CurrencyUpdateForm};
-use app_108jobs_db_schema::source::currency_rate_history::{CurrencyRateHistory, CurrencyRateHistoryInsertForm};
-use app_108jobs_db_schema::source::pricing_config::{PricingConfig, PricingConfigInsertForm, PricingConfigUpdateForm};
+use app_108jobs_db_schema::source::currency_rate_history::{
+  CurrencyRateHistory, CurrencyRateHistoryInsertForm,
+};
+use app_108jobs_db_schema::source::pricing_config::{
+  PricingConfig, PricingConfigInsertForm, PricingConfigUpdateForm,
+};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_currency::api::{
-  CreateCurrency, CurrencyListResponse, CurrencyResponse, CreatePricingConfig,
-  GetCurrency, ListPricingConfigs, PricingConfigListResponse,
-  PricingConfigResponse, UpdateCurrency, UpdatePricingConfig, GetPricingConfig,
+  CreateCurrencyRequest, CreatePricingConfigRequest, CurrencyListResponse, CurrencyResponse,
+  GetCurrency, GetPricingConfig, ListPricingConfigs, PricingConfigListResponse,
+  PricingConfigResponse, UpdateCurrencyRequest, UpdatePricingConfigRequest,
 };
 use app_108jobs_db_views_currency::{CurrencyView, PricingConfigView};
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -26,7 +30,10 @@ pub async fn admin_list_currencies(
 
   let currencies = Currency::list_all(&mut context.pool()).await?;
 
-  let views = currencies.into_iter().map(|c| CurrencyView { currency: c }).collect();
+  let views = currencies
+    .into_iter()
+    .map(|c| CurrencyView { currency: c })
+    .collect();
 
   Ok(Json(CurrencyListResponse { currencies: views }))
 }
@@ -46,7 +53,7 @@ pub async fn admin_get_currency(
 }
 
 pub async fn admin_create_currency(
-  data: Json<CreateCurrency>,
+  data: Json<CreateCurrencyRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CurrencyResponse>> {
@@ -80,7 +87,7 @@ pub async fn admin_create_currency(
 }
 
 pub async fn admin_update_currency(
-  data: Json<UpdateCurrency>,
+  data: Json<UpdateCurrencyRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CurrencyResponse>> {
@@ -176,7 +183,7 @@ pub async fn admin_get_pricing_config(
 }
 
 pub async fn admin_create_pricing_config(
-  data: Json<CreatePricingConfig>,
+  data: Json<CreatePricingConfigRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PricingConfigResponse>> {
@@ -209,7 +216,7 @@ pub async fn admin_create_pricing_config(
 }
 
 pub async fn admin_update_pricing_config(
-  data: Json<UpdatePricingConfig>,
+  data: Json<UpdatePricingConfigRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PricingConfigResponse>> {

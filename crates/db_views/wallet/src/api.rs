@@ -12,9 +12,16 @@ pub struct GetWallet {
   pub user_id: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 /// Update wallet balance.
 pub struct UpdateWallet {
+  pub amount: Coin,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+/// Update wallet balance.
+pub struct UpdateWalletRequest {
   pub amount: Coin,
 }
 
@@ -131,46 +138,6 @@ pub struct SubmitWithdrawRequest {
   pub amount: Coin,
   pub currency_id: CurrencyId,
   pub reason: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct ValidWithdrawRequest(pub SubmitWithdrawRequest);
-
-impl TryFrom<SubmitWithdrawRequest> for ValidWithdrawRequest {
-  type Error = String;
-
-  fn try_from(value: SubmitWithdrawRequest) -> Result<Self, Self::Error> {
-    // Validate wallet_id
-    if value.wallet_id.0 <= 0 {
-      return Err("Wallet ID is required and must be valid.".to_string());
-    }
-
-    // Validate bank_account_id
-    if value.bank_account_id.0 <= 0 {
-      return Err("Bank account ID is required and must be valid.".to_string());
-    }
-
-    // Validate amount
-    if value.amount <= 0 {
-      return Err("Withdrawal amount must be greater than zero.".to_string());
-    }
-
-    // Validate currency_id
-    if value.currency_id.0 <= 0 {
-      return Err("Currency ID is required and must be valid.".to_string());
-    }
-
-    // Validate reason
-    if value.reason.trim().is_empty() {
-      return Err("Reason cannot be empty.".to_string());
-    }
-
-    if value.reason.len() > 500 {
-      return Err("Reason is too long (max 500 characters).".to_string());
-    }
-
-    Ok(ValidWithdrawRequest(value))
-  }
 }
 
 #[skip_serializing_none]

@@ -1,5 +1,3 @@
-use crate::api::EditPost;
-use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
 use crate::{PostPreview, PostView};
 use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
 use app_108jobs_db_schema::{
@@ -36,9 +34,7 @@ use app_108jobs_db_schema_file::{
     rider,
   },
 };
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::settings::SETTINGS;
-use app_108jobs_utils::utils::validation::is_valid_post_title;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::JoinOnDsl;
 use diesel::{
   self, debug_query,
@@ -50,10 +46,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::{asc_if, SortDirection};
-use slug::slugify;
 use tracing::debug;
-#[cfg(feature = "full")]
-use url::Url;
 
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
@@ -294,11 +287,11 @@ impl PostView {
             assigned_rider_id: public.assigned_rider_id,
             assigned_at: public.assigned_at,
             assigned_by_person_id: None, // Sensitive
-            linked_comment_id: None, // Sensitive
+            linked_comment_id: None,     // Sensitive
             delivery_fee: public.delivery_fee,
             employer_confirmed_at: public.employer_confirmed_at,
             employer_wallet_transaction_id: None, // Sensitive
-            rider_wallet_transaction_id: None, // Sensitive
+            rider_wallet_transaction_id: None,    // Sensitive
             created_at: public.created_at,
             updated_at: public.updated_at,
           }
@@ -585,7 +578,10 @@ impl PostQuery<'_> {
           .or(post::creator_id.eq(person_id))
           .or(exists(
             rider::table.filter(
-              rider::id.nullable().eq(delivery_details::assigned_rider_id).and(rider::person_id.eq(person_id)),
+              rider::id
+                .nullable()
+                .eq(delivery_details::assigned_rider_id)
+                .and(rider::person_id.eq(person_id)),
             ),
           )),
       );
@@ -681,154 +677,6 @@ impl PostQuery<'_> {
       .clone()
       .list_inner(site, cursor_before_data, None, pool)
       .await
-  }
-}
-
-impl TryFrom<CreatePostRequest> for CreatePost {
-  type Error = FastJobError;
-  fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
-    is_valid_post_title(&data.name)?;
-    validate_job_update_fields(&data)?;
-    if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    let domain = SETTINGS.get_protocol_and_hostname();
-    let raw_url = format!("{}/post/{}", domain, slugify(data.name.clone()));
-    let url = Url::parse(&raw_url)?;
-
-    // Determine post kind, defaulting to Normal for backward compatibility
-    let post_kind = data.post_kind.unwrap_or(PostKind::Normal);
-
-    Ok(CreatePost {
-      name: data.name,
-      category_id: data.category_id,
-      url: data.url,
-      body: data.body,
-      alt_text: data.alt_text,
-      language_id: data.language_id,
-      custom_thumbnail: data.custom_thumbnail,
-      honeypot: None,
-      self_promotion: None,
-      tags: None,
-      scheduled_publish_time_at: None,
-      budget: data.budget,
-      deadline: data.deadline,
-      intended_use: data.intended_use,
-      job_type: data.job_type,
-      is_english_required: data.is_english_required,
-      ap_id: Some(url.into()),
-      post_kind,
-      delivery_details: data.delivery_details,
-    })
-  }
-}
-
-fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
-  // Validate budget (now required)
-  if data.budget <= 0 {
-    return Err(FastJobErrorType::InvalidField(
-      "budget must be greater than 0".to_string(),
-    ))?;
-  }
-
-  // Validate deadline: must be in the future, if set
-  if let Some(deadline) = data.deadline {
-    use chrono::Utc;
-    if deadline <= Utc::now() {
-      return Err(FastJobErrorType::InvalidField(
-        "deadline must be in the future".to_string(),
-      ))?;
-    }
-  }
-
-  // For non-delivery posts, category_id is required
-  if !matches!(data.post_kind, Some(PostKind::Delivery)) && data.category_id.is_none() {
-    return Err(FastJobErrorType::InvalidDeliveryPost)?;
-  }
-
-  // Delivery-specific validation (request level only)
-  if let Some(kind) = data.post_kind {
-    if matches!(kind, PostKind::Delivery) {
-      let dd = data
-        .delivery_details
-        .as_ref()
-        .ok_or(FastJobErrorType::InvalidDeliveryPost)?;
-      if dd.pickup_address.as_ref().map_or(true, |s| s.trim().is_empty())
-        || dd.dropoff_address.as_ref().map_or(true, |s| s.trim().is_empty())
-      {
-        return Err(FastJobErrorType::InvalidDeliveryPost)?;
-      }
-      if let Some(true) = dd.cash_on_delivery {
-        if dd.cod_amount.unwrap_or(0.0) <= 0.0 {
-          return Err(FastJobErrorType::InvalidField(
-            "cod_amount must be > 0 when cash_on_delivery is true".to_string(),
-          ))?;
-        }
-      }
-      // Basic sanity on lat/lng if present
-      let ok = |lat: f64, lng: f64| {
-        lat.is_finite() && lng.is_finite() && lat.abs() <= 90.0 && lng.abs() <= 180.0
-      };
-      if let (Some(lat), Some(lng)) = (dd.pickup_lat, dd.pickup_lng) {
-        if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
-            "invalid pickup lat/lng".to_string(),
-          ))?;
-        }
-      }
-      if let (Some(lat), Some(lng)) = (dd.dropoff_lat, dd.dropoff_lng) {
-        if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
-            "invalid dropoff lat/lng".to_string(),
-          ))?;
-        }
-      }
-    } else {
-      if data.delivery_details.is_some() {
-        return Err(FastJobErrorType::InvalidField(
-          "delivery_details not allowed for Normal post".to_string(),
-        ))?;
-      }
-    }
-  }
-  Ok(())
-}
-
-impl TryFrom<EditPostRequest> for EditPost {
-  type Error = FastJobError;
-  fn try_from(data: EditPostRequest) -> Result<Self, Self::Error> {
-    if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    Ok(EditPost {
-      post_id: data.post_id,
-      category_id: data.category_id,
-      name: data.name,
-      url: data.url,
-      body: data.body,
-      alt_text: data.alt_text,
-      language_id: data.language_id,
-      custom_thumbnail: data.custom_thumbnail,
-      self_promotion: None,
-      tags: None,
-      scheduled_publish_time_at: None,
-      budget: data.budget,
-      deadline: data.deadline,
-      intended_use: data.intended_use,
-      job_type: data.job_type,
-      is_english_required: data.is_english_required,
-      delivery_details: data.delivery_details,
-    })
   }
 }
 
@@ -988,10 +836,7 @@ mod tests {
 
       let post_from_blocked_person = PostInsertForm {
         language_id: Some(LanguageId(1)),
-        ..PostInsertForm::new(
-          POST_BY_BLOCKED_PERSON.to_string(),
-          inserted_john_person.id,
-        )
+        ..PostInsertForm::new(POST_BY_BLOCKED_PERSON.to_string(), inserted_john_person.id)
       };
       Post::create(pool, &post_from_blocked_person).await?;
 

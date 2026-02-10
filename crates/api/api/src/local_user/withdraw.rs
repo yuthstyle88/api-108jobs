@@ -6,23 +6,15 @@ use app_108jobs_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawR
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_db_views_wallet::api::{
-  ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest,
-  ValidWithdrawRequest,
-};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db_views_wallet::{ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest, ValidSubmitWithdrawRequest};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn submit_withdraw(
   data: Json<SubmitWithdrawRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
-  let validated: ValidWithdrawRequest = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => {
-      return Err(FastJobErrorType::InvalidField(msg.to_string()).into());
-    }
-  };
+  let validated: ValidSubmitWithdrawRequest = data.into_inner().try_into()?;
 
   // Get the currency to calculate the conversion rate
   let currency = Currency::read(&mut context.pool(), validated.0.currency_id).await?;

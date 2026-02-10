@@ -40,15 +40,35 @@ pub struct CreateCommentRequest {
   pub language_id: LanguageId,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 /// Like a comment.
 pub struct CreateCommentLike {
   pub comment_id: CommentId,
   /// Must be -1, 0, or 1 .
   pub score: i16,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Like a comment.
+pub struct CreateCommentLikeRequest {
+  pub comment_id: CommentId,
+  /// Must be -1, 0, or 1 .
+  pub score: i16,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Delete your own comment.
+pub struct DeleteComment {
+  pub comment_id: CommentId,
+  pub deleted: bool,
 }
 
 #[skip_serializing_none]
@@ -57,7 +77,7 @@ pub struct CreateCommentLike {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Delete your own comment.
-pub struct DeleteComment {
+pub struct DeleteCommentRequest {
   pub comment_id: CommentId,
   pub deleted: bool,
 }
@@ -186,12 +206,26 @@ pub struct SaveComment {
 }
 
 #[skip_serializing_none]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Edit a comment.
+pub struct EditComment {
+  pub comment_id: CommentId,
+  pub content: Option<String>,
+  pub language_id: Option<LanguageId>,
+  pub budget: i32,
+  pub working_days: i32,
+  pub brief_url: String,
+}
+
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Edit a comment.
-pub struct EditComment {
+pub struct EditCommentRequest {
   pub comment_id: CommentId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,

@@ -8,21 +8,22 @@ use app_108jobs_db_schema::source::user_bank_account::{
 };
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_bank_account::api::{
-  BankAccountForm, CreateBankAccount, DeleteBankAccount, GetBankAccounts, ListBankAccountsResponse,
-  SetDefaultBankAccount, UpdateBankAccount,
+  CreateBankAccountRequest, DeleteBankAccountRequest, GetBankAccounts, ListBankAccountsResponse,
+  SetDefaultBankAccount, UpdateBankAccountRequest,
 };
+use app_108jobs_db_views_bank_account::validator::ValidCreateBankAccountRequest;
 use app_108jobs_db_views_bank_account::BankAccountView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn create_bank_account(
-  data: Json<BankAccountForm>,
+  data: Json<CreateBankAccountRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
   let local_user_id = local_user_view.local_user.id;
-  let data: CreateBankAccount = data.into_inner().try_into()?;
+  let data: ValidCreateBankAccountRequest = data.into_inner().try_into()?;
 
   let count = BankAccount::count_for_user(&mut context.pool(), &local_user_id).await?;
   if count >= 3 {
@@ -30,23 +31,23 @@ pub async fn create_bank_account(
   }
 
   // Verify bank belongs to user's country
-  let bank = Bank::read(&mut context.pool(), data.bank_id)
+  let bank = Bank::read(&mut context.pool(), data.0.bank_id)
     .await
     .map_err(|_| FastJobErrorType::BankNotFound)?;
 
   ensure_bank_account_unique_for_user(
     &mut context.pool(),
     &local_user_id,
-    &data.bank_id,
-    &data.account_number,
+    &data.0.bank_id,
+    &data.0.account_number,
     None,
   )
   .await?;
 
-  let verification_image = data.verification_image.clone();
-  let bank_id = data.bank_id;
-  let account_number = data.account_number.clone();
-  let account_name = data.account_name.clone();
+  let verification_image = data.0.verification_image.clone();
+  let bank_id = data.0.bank_id;
+  let account_number = data.0.account_number.clone();
+  let account_name = data.0.account_name.clone();
   let mut form = UserBankAccountInsertForm {
     local_user_id: local_user_id.clone(),
     bank_id,
@@ -101,7 +102,7 @@ pub async fn set_default_bank_account(
 }
 
 pub async fn update_bank_account(
-  data: Json<UpdateBankAccount>,
+  data: Json<UpdateBankAccountRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<BankAccountOperationResponse>> {
@@ -153,7 +154,7 @@ pub async fn update_bank_account(
 }
 
 pub async fn delete_bank_account(
-  data: Json<DeleteBankAccount>,
+  data: Json<DeleteBankAccountRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {

@@ -17,13 +17,13 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_reports::{
-  api::{CategoryReportResponse, CreateCategoryReport},
+  api::{CategoryReportResponse, CreateCategoryReportRequest},
   CategoryReportView,
 };
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn create_category_report(
-  data: Json<CreateCategoryReport>,
+  data: Json<CreateCategoryReportRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CategoryReportResponse>> {

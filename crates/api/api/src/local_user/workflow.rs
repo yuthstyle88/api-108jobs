@@ -1,19 +1,29 @@
 use actix_web::web::{Data, Json, Query};
-use chrono::Utc;
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::source::billing::Billing;
 use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_db_schema::source::billing::Billing;
 use app_108jobs_db_schema::source::billing::WorkStep;
 use app_108jobs_db_schema::source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm};
 use app_108jobs_db_schema::source::workflow::{Workflow, WorkflowUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_views_billing::api::{ApproveQuotationForm, ApproveWorkForm, CancelJobForm, CreateInvoiceForm, CreateInvoiceResponse, GetBillingByRoomQuery, RequestRevisionForm, StartWorkflowForm, SubmitStartWorkForm, UpdateBudgetPlanInstallments, UpdateBudgetPlanInstallmentsResponse, ValidApproveQuotation, ValidApproveWork, ValidCancelJob, ValidCreateInvoice, ValidRequestRevision, ValidStartWorkflow, ValidSubmitStartWork, ValidUpdateBudgetPlanInstallments};
-use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use serde_json::json;
 use app_108jobs_db_schema_file::enums::BillingStatus;
 use app_108jobs_db_schema_file::enums::WorkFlowStatus;
+use app_108jobs_db_views_billing::api::{
+  ApproveQuotationRequest, ApproveWorkRequest, CancelJobRequest, CreateInvoiceRequest,
+  RequestRevisionRequest, StartWorkflowRequest, SubmitStartWorkRequest,
+  UpdateBudgetPlanInstallmentsRequest,
+};
+use app_108jobs_db_views_billing::{
+  CreateInvoiceResponse, GetBillingByRoomQuery, UpdateBudgetPlanInstallmentsResponse,
+  ValidApproveQuotationRequest, ValidApproveWorkRequest, ValidCancelJobRequest,
+  ValidCreateInvoiceRequest, ValidRequestRevisionRequest, ValidStartWorkflowRequest,
+  ValidSubmitStartWorkRequest, ValidUpdateBudgetPlanInstallmentsRequest,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_workflow::{WorkFlowOperationResponse, WorkflowService};
+use chrono::Utc;
+use serde_json::json;
 
 // Helper: update JobBudgetPlan.installments' status for a given workflow and seq
 async fn _update_job_plan_step_status(
@@ -51,8 +61,8 @@ async fn _update_job_plan_step_status(
     return Ok(());
   }
 
-  let phases_json = serde_json::to_value(&steps)
-    .map_err(|_| FastJobErrorType::InvalidInstallmentsSerialization)?;
+  let phases_json =
+    serde_json::to_value(&steps).map_err(|_| FastJobErrorType::InvalidInstallmentsSerialization)?;
   let update = JobBudgetPlanUpdateForm {
     installments: Some(phases_json),
     updated_at: Some(Some(Utc::now())),
@@ -65,22 +75,20 @@ async fn _update_job_plan_step_status(
 // Escrow-based billing workflow handlers
 
 pub async fn create_quotation(
-  data: Json<CreateInvoiceForm>,
+  data: Json<CreateInvoiceRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CreateInvoiceResponse>> {
   // Validate via TryFrom into a validated wrapper
-  let validated: ValidCreateInvoice = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => {
-      return Err(FastJobErrorType::InvalidField(msg).into());
-    }
-  };
+  let validated: ValidCreateInvoiceRequest = data.into_inner().try_into()?;
   let workflow_id = validated.0.workflow_id;
   // Create the invoice/billing record with detailed quotation fields
-  let billing =
-    WorkflowService::create_quotation(&mut context.pool(), local_user_view.local_user.id, validated)
-      .await?;
+  let billing = WorkflowService::create_quotation(
+    &mut context.pool(),
+    local_user_view.local_user.id,
+    validated,
+  )
+  .await?;
   let _ = Workflow::update_billing(&mut context.pool(), workflow_id, billing.id).await?;
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
@@ -95,17 +103,14 @@ pub async fn create_quotation(
 }
 
 pub async fn approve_quotation(
-  data: Json<ApproveQuotationForm>,
+  data: Json<ApproveQuotationRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   let employer_id = local_user_view.local_user.id;
 
   // Validate
-  let validated: ValidApproveQuotation = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidApproveQuotationRequest = data.into_inner().try_into()?;
 
   let form = validated.0;
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
@@ -127,14 +132,11 @@ pub async fn approve_quotation(
 }
 
 pub async fn submit_start_work(
-  data: Json<SubmitStartWorkForm>,
+  data: Json<SubmitStartWorkRequest>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidSubmitStartWork = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidSubmitStartWorkRequest = data.into_inner().try_into()?;
   let form = validated.0;
 
   // Apply transition: OrderApproved -> InProgress
@@ -151,14 +153,11 @@ pub async fn submit_start_work(
 }
 
 pub async fn submit_work(
-  data: Json<SubmitStartWorkForm>,
+  data: Json<SubmitStartWorkRequest>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidSubmitStartWork = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidSubmitStartWorkRequest = data.into_inner().try_into()?;
   let form = validated.0;
 
   // Apply transition: InProgress -> PendingEmployerReview
@@ -189,18 +188,14 @@ pub async fn submit_work(
 }
 
 pub async fn approve_work(
-  data: Json<ApproveWorkForm>,
+  data: Json<ApproveWorkRequest>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidApproveWork = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidApproveWorkRequest = data.into_inner().try_into()?;
   let form = validated.0;
   let workflow_id = form.workflow_id;
-  ChatRoomId::try_from(form.room_id)
-      .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
+  ChatRoomId::try_from(form.room_id).map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let billing_id = form.billing_id;
   let coin_id = context.get_coin_id().await?;
   let platform_wallet_id = context.get_platform_wallet_id().await?;
@@ -218,14 +213,11 @@ pub async fn approve_work(
 }
 
 pub async fn request_revision(
-  data: Json<RequestRevisionForm>,
+  data: Json<RequestRevisionRequest>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidRequestRevision = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidRequestRevisionRequest = data.into_inner().try_into()?;
   let form = validated.0;
   let workflow_id = form.workflow_id;
 
@@ -244,14 +236,14 @@ pub async fn request_revision(
 /// Replace the installments array for a job budget plan using items like
 /// [{ "idx": 1, "amount": 500000, "status": "paid" }, ...]
 pub async fn update_budget_plan_status(
-  data: Json<UpdateBudgetPlanInstallments>,
+  data: Json<UpdateBudgetPlanInstallmentsRequest>,
   context: Data<FastJobContext>,
   _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<UpdateBudgetPlanInstallmentsResponse>> {
   let post_id = data.post_id;
 
   // Validate via TryFrom into a validated wrapper
-  let validated: ValidUpdateBudgetPlanInstallments = data.into_inner().try_into()?;
+  let validated: ValidUpdateBudgetPlanInstallmentsRequest = data.into_inner().try_into()?;
 
   // Load plan
   let plan = match JobBudgetPlan::get_by_post_id(&mut context.pool(), post_id).await? {
@@ -281,25 +273,18 @@ pub async fn update_budget_plan_status(
 }
 
 pub async fn start_workflow(
-  data: Json<StartWorkflowForm>,
+  data: Json<StartWorkflowRequest>,
   context: Data<FastJobContext>,
   _local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidStartWorkflow = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidStartWorkflowRequest = data.into_inner().try_into()?;
   let form = validated.0;
-  let room_id = ChatRoomId::try_from(form.room_id)
-    .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
-  let wf = WorkflowService::start_workflow(
-    &mut context.pool(),
-    form.post_id,
-    form.seq_number,
-    room_id,
-  )
-  .await?;
+  let room_id =
+    ChatRoomId::try_from(form.room_id).map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
+  let wf =
+    WorkflowService::start_workflow(&mut context.pool(), form.post_id, form.seq_number, room_id)
+      .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.id.into(),
@@ -309,18 +294,16 @@ pub async fn start_workflow(
 }
 
 pub async fn cancel_job(
-  data: Json<CancelJobForm>,
+  data: Json<CancelJobRequest>,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
-  let validated: ValidCancelJob = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => return Err(FastJobErrorType::InvalidField(msg).into()),
-  };
+  let validated: ValidCancelJobRequest = data.into_inner().try_into()?;
   let form = validated.0;
 
   // Perform cancellation (allowed for any non-finalized status)
-  let _ = WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
+  let _ =
+    WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
   // Refund any reserved/outstanding funds back to payer (idempotent inside service)
   let _ = WorkflowService::refund_on_cancel(&mut context.pool(), form.workflow_id).await;
 
@@ -340,10 +323,10 @@ pub async fn get_billing_by_room(
   let mut pool = context.pool();
   let room_id = ChatRoomId::try_from(query.room_id.clone())
     .map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
-  let billing_status =  query.billing_status.unwrap_or(BillingStatus::QuotePendingReview);
-  let bill_opt =
-    Billing::get_by_room_and_status(&mut pool, room_id, billing_status)
-      .await?;
+  let billing_status = query
+    .billing_status
+    .unwrap_or(BillingStatus::QuotePendingReview);
+  let bill_opt = Billing::get_by_room_and_status(&mut pool, room_id, billing_status).await?;
 
   match bill_opt {
     Some(b) => {

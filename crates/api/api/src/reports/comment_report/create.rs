@@ -14,14 +14,14 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_reports::{
-  api::{CommentReportResponse, CreateCommentReport},
+  api::{CommentReportResponse, CreateCommentReportRequest},
   CommentReportView,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(
-  data: Json<CreateCommentReport>,
+  data: Json<CreateCommentReportRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentReportResponse>> {

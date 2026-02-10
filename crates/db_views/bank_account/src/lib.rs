@@ -1,6 +1,7 @@
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
 use diesel::{Queryable, Selectable};
 use app_108jobs_db_schema::source::{bank::Bank, user_bank_account::BankAccount};

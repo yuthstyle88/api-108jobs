@@ -25,7 +25,7 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::{
-  api::{EditSite, SiteResponse},
+  api::{EditSiteRequest, SiteResponse},
   SiteView,
 };
 use app_108jobs_utils::{
@@ -40,7 +40,7 @@ use app_108jobs_utils::{
 };
 
 pub async fn update_site(
-  data: Json<EditSite>,
+  data: Json<EditSiteRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SiteResponse>> {
@@ -176,7 +176,7 @@ pub async fn update_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSite) -> FastJobResult<()> {
+fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSiteRequest) -> FastJobResult<()> {
   // Check that the slur regex compiles, and return the regex if valid...
   // Prioritize using new slur regex from the request; if not provided, use the existing regex.
   let slur_regex = build_and_check_regex(
@@ -218,7 +218,7 @@ mod tests {
   use crate::site::update::validate_update_payload;
   use app_108jobs_db_schema::source::local_site::LocalSite;
   use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
-  use app_108jobs_db_views_site::api::EditSite;
+  use app_108jobs_db_views_site::api::EditSiteRequest;
   use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
@@ -233,7 +233,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("foo site_name")),
           ..Default::default()
         },
@@ -247,7 +247,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("zeta site_name")),
           slur_filter_regex: Some(String::from("(zeta|alpha)")),
           ..Default::default()
@@ -261,7 +261,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("site_name")),
           default_post_listing_type: Some(ListingType::Subscribed),
           ..Default::default()
@@ -275,7 +275,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("site_name")),
           registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()
@@ -320,7 +320,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite::default(),
+        &EditSiteRequest::default(),
       ),
       (
         "EditSite allows clearing and changing values",
@@ -329,7 +329,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("site_name")),
           sidebar: Some(String::new()),
           description: Some(String::new()),
@@ -350,7 +350,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("foo site_name")),
           slur_filter_regex: Some(String::new()),
           ..Default::default()
@@ -364,7 +364,7 @@ mod tests {
           registration_mode: RegistrationMode::Open,
           ..Default::default()
         },
-        &EditSite {
+        &EditSiteRequest {
           name: Some(String::from("site_name")),
           registration_mode: Some(RegistrationMode::RequireApplication),
           ..Default::default()

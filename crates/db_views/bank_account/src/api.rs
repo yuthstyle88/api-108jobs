@@ -1,7 +1,5 @@
 use crate::BankAccountView;
 use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType};
-use app_108jobs_utils::utils::validation::validate_bank_account;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -39,36 +37,9 @@ pub struct CreateBankAccount {
   pub verification_image: Option<String>, // Base64 encoded image or image path
 }
 
-impl TryFrom<BankAccountForm> for CreateBankAccount {
-  type Error = FastJobError;
-
-  fn try_from(data: BankAccountForm) -> Result<Self, Self::Error> {
-    // Validate account number presence and format by country
-    let acc_num = data.account_number.trim();
-    if acc_num.is_empty() || !validate_bank_account(&data.country_id, acc_num) {
-      return Err(FastJobErrorType::InvalidAccountNumber.into());
-    }
-
-    // Validate account name
-    if data.account_name.trim().is_empty() {
-      return Err(FastJobErrorType::InvalidAccountName.into());
-    }
-
-    Ok(CreateBankAccount {
-      bank_id: data.bank_id,
-      account_number: data.account_number,
-      account_name: data.account_name,
-      is_default: None,
-      verification_image: None,
-    })
-  }
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
 /// Create a new bank account for user.
 pub struct BankAccountForm {
   pub bank_id: BankId,
@@ -80,10 +51,24 @@ pub struct BankAccountForm {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Create a new bank account for user.
+pub struct CreateBankAccountRequest {
+  pub bank_id: BankId,
+  pub account_number: String,
+  pub account_name: String,
+  pub is_default: Option<bool>,
+  pub country_id: String,
+  pub verification_image: Option<String>, // Base64 encoded image or image path
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Update an existing bank account for user.
 pub struct UpdateBankAccount {
   pub bank_account_id: BankAccountId,
@@ -99,8 +84,32 @@ pub struct UpdateBankAccount {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
+/// Update an existing bank account for user.
+pub struct UpdateBankAccountRequest {
+  pub bank_account_id: BankAccountId,
+  pub bank_id: Option<BankId>,
+  pub account_number: Option<String>,
+  pub account_name: Option<String>,
+  pub is_default: Option<bool>,
+  pub verification_image: Option<String>, // Base64 encoded image or image path
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete bank account.
 pub struct DeleteBankAccount {
+  pub bank_account_id: BankAccountId,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Delete bank account.
+pub struct DeleteBankAccountRequest {
   pub bank_account_id: BankAccountId,
 }
 

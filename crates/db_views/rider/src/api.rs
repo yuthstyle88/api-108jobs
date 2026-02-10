@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateRiderRequest {
   pub vehicle_type: VehicleType,
@@ -16,7 +16,7 @@ pub struct CreateRiderRequest {
   pub license_expiry_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CreateRider {
   pub vehicle_type: VehicleType,
   pub vehicle_plate_number: Option<String>,

@@ -10,6 +10,7 @@ use app_108jobs_db_views_post::{
   api::{MarkPostAsRead, PostResponse},
   PostView,
 };
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn mark_post_as_read(
@@ -35,6 +36,25 @@ pub async fn mark_post_as_read(
     local_instance_id,
   )
   .await?;
+  // Determine viewer and load logistics
+  let is_admin = local_user_view.local_user.admin;
+  let viewer = if is_admin {
+    LogisticsViewer::Admin
+  } else if local_user_view.person.id == post_view.creator.id {
+    LogisticsViewer::Employer(post_view.creator.id)
+  } else {
+    LogisticsViewer::Public
+  };
 
-  Ok(Json(PostResponse { post_view }))
+  let logistics = logistics::load_post_logistics(
+    &mut context.pool(),
+    post_id,
+    post_view.post.post_kind,
+    post_view.creator.id,
+    viewer,
+    is_admin,
+  )
+  .await?;
+
+  Ok(Json(PostResponse { post_view, logistics }))
 }

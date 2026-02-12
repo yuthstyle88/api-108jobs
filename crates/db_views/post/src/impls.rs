@@ -718,7 +718,7 @@ mod tests {
     newtypes::LanguageId,
     source::{
       actor_language::LocalUserLanguage,
-      category::{category, categoryUpdateForm, CategoryInsertForm},
+      category::{category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,

@@ -1,4 +1,4 @@
-use crate::newtypes::{CurrencyId, LocalUserId};
+use crate::newtypes::{CurrencyId, CurrencyRateHistoryId, LocalUserId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::currency_rate_history;
@@ -17,7 +17,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct CurrencyRateHistory {
-  pub id: i32,
+  pub id: CurrencyRateHistoryId,
   pub currency_id: CurrencyId,
   pub old_rate: i32,
   pub new_rate: i32,

@@ -417,11 +417,13 @@ pub enum RiderVerificationStatus {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// Kind of post: Normal or Delivery
+/// Kind of post: Normal | Delivery | RideTaxi
 pub enum PostKind {
   #[default]
   Normal,
   Delivery,
+  /// On-demand ride / taxi session attached to a post
+  RideTaxi,
 }
 
 #[derive(

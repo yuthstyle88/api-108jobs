@@ -25,6 +25,7 @@ full = [
     "app_108jobs_db_schema_file/full",
     "app_108jobs_db_views_category/full",
     "app_108jobs_db_views_vote/full",
+    "app_108jobs_db_views_rider/full",
     "url",
 ]
 ts-rs = [
@@ -33,6 +34,7 @@ ts-rs = [
     "app_108jobs_db_schema_file/ts-rs",
     "app_108jobs_db_views_category/ts-rs",
     "app_108jobs_db_views_vote/ts-rs",
+    "app_108jobs_db_views_rider/ts-rs",
 ]
 
 [dependencies]
@@ -41,6 +43,7 @@ app_108jobs_utils = { workspace = true, optional = true }
 app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_db_views_category = { workspace = true }
 app_108jobs_db_views_vote = { workspace = true }
+app_108jobs_db_views_rider = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

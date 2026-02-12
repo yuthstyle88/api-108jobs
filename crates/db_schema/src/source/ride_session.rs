@@ -34,6 +34,7 @@ pub struct RideSession {
   pub pickup_note: Option<String>,
 
   // Payment method
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub payment_method: PaymentMethod,
   pub payment_status: String,
 

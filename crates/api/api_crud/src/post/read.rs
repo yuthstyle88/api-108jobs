@@ -17,6 +17,7 @@ use app_108jobs_db_views_post::{
   api::{GetPost, GetPostResponse},
   PostView,
 };
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_search_combined::impls::SearchCombinedQuery;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -106,9 +107,32 @@ pub async fn get_post(
   };
 
   // Return the jwt
-  Ok(Json(GetPostResponse {
-    post_view,
-    category_view,
-    cross_posts,
-  }))
+  // Compute viewer and load logistics view if applicable
+  let (viewer, is_admin) = if let Some(lu) = local_user.as_ref() {
+    if lu.admin {
+      (LogisticsViewer::Admin, true)
+    } else if let Some(p) = person_id {
+      if p == post_view.creator.id {
+        (LogisticsViewer::Employer(post_view.creator.id), false)
+      } else {
+        (LogisticsViewer::Public, false)
+      }
+    } else {
+      (LogisticsViewer::Public, false)
+    }
+  } else {
+    (LogisticsViewer::Public, false)
+  };
+
+  let logistics = logistics::load_post_logistics(
+    &mut context.pool(),
+    post_id,
+    post_view.post.post_kind,
+    post_view.creator.id,
+    viewer,
+    is_admin,
+  )
+  .await?;
+
+  Ok(Json(GetPostResponse { post_view, category_view, cross_posts, logistics }))
 }

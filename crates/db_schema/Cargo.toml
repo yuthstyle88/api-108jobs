@@ -39,14 +39,18 @@ full = [
     "app_108jobs_db_schema_file/full",
     "app_108jobs_db_schema_setup",
 ]
-ts-rs = ["dep:ts-rs"]
+ts-rs = [
+    "dep:ts-rs",
+    # Forward the ts-rs feature to dependent crates so their types also derive TS
+    "app_108jobs_db_schema_file/ts-rs",
+]
 
 [dependencies]
 chrono = { workspace = true }
 serde = { workspace = true }
 serde_with = { workspace = true }
-url = { workspace = true }
 strum = { workspace = true }
+url = { workspace = true }
 serde_json = { workspace = true, optional = true }
 app_108jobs_utils = { workspace = true, optional = true }
 app_108jobs_db_schema_file = { workspace = true }

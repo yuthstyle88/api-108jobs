@@ -1,11 +1,12 @@
 use crate::PostView;
+use crate::logistics::PostLogisticsView;
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
   source::delivery_details::DeliveryDetailsPayload,
   PostFeatureType,
 };
 use app_108jobs_db_schema_file::enums::{
-  IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType,
+  IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType, PaymentMethod,
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
@@ -42,9 +43,10 @@ pub struct CreatePost {
   pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
-  // NEW: kind and optional delivery payload (carried through to handler layer)
+  // NEW: kind and optional logistics payloads (carried through to handler layer)
   pub post_kind: PostKind,
   pub delivery_details: Option<DeliveryDetailsPayload>,
+  pub ride_payload: Option<RideSessionCreatePayload>,
 }
 
 #[skip_serializing_none]
@@ -77,6 +79,24 @@ pub struct CreatePostRequest {
   // NEW
   pub post_kind: Option<PostKind>,
   pub delivery_details: Option<DeliveryDetailsPayload>,
+  pub ride_payload: Option<RideSessionCreatePayload>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Minimal payload to create a RideSession attached to a post
+pub struct RideSessionCreatePayload {
+  pub pickup_address: String,
+  pub pickup_lat: Option<f64>,
+  pub pickup_lng: Option<f64>,
+  pub dropoff_address: String,
+  pub dropoff_lat: Option<f64>,
+  pub dropoff_lng: Option<f64>,
+  pub pickup_note: Option<String>,
+  pub payment_method: PaymentMethod,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -223,6 +243,8 @@ pub struct GetPostResponse {
   pub category_view: Option<CategoryView>,
   /// A list of cross-posts, or other times / communities this link has been posted to.
   pub cross_posts: Vec<PostView>,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
 }
 
 #[skip_serializing_none]
@@ -382,6 +404,8 @@ pub struct OpenGraphData {
 #[serde(rename_all = "camelCase")]
 pub struct PostResponse {
   pub post_view: PostView,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
 }
 
 #[skip_serializing_none]

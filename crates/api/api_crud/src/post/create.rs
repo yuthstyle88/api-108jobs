@@ -12,6 +12,7 @@ use app_108jobs_api_utils::{
   },
 };
 use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm};
+use app_108jobs_db_schema::source::ride_session::RideSessionInsertForm;
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
@@ -126,7 +127,7 @@ pub async fn create_post(
 
   let inserted_post = Post::create(&mut context.pool(), &post_form).await?;
 
-  // If this is a Delivery post, persist delivery_details in its table
+  // Persist logistics child based on post_kind
   if data.post_kind == PostKind::Delivery {
     let dd = data
       .delivery_details
@@ -173,6 +174,39 @@ pub async fn create_post(
     DeliveryDetails::create(&mut context.pool(), &dd_form)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
+  } else if data.post_kind == PostKind::RideTaxi {
+    let rp = data
+      .ride_payload
+      .as_ref()
+      .ok_or(FastJobErrorType::InvalidField(
+        "ride_payload required for RideTaxi post".to_string(),
+      ))?;
+
+    let session_form = RideSessionInsertForm {
+      post_id: inserted_post.id,
+      rider_id: None,
+      employer_id: local_user_view.local_user.id,
+      pricing_config_id: None,
+      pickup_address: rp.pickup_address.clone(),
+      pickup_lat: rp.pickup_lat,
+      pickup_lng: rp.pickup_lng,
+      dropoff_address: rp.dropoff_address.clone(),
+      dropoff_lat: rp.dropoff_lat,
+      dropoff_lng: rp.dropoff_lng,
+      pickup_note: rp.pickup_note.clone(),
+      payment_method: rp.payment_method,
+      payment_status: None,
+      status: Some(DeliveryStatus::Pending),
+      requested_at: Some(chrono::Utc::now()),
+      current_price_coin: Some(0),
+    };
+
+    app_108jobs_db_schema::source::ride_session::RideSession::create(
+      &mut context.pool(),
+      &session_form,
+    )
+    .await
+    .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
   }
 
   // Tags are only supported for posts with a category

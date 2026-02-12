@@ -1,0 +1,2 @@
+-- No-op: removing enum values in Postgres requires complex type recreation.
+-- This down migration intentionally does nothing.

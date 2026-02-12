@@ -18,6 +18,7 @@ use app_108jobs_db_views_category::api::ListCategoriesTreeResponse;
 use app_108jobs_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{api::PostResponse, PostView};
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
@@ -68,7 +69,28 @@ pub async fn build_post_response(
     local_user_view.person.instance_id,
   )
   .await?;
-  Ok(Json(PostResponse { post_view }))
+  // Determine viewer role for logistics projection
+  let is_admin = local_user.admin;
+  let viewer = if is_admin {
+    LogisticsViewer::Admin
+  } else if local_user_view.person.id == post_view.creator.id {
+    LogisticsViewer::Employer(post_view.creator.id)
+  } else {
+    LogisticsViewer::Public
+  };
+
+  // Load unified logistics view if applicable
+  let logistics = logistics::load_post_logistics(
+    &mut context.pool(),
+    post_id,
+    post_view.post.post_kind,
+    post_view.creator.id,
+    viewer,
+    is_admin,
+  )
+  .await?;
+
+  Ok(Json(PostResponse { post_view, logistics }))
 }
 
 pub fn build_category_tree(

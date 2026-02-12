@@ -142,7 +142,7 @@ pub struct DeliveryDetailsInsertForm {
   #[new(default)]
   pub rider_wallet_transaction_id: Option<i32>,
 
-  // Tracking state
+  // Tracking state,
   #[new(default)]
   pub status: Option<DeliveryStatus>,
 }
@@ -330,6 +330,7 @@ pub struct DeliveryDetailsPublic {
   pub package_size: Option<String>,
   pub fragile: bool,
   pub requires_signature: bool,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub vehicle_required: Option<VehicleType>,
 
   // Timing (safe to show)
@@ -386,6 +387,7 @@ pub struct DeliveryDetailsPrivate {
 
   pub cash_on_delivery: bool,
   pub cod_amount: Option<f64>,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub status: DeliveryStatus,
   pub cancellation_reason: Option<String>,
   pub assigned_rider_id: Option<RiderId>,

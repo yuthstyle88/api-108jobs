@@ -133,7 +133,7 @@ mod tests {
     );
     let category = Category::create(pool, &category_form).await?;
 
-    let form = PostInsertForm::new("A test post".into(), person.id, category.id);
+    let form = PostInsertForm::new("A test post".into(), person.id);
     let post = Post::create(pool, &form).await?;
 
     let report_form = PostReportForm {

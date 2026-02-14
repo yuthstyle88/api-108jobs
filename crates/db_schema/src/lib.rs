@@ -10,8 +10,6 @@ pub mod impls;
 pub mod newtypes;
 pub mod sensitive;
 #[cfg(feature = "full")]
-pub mod test_data;
-#[cfg(feature = "full")]
 pub mod aliases {
   use app_108jobs_db_schema_file::schema::{category_actions, instance_actions, local_user, person};
   diesel::alias!(

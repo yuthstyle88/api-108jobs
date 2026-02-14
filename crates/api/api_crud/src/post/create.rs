@@ -195,7 +195,7 @@ pub async fn create_post(
       dropoff_lng: rp.dropoff_lng,
       pickup_note: rp.pickup_note.clone(),
       payment_method: rp.payment_method,
-      payment_status: None,
+      payment_status: Some("Pending".to_string()),
       status: Some(DeliveryStatus::Pending),
       requested_at: Some(chrono::Utc::now()),
       current_price_coin: Some(0),

@@ -41,6 +41,7 @@ pub async fn search(
     budget_max: data.budget_max,
     requires_english: data.requires_english,
     post_kind: data.post_kind,
+    logistics_status: data.logistics_status,
     cursor_data,
     page_back: data.page_back,
     limit: data.limit,

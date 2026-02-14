@@ -248,7 +248,6 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
         category: Some(v.category),
         creator: v.item_creator,
         image_details: v.image_details,
-        delivery_details: v.delivery_details,
         category_actions: v.category_actions,
         post_actions: v.post_actions,
         person_actions: v.person_actions,

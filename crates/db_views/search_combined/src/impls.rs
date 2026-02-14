@@ -3,8 +3,8 @@ use crate::{
   SearchCombinedViewInternal,
 };
 use diesel::{
-  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgTextExpressionMethods, QueryDsl, SelectableHelper,
+  dsl::{exists, not}, BoolExpressionMethods, ExpressionMethods, JoinOnDsl,
+  NullableExpressionMethods, PgTextExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -22,8 +22,8 @@ use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor,
   },
   seconds_to_pg_interval, DbPool,
 }, SearchSortType::{self, *}, SearchType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind};
-use app_108jobs_db_schema_file::schema::{category, comment, delivery_details, person, post, search_combined};
+use app_108jobs_db_schema_file::enums::{DeliveryStatus, IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::schema::{category, comment, delivery_details, person, post, ride_session, search_combined};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
@@ -97,7 +97,6 @@ impl SearchCombinedViewInternal {
       .left_join(my_person_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(image_details_join())
-      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
 }
 
@@ -172,6 +171,8 @@ pub struct SearchCombinedQuery {
   pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<DeliveryStatus>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -261,12 +262,36 @@ impl SearchCombinedQuery {
       SearchType::Users => query.filter(is_person),
     };
 
-    // if has post kind -> Delivery else -> Normal
-    let kind = match self.post_kind {
-      Some(_) => PostKind::Delivery,
-      None => PostKind::Normal,
-    };
-    query = query.filter(post::post_kind.eq(kind));
+    // Filter by post_kind (Delivery, RideTaxi, Normal)
+    if let Some(kind) = self.post_kind {
+      query = query.filter(post::post_kind.eq(kind));
+    }
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = self.logistics_status {
+      match self.post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
+    }
 
     // Filter by the time range
     if let Some(time_range_seconds) = self.time_range_seconds {
@@ -345,7 +370,6 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         creator,
         creator_is_admin: v.item_creator_is_admin,
         image_details: v.image_details,
-        delivery_details: v.delivery_details,
         category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         person_actions: v.person_actions,

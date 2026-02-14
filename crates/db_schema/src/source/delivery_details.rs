@@ -189,7 +189,7 @@ pub struct DeliveryDetailsUpdateForm {
   pub requires_signature: Option<bool>,
 
   // Constraints
-  pub vehicle_required: Option<Option<app_108jobs_db_schema_file::enums::VehicleType>>,
+  pub vehicle_required: Option<Option<VehicleType>>,
   pub latest_pickup_at: Option<Option<DateTime<Utc>>>,
   pub latest_dropoff_at: Option<Option<DateTime<Utc>>>,
 

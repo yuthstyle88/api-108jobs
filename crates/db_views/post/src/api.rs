@@ -6,7 +6,8 @@ use app_108jobs_db_schema::{
   PostFeatureType,
 };
 use app_108jobs_db_schema_file::enums::{
-  IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType, PaymentMethod,
+  DeliveryStatus, IntendedUse, JobType, ListingType, PostKind, PostNotifications, PostSortType,
+  PaymentMethod,
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
@@ -279,6 +280,8 @@ pub struct GetPosts {
   pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<DeliveryStatus>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

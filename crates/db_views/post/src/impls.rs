@@ -31,11 +31,10 @@ use app_108jobs_db_schema_file::{
   },
   schema::{
     category, category_actions, delivery_details, local_user_language, person, post, post_actions,
-    rider,
+    ride_session,
   },
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::JoinOnDsl;
 use diesel::{
   self, debug_query,
   dsl::{exists, not},
@@ -83,7 +82,6 @@ impl PostView {
       .inner_join(person::table)
       .left_join(category::table) // Changed to left_join for nullable category_id (delivery posts)
       .left_join(image_details_join())
-      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
       .left_join(my_category_actions_join)
       .left_join(my_person_actions_join)
       .left_join(my_post_actions_join)
@@ -235,114 +233,6 @@ impl PostView {
 
     PaginationCursor::new(&prefixes_and_ids)
   }
-
-  /// Convert to a filtered view based on viewer authorization.
-  /// This returns a clone with delivery_details filtered to public/private view.
-  ///
-  /// # Arguments
-  /// * `viewer` - The viewer context (public, employer, rider, admin)
-  /// * `is_admin` - Whether the viewer is an admin
-  ///
-  /// # Returns
-  /// A cloned PostView with delivery_details appropriately filtered
-  #[cfg(feature = "full")]
-  pub fn with_filtered_delivery_details(
-    &self,
-    viewer: app_108jobs_db_schema::source::delivery_details::DeliveryDetailsViewer,
-    is_admin: bool,
-  ) -> Self {
-    use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsView};
-
-    let filtered_delivery_details = self.delivery_details.as_ref().map(|dd| {
-      // Convert to appropriate view based on authorization
-      match dd.to_view(viewer, self.creator.id, is_admin) {
-        DeliveryDetailsView::Public(public) => {
-          // Convert public back to DeliveryDetails (with sensitive fields as None)
-          DeliveryDetails {
-            id: public.id,
-            post_id: public.post_id,
-            pickup_address: public.pickup_address,
-            pickup_lat: public.pickup_lat,
-            pickup_lng: public.pickup_lng,
-            dropoff_address: public.dropoff_address,
-            dropoff_lat: public.dropoff_lat,
-            dropoff_lng: public.dropoff_lng,
-            package_description: public.package_description,
-            package_weight_kg: public.package_weight_kg,
-            package_size: public.package_size,
-            fragile: public.fragile,
-            requires_signature: public.requires_signature,
-            vehicle_required: public.vehicle_required,
-            latest_pickup_at: public.latest_pickup_at,
-            latest_dropoff_at: public.latest_dropoff_at,
-            // Sensitive fields set to None for public view
-            sender_name: None,
-            sender_phone: None,
-            receiver_name: None,
-            receiver_phone: None,
-            cash_on_delivery: public.cash_on_delivery,
-            cod_amount: None, // Sensitive
-            status: public.status,
-            cancellation_reason: None, // Sensitive
-            assigned_rider_id: public.assigned_rider_id,
-            assigned_at: public.assigned_at,
-            assigned_by_person_id: None, // Sensitive
-            linked_comment_id: None,     // Sensitive
-            delivery_fee: public.delivery_fee,
-            employer_confirmed_at: public.employer_confirmed_at,
-            employer_wallet_transaction_id: None, // Sensitive
-            rider_wallet_transaction_id: None,    // Sensitive
-            created_at: public.created_at,
-            updated_at: public.updated_at,
-          }
-        }
-        DeliveryDetailsView::Private(private) => {
-          // Private view contains all data
-          DeliveryDetails {
-            id: private.id,
-            post_id: private.post_id,
-            pickup_address: private.pickup_address,
-            pickup_lat: private.pickup_lat,
-            pickup_lng: private.pickup_lng,
-            dropoff_address: private.dropoff_address,
-            dropoff_lat: private.dropoff_lat,
-            dropoff_lng: private.dropoff_lng,
-            package_description: private.package_description,
-            package_weight_kg: private.package_weight_kg,
-            package_size: private.package_size,
-            fragile: private.fragile,
-            requires_signature: private.requires_signature,
-            vehicle_required: private.vehicle_required,
-            latest_pickup_at: private.latest_pickup_at,
-            latest_dropoff_at: private.latest_dropoff_at,
-            sender_name: private.sender_name,
-            sender_phone: private.sender_phone,
-            receiver_name: private.receiver_name,
-            receiver_phone: private.receiver_phone,
-            cash_on_delivery: private.cash_on_delivery,
-            cod_amount: private.cod_amount,
-            status: private.status,
-            cancellation_reason: private.cancellation_reason,
-            assigned_rider_id: private.assigned_rider_id,
-            assigned_at: private.assigned_at,
-            assigned_by_person_id: private.assigned_by_person_id,
-            linked_comment_id: private.linked_comment_id,
-            delivery_fee: private.delivery_fee,
-            employer_confirmed_at: private.employer_confirmed_at,
-            employer_wallet_transaction_id: private.employer_wallet_transaction_id,
-            rider_wallet_transaction_id: private.rider_wallet_transaction_id,
-            created_at: private.created_at,
-            updated_at: private.updated_at,
-          }
-        }
-      }
-    });
-
-    Self {
-      delivery_details: filtered_delivery_details,
-      ..self.clone()
-    }
-  }
 }
 
 #[derive(Clone, Default)]
@@ -364,6 +254,8 @@ pub struct PostQuery<'a> {
   pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<DeliveryStatus>,
   pub cursor_data: Option<Post>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -442,12 +334,36 @@ impl PostQuery<'_> {
       .limit(limit)
       .into_boxed();
 
-    // if has post kind -> Delivery else -> Normal
-    let kind = match o.post_kind {
-      Some(_) => PostKind::Delivery,
-      None => PostKind::Normal,
-    };
-    query = query.filter(post::post_kind.eq(kind));
+    // Filter by post_kind (Delivery, RideTaxi, Normal)
+    if let Some(kind) = o.post_kind {
+      query = query.filter(post::post_kind.eq(kind));
+    }
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = o.logistics_status {
+      match o.post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
+    }
 
     // hide posts from deleted communities
     query = query.filter(category::deleted.eq(false));
@@ -565,29 +481,6 @@ impl PostQuery<'_> {
         .filter(category::removed.eq(false))
         .filter(category::local_removed.eq(false))
         .filter(post::removed.eq(false));
-    }
-
-    // Hide assigned/in-progress delivery posts from public listings
-    // Only show Pending deliveries to public
-    // Show all deliveries to the employer (creator) and the assigned rider
-    if let Some(person_id) = my_person_id {
-      // User is logged in - show assigned/in-progress deliveries only if they are the creator or assigned rider
-      query = query.filter(
-        delivery_details::status
-          .eq(DeliveryStatus::Pending)
-          .or(post::creator_id.eq(person_id))
-          .or(exists(
-            rider::table.filter(
-              rider::id
-                .nullable()
-                .eq(delivery_details::assigned_rider_id)
-                .and(rider::person_id.eq(person_id)),
-            ),
-          )),
-      );
-    } else {
-      // Not logged in - only show pending (unassigned) deliveries
-      query = query.filter(delivery_details::status.eq(DeliveryStatus::Pending));
     }
 
     // Dont filter blocks or missing languages for moderator view type

@@ -26,6 +26,7 @@ pub async fn list_person_created(
     data.limit,
     None,
     data.post_kind,
+    data.logistics_status,
   )
   .await?;
 

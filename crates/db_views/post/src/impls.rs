@@ -194,6 +194,7 @@ impl PostView {
     limit: Option<i64>,
     no_limit: Option<bool>,
     post_kind: Option<PostKind>,
+    logistics_status: Option<DeliveryStatus>,
   ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -214,6 +215,32 @@ impl PostView {
 
     if let Some(post_kind) = post_kind {
       query = query.filter(post::post_kind.eq(post_kind));
+    }
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = logistics_status {
+      match post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
     }
 
     // Sorting by published_at (newest to oldest), tie-breaker by id

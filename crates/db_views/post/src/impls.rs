@@ -213,9 +213,8 @@ impl PostView {
       query = query.filter(post::language_id.eq(language_id));
     }
 
-    if let Some(post_kind) = post_kind {
-      query = query.filter(post::post_kind.eq(post_kind));
-    }
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(post_kind.unwrap_or(PostKind::Normal)));
 
     // Filter by logistics status (for Delivery and RideTaxi posts)
     // Uses EXISTS subqueries to avoid joins
@@ -361,10 +360,8 @@ impl PostQuery<'_> {
       .limit(limit)
       .into_boxed();
 
-    // Filter by post_kind (Delivery, RideTaxi, Normal)
-    if let Some(kind) = o.post_kind {
-      query = query.filter(post::post_kind.eq(kind));
-    }
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(o.post_kind.unwrap_or(PostKind::Normal)));
 
     // Filter by logistics status (for Delivery and RideTaxi posts)
     // Uses EXISTS subqueries to avoid joins

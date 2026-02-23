@@ -262,10 +262,8 @@ impl SearchCombinedQuery {
       SearchType::Users => query.filter(is_person),
     };
 
-    // Filter by post_kind (Delivery, RideTaxi, Normal)
-    if let Some(kind) = self.post_kind {
-      query = query.filter(post::post_kind.eq(kind));
-    }
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(self.post_kind.unwrap_or(PostKind::Normal)));
 
     // Filter by logistics status (for Delivery and RideTaxi posts)
     // Uses EXISTS subqueries to avoid joins

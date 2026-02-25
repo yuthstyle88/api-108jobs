@@ -98,11 +98,13 @@ impl CommentView {
     // Specifically, if the category is private then only accepted followers may view its
     // content, otherwise it is filtered out. Admins can view private category content
     // without restriction.
+    // For posts without category (Delivery/RideTaxi), allow access.
     if !my_local_user.is_admin() {
       query = query.filter(
-          category::visibility
-          .ne(CategoryVisibility::Private)
-          .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted)),
+          category::id.is_null()
+          .or(category::visibility
+            .ne(CategoryVisibility::Private)
+            .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted))),
       );
     }
 

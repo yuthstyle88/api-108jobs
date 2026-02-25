@@ -53,7 +53,7 @@ pub async fn create_comment(
 
   let post = post_view.post;
 
-  // Handle delivery posts which have no category
+  // Handle delivery/ridetaxi posts which have no category
   let language_id = if let Some(category) = post_view.category {
     // Normal post with a category - validate language
     validate_post_language(
@@ -63,11 +63,11 @@ pub async fn create_comment(
       local_user_view.local_user.id,
     )
     .await?
-  } else if post.post_kind == PostKind::Delivery {
-    // Delivery post without a category - use provided language or UNDETERMINED_ID
+  } else if matches!(post.post_kind, PostKind::Delivery | PostKind::RideTaxi) {
+    // Delivery or RideTaxi post without a category - use provided language or UNDETERMINED_ID
     data.language_id.unwrap_or(UNDETERMINED_ID)
   } else {
-    // Non-delivery post without a category should not happen
+    // Non-delivery/ridetaxi post without a category should not happen
     return Err(FastJobErrorType::NotFound)?;
   };
 

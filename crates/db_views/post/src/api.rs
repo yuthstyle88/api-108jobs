@@ -97,6 +97,8 @@ pub struct RideSessionCreatePayload {
   pub dropoff_lat: Option<f64>,
   pub dropoff_lng: Option<f64>,
   pub pickup_note: Option<String>,
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
 }
 

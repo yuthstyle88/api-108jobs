@@ -1,5 +1,5 @@
 use crate::RiderView;
-use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId};
+use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId};
 use app_108jobs_db_schema::newtypes::RiderId;
 use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
@@ -247,10 +247,10 @@ pub struct ConfirmDeliveryRequest {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateRideSessionRequest {
-  /// The post ID (delivery post)
+  /// The post ID (ride post)
   pub post_id: PostId,
   /// Pricing config ID to use for this ride
-  pub pricing_config_id: Option<i32>,
+  pub pricing_config_id: Option<PricingConfigId>,
   /// Pickup location
   pub pickup_address: String,
   pub pickup_lat: Option<f64>,
@@ -261,6 +261,9 @@ pub struct CreateRideSessionRequest {
   pub dropoff_lng: Option<f64>,
   /// Optional pickup note
   pub pickup_note: Option<String>,
+  /// Passenger contact info
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
   /// Payment method: cash or coin
   pub payment_method: PaymentMethod,
 }
@@ -270,7 +273,7 @@ pub struct CreateRideSessionRequest {
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RideSessionResponse {
-  pub id: i32,
+  pub id: RideSessionId,
   pub post_id: PostId,
   pub rider_id: Option<RiderId>,  // NULL until a rider accepts
   pub status: DeliveryStatus,
@@ -296,7 +299,7 @@ pub struct UpdateRideMeterRequest {
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RideMeterResponse {
-  pub session_id: i32,
+  pub session_id: RideSessionId,
   pub current_price_coin: i32,
   pub elapsed_minutes: i32,
   pub distance_km: f64,
@@ -321,14 +324,14 @@ pub struct PricingBreakdown {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AcceptRideRequest {
-  pub session_id: i32,
+  pub session_id: RideSessionId,
 }
 
 /// Request to confirm ride assignment (rider confirms they're taking this job)
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfirmRideRequest {
-  pub session_id: i32,
+  pub session_id: RideSessionId,
 }
 
 /// Event published to Redis for ride status updates
@@ -337,7 +340,7 @@ pub struct ConfirmRideRequest {
 pub struct RideStatusEvent {
   #[serde(rename = "type")]
   pub kind: &'static str,
-  pub session_id: i32,
+  pub session_id: RideSessionId,
   pub post_id: PostId,
   pub status: DeliveryStatus,
   pub updated_at: DateTime<Utc>,
@@ -349,7 +352,7 @@ pub struct RideStatusEvent {
 pub struct RideMeterEvent {
   #[serde(rename = "type")]
   pub kind: &'static str,
-  pub session_id: i32,
+  pub session_id: RideSessionId,
   pub post_id: PostId,
   pub current_price_coin: i32,
   pub elapsed_minutes: i32,

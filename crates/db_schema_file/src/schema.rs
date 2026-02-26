@@ -1876,6 +1876,8 @@ diesel::table! {
         dropoff_lat -> Nullable<Float8>,
         dropoff_lng -> Nullable<Float8>,
         pickup_note -> Nullable<Text>,
+        passenger_name -> Nullable<Text>,
+        passenger_phone -> Nullable<Text>,
         payment_method -> PaymentMethod,
         payment_status -> Varchar,
         status -> DeliveryStatus,

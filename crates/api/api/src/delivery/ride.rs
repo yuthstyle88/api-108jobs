@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_api_utils::utils::get_active_rider_by_person;
-use app_108jobs_db_schema::newtypes::{PricingConfigId, RideSessionId};
+use app_108jobs_db_schema::newtypes::RideSessionId;
 use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::pricing_config::PricingConfig;
 use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionInsertForm, RideSessionUpdateForm};
@@ -32,7 +32,7 @@ pub async fn create_ride_session(
 
   // Get the default pricing config if not specified
   let pricing_config = if let Some(config_id) = form.pricing_config_id {
-    PricingConfig::read(&mut context.pool(), PricingConfigId(config_id)).await?
+    PricingConfig::read(&mut context.pool(), config_id).await?
   } else {
     // Get default currency and its active pricing config
     let currency = Currency::get_default(&mut context.pool())
@@ -58,6 +58,8 @@ pub async fn create_ride_session(
     dropoff_lat: form.dropoff_lat,
     dropoff_lng: form.dropoff_lng,
     pickup_note: form.pickup_note.clone(),
+    passenger_name: form.passenger_name.clone(),
+    passenger_phone: form.passenger_phone.clone(),
     payment_method: form.payment_method.clone(),
     payment_status: Some("pending".to_string()),
     status: Some(DeliveryStatus::Pending),
@@ -70,16 +72,16 @@ pub async fn create_ride_session(
   // Publish event for available riders
   let event = RideStatusEvent {
     kind: "ride_requested",
-    session_id: session.id.0,
+    session_id: session.id,
     post_id,
     status: DeliveryStatus::Pending,
     updated_at: session.created_at,
   };
 
-  publish_ride_event(&context, &event, session.id.0).await;
+  publish_ride_event(&context, &event, session.id).await;
 
   Ok(Json(RideSessionResponse {
-    id: session.id.0,
+    id: session.id,
     post_id,
     rider_id: session.rider_id,
     status: session.status,
@@ -95,7 +97,7 @@ pub async fn create_ride_session(
 /// Rider accepts a ride assignment.
 /// Only verified riders can accept rides.
 pub async fn accept_ride_assignment(
-  path: Path<i32>,
+  path: Path<RideSessionId>,
   context: Data<FastJobContext>,
   _form: Json<AcceptRideRequest>,
   local_user_view: LocalUserView,
@@ -107,7 +109,7 @@ pub async fn accept_ride_assignment(
   let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
   // Get the current session
-  let session = RideSession::read(&mut context.pool(), RideSessionId(session_id))
+  let session = RideSession::read(&mut context.pool(), session_id)
     .await?;
 
   // Check if session is in Pending status
@@ -123,12 +125,7 @@ pub async fn accept_ride_assignment(
     ..Default::default()
   };
 
-  let updated = RideSession::update(
-    &mut context.pool(),
-    RideSessionId(session_id),
-    &update_form,
-  )
-  .await?;
+  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
 
   // Publish event
   let event = RideStatusEvent {
@@ -142,7 +139,7 @@ pub async fn accept_ride_assignment(
   publish_ride_event(&context, &event, session_id).await;
 
   Ok(Json(RideSessionResponse {
-    id: updated.id.0,
+    id: updated.id,
     post_id: updated.post_id,
     rider_id: updated.rider_id,
     status: updated.status,
@@ -159,7 +156,7 @@ pub async fn accept_ride_assignment(
 /// This is specific to taxi-style rides where the rider needs to confirm
 /// after the employer assigns them.
 pub async fn confirm_ride_assignment(
-  path: Path<i32>,
+  path: Path<RideSessionId>,
   context: Data<FastJobContext>,
   _form: Json<ConfirmRideRequest>,
   local_user_view: LocalUserView,
@@ -171,7 +168,7 @@ pub async fn confirm_ride_assignment(
   let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
   // Get the current session
-  let session = RideSession::read(&mut context.pool(), RideSessionId(session_id))
+  let session = RideSession::read(&mut context.pool(), session_id)
     .await?;
 
   // Verify this rider is assigned to this session
@@ -191,12 +188,7 @@ pub async fn confirm_ride_assignment(
     ..Default::default()
   };
 
-  let updated = RideSession::update(
-    &mut context.pool(),
-    RideSessionId(session_id),
-    &update_form,
-  )
-  .await?;
+  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
 
   // Publish event
   let event = RideStatusEvent {
@@ -210,7 +202,7 @@ pub async fn confirm_ride_assignment(
   publish_ride_event(&context, &event, session_id).await;
 
   Ok(Json(RideSessionResponse {
-    id: updated.id.0,
+    id: updated.id,
     post_id: updated.post_id,
     rider_id: updated.rider_id,
     status: updated.status,
@@ -229,7 +221,7 @@ pub async fn confirm_ride_assignment(
 /// Can be called by either the rider (real-time GPS updates) or
 /// the system based on time elapsed.
 pub async fn update_ride_meter(
-  path: Path<i32>,
+  path: Path<RideSessionId>,
   data: Json<UpdateRideMeterRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
@@ -239,7 +231,7 @@ pub async fn update_ride_meter(
   let distance_km = data.distance_km;
 
   // Get the session
-  let session = RideSession::read(&mut context.pool(), RideSessionId(session_id))
+  let session = RideSession::read(&mut context.pool(), session_id)
     .await?;
 
   // Verify authorization: must be the assigned rider or admin
@@ -273,12 +265,7 @@ pub async fn update_ride_meter(
     ..Default::default()
   };
 
-  let updated = RideSession::update(
-    &mut context.pool(),
-    RideSessionId(session_id),
-    &update_form,
-  )
-  .await?;
+  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
 
   // Get currency for display
   let currency = Currency::read(&mut context.pool(), pricing_config.currency_id).await?;
@@ -316,14 +303,14 @@ pub async fn update_ride_meter(
 }
 
 /// Helper function to publish ride status events to Redis
-async fn publish_ride_event(context: &FastJobContext, event: &RideStatusEvent, session_id: i32) {
+async fn publish_ride_event(context: &FastJobContext, event: &RideStatusEvent, session_id: RideSessionId) {
   if let Ok(json) = serde_json::to_string(&event) {
-    let channel = format!("ride:status:{}", session_id);
+    let channel = format!("ride:status:{}", session_id.0);
     let mut redis = context.redis().clone();
     if let Err(e) = redis.publish(&channel, &json).await {
       tracing::warn!(
         ?e,
-        session_id,
+        session_id = session_id.0,
         "Failed to publish ride status update to Redis"
       );
     }
@@ -331,14 +318,14 @@ async fn publish_ride_event(context: &FastJobContext, event: &RideStatusEvent, s
 }
 
 /// Helper function to publish ride meter events to Redis
-async fn publish_meter_event(context: &FastJobContext, event: &RideMeterEvent, session_id: i32) {
+async fn publish_meter_event(context: &FastJobContext, event: &RideMeterEvent, session_id: RideSessionId) {
   if let Ok(json) = serde_json::to_string(&event) {
-    let channel = format!("ride:meter:{}", session_id);
+    let channel = format!("ride:meter:{}", session_id.0);
     let mut redis = context.redis().clone();
     if let Err(e) = redis.publish(&channel, &json).await {
       tracing::warn!(
         ?e,
-        session_id,
+        session_id = session_id.0,
         "Failed to publish ride meter update to Redis"
       );
     }

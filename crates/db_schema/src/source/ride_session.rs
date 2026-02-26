@@ -33,6 +33,10 @@ pub struct RideSession {
   pub dropoff_lng: Option<f64>,
   pub pickup_note: Option<String>,
 
+  // Passenger contact info
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
+
   // Payment method
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
   pub payment_method: PaymentMethod,
@@ -85,6 +89,8 @@ pub struct RideSessionInsertForm {
   pub dropoff_lat: Option<f64>,
   pub dropoff_lng: Option<f64>,
   pub pickup_note: Option<String>,
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
   pub payment_status: Option<String>,
   pub status: Option<DeliveryStatus>,
@@ -103,6 +109,8 @@ pub struct RideSessionUpdateForm {
   pub dropoff_lat: Option<Option<f64>>,
   pub dropoff_lng: Option<Option<f64>>,
   pub pickup_note: Option<Option<String>>,
+  pub passenger_name: Option<Option<String>>,
+  pub passenger_phone: Option<Option<String>>,
   pub payment_status: Option<String>,
   pub status: Option<DeliveryStatus>,
   pub rider_assigned_at: Option<Option<DateTime<Utc>>>,

@@ -194,6 +194,8 @@ pub async fn create_post(
       dropoff_lat: rp.dropoff_lat,
       dropoff_lng: rp.dropoff_lng,
       pickup_note: rp.pickup_note.clone(),
+      passenger_name: rp.passenger_name.clone(),
+      passenger_phone: rp.passenger_phone.clone(),
       payment_method: rp.payment_method,
       payment_status: Some("Pending".to_string()),
       status: Some(DeliveryStatus::Pending),

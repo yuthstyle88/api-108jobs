@@ -46,6 +46,9 @@ pub struct RidePrivate {
   pub dropoff_lat: Option<f64>,
   pub dropoff_lng: Option<f64>,
   pub pickup_note: Option<String>,
+  // Passenger contact info - only visible to authorized parties
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
   pub payment_status: String,
   pub status: DeliveryStatus,
@@ -98,6 +101,8 @@ pub fn project_ride_session(
       dropoff_lat: session.dropoff_lat,
       dropoff_lng: session.dropoff_lng,
       pickup_note: session.pickup_note.clone(),
+      passenger_name: session.passenger_name.clone(),
+      passenger_phone: session.passenger_phone.clone(),
       payment_method: session.payment_method,
       payment_status: session.payment_status.clone(),
       status: session.status,

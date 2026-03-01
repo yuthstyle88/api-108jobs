@@ -1,6 +1,10 @@
 use crate::{
   CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
-  SearchCombinedViewInternal,
+  SearchCombinedViewInternal, SearchPostView,
+};
+use app_108jobs_db_views_post::logistics::{
+  LogisticsViewer,
+  fetch_logistics_maps_by_ids, build_logistics_from_maps,
 };
 use diesel::{
   dsl::{exists, not}, BoolExpressionMethods, ExpressionMethods, JoinOnDsl,
@@ -8,7 +12,7 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PostId};
 use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
   combined::search::{search_combined_keys as key, SearchCombined},
   site::Site,
@@ -104,7 +108,7 @@ impl SearchCombinedView {
   /// Useful in combination with filter_map
   pub fn to_post_view(&self) -> Option<&PostView> {
     if let Self::Post(v) = self {
-      Some(v)
+      Some(&v.post_view)
     } else {
       None
     }
@@ -116,7 +120,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      SearchCombinedView::Post(v) => ('P', v.post.id.0),
+      SearchCombinedView::Post(v) => ('P', v.post_view.post.id.0),
       SearchCombinedView::Comment(v) => ('C', v.comment.id.0),
       SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
@@ -331,6 +335,69 @@ impl SearchCombinedQuery {
   }
 }
 
+/// Batch load logistics for all post results in a search response.
+/// Optimized: Skips DB queries entirely if all posts are Normal kind.
+/// Reuses shared logistics functions from db_views_post.
+pub async fn load_logistics_for_results(
+  results: &mut Vec<SearchCombinedView>,
+  pool: &mut DbPool<'_>,
+  viewer: LogisticsViewer,
+  is_admin: bool,
+) -> FastJobResult<()> {
+  // Early return if no results
+  if results.is_empty() {
+    return Ok(());
+  }
+
+  // Check if any posts need logistics (before getting DB connection)
+  let has_delivery = results.iter().any(|r| {
+    matches!(r, SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::Delivery)
+  });
+  let has_ride = results.iter().any(|r| {
+    matches!(r, SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::RideTaxi)
+  });
+
+  // Early return if no delivery or ride posts - skip DB entirely
+  if !has_delivery && !has_ride {
+    return Ok(());
+  }
+
+  let conn = &mut get_conn(pool).await?;
+
+  // Collect post IDs by kind
+  let delivery_ids: Vec<PostId> = results
+    .iter()
+    .filter_map(|r| match r {
+      SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::Delivery => {
+        Some(spv.post_view.post.id)
+      }
+      _ => None,
+    })
+    .collect();
+
+  let ride_ids: Vec<PostId> = results
+    .iter()
+    .filter_map(|r| match r {
+      SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::RideTaxi => {
+        Some(spv.post_view.post.id)
+      }
+      _ => None,
+    })
+    .collect();
+
+  // Fetch maps using shared function
+  let maps = fetch_logistics_maps_by_ids(conn, &delivery_ids, &ride_ids).await?;
+
+  // Assign logistics to each post result using shared function
+  for result in results.iter_mut() {
+    if let SearchCombinedView::Post(search_post_view) = result {
+      search_post_view.logistics = build_logistics_from_maps(&search_post_view.post_view, &maps, viewer, is_admin);
+    }
+  }
+
+  Ok(())
+}
+
 impl InternalToCombinedView for SearchCombinedViewInternal {
   type CombinedView = SearchCombinedView;
 
@@ -362,7 +429,7 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     } else if let (Some(post), Some(creator)) =
       (v.post, v.item_creator.clone())
     {
-      Some(SearchCombinedView::Post(PostView {
+      let post_view = PostView {
         post,
         category: v.category,
         creator,
@@ -377,6 +444,10 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
         creator_banned_from_category: v.creator_banned_from_category,
+      };
+      Some(SearchCombinedView::Post(SearchPostView {
+        post_view,
+        logistics: None, // Logistics loaded separately via load_logistics_for_results
       }))
     } else if let Some(category) = v.category {
       Some(SearchCombinedView::Category(CategoryView {
@@ -577,57 +648,57 @@ mod tests {
     // Make sure the types are correct
     if let SearchCombinedView::Comment(v) = &search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[3] {
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[4] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[5] {
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::category(v) = &search[6] {
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::category(v) = &search[7] {
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -753,13 +824,13 @@ mod tests {
 
     // Make sure the types are correct
     if let SearchCombinedView::category(v) = &category_search[0] {
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::category(v) = &category_search[1] {
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -784,7 +855,7 @@ mod tests {
     assert_length!(1, category_search_by_name);
     if let SearchCombinedView::category(v) = &category_search_by_name[0] {
       // The askapp_108jobs category
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -900,22 +971,22 @@ mod tests {
 
     // Make sure the types are correct
     if let SearchCombinedView::Post(v) = &post_search[0] {
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[1] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[2] {
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -991,8 +1062,8 @@ mod tests {
 
     // Timmy_post_2 has a dislike, so it should be last
     if let SearchCombinedView::Post(v) = &post_search_sort_top[2] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -1018,8 +1089,8 @@ mod tests {
 
     // Make sure the first is the self_promotion
     if let SearchCombinedView::Post(v) = &self_promotion_post_search[0] {
-      assert_eq!(data.self_promotion_post.id, v.post.id);
-      assert!(v.post.self_promotion);
+      assert_eq!(data.self_promotion_post.id, v.post_view.post.id);
+      assert!(v.post_view.post.self_promotion);
     } else {
       panic!("wrong type");
     }
@@ -1046,8 +1117,8 @@ mod tests {
     // Make sure the first is the self_promotion
     if let SearchCombinedView::Comment(v) = &self_promotion_comment_search[0] {
       assert_eq!(data.comment_in_self_promotion_post.id, v.comment.id);
-      assert_eq!(data.self_promotion_post.id, v.post.id);
-      assert!(v.post.self_promotion);
+      assert_eq!(data.self_promotion_post.id, v.post_view.post.id);
+      assert!(v.post_view.post.self_promotion);
     } else {
       panic!("wrong type");
     }
@@ -1075,24 +1146,24 @@ mod tests {
     // Make sure the types are correct
     if let SearchCombinedView::Comment(v) = &comment_search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &comment_search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.category_2.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &comment_search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -1145,8 +1216,8 @@ mod tests {
     // Sara comment 2 is disliked, so should be last
     if let SearchCombinedView::Comment(v) = &comment_search_sort_top[2] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }

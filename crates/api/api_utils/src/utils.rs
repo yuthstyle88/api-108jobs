@@ -574,6 +574,20 @@ pub fn check_conflicting_like_filters(
   }
 }
 
+/// Maximum allowed limit for pagination
+pub const MAX_FETCH_LIMIT: i64 = 30;
+
+/// Validate that the limit parameter doesn't exceed MAX_FETCH_LIMIT.
+/// Returns the limit capped at MAX_FETCH_LIMIT if it was too large.
+pub fn check_fetch_limit(limit: Option<i64>) -> FastJobResult<i64> {
+  let limit = limit.unwrap_or(20);
+  if limit > MAX_FETCH_LIMIT {
+    Err(FastJobErrorType::InvalidFetchLimit.into())
+  } else {
+    Ok(limit)
+  }
+}
+
 pub async fn process_markdown(
   text: &str,
   slur_regex: &Regex,

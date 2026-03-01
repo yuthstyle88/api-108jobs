@@ -14,6 +14,7 @@ pub use app_108jobs_db_views_post::{
     GetSiteMetadataResponse,
     LinkMetadata,
     OpenGraphData,
+    PostItem,
     PostResponse,
   },
   PostView,

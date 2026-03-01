@@ -24,7 +24,7 @@ use app_108jobs_db_schema_file::enums::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::{PersonView};
-use app_108jobs_db_views_post::PostView;
+use app_108jobs_db_views_post::api::PostItem;
 use app_108jobs_utils::error::FastJobError;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -884,7 +884,7 @@ pub struct ListPersonHidden {
 /// You hidden posts response.
 #[serde(rename_all = "camelCase")]
 pub struct ListPersonHiddenResponse {
-  pub hidden: Vec<PostView>,
+  pub hidden: Vec<PostItem>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -909,7 +909,7 @@ pub struct ListPersonRead {
 /// You read posts response.
 #[serde(rename_all = "camelCase")]
 pub struct ListPersonReadResponse {
-  pub read: Vec<PostView>,
+  pub read: Vec<PostItem>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -938,7 +938,7 @@ pub struct ListPersonCreated {
 /// Your created posts response.
 #[serde(rename_all = "camelCase")]
 pub struct ListPersonCreatedResponse {
-  pub created: Vec<PostView>,
+  pub created: Vec<PostItem>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,

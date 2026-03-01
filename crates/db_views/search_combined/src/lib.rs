@@ -13,6 +13,7 @@ use app_108jobs_db_schema::{
     SearchSortType,
     SearchType,
 };
+use app_108jobs_db_views_post::logistics::PostLogisticsView;
 use app_108jobs_db_schema_file::enums::{DeliveryStatus, IntendedUse, JobType, ListingType, PostKind};
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_category::CategoryView;
@@ -111,13 +112,26 @@ pub(crate) struct SearchCombinedViewInternal {
   pub creator_banned_from_category: bool,
 }
 
+/// A post view with logistics for search results
+#[skip_serializing_none]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct SearchPostView {
+  #[serde(flatten)]
+  pub post_view: PostView,
+  /// Logistics data for Delivery/RideTaxi posts
+  pub logistics: Option<PostLogisticsView>,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 // Use serde's internal tagging, to work easier with javascript libraries
 #[serde(tag = "type_")]
 pub enum SearchCombinedView {
-  Post(PostView),
+  Post(SearchPostView),
   Comment(CommentView),
   Category(CategoryView),
   Person(PersonView),

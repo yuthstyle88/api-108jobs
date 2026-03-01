@@ -1,11 +1,12 @@
 use crate::api::{listing_type_with_default, post_sort_type_with_default};
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_api_utils::{context::FastJobContext, utils::{check_fetch_limit, check_private_instance}};
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
   api::{GetPosts, GetPostsResponse},
   impls::PostQuery,
+  logistics::{load_logistics_for_post_views, LogisticsViewer},
   PostView,
 };
 use app_108jobs_utils::error::FastJobResult;
@@ -18,8 +19,7 @@ pub async fn list_posts(
   let site_view = context.site_config().get().await?.site_view;
 
   check_private_instance(&local_user_view, &site_view.local_site)?;
-
-  let limit = data.limit;
+  let limit = check_fetch_limit(data.limit)?;
   let category_id = data.category_id;
   let language_id = data.language_id;
   let show_hidden = data.show_hidden;
@@ -48,14 +48,14 @@ pub async fn list_posts(
 
   let page_back = data.page_back;
 
-  let posts = PostQuery {
+  let post_views = PostQuery {
     local_user,
     listing_type,
     language_id,
     sort,
     time_range_seconds: None,
     category_id,
-    limit,
+    limit: Some(limit),
     show_hidden,
     show_read: None,
     self_promotion: data.self_promotion,
@@ -73,9 +73,26 @@ pub async fn list_posts(
   }
   .list(&site_view.site, &mut context.pool())
   .await?;
-  // if this page wasn't empty, then there is a next page after the last post on this page
-  let next_page = posts.last().map(PaginationCursorBuilder::to_cursor);
-  let prev_page = posts.first().map(PaginationCursorBuilder::to_cursor);
+
+  let next_page = post_views.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = post_views.first().map(PaginationCursorBuilder::to_cursor);
+
+  // Determine viewer role for logistics projection
+  let (viewer, is_admin) = match &local_user_view {
+    Some(luv) => {
+      let is_admin = luv.local_user.admin;
+      let viewer = if is_admin {
+        LogisticsViewer::Admin
+      } else {
+        LogisticsViewer::Public // For list posts, we don't know which posts user created
+      };
+      (viewer, is_admin)
+    }
+    None => (LogisticsViewer::Public, false),
+  };
+
+  // Batch load logistics for all posts
+  let posts = load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
 
   Ok(Json(GetPostsResponse {
     posts,

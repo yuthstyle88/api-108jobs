@@ -1303,6 +1303,7 @@ dependencies = [
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_person",
  "app_108jobs_db_views_post",
+ "app_108jobs_db_views_rider",
  "app_108jobs_utils",
  "diesel",
  "diesel-async",

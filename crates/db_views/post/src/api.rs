@@ -296,7 +296,7 @@ pub struct GetPosts {
 /// The post list response.
 #[serde(rename_all = "camelCase")]
 pub struct GetPostsResponse {
-  pub posts: Vec<PostView>,
+  pub posts: Vec<PostItem>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -401,6 +401,17 @@ pub struct OpenGraphData {
   pub description: Option<String>,
   pub image: Option<DbUrl>,
   pub embed_video_url: Option<DbUrl>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct PostItem {
+  #[serde(flatten)]
+  pub post_view: PostView,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

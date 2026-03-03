@@ -1,6 +1,6 @@
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Data, Json, Path, Query};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::get_active_rider_by_person;
+use app_108jobs_api_utils::utils::{check_fetch_limit, get_active_rider_by_person};
 use app_108jobs_db_schema::newtypes::RideSessionId;
 use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::pricing_config::PricingConfig;
@@ -9,9 +9,11 @@ use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  AcceptRideRequest, ConfirmRideRequest, CreateRideSessionRequest, PricingBreakdown,
+  AcceptRideRequest, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
+  ListAvailableRidesResponse, ListMyRideSessions, ListMyRideSessionsResponse, PricingBreakdown,
   RideMeterEvent, RideMeterResponse, RideSessionResponse, RideStatusEvent, UpdateRideMeterRequest,
 };
+use app_108jobs_db_views_rider::ride_session_view::{project_ride_session, RideViewer};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
 
@@ -22,6 +24,9 @@ use chrono::Utc;
 ///
 /// The ride session will use the active pricing config for the default currency,
 /// or a specific pricing config if provided.
+///
+/// If rider_person_id is provided, the ride will be assigned to that rider directly.
+/// Validation: One post can only have one ride session, and one rider can only have one active ride.
 pub async fn create_ride_session(
   context: Data<FastJobContext>,
   form: Json<CreateRideSessionRequest>,
@@ -29,6 +34,11 @@ pub async fn create_ride_session(
 ) -> FastJobResult<Json<RideSessionResponse>> {
   let post_id = form.post_id;
   let employer_id = local_user_view.local_user.id;
+
+  // Check if a ride session already exists for this post
+  if RideSession::exists_for_post(&mut context.pool(), post_id).await? {
+    return Err(FastJobErrorType::RideSessionAlreadyExistsForPost.into());
+  }
 
   // Get the default pricing config if not specified
   let pricing_config = if let Some(config_id) = form.pricing_config_id {
@@ -45,10 +55,24 @@ pub async fn create_ride_session(
 
   let base_fare = pricing_config.base_fare_coin;
 
+  // Lookup rider if rider_person_id is provided
+  let (rider_id, initial_status, rider_assigned_at) = if let Some(person_id) = form.rider_person_id {
+    let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
+
+    // Check if rider already has an active ride session
+    if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
+      return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+    }
+
+    (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()))
+  } else {
+    (None, DeliveryStatus::Pending, None)
+  };
+
   // Create the ride session
   let session_form = RideSessionInsertForm {
     post_id,
-    rider_id: None,  // No rider assigned yet - will be set when rider accepts
+    rider_id,
     employer_id,
     pricing_config_id: Some(pricing_config.id),
     pickup_address: form.pickup_address.clone(),
@@ -62,19 +86,30 @@ pub async fn create_ride_session(
     passenger_phone: form.passenger_phone.clone(),
     payment_method: form.payment_method.clone(),
     payment_status: Some("pending".to_string()),
-    status: Some(DeliveryStatus::Pending),
+    status: Some(initial_status),
     requested_at: Some(Utc::now()),
     current_price_coin: Some(base_fare), // Start with base fare
   };
 
   let session = RideSession::create(&mut context.pool(), &session_form).await?;
 
+  // If rider was assigned, update the rider_assigned_at timestamp
+  let session = if rider_assigned_at.is_some() {
+    let update_form = RideSessionUpdateForm {
+      rider_assigned_at: Some(rider_assigned_at),
+      ..Default::default()
+    };
+    RideSession::update(&mut context.pool(), session.id, &update_form).await?
+  } else {
+    session
+  };
+
   // Publish event for available riders
   let event = RideStatusEvent {
-    kind: "ride_requested",
+    kind: if rider_id.is_some() { "ride_assigned" } else { "ride_requested" },
     session_id: session.id,
     post_id,
-    status: DeliveryStatus::Pending,
+    status: session.status,
     updated_at: session.created_at,
   };
 
@@ -96,6 +131,7 @@ pub async fn create_ride_session(
 ///
 /// Rider accepts a ride assignment.
 /// Only verified riders can accept rides.
+/// Validation: Rider can only have one active ride session at a time.
 pub async fn accept_ride_assignment(
   path: Path<RideSessionId>,
   context: Data<FastJobContext>,
@@ -107,6 +143,11 @@ pub async fn accept_ride_assignment(
 
   // Get the rider for this person
   let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
+
+  // Check if rider already has an active ride session
+  if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
+    return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+  }
 
   // Get the current session
   let session = RideSession::read(&mut context.pool(), session_id)
@@ -300,6 +341,70 @@ pub async fn update_ride_meter(
     distance_km,
     breakdown,
   }))
+}
+
+/// GET /api/v4/rides/my-sessions
+///
+/// List ride sessions for the current rider.
+/// Riders can see their assigned and completed rides.
+pub async fn list_my_ride_sessions(
+  query: Query<ListMyRideSessions>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<ListMyRideSessionsResponse>> {
+  let person_id = local_user_view.person.id;
+  let is_admin = local_user_view.local_user.admin;
+  let limit = check_fetch_limit(query.limit)?;
+
+  // Get the rider for this person
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
+
+  // Get ride sessions for this rider
+  let sessions = RideSession::list_for_rider(
+    &mut context.pool(),
+    rider.id,
+    query.status,
+    Some(limit),
+  ).await?;
+
+  // Project to views
+  let viewer = RideViewer::Rider(rider.id);
+  let rides = sessions
+    .iter()
+    .map(|session| project_ride_session(session, viewer, person_id, is_admin))
+    .collect();
+
+  Ok(Json(ListMyRideSessionsResponse { rides }))
+}
+
+/// GET /api/v4/rides/available
+///
+/// List available ride sessions that riders can accept.
+/// Only shows Pending rides with no rider assigned.
+pub async fn list_available_rides(
+  query: Query<ListAvailableRides>,
+  context: Data<FastJobContext>,
+  _local_user_view: LocalUserView,
+) -> FastJobResult<Json<ListAvailableRidesResponse>> {
+  let limit = check_fetch_limit(query.limit)?;
+
+  // Get available rides (Pending, no rider assigned)
+  let sessions = RideSession::list_available_for_rider(
+    &mut context.pool(),
+    Some(limit),
+  ).await?;
+
+  // Project to public views (limited info for available rides)
+  let rides = sessions
+    .iter()
+    .map(|session| project_ride_session(session, RideViewer::Public, Default::default(), false))
+    .filter_map(|view| match view {
+      app_108jobs_db_views_rider::ride_session_view::RideSessionView::Public(public) => Some(public),
+      _ => None,
+    })
+    .collect();
+
+  Ok(Json(ListAvailableRidesResponse { rides }))
 }
 
 /// Helper function to publish ride status events to Redis

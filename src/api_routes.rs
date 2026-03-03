@@ -17,7 +17,7 @@ use app_108jobs_api::delivery::list::{
 };
 use app_108jobs_api::delivery::location::post_location as post_delivery_location;
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
-use app_108jobs_api::delivery::ride::{accept_ride_assignment, confirm_ride_assignment, create_ride_session, update_ride_meter};
+use app_108jobs_api::delivery::ride::{accept_ride_assignment, confirm_ride_assignment, create_ride_session, list_available_rides, list_my_ride_sessions, update_ride_meter};
 use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -262,6 +262,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/rides")
             .route("/create", post().to(create_ride_session))
+            .route("/my-sessions", get().to(list_my_ride_sessions))
+            .route("/available", get().to(list_available_rides))
             .route("/{sessionId}/accept", post().to(accept_ride_assignment))
             .route("/{sessionId}/confirm", post().to(confirm_ride_assignment))
             .route("/{sessionId}/meter", put().to(update_ride_meter)),

@@ -364,26 +364,21 @@ pub async fn load_logistics_for_results(
 
   let conn = &mut get_conn(pool).await?;
 
-  // Collect post IDs by kind
-  let delivery_ids: Vec<PostId> = results
+  // Collect post IDs by kind in a single pass
+  let (delivery_ids, ride_ids): (Vec<PostId>, Vec<PostId>) = results
     .iter()
     .filter_map(|r| match r {
-      SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::Delivery => {
-        Some(spv.post_view.post.id)
-      }
+      SearchCombinedView::Post(spv) => Some(spv),
       _ => None,
     })
-    .collect();
-
-  let ride_ids: Vec<PostId> = results
-    .iter()
-    .filter_map(|r| match r {
-      SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::RideTaxi => {
-        Some(spv.post_view.post.id)
+    .fold((Vec::new(), Vec::new()), |(mut del, mut ride), spv| {
+      match spv.post_view.post.post_kind {
+        PostKind::Delivery => del.push(spv.post_view.post.id),
+        PostKind::RideTaxi => ride.push(spv.post_view.post.id),
+        PostKind::Normal => {}
       }
-      _ => None,
-    })
-    .collect();
+      (del, ride)
+    });
 
   // Fetch maps using shared function
   let maps = fetch_logistics_maps_by_ids(conn, &delivery_ids, &ride_ids).await?;

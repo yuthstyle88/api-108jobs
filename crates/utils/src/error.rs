@@ -370,6 +370,9 @@ pub enum FastJobErrorType {
   OnlyAssignerCanConfirm,
   CannotConfirmNonDeliveredDelivery,
   NoRiderAssigned,
+  // Ride session errors
+  RiderAlreadyHasActiveRide,
+  RideSessionAlreadyExistsForPost,
   // Wallet errors
   ReleaseExceedsOutstanding,
   CaptureExceedsOutstandingOrTotal,

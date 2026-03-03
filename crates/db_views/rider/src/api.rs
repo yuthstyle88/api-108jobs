@@ -1,4 +1,5 @@
 use crate::RiderView;
+use crate::ride_session_view::{RidePublic, RideSessionView};
 use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId};
 use app_108jobs_db_schema::newtypes::RiderId;
 use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod, VehicleType};
@@ -251,6 +252,8 @@ pub struct CreateRideSessionRequest {
   pub post_id: PostId,
   /// Pricing config ID to use for this ride
   pub pricing_config_id: Option<PricingConfigId>,
+  /// Optional rider to assign (pass PersonId, will lookup RiderId)
+  pub rider_person_id: Option<PersonId>,
   /// Pickup location
   pub pickup_address: String,
   pub pickup_lat: Option<f64>,
@@ -358,5 +361,45 @@ pub struct RideMeterEvent {
   pub elapsed_minutes: i32,
   pub distance_km: f64,
   pub updated_at: DateTime<Utc>,
+}
+
+// ============================================================================
+// List Ride Sessions API Types
+// ============================================================================
+
+/// Query params for listing rider's ride sessions
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ListMyRideSessions {
+  /// Filter by status
+  pub status: Option<DeliveryStatus>,
+  /// Max number of results
+  pub limit: Option<i64>,
+}
+
+/// Response for listing rider's ride sessions
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ListMyRideSessionsResponse {
+  pub rides: Vec<RideSessionView>,
+}
+
+/// Query params for listing available rides (for riders to accept)
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ListAvailableRides {
+  /// Max number of results
+  pub limit: Option<i64>,
+}
+
+/// Response for listing available rides
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ListAvailableRidesResponse {
+  pub rides: Vec<RidePublic>,
 }
 

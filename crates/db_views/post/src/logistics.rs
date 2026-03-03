@@ -143,18 +143,17 @@ pub async fn load_logistics_for_post_views(
   // Get connection only if we need to fetch logistics
   let conn = &mut get_conn(pool).await?;
 
-  // Collect post IDs by kind
-  let delivery_ids: Vec<PostId> = post_views
+  // Collect post IDs by kind in a single pass
+  let (delivery_ids, ride_ids): (Vec<PostId>, Vec<PostId>) = post_views
     .iter()
-    .filter(|pv| pv.post.post_kind == PostKind::Delivery)
-    .map(|pv| pv.post.id)
-    .collect();
-
-  let ride_ids: Vec<PostId> = post_views
-    .iter()
-    .filter(|pv| pv.post.post_kind == PostKind::RideTaxi)
-    .map(|pv| pv.post.id)
-    .collect();
+    .fold((Vec::new(), Vec::new()), |(mut del, mut ride), pv| {
+      match pv.post.post_kind {
+        PostKind::Delivery => del.push(pv.post.id),
+        PostKind::RideTaxi => ride.push(pv.post.id),
+        PostKind::Normal => {}
+      }
+      (del, ride)
+    });
 
   // Fetch maps
   let maps = fetch_logistics_maps_by_ids(conn, &delivery_ids, &ride_ids).await?;

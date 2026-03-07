@@ -373,6 +373,7 @@ pub enum FastJobErrorType {
   // Ride session errors
   RiderAlreadyHasActiveRide,
   RideSessionAlreadyExistsForPost,
+  CannotCancelCompletedRide,
   // Wallet errors
   ReleaseExceedsOutstanding,
   CaptureExceedsOutstandingOrTotal,

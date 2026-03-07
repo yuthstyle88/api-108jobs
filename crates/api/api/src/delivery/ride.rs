@@ -9,9 +9,10 @@ use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  AcceptRideRequest, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
+  CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
   ListAvailableRidesResponse, ListMyRideSessions, ListMyRideSessionsResponse, PricingBreakdown,
   RideMeterEvent, RideMeterResponse, RideSessionResponse, RideStatusEvent, UpdateRideMeterRequest,
+  UpdateRideStatusRequest, UpdateRideStatusResponse,
 };
 use app_108jobs_db_views_rider::ride_session_view::{project_ride_session, RideViewer};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
@@ -127,75 +128,10 @@ pub async fn create_ride_session(
   }))
 }
 
-/// POST /api/v4/rides/{sessionId}/accept
-///
-/// Rider accepts a ride assignment.
-/// Only verified riders can accept rides.
-/// Validation: Rider can only have one active ride session at a time.
-pub async fn accept_ride_assignment(
-  path: Path<RideSessionId>,
-  context: Data<FastJobContext>,
-  _form: Json<AcceptRideRequest>,
-  local_user_view: LocalUserView,
-) -> FastJobResult<Json<RideSessionResponse>> {
-  let session_id = path.into_inner();
-  let person_id = local_user_view.person.id;
-
-  // Get the rider for this person
-  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
-
-  // Check if rider already has an active ride session
-  if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
-    return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
-  }
-
-  // Get the current session
-  let session = RideSession::read(&mut context.pool(), session_id)
-    .await?;
-
-  // Check if session is in Pending status
-  if session.status != DeliveryStatus::Pending {
-    return Err(FastJobErrorType::DeliveryIsNotActive.into());
-  }
-
-  // Update session with rider and status
-  let update_form = RideSessionUpdateForm {
-    rider_id: Some(Some(rider.id)),  // Nullable column, so Some(Some())
-    status: Some(DeliveryStatus::Assigned),
-    rider_assigned_at: Some(Some(Utc::now())),
-    ..Default::default()
-  };
-
-  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
-
-  // Publish event
-  let event = RideStatusEvent {
-    kind: "ride_accepted",
-    session_id,
-    post_id: session.post_id,
-    status: DeliveryStatus::Assigned,
-    updated_at: updated.updated_at.unwrap_or_else(Utc::now),
-  };
-
-  publish_ride_event(&context, &event, session_id).await;
-
-  Ok(Json(RideSessionResponse {
-    id: updated.id,
-    post_id: updated.post_id,
-    rider_id: updated.rider_id,
-    status: updated.status,
-    current_price_coin: updated.current_price_coin,
-    payment_method: updated.payment_method,
-    payment_status: updated.payment_status,
-    created_at: updated.created_at,
-  }))
-}
-
 /// POST /api/v4/rides/{sessionId}/confirm
 ///
 /// Rider confirms they are taking this ride (RiderConfirmed status).
-/// This is specific to taxi-style rides where the rider needs to confirm
-/// after the employer assigns them.
+/// This is called after the employer assigns the rider via create_ride_session.
 pub async fn confirm_ride_assignment(
   path: Path<RideSessionId>,
   context: Data<FastJobContext>,
@@ -405,6 +341,176 @@ pub async fn list_available_rides(
     .collect();
 
   Ok(Json(ListAvailableRidesResponse { rides }))
+}
+
+/// POST /api/v4/rides/{sessionId}/cancel
+///
+/// Cancel a ride session (employer or rider can cancel).
+/// Only the assigned rider or employer who created the session can cancel.
+/// Reason for cancellation is required.
+pub async fn cancel_ride_session(
+  path: Path<RideSessionId>,
+  form: Json<CancelRideSessionRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<CancelRideSessionResponse>> {
+  let session_id = path.into_inner();
+  let person_id = local_user_view.person.id;
+
+  // Get the current session
+  let session = RideSession::read(&mut context.pool(), session_id).await?;
+
+  // Check authorization: must be the assigned rider or the employer who created this session
+    let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+    let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
+
+    let is_employer = session.employer_id == local_user_view.local_user.id;
+
+  if !is_rider && !is_employer {
+    return Err(FastJobErrorType::NotAnActiveRider.into());
+  }
+
+  // Check if session can be cancelled (not Delivered or Cancelled)
+  if matches!(session.status, DeliveryStatus::Delivered | DeliveryStatus::Cancelled) {
+    return Err(FastJobErrorType::CannotCancelCompletedRide.into());
+  }
+
+  let cancelled_at = Utc::now();
+
+  // Update session status to Cancelled
+  let update_form = RideSessionUpdateForm {
+    status: Some(DeliveryStatus::Cancelled),
+    updated_at: Some(Some(cancelled_at)),
+    ..Default::default()
+  };
+
+  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
+
+  // Publish event
+  let event = RideStatusEvent {
+    kind: "ride_cancelled",
+    session_id,
+    post_id: session.post_id,
+    status: DeliveryStatus::Cancelled,
+    updated_at: cancelled_at,
+  };
+
+  publish_ride_event(&context, &event, session_id).await;
+
+  Ok(Json(CancelRideSessionResponse {
+    session_id,
+    status: DeliveryStatus::Cancelled,
+    cancellation_reason: form.reason.clone(),
+    cancelled_at,
+  }))
+}
+
+/// PUT /api/v4/rides/{sessionId}/status
+///
+/// Updates the status of a ride session. The authenticated user must be either:
+/// - The assigned rider for this ride, or
+/// - The employer who created this ride session
+///
+/// Valid status transitions:
+/// - RiderConfirmed → EnRouteToPickup
+/// - EnRouteToPickup → PickedUp
+/// - PickedUp → EnRouteToDropoff
+/// - EnRouteToDropoff → Delivered
+/// - (Any active state) → Cancelled (use cancel_ride_session instead)
+pub async fn update_ride_status(
+  path: Path<RideSessionId>,
+  form: Json<UpdateRideStatusRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<UpdateRideStatusResponse>> {
+  let session_id = path.into_inner();
+  let person_id = local_user_view.person.id;
+  let new_status = form.status;
+
+  // Get the current session
+  let session = RideSession::read(&mut context.pool(), session_id).await?;
+
+  // Check authorization: must be the assigned rider or the employer who created this session
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+  let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
+  let is_employer = session.employer_id == local_user_view.local_user.id;
+
+  if !is_rider && !is_employer {
+    return Err(FastJobErrorType::NotAnActiveRider.into());
+  }
+
+  // For cancellation, use the dedicated cancel endpoint
+  if new_status == DeliveryStatus::Cancelled {
+    return Err(FastJobErrorType::ReasonIsRequiredWhenCancelling.into());
+  }
+
+  // Check if status is actually changing
+  if session.status == new_status {
+    // Idempotent - return current state without error
+    return Ok(Json(UpdateRideStatusResponse {
+      session_id,
+      status: new_status,
+      cancellation_reason: None,
+      updated_at: session.updated_at.unwrap_or(session.created_at),
+    }));
+  }
+
+  // Validate status transitions based on current status
+  let valid_transition = match (&session.status, &new_status) {
+    (DeliveryStatus::RiderConfirmed, DeliveryStatus::EnRouteToPickup) => true,
+    (DeliveryStatus::EnRouteToPickup, DeliveryStatus::PickedUp) => true,
+    (DeliveryStatus::PickedUp, DeliveryStatus::EnRouteToDropoff) => true,
+    (DeliveryStatus::EnRouteToDropoff, DeliveryStatus::Delivered) => true,
+    _ => false,
+  };
+
+  if !valid_transition {
+    return Err(FastJobErrorType::InvalidDeliveryPost.into());
+  }
+
+  let now = Utc::now();
+
+  // Build update form with appropriate timestamp based on new status
+  let update_form = RideSessionUpdateForm {
+    status: Some(new_status),
+    arrived_at_pickup_at: if new_status == DeliveryStatus::EnRouteToPickup {
+      Some(Some(now))
+    } else {
+      None
+    },
+    ride_started_at: if new_status == DeliveryStatus::PickedUp {
+      Some(Some(now))
+    } else {
+      None
+    },
+    ride_completed_at: if new_status == DeliveryStatus::Delivered {
+      Some(Some(now))
+    } else {
+      None
+    },
+    updated_at: Some(Some(now)),
+    ..Default::default()
+  };
+
+  let _updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
+
+  // Publish event
+  let event = RideStatusEvent {
+    kind: "ride_status_update",
+    session_id,
+    post_id: session.post_id,
+    status: new_status,
+    updated_at: now,
+  };
+
+  publish_ride_event(&context, &event, session_id).await;
+
+  Ok(Json(UpdateRideStatusResponse {
+    session_id,
+    status: new_status,
+    cancellation_reason: None,
+    updated_at: now,
+  }))
 }
 
 /// Helper function to publish ride status events to Redis

@@ -403,3 +403,44 @@ pub struct ListAvailableRidesResponse {
   pub rides: Vec<RidePublic>,
 }
 
+/// Request to cancel a ride session
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CancelRideSessionRequest {
+  /// Reason for cancellation
+  pub reason: String,
+}
+
+/// Response after cancelling a ride session
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CancelRideSessionResponse {
+  pub session_id: RideSessionId,
+  pub status: DeliveryStatus,
+  pub cancellation_reason: String,
+  pub cancelled_at: DateTime<Utc>,
+}
+
+/// Request body for updating ride session status
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateRideStatusRequest {
+  /// The new status to set
+  pub status: DeliveryStatus,
+  /// Optional reason for status change (required for cancellation)
+  pub reason: Option<String>,
+}
+
+/// Response after updating ride session status
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateRideStatusResponse {
+  pub session_id: RideSessionId,
+  pub status: DeliveryStatus,
+  pub cancellation_reason: Option<String>,
+  pub updated_at: DateTime<Utc>,
+}

@@ -384,7 +384,7 @@ pub async fn cancel_ride_session(
     ..Default::default()
   };
 
-  let updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
+  RideSession::update(&mut context.pool(), session_id, &update_form).await?;
 
   // Publish event
   let event = RideStatusEvent {

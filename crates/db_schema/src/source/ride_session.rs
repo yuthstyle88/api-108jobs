@@ -67,6 +67,9 @@ pub struct RideSession {
   pub time_charge_applied_coin: Option<i32>,
   pub distance_charge_applied_coin: Option<i32>,
 
+  // Cancellation
+  pub cancellation_reason: Option<String>,
+
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -125,5 +128,6 @@ pub struct RideSessionUpdateForm {
   pub base_fare_applied_coin: Option<Option<i32>>,
   pub time_charge_applied_coin: Option<Option<i32>>,
   pub distance_charge_applied_coin: Option<Option<i32>>,
+  pub cancellation_reason: Option<Option<String>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
 }

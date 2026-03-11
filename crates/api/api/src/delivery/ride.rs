@@ -380,6 +380,7 @@ pub async fn cancel_ride_session(
   // Update session status to Cancelled
   let update_form = RideSessionUpdateForm {
     status: Some(DeliveryStatus::Cancelled),
+    cancellation_reason: Some(Some(form.reason.clone())),
     updated_at: Some(Some(cancelled_at)),
     ..Default::default()
   };

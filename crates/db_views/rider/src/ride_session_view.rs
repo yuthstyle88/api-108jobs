@@ -65,6 +65,7 @@ pub struct RidePrivate {
   pub base_fare_applied_coin: Option<i32>,
   pub time_charge_applied_coin: Option<i32>,
   pub distance_charge_applied_coin: Option<i32>,
+  pub cancellation_reason: Option<String>,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -119,6 +120,7 @@ pub fn project_ride_session(
       base_fare_applied_coin: session.base_fare_applied_coin,
       time_charge_applied_coin: session.time_charge_applied_coin,
       distance_charge_applied_coin: session.distance_charge_applied_coin,
+      cancellation_reason: session.cancellation_reason.clone(),
       created_at: session.created_at,
       updated_at: session.updated_at,
     })

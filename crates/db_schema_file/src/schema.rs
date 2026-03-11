@@ -1894,6 +1894,7 @@ diesel::table! {
         base_fare_applied_coin -> Nullable<Int4>,
         time_charge_applied_coin -> Nullable<Int4>,
         distance_charge_applied_coin -> Nullable<Int4>,
+        cancellation_reason -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }

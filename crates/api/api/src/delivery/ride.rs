@@ -11,8 +11,8 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
   CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
   ListAvailableRidesResponse, ListMyRideSessions, ListMyRideSessionsResponse, PricingBreakdown,
-  RideMeterEvent, RideMeterResponse, RideSessionResponse, RideStatusEvent, UpdateRideMeterRequest,
-  UpdateRideStatusRequest, UpdateRideStatusResponse,
+  PricingConfigSnapshot, PricingConfigSnapshotResponse, RideMeterEvent, RideMeterResponse, RideSessionResponse,
+  RideStatusEvent, UpdateRideMeterRequest, UpdateRideStatusRequest, UpdateRideStatusResponse,
 };
 use app_108jobs_db_views_rider::ride_session_view::{project_ride_session, RideViewer};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
@@ -276,6 +276,55 @@ pub async fn update_ride_meter(
     elapsed_minutes,
     distance_km,
     breakdown,
+  }))
+}
+
+/// GET /api/v4/rides/{sessionId}/pricing-config
+///
+/// Get the pricing config snapshot for a ride session.
+/// Used by rider app to calculate meter updates locally.
+/// Only the assigned rider or employer who created the session can access this.
+pub async fn get_ride_pricing_config(
+  path: Path<RideSessionId>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<PricingConfigSnapshotResponse>> {
+  let session_id = path.into_inner();
+  let person_id = local_user_view.person.id;
+
+  // Get the current session
+  let session = RideSession::read(&mut context.pool(), session_id).await?;
+
+  // Check authorization: must be the assigned rider or the employer who created this session
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+  let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
+  let is_employer = session.employer_id == local_user_view.local_user.id;
+
+  if !is_rider && !is_employer {
+    return Err(FastJobErrorType::NotAnActiveRider.into());
+  }
+
+  // Get the pricing config
+  let pricing_config_id = session.pricing_config_id
+    .ok_or(FastJobErrorType::NotFound)?;
+
+  let pricing_config = PricingConfig::read(&mut context.pool(), pricing_config_id).await?;
+
+  // Get the currency info
+  let currency = Currency::read(&mut context.pool(), pricing_config.currency_id).await?;
+
+  Ok(Json(PricingConfigSnapshotResponse {
+    session_id,
+    pricing_config: PricingConfigSnapshot {
+      id: pricing_config.id,
+      name: pricing_config.name,
+      base_fare_coin: pricing_config.base_fare_coin,
+      time_charge_per_minute_coin: pricing_config.time_charge_per_minute_coin,
+      minimum_charge_minutes: pricing_config.minimum_charge_minutes,
+      distance_charge_per_km_coin: pricing_config.distance_charge_per_km_coin,
+      currency_code: currency.code,
+      currency_symbol: currency.symbol,
+    },
   }))
 }
 

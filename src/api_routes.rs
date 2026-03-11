@@ -17,7 +17,7 @@ use app_108jobs_api::delivery::list::{
 };
 use app_108jobs_api::delivery::location::post_location as post_delivery_location;
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
-use app_108jobs_api::delivery::ride::{cancel_ride_session, confirm_ride_assignment, create_ride_session, list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status};
+use app_108jobs_api::delivery::ride::{cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config, list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status};
 use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -265,6 +265,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/my-sessions", get().to(list_my_ride_sessions))
             .route("/available", get().to(list_available_rides))
             .route("/{sessionId}/confirm", post().to(confirm_ride_assignment))
+            .route("/{sessionId}/pricing-config", get().to(get_ride_pricing_config))
             .route("/{sessionId}/meter", put().to(update_ride_meter))
             .route("/{sessionId}/status", put().to(update_ride_status))
             .route("/{sessionId}/cancel", post().to(cancel_ride_session)),

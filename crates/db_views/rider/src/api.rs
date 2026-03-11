@@ -444,3 +444,31 @@ pub struct UpdateRideStatusResponse {
   pub cancellation_reason: Option<String>,
   pub updated_at: DateTime<Utc>,
 }
+
+// ============================================================================
+// Pricing Config Snapshot API Types
+// ============================================================================
+
+/// Response with pricing config snapshot for a ride session
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PricingConfigSnapshotResponse {
+  pub session_id: RideSessionId,
+  pub pricing_config: PricingConfigSnapshot,
+}
+
+/// Pricing config snapshot for ride meter calculations
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PricingConfigSnapshot {
+  pub id: PricingConfigId,
+  pub name: String,
+  pub base_fare_coin: i32,
+  pub time_charge_per_minute_coin: i32,
+  pub minimum_charge_minutes: i32,
+  pub distance_charge_per_km_coin: i32,
+  pub currency_code: String,
+  pub currency_symbol: String,
+}

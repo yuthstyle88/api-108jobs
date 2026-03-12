@@ -114,6 +114,7 @@ pub struct RideSessionUpdateForm {
   pub pickup_note: Option<Option<String>>,
   pub passenger_name: Option<Option<String>>,
   pub passenger_phone: Option<Option<String>>,
+  pub payment_method: Option<PaymentMethod>,
   pub payment_status: Option<String>,
   pub status: Option<DeliveryStatus>,
   pub rider_assigned_at: Option<Option<DateTime<Utc>>>,

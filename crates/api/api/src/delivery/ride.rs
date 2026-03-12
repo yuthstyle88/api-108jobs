@@ -4,7 +4,7 @@ use app_108jobs_api_utils::utils::{check_fetch_limit, get_active_rider_by_person
 use app_108jobs_db_schema::newtypes::RideSessionId;
 use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::pricing_config::PricingConfig;
-use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionInsertForm, RideSessionUpdateForm};
+use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -20,14 +20,18 @@ use chrono::Utc;
 
 /// POST /api/v4/rides/create
 ///
-/// Creates a new ride session (taxi-style ride with dynamic pricing).
-/// Only the employer (post creator) can create a ride session.
+/// Updates an existing ride session (created when post was created with PostKind::RideTaxi).
+/// Only the employer (post creator) can update the ride session.
 ///
-/// The ride session will use the active pricing config for the default currency,
-/// or a specific pricing config if provided.
+/// Use this endpoint to:
+/// - Assign a rider to the ride
+/// - Set/update pricing config
+/// - Update passenger contact info
+/// - Update pickup note
+/// - Set payment method
 ///
 /// If rider_person_id is provided, the ride will be assigned to that rider directly.
-/// Validation: One post can only have one ride session, and one rider can only have one active ride.
+/// Validation: One rider can only have one active ride.
 pub async fn create_ride_session(
   context: Data<FastJobContext>,
   form: Json<CreateRideSessionRequest>,
@@ -36,14 +40,22 @@ pub async fn create_ride_session(
   let post_id = form.post_id;
   let employer_id = local_user_view.local_user.id;
 
-  // Check if a ride session already exists for this post
-  if RideSession::exists_for_post(&mut context.pool(), post_id).await? {
-    return Err(FastJobErrorType::RideSessionAlreadyExistsForPost.into());
+  // Get the existing ride session for this post
+  let existing_session = RideSession::get_by_post(&mut context.pool(), post_id)
+    .await?
+    .ok_or(FastJobErrorType::NotFound)?;
+
+  // Verify the employer owns this ride session
+  if existing_session.employer_id != employer_id {
+    return Err(FastJobErrorType::NotFound.into());
   }
 
-  // Get the default pricing config if not specified
+  // Get the pricing config
   let pricing_config = if let Some(config_id) = form.pricing_config_id {
     PricingConfig::read(&mut context.pool(), config_id).await?
+  } else if let Some(existing_config_id) = existing_session.pricing_config_id {
+    // Use existing pricing config if already set
+    PricingConfig::read(&mut context.pool(), existing_config_id).await?
   } else {
     // Get default currency and its active pricing config
     let currency = Currency::get_default(&mut context.pool())
@@ -57,64 +69,58 @@ pub async fn create_ride_session(
   let base_fare = pricing_config.base_fare_coin;
 
   // Lookup rider if rider_person_id is provided
-  let (rider_id, initial_status, rider_assigned_at) = if let Some(person_id) = form.rider_person_id {
+  let (rider_id, new_status, rider_assigned_at) = if let Some(person_id) = form.rider_person_id {
+    // Skip if same rider is already assigned
     let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
-    // Check if rider already has an active ride session
-    if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
-      return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+    if existing_session.rider_id == Some(rider.id) {
+      (existing_session.rider_id, existing_session.status, None)
+    } else {
+      // Check if rider already has an active ride session
+      if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
+        return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+      }
+      (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()))
     }
-
-    (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()))
   } else {
-    (None, DeliveryStatus::Pending, None)
+    (existing_session.rider_id, existing_session.status, None)
   };
 
-  // Create the ride session
-  let session_form = RideSessionInsertForm {
-    post_id,
-    rider_id,
-    employer_id,
-    pricing_config_id: Some(pricing_config.id),
-    pickup_address: form.pickup_address.clone(),
-    pickup_lat: form.pickup_lat,
-    pickup_lng: form.pickup_lng,
-    dropoff_address: form.dropoff_address.clone(),
-    dropoff_lat: form.dropoff_lat,
-    dropoff_lng: form.dropoff_lng,
-    pickup_note: form.pickup_note.clone(),
-    passenger_name: form.passenger_name.clone(),
-    passenger_phone: form.passenger_phone.clone(),
-    payment_method: form.payment_method.clone(),
+  // Calculate initial price if not already set
+  let current_price_coin = if existing_session.current_price_coin == 0 {
+    base_fare
+  } else {
+    existing_session.current_price_coin
+  };
+
+  // Update the ride session
+  let update_form = RideSessionUpdateForm {
+    rider_id: Some(rider_id),
+    pricing_config_id: Some(Some(pricing_config.id)),
+    pickup_note: Some(form.pickup_note.clone()),
+    passenger_name: Some(form.passenger_name.clone()),
+    passenger_phone: Some(form.passenger_phone.clone()),
     payment_status: Some("pending".to_string()),
-    status: Some(initial_status),
-    requested_at: Some(Utc::now()),
-    current_price_coin: Some(base_fare), // Start with base fare
+    status: Some(new_status),
+    rider_assigned_at: Some(rider_assigned_at),
+    current_price_coin: Some(current_price_coin),
+    updated_at: Some(Some(Utc::now())),
+    ..Default::default()
   };
 
-  let session = RideSession::create(&mut context.pool(), &session_form).await?;
+  let session = RideSession::update(&mut context.pool(), existing_session.id, &update_form).await?;
 
-  // If rider was assigned, update the rider_assigned_at timestamp
-  let session = if rider_assigned_at.is_some() {
-    let update_form = RideSessionUpdateForm {
-      rider_assigned_at: Some(rider_assigned_at),
-      ..Default::default()
+  // Publish event if rider was assigned
+  if rider_assigned_at.is_some() {
+    let event = RideStatusEvent {
+      kind: "ride_assigned",
+      session_id: session.id,
+      post_id,
+      status: session.status,
+      updated_at: session.updated_at.unwrap_or(session.created_at),
     };
-    RideSession::update(&mut context.pool(), session.id, &update_form).await?
-  } else {
-    session
-  };
-
-  // Publish event for available riders
-  let event = RideStatusEvent {
-    kind: if rider_id.is_some() { "ride_assigned" } else { "ride_requested" },
-    session_id: session.id,
-    post_id,
-    status: session.status,
-    updated_at: session.created_at,
-  };
-
-  publish_ride_event(&context, &event, session.id).await;
+    publish_ride_event(&context, &event, session.id).await;
+  }
 
   Ok(Json(RideSessionResponse {
     id: session.id,

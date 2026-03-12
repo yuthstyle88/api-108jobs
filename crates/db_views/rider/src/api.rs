@@ -254,14 +254,6 @@ pub struct CreateRideSessionRequest {
   pub pricing_config_id: Option<PricingConfigId>,
   /// Optional rider to assign (pass PersonId, will lookup RiderId)
   pub rider_person_id: Option<PersonId>,
-  /// Pickup location
-  pub pickup_address: String,
-  pub pickup_lat: Option<f64>,
-  pub pickup_lng: Option<f64>,
-  /// Dropoff location
-  pub dropoff_address: String,
-  pub dropoff_lat: Option<f64>,
-  pub dropoff_lng: Option<f64>,
   /// Optional pickup note
   pub pickup_note: Option<String>,
   /// Passenger contact info

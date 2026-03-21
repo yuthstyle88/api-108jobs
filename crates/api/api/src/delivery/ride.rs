@@ -4,6 +4,7 @@ use app_108jobs_api_utils::utils::{check_fetch_limit, get_active_rider_by_person
 use app_108jobs_db_schema::newtypes::RideSessionId;
 use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::pricing_config::PricingConfig;
+use app_108jobs_db_schema::source::rider::{Rider, RiderUpdateForm};
 use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::DeliveryStatus;
@@ -69,21 +70,25 @@ pub async fn create_ride_session(
   let base_fare = pricing_config.base_fare_coin;
 
   // Lookup rider if rider_person_id is provided
-  let (rider_id, new_status, rider_assigned_at) = if let Some(person_id) = form.rider_person_id {
+  let (rider_id, new_status, rider_assigned_at, rider_to_update) = if let Some(person_id) = form.rider_person_id {
     // Skip if same rider is already assigned
     let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
     if existing_session.rider_id == Some(rider.id) {
-      (existing_session.rider_id, existing_session.status, None)
+      (existing_session.rider_id, existing_session.status, None, None)
     } else {
+      // Check if rider is accepting jobs (not busy)
+      if !rider.accepting_jobs {
+        return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+      }
       // Check if rider already has an active ride session
       if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
         return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
       }
-      (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()))
+      (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()), Some(rider))
     }
   } else {
-    (existing_session.rider_id, existing_session.status, None)
+    (existing_session.rider_id, existing_session.status, None, None)
   };
 
   // Calculate initial price if not already set
@@ -109,6 +114,15 @@ pub async fn create_ride_session(
   };
 
   let session = RideSession::update(&mut context.pool(), existing_session.id, &update_form).await?;
+
+  // Mark rider as busy (not accepting jobs) if newly assigned
+  if let Some(rider) = rider_to_update {
+    let rider_update = RiderUpdateForm {
+      accepting_jobs: Some(false),
+      ..Default::default()
+    };
+    Rider::update(&mut context.pool(), rider.id, &rider_update).await?;
+  }
 
   // Publish event if rider was assigned
   if rider_assigned_at.is_some() {
@@ -416,10 +430,10 @@ pub async fn cancel_ride_session(
   let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Check authorization: must be the assigned rider or the employer who created this session
-    let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
-    let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+  let is_rider = rider.as_ref().map_or(false, |r| session.rider_id == Some(r.id));
 
-    let is_employer = session.employer_id == local_user_view.local_user.id;
+  let is_employer = session.employer_id == local_user_view.local_user.id;
 
   if !is_rider && !is_employer {
     return Err(FastJobErrorType::NotAnActiveRider.into());
@@ -441,6 +455,15 @@ pub async fn cancel_ride_session(
   };
 
   RideSession::update(&mut context.pool(), session_id, &update_form).await?;
+
+  // Mark rider as available (accepting jobs) if they were assigned
+  if let Some(rider_id) = session.rider_id {
+    let rider_update = RiderUpdateForm {
+      accepting_jobs: Some(true),
+      ..Default::default()
+    };
+    Rider::update(&mut context.pool(), rider_id, &rider_update).await?;
+  }
 
   // Publish event
   let event = RideStatusEvent {
@@ -549,6 +572,17 @@ pub async fn update_ride_status(
   };
 
   let _updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
+
+  // Mark rider as available (accepting jobs) when ride is delivered
+  if new_status == DeliveryStatus::Delivered {
+    if let Some(rider_id) = session.rider_id {
+      let rider_update = RiderUpdateForm {
+        accepting_jobs: Some(true),
+        ..Default::default()
+      };
+      Rider::update(&mut context.pool(), rider_id, &rider_update).await?;
+    }
+  }
 
   // Publish event
   let event = RideStatusEvent {

@@ -47,7 +47,7 @@ fn replaceable_schema() -> String {
     include_str!("../replaceable_schema/utils.sql"),
     include_str!("../replaceable_schema/triggers.sql"),
   ]
-  .join("\n")
+      .join("\n")
 }
 
 const REPLACEABLE_SCHEMA_PATH: &str = "crates/db_schema_setup/replaceable_schema";
@@ -69,8 +69,8 @@ impl MigrationHarnessWrapper<'_> {
     let result = self.conn.run_migration(migration);
 
     let duration = TimeDelta::from_std(start_time.elapsed())
-      .map(|d| d.to_string())
-      .unwrap_or_default();
+        .map(|d| d.to_string())
+        .unwrap_or_default();
     let name = migration.name();
     self.options.print(&format!("{duration} run {name}"));
 
@@ -113,8 +113,8 @@ impl MigrationHarness<Pg> for MigrationHarnessWrapper<'_> {
     let result = self.conn.revert_migration(migration);
 
     let duration = TimeDelta::from_std(start_time.elapsed())
-      .map(|d| d.to_string())
-      .unwrap_or_default();
+        .map(|d| d.to_string())
+        .unwrap_or_default();
     let name = migration.name();
     self.options.print(&format!("{duration} revert {name}"));
 
@@ -189,9 +189,9 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
   // If possible, skip getting a lock and recreating the "r" schema, so
   // app_108jobs_server processes in a horizontally scaled setup can start without causing locks
   if !options.revert
-    && options.run
-    && options.limit.is_none()
-    && !conn
+      && options.run
+      && options.limit.is_none()
+      && !conn
       .has_pending_migration(migrations())
       .map_err(convert_err)?
   {
@@ -222,7 +222,7 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
 
   // Only run replaceable_schema if the newest migration was applied
   let output = if (options.run && options.limit.is_none())
-    || !conn
+      || !conn
       .has_pending_migration(migrations())
       .map_err(convert_err)?
   {
@@ -255,12 +255,12 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
 fn run_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
   conn.transaction(|conn| {
     conn
-      .batch_execute(&replaceable_schema())
-      .with_context(|| format!("Failed to run SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
+        .batch_execute(&replaceable_schema())
+        .with_context(|| format!("Failed to run SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
 
     let num_rows_updated = update(previously_run_sql::table)
-      .set(previously_run_sql::content.eq(replaceable_schema()))
-      .execute(conn)?;
+        .set(previously_run_sql::content.eq(replaceable_schema()))
+        .execute(conn)?;
 
     debug_assert_eq!(num_rows_updated, 1);
 
@@ -270,8 +270,8 @@ fn run_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
 
 fn revert_replaceable_schema(conn: &mut PgConnection) -> anyhow::Result<()> {
   conn
-    .batch_execute("DROP SCHEMA IF EXISTS r CASCADE;")
-    .with_context(|| format!("Failed to revert SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
+      .batch_execute("DROP SCHEMA IF EXISTS r CASCADE;")
+      .with_context(|| format!("Failed to revert SQL files in {REPLACEABLE_SCHEMA_PATH}"))?;
 
   // Value in the ` previously_run_sql ` table is not set here because the table might not exist,
   // and that's fine because the existence of the `r` schema is also checked

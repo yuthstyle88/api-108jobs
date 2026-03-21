@@ -190,13 +190,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for PhoenixSession {
   }
 }
 
-pub struct DeliveryLocationSession {
+pub struct TripLocationSession {
   post_id: PostId,
   ctx: FastJobContext,
   last_sent: Option<String>,
 }
 
-impl DeliveryLocationSession {
+impl TripLocationSession {
   pub(crate) fn new(post_id: PostId, ctx: FastJobContext) -> Self {
     Self {
       post_id,
@@ -206,12 +206,12 @@ impl DeliveryLocationSession {
   }
 }
 
-impl Actor for DeliveryLocationSession {
+impl Actor for TripLocationSession {
   type Context = ws::WebsocketContext<Self>;
 
   fn started(&mut self, ctx: &mut Self::Context) {
     // Emit last known + start a lightweight polling loop (imitate existing utils style)
-    let key = format!("delivery:current:{}", self.post_id);
+    let key = format!("trip:current:{}", self.post_id);
     let mut redis = self.ctx.redis().clone();
     let addr = ctx.address();
     actix::spawn(async move {
@@ -232,7 +232,7 @@ impl Actor for DeliveryLocationSession {
       let mut last: Option<String> = None;
       loop {
         tick.tick().await;
-        let key = format!("delivery:current:{}", post_id);
+        let key = format!("trip:current:{}", post_id);
         if let Ok(Some::<Value>(val)) = redis.get_value(&key).await {
           if let Ok(text) = serde_json::to_string(&val) {
             if last.as_deref() != Some(&text) {
@@ -250,7 +250,7 @@ impl Actor for DeliveryLocationSession {
 #[rtype(result = "()")]
 struct EmitRaw(String);
 
-impl Handler<EmitRaw> for DeliveryLocationSession {
+impl Handler<EmitRaw> for TripLocationSession {
   type Result = ();
   fn handle(&mut self, msg: EmitRaw, ctx: &mut Self::Context) -> Self::Result {
     ctx.text(msg.0);
@@ -263,7 +263,7 @@ struct EmitMaybe {
   payload: String,
 }
 
-impl Handler<EmitMaybe> for DeliveryLocationSession {
+impl Handler<EmitMaybe> for TripLocationSession {
   type Result = ();
   fn handle(&mut self, msg: EmitMaybe, ctx: &mut Self::Context) -> Self::Result {
     if self.last_sent.as_deref() != Some(&msg.payload) {
@@ -273,8 +273,8 @@ impl Handler<EmitMaybe> for DeliveryLocationSession {
   }
 }
 
-// ============ Delivery location WS (employer/rider viewer) ============
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for DeliveryLocationSession {
+// ============ Trip location WS (employer/rider viewer) ============
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for TripLocationSession {
   fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     match item {
       Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),

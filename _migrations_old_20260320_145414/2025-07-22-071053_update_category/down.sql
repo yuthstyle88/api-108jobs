@@ -1,0 +1,9 @@
+DROP INDEX IF EXISTS idx_category_path;
+
+ALTER TABLE category
+DROP
+COLUMN IF EXISTS path,
+    DROP
+COLUMN IF EXISTS active,
+    DROP
+COLUMN IF EXISTS is_new;

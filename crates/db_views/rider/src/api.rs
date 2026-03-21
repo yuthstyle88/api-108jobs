@@ -1,7 +1,6 @@
 use crate::RiderView;
 use crate::ride_session_view::{RidePublic, RideSessionView};
-use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId};
-use app_108jobs_db_schema::newtypes::RiderId;
+use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId, RiderId};
 use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
@@ -463,4 +462,23 @@ pub struct PricingConfigSnapshot {
   pub distance_charge_per_km_coin: i32,
   pub currency_code: String,
   pub currency_symbol: String,
+}
+
+// ============================================================================
+// Rider Location API Types
+// ============================================================================
+
+/// Response with rider's current location
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RiderLocationResponse {
+  pub session_id: RideSessionId,
+  pub rider_id: RiderId,
+  pub lat: f64,
+  pub lng: f64,
+  pub heading: Option<f64>,
+  pub speed_kmh: Option<f64>,
+  pub accuracy_m: Option<f64>,
+  pub updated_at: DateTime<Utc>,
 }

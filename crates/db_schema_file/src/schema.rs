@@ -1071,7 +1071,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    delivery_location_current (post_id) {
+    trip_location_current (post_id) {
         post_id -> Int4,
         rider_id -> Int4,
         lat -> Float8,
@@ -1084,7 +1084,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    delivery_location_history (id) {
+    trip_location_history (id) {
         id -> Int8,
         post_id -> Int4,
         rider_id -> Int4,
@@ -1690,10 +1690,10 @@ diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id)
 diesel::joinable!(withdraw_requests -> currency (currency_id));
 diesel::joinable!(rider -> person (person_id));
 diesel::joinable!(delivery_details -> post (post_id));
-diesel::joinable!(delivery_location_current -> post (post_id));
-diesel::joinable!(delivery_location_current -> rider (rider_id));
-diesel::joinable!(delivery_location_history -> post (post_id));
-diesel::joinable!(delivery_location_history -> rider (rider_id));
+diesel::joinable!(trip_location_current -> post (post_id));
+diesel::joinable!(trip_location_current -> rider (rider_id));
+diesel::joinable!(trip_location_history -> post (post_id));
+diesel::joinable!(trip_location_history -> rider (rider_id));
 diesel::joinable!(delivery_rider_rating -> post (post_id));
 diesel::joinable!(delivery_rider_rating -> rider (rider_id));
 diesel::joinable!(currency_rate_history -> currency (currency_id));
@@ -1789,8 +1789,8 @@ diesel::allow_tables_to_appear_in_same_query!(
   withdraw_requests,
   rider,
   delivery_details,
-  delivery_location_current,
-  delivery_location_history,
+  trip_location_current,
+  trip_location_history,
   delivery_rider_rating,
   currency,
   currency_rate_history,

@@ -1,0 +1,3 @@
+ALTER TABLE user_
+    ADD COLUMN deleted boolean DEFAULT FALSE NOT NULL;
+

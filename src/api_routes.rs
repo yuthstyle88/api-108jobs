@@ -15,7 +15,7 @@ use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
 use app_108jobs_api::delivery::list::{
   get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
 };
-use app_108jobs_api::delivery::location::post_location as post_delivery_location;
+use app_108jobs_api::delivery::location::{post_location as post_trip_location, get_location as get_trip_location};
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
 use app_108jobs_api::delivery::ride::{cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config, list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status};
 use app_108jobs_api::delivery::status::update_delivery_status;
@@ -157,7 +157,7 @@ use app_108jobs_routes::images::{
 use app_108jobs_routes::payments::create_qrcode::create_qrcode;
 use app_108jobs_routes::payments::inquire::inquire_qrcode;
 use app_108jobs_utils::rate_limit::RateLimit;
-use app_108jobs_ws::server::handler::delivery_location_ws;
+use app_108jobs_ws::server::handler::trip_location_ws;
 use app_108jobs_ws::server::handler::{
   get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
   phoenix_ws,
@@ -166,10 +166,10 @@ use app_108jobs_ws::server::handler::{
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
     .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
-    // WS endpoints for delivery tracking
+    // WS endpoints for trip tracking (shared by delivery and ride taxi)
     .service(scope("/ws").route(
-      "/deliveries/{postId}/location",
-      get().to(delivery_location_ws),
+      "/trips/{postId}/location",
+      get().to(trip_location_ws),
     ))
     .service(
       scope("/api/v4")
@@ -253,7 +253,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/active", get().to(get_active_deliveries))
             .route("/completed", get().to(get_completed_deliveries))
             .route("/cancelled", get().to(get_cancelled_deliveries))
-            .route("/{postId}/location", post().to(post_delivery_location))
+            .route("/{postId}/location", post().to(post_trip_location))
+            .route("/{postId}/location", get().to(get_trip_location))
             .route("/{postId}/status", put().to(update_delivery_status))
             .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
             .route("/{postId}/confirm", post().to(confirm_delivery_completion)),

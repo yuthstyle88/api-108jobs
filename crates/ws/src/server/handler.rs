@@ -2,7 +2,7 @@ use crate::broker::manager::{
   FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager,
 };
 use crate::presence::{IsUserOnline, PresenceManager};
-use crate::server::session::{DeliveryLocationSession, PhoenixSession};
+use crate::server::session::{TripLocationSession, PhoenixSession};
 use actix::Addr;
 use actix_web::{
   web,
@@ -126,17 +126,17 @@ pub async fn phoenix_ws(
   ws::start(ph_session, &req, stream)
 }
 
-// ============ Delivery location WS (employer/rider viewer) ============
+// ============ Trip location WS (employer/rider viewer) ============
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct TokenQuery {
   pub token: Option<String>,
 }
 
-/// WebSocket that streams delivery location updates for a given postId.
+/// WebSocket that streams trip location updates for a given postId.
 /// Auth: JWT in `?token=` query; must resolve to a valid user. Authorization to
-/// a specific delivery should be enforced at a higher layer when assignment flow is implemented.
-pub async fn delivery_location_ws(
+/// a specific trip should be enforced at a higher layer when assignment flow is implemented.
+pub async fn trip_location_ws(
   req: HttpRequest,
   path: web::Path<PostId>,
   query: Query<TokenQuery>,
@@ -158,6 +158,6 @@ pub async fn delivery_location_ws(
   }
 
   let post_id = *path;
-  let session = DeliveryLocationSession::new(post_id, context.get_ref().clone());
+  let session = TripLocationSession::new(post_id, context.get_ref().clone());
   ws::start(session, &req, stream)
 }

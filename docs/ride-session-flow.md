@@ -1,6 +1,6 @@
 # Ride Session Flow
 
-## DeliveryStatus Enum
+## TripStatus Enum
 
 ```
 Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
@@ -97,7 +97,7 @@ Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnR
 
 ## Key Implementation Files
 
-- **Status Enum**: `crates/db_schema_file/src/enums.rs` - `DeliveryStatus`
+- **Status Enum**: `crates/db_schema_file/src/enums.rs` - `TripStatus`
 - **Session Struct**: `crates/db_schema/src/source/ride_session.rs` - `RideSession`
 - **Session Methods**: `crates/db_schema/src/impls/ride_session.rs`
 - **Create Handler**: `crates/api/api/src/delivery/ride.rs` - `create_ride_session`

@@ -1,5 +1,5 @@
 use crate::newtypes::{LocalUserId, PostId, PricingConfigId, RiderId, RideSessionId};
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod};
+use app_108jobs_db_schema_file::enums::{TripStatus, PaymentMethod};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::ride_session;
@@ -42,9 +42,9 @@ pub struct RideSession {
   pub payment_method: PaymentMethod,
   pub payment_status: String,
 
-  // Session state - uses DeliveryStatus for both taxi and cargo
+  // Session state - uses TripStatus for both taxi and cargo
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
 
   // Timestamps
   pub requested_at: DateTime<Utc>,
@@ -96,7 +96,7 @@ pub struct RideSessionInsertForm {
   pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
   pub payment_status: Option<String>,
-  pub status: Option<DeliveryStatus>,
+  pub status: Option<TripStatus>,
   pub requested_at: Option<DateTime<Utc>>,
   pub current_price_coin: Option<i32>,
 }
@@ -116,7 +116,7 @@ pub struct RideSessionUpdateForm {
   pub passenger_phone: Option<Option<String>>,
   pub payment_method: Option<PaymentMethod>,
   pub payment_status: Option<String>,
-  pub status: Option<DeliveryStatus>,
+  pub status: Option<TripStatus>,
   pub rider_assigned_at: Option<Option<DateTime<Utc>>>,
   pub rider_confirmed_at: Option<Option<DateTime<Utc>>>,
   pub arrived_at_pickup_at: Option<Option<DateTime<Utc>>>,

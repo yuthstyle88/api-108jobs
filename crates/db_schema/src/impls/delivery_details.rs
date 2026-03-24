@@ -25,7 +25,7 @@ use uuid::Uuid;
 use app_108jobs_db_schema_file::schema::delivery_details;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{local_user as local_user_tbl, post as post_tbl, rider as rider_tbl};
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PostKind, RiderVerificationStatus};
+use app_108jobs_db_schema_file::enums::{TripStatus, PostKind, RiderVerificationStatus};
 
 impl Crud for DeliveryDetails {
     type InsertForm = DeliveryDetailsInsertForm;
@@ -91,8 +91,8 @@ impl DeliveryDetails {
         let is_active_delivery: bool = select(diesel::dsl::exists(
             delivery_details::dsl::delivery_details
                 .filter(delivery_details::dsl::post_id.eq(post_id.0))
-                .filter(delivery_details::dsl::status.ne(DeliveryStatus::Cancelled))
-                .filter(delivery_details::dsl::status.ne(DeliveryStatus::Delivered)),
+                .filter(delivery_details::dsl::status.ne(TripStatus::Cancelled))
+                .filter(delivery_details::dsl::status.ne(TripStatus::Delivered)),
         ))
         .get_result(conn)
         .await
@@ -121,8 +121,8 @@ impl DeliveryDetails {
 
     /// Check if a status transition is valid.
     /// Returns true if the transition is allowed, false otherwise.
-    pub fn can_transition_to(&self, new_status: DeliveryStatus) -> bool {
-        use DeliveryStatus::*;
+    pub fn can_transition_to(&self, new_status: TripStatus) -> bool {
+        use TripStatus::*;
 
         // Terminal states cannot be transitioned from
         if matches!(self.status, Cancelled | Delivered) {
@@ -158,7 +158,7 @@ impl DeliveryDetails {
     pub async fn update_status(
         pool: &mut DbPool<'_>,
         post_id: PostId,
-        new_status: DeliveryStatus,
+        new_status: TripStatus,
         cancellation_reason: Option<String>,
     ) -> FastJobResult<Self> {
         use diesel::ExpressionMethods;
@@ -184,7 +184,7 @@ impl DeliveryDetails {
         // Determine the cancellation reason to save
         // If cancelling, use the provided reason or clear it if not cancelling
         let reason_to_save = match new_status {
-            DeliveryStatus::Cancelled => cancellation_reason,
+            TripStatus::Cancelled => cancellation_reason,
             _ => None, // Clear reason for non-cancelled statuses
         };
 
@@ -226,10 +226,10 @@ impl DeliveryDetails {
 
         let results = delivery_details::dsl::delivery_details
             .filter(delivery_details::dsl::status.eq_any(vec![
-                DeliveryStatus::Assigned,
-                DeliveryStatus::EnRouteToPickup,
-                DeliveryStatus::PickedUp,
-                DeliveryStatus::EnRouteToDropoff,
+                TripStatus::Assigned,
+                TripStatus::EnRouteToPickup,
+                TripStatus::PickedUp,
+                TripStatus::EnRouteToDropoff,
             ]))
             .order(delivery_details::dsl::created_at.desc())
             .load::<Self>(conn)
@@ -265,7 +265,7 @@ impl DeliveryDetails {
             .map_err(|_| FastJobErrorType::NotFound)?;
 
         // Can only assign from Pending status
-        if current_delivery.status != DeliveryStatus::Pending {
+        if current_delivery.status != TripStatus::Pending {
             return Err(FastJobErrorType::CannotUnassignFromStatus.into());
         }
 
@@ -295,7 +295,7 @@ impl DeliveryDetails {
                 delivery_details::dsl::sender_phone.eq(sender_phone),
                 delivery_details::dsl::receiver_name.eq(receiver_name),
                 delivery_details::dsl::receiver_phone.eq(receiver_phone),
-                delivery_details::dsl::status.eq(DeliveryStatus::Assigned),
+                delivery_details::dsl::status.eq(TripStatus::Assigned),
                 delivery_details::dsl::updated_at.eq(Utc::now()),
             ))
             .get_result::<Self>(conn)
@@ -336,7 +336,7 @@ impl DeliveryDetails {
                     .map_err(|_| FastJobErrorType::NotFound)?;
 
                 // Can only assign from Pending status
-                if current_delivery.status != DeliveryStatus::Pending {
+                if current_delivery.status != TripStatus::Pending {
                     return Err(FastJobErrorType::CannotUnassignFromStatus.into());
                 }
 
@@ -390,7 +390,7 @@ impl DeliveryDetails {
                         delivery_details::dsl::receiver_name.eq(receiver_name),
                         delivery_details::dsl::receiver_phone.eq(receiver_phone),
                         delivery_details::dsl::delivery_fee.eq(delivery_fee),
-                        delivery_details::dsl::status.eq(DeliveryStatus::Assigned),
+                        delivery_details::dsl::status.eq(TripStatus::Assigned),
                         delivery_details::dsl::updated_at.eq(Utc::now()),
                     ))
                     .get_result::<Self>(conn)
@@ -428,7 +428,7 @@ impl DeliveryDetails {
         }
 
         // Can only unassign from Assigned status (before work begins)
-        if current_delivery.status != DeliveryStatus::Assigned {
+        if current_delivery.status != TripStatus::Assigned {
             return Err(FastJobErrorType::CannotUnassignFromStatus.into());
         }
 
@@ -440,7 +440,7 @@ impl DeliveryDetails {
                 delivery_details::dsl::assigned_at.eq(Option::<DateTime<Utc>>::None),
                 delivery_details::dsl::assigned_by_person_id.eq(Option::<i32>::None),
                 delivery_details::dsl::linked_comment_id.eq(Option::<i32>::None),
-                delivery_details::dsl::status.eq(DeliveryStatus::Pending),
+                delivery_details::dsl::status.eq(TripStatus::Pending),
                 delivery_details::dsl::updated_at.eq(Utc::now()),
             ))
             .get_result::<Self>(conn)
@@ -485,7 +485,7 @@ impl DeliveryDetails {
                 }
 
                 // Can only confirm Delivered status
-                if current_delivery.status != DeliveryStatus::Delivered {
+                if current_delivery.status != TripStatus::Delivered {
                     return Err(FastJobErrorType::CannotConfirmNonDeliveredDelivery.into());
                 }
 
@@ -564,10 +564,10 @@ impl DeliveryDetails {
         let result = delivery_details::dsl::delivery_details
             .filter(delivery_details::dsl::assigned_rider_id.eq(rider_id.0))
             .filter(delivery_details::dsl::status.eq_any(vec![
-                DeliveryStatus::Assigned,
-                DeliveryStatus::EnRouteToPickup,
-                DeliveryStatus::PickedUp,
-                DeliveryStatus::EnRouteToDropoff,
+                TripStatus::Assigned,
+                TripStatus::EnRouteToPickup,
+                TripStatus::PickedUp,
+                TripStatus::EnRouteToDropoff,
             ]))
             .first::<Self>(conn)
             .await
@@ -584,7 +584,7 @@ impl DeliveryDetails {
         let conn = &mut get_conn(pool).await?;
 
         let results = delivery_details::dsl::delivery_details
-            .filter(delivery_details::dsl::status.eq(DeliveryStatus::Delivered))
+            .filter(delivery_details::dsl::status.eq(TripStatus::Delivered))
             .order(delivery_details::dsl::created_at.desc())
             .load::<Self>(conn)
             .await
@@ -601,7 +601,7 @@ impl DeliveryDetails {
         let conn = &mut get_conn(pool).await?;
 
         let results = delivery_details::dsl::delivery_details
-            .filter(delivery_details::dsl::status.eq(DeliveryStatus::Cancelled))
+            .filter(delivery_details::dsl::status.eq(TripStatus::Cancelled))
             .order(delivery_details::dsl::created_at.desc())
             .load::<Self>(conn)
             .await

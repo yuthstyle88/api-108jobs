@@ -1,2 +1,0 @@
-DROP FUNCTION category_aggregates_activity, site_aggregates_activity CASCADE;
-

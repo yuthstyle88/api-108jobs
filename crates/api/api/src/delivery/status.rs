@@ -2,10 +2,10 @@ use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::newtypes::PostId;
 use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
-use app_108jobs_db_schema_file::enums::DeliveryStatus;
+use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  DeliveryStatusEvent, DeliveryStatusResponse, UpdateDeliveryStatusRequest,
+  TripStatusEvent, TripStatusResponse, UpdateTripStatusRequest,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -24,16 +24,16 @@ use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 /// - (Any active state) → Cancelled
 pub async fn update_delivery_status(
   path: Path<PostId>,
-  data: Json<UpdateDeliveryStatusRequest>,
+  data: Json<UpdateTripStatusRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<DeliveryStatusResponse>> {
+) -> FastJobResult<Json<TripStatusResponse>> {
   let post_id = path.into_inner();
   let person_id = local_user_view.person.id;
   let new_status = data.status;
 
   // Require reason for cancellation
-  if new_status == DeliveryStatus::Cancelled
+  if new_status == TripStatus::Cancelled
     && data.reason.as_ref().map_or(true, |r| r.trim().is_empty())
   {
     return Err(FastJobErrorType::ReasonIsRequiredWhenCancelling.into());
@@ -63,7 +63,7 @@ pub async fn update_delivery_status(
   // Check if status is actually changing
   if current_delivery.status == new_status {
     // Idempotent - return current state without error
-    return Ok(Json(DeliveryStatusResponse {
+    return Ok(Json(TripStatusResponse {
       post_id,
       status: new_status,
       cancellation_reason: current_delivery.cancellation_reason,
@@ -77,7 +77,7 @@ pub async fn update_delivery_status(
     DeliveryDetails::update_status(&mut pool, post_id, new_status, data.reason.clone()).await?
   };
 
-  let response = DeliveryStatusResponse {
+  let response = TripStatusResponse {
     post_id,
     status: new_status,
     cancellation_reason: updated_delivery.cancellation_reason,
@@ -85,7 +85,7 @@ pub async fn update_delivery_status(
   };
 
   // Publish status change event to Redis for WebSocket listeners
-  let event = DeliveryStatusEvent {
+  let event = TripStatusEvent {
     kind: "delivery_status_update",
     post_id,
     status: new_status,

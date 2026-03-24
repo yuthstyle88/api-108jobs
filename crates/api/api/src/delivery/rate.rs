@@ -7,7 +7,7 @@ use app_108jobs_db_schema::source::delivery_rider_rating::DeliveryRiderRating;
 use app_108jobs_db_schema::source::post::Post;
 use app_108jobs_db_schema::source::rider::Rider;
 use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PostKind};
+use app_108jobs_db_schema_file::enums::{TripStatus, PostKind};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{DeliveryRiderRatingData, RateRiderRequest, RateRiderResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
@@ -44,7 +44,7 @@ pub async fn rate_rider(
 
   // Verify the delivery is completed
   let delivery = DeliveryDetails::get_by_post_id(&mut context.pool(), post_id).await?;
-  if delivery.status != DeliveryStatus::Delivered {
+  if delivery.status != TripStatus::Delivered {
     return Err(FastJobErrorType::DeliveryMustBeCompleted.into());
   }
 

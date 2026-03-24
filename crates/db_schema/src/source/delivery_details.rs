@@ -9,7 +9,7 @@ use {
   diesel::prelude::*,
   diesel_async::RunQueryDsl,
 };
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, VehicleType};
+use app_108jobs_db_schema_file::enums::{TripStatus, VehicleType};
 use crate::newtypes::{PersonId as PersonIdNew, RiderId as RiderIdNew};
 
 /// Viewer context for determining access level to delivery details
@@ -60,7 +60,7 @@ pub struct DeliveryDetails {
   pub receiver_phone: Option<String>,
   pub cash_on_delivery: bool,
   pub cod_amount: Option<f64>,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub cancellation_reason: Option<String>,
   pub assigned_rider_id: Option<RiderId>,
   pub assigned_at: Option<DateTime<Utc>>,
@@ -144,7 +144,7 @@ pub struct DeliveryDetailsInsertForm {
 
   // Tracking state,
   #[new(default)]
-  pub status: Option<DeliveryStatus>,
+  pub status: Option<TripStatus>,
 }
 
 #[cfg(feature = "full")]
@@ -210,7 +210,7 @@ pub struct DeliveryDetailsUpdateForm {
   pub rider_wallet_transaction_id: Option<Option<i32>>,
 
   // Status
-  pub status: Option<DeliveryStatus>,
+  pub status: Option<TripStatus>,
   pub cancellation_reason: Option<Option<String>>,
 
   // Assignment
@@ -346,7 +346,7 @@ pub struct DeliveryDetailsPublic {
   pub employer_confirmed_at: Option<DateTime<Utc>>,
 
   // Status and assignment (safe to show - no personal info)
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub assigned_rider_id: Option<RiderId>,
   pub assigned_at: Option<DateTime<Utc>>,
 
@@ -388,7 +388,7 @@ pub struct DeliveryDetailsPrivate {
   pub cash_on_delivery: bool,
   pub cod_amount: Option<f64>,
   #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub cancellation_reason: Option<String>,
   pub assigned_rider_id: Option<RiderId>,
   pub assigned_at: Option<DateTime<Utc>>,

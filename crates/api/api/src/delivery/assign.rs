@@ -6,7 +6,7 @@ use app_108jobs_api_utils::utils::{
 use app_108jobs_db_schema::newtypes::PostId;
 use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
 use app_108jobs_db_schema::utils::get_conn;
-use app_108jobs_db_schema_file::enums::DeliveryStatus;
+use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{AssignDeliveryRequest, DeliveryAssignmentEvent};
 use app_108jobs_db_views_site::api::SuccessResponse;
@@ -98,7 +98,7 @@ pub async fn assign_delivery_from_proposal(
         post_id,
         rider_id,
         assigned_at: delivery.assigned_at.unwrap_or_else(Utc::now),
-        status: DeliveryStatus::Assigned,
+        status: TripStatus::Assigned,
     };
 
     if let Ok(json) = serde_json::to_string(&event) {

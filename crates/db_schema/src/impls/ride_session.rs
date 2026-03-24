@@ -9,7 +9,7 @@ use diesel::dsl::{insert_into, update};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::RunQueryDsl;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema_file::enums::DeliveryStatus;
+use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_schema_file::schema::ride_session;
 
 impl Crud for RideSession {
@@ -92,7 +92,7 @@ impl RideSession {
 
     let result = ride_session::table
       .filter(ride_session::rider_id.eq(rider_id))
-      .filter(ride_session::status.eq(DeliveryStatus::PickedUp))
+      .filter(ride_session::status.eq(TripStatus::PickedUp))
       .first::<Self>(conn)
       .await
       .optional()
@@ -105,7 +105,7 @@ impl RideSession {
   pub async fn list_for_rider(
     pool: &mut DbPool<'_>,
     rider_id: RiderId,
-    status: Option<DeliveryStatus>,
+    status: Option<TripStatus>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
@@ -136,7 +136,7 @@ impl RideSession {
     let limit = limit.unwrap_or(20);
 
     ride_session::table
-      .filter(ride_session::status.eq(DeliveryStatus::Pending))
+      .filter(ride_session::status.eq(TripStatus::Pending))
       .filter(ride_session::rider_id.is_null())
       .order(ride_session::created_at.desc())
       .limit(limit)
@@ -155,12 +155,12 @@ impl RideSession {
     let conn = &mut get_conn(pool).await?;
 
     let active_statuses = vec![
-      DeliveryStatus::Pending,
-      DeliveryStatus::Assigned,
-      DeliveryStatus::EnRouteToPickup,
-      DeliveryStatus::PickedUp,
-      DeliveryStatus::EnRouteToDropoff,
-      DeliveryStatus::RiderConfirmed,
+      TripStatus::Pending,
+      TripStatus::Assigned,
+      TripStatus::EnRouteToPickup,
+      TripStatus::PickedUp,
+      TripStatus::EnRouteToDropoff,
+      TripStatus::RiderConfirmed,
     ];
 
     let count: i64 = ride_session::table

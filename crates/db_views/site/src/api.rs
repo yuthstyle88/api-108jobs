@@ -19,7 +19,7 @@ use app_108jobs_db_schema::{
   },
 };
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, DeliveryStatus, ListingType, PostKind, PostListingMode, PostSortType,
+  CommentSortType, TripStatus, ListingType, PostKind, PostListingMode, PostSortType,
   RegistrationMode, VoteShow,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -928,7 +928,7 @@ pub struct ListPersonCreated {
   pub limit: Option<i64>,
   pub post_kind: Option<PostKind>,
   /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
-  pub logistics_status: Option<DeliveryStatus>,
+  pub logistics_status: Option<TripStatus>,
 }
 
 #[skip_serializing_none]

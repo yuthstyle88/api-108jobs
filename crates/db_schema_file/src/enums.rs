@@ -432,7 +432,7 @@ pub enum PostKind {
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::DeliveryStatus"
+  ExistingTypePath = "crate::schema::sql_types::TripStatus"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -440,7 +440,7 @@ pub enum PostKind {
 /// Transport workflow status - works for both cargo delivery and taxi rides
 /// Taxi flow: Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
 /// Cargo flow: Pending → Assigned → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
-pub enum DeliveryStatus {
+pub enum TripStatus {
   #[default]
   Pending,
   Assigned,

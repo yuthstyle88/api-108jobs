@@ -58,8 +58,8 @@ pub mod sql_types {
   pub struct PostKind;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "delivery_status"))]
-  pub struct DeliveryStatus;
+  #[diesel(postgres_type(name = "trip_status"))]
+  pub struct TripStatus;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "payment_method"))]
@@ -1029,7 +1029,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::DeliveryStatus;
+    use super::sql_types::TripStatus;
     use super::sql_types::VehicleType;
 
     delivery_details (id) {
@@ -1055,7 +1055,7 @@ diesel::table! {
         receiver_phone -> Nullable<Varchar>,
         cash_on_delivery -> Bool,
         cod_amount -> Nullable<Float8>,
-        status -> DeliveryStatus,
+        status -> TripStatus,
         cancellation_reason -> Nullable<Text>,
         assigned_rider_id -> Nullable<Int4>,
         assigned_at -> Nullable<Timestamptz>,
@@ -1860,7 +1860,7 @@ diesel::table! {
 // Ride session table schema
 diesel::table! {
     use diesel::sql_types::*;
-    use crate::schema::sql_types::DeliveryStatus;
+    use crate::schema::sql_types::TripStatus;
     use crate::schema::sql_types::PaymentMethod;
 
     ride_session (id) {
@@ -1880,7 +1880,7 @@ diesel::table! {
         passenger_phone -> Nullable<Text>,
         payment_method -> PaymentMethod,
         payment_status -> Varchar,
-        status -> DeliveryStatus,
+        status -> TripStatus,
         requested_at -> Timestamptz,
         rider_assigned_at -> Nullable<Timestamptz>,
         rider_confirmed_at -> Nullable<Timestamptz>,

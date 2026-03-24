@@ -1,7 +1,7 @@
 -- Multi-currency support for taxi rider system
 -- Admin can manage currencies and conversion rates
 
--- Add RiderConfirmed status to DeliveryStatus enum (for taxi rides)
+-- Add RiderConfirmed status to TripStatus enum (for taxi rides)
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'RiderConfirmed' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'delivery_status')) THEN
@@ -119,7 +119,7 @@ CREATE TABLE ride_session (
     payment_method payment_method NOT NULL,  -- Uses enum: 'cash' or 'coin'
     payment_status VARCHAR(20) DEFAULT 'pending',
 
-    -- Session state - uses DeliveryStatus enum (shared with cargo delivery)
+    -- Session state - uses TripStatus enum (shared with cargo delivery)
     status delivery_status NOT NULL DEFAULT 'Pending',
     -- Taxi flow: Pending -> Assigned -> RiderConfirmed -> EnRouteToPickup -> PickedUp -> EnRouteToDropoff -> Delivered
     -- Cargo flow: Pending -> Assigned -> EnRouteToPickup -> PickedUp -> EnRouteToDropoff -> Delivered

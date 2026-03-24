@@ -26,7 +26,7 @@ use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor,
   },
   seconds_to_pg_interval, DbPool,
 }, SearchSortType::{self, *}, SearchType};
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::enums::{TripStatus, IntendedUse, JobType, PostKind};
 use app_108jobs_db_schema_file::schema::{category, comment, delivery_details, person, post, ride_session, search_combined};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -176,7 +176,7 @@ pub struct SearchCombinedQuery {
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
-  pub logistics_status: Option<DeliveryStatus>,
+  pub logistics_status: Option<TripStatus>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

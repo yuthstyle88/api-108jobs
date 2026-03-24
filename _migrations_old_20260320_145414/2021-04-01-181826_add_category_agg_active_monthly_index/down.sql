@@ -1,2 +1,0 @@
-DROP INDEX idx_category_aggregates_users_active_month;
-

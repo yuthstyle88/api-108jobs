@@ -23,7 +23,7 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::enums::{TripStatus, IntendedUse, JobType, PostKind};
 use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,
@@ -194,7 +194,7 @@ impl PostView {
     limit: Option<i64>,
     no_limit: Option<bool>,
     post_kind: Option<PostKind>,
-    logistics_status: Option<DeliveryStatus>,
+    logistics_status: Option<TripStatus>,
   ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -281,7 +281,7 @@ pub struct PostQuery<'a> {
   pub requires_english: Option<bool>,
   pub post_kind: Option<PostKind>,
   /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
-  pub logistics_status: Option<DeliveryStatus>,
+  pub logistics_status: Option<TripStatus>,
   pub cursor_data: Option<Post>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

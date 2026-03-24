@@ -1,6 +1,6 @@
 use app_108jobs_db_schema::newtypes::{PersonId, RiderId};
 use app_108jobs_db_schema::source::ride_session::RideSession;
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod};
+use app_108jobs_db_schema_file::enums::{TripStatus, PaymentMethod};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -23,7 +23,7 @@ pub struct RidePublic {
   pub post_id: app_108jobs_db_schema::newtypes::PostId,
   pub pickup_address: String,
   pub dropoff_address: String,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub rider_id: Option<RiderId>,
   pub rider_assigned_at: Option<DateTime<Utc>>,
 }
@@ -51,7 +51,7 @@ pub struct RidePrivate {
   pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
   pub payment_status: String,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub requested_at: DateTime<Utc>,
   pub rider_assigned_at: Option<DateTime<Utc>>,
   pub rider_confirmed_at: Option<DateTime<Utc>>,

@@ -3,9 +3,9 @@ use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_api_utils::utils::verify_post_creator;
 use app_108jobs_db_schema::newtypes::PostId;
 use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
-use app_108jobs_db_schema_file::enums::DeliveryStatus;
+use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::api::DeliveryStatusEvent;
+use app_108jobs_db_views_rider::api::TripStatusEvent;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_views_site::api::SuccessResponse;
 
@@ -35,7 +35,7 @@ pub async fn confirm_delivery_completion(
   let current_delivery = DeliveryDetails::get_by_post_id(&mut context.pool(), post_id).await?;
 
   // Can only confirm Delivered status
-  if current_delivery.status != DeliveryStatus::Delivered {
+  if current_delivery.status != TripStatus::Delivered {
     return Err(FastJobErrorType::CannotConfirmNonDeliveredDelivery.into());
   }
 
@@ -54,10 +54,10 @@ pub async fn confirm_delivery_completion(
   .await?;
 
   // Publish confirmation event to Redis for WebSocket listeners
-  let event = DeliveryStatusEvent {
+  let event = TripStatusEvent {
     kind: "delivery_confirmed",
     post_id,
-    status: DeliveryStatus::Delivered,
+    status: TripStatus::Delivered,
     updated_at: updated_delivery.updated_at,
     reason: Some("Employer confirmed and payment released".to_string()),
   };

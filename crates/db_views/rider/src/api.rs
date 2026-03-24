@@ -1,7 +1,7 @@
 use crate::RiderView;
 use crate::ride_session_view::{RidePublic, RideSessionView};
 use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId, RiderId};
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PaymentMethod, VehicleType};
+use app_108jobs_db_schema_file::enums::{TripStatus, PaymentMethod, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -78,9 +78,9 @@ pub struct AdminVerifyRiderRequest {
 /// Request body for updating delivery status
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateDeliveryStatusRequest {
+pub struct UpdateTripStatusRequest {
   /// The new status to set
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   /// Optional reason for status change (required for cancellation)
   pub reason: Option<String>,
 }
@@ -88,9 +88,9 @@ pub struct UpdateDeliveryStatusRequest {
 /// Response after updating delivery status
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DeliveryStatusResponse {
+pub struct TripStatusResponse {
   pub post_id: PostId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub cancellation_reason: Option<String>,
   pub updated_at: DateTime<Utc>,
 }
@@ -98,11 +98,11 @@ pub struct DeliveryStatusResponse {
 /// Event published to Redis for WebSocket clients
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DeliveryStatusEvent {
+pub struct TripStatusEvent {
   #[serde(rename = "type")]
   pub kind: &'static str,
   pub post_id: PostId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub updated_at: DateTime<Utc>,
   pub reason: Option<String>,
 }
@@ -139,7 +139,7 @@ pub struct AssignDeliveryResponse {
   /// The person who made the assignment
   pub assigned_by_person_id: Option<i32>,
   /// The new delivery status
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   /// The linked comment (proposal) ID
   pub linked_comment_id: CommentId,
 }
@@ -153,7 +153,7 @@ pub struct DeliveryAssignmentEvent {
   pub post_id: PostId,
   pub rider_id: RiderId,
   pub assigned_at: DateTime<Utc>,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
 }
 
 /// Response for getting a rider's current active delivery assignment
@@ -171,7 +171,7 @@ pub struct MyDeliveryAssignmentResponse {
 #[serde(rename_all = "camelCase")]
 pub struct MyDeliveryInfo {
   pub post_id: PostId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub pickup_address: String,
   pub dropoff_address: String,
   pub assigned_at: Option<DateTime<Utc>>,
@@ -270,7 +270,7 @@ pub struct RideSessionResponse {
   pub id: RideSessionId,
   pub post_id: PostId,
   pub rider_id: Option<RiderId>,  // NULL until a rider accepts
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub current_price_coin: i32,
   pub payment_method: PaymentMethod,
   pub payment_status: String,
@@ -336,7 +336,7 @@ pub struct RideStatusEvent {
   pub kind: &'static str,
   pub session_id: RideSessionId,
   pub post_id: PostId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub updated_at: DateTime<Utc>,
 }
 
@@ -364,7 +364,7 @@ pub struct RideMeterEvent {
 #[serde(rename_all = "camelCase")]
 pub struct ListMyRideSessions {
   /// Filter by status
-  pub status: Option<DeliveryStatus>,
+  pub status: Option<TripStatus>,
   /// Max number of results
   pub limit: Option<i64>,
 }
@@ -409,7 +409,7 @@ pub struct CancelRideSessionRequest {
 #[serde(rename_all = "camelCase")]
 pub struct CancelRideSessionResponse {
   pub session_id: RideSessionId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub cancellation_reason: String,
   pub cancelled_at: DateTime<Utc>,
 }
@@ -420,7 +420,7 @@ pub struct CancelRideSessionResponse {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateRideStatusRequest {
   /// The new status to set
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   /// Optional reason for status change (required for cancellation)
   pub reason: Option<String>,
 }
@@ -431,7 +431,7 @@ pub struct UpdateRideStatusRequest {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateRideStatusResponse {
   pub session_id: RideSessionId,
-  pub status: DeliveryStatus,
+  pub status: TripStatus,
   pub cancellation_reason: Option<String>,
   pub updated_at: DateTime<Utc>,
 }

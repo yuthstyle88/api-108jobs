@@ -19,7 +19,7 @@ use app_108jobs_db_schema::{
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use app_108jobs_db_schema_file::enums::{DeliveryStatus, PostKind};
+use app_108jobs_db_schema_file::enums::{TripStatus, PostKind};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
@@ -163,7 +163,7 @@ pub async fn create_post(
       receiver_phone: dd.receiver_phone.clone(),
       cash_on_delivery: dd.cash_on_delivery,
       cod_amount: dd.cod_amount,
-      status: Some(DeliveryStatus::Pending),
+      status: Some(TripStatus::Pending),
       // Payment tracking fields (not set during post creation)
       delivery_fee: None,
       employer_confirmed_at: None,
@@ -198,7 +198,7 @@ pub async fn create_post(
       passenger_phone: rp.passenger_phone.clone(),
       payment_method: rp.payment_method,
       payment_status: Some("Pending".to_string()),
-      status: Some(DeliveryStatus::Pending),
+      status: Some(TripStatus::Pending),
       requested_at: Some(chrono::Utc::now()),
       current_price_coin: Some(0),
     };

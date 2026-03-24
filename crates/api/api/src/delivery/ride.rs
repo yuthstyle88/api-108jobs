@@ -7,7 +7,7 @@ use app_108jobs_db_schema::source::pricing_config::PricingConfig;
 use app_108jobs_db_schema::source::rider::{Rider, RiderUpdateForm};
 use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema_file::enums::DeliveryStatus;
+use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
   CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
@@ -85,7 +85,7 @@ pub async fn create_ride_session(
       if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
         return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
       }
-      (Some(rider.id), DeliveryStatus::Assigned, Some(Utc::now()), Some(rider))
+      (Some(rider.id), TripStatus::Assigned, Some(Utc::now()), Some(rider))
     }
   } else {
     (existing_session.rider_id, existing_session.status, None, None)
@@ -174,13 +174,13 @@ pub async fn confirm_ride_assignment(
   }
 
   // Check if session is in Assigned status
-  if session.status != DeliveryStatus::Assigned {
+  if session.status != TripStatus::Assigned {
     return Err(FastJobErrorType::DeliveryIsNotActive.into());
   }
 
   // Update session status to RiderConfirmed
   let update_form = RideSessionUpdateForm {
-    status: Some(DeliveryStatus::RiderConfirmed),
+    status: Some(TripStatus::RiderConfirmed),
     rider_confirmed_at: Some(Some(Utc::now())),
     ..Default::default()
   };
@@ -192,7 +192,7 @@ pub async fn confirm_ride_assignment(
     kind: "ride_confirmed",
     session_id,
     post_id: session.post_id,
-    status: DeliveryStatus::RiderConfirmed,
+    status: TripStatus::RiderConfirmed,
     updated_at: updated.updated_at.unwrap_or_else(Utc::now),
   };
 
@@ -440,7 +440,7 @@ pub async fn cancel_ride_session(
   }
 
   // Check if session can be cancelled (not Delivered or Cancelled)
-  if matches!(session.status, DeliveryStatus::Delivered | DeliveryStatus::Cancelled) {
+  if matches!(session.status, TripStatus::Delivered | TripStatus::Cancelled) {
     return Err(FastJobErrorType::CannotCancelCompletedRide.into());
   }
 
@@ -448,7 +448,7 @@ pub async fn cancel_ride_session(
 
   // Update session status to Cancelled
   let update_form = RideSessionUpdateForm {
-    status: Some(DeliveryStatus::Cancelled),
+    status: Some(TripStatus::Cancelled),
     cancellation_reason: Some(Some(form.reason.clone())),
     updated_at: Some(Some(cancelled_at)),
     ..Default::default()
@@ -470,7 +470,7 @@ pub async fn cancel_ride_session(
     kind: "ride_cancelled",
     session_id,
     post_id: session.post_id,
-    status: DeliveryStatus::Cancelled,
+    status: TripStatus::Cancelled,
     updated_at: cancelled_at,
   };
 
@@ -478,7 +478,7 @@ pub async fn cancel_ride_session(
 
   Ok(Json(CancelRideSessionResponse {
     session_id,
-    status: DeliveryStatus::Cancelled,
+    status: TripStatus::Cancelled,
     cancellation_reason: form.reason.clone(),
     cancelled_at,
   }))
@@ -519,7 +519,7 @@ pub async fn update_ride_status(
   }
 
   // For cancellation, use the dedicated cancel endpoint
-  if new_status == DeliveryStatus::Cancelled {
+  if new_status == TripStatus::Cancelled {
     return Err(FastJobErrorType::ReasonIsRequiredWhenCancelling.into());
   }
 
@@ -536,10 +536,10 @@ pub async fn update_ride_status(
 
   // Validate status transitions based on current status
   let valid_transition = match (&session.status, &new_status) {
-    (DeliveryStatus::RiderConfirmed, DeliveryStatus::EnRouteToPickup) => true,
-    (DeliveryStatus::EnRouteToPickup, DeliveryStatus::PickedUp) => true,
-    (DeliveryStatus::PickedUp, DeliveryStatus::EnRouteToDropoff) => true,
-    (DeliveryStatus::EnRouteToDropoff, DeliveryStatus::Delivered) => true,
+    (TripStatus::RiderConfirmed, TripStatus::EnRouteToPickup) => true,
+    (TripStatus::EnRouteToPickup, TripStatus::PickedUp) => true,
+    (TripStatus::PickedUp, TripStatus::EnRouteToDropoff) => true,
+    (TripStatus::EnRouteToDropoff, TripStatus::Delivered) => true,
     _ => false,
   };
 
@@ -552,17 +552,17 @@ pub async fn update_ride_status(
   // Build update form with appropriate timestamp based on new status
   let update_form = RideSessionUpdateForm {
     status: Some(new_status),
-    arrived_at_pickup_at: if new_status == DeliveryStatus::EnRouteToPickup {
+    arrived_at_pickup_at: if new_status == TripStatus::EnRouteToPickup {
       Some(Some(now))
     } else {
       None
     },
-    ride_started_at: if new_status == DeliveryStatus::PickedUp {
+    ride_started_at: if new_status == TripStatus::PickedUp {
       Some(Some(now))
     } else {
       None
     },
-    ride_completed_at: if new_status == DeliveryStatus::Delivered {
+    ride_completed_at: if new_status == TripStatus::Delivered {
       Some(Some(now))
     } else {
       None
@@ -574,7 +574,7 @@ pub async fn update_ride_status(
   let _updated = RideSession::update(&mut context.pool(), session_id, &update_form).await?;
 
   // Mark rider as available (accepting jobs) when ride is delivered
-  if new_status == DeliveryStatus::Delivered {
+  if new_status == TripStatus::Delivered {
     if let Some(rider_id) = session.rider_id {
       let rider_update = RiderUpdateForm {
         accepting_jobs: Some(true),

@@ -6,6 +6,7 @@ use app_108jobs_db_schema_file::enums::RiderVerificationStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::AdminVerifyRiderRequest;
 use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_email::rider::{send_rider_application_approved_email, send_rider_application_denied_email};
 use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 
@@ -20,8 +21,11 @@ pub async fn admin_verify_rider(
   let AdminVerifyRiderRequest {
     rider_id,
     approve,
-    reason: _,
+    reason,
   } = data.into_inner();
+
+  // Get the rider first to obtain user_id for email notification
+  let rider = Rider::read(&mut context.pool(), rider_id).await?;
 
   let update_form = if approve {
     RiderUpdateForm {
@@ -40,6 +44,16 @@ pub async fn admin_verify_rider(
   };
 
   let _ = Rider::update(&mut context.pool(), rider_id, &update_form).await?;
+
+  // Send email notification to the rider
+  let rider_user = LocalUserView::read(&mut context.pool(), rider.user_id).await?;
+  let settings = context.settings();
+
+  if approve {
+    let _ = send_rider_application_approved_email(&rider_user, settings).await;
+  } else {
+    let _ = send_rider_application_denied_email(&rider_user, reason, settings).await;
+  }
 
   Ok(Json(SuccessResponse::default()))
 }

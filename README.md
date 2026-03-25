@@ -142,7 +142,7 @@ For support, please email support@108jobs.com or open an issue in this repositor
 
 ## Credits
 
-- **Original Project**: Based on Lemmy (fediverse link aggregator)
+- **Original Project**: Based on 108Jobs (fediverse link aggregator)
 - **Adapted for**: 108Jobs - Thai Freelance Marketplace
 - **Repository**: https://github.com/yuthstyle88/api-108jobs
 - **Website**: https://108jobs.com

@@ -228,6 +228,21 @@ impl WalletModel {
   }
 
   /// Get a wallet by user ID
+  /// Read a wallet row by id on the supplied connection. Useful inside a
+  /// `run_transaction` where the caller has already mutated the wallet
+  /// and wants to surface the new balance without releasing the
+  /// connection back to the pool.
+  pub async fn read_by_id_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    wallet_id: WalletId,
+  ) -> FastJobResult<Wallet> {
+    wallet::table
+      .find(wallet_id)
+      .first::<Wallet>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntFindWalletByUser)
+  }
+
   pub async fn get_by_user(
     pool: &mut DbPool<'_>,
     local_user_id: LocalUserId,
@@ -438,6 +453,29 @@ impl WalletModel {
     Self::validate_positive_amount(amount)?;
     Self::deposit_to_user_from_platform(conn, platform_wallet_id, form.wallet_id, amount).await?;
     let _ = CoinModel::update_balance(conn, coin_id, -amount).await?;
+    let _ = Self::insert_wallet_tx(conn, form).await?;
+    let mut mirror = form.clone();
+    mirror.wallet_id = platform_wallet_id;
+    mirror.description = format!("platform counter: {}", mirror.description);
+    let _ = Self::insert_wallet_tx(conn, &mirror).await?;
+    Ok(())
+  }
+
+  /// Connection-scoped variant of `withdraw_to_platform` (user -> platform)
+  /// for callers that are already inside a `run_transaction`. Does NOT open
+  /// a new transaction. Used by the hardened admin-withdraw path so the
+  /// wallet debit + supply update + journal rows + withdraw_request status
+  /// change are atomic.
+  pub async fn withdraw_to_platform_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
+  ) -> FastJobResult<()> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+    Self::withdraw_from_user_to_platform(conn, form.wallet_id, platform_wallet_id, amount).await?;
+    let _ = CoinModel::update_balance(conn, coin_id, amount).await?;
     let _ = Self::insert_wallet_tx(conn, form).await?;
     let mut mirror = form.clone();
     mirror.wallet_id = platform_wallet_id;

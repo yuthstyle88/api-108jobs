@@ -18,6 +18,13 @@ doctest = false
 [lints]
 workspace = true
 
+[features]
+# Pass-through feature so `cargo test -p app_108jobs_api --features full`
+# works at the verification command. No conditional compilation depends on
+# it; dependencies already enable `full` via `features = ["full"]` above.
+default = []
+full = []
+
 [dependencies]
 app_108jobs_db_views_comment = { workspace = true, features = ["full"] }
 app_108jobs_db_views_chat = { workspace = true, features = ["full"] }
@@ -80,3 +87,9 @@ tokio = { workspace = true }
 elementtree = "1.2.3"
 pretty_assertions = { workspace = true }
 app_108jobs_api_crud = { workspace = true }
+# Re-enable test-utils on the db_schema dep so admin_top_up_wallet's
+# integration test can use `pool_for_tests` and `TestData`.
+app_108jobs_db_schema = { workspace = true, features = ["full", "test-utils"] }
+uuid = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true, features = ["deadpool", "postgres"] }

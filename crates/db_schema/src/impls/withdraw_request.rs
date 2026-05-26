@@ -77,6 +77,46 @@ impl WithdrawRequest {
       .await
       .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
+
+  /// Re-read a `WithdrawRequest` by id with `SELECT ... FOR UPDATE` on the
+  /// supplied connection. Intended for use inside a `run_transaction` so
+  /// concurrent admin-approval or reject calls serialize on this row and
+  /// the `status` check is racing-safe before debiting / changing state.
+  pub async fn lock_for_approval_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    id: WithdrawRequestId,
+  ) -> FastJobResult<Self> {
+    withdraw_requests::table
+      .find(id)
+      .for_update()
+      .first::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  /// Set `status` + `reason` for the row identified by `id` on the supplied
+  /// connection. Intended for use inside the same `run_transaction` that
+  /// holds the `FOR UPDATE` lock from [`Self::lock_for_approval_on_conn`].
+  pub async fn set_status_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    id: WithdrawRequestId,
+    new_status: app_108jobs_db_schema_file::enums::WithdrawStatus,
+    reason: Option<String>,
+  ) -> FastJobResult<()> {
+    let updated = diesel::update(withdraw_requests::table.find(id))
+      .set((
+        withdraw_requests::status.eq(new_status),
+        withdraw_requests::reason.eq(reason),
+        withdraw_requests::updated_at.eq(chrono::Utc::now()),
+      ))
+      .execute(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    if updated == 0 {
+      return Err(FastJobErrorType::NotFound.into());
+    }
+    Ok(())
+  }
 }
 
 // ============================================================================

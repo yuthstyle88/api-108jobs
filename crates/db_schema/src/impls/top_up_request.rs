@@ -67,6 +67,45 @@ impl TopUpRequest {
       .await
       .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
+
+  /// Re-read a `TopUpRequest` by `qr_id` with `SELECT ... FOR UPDATE` on the
+  /// supplied connection. Intended for use inside a `run_transaction` so the
+  /// caller can serialize concurrent admin top-up calls on the same row and
+  /// inspect the `transferred` flag race-safely before crediting.
+  pub async fn lock_for_credit_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    qr_id: &str,
+  ) -> FastJobResult<Self> {
+    top_up_requests::table
+      .filter(top_up_requests::qr_id.eq(qr_id))
+      .for_update()
+      .first::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  /// Flip `transferred = true` for the row identified by `qr_id` on the
+  /// supplied connection. Returns `Ok(())` if exactly one row updated,
+  /// `Err(NotFound)` otherwise. Intended for use inside the same
+  /// `run_transaction` that holds the `FOR UPDATE` lock from
+  /// [`Self::lock_for_credit_on_conn`].
+  pub async fn mark_transferred_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    qr_id: &str,
+  ) -> FastJobResult<()> {
+    let updated = diesel::update(top_up_requests::table.filter(top_up_requests::qr_id.eq(qr_id)))
+      .set((
+        top_up_requests::transferred.eq(true),
+        top_up_requests::updated_at.eq(chrono::Utc::now()),
+      ))
+      .execute(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    if updated == 0 {
+      return Err(FastJobErrorType::NotFound.into());
+    }
+    Ok(())
+  }
 }
 
 // ============================================================================

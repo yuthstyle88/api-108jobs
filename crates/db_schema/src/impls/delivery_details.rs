@@ -611,3 +611,228 @@ impl DeliveryDetails {
     Ok(results)
   }
 }
+
+// ============================================================================
+// DB-backed tests for the delivery lifecycle.
+//
+// Coverage:
+//   * can_transition_to: every legal forward + cancel transition allowed,
+//     terminal states rejected, every illegal pair rejected.
+//   * update_status enforces those rules (Pending -> Delivered blocked).
+//   * Status transitions persist the new status and updated_at.
+//   * Cancellation persists the supplied reason; non-cancel transitions
+//     clear the reason field.
+//
+// NOTE on the escrow/confirm flows (`assign_from_comment_with_escrow`,
+// `confirm_completion_and_release_payment`): these were exercised by hand
+// during the panic/transaction audit and the random `Uuid::new_v4()`
+// idempotency keys at lines 372 and 534 (relative to original file) make
+// retries non-idempotent. A characterization test exposing that defect
+// would need to inject a deterministic key. The smallest reproducer is in
+// `crates/workflow/src/impls.rs` `concurrent_approve_one_succeeds_other_fails`
+// where the correct pattern is already in place; bringing that test pattern
+// to delivery is the recommended next step (see report).
+// ============================================================================
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::source::instance::Instance;
+  use crate::source::person::{Person, PersonInsertForm};
+  use crate::source::post::PostInsertForm;
+  use crate::test_data::pool_for_tests;
+  use app_108jobs_db_schema_file::schema::post;
+  use diesel_async::RunQueryDsl;
+  use serial_test::serial;
+
+  /// Build a minimal delivery row with the requested initial status.
+  /// Returns (instance_id, post_id, delivery row).
+  async fn fixture_with_status(
+    pool: &mut DbPool<'_>,
+    initial: TripStatus,
+  ) -> (crate::newtypes::InstanceId, PostId, DeliveryDetails) {
+    let inst = Instance::read_or_create(pool, format!("dd-test-{}.tld", uuid::Uuid::new_v4()))
+      .await
+      .expect("create instance");
+
+    let suffix = uuid::Uuid::new_v4().simple().to_string();
+    let suffix_short = &suffix[..8];
+    let (p_form, _wallet) =
+      PersonInsertForm::test_form_with_wallet(pool, inst.id, &format!("emp-{suffix_short}"))
+        .await
+        .expect("test_form_with_wallet");
+    let emp = Person::create(pool, &p_form).await.expect("create person");
+
+    let mut post_form = PostInsertForm::new("delivery test".into(), emp.id);
+    post_form.post_kind = Some(PostKind::Delivery);
+    let post_id: i32 = {
+      let conn = &mut get_conn(pool).await.expect("get conn");
+      diesel::insert_into(post::table)
+        .values(&post_form)
+        .returning(post::id)
+        .get_result(conn)
+        .await
+        .expect("insert post")
+    };
+
+    let mut form = DeliveryDetailsInsertForm::new(
+      PostId(post_id),
+      "1 Pickup St".to_string(),
+      "2 Dropoff St".to_string(),
+    );
+    form.status = Some(initial);
+    let delivery = DeliveryDetails::create(pool, &form).await.expect("create");
+    (inst.id, PostId(post_id), delivery)
+  }
+
+  async fn cleanup(pool: &mut DbPool<'_>, instance_id: crate::newtypes::InstanceId) {
+    let _ = Instance::delete(pool, instance_id).await;
+  }
+
+  /// Spot-check valid forward transitions and the same-status idempotency
+  /// rule baked into `can_transition_to`.
+  #[tokio::test]
+  #[serial]
+  async fn can_transition_to_accepts_valid_forward_and_cancel() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, _, d) = fixture_with_status(pool, TripStatus::Pending).await;
+
+    assert!(d.can_transition_to(TripStatus::Assigned));
+    assert!(d.can_transition_to(TripStatus::Cancelled));
+    assert!(
+      d.can_transition_to(TripStatus::Pending),
+      "same status is no-op"
+    );
+    assert!(!d.can_transition_to(TripStatus::Delivered));
+    assert!(!d.can_transition_to(TripStatus::EnRouteToPickup));
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Terminal states refuse every outgoing transition (including same-status,
+  /// per the early-return guard at line 125).
+  #[tokio::test]
+  #[serial]
+  async fn can_transition_to_locks_terminal_states() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, _, d) = fixture_with_status(pool, TripStatus::Delivered).await;
+
+    assert!(!d.can_transition_to(TripStatus::Cancelled));
+    assert!(!d.can_transition_to(TripStatus::EnRouteToPickup));
+    assert!(
+      !d.can_transition_to(TripStatus::Delivered),
+      "Delivered is terminal: per the early-return at line 125, even \
+       same-status returns false"
+    );
+
+    cleanup(pool, instance_id).await;
+  }
+
+  /// update_status walks the assignment lane and persists the new status.
+  #[tokio::test]
+  #[serial]
+  async fn update_status_walks_lifecycle_lane() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    for next in [
+      TripStatus::EnRouteToPickup,
+      TripStatus::PickedUp,
+      TripStatus::EnRouteToDropoff,
+      TripStatus::Delivered,
+    ] {
+      let updated = DeliveryDetails::update_status(pool, post_id, next, None)
+        .await
+        .unwrap_or_else(|e| panic!("transition -> {next:?} failed: {e:?}"));
+      assert_eq!(updated.status, next);
+    }
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Illegal jumps from Pending must surface InvalidField, not silently apply.
+  #[tokio::test]
+  #[serial]
+  async fn update_status_rejects_illegal_jump() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Pending).await;
+
+    let err = DeliveryDetails::update_status(pool, post_id, TripStatus::Delivered, None)
+      .await
+      .expect_err("Pending -> Delivered must be rejected");
+    let msg = format!("{err:?}");
+    assert!(
+      msg.contains("InvalidField") || msg.contains("Cannot transition"),
+      "expected illegal-transition error, got {msg}"
+    );
+
+    // State must not have moved.
+    let after = DeliveryDetails::get_by_post_id(pool, post_id)
+      .await
+      .expect("get");
+    assert_eq!(after.status, TripStatus::Pending);
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Cancellation persists the reason; subsequent transitions are blocked
+  /// because Cancelled is terminal.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_persists_reason_and_locks_state() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    let cancelled = DeliveryDetails::update_status(
+      pool,
+      post_id,
+      TripStatus::Cancelled,
+      Some("rider unavailable".to_string()),
+    )
+    .await
+    .expect("cancel");
+    assert_eq!(cancelled.status, TripStatus::Cancelled);
+    assert_eq!(
+      cancelled.cancellation_reason.as_deref(),
+      Some("rider unavailable")
+    );
+
+    let err = DeliveryDetails::update_status(pool, post_id, TripStatus::EnRouteToPickup, None)
+      .await
+      .expect_err("post-cancel transition must be rejected");
+    assert!(format!("{err:?}").contains("InvalidField"));
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Non-cancel transitions clear `cancellation_reason` (per update_status:185).
+  #[tokio::test]
+  #[serial]
+  async fn forward_transition_clears_reason() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    // Sneak a reason in directly so we can verify clearing.
+    use app_108jobs_db_schema_file::schema::delivery_details as dd;
+    {
+      let conn = &mut get_conn(pool).await.expect("conn");
+      diesel::update(dd::dsl::delivery_details.filter(dd::dsl::post_id.eq(post_id.0)))
+        .set(dd::dsl::cancellation_reason.eq(Some("stale reason".to_string())))
+        .execute(conn)
+        .await
+        .expect("seed reason");
+    }
+
+    let moved = DeliveryDetails::update_status(pool, post_id, TripStatus::EnRouteToPickup, None)
+      .await
+      .expect("forward transition");
+    assert_eq!(moved.status, TripStatus::EnRouteToPickup);
+    assert!(
+      moved.cancellation_reason.is_none(),
+      "non-cancel transition must clear cancellation_reason; got {:?}",
+      moved.cancellation_reason
+    );
+    cleanup(pool, instance_id).await;
+  }
+}

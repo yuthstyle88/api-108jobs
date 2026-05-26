@@ -2,13 +2,12 @@ use crate::{
   newtypes::{DbUrl, OAuthProviderId},
   sensitive::SensitiveString,
 };
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::oauth_provider;
+use chrono::{DateTime, Utc};
 use serde::{
   ser::{SerializeStruct, Serializer},
-  Deserialize,
-  Serialize,
+  Deserialize, Serialize,
 };
 use serde_with::skip_serializing_none;
 
@@ -76,7 +75,7 @@ pub struct PublicOAuthProvider(pub OAuthProvider);
 impl Serialize for PublicOAuthProvider {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
-   S: Serializer,
+    S: Serializer,
   {
     let mut state = serializer.serialize_struct("PublicOAuthProvider", 5)?;
     state.serialize_field("id", &self.0.id)?;

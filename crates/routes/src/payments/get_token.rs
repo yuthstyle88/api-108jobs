@@ -1,7 +1,7 @@
+use crate::payments::http_client::scb_client;
 use actix_web::web::Data;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
@@ -52,7 +52,10 @@ pub async fn fetch_scb_token(context: &Data<FastJobContext>) -> FastJobResult<St
     application_secret: scb.api_secret.clone(),
   };
 
-  let client = Client::new();
+  let client = scb_client().map_err(|e| {
+    error!("scb client build failed: {e}");
+    FastJobErrorType::ExternalApiError
+  })?;
   let resp = client
     .post(&url)
     .header("Content-Type", "application/json")

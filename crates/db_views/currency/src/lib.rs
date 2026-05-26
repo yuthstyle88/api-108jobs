@@ -1,7 +1,7 @@
 use app_108jobs_db_schema::source::currency::{Currency, CurrencyInfo};
 use app_108jobs_db_schema::source::currency_rate_history::CurrencyRateHistory;
-use app_108jobs_db_schema::source::pricing_config::PricingConfig;
 use app_108jobs_db_schema::source::local_user::LocalUser;
+use app_108jobs_db_schema::source::pricing_config::PricingConfig;
 use serde::{Deserialize, Serialize};
 
 pub mod api;

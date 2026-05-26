@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::utils::check_category_deleted_removed;
 use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
@@ -23,6 +22,7 @@ use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
+use chrono::Utc;
 
 pub async fn update_comment(
   data: Json<EditCommentRequest>,
@@ -70,7 +70,6 @@ pub async fn update_comment(
     is_valid_body_field(content, false)?;
   }
 
-
   let comment_id = data.comment_id;
   let form = CommentUpdateForm {
     content,
@@ -106,4 +105,3 @@ pub async fn update_comment(
     .await?,
   ))
 }
-

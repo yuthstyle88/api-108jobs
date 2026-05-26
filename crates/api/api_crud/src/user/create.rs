@@ -2,7 +2,6 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use app_108jobs_api_utils::utils::prepare_user_languages;
 use app_108jobs_api_utils::{
   claims::Claims,
@@ -44,6 +43,7 @@ use app_108jobs_utils::{
     validation::is_valid_actor_name,
   },
 };
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -106,11 +106,11 @@ pub async fn register(
   if let Some(email) = &data.email {
     match LocalUser::check_is_email_taken(pool, email).await? {
       //when accept application is true
-      Some((_,_, true, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
+      Some((_, _, true, true)) => Err(FastJobErrorType::EmailAlreadyExists)?,
       //when accept terms is false
-      Some((_,person_id, _ , _)) => {
+      Some((_, person_id, _, _)) => {
         Person::delete(pool, person_id).await?;
-      },
+      }
       //when an email doesn't exist
       None => (),
     }
@@ -140,13 +140,7 @@ pub async fn register(
           prepare_user_languages(conn.into(), &site_view.local_site, &language_tags).await?;
 
         // We have to create both a person, and local_user
-        let person = create_person(
-          tx_data.username.clone(),
-          &site_view,
-          &tx_context,
-          conn,
-        )
-        .await?;
+        let person = create_person(tx_data.username.clone(), &site_view, &tx_context, conn).await?;
         // Create the local user
         let local_user_form = LocalUserInsertForm {
           email: tx_data.email.as_deref().map(str::to_lowercase),
@@ -336,13 +330,8 @@ pub async fn register_with_oauth(
           check_slurs_opt(&data.answer, &slur_regex)?;
 
           // We have to create a person, a local_user, and an oauth_account
-          let person = create_person(
-            username.parse().unwrap(),
-            &site_view,
-            &tx_context,
-            conn,
-          )
-          .await?;
+          let person =
+            create_person(username.parse().unwrap(), &site_view, &tx_context, conn).await?;
 
           // Create the local user
           let local_user_form = LocalUserInsertForm {
@@ -585,13 +574,7 @@ pub async fn authenticate_with_oauth(
             Person::check_username_taken(&mut conn.into(), username).await?;
 
             // We have to create a person, a local_user, and an oauth_account
-            let person = create_person(
-              username.clone(),
-              &site_view,
-              &tx_context,
-              conn,
-            )
-            .await?;
+            let person = create_person(username.clone(), &site_view, &tx_context, conn).await?;
 
             // Create the local user
             let local_user_form = LocalUserInsertForm {
@@ -659,9 +642,7 @@ pub async fn authenticate_with_oauth(
     }
   };
 
-  if (!login_response.registration_created && !login_response.verify_email_sent)
-    || accepted_terms
-  {
+  if (!login_response.registration_created && !login_response.verify_email_sent) || accepted_terms {
     let lang = local_user.interface_language;
     let accepted_terms = local_user.accepted_terms;
     let is_admin = local_user.admin;
@@ -736,7 +717,6 @@ async fn create_local_user(
   local_user_form.admin = Some(!local_site.site_setup);
   // Extract the interface language using indexing to avoid Diesel trait conflicts
   local_user_form.interface_language = interface_language;
-
 
   let inserted_local_user =
     LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;

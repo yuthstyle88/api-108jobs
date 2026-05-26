@@ -2,7 +2,7 @@ use crate::broker::manager::{
   FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager,
 };
 use crate::presence::{IsUserOnline, PresenceManager};
-use crate::server::session::{TripLocationSession, PhoenixSession};
+use crate::server::session::{PhoenixSession, TripLocationSession};
 use actix::Addr;
 use actix_web::{
   web,

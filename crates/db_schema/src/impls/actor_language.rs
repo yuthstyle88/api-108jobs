@@ -3,35 +3,24 @@ use crate::{
   newtypes::{CategoryId, InstanceId, LanguageId, LocalUserId, SiteId},
   source::{
     actor_language::{
-      CategoryLanguage,
-      CategoryLanguageForm,
-      LocalUserLanguage,
-      LocalUserLanguageForm,
-      SiteLanguage,
-      SiteLanguageForm,
+      CategoryLanguage, CategoryLanguageForm, LocalUserLanguage, LocalUserLanguageForm,
+      SiteLanguage, SiteLanguageForm,
     },
     language::Language,
     site::Site,
   },
   utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::{
+  category_language, local_site, local_user_language, site, site_language,
+};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{count, exists},
-  insert_into,
-  select,
-  ExpressionMethods,
-  QueryDsl,
+  insert_into, select, ExpressionMethods, QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
-use app_108jobs_db_schema_file::schema::{
-  category_language,
-  local_site,
-  local_user_language,
-  site,
-  site_language,
-};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use tokio::sync::OnceCell;
 
 pub const UNDETERMINED_ID: LanguageId = LanguageId(0);
@@ -217,9 +206,7 @@ impl CategoryLanguage {
     for_instance_id: InstanceId,
   ) -> FastJobResult<()> {
     use app_108jobs_db_schema_file::schema::{
-      category::dsl as c,
-      category_language::dsl as cl,
-      site_language::dsl as sl,
+      category::dsl as c, category_language::dsl as cl, site_language::dsl as sl,
     };
     let category_languages: Vec<LanguageId> = cl::category_language
       .left_outer_join(sl::site_language.on(cl::language_id.eq(sl::language_id)))
@@ -243,9 +230,7 @@ impl CategoryLanguage {
     for_category_id: CategoryId,
   ) -> FastJobResult<Vec<LanguageId>> {
     use app_108jobs_db_schema_file::schema::category_language::dsl::{
-      category_id,
-      category_language,
-      language_id,
+      category_id, category_language, language_id,
     };
     let conn = &mut get_conn(pool).await?;
     let langs = category_language
@@ -318,8 +303,7 @@ pub async fn validate_post_language(
   local_user_id: LocalUserId,
 ) -> FastJobResult<LanguageId> {
   use app_108jobs_db_schema_file::schema::{
-    category_language::dsl as cl,
-    local_user_language::dsl as ul,
+    category_language::dsl as cl, local_user_language::dsl as ul,
   };
   let conn = &mut get_conn(pool).await?;
   let language_id = match language_id {
@@ -400,10 +384,10 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-        category::{Category, CategoryInsertForm},
-        local_site::LocalSite,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
+      category::{Category, CategoryInsertForm},
+      local_site::LocalSite,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
     },
     test_data::TestData,
     traits::Crud,
@@ -496,7 +480,8 @@ mod tests {
 
     let data = TestData::create(pool).await?;
 
-    let person_form = PersonInsertForm::test_form(data.instance.id, "my test person");
+    let (person_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "my test person").await?;
     let person = Person::create(pool, &person_form).await?;
     let local_user_form = LocalUserInsertForm::test_form(person.id);
 
@@ -526,6 +511,7 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
     let data = TestData::create(pool).await?;
+    crate::test_data::reset_category_sequence(pool).await?;
     let test_langs = test_langs1(pool).await?;
     SiteLanguage::update(pool, test_langs.clone(), &data.site).await?;
 
@@ -582,6 +568,7 @@ mod tests {
     let data = TestData::create(pool).await?;
     let test_langs = test_langs1(pool).await?;
     let test_langs2 = test_langs2(pool).await?;
+    crate::test_data::reset_category_sequence(pool).await?;
 
     let category_form = CategoryInsertForm::new(
       data.instance.id,
@@ -591,7 +578,8 @@ mod tests {
     let category = Category::create(pool, &category_form).await?;
     CategoryLanguage::update(pool, test_langs, category.id).await?;
 
-    let person_form = PersonInsertForm::test_form(data.instance.id, "my test person");
+    let (person_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "my test person").await?;
     let person = Person::create(pool, &person_form).await?;
     let local_user_form = LocalUserInsertForm::test_form(person.id);
     let local_user = LocalUser::create(pool, &local_user_form, vec![]).await?;

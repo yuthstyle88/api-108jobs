@@ -1,6 +1,4 @@
 use crate::CustomEmojiView;
-use diesel::{dsl::Nullable, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
   newtypes::CustomEmojiId,
   source::{custom_emoji::CustomEmoji, custom_emoji_keyword::CustomEmojiKeyword},
@@ -8,6 +6,8 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{custom_emoji, custom_emoji_keyword};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{dsl::Nullable, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 use std::collections::HashMap;
 
 type SelectionType = (

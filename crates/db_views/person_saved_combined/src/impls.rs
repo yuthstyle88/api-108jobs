@@ -1,49 +1,33 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonSavedCombinedView,
-  PersonSavedCombinedViewInternal,
-  PostView,
+  CommentView, LocalUserView, PersonSavedCombinedView, PersonSavedCombinedViewInternal, PostView,
 };
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_saved::{person_saved_combined_keys as key, PersonSavedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_category_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_comment_actions_join,
-      my_category_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_category_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_local_user_admin_join, image_details_join, my_category_actions_join,
+      my_comment_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
   PersonContentType,
 };
-use app_108jobs_db_schema_file::schema::{comment, delivery_details, person, person_saved_combined, post};
+use app_108jobs_db_schema_file::schema::{
+  comment, delivery_details, person, person_saved_combined, post,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 #[derive(Default)]
 pub struct PersonSavedCombinedQuery {
@@ -258,14 +242,15 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonSavedCombinedQuery, LocalUserView, PersonSavedCombinedView};
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     source::{
-        comment::{Comment, CommentActions, CommentInsertForm, CommentSavedForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        post::{Post, PostActions, PostInsertForm, PostSavedForm},
+      category::{category, CategoryInsertForm},
+      comment::{Comment, CommentActions, CommentInsertForm, CommentSavedForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostActions, PostInsertForm, PostSavedForm},
     },
     traits::{Crud, Saveable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -273,7 +258,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -319,15 +303,15 @@ mod tests {
 
     let timmy_comment_form =
       CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let _timmy_comment = Comment::create(pool, &timmy_comment_form, ).await?;
+    let _timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
       CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form, ).await?;
+    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
     let sara_comment_form_2 =
       CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2,).await?;
+    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
 
     Ok(Data {
       instance,

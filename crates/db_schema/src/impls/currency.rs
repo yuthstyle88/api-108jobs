@@ -5,10 +5,10 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::{insert_into, update};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::RunQueryDsl;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for Currency {
   type InsertForm = CurrencyInsertForm;
@@ -81,7 +81,10 @@ impl Currency {
   /// Find currency by ISO 4217 numeric currency code
   /// Used for mapping payment gateway responses (SCB, etc.)
   /// Example: 764 = THB, 360 = IDR, 704 = VND
-  pub async fn get_by_numeric_code(pool: &mut DbPool<'_>, numeric_code: i32) -> FastJobResult<Option<Self>> {
+  pub async fn get_by_numeric_code(
+    pool: &mut DbPool<'_>,
+    numeric_code: i32,
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     let result = app_108jobs_db_schema_file::schema::currency::table

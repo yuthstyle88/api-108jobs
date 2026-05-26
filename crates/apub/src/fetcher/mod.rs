@@ -1,9 +1,8 @@
 use actix_web::web::Data;
-use diesel::NotFound;
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::{traits::ApubActor};
+use app_108jobs_db_schema::traits::ApubActor;
 use app_108jobs_utils::error::FastJobResult;
-
+use diesel::NotFound;
 
 /// Resolve actor identifier like `!news@example.com` to user or category object.
 ///
@@ -15,14 +14,14 @@ pub async fn resolve_ap_identifier<ActorType, DbActor>(
   include_deleted: bool,
 ) -> FastJobResult<ActorType>
 where
-  DbActor: ApubActor + Send + 'static, ActorType: std::convert::From<DbActor>
+  DbActor: ApubActor + Send + 'static,
+  ActorType: std::convert::From<DbActor>,
 {
-    let identifier = identifier.to_string();
-    Ok(
-      DbActor::read_from_name(&mut context.pool(), &identifier, include_deleted)
-        .await?
-        .ok_or(NotFound)?
-        .into(),
-    )
+  let identifier = identifier.to_string();
+  Ok(
+    DbActor::read_from_name(&mut context.pool(), &identifier, include_deleted)
+      .await?
+      .ok_or(NotFound)?
+      .into(),
+  )
 }
-

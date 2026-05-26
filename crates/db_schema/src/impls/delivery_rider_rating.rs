@@ -1,19 +1,17 @@
 use crate::{
   newtypes::{DeliveryRiderRatingId, PersonId, PostId, RiderId},
   source::delivery_rider_rating::{
-    DeliveryRiderRating,
-    DeliveryRiderRatingInsertForm,
-    DeliveryRiderRatingUpdateForm,
+    DeliveryRiderRating, DeliveryRiderRatingInsertForm, DeliveryRiderRatingUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 
+use chrono::Utc;
 use diesel::dsl::insert_into;
 use diesel::OptionalExtension;
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use chrono::Utc;
 
 use app_108jobs_db_schema_file::schema::delivery_rider_rating;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -23,10 +21,7 @@ impl Crud for DeliveryRiderRating {
   type UpdateForm = DeliveryRiderRatingUpdateForm;
   type IdType = DeliveryRiderRatingId;
 
-  async fn create(
-    pool: &mut DbPool<'_>,
-    form: &Self::InsertForm,
-  ) -> FastJobResult<Self> {
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(delivery_rider_rating::table)

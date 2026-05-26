@@ -1,14 +1,14 @@
-use std::collections::HashMap;
 use app_108jobs_db_schema::newtypes::{PersonId, PostId, RiderId};
 use app_108jobs_db_schema::utils::{get_conn, DbPool};
 use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_utils::error::FastJobResult;
+use std::collections::HashMap;
 
+use crate::api::PostItem;
+use crate::PostView;
 use app_108jobs_db_schema::source::delivery_details as dd_src;
 use app_108jobs_db_schema::source::ride_session as ride_src;
 use app_108jobs_db_views_rider::ride_session_view as rider_view;
-use crate::api::PostItem;
-use crate::PostView;
 
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -105,10 +105,19 @@ pub fn build_logistics_from_maps(
   let (delivery_map, ride_map) = maps;
   match post_view.post.post_kind {
     PostKind::Delivery => delivery_map.get(&post_view.post.id).map(|full| {
-      PostLogisticsView::Delivery(full.to_view(viewer.to_delivery_viewer(), post_view.creator.id, is_admin))
+      PostLogisticsView::Delivery(full.to_view(
+        viewer.to_delivery_viewer(),
+        post_view.creator.id,
+        is_admin,
+      ))
     }),
     PostKind::RideTaxi => ride_map.get(&post_view.post.id).map(|full| {
-      PostLogisticsView::Ride(rider_view::project_ride_session(full, viewer.to_ride_viewer(), post_view.creator.id, is_admin))
+      PostLogisticsView::Ride(rider_view::project_ride_session(
+        full,
+        viewer.to_ride_viewer(),
+        post_view.creator.id,
+        is_admin,
+      ))
     }),
     PostKind::Normal => None,
   }
@@ -129,31 +138,41 @@ pub async fn load_logistics_for_post_views(
   }
 
   // Check if any posts need logistics (before getting DB connection)
-  let has_delivery = post_views.iter().any(|pv| pv.post.post_kind == PostKind::Delivery);
-  let has_ride = post_views.iter().any(|pv| pv.post.post_kind == PostKind::RideTaxi);
+  let has_delivery = post_views
+    .iter()
+    .any(|pv| pv.post.post_kind == PostKind::Delivery);
+  let has_ride = post_views
+    .iter()
+    .any(|pv| pv.post.post_kind == PostKind::RideTaxi);
 
   // If all posts are Normal, skip DB queries entirely
   if !has_delivery && !has_ride {
-    return Ok(post_views
-      .into_iter()
-      .map(|post_view| PostItem { post_view, logistics: None })
-      .collect());
+    return Ok(
+      post_views
+        .into_iter()
+        .map(|post_view| PostItem {
+          post_view,
+          logistics: None,
+        })
+        .collect(),
+    );
   }
 
   // Get connection only if we need to fetch logistics
   let conn = &mut get_conn(pool).await?;
 
   // Collect post IDs by kind in a single pass
-  let (delivery_ids, ride_ids): (Vec<PostId>, Vec<PostId>) = post_views
-    .iter()
-    .fold((Vec::new(), Vec::new()), |(mut del, mut ride), pv| {
-      match pv.post.post_kind {
-        PostKind::Delivery => del.push(pv.post.id),
-        PostKind::RideTaxi => ride.push(pv.post.id),
-        PostKind::Normal => {}
-      }
-      (del, ride)
-    });
+  let (delivery_ids, ride_ids): (Vec<PostId>, Vec<PostId>) =
+    post_views
+      .iter()
+      .fold((Vec::new(), Vec::new()), |(mut del, mut ride), pv| {
+        match pv.post.post_kind {
+          PostKind::Delivery => del.push(pv.post.id),
+          PostKind::RideTaxi => ride.push(pv.post.id),
+          PostKind::Normal => {}
+        }
+        (del, ride)
+      });
 
   // Fetch maps
   let maps = fetch_logistics_maps_by_ids(conn, &delivery_ids, &ride_ids).await?;
@@ -163,7 +182,10 @@ pub async fn load_logistics_for_post_views(
     .into_iter()
     .map(|post_view| {
       let logistics = build_logistics_from_maps(&post_view, &maps, viewer, is_admin);
-      PostItem { post_view, logistics }
+      PostItem {
+        post_view,
+        logistics,
+      }
     })
     .collect();
 
@@ -196,7 +218,11 @@ pub async fn load_post_logistics(
         .optional()?;
 
       Ok(found.map(|full| {
-        PostLogisticsView::Delivery(full.to_view(viewer.to_delivery_viewer(), creator_person_id, is_admin))
+        PostLogisticsView::Delivery(full.to_view(
+          viewer.to_delivery_viewer(),
+          creator_person_id,
+          is_admin,
+        ))
       }))
     }
     PostKind::RideTaxi => {
@@ -208,7 +234,12 @@ pub async fn load_post_logistics(
         .optional()?;
 
       Ok(found.map(|full| {
-        PostLogisticsView::Ride(rider_view::project_ride_session(&full, viewer.to_ride_viewer(), creator_person_id, is_admin))
+        PostLogisticsView::Ride(rider_view::project_ride_session(
+          &full,
+          viewer.to_ride_viewer(),
+          creator_person_id,
+          is_admin,
+        ))
       }))
     }
     PostKind::Normal => Ok(None),

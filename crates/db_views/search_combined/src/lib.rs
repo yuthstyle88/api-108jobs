@@ -1,40 +1,36 @@
+use app_108jobs_db_schema::newtypes::LanguageId;
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, Coin, PaginationCursor, PersonId},
-    source::{
+  newtypes::{CategoryId, Coin, PaginationCursor, PersonId},
+  source::{
+    category::{Category, CategoryActions},
     combined::search::SearchCombined,
     comment::{Comment, CommentActions},
-    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
     tag::TagsView,
   },
-    SearchSortType,
-    SearchType,
+  SearchSortType, SearchType,
 };
-use app_108jobs_db_views_post::logistics::PostLogisticsView;
-use app_108jobs_db_schema_file::enums::{TripStatus, IntendedUse, JobType, ListingType, PostKind};
-use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_person::PersonView;
+use app_108jobs_db_views_post::logistics::PostLogisticsView;
 use app_108jobs_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::{
-    category_post_tags_fragment,
-    creator_banned,
-    creator_is_admin,
-    local_user_can_mod,
+    category_post_tags_fragment, creator_banned, creator_is_admin, local_user_can_mod,
     post_tags_fragment,
   },
   app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
   app_108jobs_db_views_local_user::LocalUserView,
+  diesel::{Queryable, Selectable},
 };
-use app_108jobs_db_schema::newtypes::LanguageId;
 
 #[cfg(feature = "full")]
 pub mod impls;

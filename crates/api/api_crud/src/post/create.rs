@@ -7,8 +7,8 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   tags::update_post_tags,
   utils::{
-    check_self_promotion_allowed, get_url_blocklist, honeypot_check,
-    process_markdown_opt, slur_regex,
+    check_self_promotion_allowed, get_url_blocklist, honeypot_check, process_markdown_opt,
+    slur_regex,
   },
 };
 use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm};
@@ -19,7 +19,7 @@ use app_108jobs_db_schema::{
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use app_108jobs_db_schema_file::enums::{TripStatus, PostKind};
+use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
@@ -42,7 +42,7 @@ pub async fn create_post(
 
   let data: CreatePost = data.into_inner().try_into()?;
   honeypot_check(&data.honeypot)?;
-  let local_site= context.site_config().get().await?.site_view.local_site;
+  let local_site = context.site_config().get().await?.site_view.local_site;
 
   let slur_regex = slur_regex(&context).await?;
   check_slurs(&data.name, &slur_regex)?;
@@ -99,7 +99,11 @@ pub async fn create_post(
     (Some(category_view), self_promotion, language_id)
   } else {
     // For delivery posts without a category, use default values
-    (None, data.self_promotion, data.language_id.unwrap_or(UNDETERMINED_ID))
+    (
+      None,
+      data.self_promotion,
+      data.language_id.unwrap_or(UNDETERMINED_ID),
+    )
   };
 
   let scheduled_publish_time_at =
@@ -119,10 +123,7 @@ pub async fn create_post(
     is_english_required: data.is_english_required,
     post_kind: Some(data.post_kind),
     category_id: data.category_id,
-    ..PostInsertForm::new(
-      data.name.trim().to_string(),
-      local_user_view.person.id,
-    )
+    ..PostInsertForm::new(data.name.trim().to_string(), local_user_view.person.id)
   };
 
   let inserted_post = Post::create(&mut context.pool(), &post_form).await?;
@@ -139,14 +140,20 @@ pub async fn create_post(
     // Build insert form using struct literal; derive_new::new() only accepts required fields
     let dd_form = DeliveryDetailsInsertForm {
       post_id: inserted_post.id,
-      pickup_address: dd.pickup_address.clone().ok_or(FastJobErrorType::InvalidField(
-        "pickup_address is required".to_string(),
-      ))?,
+      pickup_address: dd
+        .pickup_address
+        .clone()
+        .ok_or(FastJobErrorType::InvalidField(
+          "pickup_address is required".to_string(),
+        ))?,
       pickup_lat: dd.pickup_lat,
       pickup_lng: dd.pickup_lng,
-      dropoff_address: dd.dropoff_address.clone().ok_or(FastJobErrorType::InvalidField(
-        "dropoff_address is required".to_string(),
-      ))?,
+      dropoff_address: dd
+        .dropoff_address
+        .clone()
+        .ok_or(FastJobErrorType::InvalidField(
+          "dropoff_address is required".to_string(),
+        ))?,
       dropoff_lat: dd.dropoff_lat,
       dropoff_lng: dd.dropoff_lng,
       package_description: dd.package_description.clone(),
@@ -230,13 +237,7 @@ pub async fn create_post(
 
   PostActions::like(&mut context.pool(), &like_form).await?;
 
-  send_local_notifs(
-    &inserted_post,
-    None,
-    &local_user_view.person,
-    &context,
-  )
-  .await?;
+  send_local_notifs(&inserted_post, None, &local_user_view.person, &context).await?;
 
   let read_form = PostReadForm::new(post_id, person_id);
   PostActions::mark_as_read(&mut context.pool(), &read_form).await?;

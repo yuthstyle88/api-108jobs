@@ -46,7 +46,8 @@ pub async fn list_person_created(
   };
 
   // Batch load logistics for all posts
-  let created = load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
+  let created =
+    load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
 
   Ok(Json(ListPersonCreatedResponse {
     created,

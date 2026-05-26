@@ -1,4 +1,4 @@
-use crate::{CurrencyView, PricingConfigView, CurrencyRateHistoryView};
+use crate::{CurrencyRateHistoryView, CurrencyView, PricingConfigView};
 use app_108jobs_db_schema::newtypes::{CurrencyId, PricingConfigId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

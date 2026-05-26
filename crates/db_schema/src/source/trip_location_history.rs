@@ -1,4 +1,4 @@
-use crate::newtypes::{TripLocationHistoryId, PostId, RiderId};
+use crate::newtypes::{PostId, RiderId, TripLocationHistoryId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

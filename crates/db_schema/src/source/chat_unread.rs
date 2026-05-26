@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 // Bring the generated diesel schema table into scope for annotations
 use app_108jobs_db_schema_file::schema::chat_unread;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, diesel::Queryable, diesel::Selectable)]
+#[derive(
+  Clone, PartialEq, Eq, Debug, Serialize, Deserialize, diesel::Queryable, diesel::Selectable,
+)]
 #[diesel(table_name = chat_unread)]
 #[diesel(primary_key(local_user_id, room_id))]
 #[diesel(check_for_backend(diesel::pg::Pg))]

@@ -1,49 +1,34 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonContentCombinedView,
-  PersonContentCombinedViewInternal,
+  CommentView, LocalUserView, PersonContentCombinedView, PersonContentCombinedViewInternal,
   PostView,
 };
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   self,
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_comment_actions_join,
-      my_category_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
   PersonContentType,
 };
-use app_108jobs_db_schema_file::schema::{comment, delivery_details, person, person_content_combined, post};
+use app_108jobs_db_schema_file::schema::{
+  comment, delivery_details, person, person_content_combined, post,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl PersonContentCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -71,8 +56,7 @@ impl PersonContentCombinedViewInternal {
         ),
     );
 
-    let my_category_actions_join: my_category_actions_join =
-      my_category_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
@@ -278,14 +262,15 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
 
+  use crate::impls::app_108jobs_db_schema::newtypes::DbUrl;
   use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
   use app_108jobs_db_schema::{
     source::{
-        comment::{Comment, CommentInsertForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        person::{Person, PersonInsertForm},
-        post::{Post, PostInsertForm},
+      category::{category, CategoryInsertForm},
+      comment::{Comment, CommentInsertForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::{Post, PostInsertForm},
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
@@ -293,7 +278,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use crate::impls::app_108jobs_db_schema::newtypes::DbUrl;
   struct Data {
     instance: Instance,
     timmy: Person,

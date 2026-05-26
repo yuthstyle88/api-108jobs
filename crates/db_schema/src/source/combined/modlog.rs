@@ -1,28 +1,14 @@
 use crate::newtypes::{
-  AdminAllowInstanceId,
-  AdminBlockInstanceId,
-  AdminPurgeCommentId,
-  AdminPurgeCategoryId,
-  AdminPurgePersonId,
-  AdminPurgePostId,
-  ModAddCategoryId,
-  ModAddId,
-  ModBanFromCategoryId,
-  ModBanId,
-  ModChangeCategoryVisibilityId,
-  ModFeaturePostId,
-  ModLockPostId,
-  ModRemoveCommentId,
-  ModRemoveCategoryId,
-  ModRemovePostId,
-  ModTransferCategoryId,
-  ModlogCombinedId,
+  AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgeCommentId,
+  AdminPurgePersonId, AdminPurgePostId, ModAddCategoryId, ModAddId, ModBanFromCategoryId, ModBanId,
+  ModChangeCategoryVisibilityId, ModFeaturePostId, ModLockPostId, ModRemoveCategoryId,
+  ModRemoveCommentId, ModRemovePostId, ModTransferCategoryId, ModlogCombinedId,
 };
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::modlog_combined;
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::modlog_combined;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Serialize, Deserialize, Debug, Clone)]

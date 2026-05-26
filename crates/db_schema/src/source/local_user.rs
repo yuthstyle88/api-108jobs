@@ -2,12 +2,12 @@ use crate::{
   newtypes::{LocalUserId, PersonId},
   sensitive::SensitiveString,
 };
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema_file::enums::{
   CommentSortType, ListingType, PostListingMode, PostSortType, VoteShow,
 };
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::local_user;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

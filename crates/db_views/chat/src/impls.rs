@@ -1,8 +1,5 @@
 use crate::api::{GetChatRoomRequest, ListUserChatRooms};
 use crate::{ChatMessageView, ChatParticipantView, ChatRoomView};
-use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
-use diesel_async::RunQueryDsl;
-use futures_util::{StreamExt, TryStreamExt};
 use app_108jobs_db_schema::source::workflow::Workflow;
 use app_108jobs_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
@@ -11,9 +8,14 @@ use app_108jobs_db_schema::{
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{chat_message, chat_participant, chat_room, local_user, person};
+use app_108jobs_db_schema_file::schema::{
+  chat_message, chat_participant, chat_room, local_user, person,
+};
 use app_108jobs_db_views_post::PostPreview;
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
+use futures_util::{StreamExt, TryStreamExt};
 
 /// Cursor support for chat message pagination
 impl PaginationCursorBuilder for ChatMessageView {

@@ -3,10 +3,10 @@ use crate::{
   source::keyword_block::{LocalUserKeywordBlock, LocalUserKeywordBlockForm},
   utils::{get_conn, DbPool},
 };
-use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
-use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use app_108jobs_db_schema_file::schema::local_user_keyword_block;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 
 impl LocalUserKeywordBlock {
   pub async fn read(

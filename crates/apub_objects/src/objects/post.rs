@@ -1,13 +1,10 @@
 use crate::fake_trait::Object;
-use crate::{
-  protocol::page::Page,
-};
+use crate::protocol::page::Page;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::post::Post;
 use app_108jobs_utils::error::FastJobError;
 use std::ops::Deref;
 use url::Url;
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApubPost(pub Post);
@@ -33,6 +30,4 @@ impl Object for ApubPost {
   fn id(&self) -> &Url {
     self.ap_id.inner()
   }
-
 }
-

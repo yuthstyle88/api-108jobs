@@ -44,6 +44,9 @@ ts-rs = [
     # Forward the ts-rs feature to dependent crates so their types also derive TS
     "app_108jobs_db_schema_file/ts-rs",
 ]
+# Exposes `crate::test_data::TestData` (instance + site + local_site scaffold)
+# to downstream crates' test targets. Production builds NEVER enable this.
+test-utils = []
 
 [dependencies]
 chrono = { workspace = true }

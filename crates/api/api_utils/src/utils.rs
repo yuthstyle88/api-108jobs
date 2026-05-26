@@ -216,6 +216,11 @@ pub fn honeypot_check(honeypot: &Option<String>) -> FastJobResult<()> {
 pub fn local_site_rate_limit_to_rate_limit_config(
   l: &LocalSiteRateLimit,
 ) -> EnumMap<ActionType, BucketConfig> {
+  // Login throttle is not yet tunable from the admin UI — it lives in the
+  // local_site_rate_limit table as a future column. Using a hardcoded
+  // default keeps this change reversible without a migration.
+  const LOGIN_MAX_REQUESTS: i32 = 10;
+  const LOGIN_INTERVAL_SECONDS: i32 = 60;
   enum_map! {
     ActionType::Message => (l.message_max_requests, l.message_interval_seconds),
     ActionType::Post => (l.post_max_requests, l.post_interval_seconds),
@@ -224,6 +229,7 @@ pub fn local_site_rate_limit_to_rate_limit_config(
     ActionType::Comment => (l.comment_max_requests, l.comment_interval_seconds),
     ActionType::Search => (l.search_max_requests, l.search_interval_seconds),
     ActionType::ImportUserSettings => (l.import_user_settings_max_requests, l.import_user_settings_interval_seconds),
+    ActionType::Login => (LOGIN_MAX_REQUESTS, LOGIN_INTERVAL_SECONDS),
   }
   .map(|_key, (max_requests, interval)| BucketConfig {
     max_requests: u32::try_from(max_requests).unwrap_or(0),
@@ -995,10 +1001,7 @@ pub async fn verify_comment_on_post(
 /// Verify that a comment's author matches the expected person_id.
 ///
 /// Returns an error if the comment author does not match.
-pub fn verify_comment_author(
-  comment: &Comment,
-  expected_person_id: PersonId,
-) -> FastJobResult<()> {
+pub fn verify_comment_author(comment: &Comment, expected_person_id: PersonId) -> FastJobResult<()> {
   if comment.creator_id != expected_person_id.into() {
     return Err(FastJobErrorType::CommentAuthorMismatch.into());
   }

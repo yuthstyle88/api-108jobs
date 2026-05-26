@@ -1,4 +1,4 @@
-use crate::newtypes::{LocalUserId, ChatRoomId, ChatMessageRefId};
+use crate::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -16,27 +16,27 @@ use app_108jobs_db_schema_file::schema::last_reads;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct LastRead {
-    pub local_user_id: LocalUserId,
-    pub room_id: ChatRoomId,
-    pub last_read_msg_id: ChatMessageRefId,
-    pub updated_at: Option<DateTime<Utc>>,
+  pub local_user_id: LocalUserId,
+  pub room_id: ChatRoomId,
+  pub last_read_msg_id: ChatMessageRefId,
+  pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = last_reads))]
 pub struct LastReadInsertForm {
-    pub local_user_id: LocalUserId,
-    pub room_id: ChatRoomId,
-    pub last_read_msg_id: ChatMessageRefId,
-    #[new(default)]
-    pub updated_at: Option<DateTime<Utc>>,
+  pub local_user_id: LocalUserId,
+  pub room_id: ChatRoomId,
+  pub last_read_msg_id: ChatMessageRefId,
+  #[new(default)]
+  pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Default)]
 #[cfg_attr(feature = "full", derive(AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = last_reads))]
 pub struct LastReadUpdateForm {
-    pub last_read_msg_id: Option<ChatMessageRefId>,
-    pub updated_at: Option<DateTime<Utc>>,
+  pub last_read_msg_id: Option<ChatMessageRefId>,
+  pub updated_at: Option<DateTime<Utc>>,
 }

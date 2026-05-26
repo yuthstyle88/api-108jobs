@@ -2,10 +2,10 @@ use crate::{
   source::local_site_url_blocklist::{LocalSiteUrlBlocklist, LocalSiteUrlBlocklistForm},
   utils::{get_conn, DbPool},
 };
-use diesel::dsl::insert_into;
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use app_108jobs_db_schema_file::schema::local_site_url_blocklist;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::dsl::insert_into;
+use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 
 impl LocalSiteUrlBlocklist {
   pub async fn replace(pool: &mut DbPool<'_>, url_blocklist: Vec<String>) -> FastJobResult<usize> {

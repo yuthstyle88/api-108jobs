@@ -4,10 +4,10 @@ use crate::{
   source::login_token::{LoginToken, LoginTokenCreateForm},
   utils::{get_conn, DbPool},
 };
-use diesel::{delete, dsl::exists, insert_into, select};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::login_token::{dsl::login_token, user_id};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{delete, dsl::exists, insert_into, select};
+use diesel_async::RunQueryDsl;
 
 impl LoginToken {
   pub async fn create(pool: &mut DbPool<'_>, form: LoginTokenCreateForm) -> FastJobResult<Self> {
@@ -35,7 +35,10 @@ impl LoginToken {
     .ok_or(FastJobErrorType::NotLoggedIn.into())
   }
 
-  pub async fn list(pool: &mut DbPool<'_>, user_id_: LocalUserId) -> FastJobResult<Vec<LoginToken>> {
+  pub async fn list(
+    pool: &mut DbPool<'_>,
+    user_id_: LocalUserId,
+  ) -> FastJobResult<Vec<LoginToken>> {
     let conn = &mut get_conn(pool).await?;
 
     login_token
@@ -55,7 +58,10 @@ impl LoginToken {
   }
 
   /// Invalidate all logins of given user on password reset/change, or account deletion.
-  pub async fn invalidate_all(pool: &mut DbPool<'_>, user_id_: LocalUserId) -> FastJobResult<usize> {
+  pub async fn invalidate_all(
+    pool: &mut DbPool<'_>,
+    user_id_: LocalUserId,
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     delete(login_token.filter(user_id.eq(user_id_)))
       .execute(conn)

@@ -6,12 +6,12 @@ use actix_web::{
   web::Data,
   HttpRequest,
 };
-use diesel::NotFound;
-use futures::stream::{Stream, StreamExt};
-use http::HeaderValue;
 use app_108jobs_api_utils::{context::FastJobContext, request::delete_image_alias};
 use app_108jobs_db_schema::newtypes::DbUrl;
 use app_108jobs_utils::{error::FastJobResult, REQWEST_TIMEOUT};
+use diesel::NotFound;
+use futures::stream::{Stream, StreamExt};
+use http::HeaderValue;
 use reqwest_middleware::RequestBuilder;
 
 pub(super) fn adapt_request(
@@ -115,15 +115,10 @@ pub(super) async fn delete_old_image(
     }
 
     // Extract alias from the URL path
-    let alias = old_image
-        .as_str()
-        .split('/')
-        .next_back()
-        .ok_or(NotFound)?;
+    let alias = old_image.as_str().split('/').next_back().ok_or(NotFound)?;
 
     delete_image_alias(alias, context).await?;
   }
 
   Ok(())
 }
-

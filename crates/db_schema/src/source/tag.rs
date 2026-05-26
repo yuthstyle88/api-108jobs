@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{sql_types::Nullable, AsExpression, FromSqlRow},
   app_108jobs_db_schema_file::schema::tag,
+  diesel::{sql_types::Nullable, AsExpression, FromSqlRow},
 };
 
 #[skip_serializing_none]

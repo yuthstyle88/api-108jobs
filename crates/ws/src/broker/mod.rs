@@ -1,7 +1,7 @@
 pub mod bridge_message;
-pub mod manager;
-pub mod init_socket;
 pub mod connect_now;
+pub mod init_socket;
+pub mod manager;
 pub mod register_client_msg;
 
 pub const CONNECT_TIMEOUT_SECS: u64 = 10;

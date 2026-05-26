@@ -5,10 +5,10 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::dsl::insert_into;
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::pending_sender_ack;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::dsl::insert_into;
+use diesel_async::RunQueryDsl;
 
 impl Crud for PendingSenderAck {
   type InsertForm = PendingSenderAckInsertForm;
@@ -29,7 +29,7 @@ impl Crud for PendingSenderAck {
     _id: Self::IdType,
     _form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
-     unimplemented!()
+    unimplemented!()
   }
 }
 

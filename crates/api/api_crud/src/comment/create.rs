@@ -15,9 +15,9 @@ use app_108jobs_db_schema::{
   traits::Likeable,
   utils::DbPool,
 };
-use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
-use app_108jobs_db_schema_file::schema::comment::dsl::comment;
 use app_108jobs_db_schema_file::enums::PostKind;
+use app_108jobs_db_schema_file::schema::comment::dsl::comment;
+use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
@@ -84,7 +84,12 @@ pub async fn create_comment(
   }
 
   // Check if user has already commented on this post
-  check_user_already_commented(&mut context.pool(), local_user_view.person.id, data.post_id.clone()).await?;
+  check_user_already_commented(
+    &mut context.pool(),
+    local_user_view.person.id,
+    data.post_id.clone(),
+  )
+  .await?;
 
   let comment_form = CommentInsertForm {
     language_id: Some(language_id),
@@ -142,9 +147,9 @@ async fn check_user_already_commented(
   person_id: PersonId,
   current_post_id: PostId,
 ) -> FastJobResult<()> {
+  use app_108jobs_db_schema::utils::get_conn;
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
-  use app_108jobs_db_schema::utils::get_conn;
 
   let conn = &mut get_conn(pool).await?;
 

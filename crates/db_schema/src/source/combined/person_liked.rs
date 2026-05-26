@@ -1,9 +1,9 @@
 use crate::newtypes::{CommentId, PersonId, PersonLikedCombinedId, PostId};
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::person_liked_combined;
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::person_liked_combined;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

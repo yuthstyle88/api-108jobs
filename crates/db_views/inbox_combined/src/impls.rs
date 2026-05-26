@@ -2,11 +2,6 @@ use crate::{
   CommentReplyView, InboxCombinedView, InboxCombinedViewInternal, PersonCommentMentionView,
   PersonPostMentionView,
 };
-use diesel::{
-  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   aliases::{self},
   newtypes::{InstanceId, PaginationCursor, PersonId},
@@ -17,7 +12,7 @@ use app_108jobs_db_schema::{
     queries::{
       category_join, creator_category_actions_join, creator_home_instance_actions_join,
       creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_comment_actions_join, my_category_actions_join, my_instance_actions_person_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
       my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
@@ -29,6 +24,11 @@ use app_108jobs_db_schema_file::schema::{
   person_comment_mention, person_post_mention, post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl InboxCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -380,17 +380,18 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-        comment::{Comment, CommentInsertForm},
-        comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
-        person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
-        person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
-        post::{Post, PostInsertForm},
+      category::{category, CategoryInsertForm},
+      comment::{Comment, CommentInsertForm},
+      comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
+      instance::Instance,
+      person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
+      person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
+      person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+      post::{Post, PostInsertForm},
     },
     traits::{Blockable, Crud},
     utils::{build_db_pool_for_tests, DbPool},
@@ -399,7 +400,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -434,17 +434,16 @@ mod tests {
     let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let jessica_post_form =
-      PostInsertForm::new("jessica post prv".into(), jessica.id, category.id);
+    let jessica_post_form = PostInsertForm::new("jessica post prv".into(), jessica.id, category.id);
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =
       CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form, ).await?;
+    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
       CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form, ).await?;
+    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
 
     Ok(Data {
       instance,

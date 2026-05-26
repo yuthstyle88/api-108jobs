@@ -23,7 +23,7 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{TripStatus, IntendedUse, JobType, PostKind};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, TripStatus};
 use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,

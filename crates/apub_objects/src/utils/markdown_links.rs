@@ -1,16 +1,13 @@
 use app_108jobs_utils::utils::markdown::image_links::{markdown_find_links, markdown_handle_title};
 use url::Url;
 
-
 /// Goes through all remote markdown links and attempts to resolve them as Activitypub objects.
 /// If successful, the link is rewritten to a local link, so it can be viewed without leaving the
 /// local instance.
 ///
 /// As it relies on ObjectId::dereference, it can only be used for incoming federated objects, not
 /// for the API.
-pub async fn markdown_rewrite_remote_links(
-  mut src: String,
-) -> String {
+pub async fn markdown_rewrite_remote_links(mut src: String) -> String {
   let links_offsets = markdown_find_links(&src);
 
   // Go through the collected links in reverse order

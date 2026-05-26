@@ -1,7 +1,7 @@
 pub mod api;
 mod impls;
-pub mod validator;
 pub mod ride_session_view;
+pub mod validator;
 
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

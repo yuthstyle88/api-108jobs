@@ -2,7 +2,6 @@ use super::not_zero;
 use crate::site::{application_question_check, site_default_post_listing_type_check};
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
@@ -38,6 +37,7 @@ use app_108jobs_utils::{
     },
   },
 };
+use chrono::Utc;
 
 pub async fn update_site(
   data: Json<EditSiteRequest>,
@@ -176,7 +176,10 @@ pub async fn update_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_update_payload(local_site: &LocalSite, edit_site: &EditSiteRequest) -> FastJobResult<()> {
+fn validate_update_payload(
+  local_site: &LocalSite,
+  edit_site: &EditSiteRequest,
+) -> FastJobResult<()> {
   // Check that the slur regex compiles, and return the regex if valid...
   // Prioritize using new slur regex from the request; if not provided, use the existing regex.
   let slur_regex = build_and_check_regex(

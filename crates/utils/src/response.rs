@@ -37,15 +37,8 @@ mod tests {
   use super::*;
   use crate::error::{FastJobError, FastJobErrorType};
   use actix_web::{
-    error::ErrorInternalServerError,
-    http::StatusCode,
-    middleware::ErrorHandlers,
-    test,
-    web,
-    App,
-    Error,
-    Handler,
-    Responder,
+    error::ErrorInternalServerError, http::StatusCode, middleware::ErrorHandlers, test, web, App,
+    Error, Handler, Responder,
   };
   use pretty_assertions::assert_eq;
 
@@ -89,7 +82,9 @@ mod tests {
   #[actix_web::test]
   async fn test_anyhow_errors_wrapped_in_app_108jobs_errors_are_jsonified_correctly() {
     async fn anyhow_error_service() -> actix_web::Result<String, FastJobError> {
-      Err(FastJobError::from(anyhow::anyhow!("This is the inner error")))
+      Err(FastJobError::from(anyhow::anyhow!(
+        "This is the inner error"
+      )))
     }
 
     check_for_jsonification(

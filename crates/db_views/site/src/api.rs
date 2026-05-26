@@ -1,12 +1,12 @@
 use crate::SiteView;
-use chrono::{DateTime, Utc};
+use app_108jobs_db_schema::source::person::{PortfolioPic, WorkSample};
 use app_108jobs_db_schema::source::wallet::Wallet;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
-    comment::Comment,
     category::Category,
+    comment::Comment,
     instance::Instance,
     language::Language,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -19,13 +19,14 @@ use app_108jobs_db_schema::{
   },
 };
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, TripStatus, ListingType, PostKind, PostListingMode, PostSortType,
-  RegistrationMode, VoteShow,
+  CommentSortType, ListingType, PostKind, PostListingMode, PostSortType, RegistrationMode,
+  TripStatus, VoteShow,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_person::{PersonView};
+use app_108jobs_db_views_person::PersonView;
 use app_108jobs_db_views_post::api::PostItem;
 use app_108jobs_utils::error::FastJobError;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -35,7 +36,6 @@ use {
   extism::FromBytes,
   extism_convert::{encoding, Json},
 };
-use app_108jobs_db_schema::source::person::{PortfolioPic, WorkSample};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -807,7 +807,6 @@ pub struct SaveUserSettings {
   pub available: Option<bool>,
   pub is_secure_message: Option<bool>,
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]

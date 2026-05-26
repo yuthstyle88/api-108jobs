@@ -8,12 +8,12 @@ use app_108jobs_utils::error::FastJobResult;
 /// Returns a list of all active deliveries (not Cancelled or Delivered).
 /// Accessible by authenticated users (riders, employers, admins).
 pub async fn get_active_deliveries(
-    context: Data<FastJobContext>,
+  context: Data<FastJobContext>,
 ) -> FastJobResult<Json<Vec<DeliveryDetails>>> {
-    let mut pool = context.pool();
-    let active_deliveries = DeliveryDetails::get_all_active(&mut pool).await?;
+  let mut pool = context.pool();
+  let active_deliveries = DeliveryDetails::get_all_active(&mut pool).await?;
 
-    Ok(Json(active_deliveries))
+  Ok(Json(active_deliveries))
 }
 
 /// GET /deliveries/completed
@@ -21,12 +21,12 @@ pub async fn get_active_deliveries(
 /// Returns a list of all completed deliveries (status = Delivered).
 /// Accessible by authenticated users (riders, employers, admins).
 pub async fn get_completed_deliveries(
-    context: Data<FastJobContext>,
+  context: Data<FastJobContext>,
 ) -> FastJobResult<Json<Vec<DeliveryDetails>>> {
-    let mut pool = context.pool();
-    let completed_deliveries = DeliveryDetails::get_all_completed(&mut pool).await?;
+  let mut pool = context.pool();
+  let completed_deliveries = DeliveryDetails::get_all_completed(&mut pool).await?;
 
-    Ok(Json(completed_deliveries))
+  Ok(Json(completed_deliveries))
 }
 
 /// GET /deliveries/cancelled
@@ -34,10 +34,10 @@ pub async fn get_completed_deliveries(
 /// Returns a list of all cancelled deliveries (status = Cancelled).
 /// Accessible by authenticated users (riders, employers, admins).
 pub async fn get_cancelled_deliveries(
-    context: Data<FastJobContext>,
+  context: Data<FastJobContext>,
 ) -> FastJobResult<Json<Vec<DeliveryDetails>>> {
-    let mut pool = context.pool();
-    let cancelled_deliveries = DeliveryDetails::get_all_cancelled(&mut pool).await?;
+  let mut pool = context.pool();
+  let cancelled_deliveries = DeliveryDetails::get_all_cancelled(&mut pool).await?;
 
-    Ok(Json(cancelled_deliveries))
+  Ok(Json(cancelled_deliveries))
 }

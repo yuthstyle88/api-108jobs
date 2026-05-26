@@ -8,7 +8,7 @@ use crate::{
 use diesel::dsl::{exists, select};
 use diesel::{
   dsl::{insert_into, update},
-  ExpressionMethods, QueryDsl, SelectableHelper, OptionalExtension,
+  ExpressionMethods, OptionalExtension, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 

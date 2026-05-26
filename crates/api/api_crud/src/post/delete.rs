@@ -57,10 +57,5 @@ pub async fn delete_post(
     &context,
   )?;
 
-  build_post_response(
-    &context,
-    local_user_view,
-    data.post_id,
-  )
-  .await
+  build_post_response(&context, local_user_view, data.post_id).await
 }

@@ -9,10 +9,10 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 pub struct SubmitUserReviewForm {
-    pub reviewee_id: PersonId,
-    pub workflow_id: WorkflowId,
-    pub rating: i16,
-    pub comment: Option<String>,
+  pub reviewee_id: PersonId,
+  pub workflow_id: WorkflowId,
+  pub rating: i16,
+  pub comment: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -21,10 +21,10 @@ pub struct SubmitUserReviewForm {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct SubmitUserReviewRequest {
-    pub reviewee_id: PersonId,
-    pub workflow_id: WorkflowId,
-    pub rating: i16,
-    pub comment: Option<String>,
+  pub reviewee_id: PersonId,
+  pub workflow_id: WorkflowId,
+  pub rating: i16,
+  pub comment: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -33,7 +33,7 @@ pub struct SubmitUserReviewRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct SubmitUserReviewResponse {
-    pub review: UserReview,
+  pub review: UserReview,
 }
 
 #[skip_serializing_none]
@@ -43,10 +43,10 @@ pub struct SubmitUserReviewResponse {
 #[serde(rename_all = "camelCase")]
 /// Fetches a list of User Reviews.
 pub struct ListUserReviewsQuery {
-    pub profile_id: PersonId,
-    pub page_cursor: Option<PaginationCursor>,
-    pub page_back: Option<bool>,
-    pub limit: Option<i64>,
+  pub profile_id: PersonId,
+  pub page_cursor: Option<PaginationCursor>,
+  pub page_back: Option<bool>,
+  pub limit: Option<i64>,
 }
 
 #[skip_serializing_none]
@@ -56,8 +56,8 @@ pub struct ListUserReviewsQuery {
 /// The response for listing user reviews.
 #[serde(rename_all = "camelCase")]
 pub struct ListUserReviewsResponse {
-    pub reviews: Vec<UserReviewView>,
-    /// the pagination cursor to use to fetch the next page
-    pub next_page: Option<PaginationCursor>,
-    pub prev_page: Option<PaginationCursor>,
+  pub reviews: Vec<UserReviewView>,
+  /// the pagination cursor to use to fetch the next page
+  pub next_page: Option<PaginationCursor>,
+  pub prev_page: Option<PaginationCursor>,
 }

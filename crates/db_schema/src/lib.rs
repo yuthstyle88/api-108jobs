@@ -11,7 +11,9 @@ pub mod newtypes;
 pub mod sensitive;
 #[cfg(feature = "full")]
 pub mod aliases {
-  use app_108jobs_db_schema_file::schema::{category_actions, instance_actions, local_user, person};
+  use app_108jobs_db_schema_file::schema::{
+    category_actions, instance_actions, local_user, person,
+  };
   diesel::alias!(
     category_actions as creator_category_actions: CreatorcategoryActions,
     instance_actions as creator_home_instance_actions: CreatorHomeInstanceActions,
@@ -23,6 +25,13 @@ pub mod aliases {
   );
 }
 pub mod source;
+/// Shared test fixture (instance + site + local_site triple).
+///
+/// Compiled when the crate is being tested directly, or when a downstream
+/// crate opts in via the `test-utils` feature. Never visible to production
+/// callers.
+#[cfg(all(feature = "full", any(test, feature = "test-utils")))]
+pub mod test_data;
 #[cfg(feature = "full")]
 pub mod traits;
 #[cfg(feature = "full")]
@@ -32,8 +41,8 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 #[cfg(feature = "full")]
 use {
-    diesel::query_source::AliasedField,
-    app_108jobs_db_schema_file::schema::{category_actions, instance_actions, person},
+  app_108jobs_db_schema_file::schema::{category_actions, instance_actions, person},
+  diesel::query_source::AliasedField,
 };
 
 #[derive(
@@ -249,15 +258,15 @@ pub type Person2AliasAllColumnsTuple = (
 #[cfg(feature = "full")]
 /// A helper tuple for creator category actions
 pub type CreatorcategoryActionsAllColumnsTuple = (
-    AliasedField<aliases::CreatorcategoryActions, category_actions::category_id>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::person_id>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::followed_at>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::follow_state>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::follow_approver_id>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::blocked_at>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::became_moderator_at>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::received_ban_at>,
-    AliasedField<aliases::CreatorcategoryActions, category_actions::ban_expires_at>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::category_id>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::person_id>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::followed_at>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::follow_state>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::follow_approver_id>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::blocked_at>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::became_moderator_at>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::received_ban_at>,
+  AliasedField<aliases::CreatorcategoryActions, category_actions::ban_expires_at>,
 );
 
 #[cfg(feature = "full")]

@@ -16,9 +16,7 @@ pub mod actions {
   pub use app_108jobs_db_schema::newtypes::PersonContentCombinedId;
   pub use app_108jobs_db_views_person::api::{BlockPerson, BlockPersonResponse, NotePerson};
   pub use app_108jobs_db_views_person_content_combined::{
-    ListPersonContent,
-    ListPersonContentResponse,
-    PersonContentCombinedView,
+    ListPersonContent, ListPersonContentResponse, PersonContentCombinedView,
   };
 
   pub mod moderation {

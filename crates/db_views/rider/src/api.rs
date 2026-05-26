@@ -1,7 +1,9 @@
-use crate::RiderView;
 use crate::ride_session_view::{RidePublic, RideSessionView};
-use app_108jobs_db_schema::newtypes::{CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId, RiderId};
-use app_108jobs_db_schema_file::enums::{TripStatus, PaymentMethod, VehicleType};
+use crate::RiderView;
+use app_108jobs_db_schema::newtypes::{
+  CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId, RiderId,
+};
+use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -269,7 +271,7 @@ pub struct CreateRideSessionRequest {
 pub struct RideSessionResponse {
   pub id: RideSessionId,
   pub post_id: PostId,
-  pub rider_id: Option<RiderId>,  // NULL until a rider accepts
+  pub rider_id: Option<RiderId>, // NULL until a rider accepts
   pub status: TripStatus,
   pub current_price_coin: i32,
   pub payment_method: PaymentMethod,

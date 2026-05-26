@@ -1,13 +1,4 @@
 use crate::CategoryReportView;
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
   aliases,
   newtypes::{CategoryReportId, PersonId},
@@ -15,6 +6,11 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{category, category_actions, category_report, person};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
 
 impl CategoryReportView {
   /// returns the categoryReportView for the provided report_id
@@ -34,7 +30,7 @@ impl CategoryReportView {
       aliases::person2.on(category_report::resolver_id.eq(resolver_id.nullable()));
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
         .eq(category_report::category_id)
         .and(category_actions::person_id.eq(my_person_id)),
     );

@@ -1,15 +1,15 @@
 use crate::newtypes::{ChatRoomId, LocalUserId};
 use crate::source::chat_unread::{ChatUnread, ChatUnreadUpsertForm};
 use crate::utils::{get_conn, DbPool};
+use app_108jobs_db_schema_file::schema::chat_unread;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use diesel::dsl::{insert_into, now, update};
 use diesel::prelude::*;
+use diesel::sql_query;
+use diesel::sql_types::{Integer, Nullable, Text, Timestamptz, Varchar};
 use diesel::upsert::excluded;
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::chat_unread;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult, FastJobErrorExt};
-use diesel::sql_types::{Integer, Nullable, Timestamptz, Text, Varchar};
-use diesel::sql_query;
 
 impl ChatUnread {
   /// Increment unread_count by 1 for (user, room), and update last_message_*.
@@ -32,21 +32,21 @@ impl ChatUnread {
     };
 
     let q = insert_into(chat_unread::table)
-        .values(&form)
-        .on_conflict((chat_unread::local_user_id, chat_unread::room_id))
-        .do_update()
-        .set((
-          chat_unread::unread_count.eq(chat_unread::unread_count + 1),
-          chat_unread::last_message_id.eq(excluded(chat_unread::last_message_id)),
-          chat_unread::last_message_at.eq(excluded(chat_unread::last_message_at)),
-          chat_unread::updated_at.eq(now),
-        ))
-        .returning(ChatUnread::as_returning());
+      .values(&form)
+      .on_conflict((chat_unread::local_user_id, chat_unread::room_id))
+      .do_update()
+      .set((
+        chat_unread::unread_count.eq(chat_unread::unread_count + 1),
+        chat_unread::last_message_id.eq(excluded(chat_unread::last_message_id)),
+        chat_unread::last_message_at.eq(excluded(chat_unread::last_message_at)),
+        chat_unread::updated_at.eq(now),
+      ))
+      .returning(ChatUnread::as_returning());
 
     let row: ChatUnread = q
-        .get_result(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
+      .get_result(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
 
     Ok(row)
   }
@@ -61,27 +61,27 @@ impl ChatUnread {
 
     // Ensure the row exists; if not, insert with zero.
     let _ = insert_into(chat_unread::table)
-        .values((
-          chat_unread::local_user_id.eq(user_id),
-          chat_unread::room_id.eq(room_id.clone()),
-          chat_unread::unread_count.eq(0_i32),
-        ))
-        .on_conflict_do_nothing()
-        .execute(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
+      .values((
+        chat_unread::local_user_id.eq(user_id),
+        chat_unread::room_id.eq(room_id.clone()),
+        chat_unread::unread_count.eq(0_i32),
+      ))
+      .on_conflict_do_nothing()
+      .execute(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
 
     let q = update(chat_unread::table.find((user_id, room_id)))
-        .set((
-          chat_unread::unread_count.eq(0_i32),
-          chat_unread::updated_at.eq(now),
-        ))
-        .returning(ChatUnread::as_returning());
+      .set((
+        chat_unread::unread_count.eq(0_i32),
+        chat_unread::updated_at.eq(now),
+      ))
+      .returning(ChatUnread::as_returning());
 
     let row: ChatUnread = q
-        .get_result(conn)
-        .await
-        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
+      .get_result(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
 
     Ok(row)
   }
@@ -95,16 +95,16 @@ impl ChatUnread {
     let conn = &mut get_conn(pool).await?;
     let q = chat_unread::table.find((user_id, room_id));
     let row = q
-        .get_result::<ChatUnread>(conn)
-        .await
-        .optional()
-        .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
+      .get_result::<ChatUnread>(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
     Ok(row)
   }
 
   /// Fetch unread snapshot for a user across all rooms they participate in.
   /// Returns tuples of (room_id, unread_count, last_message_id, last_message_at) for every room.
-  /// 
+  ///
   pub async fn unread_snapshot_for_user(
     pool: &mut DbPool<'_>,
     user_id: LocalUserId,
@@ -144,10 +144,19 @@ impl ChatUnread {
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdateChatUnread)?;
 
-    Ok(rows
-      .into_iter()
-      .map(|r| (ChatRoomId(r.room_id), r.unread_count, r.last_message_id, r.last_message_at))
-      .collect())
+    Ok(
+      rows
+        .into_iter()
+        .map(|r| {
+          (
+            ChatRoomId(r.room_id),
+            r.unread_count,
+            r.last_message_id,
+            r.last_message_at,
+          )
+        })
+        .collect(),
+    )
   }
 
   /// Bulk increment unread_count by 1 for all members of a room (excluding sender if provided).

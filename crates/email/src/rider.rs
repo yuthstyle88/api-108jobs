@@ -27,15 +27,7 @@ pub async fn send_rider_application_approved_email(
   let next_steps = lang.rider_approved_next_steps();
 
   let body = lang.rider_application_approved_email(
-    footer.0,
-    footer.1,
-    message,
-    next_steps,
-    footer.2,
-    footer.3,
-    footer.4,
-    footer.5,
-    footer.6,
+    footer.0, footer.1, message, next_steps, footer.2, footer.3, footer.4, footer.5, footer.6,
     title,
   );
 
@@ -86,16 +78,7 @@ pub async fn send_rider_application_denied_email(
       )
     }
     None => lang.rider_application_denied_email(
-      footer.0,
-      contact,
-      footer.1,
-      message,
-      footer.2,
-      footer.3,
-      footer.4,
-      footer.5,
-      footer.6,
-      title,
+      footer.0, contact, footer.1, message, footer.2, footer.3, footer.4, footer.5, footer.6, title,
     ),
   };
 

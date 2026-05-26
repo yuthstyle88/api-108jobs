@@ -1,20 +1,17 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use bcrypt::verify;
 use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
   utils::purge_user_account,
 };
 use app_108jobs_db_schema::source::{
-  category::CategoryActions,
-  login_token::LoginToken,
-  oauth_account::OAuthAccount,
-  person::Person,
+  category::CategoryActions, login_token::LoginToken, oauth_account::OAuthAccount, person::Person,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{DeleteAccountRequest, SuccessResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use bcrypt::verify;
 
 pub async fn delete_account(
   data: Json<DeleteAccountRequest>,

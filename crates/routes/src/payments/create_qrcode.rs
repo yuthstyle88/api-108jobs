@@ -1,7 +1,7 @@
 use crate::payments::get_token::fetch_scb_token;
+use crate::payments::http_client::scb_client;
 use actix_web::web::{Data, Json};
 use actix_web::HttpResponse;
-use chrono::{Duration, Utc};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::newtypes::Coin;
 use app_108jobs_db_schema::source::currency::Currency;
@@ -9,8 +9,9 @@ use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestIn
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use reqwest::Client;
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -116,7 +117,10 @@ pub async fn create_qrcode(
 
   // Step 3: Make request
   let request_uid = Uuid::new_v4().to_string();
-  let client = Client::new();
+  let client = scb_client().map_err(|e| {
+    error!("scb client build failed: {e}");
+    FastJobErrorType::ExternalApiError
+  })?;
 
   let res = client
     .post(&url)
@@ -139,11 +143,10 @@ pub async fn create_qrcode(
     let numeric_code = match data.currency_code.parse::<i32>() {
       Ok(code) => code,
       Err(_) => {
-        return Err(FastJobErrorType::InvalidField(format!(
-          "Invalid currency code: {}",
-          data.currency_code
-        ))
-        .into());
+        return Err(
+          FastJobErrorType::InvalidField(format!("Invalid currency code: {}", data.currency_code))
+            .into(),
+        );
       }
     };
 
@@ -151,11 +154,13 @@ pub async fn create_qrcode(
     let currency = match Currency::get_by_numeric_code(&mut context.pool(), numeric_code).await? {
       Some(c) => c,
       None => {
-        return Err(FastJobErrorType::InvalidField(format!(
-          "Unsupported currency code: {} ({})",
-          data.currency_code, data.currency_name
-        ))
-        .into());
+        return Err(
+          FastJobErrorType::InvalidField(format!(
+            "Unsupported currency code: {} ({})",
+            data.currency_code, data.currency_name
+          ))
+          .into(),
+        );
       }
     };
 

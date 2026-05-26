@@ -1,18 +1,17 @@
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{
+    category::{Category, CategoryActions},
     combined::person_liked::PersonLikedCombined,
     comment::{Comment, CommentActions},
-    category::{Category, CategoryActions},
-    images::ImageDetails,
     delivery_details::DeliveryDetails,
+    images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
     tag::TagsView,
   },
-  LikeType,
-  PersonContentType,
+  LikeType, PersonContentType,
 };
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_post::PostView;
@@ -20,14 +19,14 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category,
-    creator_banned_within_category,
-    creator_is_moderator,
+    creator_banned_from_category, creator_banned_within_category, creator_is_moderator,
   },
-  app_108jobs_db_schema::utils::queries::{creator_is_admin, local_user_can_mod, post_tags_fragment},
+  app_108jobs_db_schema::utils::queries::{
+    creator_is_admin, local_user_can_mod, post_tags_fragment,
+  },
   app_108jobs_db_views_local_user::LocalUserView,
+  diesel::{Queryable, Selectable},
 };
 
 #[cfg(feature = "full")]

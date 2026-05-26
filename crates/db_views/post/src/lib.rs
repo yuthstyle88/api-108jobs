@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema::source::{
   category::{Category, CategoryActions},
   images::ImageDetails,
@@ -7,31 +6,28 @@ use app_108jobs_db_schema::source::{
   post::{Post, PostActions},
   tag::TagsView,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(test)]
 pub mod db_perf;
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PersonId, PostId};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
+  app_108jobs_db_schema::utils::queries::{
+    creator_banned_from_category, creator_banned_within_category,
+  },
+  app_108jobs_db_schema::utils::queries::{
+    creator_is_moderator, local_user_can_mod_post, post_creator_is_admin, post_tags_fragment,
+  },
   diesel::{Queryable, Selectable},
-  app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category,
-    creator_banned_within_category,
-  },
-  app_108jobs_db_schema::utils::queries::{
-    creator_is_moderator,
-    local_user_can_mod_post,
-    post_creator_is_admin,
-    post_tags_fragment,
-  },
 };
-use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PersonId, PostId};
 
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
-pub mod validator;
 pub mod logistics;
+pub mod validator;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -108,4 +104,3 @@ pub struct PostPreview {
   pub deadline: Option<DateTime<Utc>>,
   pub creator_id: PersonId,
 }
-

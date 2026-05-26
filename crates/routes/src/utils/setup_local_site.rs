@@ -1,18 +1,12 @@
-use chrono::Utc;
-use diesel::{
-  dsl::{exists, not, select},
-  query_builder::AsQuery,
-};
-use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use app_108jobs_api_utils::plugins::plugin_metadata;
 use app_108jobs_api_utils::utils::generate_inbox_url;
 use app_108jobs_db_schema::source::actor_language::SiteLanguage;
+use app_108jobs_db_schema::source::coin::CoinModel;
 use app_108jobs_db_schema::source::language::Language;
 use app_108jobs_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
 use app_108jobs_db_schema::source::oauth_provider::OAuthProvider;
 use app_108jobs_db_schema::source::tagline::Tagline;
 use app_108jobs_db_schema::source::wallet::WalletModel;
-use app_108jobs_db_schema::source::coin::CoinModel;
 use app_108jobs_db_schema::{
   source::{
     instance::Instance,
@@ -34,6 +28,12 @@ use app_108jobs_utils::{
   settings::structs::Settings,
   VERSION,
 };
+use chrono::Utc;
+use diesel::{
+  dsl::{exists, not, select},
+  query_builder::AsQuery,
+};
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use tracing::info;
 use url::Url;
 

@@ -1,5 +1,5 @@
-use crate::persistence::{ensure_room_membership, list_chat_messages};
 use crate::broker::manager::{FetchHistoryDirect, PhoenixManager};
+use crate::persistence::{ensure_room_membership, list_chat_messages};
 use actix::{Context, Handler, ResponseFuture};
 use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
 use app_108jobs_db_schema::utils::DbPool;
@@ -20,13 +20,14 @@ impl Handler<FetchHistoryDirect> for PhoenixManager {
 
     Box::pin(async move {
       // Drain buffered messages
-      let messages: Vec<ChatMessageInsertForm> = match phoenix_manager.drain_room_buffer(&room_id).await {
-        Ok(messages) => messages,
-        Err(e) => {
-          tracing::error!("Failed to drain messages for room {}: {}", room_id, e);
-          Vec::new() // Continue with empty list to avoid failing the query
-        }
-      };
+      let messages: Vec<ChatMessageInsertForm> =
+        match phoenix_manager.drain_room_buffer(&room_id).await {
+          Ok(messages) => messages,
+          Err(e) => {
+            tracing::error!("Failed to drain messages for room {}: {}", room_id, e);
+            Vec::new() // Continue with empty list to avoid failing the query
+          }
+        };
 
       // Check membership via helper
       ensure_room_membership(pool.clone(), room_id.clone(), user_id.clone()).await?;
@@ -35,7 +36,11 @@ impl Handler<FetchHistoryDirect> for PhoenixManager {
       if !messages.is_empty() {
         let mut db_pool = DbPool::Pool(&pool);
         if let Err(e) = ChatMessage::bulk_insert(&mut db_pool, &messages).await {
-          tracing::error!("Failed to persist drained messages for room {}: {}", room_id, e);
+          tracing::error!(
+            "Failed to persist drained messages for room {}: {}",
+            room_id,
+            e
+          );
           // Continue with query even if insert fails
         }
       }

@@ -1,30 +1,19 @@
 use crate::CommentReportView;
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{CommentReportId, PersonId},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-    comment,
-    comment_actions,
-    comment_report,
-    category,
-    category_actions,
-    local_user,
-    person,
-    person_actions,
-    post,
+  category, category_actions, comment, comment_actions, comment_report, local_user, person,
+  person_actions, post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
 
 impl CommentReportView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -73,7 +62,7 @@ impl CommentReportView {
     );
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
         .nullable()
         .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),

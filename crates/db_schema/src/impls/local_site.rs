@@ -2,10 +2,10 @@ use crate::{
   source::local_site::{LocalSite, LocalSiteInsertForm, LocalSiteUpdateForm},
   utils::{get_conn, DbPool},
 };
-use diesel::dsl::insert_into;
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::local_site;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::dsl::insert_into;
+use diesel_async::RunQueryDsl;
 
 impl LocalSite {
   pub async fn create(pool: &mut DbPool<'_>, form: &LocalSiteInsertForm) -> FastJobResult<Self> {
@@ -40,11 +40,8 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-      category::{Category, CategoryInsertForm, CategoryUpdateForm}
-      ,
-      person::{Person, PersonInsertForm}
-
-      ,
+      category::{Category, CategoryInsertForm, CategoryUpdateForm},
+      person::{Person, PersonInsertForm},
     },
     test_data::TestData,
     traits::Crud,
@@ -67,14 +64,13 @@ mod tests {
   ) -> FastJobResult<(TestData, Person, Category)> {
     let data = TestData::create(pool).await?;
 
-    let new_person = PersonInsertForm::test_form(data.instance.id, "thommy_site_agg");
+    crate::test_data::reset_category_sequence(pool).await?;
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "thommy_site_agg").await?;
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let new_category = CategoryInsertForm::new(
-      data.instance.id,
-      "TIL_site_agg".into(),
-      "nada".to_owned(),
-    );
+    let new_category =
+      CategoryInsertForm::new(data.instance.id, "TIL_site_agg".into(), "nada".to_owned());
 
     let inserted_category = Category::create(pool, &new_category).await?;
 

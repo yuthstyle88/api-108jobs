@@ -1,11 +1,11 @@
-use clap::Parser;
+use app_108jobs_api_server::{start_fastjob_server, CmdArgs};
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
 };
+use clap::Parser;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
-use app_108jobs_api_server::{start_fastjob_server, CmdArgs};
 
 pub extern crate rustls;
 

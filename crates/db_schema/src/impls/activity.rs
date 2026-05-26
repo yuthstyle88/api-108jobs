@@ -3,10 +3,10 @@ use crate::{
   source::activity::{SentActivity, SentActivityForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::insert_into;
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl SentActivity {
   pub async fn create(pool: &mut DbPool<'_>, form: SentActivityForm) -> FastJobResult<Self> {
@@ -23,10 +23,10 @@ impl SentActivity {
     use app_108jobs_db_schema_file::schema::sent_activity::dsl::{ap_id, sent_activity};
     let conn = &mut get_conn(pool).await?;
     sent_activity
-     .filter(ap_id.eq(object_id))
-     .first(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .filter(ap_id.eq(object_id))
+      .first(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn read(pool: &mut DbPool<'_>, object_id: ActivityId) -> FastJobResult<Self> {
@@ -39,5 +39,3 @@ impl SentActivity {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
-
-

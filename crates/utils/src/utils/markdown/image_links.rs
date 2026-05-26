@@ -6,8 +6,7 @@ use markdown_it::{
     block::fence,
     inline::{image, image::Image},
   },
-  MarkdownIt,
-  NodeValue,
+  MarkdownIt, NodeValue,
 };
 use std::sync::LazyLock;
 use url::Url;

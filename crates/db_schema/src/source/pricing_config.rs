@@ -1,16 +1,13 @@
 use crate::newtypes::{CurrencyId, PricingConfigId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::pricing_config;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-  feature = "full",
-  derive(Queryable, Selectable, Identifiable)
-)]
+#[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = pricing_config))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -22,10 +19,10 @@ pub struct PricingConfig {
   pub name: String,
 
   // Stored in Coins internally
-  pub base_fare_coin: i32,            // e.g., 5000 Coins
-  pub time_charge_per_minute_coin: i32,  // e.g., 100 Coins/minute
-  pub minimum_charge_minutes: i32,    // e.g., 10 (charge every 10 min)
-  pub distance_charge_per_km_coin: i32,   // e.g., 1000 Coins/km
+  pub base_fare_coin: i32,              // e.g., 5000 Coins
+  pub time_charge_per_minute_coin: i32, // e.g., 100 Coins/minute
+  pub minimum_charge_minutes: i32,      // e.g., 10 (charge every 10 min)
+  pub distance_charge_per_km_coin: i32, // e.g., 1000 Coins/km
 
   pub accepts_cash: bool,
   pub accepts_coin: bool,

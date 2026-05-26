@@ -1,23 +1,23 @@
 mod series;
 
 use crate::{db_perf::series::ValuesFromSeries, impls::PostQuery, PostView};
-use diesel::{
-  dsl::{self, sql},
-  sql_types, ExpressionMethods, IntoSql,
-};
-use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use app_108jobs_db_schema::{
   source::{
-      category::{category, CategoryInsertForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      site::Site,
+    category::{category, CategoryInsertForm},
+    instance::Instance,
+    person::{Person, PersonInsertForm},
+    site::Site,
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{build_db_pool, get_conn, now},
 };
 use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
 use app_108jobs_utils::error::FastJobResult;
+use diesel::{
+  dsl::{self, sql},
+  sql_types, ExpressionMethods, IntoSql,
+};
+use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;
 use std::{fmt::Display, num::NonZeroU32, str::FromStr};
 use url::Url;
@@ -76,11 +76,7 @@ async fn db_perf() -> FastJobResult<()> {
   println!("🌍 creating {} communities", args.communities);
   let mut category_ids = vec![];
   for i in 0..args.communities.get() {
-    let form = CategoryInsertForm::new(
-      instance.id,
-      format!("c{i}"),
-      i.to_string(),
-    );
+    let form = CategoryInsertForm::new(instance.id, format!("c{i}"), i.to_string());
     category_ids.push(category::create(&mut conn.into(), &form).await?.id);
   }
 

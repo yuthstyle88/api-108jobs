@@ -1,50 +1,33 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonLikedCombinedView,
-  PersonLikedCombinedViewInternal,
-  PostView,
+  CommentView, LocalUserView, PersonLikedCombinedView, PersonLikedCombinedViewInternal, PostView,
 };
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_liked::{person_liked_combined_keys as key, PersonLikedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_category_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_comment_actions_join,
-      my_category_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_category_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_local_user_admin_join, image_details_join, my_category_actions_join,
+      my_comment_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
-  LikeType,
-  PersonContentType,
+  LikeType, PersonContentType,
 };
-use app_108jobs_db_schema_file::schema::{comment, delivery_details, person, person_liked_combined, post};
+use app_108jobs_db_schema_file::schema::{
+  comment, delivery_details, person, person_liked_combined, post,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 #[derive(Default)]
 pub struct PersonLikedCombinedQuery {
@@ -268,14 +251,15 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonLikedCombinedQuery, LocalUserView, PersonLikedCombinedView};
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     source::{
-        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        post::{Post, PostActions, PostInsertForm, PostLikeForm},
+      category::{category, CategoryInsertForm},
+      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -284,7 +268,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,

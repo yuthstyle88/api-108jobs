@@ -1,9 +1,5 @@
 use crate::api::{CreateComment, CreateCommentRequest};
 use crate::{CommentSlimView, CommentView};
-use diesel::{BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper};
-use diesel_async::RunQueryDsl;
-use diesel_ltree::Ltree;
-use i_love_jesus::asc_if;
 use app_108jobs_db_schema::impls::local_user::LocalUserOptionHelper;
 use app_108jobs_db_schema::newtypes::CategoryId;
 use app_108jobs_db_schema::source::local_user::LocalUser;
@@ -19,20 +15,28 @@ use app_108jobs_db_schema::{
     queries::{
       creator_category_actions_join, creator_category_instance_actions_join,
       creator_home_instance_actions_join, creator_local_instance_actions_join,
-      my_comment_actions_join, my_category_actions_join, my_instance_actions_category_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_category_join,
       my_local_user_admin_join, my_person_actions_join,
     },
     seconds_to_pg_interval, DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
-    enums::{
+  enums::{
+    CategoryFollowerState, CategoryVisibility,
     CommentSortType::{self, *},
-    CategoryFollowerState, CategoryVisibility, ListingType,
+    ListingType,
   },
-    schema::{comment, category, category_actions, person, post},
+  schema::{category, category_actions, comment, person, post},
 };
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use diesel_ltree::Ltree;
+use i_love_jesus::asc_if;
 
 impl PaginationCursorBuilder for CommentView {
   type CursorData = Comment;
@@ -54,8 +58,7 @@ impl CommentView {
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
     let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
-    let my_category_actions_join: my_category_actions_join =
-      my_category_actions_join(my_person_id);
+    let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
     let my_instance_actions_category_join: my_instance_actions_category_join =
@@ -101,10 +104,11 @@ impl CommentView {
     // For posts without category (Delivery/RideTaxi), allow access.
     if !my_local_user.is_admin() {
       query = query.filter(
-          category::id.is_null()
-          .or(category::visibility
+        category::id.is_null().or(
+          category::visibility
             .ne(CategoryVisibility::Private)
-            .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted))),
+            .or(category_actions::follow_state.eq(CategoryFollowerState::Accepted)),
+        ),
       );
     }
 

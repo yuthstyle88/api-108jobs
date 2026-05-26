@@ -1,17 +1,15 @@
 use crate::{
   newtypes::{LocalUserId, RegistrationApplicationId},
   source::registration_application::{
-    RegistrationApplication,
-    RegistrationApplicationInsertForm,
-    RegistrationApplicationUpdateForm,
+    RegistrationApplication, RegistrationApplicationInsertForm, RegistrationApplicationUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{insert_into, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::registration_application;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl Crud for RegistrationApplication {
   type InsertForm = RegistrationApplicationInsertForm;

@@ -5,10 +5,10 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::{insert_into, update};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::RunQueryDsl;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for PricingConfig {
   type InsertForm = PricingConfigInsertForm;

@@ -6,7 +6,9 @@ use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 /// Validates that comment content is not empty
 pub fn validate_comment_content(content: &str) -> FastJobResult<()> {
   if content.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("comment content cannot be empty".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("comment content cannot be empty".to_string()).into(),
+    );
   }
   Ok(())
 }

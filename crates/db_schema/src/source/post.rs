@@ -1,12 +1,12 @@
 use crate::newtypes::{CategoryId, Coin, DbUrl, LanguageId, PersonId, PostId};
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, PostNotifications};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  i_love_jesus::CursorKeysModule,
   app_108jobs_db_schema_file::schema::{post, post_actions},
+  i_love_jesus::CursorKeysModule,
 };
 
 #[skip_serializing_none]

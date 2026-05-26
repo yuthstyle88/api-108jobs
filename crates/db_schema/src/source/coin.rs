@@ -1,9 +1,9 @@
-use chrono::{DateTime, Utc};
+use crate::newtypes::{Coin, CoinId};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::coin;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::newtypes::{Coin, CoinId};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

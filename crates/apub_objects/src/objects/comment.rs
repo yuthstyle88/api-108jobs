@@ -1,4 +1,3 @@
-
 use crate::fake_trait::Object;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::comment::Comment;
@@ -22,7 +21,6 @@ impl From<Comment> for ApubComment {
   }
 }
 
-
 impl Object for ApubComment {
   type DataType = FastJobContext;
   type Kind = String;
@@ -31,6 +29,4 @@ impl Object for ApubComment {
   fn id(&self) -> &Url {
     self.ap_id.inner()
   }
-
 }
-

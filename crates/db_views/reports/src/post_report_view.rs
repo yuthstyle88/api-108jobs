@@ -1,29 +1,18 @@
 use crate::PostReportView;
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{PersonId, PostReportId},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-    category,
-    category_actions,
-    local_user,
-    person,
-    person_actions,
-    post,
-    post_actions,
-    post_report,
+  category, category_actions, local_user, person, person_actions, post, post_actions, post_report,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
 
 impl PostReportView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -50,7 +39,7 @@ impl PostReportView {
     );
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
         .nullable()
         .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),

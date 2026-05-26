@@ -1,6 +1,9 @@
 use crate::api::{listing_type_with_default, post_sort_type_with_default};
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::{context::FastJobContext, utils::{check_fetch_limit, check_private_instance}};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{check_fetch_limit, check_private_instance},
+};
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
@@ -92,7 +95,8 @@ pub async fn list_posts(
   };
 
   // Batch load logistics for all posts
-  let posts = load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
+  let posts =
+    load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
 
   Ok(Json(GetPostsResponse {
     posts,

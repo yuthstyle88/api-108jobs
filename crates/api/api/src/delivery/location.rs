@@ -156,7 +156,10 @@ pub async fn get_location(
           updated_at,
         };
 
-        return Ok(Json(GetCurrentLocationResponse { post_id, current: Some(current) }));
+        return Ok(Json(GetCurrentLocationResponse {
+          post_id,
+          current: Some(current),
+        }));
       }
     }
   }

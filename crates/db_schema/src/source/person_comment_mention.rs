@@ -1,7 +1,7 @@
 use crate::newtypes::{CommentId, PersonCommentMentionId, PersonId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::person_comment_mention;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

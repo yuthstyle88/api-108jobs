@@ -1,16 +1,13 @@
 use crate::newtypes::{CurrencyId, LocalUserId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::currency;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-  feature = "full",
-  derive(Queryable, Selectable, Identifiable)
-)]
+#[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = currency))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -166,7 +163,10 @@ impl Currency {
     let with_decimal = if decimal_part.is_empty() {
       with_separator.clone()
     } else {
-      format!("{}{}{}", with_separator, self.decimal_separator, decimal_part)
+      format!(
+        "{}{}{}",
+        with_separator, self.decimal_separator, decimal_part
+      )
     };
 
     // Add negative sign if needed

@@ -6,7 +6,9 @@ use app_108jobs_db_schema_file::enums::RiderVerificationStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::AdminVerifyRiderRequest;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_email::rider::{send_rider_application_approved_email, send_rider_application_denied_email};
+use app_108jobs_email::rider::{
+  send_rider_application_approved_email, send_rider_application_denied_email,
+};
 use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 

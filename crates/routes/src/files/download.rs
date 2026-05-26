@@ -1,8 +1,11 @@
-use actix_web::{web::{Data, Path}, HttpResponse};
+use crate::utils::user_files_dir;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
+use actix_web::{
+  web::{Data, Path},
+  HttpResponse,
+};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use crate::utils::user_files_dir;
 
 pub async fn get_file(
   path: Path<(i32, String)>,
@@ -23,8 +26,10 @@ pub async fn get_file(
     parameters: vec![DispositionParam::Filename(filename.clone().into())],
   };
 
-  Ok(HttpResponse::Ok()
+  Ok(
+    HttpResponse::Ok()
       .insert_header(cd)
       .content_type("application/octet-stream")
-      .body(bytes))
+      .body(bytes),
+  )
 }

@@ -1,6 +1,6 @@
-use crate::protocol::phx_helper::connect;
 use crate::broker::init_socket::InitSocket;
 use crate::broker::manager::PhoenixManager;
+use crate::protocol::phx_helper::connect;
 use actix::{AsyncContext, Context, Handler, Message};
 
 #[derive(Message)]

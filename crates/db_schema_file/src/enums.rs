@@ -444,9 +444,9 @@ pub enum TripStatus {
   #[default]
   Pending,
   Assigned,
-  RiderConfirmed,       // Taxi-specific: rider confirms assignment from employer
+  RiderConfirmed, // Taxi-specific: rider confirms assignment from employer
   EnRouteToPickup,
-  PickedUp,             // Cargo: package picked up | Taxi: customer in car
+  PickedUp, // Cargo: package picked up | Taxi: customer in car
   EnRouteToDropoff,
   Delivered,
   Cancelled,

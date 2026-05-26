@@ -604,9 +604,12 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
+    let inserted_instance =
+      Instance::read_or_create(pool, crate::test_data::unique_test_domain("post-crud")).await?;
+    crate::test_data::reset_category_sequence(pool).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "jim");
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jim").await?;
 
     let inserted_person = Person::create(pool, &new_person).await?;
 
@@ -740,13 +743,22 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
+    let inserted_instance = Instance::read_or_create(
+      pool,
+      crate::test_data::unique_test_domain("post-aggregates"),
+    )
+    .await?;
+    crate::test_data::reset_category_sequence(pool).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_category_agg");
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "thommy_category_agg")
+        .await?;
 
     let inserted_person = Person::create(pool, &new_person).await?;
 
-    let another_person = PersonInsertForm::test_form(inserted_instance.id, "jerry_category_agg");
+    let (another_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jerry_category_agg")
+        .await?;
 
     let another_inserted_person = Person::create(pool, &another_person).await?;
 
@@ -838,9 +850,16 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
+    let inserted_instance = Instance::read_or_create(
+      pool,
+      crate::test_data::unique_test_domain("post-aggregates-soft-delete"),
+    )
+    .await?;
+    crate::test_data::reset_category_sequence(pool).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy_category_agg");
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "thommy_category_agg")
+        .await?;
 
     let inserted_person = Person::create(pool, &new_person).await?;
 

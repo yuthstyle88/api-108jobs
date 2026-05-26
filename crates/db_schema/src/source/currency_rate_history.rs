@@ -1,16 +1,13 @@
 use crate::newtypes::{CurrencyId, CurrencyRateHistoryId, LocalUserId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::currency_rate_history;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-  feature = "full",
-  derive(Queryable, Selectable, Identifiable)
-)]
+#[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = currency_rate_history))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -28,10 +25,7 @@ pub struct CurrencyRateHistory {
 }
 
 #[derive(Debug, Clone, derive_new::new)]
-#[cfg_attr(
-  feature = "full",
-  derive(Insertable)
-)]
+#[cfg_attr(feature = "full", derive(Insertable))]
 #[cfg_attr(feature = "full", diesel(table_name = currency_rate_history))]
 pub struct CurrencyRateHistoryInsertForm {
   pub currency_id: CurrencyId,

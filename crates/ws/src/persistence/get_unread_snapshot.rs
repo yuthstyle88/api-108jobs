@@ -17,12 +17,14 @@ impl Handler<GetUnreadSnapshot> for PhoenixManager {
       let rows = ChatUnread::unread_snapshot_for_user(&mut db, local_user_id).await?;
       let items = rows
         .into_iter()
-        .map(|(room_id, unread_count, last_message_id, last_message_at)| UnreadSnapshotItem {
-          room_id,
-          unread_count,
-          last_message_id,
-          last_message_at,
-        })
+        .map(
+          |(room_id, unread_count, last_message_id, last_message_at)| UnreadSnapshotItem {
+            room_id,
+            unread_count,
+            last_message_id,
+            last_message_at,
+          },
+        )
         .collect::<Vec<_>>();
       Ok(items)
     })

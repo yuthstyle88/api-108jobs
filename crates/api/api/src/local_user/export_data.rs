@@ -5,8 +5,7 @@ use app_108jobs_db_schema::source::local_user::LocalUser;
 use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person_content_combined::{
-  impls::PersonContentCombinedQuery,
-  PersonContentCombinedView,
+  impls::PersonContentCombinedQuery, PersonContentCombinedView,
 };
 use app_108jobs_db_views_site::{
   api::{ExportDataResponse, PostOrCommentOrPrivateMessage},
@@ -51,8 +50,6 @@ pub async fn export_data(
     InboxCombinedView::PostMention(pm) => Post(pm.post),
   })
   .collect();
-
-
 
   let lists = LocalUser::export_backup(pool, local_user_view.person.id).await?;
   let settings = user_backup_list_to_user_settings_backup(local_user_view, lists);

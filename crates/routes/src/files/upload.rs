@@ -2,10 +2,10 @@ use crate::files::{file_url, FileUploadResponse};
 use crate::utils::{sanitize_filename, unique_target_filename, user_files_dir};
 use actix_multipart::Multipart;
 use actix_web::web::{Data, Json};
-use futures_util::TryStreamExt as StreamExt;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use futures_util::TryStreamExt as StreamExt;
 use tokio::{fs, io::AsyncWriteExt};
 
 const MAX_FILE_SIZE_BYTES: u64 = 25 * 1024 * 1024;
@@ -18,7 +18,11 @@ pub async fn upload_file(
   // Only the first file field is considered
   let mut saved: Option<FileUploadResponse> = None;
 
-  while let Some(item) = payload.try_next().await.map_err(|_| FastJobErrorType::InvalidBodyField)? {
+  while let Some(item) = payload
+    .try_next()
+    .await
+    .map_err(|_| FastJobErrorType::InvalidBodyField)?
+  {
     let content_disposition = item.content_disposition().cloned();
     let field_name = content_disposition
       .as_ref()
@@ -43,7 +47,11 @@ pub async fn upload_file(
 
     let mut field = item;
     let mut size: u64 = 0;
-    while let Some(chunk) = field.try_next().await.map_err(|_| FastJobErrorType::InvalidBodyField)? {
+    while let Some(chunk) = field
+      .try_next()
+      .await
+      .map_err(|_| FastJobErrorType::InvalidBodyField)?
+    {
       size += chunk.len() as u64;
       if size > MAX_FILE_SIZE_BYTES {
         // Remove a partially written file
@@ -54,7 +62,11 @@ pub async fn upload_file(
     }
 
     let protocol_and_hostname = context.settings().get_protocol_and_hostname();
-    let url = file_url(local_user_view.local_user.id, &filename, &protocol_and_hostname)?;
+    let url = file_url(
+      local_user_view.local_user.id,
+      &filename,
+      &protocol_and_hostname,
+    )?;
     saved = Some(FileUploadResponse {
       filename,
       size,

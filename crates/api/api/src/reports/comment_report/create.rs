@@ -1,7 +1,6 @@
 use crate::check_report_reason;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use either::Either;
 use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
@@ -18,6 +17,7 @@ use app_108jobs_db_views_reports::{
   CommentReportView,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use either::Either;
 
 /// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(

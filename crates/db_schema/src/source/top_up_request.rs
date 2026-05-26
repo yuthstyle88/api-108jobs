@@ -1,18 +1,25 @@
 use crate::newtypes::{Coin, CurrencyId, LocalUserId, TopUpRequestId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::enums::TopUpStatus;
+use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {i_love_jesus::CursorKeysModule, app_108jobs_db_schema_file::schema::top_up_requests};
+use {app_108jobs_db_schema_file::schema::top_up_requests, i_love_jesus::CursorKeysModule};
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(
   feature = "full",
-  derive(Queryable, Selectable, Identifiable, CursorKeysModule, Serialize, Deserialize)
+  derive(
+    Queryable,
+    Selectable,
+    Identifiable,
+    CursorKeysModule,
+    Serialize,
+    Deserialize
+  )
 )]
 #[cfg_attr(feature = "full", diesel(table_name = top_up_requests))]
 #[cfg_attr(feature = "full", diesel(primary_key(id)))]

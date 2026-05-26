@@ -1,26 +1,25 @@
 use crate::{
-    newtypes::{CategoryId, TagId},
-    source::tag::{Tag, TagInsertForm, TagUpdateForm, TagsView},
-    traits::Crud,
-    utils::{get_conn, DbPool},
+  newtypes::{CategoryId, TagId},
+  source::tag::{Tag, TagInsertForm, TagUpdateForm, TagsView},
+  traits::Crud,
+  utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::tag;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   deserialize::FromSql,
   insert_into,
   pg::{Pg, PgValue},
   serialize::ToSql,
   sql_types::{Json, Nullable},
-  ExpressionMethods,
-  QueryDsl,
+  ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::tag;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Tag {
   pub async fn get_by_category(
-      pool: &mut DbPool<'_>,
-      search_category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    search_category_id: CategoryId,
   ) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     tag::table
@@ -46,7 +45,11 @@ impl Crud for Tag {
       .with_fastjob_type(FastJobErrorType::CouldntCreateTag)
   }
 
-  async fn update(pool: &mut DbPool<'_>, pid: TagId, form: &Self::UpdateForm) -> FastJobResult<Self> {
+  async fn update(
+    pool: &mut DbPool<'_>,
+    pid: TagId,
+    form: &Self::UpdateForm,
+  ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(tag::table.find(pid))
       .set(form)

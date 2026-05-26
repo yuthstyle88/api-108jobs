@@ -5,10 +5,10 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::post_tag;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl PostTag {
   pub async fn set(pool: &mut DbPool<'_>, tags: &[PostTagForm]) -> FastJobResult<Vec<Self>> {

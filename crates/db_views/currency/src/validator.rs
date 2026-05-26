@@ -13,7 +13,10 @@ pub fn validate_currency_code(code: &str) -> FastJobResult<()> {
     return Err(FastJobErrorType::InvalidField("currency code cannot be empty".to_string()).into());
   }
   if trimmed.len() != 3 || !trimmed.chars().all(|c| c.is_ascii_uppercase()) {
-    return Err(FastJobErrorType::InvalidField("currency code must be 3 uppercase letters".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("currency code must be 3 uppercase letters".to_string())
+        .into(),
+    );
   }
   Ok(())
 }
@@ -29,7 +32,9 @@ pub fn validate_currency_name(name: &str) -> FastJobResult<()> {
 /// Validates that currency symbol is not empty
 pub fn validate_currency_symbol(symbol: &str) -> FastJobResult<()> {
   if symbol.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("currency symbol cannot be empty".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("currency symbol cannot be empty".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -45,7 +50,9 @@ pub fn validate_numeric_code(code: i32) -> FastJobResult<()> {
 /// Validates that coin to currency rate is positive
 pub fn validate_coin_to_currency_rate(rate: i32) -> FastJobResult<()> {
   if rate <= 0 {
-    return Err(FastJobErrorType::InvalidField("coin to currency rate must be positive".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("coin to currency rate must be positive".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -53,7 +60,9 @@ pub fn validate_coin_to_currency_rate(rate: i32) -> FastJobResult<()> {
 /// Validates that decimal places is non-negative
 pub fn validate_decimal_places(decimal_places: i32) -> FastJobResult<()> {
   if decimal_places < 0 {
-    return Err(FastJobErrorType::InvalidField("decimal places must be non-negative".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("decimal places must be non-negative".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -77,7 +86,9 @@ pub fn validate_pricing_config_id(config_id: PricingConfigId) -> FastJobResult<(
 /// Validates pricing amount is positive
 pub fn validate_pricing_amount(amount: i32) -> FastJobResult<()> {
   if amount < 0 {
-    return Err(FastJobErrorType::InvalidField("pricing amount must be non-negative".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("pricing amount must be non-negative".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -85,7 +96,9 @@ pub fn validate_pricing_amount(amount: i32) -> FastJobResult<()> {
 /// Validates pricing config name is not empty
 pub fn validate_pricing_config_name(name: &str) -> FastJobResult<()> {
   if name.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("pricing config name cannot be empty".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("pricing config name cannot be empty".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -93,7 +106,9 @@ pub fn validate_pricing_config_name(name: &str) -> FastJobResult<()> {
 /// Validates minimum charge minutes is positive
 pub fn validate_minimum_charge_minutes(minutes: i32) -> FastJobResult<()> {
   if minutes <= 0 {
-    return Err(FastJobErrorType::InvalidField("minimum charge minutes must be positive".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("minimum charge minutes must be positive".to_string()).into(),
+    );
   }
   Ok(())
 }

@@ -4,7 +4,7 @@ use actix::{Actor, Addr};
 use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
-  web::{scope, Data},
+  web::{scope, Data, JsonConfig, PayloadConfig},
   App, HttpResponse, HttpServer,
 };
 use app_108jobs_api_utils::site_snapshot::CachedSiteConfigProvider;
@@ -186,8 +186,12 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   // Presence manager: timeout & sweep configuration
   let heartbeat_ttl = Duration::from_secs(45);
   // Start a lightweight system broker for broadcasting presence events
-  let presence_manager =
-    PresenceManager::new(heartbeat_ttl, Option::from(redis_client.clone()), pool.clone()).start();
+  let presence_manager = PresenceManager::new(
+    heartbeat_ttl,
+    Option::from(redis_client.clone()),
+    pool.clone(),
+  )
+  .start();
   let context = FastJobContext::create(
     pool.clone(),
     client.clone(),
@@ -322,7 +326,13 @@ fn create_http_server(
       // Application data - these don't affect middleware order
       .app_data(Data::new(context.clone()))
       .app_data(Data::new(phoenix_manager.clone()))
-      .app_data(Data::new(presence_manager.clone()));
+      .app_data(Data::new(presence_manager.clone()))
+      // Body-size limits. Default actix limits are 256 KiB for JSON which is
+      // already restrictive; we lift to 1 MiB for JSON to match real payload
+      // sizes (e.g. comment bodies, profile updates) and cap raw payloads at
+      // 4 MiB. File uploads use their own multipart limit at the route level.
+      .app_data(JsonConfig::default().limit(1024 * 1024))
+      .app_data(PayloadConfig::new(4 * 1024 * 1024));
 
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))

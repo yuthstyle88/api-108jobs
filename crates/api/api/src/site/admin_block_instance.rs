@@ -19,8 +19,6 @@ pub async fn admin_block_instance(
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
 
-
-
   let instance_id = Instance::read_or_create(&mut context.pool(), data.instance.clone())
     .await?
     .id;

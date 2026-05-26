@@ -1,6 +1,6 @@
 use crate::{
-  diesel::{OptionalExtension, NullableExpressionMethods},
-  newtypes::{CommentId, CategoryId, DbUrl, InstanceId, PersonId},
+  diesel::{NullableExpressionMethods, OptionalExtension},
+  newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId},
   source::comment::{
     Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentSavedForm,
     CommentUpdateForm,
@@ -8,16 +8,16 @@ use crate::{
   traits::{Crud, Likeable, Saveable},
   utils::{functions::hot_rank, get_conn, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT},
 };
+use app_108jobs_db_schema_file::schema::{category, comment, comment_actions, post};
+use app_108jobs_utils::{
+  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+};
 use chrono::Utc;
 use diesel::{
   dsl::insert_into, expression::SelectableHelper, update, ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::{comment, comment_actions, category, post};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-};
 use url::Url;
 
 impl Crud for Comment {
@@ -130,8 +130,7 @@ impl Comment {
     category_id: CategoryId,
     removed: bool,
   ) -> FastJobResult<Vec<CommentId>> {
-    let comment_ids =
-      Self::creator_comment_ids_in_category(pool, creator_id, category_id).await?;
+    let comment_ids = Self::creator_comment_ids_in_category(pool, creator_id, category_id).await?;
 
     let conn = &mut get_conn(pool).await?;
 

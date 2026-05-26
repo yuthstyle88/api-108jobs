@@ -6,16 +6,16 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 #[cfg(feature = "full")]
-use diesel::QueryDsl;
-use diesel::{ExpressionMethods, OptionalExtension};
-#[cfg(feature = "full")]
-use diesel_async::RunQueryDsl;
-#[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::user_review;
 use app_108jobs_db_schema_file::schema::user_review::dsl as ur;
 #[cfg(feature = "full")]
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
+#[cfg(feature = "full")]
+use diesel::QueryDsl;
+use diesel::{ExpressionMethods, OptionalExtension};
+#[cfg(feature = "full")]
+use diesel_async::RunQueryDsl;
 
 #[cfg(feature = "full")]
 impl Crud for UserReview {
@@ -73,7 +73,9 @@ impl UserReview {
     rating: i16,
     comment: Option<String>,
   ) -> FastJobResult<Self> {
-    if let Some(existing) = Self::get_by_triplet(pool, reviewer_id, reviewee_id, workflow_id).await? {
+    if let Some(existing) =
+      Self::get_by_triplet(pool, reviewer_id, reviewee_id, workflow_id).await?
+    {
       let form = UserReviewUpdateForm {
         rating: Some(rating),
         comment: Some(comment),

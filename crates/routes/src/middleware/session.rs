@@ -2,15 +2,14 @@ use actix_web::{
   body::MessageBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
   http::header::{HeaderValue, CACHE_CONTROL},
-  Error,
-  HttpMessage,
+  Error, HttpMessage,
 };
-use core::future::Ready;
-use futures_util::future::LocalBoxFuture;
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{local_user_view_from_jwt, read_auth_token},
 };
+use core::future::Ready;
+use futures_util::future::LocalBoxFuture;
 use std::{future::ready, rc::Rc};
 
 #[derive(Clone)]

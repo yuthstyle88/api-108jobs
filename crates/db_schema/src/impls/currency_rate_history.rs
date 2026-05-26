@@ -2,10 +2,10 @@ use crate::newtypes::CurrencyId;
 use crate::source::currency_rate_history::{CurrencyRateHistory, CurrencyRateHistoryInsertForm};
 use crate::traits::Crud;
 use crate::utils::{get_conn, DbPool};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::insert_into;
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for CurrencyRateHistory {
   type InsertForm = CurrencyRateHistoryInsertForm;
@@ -41,7 +41,9 @@ impl CurrencyRateHistory {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = app_108jobs_db_schema_file::schema::currency_rate_history::table
-      .filter(app_108jobs_db_schema_file::schema::currency_rate_history::currency_id.eq(currency_id))
+      .filter(
+        app_108jobs_db_schema_file::schema::currency_rate_history::currency_id.eq(currency_id),
+      )
       .order(app_108jobs_db_schema_file::schema::currency_rate_history::changed_at.desc())
       .into_boxed();
 
@@ -55,10 +57,7 @@ impl CurrencyRateHistory {
       .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 
-  pub async fn list_recent(
-    pool: &mut DbPool<'_>,
-    limit: i64,
-  ) -> FastJobResult<Vec<Self>> {
+  pub async fn list_recent(pool: &mut DbPool<'_>, limit: i64) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     app_108jobs_db_schema_file::schema::currency_rate_history::table

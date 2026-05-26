@@ -7,9 +7,11 @@ use app_108jobs_db_schema::source::delivery_rider_rating::DeliveryRiderRating;
 use app_108jobs_db_schema::source::post::Post;
 use app_108jobs_db_schema::source::rider::Rider;
 use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema_file::enums::{TripStatus, PostKind};
+use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::api::{DeliveryRiderRatingData, RateRiderRequest, RateRiderResponse};
+use app_108jobs_db_views_rider::api::{
+  DeliveryRiderRatingData, RateRiderRequest, RateRiderResponse,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// POST /api/v4/rider/rate
@@ -116,7 +118,8 @@ pub async fn get_rider_ratings(
 ) -> FastJobResult<Json<app_108jobs_db_views_rider::api::GetRiderRatingsResponse>> {
   let ratings = DeliveryRiderRating::get_by_rider_id(&mut context.pool(), *rider_id).await?;
 
-  let average_rating = DeliveryRiderRating::get_average_rating_for_rider(&mut context.pool(), *rider_id).await?;
+  let average_rating =
+    DeliveryRiderRating::get_average_rating_for_rider(&mut context.pool(), *rider_id).await?;
   let total_ratings = ratings.len() as i32;
 
   let rating_data: Vec<DeliveryRiderRatingData> = ratings
@@ -133,9 +136,11 @@ pub async fn get_rider_ratings(
     })
     .collect();
 
-  Ok(Json(app_108jobs_db_views_rider::api::GetRiderRatingsResponse {
-    ratings: rating_data,
-    average_rating,
-    total_ratings,
-  }))
+  Ok(Json(
+    app_108jobs_db_views_rider::api::GetRiderRatingsResponse {
+      ratings: rating_data,
+      average_rating,
+      total_ratings,
+    },
+  ))
 }

@@ -6,11 +6,11 @@ use app_108jobs_db_schema::{
   traits::{Readable, Saveable},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{PostResponse, SavePost},
   PostView,
 };
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn save_post(
@@ -59,5 +59,8 @@ pub async fn save_post(
   )
   .await?;
 
-  Ok(Json(PostResponse { post_view, logistics }))
+  Ok(Json(PostResponse {
+    post_view,
+    logistics,
+  }))
 }

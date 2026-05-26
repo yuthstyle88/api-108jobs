@@ -1,17 +1,14 @@
-use crate::newtypes::{LocalUserId, PostId, PricingConfigId, RiderId, RideSessionId};
-use app_108jobs_db_schema_file::enums::{TripStatus, PaymentMethod};
-use chrono::{DateTime, Utc};
+use crate::newtypes::{LocalUserId, PostId, PricingConfigId, RideSessionId, RiderId};
+use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::ride_session;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-  feature = "full",
-  derive(Queryable, Selectable, Identifiable)
-)]
+#[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = ride_session))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -20,7 +17,7 @@ use serde_with::skip_serializing_none;
 pub struct RideSession {
   pub id: RideSessionId,
   pub post_id: PostId,
-  pub rider_id: Option<RiderId>,  // NULL until a rider accepts the ride
+  pub rider_id: Option<RiderId>, // NULL until a rider accepts the ride
   pub employer_id: LocalUserId,
   pub pricing_config_id: Option<PricingConfigId>,
 
@@ -105,7 +102,7 @@ pub struct RideSessionInsertForm {
 #[cfg_attr(feature = "full", derive(AsChangeset, Serialize, Deserialize))]
 #[cfg_attr(feature = "full", diesel(table_name = ride_session))]
 pub struct RideSessionUpdateForm {
-  pub rider_id: Option<Option<RiderId>>,  // Nullable column, so Option<Option<>>
+  pub rider_id: Option<Option<RiderId>>, // Nullable column, so Option<Option<>>
   pub pricing_config_id: Option<Option<PricingConfigId>>,
   pub pickup_lat: Option<Option<f64>>,
   pub pickup_lng: Option<Option<f64>>,

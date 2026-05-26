@@ -1,7 +1,8 @@
 use actix_web::web::{Data, Json, Query};
-use chrono::Utc;
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::{is_admin, list_top_up_requests_inner, list_withdraw_requests_inner};
+use app_108jobs_api_utils::utils::{
+  is_admin, list_top_up_requests_inner, list_withdraw_requests_inner,
+};
 use app_108jobs_db_schema::newtypes::CoinId;
 use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
 use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
@@ -17,6 +18,7 @@ use app_108jobs_db_views_wallet::api::{
   RejectWithdrawalRequest,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use chrono::Utc;
 use uuid::Uuid;
 
 pub async fn admin_list_top_up_requests(
@@ -44,12 +46,17 @@ pub async fn admin_top_up_wallet(
 
   // Check if already transferred
   if topup_request.transferred {
-    return Err(FastJobErrorType::InvalidField("This top-up request has already been processed".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("This top-up request has already been processed".to_string())
+        .into(),
+    );
   }
 
   // Check if payment was successful
   if topup_request.status != TopUpStatus::Success {
-    return Err(FastJobErrorType::InvalidField("Top-up request is not in Success status".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("Top-up request is not in Success status".to_string()).into(),
+    );
   }
 
   let site_config = context.site_config().get().await?;

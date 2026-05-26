@@ -14,7 +14,9 @@ pub fn validate_category_name(name: &str) -> FastJobResult<()> {
 /// Validates that category title is not empty
 pub fn validate_category_title(title: &str) -> FastJobResult<()> {
   if title.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("category title cannot be empty".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("category title cannot be empty".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -22,7 +24,9 @@ pub fn validate_category_title(title: &str) -> FastJobResult<()> {
 /// Validates that tag display name is not empty
 pub fn validate_tag_display_name(display_name: &str) -> FastJobResult<()> {
   if display_name.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField("tag display name cannot be empty".to_string()).into());
+    return Err(
+      FastJobErrorType::InvalidField("tag display name cannot be empty".to_string()).into(),
+    );
   }
   Ok(())
 }
@@ -79,12 +83,12 @@ impl TryFrom<CreateCategoryRequest> for ValidCreateCategory {
 
   fn try_from(value: CreateCategoryRequest) -> Result<Self, Self::Error> {
     // For CreateCategory, name and title are required
-    let name = value.name.ok_or_else(|| {
-      FastJobErrorType::InvalidField("category name is required".to_string())
-    })?;
-    let title = value.title.ok_or_else(|| {
-      FastJobErrorType::InvalidField("category title is required".to_string())
-    })?;
+    let name = value
+      .name
+      .ok_or_else(|| FastJobErrorType::InvalidField("category name is required".to_string()))?;
+    let title = value
+      .title
+      .ok_or_else(|| FastJobErrorType::InvalidField("category title is required".to_string()))?;
 
     validate_category_name(&name)?;
     validate_category_title(&title)?;

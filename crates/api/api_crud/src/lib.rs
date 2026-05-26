@@ -1,10 +1,10 @@
-pub mod comment;
 pub mod category;
+pub mod chat;
+pub mod comment;
 pub mod custom_emoji;
 pub mod oauth_provider;
 pub mod post;
+pub mod rider;
 pub mod site;
 pub mod tagline;
 pub mod user;
-pub mod chat;
-pub mod rider;

@@ -1,9 +1,9 @@
 use crate::{ChatMessageView, ChatRoomView};
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema::newtypes::{
   ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
 };
 use app_108jobs_db_schema::source::last_read::LastRead;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -130,4 +130,3 @@ pub struct UnreadSnapshotItem {
   pub last_message_id: Option<String>,
   pub last_message_at: Option<DateTime<Utc>>,
 }
-

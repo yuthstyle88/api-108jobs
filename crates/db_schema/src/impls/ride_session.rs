@@ -1,16 +1,16 @@
 use crate::{
-  newtypes::{LocalUserId, PostId, RiderId, RideSessionId},
+  newtypes::{LocalUserId, PostId, RideSessionId, RiderId},
   source::ride_session::{RideSession, RideSessionInsertForm, RideSessionUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 
+use app_108jobs_db_schema_file::enums::TripStatus;
+use app_108jobs_db_schema_file::schema::ride_session;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::{insert_into, update};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::RunQueryDsl;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema_file::enums::TripStatus;
-use app_108jobs_db_schema_file::schema::ride_session;
 
 impl Crud for RideSession {
   type InsertForm = RideSessionInsertForm;
@@ -56,10 +56,7 @@ impl RideSession {
     Ok(result)
   }
 
-  pub async fn get_by_rider(
-    pool: &mut DbPool<'_>,
-    rider_id: RiderId,
-  ) -> FastJobResult<Vec<Self>> {
+  pub async fn get_by_rider(pool: &mut DbPool<'_>, rider_id: RiderId) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
 
     ride_session::table
@@ -148,10 +145,7 @@ impl RideSession {
   /// Check if a rider has any active (non-terminal) ride sessions
   /// Active statuses: Pending, Assigned, EnRouteToPickup, PickedUp, EnRouteToDropoff, RiderConfirmed
   /// Terminal statuses: Delivered, Cancelled
-  pub async fn has_active_session(
-    pool: &mut DbPool<'_>,
-    rider_id: RiderId,
-  ) -> FastJobResult<bool> {
+  pub async fn has_active_session(pool: &mut DbPool<'_>, rider_id: RiderId) -> FastJobResult<bool> {
     let conn = &mut get_conn(pool).await?;
 
     let active_statuses = vec![
@@ -175,10 +169,7 @@ impl RideSession {
   }
 
   /// Check if a post already has a ride session
-  pub async fn exists_for_post(
-    pool: &mut DbPool<'_>,
-    post_id: PostId,
-  ) -> FastJobResult<bool> {
+  pub async fn exists_for_post(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<bool> {
     let conn = &mut get_conn(pool).await?;
 
     let count: i64 = ride_session::table

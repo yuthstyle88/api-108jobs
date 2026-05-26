@@ -43,7 +43,8 @@ pub async fn list_person_read(
   };
 
   // Batch load logistics for all posts
-  let read = load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
+  let read =
+    load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
 
   Ok(Json(ListPersonReadResponse {
     read,

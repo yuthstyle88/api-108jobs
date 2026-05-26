@@ -1,19 +1,17 @@
 use crate::{
-    newtypes::{CategoryId, CategoryReportId, PersonId},
-    source::category_report::{CategoryReport, CategoryReportForm},
-    traits::Reportable,
-    utils::{get_conn, DbPool},
+  newtypes::{CategoryId, CategoryReportId, PersonId},
+  source::category_report::{CategoryReport, CategoryReportForm},
+  traits::Reportable,
+  utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::category_report;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods,
-  ExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::category_report;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for CategoryReport {
   type Form = CategoryReportForm;

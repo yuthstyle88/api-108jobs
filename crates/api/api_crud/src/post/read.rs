@@ -8,16 +8,15 @@ use app_108jobs_db_schema::{
     comment::Comment,
     post::{Post, PostActions, PostReadForm},
   },
-  traits::{Crud, Readable}
-  ,
+  traits::{Crud, Readable},
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{GetPost, GetPostResponse},
   PostView,
 };
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_search_combined::impls::SearchCombinedQuery;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
@@ -75,14 +74,7 @@ pub async fn get_post(
 
   // Necessary for the sidebar subscribed
   let category_view = if let Some(cid) = category_id {
-    Some(
-      CategoryView::read(
-        &mut context.pool(),
-        cid,
-        local_user.as_ref(),
-      )
-      .await?,
-    )
+    Some(CategoryView::read(&mut context.pool(), cid, local_user.as_ref()).await?)
   } else {
     None
   };
@@ -134,5 +126,10 @@ pub async fn get_post(
   )
   .await?;
 
-  Ok(Json(GetPostResponse { post_view, category_view, cross_posts, logistics }))
+  Ok(Json(GetPostResponse {
+    post_view,
+    category_view,
+    cross_posts,
+    logistics,
+  }))
 }

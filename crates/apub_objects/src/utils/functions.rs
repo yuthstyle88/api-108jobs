@@ -4,24 +4,17 @@ use crate::{
   protocol::{group::Group, page::Attachment},
 };
 use actix_web::web::Data;
-use either::Either;
-use html2md::parse_html;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::newtypes::PersonId;
-use app_108jobs_db_schema::source::{
-  category::Category,
-  instance::InstanceActions,
-};
+use app_108jobs_db_schema::source::{category::Category, instance::InstanceActions};
 use app_108jobs_db_schema_file::enums::{ActorType, CategoryVisibility};
 use app_108jobs_db_views_category_person_ban::CategoryPersonBanView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use either::Either;
+use html2md::parse_html;
 use url::Url;
 
-pub fn read_from_string_or_source(
-  content: &str,
-
-  source: &Option<Source>,
-) -> String {
+pub fn read_from_string_or_source(content: &str, source: &Option<Source>) -> String {
   if let Some(s) = source {
     // markdown sent by app_108jobs in source field
     s.content.clone()
@@ -39,7 +32,6 @@ pub fn read_from_string_or_source_opt(
     .as_ref()
     .map(|content| read_from_string_or_source(content, source))
 }
-
 
 pub async fn check_apub_id_valid_with_strictness(
   apub_id: &Url,
@@ -106,7 +98,6 @@ pub async fn verify_person_in_site_or_category(
   InstanceActions::check_ban(&mut context.pool(), person_id).await?;
   Ok(())
 }
-
 
 pub async fn append_attachments_to_comment(
   content: String,

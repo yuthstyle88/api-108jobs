@@ -1,6 +1,5 @@
 use crate::UserReviewView;
-use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
-use diesel_async::RunQueryDsl;
+use app_108jobs_db_schema::newtypes::DecodedCursor;
 use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, UserReviewId, WorkflowId},
@@ -8,9 +7,10 @@ use app_108jobs_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
-use app_108jobs_db_schema::newtypes::DecodedCursor;
 use app_108jobs_db_schema_file::schema::{person, user_review, workflow};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl PaginationCursorBuilder for UserReviewView {
   type CursorData = UserReview;
@@ -51,17 +51,16 @@ macro_rules! base_user_review_query {
 
 #[macro_export]
 macro_rules! apply_cursor_pagination {
-    ($query:expr, $cursor_data:expr, $page_back:expr) => {
-        if let Some(cursor) = $cursor_data {
-            if $page_back.unwrap_or(false) {
-                $query = $query.filter(user_review::id.lt(cursor.id));
-            } else {
-                $query = $query.filter(user_review::id.gt(cursor.id));
-            }
-        }
-    };
+  ($query:expr, $cursor_data:expr, $page_back:expr) => {
+    if let Some(cursor) = $cursor_data {
+      if $page_back.unwrap_or(false) {
+        $query = $query.filter(user_review::id.lt(cursor.id));
+      } else {
+        $query = $query.filter(user_review::id.gt(cursor.id));
+      }
+    }
+  };
 }
-
 
 impl UserReviewView {
   #[diesel::dsl::auto_type(no_type_alias)]

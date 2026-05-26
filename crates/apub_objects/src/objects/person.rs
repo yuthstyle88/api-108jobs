@@ -1,15 +1,10 @@
-use crate::{
-  protocol::person::Person,
-  utils::functions::GetActorType,
-};
+use crate::{protocol::person::Person, utils::functions::GetActorType};
 
 use crate::fake_trait::{Actor, Object};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::{
-  source::person::Person as DbPerson,
-};
+use app_108jobs_db_schema::source::person::Person as DbPerson;
 use app_108jobs_db_schema_file::enums::ActorType;
-use app_108jobs_utils::error::{FastJobError};
+use app_108jobs_utils::error::FastJobError;
 use std::ops::Deref;
 use url::Url;
 
@@ -37,12 +32,11 @@ impl Object for ApubPerson {
   fn id(&self) -> &Url {
     self.ap_id.inner()
   }
-
 }
 
 impl Actor for ApubPerson {
   fn public_key_pem(&self) -> &str {
-     todo!()
+    todo!()
   }
 
   fn private_key_pem(&self) -> Option<String> {

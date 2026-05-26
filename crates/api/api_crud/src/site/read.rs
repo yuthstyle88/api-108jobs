@@ -15,7 +15,7 @@ pub async fn get_site(
     .get()
     .await
     .map_err(|e| anyhow::anyhow!("Failed to load site config: {e}"))?;
-  
+
   let site_view = SiteView::read_local(&mut context.pool()).await?;
   snap.site_view = site_view;
 
@@ -33,5 +33,5 @@ pub async fn get_site(
 }
 
 pub async fn health() -> FastJobResult<Json<SuccessResponse>> {
-  Ok(Json(SuccessResponse{success: true}))
+  Ok(Json(SuccessResponse { success: true }))
 }

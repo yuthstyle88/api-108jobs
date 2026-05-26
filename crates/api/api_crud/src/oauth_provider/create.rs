@@ -17,7 +17,6 @@ pub async fn create_oauth_provider(
   // Make sure user is an admin
   is_admin(&local_user_view)?;
 
-
   let cloned_data = data.clone();
   let oauth_provider_form = OAuthProviderInsertForm {
     display_name: cloned_data.display_name,

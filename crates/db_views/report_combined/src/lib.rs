@@ -1,27 +1,23 @@
 use app_108jobs_db_schema::source::{
+  category::{Category, CategoryActions},
+  category_report::CategoryReport,
   combined::report::ReportCombined,
   comment::{Comment, CommentActions},
   comment_report::CommentReport,
-  category::{Category, CategoryActions},
-  category_report::CategoryReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
 };
-use app_108jobs_db_views_reports::{
-  CommentReportView,
-  CategoryReportView,
-  PostReportView,
-};
+use app_108jobs_db_views_reports::{CategoryReportView, CommentReportView, PostReportView};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
   app_108jobs_db_schema::{
-    utils::queries::{local_user_is_admin, person1_select, },
+    utils::queries::{local_user_is_admin, person1_select},
     Person1AliasAllColumnsTuple,
   },
   app_108jobs_db_views_local_user::LocalUserView,
+  diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 
 pub mod api;

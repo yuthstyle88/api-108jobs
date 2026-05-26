@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json};
-use chrono::NaiveDate;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -56,11 +56,12 @@ pub struct IdentityCardDto {
   pub created_at: String,
 }
 
-fn is_all_digits(s: &str) -> bool { s.chars().all(|c| c.is_ascii_digit()) }
+fn is_all_digits(s: &str) -> bool {
+  s.chars().all(|c| c.is_ascii_digit())
+}
 
 fn parse_date(s: &str) -> Result<NaiveDate, FastJobErrorType> {
-  NaiveDate::parse_from_str(s, "%Y-%m-%d")
-    .map_err(|_| FastJobErrorType::InvalidDateFormatYYYYMMDD)
+  NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| FastJobErrorType::InvalidDateFormatYYYYMMDD)
 }
 
 pub async fn create_identity_card(

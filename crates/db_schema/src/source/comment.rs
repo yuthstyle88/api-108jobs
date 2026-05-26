@@ -5,9 +5,9 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   crate::newtypes::LtreeDef,
+  app_108jobs_db_schema_file::schema::{comment, comment_actions},
   diesel_ltree::Ltree,
   i_love_jesus::CursorKeysModule,
-  app_108jobs_db_schema_file::schema::{comment, comment_actions},
 };
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

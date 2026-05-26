@@ -1,47 +1,32 @@
 use crate::source::category::CategoryChangeset;
 use crate::{
-    diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
-    newtypes::{CategoryId, DbUrl, PersonId},
-    source::{
-      actor_language::CategoryLanguage,
-      category::{
-        Category,
-        CategoryActions,
-        CategoryInsertForm,
-        CategoryUpdateForm,
-    },
-      post::Post,
+  diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
+  newtypes::{CategoryId, DbUrl, PersonId},
+  source::{
+    actor_language::CategoryLanguage,
+    category::{Category, CategoryActions, CategoryInsertForm, CategoryUpdateForm},
+    post::Post,
   },
-    traits::{ApubActor, Crud},
-    utils::{
+  traits::{ApubActor, Crud},
+  utils::{
     format_actor_url,
     functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
-    get_conn,
-    uplete,
-    DbPool,
+    get_conn, uplete, DbPool,
   },
 };
+use app_108jobs_db_schema_file::{
+  enums::{CategoryVisibility, ListingType},
+  schema::{category, category_actions, comment, instance, post},
+};
+use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::{settings::structs::Settings, CACHE_DURATION_LARGEST_CATEGORY};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
-  select,
-  update,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  QueryDsl,
+  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::{
-  enums::{CategoryVisibility, ListingType},
-  schema::{comment, category, category_actions, instance, post},
-};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::{
-  settings::structs::Settings,
-  CACHE_DURATION_LARGEST_CATEGORY,
-};
 use moka::future::Cache;
 use regex::Regex;
 use std::sync::{Arc, LazyLock};
@@ -67,14 +52,12 @@ impl Crud for Category {
   }
 
   async fn update(
-      pool: &mut DbPool<'_>,
-      category_id: CategoryId,
-      form: &Self::UpdateForm,
+    pool: &mut DbPool<'_>,
+    category_id: CategoryId,
+    form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    
 
-    
     // Create a changeset from the form
     let changeset = CategoryChangeset {
       title: form.title.clone(),
@@ -98,7 +81,7 @@ impl Crud for Category {
       description: form.description.clone(),
       local_removed: form.local_removed,
     };
-    
+
     // Execute the update statement with the explicit changeset
     update(category::table.find(category_id))
       .set(changeset)
@@ -116,9 +99,9 @@ pub enum CollectionType {
 
 impl Category {
   pub async fn insert_apub(
-      pool: &mut DbPool<'_>,
-      timestamp: DateTime<Utc>,
-      form: &CategoryInsertForm,
+    pool: &mut DbPool<'_>,
+    timestamp: DateTime<Utc>,
+    form: &CategoryInsertForm,
   ) -> FastJobResult<Self> {
     let is_new_category = match &form.ap_id {
       Some(id) => Category::read_from_apub_id(pool, id).await?.is_none(),
@@ -128,13 +111,13 @@ impl Category {
 
     // Can't do separate insert/update commands because InsertForm/UpdateForm aren't convertible
     let category_ = insert_into(category::table)
-     .values(form)
-     .on_conflict(category::ap_id)
-     .filter_target(coalesce(category::updated_at, category::published_at).lt(timestamp))
-     .do_update()
-     .set(form)
-     .get_result::<Self>(conn)
-     .await?;
+      .values(form)
+      .on_conflict(category::ap_id)
+      .filter_target(coalesce(category::updated_at, category::published_at).lt(timestamp))
+      .do_update()
+      .set(form)
+      .get_result::<Self>(conn)
+      .await?;
 
     // Initialize languages for new category
     if is_new_category {
@@ -148,9 +131,9 @@ impl Category {
     let conn = &mut get_conn(pool).await?;
 
     let communities = category::table
-        .order_by(category::path.asc())
-        .load::<Category>(conn)
-        .await?;
+      .order_by(category::path.asc())
+      .load::<Category>(conn)
+      .await?;
 
     Ok(communities)
   }
@@ -183,9 +166,9 @@ impl Category {
   }
 
   pub async fn set_featured_posts(
-      category_id: CategoryId,
-      posts: Vec<Post>,
-      pool: &mut DbPool<'_>,
+    category_id: CategoryId,
+    posts: Vec<Post>,
+    pool: &mut DbPool<'_>,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     for p in &posts {
@@ -268,9 +251,7 @@ impl Category {
 
   #[diesel::dsl::auto_type(no_type_alias)]
   pub fn hide_removed_and_deleted() -> _ {
-    category::removed
-      .eq(false)
-      .and(category::deleted.eq(false))
+    category::removed.eq(false).and(category::deleted.eq(false))
   }
 
   pub fn build_tag_ap_id(&self, tag_name: &str) -> FastJobResult<DbUrl> {
@@ -290,9 +271,9 @@ impl Category {
 
 impl CategoryActions {
   pub async fn read(
-      pool: &mut DbPool<'_>,
-      category_id: CategoryId,
-      person_id: PersonId,
+    pool: &mut DbPool<'_>,
+    category_id: CategoryId,
+    person_id: PersonId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     category_actions::table
@@ -304,18 +285,16 @@ impl CategoryActions {
   }
 
   pub async fn delete_mods_for_category(
-      pool: &mut DbPool<'_>,
-      for_category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    for_category_id: CategoryId,
   ) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
 
-    uplete::new(
-      category_actions::table.filter(category_actions::category_id.eq(for_category_id)),
-    )
-    .set_null(category_actions::became_moderator_at)
-    .get_result(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::NotFound)
+    uplete::new(category_actions::table.filter(category_actions::category_id.eq(for_category_id)))
+      .set_null(category_actions::became_moderator_at)
+      .get_result(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn leave_mod_team_for_all_communities(
@@ -346,10 +325,10 @@ impl CategoryActions {
 
   /// Checks to make sure the acting moderator was added earlier than the target moderator
   pub async fn is_higher_mod_check(
-      pool: &mut DbPool<'_>,
-      for_category_id: CategoryId,
-      mod_person_id: PersonId,
-      target_person_ids: Vec<PersonId>,
+    pool: &mut DbPool<'_>,
+    for_category_id: CategoryId,
+    mod_person_id: PersonId,
+    target_person_ids: Vec<PersonId>,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
@@ -382,8 +361,8 @@ impl CategoryActions {
   ///
   /// Dont use this check for local communities.
   pub async fn check_accept_activity_in_category(
-      pool: &mut DbPool<'_>,
-      remote_category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    remote_category_id: CategoryId,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let follow_action = category_actions::table
@@ -503,12 +482,7 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-      category::{
-          Category,
-          CategoryActions,
-          CategoryInsertForm,
-          CategoryUpdateForm,
-      },
+      category::{Category, CategoryActions, CategoryInsertForm, CategoryUpdateForm},
       instance::Instance,
       local_user::LocalUser,
       person::{Person, PersonInsertForm},
@@ -517,8 +491,8 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, RANK_DEFAULT},
   };
-  use diesel_ltree::Ltree;
   use app_108jobs_utils::error::FastJobResult;
+  use diesel_ltree::Ltree;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
@@ -528,19 +502,20 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
+    let inserted_instance =
+      Instance::read_or_create(pool, crate::test_data::unique_test_domain("category-crud")).await?;
+    crate::test_data::reset_category_sequence(pool).await?;
 
-    let bobby_person = PersonInsertForm::test_form(inserted_instance.id, "bobby");
+    let (bobby_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "bobby").await?;
     let inserted_bobby = Person::create(pool, &bobby_person).await?;
 
-    let artemis_person = PersonInsertForm::test_form(inserted_instance.id, "artemis");
+    let (artemis_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "artemis").await?;
     let inserted_artemis = Person::create(pool, &artemis_person).await?;
 
-    let new_category = CategoryInsertForm::new(
-      inserted_instance.id,
-      "TIL".into(),
-      "nada".to_owned(),
-    );
+    let new_category =
+      CategoryInsertForm::new(inserted_instance.id, "TIL".into(), "nada".to_owned());
     let inserted_category = Category::create(pool, &new_category).await?;
 
     let expected_category = Category {
@@ -584,8 +559,6 @@ mod tests {
       active: false,
       is_new: false,
     };
-
-
 
     let moderator_person_ids = vec![inserted_bobby.id, inserted_artemis.id];
 

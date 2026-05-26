@@ -1,47 +1,27 @@
 use crate::{
-  CommentReportView,
-  CategoryReportView,
-  LocalUserView,
-  PostReportView,
-  ReportCombinedView,
+  CategoryReportView, CommentReportView, LocalUserView, PostReportView, ReportCombinedView,
   ReportCombinedViewInternal,
 };
+use app_108jobs_db_schema::{
+  aliases::{self, creator_category_actions},
+  newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
+  source::combined::report::{report_combined_keys as key, ReportCombined},
+  traits::{InternalToCombinedView, PaginationCursorBuilder},
+  utils::{get_conn, limit_fetch, paginate, DbPool},
+  ReportType,
+};
+use app_108jobs_db_schema_file::schema::{
+  category, category_actions, category_report, comment, comment_actions, comment_report,
+  local_user, person, person_actions, post, post_actions, post_report, report_combined,
+};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Days, Utc};
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use app_108jobs_db_schema::{
-    aliases::{self, creator_category_actions},
-    newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
-    source::combined::report::{report_combined_keys as key, ReportCombined},
-    traits::{InternalToCombinedView, PaginationCursorBuilder},
-    utils::{get_conn, limit_fetch, paginate, DbPool},
-    ReportType,
-};
-use app_108jobs_db_schema_file::schema::{
-  comment,
-  comment_actions,
-  comment_report,
-  category,
-  category_actions,
-  category_report,
-  local_user,
-  person,
-  person_actions,
-  post,
-  post_actions,
-  post_report,
-  report_combined,
-};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl ReportCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -50,14 +30,14 @@ impl ReportCombinedViewInternal {
     let item_creator = aliases::person1.field(person::id);
 
     let comment_join = comment::table.on(comment_report::comment_id.eq(comment::id));
-     let post_join = post::table.on(
+    let post_join = post::table.on(
       post_report::post_id
         .eq(post::id)
         .or(comment::post_id.eq(post::id)),
     );
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
         .nullable()
         .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),
@@ -137,9 +117,9 @@ impl ReportCombinedViewInternal {
 
   /// returns the current unresolved report count for the communities you mod
   pub async fn get_report_count(
-      pool: &mut DbPool<'_>,
-      user: &LocalUserView,
-      category_id: Option<CategoryId>,
+    pool: &mut DbPool<'_>,
+    user: &LocalUserView,
+    category_id: Option<CategoryId>,
   ) -> FastJobResult<i64> {
     use diesel::dsl::count;
 
@@ -413,26 +393,21 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
 mod tests {
 
   use crate::{
-    impls::ReportCombinedQuery,
-    LocalUserView,
-    ReportCombinedView,
-    ReportCombinedViewInternal,
+    impls::ReportCombinedQuery, LocalUserView, ReportCombinedView, ReportCombinedViewInternal,
   };
-  use chrono::{Days, Utc};
-  use diesel::{update, ExpressionMethods, QueryDsl};
-  use diesel_async::RunQueryDsl;
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-        comment::{Comment, CommentInsertForm},
-        comment_report::{CommentReport, CommentReportForm},
-        category::{category, CategoryInsertForm},
-        category_report::{CategoryReport, CategoryReportForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        post::{Post, PostInsertForm},
-        post_report::{PostReport, PostReportForm},
+      category::{category, CategoryInsertForm},
+      category_report::{CategoryReport, CategoryReportForm},
+      comment::{Comment, CommentInsertForm},
+      comment_report::{CommentReport, CommentReportForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostInsertForm},
+      post_report::{PostReport, PostReportForm},
     },
     traits::{Crud, Reportable},
     utils::{build_db_pool_for_tests, get_conn, DbPool},
@@ -440,9 +415,11 @@ mod tests {
   };
   use app_108jobs_db_schema_file::schema::report_combined;
   use app_108jobs_utils::error::FastJobResult;
+  use chrono::{Days, Utc};
+  use diesel::{update, ExpressionMethods, QueryDsl};
+  use diesel_async::RunQueryDsl;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -579,7 +556,6 @@ mod tests {
     };
     CommentReport::report(pool, &sara_report_comment_form).await?;
 
-
     // Do a batch read of admins reports
     let reports = ReportCombinedQuery {
       show_category_rule_violations: Some(true),
@@ -609,7 +585,6 @@ mod tests {
     } else {
       panic!("wrong type");
     }
-
 
     let report_count_mod =
       ReportCombinedViewInternal::get_report_count(pool, &data.timmy_view, None).await?;
@@ -687,7 +662,6 @@ mod tests {
     Ok(())
   }
 
-
   #[tokio::test]
   #[serial]
   async fn post_reports() -> FastJobResult<()> {
@@ -720,7 +694,6 @@ mod tests {
     };
 
     let inserted_jessica_report = PostReport::report(pool, &jessica_report_form).await?;
-
 
     // Make sure the triggers are reading the aggregates correctly.
     let agg_1 = Post::read(pool, data.post.id).await?;
@@ -755,7 +728,6 @@ mod tests {
     // This is called manually in the API for post removals
     PostReport::resolve_all_for_object(pool, inserted_jessica_report.post_id, data.timmy.id)
       .await?;
-
 
     // Make sure the unresolved_post report got decremented in the trigger
     let agg_2 = Post::read(pool, data.post_2.id).await?;

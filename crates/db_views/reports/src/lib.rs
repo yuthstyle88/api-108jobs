@@ -1,8 +1,8 @@
 use app_108jobs_db_schema::source::{
-  comment::{Comment, CommentActions},
-  comment_report::CommentReport,
   category::{Category, CategoryActions},
   category_report::CategoryReport,
+  comment::{Comment, CommentActions},
+  comment_report::CommentReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
@@ -11,15 +11,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::{
-    utils::queries::{
-      comment_creator_is_admin,
-      person1_select,
-      post_creator_is_admin,
-    },
+    utils::queries::{comment_creator_is_admin, person1_select, post_creator_is_admin},
     Person1AliasAllColumnsTuple,
   },
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;

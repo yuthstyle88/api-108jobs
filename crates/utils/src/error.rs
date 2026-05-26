@@ -316,6 +316,19 @@ pub enum FastJobErrorType {
   InsufficientBalanceForTransfer,
   InsufficientBalanceForWithdraw,
   WalletInvariantViolated,
+  /// Concurrent write detected on a wallet row (version CAS or row-lock missed).
+  /// Caller should retry or surface to the user.
+  ConcurrentWalletModification,
+  /// Attempt to insert a second Active wallet_hold for the same billing.
+  /// Maps to the partial unique index uq_wallet_hold_active_per_billing.
+  DuplicateWalletHold,
+  /// Wallet does not have enough available balance to perform the requested
+  /// reserve/transfer. Distinct from `InsufficientBalanceForTransfer` so the
+  /// new ledger-aware paths can return a stable, typed error.
+  InsufficientFunds,
+  /// Detected an inconsistency between wallet.balance_outstanding and the
+  /// derived sum of Active wallet_hold rows. Treat as a hard failure.
+  WalletInvariantViolation(String),
   InvalidOperation,
   StillDoNotPayYet,
   ReturnedNonJSONResponse,
@@ -330,19 +343,19 @@ pub enum FastJobErrorType {
   InvalidIVLength,
   LastReadNotFound,
   WorkflowDoesNotExist,
-    CouldntCreatePendingSenderAck,
+  CouldntCreatePendingSenderAck,
   CouldntUpdatePendingSenderAck,
-    BankAccountAlreadyExistsForThisBank,
-    ExternalApiError,
-    UnauthorizedAccess,
+  BankAccountAlreadyExistsForThisBank,
+  ExternalApiError,
+  UnauthorizedAccess,
   CannotDeleteDefaultBankAccount,
-    ReachedMax3BankAccounts,
-    CouldntUpdateChatUnread,
-    RedisPipelineFailed,
-    CouldntCreateRider,
+  ReachedMax3BankAccounts,
+  CouldntUpdateChatUnread,
+  RedisPipelineFailed,
+  CouldntCreateRider,
   CouldntUpdateRider,
   RiderAlreadyExists,
-    InvalidData,
+  InvalidData,
   CouldntCreateTripLocation,
   CouldntUpdateTripLocation,
   CouldntCreateTripLocationHistory,

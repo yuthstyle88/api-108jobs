@@ -69,40 +69,54 @@ pub async fn send_verification_email(
   let subject = lang.verify_email_subject(&settings.hostname);
 
   let footer = (
-    lang.contact_us(), // 0
-    lang.copyright(), // 1
-    lang.otp_body(), // 2
-    lang.otp_subject(), // 3
-    lang.privacy_policy(), // 4
-    lang.regards(), // 5
+    lang.contact_us(),       // 0
+    lang.copyright(),        // 1
+    lang.otp_body(),         // 2
+    lang.otp_subject(),      // 3
+    lang.privacy_policy(),   // 4
+    lang.regards(),          // 5
     lang.sent_to(new_email), // 6
-    lang.team(), // 7
+    lang.team(),             // 7
     lang.terms_of_service(), // 8
-    lang.title(), // 9
-    lang.trouble_text(), // 10
+    lang.title(),            // 9
+    lang.trouble_text(),     // 10
   );
 
   let body = if local_site.verify_with_otp {
     lang.verify_email_with_otp(
-      footer.0, footer.1, lang.otp_message(),
-      footer.2, footer.3,
-      footer.4, footer.5, footer.6,
-      footer.7, footer.8, footer.9,
-      footer.10,  &verification_code,
+      footer.0,
+      footer.1,
+      lang.otp_message(),
+      footer.2,
+      footer.3,
+      footer.4,
+      footer.5,
+      footer.6,
+      footer.7,
+      footer.8,
+      footer.9,
+      footer.10,
+      &verification_code,
     )
   } else {
     lang.verify_email_with_url(
-      lang.button(), footer.0, footer.1,
-      lang.link_message(), footer.4,
-      footer.5, footer.6, footer.7,
-      footer.8, footer.9, footer.10,
+      lang.button(),
+      footer.0,
+      footer.1,
+      lang.link_message(),
+      footer.4,
+      footer.5,
+      footer.6,
+      footer.7,
+      footer.8,
+      footer.9,
+      footer.10,
       &verify_link,
     )
   };
 
   send_email(&subject, new_email, &user.person.name, &body, settings).await
 }
-
 
 /// Returns true if email was sent.
 pub async fn send_verification_email_if_required(

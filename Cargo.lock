@@ -1523,6 +1523,8 @@ dependencies = [
  "diesel-async",
  "serde",
  "serde_json",
+ "serial_test",
+ "tokio",
  "tracing",
  "ts-rs",
  "uuid",

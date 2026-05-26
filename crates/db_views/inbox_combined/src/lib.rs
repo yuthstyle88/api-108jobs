@@ -1,10 +1,10 @@
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{
+    category::{Category, CategoryActions},
     combined::inbox::InboxCombined,
     comment::{Comment, CommentActions},
     comment_reply::CommentReply,
-    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
@@ -19,18 +19,14 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::{
     utils::queries::{
-      creator_banned,
-      creator_is_admin,
-      local_user_can_mod,
-      person1_select,
-      post_tags_fragment,
+      creator_banned, creator_is_admin, local_user_can_mod, person1_select, post_tags_fragment,
     },
     utils::queries::{creator_banned_from_category, creator_is_moderator},
     Person1AliasAllColumnsTuple,
   },
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;

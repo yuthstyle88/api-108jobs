@@ -1,7 +1,4 @@
 use crate::LocalImageView;
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   newtypes::{PaginationCursor, PersonId},
   source::images::{local_image_keys as key, LocalImage},
@@ -10,6 +7,9 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{local_image, person, post};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl LocalImageView {
   #[diesel::dsl::auto_type(no_type_alias)]

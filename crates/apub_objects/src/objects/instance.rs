@@ -1,17 +1,10 @@
-use crate::{
-  protocol::instance::Instance,
-  utils::functions::GetActorType,
-};
+use crate::{protocol::instance::Instance, utils::functions::GetActorType};
 
 use crate::fake_trait::{Actor, Object};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::{
-  sensitive::SensitiveString,
-  source::site::Site
-  ,
-};
+use app_108jobs_db_schema::{sensitive::SensitiveString, source::site::Site};
 use app_108jobs_db_schema_file::enums::ActorType;
-use app_108jobs_utils::error::{FastJobError};
+use app_108jobs_utils::error::FastJobError;
 use std::ops::Deref;
 use url::Url;
 
@@ -39,7 +32,6 @@ impl Object for ApubSite {
   fn id(&self) -> &Url {
     self.ap_id.inner()
   }
-
 }
 
 impl Actor for ApubSite {
@@ -60,4 +52,3 @@ impl GetActorType for ApubSite {
     ActorType::Site
   }
 }
-

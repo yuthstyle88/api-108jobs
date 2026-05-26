@@ -6,11 +6,11 @@ use app_108jobs_db_schema::{
   traits::Readable,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{MarkPostAsRead, PostResponse},
   PostView,
 };
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn mark_post_as_read(
@@ -56,5 +56,8 @@ pub async fn mark_post_as_read(
   )
   .await?;
 
-  Ok(Json(PostResponse { post_view, logistics }))
+  Ok(Json(PostResponse {
+    post_view,
+    logistics,
+  }))
 }

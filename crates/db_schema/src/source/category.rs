@@ -2,17 +2,17 @@ use crate::{
   newtypes::{CategoryId, DbUrl, InstanceId, PersonId},
   source::placeholder_apub_url,
 };
+use app_108jobs_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use diesel_ltree::Ltree;
-use app_108jobs_db_schema_file::enums::{CategoryFollowerState, CategoryVisibility};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 pub use {
   crate::newtypes::LtreeDef,
-  i_love_jesus::CursorKeysModule,
   app_108jobs_db_schema_file::schema::{category, category_actions},
+  i_love_jesus::CursorKeysModule,
 };
 
 #[skip_serializing_none]

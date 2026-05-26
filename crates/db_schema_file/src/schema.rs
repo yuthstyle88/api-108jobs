@@ -1293,6 +1293,20 @@ diesel::table! {
         is_platform -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        version -> Int8,
+    }
+}
+
+diesel::table! {
+    wallet_hold (id) {
+        id -> Int8,
+        wallet_id -> Int4,
+        billing_id -> Int4,
+        amount -> Int4,
+        status -> Text,
+        idempotency_key -> Nullable<Text>,
+        created_at -> Timestamptz,
+        released_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1646,6 +1660,8 @@ diesel::joinable!(password_reset_request -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_comment_mention -> comment (comment_id));
 diesel::joinable!(wallet_transaction -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> billing (billing_id));
 diesel::joinable!(person_comment_mention -> person (recipient_id));
 diesel::joinable!(person_content_combined -> comment (comment_id));
 diesel::joinable!(person_content_combined -> post (post_id));
@@ -1778,6 +1794,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   wallet,
+  wallet_hold,
   wallet_transaction,
   banks,
   user_bank_accounts,

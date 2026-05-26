@@ -1,10 +1,5 @@
 use crate::api::{CreateCategory, CreateCategoryRequest};
 use crate::CategoryView;
-use diesel::{debug_query, ExpressionMethods, QueryDsl, SelectableHelper};
-use diesel::pg::Pg;
-use diesel_async::RunQueryDsl;
-use diesel_ltree::nlevel;
-use i_love_jesus::asc_if;
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, PaginationCursor, PersonId},
@@ -30,6 +25,11 @@ use app_108jobs_db_schema_file::{
 };
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_utils::utils::validation::get_required_trimmed;
+use diesel::pg::Pg;
+use diesel::{debug_query, ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
+use diesel_ltree::nlevel;
+use i_love_jesus::asc_if;
 
 impl CategoryView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -140,8 +140,8 @@ impl CategoryQuery<'_> {
 
     // Filter by the time range
     if let Some(time_range_seconds) = o.time_range_seconds {
-      query = query
-        .filter(category::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)));
+      query =
+        query.filter(category::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)));
     }
 
     // Only sort by ascending for Old or NameAsc sorts.
@@ -206,11 +206,11 @@ mod tests {
   use crate::{impls::CategoryQuery, CategoryView};
   use app_108jobs_db_schema::{
     source::{
-        category::{Category, CategoryInsertForm, CategoryUpdateForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        site::Site,
+      category::{Category, CategoryInsertForm, CategoryUpdateForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      site::Site,
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
@@ -322,8 +322,7 @@ mod tests {
     let authenticated = CategoryView::read(pool, category.id, Some(&data.local_user)).await?;
     assert!(authenticated.category_actions.is_none());
 
-    let with_pending_follow =
-      CategoryView::read(pool, category.id, Some(&data.local_user)).await?;
+    let with_pending_follow = CategoryView::read(pool, category.id, Some(&data.local_user)).await?;
     assert!(with_pending_follow
       .category_actions
       .is_some_and(|x| x.follow_state == Some(CategoryFollowerState::Pending)));

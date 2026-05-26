@@ -1,3 +1,4 @@
+use crate::site_snapshot::SiteConfigProvider;
 use app_108jobs_db_schema::{
   source::secret::Secret,
   utils::{ActualDbPool, DbPool},
@@ -10,7 +11,6 @@ use app_108jobs_utils::{
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::sync::Arc;
-use crate::site_snapshot::SiteConfigProvider;
 
 #[derive(Clone)]
 pub struct FastJobContext {
@@ -25,7 +25,7 @@ pub struct FastJobContext {
   rate_limit_cell: Arc<RateLimit>,
   redis: Arc<RedisClient>,
   site_config: Arc<dyn SiteConfigProvider + Send + Sync>,
-  scb: Arc<ClientWithMiddleware>
+  scb: Arc<ClientWithMiddleware>,
 }
 
 impl FastJobContext {
@@ -48,41 +48,41 @@ impl FastJobContext {
       rate_limit_cell: Arc::new(rate_limit_cell),
       redis: Arc::new(redis),
       site_config: Arc::from(site_config),
-      scb: Arc::new(scb)
+      scb: Arc::new(scb),
     }
   }
-  
+
   // Update accessor methods to work with Arc-wrapped fields
   pub fn pool(&self) -> DbPool<'_> {
     // Create a DbPool that references the Arc-wrapped pool
     DbPool::Pool(&self.pool)
   }
-  
+
   pub fn inner_pool(&self) -> &ActualDbPool {
     // Dereference the Arc to get the underlying pool
     &self.pool
   }
-  
+
   pub fn client(&self) -> &ClientWithMiddleware {
     // Return a reference to the ClientWithMiddleware inside the Arc
     &self.client
   }
-  
+
   pub fn pictrs_client(&self) -> &ClientWithMiddleware {
     // Return a reference to the pictrs_client inside the Arc
     &self.pictrs_client
   }
-  
+
   pub fn settings(&self) -> &'static Settings {
     // This doesn't need to change as it's a static reference
     &SETTINGS
   }
-  
+
   pub fn secret(&self) -> &Secret {
     // Return a reference to the Secret inside the Arc
     &self.secret
   }
-  
+
   pub fn rate_limit_cell(&self) -> &RateLimit {
     // Return a reference to the RateLimit inside the Arc
     &self.rate_limit_cell
@@ -115,7 +115,9 @@ impl FastJobContext {
 
   /// Get the platform wallet ID from the first admin.
   /// Returns error if no admin is configured.
-  pub async fn get_platform_wallet_id(&self) -> FastJobResult<app_108jobs_db_schema::newtypes::WalletId> {
+  pub async fn get_platform_wallet_id(
+    &self,
+  ) -> FastJobResult<app_108jobs_db_schema::newtypes::WalletId> {
     match self.site_config().get().await?.admins.first() {
       Some(a) => Ok(a.person.wallet_id),
       None => Err(app_108jobs_utils::error::FastJobErrorType::NoPlatformAdminConfigured.into()),

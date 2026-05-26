@@ -1,16 +1,17 @@
 use crate::payments::get_token::fetch_scb_token;
+use crate::payments::http_client::scb_client;
 use actix_web::{
   web::{Data, Json},
   HttpResponse,
 };
-use chrono::Utc;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
 use app_108jobs_db_schema_file::enums::TopUpStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use reqwest::Client;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -68,7 +69,10 @@ pub async fn inquire_qrcode(
 
   let request_uid = Uuid::new_v4().to_string();
 
-  let client = Client::new();
+  let client = scb_client().map_err(|e| {
+    error!("scb client build failed: {e}");
+    FastJobErrorType::ExternalApiError
+  })?;
   let resp = client
     .get(url)
     .header("authorization", format!("Bearer {}", token))
@@ -92,12 +96,9 @@ pub async fn inquire_qrcode(
         paid_at: Some(Some(data.transaction_dateand_time.parse()?)),
         transferred: None,
       };
-      let _updated = TopUpRequest::update_by_qr_id(
-        &mut context.pool(),
-        data.qr_id.clone(),
-        &update_form,
-      )
-      .await?;
+      let _updated =
+        TopUpRequest::update_by_qr_id(&mut context.pool(), data.qr_id.clone(), &update_form)
+          .await?;
     }
 
     return Ok(HttpResponse::Ok().json(parsed));

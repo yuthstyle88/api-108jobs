@@ -1,27 +1,15 @@
 use app_108jobs_db_schema::source::{
-  comment::Comment,
   category::Category,
+  comment::Comment,
   instance::Instance,
   mod_log::{
     admin::{
-      AdminAllowInstance,
-      AdminBlockInstance,
-      AdminPurgeComment,
-      AdminPurgeCategory,
-      AdminPurgePerson,
-      AdminPurgePost,
+      AdminAllowInstance, AdminBlockInstance, AdminPurgeCategory, AdminPurgeComment,
+      AdminPurgePerson, AdminPurgePost,
     },
     moderator::{
-      ModAdd,
-      ModAddCategory,
-      ModBan,
-      ModBanFromCategory,
-      ModChangeCategoryVisibility,
-      ModFeaturePost,
-      ModLockPost,
-      ModRemoveComment,
-      ModRemoveCategory,
-      ModRemovePost,
+      ModAdd, ModAddCategory, ModBan, ModBanFromCategory, ModChangeCategoryVisibility,
+      ModFeaturePost, ModLockPost, ModRemoveCategory, ModRemoveComment, ModRemovePost,
       ModTransferCategory,
     },
   },
@@ -32,8 +20,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
   app_108jobs_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
+  diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 
 pub mod api;

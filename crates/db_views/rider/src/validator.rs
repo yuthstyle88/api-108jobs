@@ -7,10 +7,12 @@ use chrono::{DateTime, Utc};
 pub fn validate_license_expiry(expiry_date: Option<DateTime<Utc>>) -> FastJobResult<()> {
   if let Some(date) = expiry_date {
     if date <= Utc::now() {
-      return Err(app_108jobs_utils::error::FastJobErrorType::InvalidField(
-        "license expiry date must be in the future".to_string(),
-      )
-      .into());
+      return Err(
+        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+          "license expiry date must be in the future".to_string(),
+        )
+        .into(),
+      );
     }
   }
   Ok(())
@@ -20,10 +22,12 @@ pub fn validate_license_expiry(expiry_date: Option<DateTime<Utc>>) -> FastJobRes
 pub fn validate_plate_number(plate_number: Option<&String>) -> FastJobResult<()> {
   if let Some(plate) = plate_number {
     if plate.trim().is_empty() {
-      return Err(app_108jobs_utils::error::FastJobErrorType::InvalidField(
-        "plate number cannot be empty".to_string(),
-      )
-      .into());
+      return Err(
+        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+          "plate number cannot be empty".to_string(),
+        )
+        .into(),
+      );
     }
   }
   Ok(())
@@ -33,10 +37,12 @@ pub fn validate_plate_number(plate_number: Option<&String>) -> FastJobResult<()>
 pub fn validate_license_number(license_number: Option<&String>) -> FastJobResult<()> {
   if let Some(license) = license_number {
     if license.trim().is_empty() {
-      return Err(app_108jobs_utils::error::FastJobErrorType::InvalidField(
-        "license number cannot be empty".to_string(),
-      )
-      .into());
+      return Err(
+        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+          "license number cannot be empty".to_string(),
+        )
+        .into(),
+      );
     }
   }
   Ok(())

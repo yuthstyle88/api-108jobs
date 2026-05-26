@@ -1,4 +1,6 @@
-use crate::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS};
+use crate::error::{
+  FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult, MAX_API_PARAM_ELEMENTS,
+};
 use clearurls::UrlCleaner;
 use diesel::internal::derives::multiconnection::chrono::NaiveDate;
 use invisible_characters::INVISIBLE_CHARS;
@@ -111,7 +113,11 @@ pub fn is_valid_post_title(title: &str) -> FastJobResult<()> {
 /// This could be post bodies, comments, notes, or any description field
 pub fn is_valid_body_field(body: &str, post: bool) -> FastJobResult<()> {
   if post {
-    max_length_check(body, POST_BODY_MAX_LENGTH, FastJobErrorType::InvalidBodyField)?;
+    max_length_check(
+      body,
+      POST_BODY_MAX_LENGTH,
+      FastJobErrorType::InvalidBodyField,
+    )?;
   } else {
     max_length_check(body, BODY_MAX_LENGTH, FastJobErrorType::InvalidBodyField)?;
   };
@@ -134,7 +140,11 @@ pub fn is_valid_alt_text_field(alt_text: &str) -> FastJobResult<()> {
 
 /// Checks the site name length, the limit as defined in the DB.
 pub fn site_name_length_check(name: &str) -> FastJobResult<()> {
-  min_length_check(name, SITE_NAME_MIN_LENGTH, FastJobErrorType::SiteNameRequired)?;
+  min_length_check(
+    name,
+    SITE_NAME_MIN_LENGTH,
+    FastJobErrorType::SiteNameRequired,
+  )?;
   max_length_check(
     name,
     SITE_NAME_MAX_LENGTH,
@@ -382,7 +392,9 @@ pub fn is_valid_phone(phone: &str) -> bool {
   // Basic phone validation: only contains digits, +, -, and spaces
   // and has at least 7 digits
   let digit_count = phone.chars().filter(|c| c.is_digit(10)).count();
-  let valid_chars = phone.chars().all(|c| c.is_digit(10) || c == '+' || c == '-' || c == ' ');
+  let valid_chars = phone
+    .chars()
+    .all(|c| c.is_digit(10) || c == '+' || c == '-' || c == ' ');
 
   valid_chars && digit_count >= 7
 }
@@ -397,10 +409,10 @@ pub fn get_required_trimmed(
   err: FastJobErrorType,
 ) -> Result<String, FastJobError> {
   field
-      .as_ref()
-      .map(|s| s.trim().to_owned())
-      .filter(|s| !s.is_empty())
-      .ok_or_else(|| err.into())
+    .as_ref()
+    .map(|s| s.trim().to_owned())
+    .filter(|s| !s.is_empty())
+    .ok_or_else(|| err.into())
 }
 
 // National ID validation
@@ -419,11 +431,12 @@ impl NationalIdValidator for ThaiIdValidator {
 
     let digits: Vec<u32> = id.chars().filter_map(|c| c.to_digit(10)).collect();
 
-    let sum: u32 = digits.iter()
-        .take(12)
-        .enumerate()
-        .map(|(i, &digit)| digit * (13 - i as u32))
-        .sum();
+    let sum: u32 = digits
+      .iter()
+      .take(12)
+      .enumerate()
+      .map(|(i, &digit)| digit * (13 - i as u32))
+      .sum();
 
     let check_digit = (11 - (sum % 11)) % 10;
     check_digit == digits[12]
@@ -451,17 +464,9 @@ pub fn validate_bank_account(country_id: &str, account_number: &str) -> bool {
 
   match country_id.to_uppercase().as_str() {
     // Thailand: usually 10-12 digits, all numeric
-    "TH" => {
-      num.len() >= 10
-      && num.len() <= 12
-      && num.chars().all(|c| c.is_ascii_digit())
-    }
+    "TH" => num.len() >= 10 && num.len() <= 12 && num.chars().all(|c| c.is_ascii_digit()),
     // Vietnam: usually 8-15 digits, all numeric
-    "VN" => {
-      num.len() >= 8
-      && num.len() <= 15
-      && num.chars().all(|c| c.is_ascii_digit())
-    }
+    "VN" => num.len() >= 8 && num.len() <= 15 && num.chars().all(|c| c.is_ascii_digit()),
     // Unsupported country
     _ => false,
   }
@@ -484,24 +489,11 @@ mod tests {
   use crate::{
     error::{FastJobErrorType, FastJobResult},
     utils::validation::{
-      build_and_check_regex,
-      check_urls_are_valid,
-      clean_url,
-      clean_urls_in_text,
-      is_url_blocked,
-      is_valid_actor_name,
-      is_valid_bio_field,
-      is_valid_display_name,
-      is_valid_matrix_id,
-      is_valid_post_title,
-      is_valid_url,
-      site_name_length_check,
-      site_or_category_description_length_check,
-      truncate_for_db,
-      BIO_MAX_LENGTH,
-      SITE_DESCRIPTION_MAX_LENGTH,
-      SITE_NAME_MAX_LENGTH,
-      URL_MAX_LENGTH,
+      build_and_check_regex, check_urls_are_valid, clean_url, clean_urls_in_text, is_url_blocked,
+      is_valid_actor_name, is_valid_bio_field, is_valid_display_name, is_valid_matrix_id,
+      is_valid_post_title, is_valid_url, site_name_length_check,
+      site_or_category_description_length_check, truncate_for_db, BIO_MAX_LENGTH,
+      SITE_DESCRIPTION_MAX_LENGTH, SITE_NAME_MAX_LENGTH, URL_MAX_LENGTH,
     },
   };
   use pretty_assertions::assert_eq;

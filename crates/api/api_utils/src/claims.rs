@@ -1,15 +1,50 @@
 use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
-use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use app_108jobs_db_schema::{
   newtypes::LocalUserId,
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use std::env;
 use uuid::Uuid;
+
+/// JWT lifetime in hours. Read from `app_108jobs_JWT_TTL_HOURS` if set,
+/// otherwise 24h. Clamped to a sane range [1, 720] (1 hour .. 30 days).
+/// The previous default (1200 h = 50 days) was unacceptably long for a
+/// platform handling payments.
+const JWT_DEFAULT_TTL_HOURS: i64 = 24;
+const JWT_MIN_TTL_HOURS: i64 = 1;
+const JWT_MAX_TTL_HOURS: i64 = 720;
+
+pub fn jwt_ttl_hours() -> i64 {
+  jwt_ttl_hours_from(|k| env::var(k).ok())
+}
+
+pub fn jwt_ttl_hours_from<F>(reader: F) -> i64
+where
+  F: Fn(&str) -> Option<String>,
+{
+  let raw = match reader("app_108jobs_JWT_TTL_HOURS") {
+    Some(v) => v,
+    None => return JWT_DEFAULT_TTL_HOURS,
+  };
+  let parsed: i64 = match raw.trim().parse() {
+    Ok(n) => n,
+    Err(_) => {
+      tracing::warn!(
+        "app_108jobs_JWT_TTL_HOURS={:?} is not a valid integer; using default {}",
+        raw,
+        JWT_DEFAULT_TTL_HOURS
+      );
+      return JWT_DEFAULT_TTL_HOURS;
+    }
+  };
+  parsed.clamp(JWT_MIN_TTL_HOURS, JWT_MAX_TTL_HOURS)
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
@@ -53,16 +88,17 @@ impl Claims {
     context: &FastJobContext,
   ) -> FastJobResult<SensitiveString> {
     let hostname = context.settings().hostname.clone();
+    let ttl_hours = jwt_ttl_hours();
     let my_claims = Claims {
       sub: user_id.0.to_string(),
       iss: hostname,
       iat: Utc::now().timestamp(),
-      exp: (Utc::now() + Duration::hours(1200)).timestamp(),
+      exp: (Utc::now() + Duration::hours(ttl_hours)).timestamp(),
       session: generate_session(),
       email,
       lang,
       accepted_terms,
-      is_admin
+      is_admin,
     };
 
     let secret = &context.secret().jwt_secret;
@@ -89,4 +125,51 @@ impl Claims {
 }
 pub fn generate_session() -> String {
   Uuid::new_v4().as_simple().to_string()
+}
+
+#[cfg(test)]
+mod ttl_tests {
+  use super::*;
+  use std::collections::HashMap;
+
+  fn reader_from<'a>(map: &'a HashMap<&'a str, &'a str>) -> impl Fn(&str) -> Option<String> + 'a {
+    move |k: &str| map.get(k).map(|s| s.to_string())
+  }
+
+  #[test]
+  fn ttl_defaults_to_24_when_unset() {
+    let map: HashMap<&str, &str> = HashMap::new();
+    assert_eq!(jwt_ttl_hours_from(reader_from(&map)), 24);
+  }
+
+  #[test]
+  fn ttl_uses_env_value() {
+    let map = HashMap::from([("app_108jobs_JWT_TTL_HOURS", "48")]);
+    assert_eq!(jwt_ttl_hours_from(reader_from(&map)), 48);
+  }
+
+  #[test]
+  fn ttl_clamps_to_max_30_days() {
+    let map = HashMap::from([("app_108jobs_JWT_TTL_HOURS", "5000")]);
+    assert_eq!(jwt_ttl_hours_from(reader_from(&map)), 720);
+  }
+
+  #[test]
+  fn ttl_clamps_to_min_one_hour() {
+    let map = HashMap::from([("app_108jobs_JWT_TTL_HOURS", "0")]);
+    assert_eq!(jwt_ttl_hours_from(reader_from(&map)), 1);
+  }
+
+  #[test]
+  fn ttl_garbage_falls_back_to_default() {
+    let map = HashMap::from([("app_108jobs_JWT_TTL_HOURS", "abc")]);
+    assert_eq!(jwt_ttl_hours_from(reader_from(&map)), 24);
+  }
+
+  #[test]
+  fn ttl_old_default_1200_no_longer_in_use() {
+    // Sanity guard against regression to the audit-flagged value.
+    let map: HashMap<&str, &str> = HashMap::new();
+    assert!(jwt_ttl_hours_from(reader_from(&map)) < 1200);
+  }
 }

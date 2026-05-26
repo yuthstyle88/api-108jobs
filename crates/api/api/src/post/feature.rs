@@ -29,9 +29,7 @@ pub async fn feature_post(
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
 
   // Feature only works for posts with categories
-  let category_id = orig_post
-    .category_id
-    .ok_or(FastJobErrorType::NotFound)?;
+  let category_id = orig_post.category_id.ok_or(FastJobErrorType::NotFound)?;
   let category = Category::read(&mut context.pool(), category_id).await?;
   check_category_deleted_removed(&category)?;
 

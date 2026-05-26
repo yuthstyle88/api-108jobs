@@ -126,7 +126,6 @@ pub struct BankResponse {
   pub swift_code: Option<String>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

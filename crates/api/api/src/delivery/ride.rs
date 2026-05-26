@@ -4,15 +4,16 @@ use app_108jobs_api_utils::utils::{check_fetch_limit, get_active_rider_by_person
 use app_108jobs_db_schema::newtypes::RideSessionId;
 use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::pricing_config::PricingConfig;
-use app_108jobs_db_schema::source::rider::{Rider, RiderUpdateForm};
 use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionUpdateForm};
+use app_108jobs_db_schema::source::rider::{Rider, RiderUpdateForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest, CreateRideSessionRequest, ListAvailableRides,
-  ListAvailableRidesResponse, ListMyRideSessions, ListMyRideSessionsResponse, PricingBreakdown,
-  PricingConfigSnapshot, PricingConfigSnapshotResponse, RideMeterEvent, RideMeterResponse, RideSessionResponse,
+  CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest,
+  CreateRideSessionRequest, ListAvailableRides, ListAvailableRidesResponse, ListMyRideSessions,
+  ListMyRideSessionsResponse, PricingBreakdown, PricingConfigSnapshot,
+  PricingConfigSnapshotResponse, RideMeterEvent, RideMeterResponse, RideSessionResponse,
   RideStatusEvent, UpdateRideMeterRequest, UpdateRideStatusRequest, UpdateRideStatusResponse,
 };
 use app_108jobs_db_views_rider::ride_session_view::{project_ride_session, RideViewer};
@@ -70,26 +71,42 @@ pub async fn create_ride_session(
   let base_fare = pricing_config.base_fare_coin;
 
   // Lookup rider if rider_person_id is provided
-  let (rider_id, new_status, rider_assigned_at, rider_to_update) = if let Some(person_id) = form.rider_person_id {
-    // Skip if same rider is already assigned
-    let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
+  let (rider_id, new_status, rider_assigned_at, rider_to_update) =
+    if let Some(person_id) = form.rider_person_id {
+      // Skip if same rider is already assigned
+      let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
-    if existing_session.rider_id == Some(rider.id) {
-      (existing_session.rider_id, existing_session.status, None, None)
+      if existing_session.rider_id == Some(rider.id) {
+        (
+          existing_session.rider_id,
+          existing_session.status,
+          None,
+          None,
+        )
+      } else {
+        // Check if rider is accepting jobs (not busy)
+        if !rider.accepting_jobs {
+          return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+        }
+        // Check if rider already has an active ride session
+        if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
+          return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
+        }
+        (
+          Some(rider.id),
+          TripStatus::Assigned,
+          Some(Utc::now()),
+          Some(rider),
+        )
+      }
     } else {
-      // Check if rider is accepting jobs (not busy)
-      if !rider.accepting_jobs {
-        return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
-      }
-      // Check if rider already has an active ride session
-      if RideSession::has_active_session(&mut context.pool(), rider.id).await? {
-        return Err(FastJobErrorType::RiderAlreadyHasActiveRide.into());
-      }
-      (Some(rider.id), TripStatus::Assigned, Some(Utc::now()), Some(rider))
-    }
-  } else {
-    (existing_session.rider_id, existing_session.status, None, None)
-  };
+      (
+        existing_session.rider_id,
+        existing_session.status,
+        None,
+        None,
+      )
+    };
 
   // Calculate initial price if not already set
   let current_price_coin = if existing_session.current_price_coin == 0 {
@@ -165,8 +182,7 @@ pub async fn confirm_ride_assignment(
   let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
   // Get the current session
-  let session = RideSession::read(&mut context.pool(), session_id)
-    .await?;
+  let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Verify this rider is assigned to this session
   if session.rider_id != Some(rider.id) {
@@ -228,13 +244,14 @@ pub async fn update_ride_meter(
   let distance_km = data.distance_km;
 
   // Get the session
-  let session = RideSession::read(&mut context.pool(), session_id)
-    .await?;
+  let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Verify authorization: must be the assigned rider or admin
   let is_admin = local_user_view.local_user.admin;
   let is_rider = if !is_admin {
-    let rider = get_active_rider_by_person(&mut context.pool(), local_user_view.person.id).await.ok();
+    let rider = get_active_rider_by_person(&mut context.pool(), local_user_view.person.id)
+      .await
+      .ok();
     rider.map_or(false, |r| session.rider_id == Some(r.id))
   } else {
     false
@@ -245,13 +262,16 @@ pub async fn update_ride_meter(
   }
 
   // Get pricing config
-  let pricing_config_id = session.pricing_config_id.ok_or(FastJobErrorType::NotFound)?;
+  let pricing_config_id = session
+    .pricing_config_id
+    .ok_or(FastJobErrorType::NotFound)?;
   let pricing_config = PricingConfig::read(&mut context.pool(), pricing_config_id).await?;
 
   // Calculate pricing
   let time_charge_coin = ((elapsed_minutes / pricing_config.minimum_charge_minutes).max(1)
     * pricing_config.time_charge_per_minute_coin) as i32;
-  let distance_charge_coin = (distance_km * pricing_config.distance_charge_per_km_coin as f64) as i32;
+  let distance_charge_coin =
+    (distance_km * pricing_config.distance_charge_per_km_coin as f64) as i32;
   let total_coin = pricing_config.base_fare_coin + time_charge_coin + distance_charge_coin;
 
   // Update session
@@ -316,7 +336,9 @@ pub async fn get_ride_pricing_config(
   let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Check authorization: must be the assigned rider or the employer who created this session
-  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id)
+    .await
+    .ok();
   let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
   let is_employer = session.employer_id == local_user_view.local_user.id;
 
@@ -325,7 +347,8 @@ pub async fn get_ride_pricing_config(
   }
 
   // Get the pricing config
-  let pricing_config_id = session.pricing_config_id
+  let pricing_config_id = session
+    .pricing_config_id
     .ok_or(FastJobErrorType::NotFound)?;
 
   let pricing_config = PricingConfig::read(&mut context.pool(), pricing_config_id).await?;
@@ -365,12 +388,8 @@ pub async fn list_my_ride_sessions(
   let rider = get_active_rider_by_person(&mut context.pool(), person_id).await?;
 
   // Get ride sessions for this rider
-  let sessions = RideSession::list_for_rider(
-    &mut context.pool(),
-    rider.id,
-    query.status,
-    Some(limit),
-  ).await?;
+  let sessions =
+    RideSession::list_for_rider(&mut context.pool(), rider.id, query.status, Some(limit)).await?;
 
   // Project to views
   let viewer = RideViewer::Rider(rider.id);
@@ -394,17 +413,16 @@ pub async fn list_available_rides(
   let limit = check_fetch_limit(query.limit)?;
 
   // Get available rides (Pending, no rider assigned)
-  let sessions = RideSession::list_available_for_rider(
-    &mut context.pool(),
-    Some(limit),
-  ).await?;
+  let sessions = RideSession::list_available_for_rider(&mut context.pool(), Some(limit)).await?;
 
   // Project to public views (limited info for available rides)
   let rides = sessions
     .iter()
     .map(|session| project_ride_session(session, RideViewer::Public, Default::default(), false))
     .filter_map(|view| match view {
-      app_108jobs_db_views_rider::ride_session_view::RideSessionView::Public(public) => Some(public),
+      app_108jobs_db_views_rider::ride_session_view::RideSessionView::Public(public) => {
+        Some(public)
+      }
       _ => None,
     })
     .collect();
@@ -430,8 +448,12 @@ pub async fn cancel_ride_session(
   let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Check authorization: must be the assigned rider or the employer who created this session
-  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
-  let is_rider = rider.as_ref().map_or(false, |r| session.rider_id == Some(r.id));
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id)
+    .await
+    .ok();
+  let is_rider = rider
+    .as_ref()
+    .map_or(false, |r| session.rider_id == Some(r.id));
 
   let is_employer = session.employer_id == local_user_view.local_user.id;
 
@@ -440,7 +462,10 @@ pub async fn cancel_ride_session(
   }
 
   // Check if session can be cancelled (not Delivered or Cancelled)
-  if matches!(session.status, TripStatus::Delivered | TripStatus::Cancelled) {
+  if matches!(
+    session.status,
+    TripStatus::Delivered | TripStatus::Cancelled
+  ) {
     return Err(FastJobErrorType::CannotCancelCompletedRide.into());
   }
 
@@ -510,7 +535,9 @@ pub async fn update_ride_status(
   let session = RideSession::read(&mut context.pool(), session_id).await?;
 
   // Check authorization: must be the assigned rider or the employer who created this session
-  let rider = get_active_rider_by_person(&mut context.pool(), person_id).await.ok();
+  let rider = get_active_rider_by_person(&mut context.pool(), person_id)
+    .await
+    .ok();
   let is_rider = rider.map_or(false, |r| session.rider_id == Some(r.id));
   let is_employer = session.employer_id == local_user_view.local_user.id;
 
@@ -604,7 +631,11 @@ pub async fn update_ride_status(
 }
 
 /// Helper function to publish ride status events to Redis
-async fn publish_ride_event(context: &FastJobContext, event: &RideStatusEvent, session_id: RideSessionId) {
+async fn publish_ride_event(
+  context: &FastJobContext,
+  event: &RideStatusEvent,
+  session_id: RideSessionId,
+) {
   if let Ok(json) = serde_json::to_string(&event) {
     let channel = format!("ride:status:{}", session_id.0);
     let mut redis = context.redis().clone();
@@ -619,7 +650,11 @@ async fn publish_ride_event(context: &FastJobContext, event: &RideStatusEvent, s
 }
 
 /// Helper function to publish ride meter events to Redis
-async fn publish_meter_event(context: &FastJobContext, event: &RideMeterEvent, session_id: RideSessionId) {
+async fn publish_meter_event(
+  context: &FastJobContext,
+  event: &RideMeterEvent,
+  session_id: RideSessionId,
+) {
   if let Ok(json) = serde_json::to_string(&event) {
     let channel = format!("ride:meter:{}", session_id.0);
     let mut redis = context.redis().clone();

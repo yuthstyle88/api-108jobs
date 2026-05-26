@@ -1,16 +1,15 @@
 use crate::newtypes::{Coin, CommentId, DeliveryDetailsId, PersonId, PostId, RiderId};
+use crate::newtypes::{PersonId as PersonIdNew, RiderId as RiderIdNew};
 use crate::utils;
+use app_108jobs_db_schema_file::enums::{TripStatus, VehicleType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema_file::schema::delivery_details,
-  diesel::prelude::*,
+  app_108jobs_db_schema_file::schema::delivery_details, diesel::prelude::*,
   diesel_async::RunQueryDsl,
 };
-use app_108jobs_db_schema_file::enums::{TripStatus, VehicleType};
-use crate::newtypes::{PersonId as PersonIdNew, RiderId as RiderIdNew};
 
 /// Viewer context for determining access level to delivery details
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -425,7 +424,12 @@ impl DeliveryDetails {
   /// - Assigned rider: see `DeliveryDetailsPrivate`
   /// - Admins: see `DeliveryDetailsPrivate`
   /// - Everyone else: see `DeliveryDetailsPublic`
-  pub fn to_view(&self, viewer: DeliveryDetailsViewer, creator_id: PersonId, is_admin: bool) -> DeliveryDetailsView {
+  pub fn to_view(
+    &self,
+    viewer: DeliveryDetailsViewer,
+    creator_id: PersonId,
+    is_admin: bool,
+  ) -> DeliveryDetailsView {
     let is_authorized = match viewer {
       DeliveryDetailsViewer::Admin => true,
       DeliveryDetailsViewer::Employer(employer_id) if employer_id == creator_id => true,

@@ -1,4 +1,6 @@
-use app_108jobs_db_schema::newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId};
+use app_108jobs_db_schema::newtypes::{
+  BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId,
+};
 use app_108jobs_db_schema::source::billing::WorkStep;
 use app_108jobs_db_schema::source::job_budget_plan::JobBudgetPlan;
 use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
@@ -10,24 +12,24 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Create invoice/quotation for job (freelancer creates detailed proposal).
 pub struct CreateInvoiceForm {
-    pub employer_id: LocalUserId,
-    pub post_id: PostId,
-    pub comment_id: Option<CommentId>,
-    pub seq_number: i16,
-    pub amount: Coin,
-    pub proposal: String,
-    pub project_name: String,
-    pub status: BillingStatus,
-    pub project_details: String,
-    pub working_days: i32,
-    pub deliverables: Vec<String>,
-    pub note: Option<String>,
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-    pub starting_day: NaiveDate, // ISO date string (YYYY-MM-DD)
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-    pub delivery_day: NaiveDate, // ISO date string (YYYY-MM-DD)
-    pub room_id: ChatRoomId,
-    pub workflow_id: WorkflowId,
+  pub employer_id: LocalUserId,
+  pub post_id: PostId,
+  pub comment_id: Option<CommentId>,
+  pub seq_number: i16,
+  pub amount: Coin,
+  pub proposal: String,
+  pub project_name: String,
+  pub status: BillingStatus,
+  pub project_details: String,
+  pub working_days: i32,
+  pub deliverables: Vec<String>,
+  pub note: Option<String>,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub starting_day: NaiveDate, // ISO date string (YYYY-MM-DD)
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub delivery_day: NaiveDate, // ISO date string (YYYY-MM-DD)
+  pub room_id: ChatRoomId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,26 +38,26 @@ pub struct CreateInvoiceForm {
 #[serde(rename_all = "camelCase")]
 /// Create invoice/quotation for job (freelancer creates detailed proposal).
 pub struct CreateInvoiceRequest {
-    pub employer_id: LocalUserId,
-    pub post_id: PostId,
-    pub comment_id: Option<CommentId>,
-    pub seq_number: i16,
-    pub amount: Coin,
-    pub proposal: String,
-    pub project_name: String,
-    pub status: BillingStatus,
-    #[serde(default)]
-    pub project_details: String,
-    pub working_days: i32,
-    #[serde(default)]
-    pub deliverables: Vec<String>,
-    pub note: Option<String>,
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-    pub starting_day: NaiveDate, // ISO date string (YYYY-MM-DD)
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
-    pub delivery_day: NaiveDate, // ISO date string (YYYY-MM-DD)
-    pub room_id: ChatRoomId,
-    pub workflow_id: WorkflowId,
+  pub employer_id: LocalUserId,
+  pub post_id: PostId,
+  pub comment_id: Option<CommentId>,
+  pub seq_number: i16,
+  pub amount: Coin,
+  pub proposal: String,
+  pub project_name: String,
+  pub status: BillingStatus,
+  #[serde(default)]
+  pub project_details: String,
+  pub working_days: i32,
+  #[serde(default)]
+  pub deliverables: Vec<String>,
+  pub note: Option<String>,
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub starting_day: NaiveDate, // ISO date string (YYYY-MM-DD)
+  #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+  pub delivery_day: NaiveDate, // ISO date string (YYYY-MM-DD)
+  pub room_id: ChatRoomId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Clone)]
@@ -63,10 +65,10 @@ pub struct CreateInvoiceRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Approve quotation and convert to order (employer approves freelancer's quotation).
 pub struct ApproveQuotationForm {
-    pub seq_number: i16,
-    pub billing_id: BillingId,
-    pub wallet_id: WalletId,
-    pub workflow_id: WorkflowId,
+  pub seq_number: i16,
+  pub billing_id: BillingId,
+  pub wallet_id: WalletId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -75,10 +77,10 @@ pub struct ApproveQuotationForm {
 #[serde(rename_all = "camelCase")]
 /// Approve quotation and convert to order (employer approves freelancer's quotation).
 pub struct ApproveQuotationRequest {
-    pub seq_number: i16,
-    pub billing_id: BillingId,
-    pub wallet_id: WalletId,
-    pub workflow_id: WorkflowId,
+  pub seq_number: i16,
+  pub billing_id: BillingId,
+  pub wallet_id: WalletId,
+  pub workflow_id: WorkflowId,
 }
 
 #[derive(Debug, Clone)]
@@ -86,9 +88,9 @@ pub struct ApproveQuotationRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Start or init a workflow for a post/sequence in a chat room.
 pub struct StartWorkflowForm {
-    pub post_id: PostId,
-    pub seq_number: i16,
-    pub room_id: ChatRoomId,
+  pub post_id: PostId,
+  pub seq_number: i16,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -97,9 +99,9 @@ pub struct StartWorkflowForm {
 #[serde(rename_all = "camelCase")]
 /// Start or init a workflow for a post/sequence in a chat room.
 pub struct StartWorkflowRequest {
-    pub post_id: PostId,
-    pub seq_number: i16,
-    pub room_id: ChatRoomId,
+  pub post_id: PostId,
+  pub seq_number: i16,
+  pub room_id: ChatRoomId,
 }
 
 #[derive(Debug, Clone)]
@@ -107,10 +109,10 @@ pub struct StartWorkflowRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Submit completed work (freelancer starts work).
 pub struct SubmitStartWorkForm {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub work_description: String,
-    pub deliverable_url: Option<String>,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub work_description: String,
+  pub deliverable_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -119,10 +121,10 @@ pub struct SubmitStartWorkForm {
 #[serde(rename_all = "camelCase")]
 /// Submit completed work (freelancer starts work).
 pub struct SubmitStartWorkRequest {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub work_description: String,
-    pub deliverable_url: Option<String>,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub work_description: String,
+  pub deliverable_url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -130,10 +132,10 @@ pub struct SubmitStartWorkRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Approve work and release payment (employer approves).
 pub struct ApproveWorkForm {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub room_id: ChatRoomId,
-    pub billing_id: BillingId,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub room_id: ChatRoomId,
+  pub billing_id: BillingId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -142,10 +144,10 @@ pub struct ApproveWorkForm {
 #[serde(rename_all = "camelCase")]
 /// Approve work and release payment (employer approves).
 pub struct ApproveWorkRequest {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub room_id: ChatRoomId,
-    pub billing_id: BillingId,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub room_id: ChatRoomId,
+  pub billing_id: BillingId,
 }
 
 #[derive(Debug, Clone)]
@@ -153,9 +155,9 @@ pub struct ApproveWorkRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Request revision on a submitted work (employer requests changes from freelancer).
 pub struct RequestRevisionForm {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub reason: Option<String>,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -164,9 +166,9 @@ pub struct RequestRevisionForm {
 #[serde(rename_all = "camelCase")]
 /// Request revision on a submitted work (employer requests changes from freelancer).
 pub struct RequestRevisionRequest {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub reason: Option<String>,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -175,14 +177,14 @@ pub struct RequestRevisionRequest {
 #[serde(rename_all = "camelCase")]
 /// Response for creating an invoice.
 pub struct CreateInvoiceResponse {
-    pub billing_id: BillingId,
-    pub issuer_id: LocalUserId,
-    pub recipient_id: LocalUserId,
-    pub post_id: PostId,
-    pub amount: Coin,
-    pub status: BillingStatus,
-    pub created_at: String,
-    pub success: bool,
+  pub billing_id: BillingId,
+  pub issuer_id: LocalUserId,
+  pub recipient_id: LocalUserId,
+  pub post_id: PostId,
+  pub amount: Coin,
+  pub status: BillingStatus,
+  pub created_at: String,
+  pub success: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -191,9 +193,9 @@ pub struct CreateInvoiceResponse {
 #[serde(rename_all = "camelCase")]
 /// Response for billing operations.
 pub struct BillingOperationResponse {
-    pub billing_id: BillingId,
-    pub status: BillingStatus,
-    pub success: bool,
+  pub billing_id: BillingId,
+  pub status: BillingStatus,
+  pub success: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -201,8 +203,8 @@ pub struct BillingOperationResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Update the entire installments array for a given post.
 pub struct UpdateBudgetPlanInstallments {
-    pub post_id: PostId,
-    pub installments: Vec<WorkStep>,
+  pub post_id: PostId,
+  pub installments: Vec<WorkStep>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -211,8 +213,8 @@ pub struct UpdateBudgetPlanInstallments {
 #[serde(rename_all = "camelCase")]
 /// Update the entire installments array for a given post.
 pub struct UpdateBudgetPlanInstallmentsRequest {
-    pub post_id: PostId,
-    pub installments: Vec<WorkStep>,
+  pub post_id: PostId,
+  pub installments: Vec<WorkStep>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -221,8 +223,8 @@ pub struct UpdateBudgetPlanInstallmentsRequest {
 #[serde(rename_all = "camelCase")]
 /// Response for creating an invoice.
 pub struct UpdateBudgetPlanInstallmentsResponse {
-    pub budget_plan: JobBudgetPlan,
-    pub success: bool,
+  pub budget_plan: JobBudgetPlan,
+  pub success: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -230,10 +232,10 @@ pub struct UpdateBudgetPlanInstallmentsResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Cancel a workflow job
 pub struct CancelJobForm {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub reason: Option<String>,
-    pub current_status: WorkFlowStatus,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub reason: Option<String>,
+  pub current_status: WorkFlowStatus,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -242,15 +244,15 @@ pub struct CancelJobForm {
 #[serde(rename_all = "camelCase")]
 /// Cancel a workflow job
 pub struct CancelJobRequest {
-    pub seq_number: i16,
-    pub workflow_id: WorkflowId,
-    pub reason: Option<String>,
-    pub current_status: WorkFlowStatus,
+  pub seq_number: i16,
+  pub workflow_id: WorkflowId,
+  pub reason: Option<String>,
+  pub current_status: WorkFlowStatus,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetBillingByRoomQuery {
-    pub room_id: ChatRoomId,
-    pub billing_status: Option<BillingStatus>,
+  pub room_id: ChatRoomId,
+  pub billing_status: Option<BillingStatus>,
 }

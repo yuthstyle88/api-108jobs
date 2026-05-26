@@ -1,12 +1,19 @@
 use crate::{
-    diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
-    newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
-    source::person::{
+  diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
+  newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
+  source::person::{
     Person, PersonActions, PersonBlockForm, PersonFollowerForm, PersonInsertForm, PersonNoteForm,
     PersonUpdateForm,
   },
-    traits::{ApubActor, Blockable, Crud, Followable},
-    utils::{functions::lower, get_conn, uplete, DbPool},
+  traits::{ApubActor, Blockable, Crud, Followable},
+  utils::{functions::lower, get_conn, uplete, DbPool},
+};
+use app_108jobs_db_schema_file::schema::{
+  instance, instance_actions, local_user, person, person_actions,
+};
+use app_108jobs_utils::{
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
 };
 use chrono::Utc;
 use diesel::{
@@ -15,13 +22,6 @@ use diesel::{
   ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::{
-  instance, instance_actions, local_user, person, person_actions,
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-};
 use url::Url;
 
 impl Crud for Person {
@@ -200,8 +200,39 @@ impl Person {
 }
 
 impl PersonInsertForm {
+  /// **Deprecated test helper.** Returns a form with `wallet_id = None`.
+  /// Inserting the resulting row violates the `person.wallet_id NOT NULL`
+  /// constraint added in migration `2025-08-02-085207`. Use
+  /// [`PersonInsertForm::test_form_with_wallet`] in any test that actually
+  /// inserts the form. Retained for source-compat with the ~30 db_views
+  /// tests that still reference it but never run cleanly today.
+  #[deprecated(
+    note = "produces a form with NULL wallet_id which violates the schema; use \
+            PersonInsertForm::test_form_with_wallet(pool, instance_id, name) instead"
+  )]
   pub fn test_form(instance_id: InstanceId, name: &str) -> Self {
     Self::new(name.to_owned(), Some("pubkey".to_string()), instance_id)
+  }
+
+  /// Wallet-aware test fixture. Creates a fresh user wallet on the supplied
+  /// pool, then returns a `PersonInsertForm` ready to be inserted alongside
+  /// the post-wallet schema.
+  ///
+  /// Returns the freshly-created [`Wallet`] alongside the form so fixtures
+  /// that need the wallet object (e.g. to fund the account) get it without a
+  /// follow-up DB read.
+  pub async fn test_form_with_wallet(
+    pool: &mut DbPool<'_>,
+    instance_id: InstanceId,
+    name: &str,
+  ) -> FastJobResult<(Self, crate::source::wallet::Wallet)> {
+    let wallet = {
+      let conn = &mut get_conn(pool).await?;
+      crate::source::wallet::WalletModel::create_for_user(conn).await?
+    };
+    let mut form = Self::new(name.to_owned(), Some("pubkey".to_string()), instance_id);
+    form.wallet_id = Some(wallet.id);
+    Ok((form, wallet))
   }
 }
 
@@ -514,9 +545,11 @@ mod tests {
     let pool = &mut pool.into();
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let person_form_1 = PersonInsertForm::test_form(inserted_instance.id, "erich");
+    let (person_form_1, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "erich").await?;
     let person_1 = Person::create(pool, &person_form_1).await?;
-    let person_form_2 = PersonInsertForm::test_form(inserted_instance.id, "michele");
+    let (person_form_2, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "michele").await?;
     let person_2 = Person::create(pool, &person_form_2).await?;
 
     let follow_form = PersonFollowerForm::new(person_1.id, person_2.id, false);

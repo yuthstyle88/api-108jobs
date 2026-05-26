@@ -2,16 +2,11 @@ use super::not_zero;
 use crate::site::{application_question_check, site_default_post_listing_type_check};
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
-    generate_inbox_url,
-    get_url_blocklist,
-    is_admin,
-    local_site_rate_limit_to_rate_limit_config,
-    process_markdown_opt,
-    slur_regex,
+    generate_inbox_url, get_url_blocklist, is_admin, local_site_rate_limit_to_rate_limit_config,
+    process_markdown_opt, slur_regex,
   },
 };
 use app_108jobs_db_schema::{
@@ -34,13 +29,12 @@ use app_108jobs_utils::{
   utils::{
     slurs::check_slurs,
     validation::{
-      build_and_check_regex,
-      is_valid_body_field,
-      site_name_length_check,
+      build_and_check_regex, is_valid_body_field, site_name_length_check,
       site_or_category_description_length_check,
     },
   },
 };
+use chrono::Utc;
 use url::Url;
 
 pub async fn create_site(
@@ -104,7 +98,6 @@ pub async fn create_site(
     ..Default::default()
   };
 
-
   LocalSite::update(&mut context.pool(), &local_site_form).await?;
 
   let local_site_rate_limit_form = LocalSiteRateLimitUpdateForm {
@@ -138,7 +131,10 @@ pub async fn create_site(
   Ok(Json(SiteResponse { site_view }))
 }
 
-fn validate_create_payload(local_site: &LocalSite, create_site: &CreateSiteRequest) -> FastJobResult<()> {
+fn validate_create_payload(
+  local_site: &LocalSite,
+  create_site: &CreateSiteRequest,
+) -> FastJobResult<()> {
   // Make sure the site hasn't already been set up...
   if local_site.site_setup {
     Err(FastJobErrorType::SiteAlreadyExists)?

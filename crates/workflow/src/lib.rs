@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use app_108jobs_db_schema::newtypes::WorkflowId;
 use app_108jobs_db_schema::source::workflow::WorkflowUpdateForm;
 use app_108jobs_db_schema_file::enums::WorkFlowStatus;
+use serde::{Deserialize, Serialize};
 
 mod api;
 mod impls;
@@ -15,21 +15,31 @@ pub use crate::impls::WorkflowService;
 
 // Domain transitions used by apply_transition()
 #[allow(dead_code)]
-struct FundEscrowTransition { pub form: WorkflowUpdateForm }
+struct FundEscrowTransition {
+  pub form: WorkflowUpdateForm,
+}
 #[allow(dead_code)]
-struct ReleaseToFreelancerTransition { pub form: WorkflowUpdateForm }
+struct ReleaseToFreelancerTransition {
+  pub form: WorkflowUpdateForm,
+}
 #[allow(dead_code)]
-struct ReleaseRemainingTransition { pub form: WorkflowUpdateForm }
+struct ReleaseRemainingTransition {
+  pub form: WorkflowUpdateForm,
+}
 #[allow(dead_code)]
-struct SubmitWorkTransition { pub form: WorkflowUpdateForm }
+struct SubmitWorkTransition {
+  pub form: WorkflowUpdateForm,
+}
 #[allow(dead_code)]
-struct CancelTransition { pub form: WorkflowUpdateForm }
+struct CancelTransition {
+  pub form: WorkflowUpdateForm,
+}
 // NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-pub struct WorkFlowOperationResponse{
+pub struct WorkFlowOperationResponse {
   pub workflow_id: WorkflowId,
   pub status: WorkFlowStatus,
   pub success: bool,

@@ -43,7 +43,8 @@ pub async fn list_person_hidden(
   };
 
   // Batch load logistics for all posts
-  let hidden = load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
+  let hidden =
+    load_logistics_for_post_views(post_views, &mut context.pool(), viewer, is_admin).await?;
 
   Ok(Json(ListPersonHiddenResponse {
     hidden,

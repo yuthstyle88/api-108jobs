@@ -11,8 +11,7 @@ use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
 use app_108jobs_utils::error::FastJobResult;
 use app_108jobs_utils::redis::{AsyncCommands, RedisClient};
 use app_108jobs_utils::utils::keys::{
-  contacts_key, presence_conn_count_key, presence_conn_key, rooms_key,
-  user_events_topic,
+  contacts_key, presence_conn_count_key, presence_conn_key, rooms_key, user_events_topic,
 };
 use chrono::{DateTime, Utc};
 use serde_json::json;

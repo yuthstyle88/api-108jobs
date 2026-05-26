@@ -1,10 +1,5 @@
 use crate::LocalUserView;
 use actix_web::{dev::Payload, FromRequest, HttpMessage, HttpRequest};
-use diesel::{
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::utils::limit_fetch;
 use app_108jobs_db_schema::{
   aliases::creator_home_instance_actions,
@@ -24,6 +19,11 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 use std::future::{ready, Ready};
 
 impl LocalUserView {

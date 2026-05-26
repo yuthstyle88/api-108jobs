@@ -6,8 +6,8 @@ use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::TripStatusEvent;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_views_site::api::SuccessResponse;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// POST /api/v4/deliveries/{postId}/confirm
 ///

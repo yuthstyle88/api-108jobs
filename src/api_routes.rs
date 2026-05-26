@@ -2,7 +2,8 @@ use actix_web::{guard, web::*};
 use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
 use app_108jobs_api::admin::currency::{
   admin_create_currency, admin_create_pricing_config, admin_get_currency, admin_get_pricing_config,
-  admin_list_currencies, admin_list_pricing_configs, admin_update_currency, admin_update_pricing_config,
+  admin_list_currencies, admin_list_pricing_configs, admin_update_currency,
+  admin_update_pricing_config,
 };
 use app_108jobs_api::admin::platform::{admin_get_platform_assets, admin_get_platform_balance};
 use app_108jobs_api::admin::wallet::{
@@ -15,9 +16,14 @@ use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
 use app_108jobs_api::delivery::list::{
   get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
 };
-use app_108jobs_api::delivery::location::{post_location as post_trip_location, get_location as get_trip_location};
+use app_108jobs_api::delivery::location::{
+  get_location as get_trip_location, post_location as post_trip_location,
+};
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
-use app_108jobs_api::delivery::ride::{cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config, list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status};
+use app_108jobs_api::delivery::ride::{
+  cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config,
+  list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status,
+};
 use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
@@ -167,10 +173,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
     .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
     // WS endpoints for trip tracking (shared by delivery and ride taxi)
-    .service(scope("/ws").route(
-      "/trips/{postId}/location",
-      get().to(trip_location_ws),
-    ))
+    .service(scope("/ws").route("/trips/{postId}/location", get().to(trip_location_ws)))
     .service(
       scope("/api/v4")
         // .wrap(rate_limit.message())
@@ -266,7 +269,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/my-sessions", get().to(list_my_ride_sessions))
             .route("/available", get().to(list_available_rides))
             .route("/{sessionId}/confirm", post().to(confirm_ride_assignment))
-            .route("/{sessionId}/pricing-config", get().to(get_ride_pricing_config))
+            .route(
+              "/{sessionId}/pricing-config",
+              get().to(get_ride_pricing_config),
+            )
             .route("/{sessionId}/meter", put().to(update_ride_meter))
             .route("/{sessionId}/status", put().to(update_ride_status))
             .route("/{sessionId}/cancel", post().to(cancel_ride_session)),
@@ -303,9 +309,16 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         // User
         .service(
           scope("/account/auth")
-            // .wrap(rate_limit.register())
-            .route("/register", post().to(register))
-            .route("/login", post().to(login))
+            .service(
+              resource("/register")
+                .wrap(rate_limit.register())
+                .route(post().to(register)),
+            )
+            .service(
+              resource("/login")
+                .wrap(rate_limit.login())
+                .route(post().to(login)),
+            )
             .route("/logout", post().to(logout))
             .route("/password-reset", post().to(reset_password))
             .route("/password-change", post().to(change_password_after_reset))

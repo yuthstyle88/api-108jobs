@@ -1,8 +1,8 @@
 use crate::{CategoryNodeView, CategoryView};
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, LanguageId, PaginationCursor, TagId},
-    source::site::Site,
-    CategorySortType,
+  newtypes::{CategoryId, LanguageId, PaginationCursor, TagId},
+  source::site::Site,
+  CategorySortType,
 };
 use app_108jobs_db_schema_file::enums::{CategoryVisibility, ListingType};
 use serde::{Deserialize, Serialize};

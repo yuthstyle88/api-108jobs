@@ -18,6 +18,7 @@ use app_108jobs_api::delivery::list::{
 };
 use app_108jobs_api::delivery::location::{
   get_location as get_trip_location, post_location as post_trip_location,
+  post_locations_bulk as post_trip_locations_bulk,
 };
 use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
 use app_108jobs_api::delivery::ride::{
@@ -32,6 +33,7 @@ use app_108jobs_api::local_user::bank_account::{
 use app_108jobs_api::local_user::exchange::exchange_key;
 use app_108jobs_api::local_user::list_top_up_requests::list_top_up_requests;
 use app_108jobs_api::local_user::profile::visit_profile;
+use app_108jobs_api::local_user::refresh::refresh_token;
 use app_108jobs_api::local_user::review::{list_user_reviews, submit_user_review};
 use app_108jobs_api::local_user::update_term::update_term;
 use app_108jobs_api::local_user::wallet::get_wallet;
@@ -115,6 +117,7 @@ use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
 use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
 use app_108jobs_api_crud::rider::create::create_rider;
 use app_108jobs_api_crud::rider::list::list_riders;
+use app_108jobs_api_crud::rider::profile::{heartbeat, set_accepting, set_online, update_rider};
 use app_108jobs_api_crud::rider::read::get_rider;
 use app_108jobs_api_crud::rider::update::admin_verify_rider;
 use app_108jobs_api_crud::site::read::health;
@@ -258,6 +261,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/cancelled", get().to(get_cancelled_deliveries))
             .route("/{postId}/location", post().to(post_trip_location))
             .route("/{postId}/location", get().to(get_trip_location))
+            .route(
+              "/{postId}/locations/bulk",
+              post().to(post_trip_locations_bulk),
+            )
             .route("/{postId}/status", put().to(update_delivery_status))
             .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
             .route("/{postId}/confirm", post().to(confirm_delivery_completion)),
@@ -320,6 +327,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route(post().to(login)),
             )
             .route("/logout", post().to(logout))
+            .route("/refresh", post().to(refresh_token))
             .route("/password-reset", post().to(reset_password))
             .route("/password-change", post().to(change_password_after_reset))
             .route("/change-password", put().to(change_password))
@@ -334,6 +342,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               post().to(resend_verification_email),
             ),
         )
+        // Compat alias: current clients call `/auth/refresh` (missing the
+        // `/account` prefix). Canonical route is `/account/auth/refresh`.
+        .route("/auth/refresh", post().to(refresh_token))
         .route("/files/{user_id}/{filename}", get().to(get_file))
         .service(
           scope("/account")
@@ -533,6 +544,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/riders")
             .route("/profile", post().to(create_rider))
             .route("/profile", get().to(get_rider)) // this is for get current rider profile
+            .route("/profile", put().to(update_rider)) // rider updates own profile
+            .route("/status/online", patch().to(set_online))
+            .route("/status/accepting", patch().to(set_accepting))
+            .route("/heartbeat", post().to(heartbeat))
             .route("/profile/{id}", get().to(get_rider))
             .route("/rate", post().to(rate_rider))
             .route("/{riderId}/ratings", get().to(get_rider_ratings)),

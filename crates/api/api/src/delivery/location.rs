@@ -46,6 +46,20 @@ pub struct GetCurrentLocationResponse {
   pub current: Option<TripLocationCurrent>,
 }
 
+/// Body for `POST /deliveries/{postId}/locations/bulk`.
+/// snake_case to match the single-location endpoint (no `rename_all`).
+#[derive(Debug, Deserialize)]
+pub struct LocationBulkUpdate {
+  pub items: Vec<LocationUpdate>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BulkLocationResponse {
+  /// How many points were accepted and persisted.
+  pub accepted: usize,
+}
+
 /// POST /api/deliveries/{postId}/location
 pub async fn post_location(
   path: Path<PostId>,
@@ -110,6 +124,85 @@ pub async fn post_location(
   }
 
   Ok(Json(())) // → 204 No Content
+}
+
+/// POST /api/deliveries/{postId}/locations/bulk
+/// Batch endpoint for backfilling a trail of points (e.g. when a rider's app
+/// reconnects after losing signal). Mirrors `post_location` per item: validates
+/// the rider once, persists every point to the history trail, publishes each to
+/// the Redis channel, and caches the most-recent point as the current location.
+pub async fn post_locations_bulk(
+  path: Path<PostId>,
+  data: Json<LocationBulkUpdate>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<BulkLocationResponse>> {
+  let post_id = path.into_inner();
+  let person_id = local_user_view.person.id;
+
+  // Verify that the authenticated user is the assigned rider for this delivery
+  let rider_id = {
+    let mut pool = context.pool();
+    DeliveryDetails::validate_rider_identity(&mut pool, person_id, post_id).await?
+  };
+
+  let mut redis = context.redis().clone();
+  let channel = format!("trip:loc:{}", post_id);
+
+  let mut accepted = 0usize;
+  let mut last_event: Option<LocationEvent> = None;
+
+  for item in &data.items {
+    // Skip invalid coordinates rather than failing the whole batch.
+    if !item.lat.is_finite() || !item.lng.is_finite() {
+      continue;
+    }
+
+    let event = LocationEvent {
+      kind: "location_update".to_string(),
+      post_id,
+      rider_id,
+      lat: item.lat,
+      lng: item.lng,
+      heading: item.heading,
+      speed_kmh: item.speed_kmh,
+      accuracy_m: item.accuracy_m,
+      ts: item.ts.unwrap_or_else(Utc::now),
+    };
+
+    // Persist – best-effort (do not fail the HTTP request on DB error)
+    if let Err(e) = persist_location(&context, &event).await {
+      tracing::warn!(
+          ?e,
+          post_id = %post_id,
+          rider_id = %rider_id,
+          "Failed to persist bulk location point"
+      );
+    }
+
+    // Publish each point so live listeners get the full replay
+    if let Ok(json) = serde_json::to_string(&event) {
+      if let Err(e) = redis.publish(&channel, &json).await {
+        tracing::warn!(?e, channel = %channel, "Redis publish failed");
+      }
+    }
+
+    accepted += 1;
+    last_event = Some(event);
+  }
+
+  // Cache the most-recent point as the current location (24h TTL)
+  if let Some(event) = &last_event {
+    let cache_key = format!("trip:current:{}", post_id);
+    if let Err(e) = redis
+      .set_value_with_expiry(&cache_key, event, 24 * 3600)
+      .await
+    {
+      tracing::warn!(?e, key = %cache_key, "Failed to cache current location");
+    }
+  }
+
+  Ok(Json(BulkLocationResponse { accepted }))
 }
 
 /// GET /api/deliveries/{postId}/location

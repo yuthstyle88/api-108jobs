@@ -49,6 +49,38 @@ pub struct GetRiderResponse {
   pub rider_view: RiderView,
 }
 
+/// Request body for a rider updating their own profile (`PUT /riders/profile`).
+///
+/// Only editable vehicle/licence fields are accepted; verification, performance
+/// and earnings fields are server-controlled and ignored if sent. A `None`
+/// field means "leave unchanged" (the client sends the full `Rider` object, so
+/// omitted-vs-null cannot be distinguished — we keep existing values to avoid
+/// accidental wipes).
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateRiderRequest {
+  pub vehicle_type: Option<VehicleType>,
+  pub vehicle_plate_number: Option<String>,
+  pub license_number: Option<String>,
+  pub license_expiry_date: Option<DateTime<Utc>>,
+}
+
+/// Request body for toggling a rider's online presence
+/// (`PATCH /riders/status/online`).
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SetOnlineRequest {
+  pub is_online: bool,
+}
+
+/// Request body for toggling whether a rider is accepting jobs
+/// (`PATCH /riders/status/accepting`).
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SetAcceptingRequest {
+  pub accepting_jobs: bool,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListRidersQuery {

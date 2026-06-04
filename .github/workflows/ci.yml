@@ -80,11 +80,9 @@ jobs:
   test:
     name: cargo test
     runs-on: ubuntu-latest
-    # Non-blocking: the test suite does not currently compile on `main`
-    # (pre-existing breakage, e.g. `ModAddcategory` / `categoryReportForm`).
-    # Once the workspace tests compile again, drop continue-on-error so this
-    # becomes the enforced gate.
-    continue-on-error: true
+    # Enforced gate: the workspace test suite compiles again (the
+    # `ModAddcategory` / `categoryReportForm` botched-rename breakage in the
+    # db_views test modules has been restored), so a failing test now fails CI.
 
     services:
       # 15-alpine is required by the diesel schema tests (see .woodpecker.yml).

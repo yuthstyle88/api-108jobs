@@ -635,7 +635,7 @@ mod tests {
     newtypes::LanguageId,
     source::{
       actor_language::LocalUserLanguage,
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm, CategoryUpdateForm},
       comment::{Comment, CommentInsertForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
@@ -654,7 +654,7 @@ mod tests {
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use app_108jobs_db_views_local_user::LocalUserView;
   use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use chrono::Utc;
@@ -684,7 +684,7 @@ mod tests {
     tegan: LocalUserView,
     john: LocalUserView,
     bot: LocalUserView,
-    category: category,
+    category: Category,
     post: Post,
     bot_post: Post,
     post_with_tags: Post,
@@ -739,7 +739,7 @@ mod tests {
         "test_category_3".to_string(),
         "nada".to_owned(),
       );
-      let category = category::create(pool, &new_category).await?;
+      let category = Category::create(pool, &new_category).await?;
 
       // Test a person block, make sure the post query doesn't include their post
       let john_person_form = PersonInsertForm::test_form(data.instance.id, "john");
@@ -789,22 +789,25 @@ mod tests {
       // A sample post
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
-        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id, category.id)
+        category_id: Some(category.id),
+        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id)
       };
 
       let post = Post::create(pool, &new_post).await?;
 
-      let new_bot_post =
-        PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id, category.id);
+      let new_bot_post = PostInsertForm {
+        category_id: Some(category.id),
+        ..PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id)
+      };
       let bot_post = Post::create(pool, &new_bot_post).await?;
 
       // A sample post with tags
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
+        category_id: Some(category.id),
         ..PostInsertForm::new(
           POST_WITH_TAGS.to_string(),
           inserted_tegan_person.id,
-          category.id,
         )
       };
 
@@ -856,7 +859,7 @@ mod tests {
     async fn teardown(data: Data) -> FastJobResult<()> {
       let pool = &mut data.pool2();
       let num_deleted = Post::delete(pool, data.post.id).await?;
-      category::delete(pool, data.category.id).await?;
+      Category::delete(pool, data.category.id).await?;
       Person::delete(pool, data.tegan.person.id).await?;
       Person::delete(pool, data.bot.person.id).await?;
       Person::delete(pool, data.john.person.id).await?;
@@ -1085,11 +1088,10 @@ mod tests {
     let pool = &mut pool.into();
 
     // Create a 2nd bot post, to do multiple votes
-    let bot_post_2 = PostInsertForm::new(
-      "Bot post 2".to_string(),
-      data.bot.person.id,
-      data.category.id,
-    );
+    let bot_post_2 = PostInsertForm {
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new("Bot post 2".to_string(), data.bot.person.id)
+    };
     let bot_post_2 = Post::create(pool, &bot_post_2).await?;
 
     let post_like_form = PostLikeForm::new(data.bot_post.id, data.tegan.person.id, 1);
@@ -1377,7 +1379,8 @@ mod tests {
 
     let post_spanish = PostInsertForm {
       language_id: Some(spanish_id),
-      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id, data.category.id)
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id)
     };
     Post::create(pool, &post_spanish).await?;
 
@@ -1520,14 +1523,14 @@ mod tests {
       "test_category_4".to_string(),
       "none".to_owned(),
     );
-    let inserted_category = category::create(pool, &category_form).await?;
+    let inserted_category = Category::create(pool, &category_form).await?;
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
+      category_id: Some(inserted_category.id),
       ..PostInsertForm::new(
         POST_FROM_BLOCKED_INSTANCE.to_string(),
         data.bot.person.id,
-        inserted_category.id,
       )
     };
     let post_from_blocked_instance = Post::create(pool, &post_form).await?;
@@ -1568,7 +1571,7 @@ mod tests {
 
     let category_form =
       CategoryInsertForm::new(data.instance.id, "yes".to_string(), "yes".to_owned());
-    let inserted_category = category::create(pool, &category_form).await?;
+    let inserted_category = Category::create(pool, &category_form).await?;
 
     let mut inserted_post_ids = vec![];
     let mut inserted_comment_ids = vec![];
@@ -1581,10 +1584,10 @@ mod tests {
           featured_local: Some((comments % 2) == 0),
           featured_category: Some((comments % 2) == 0),
           published_at: Some(Utc::now() - Duration::from_secs(comments % 3)),
+          category_id: Some(inserted_category.id),
           ..PostInsertForm::new(
             "keep Christ in Christmas".to_owned(),
             data.tegan.person.id,
-            inserted_category.id,
           )
         };
         let inserted_post = Post::create(pool, &post_form).await?;
@@ -1658,7 +1661,7 @@ mod tests {
 
     assert_eq!(inserted_post_ids, listed_post_ids);
 
-    category::delete(pool, inserted_category.id).await?;
+    Category::delete(pool, inserted_category.id).await?;
     Ok(())
   }
 
@@ -1813,11 +1816,11 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    category::update(
+    Category::update(
       pool,
       data.category.id,
-      &categoryUpdateForm {
-        visibility: Some(categoryVisibility::LocalOnlyPrivate),
+      &CategoryUpdateForm {
+        visibility: Some(CategoryVisibility::LocalOnlyPrivate),
         ..Default::default()
       },
     )
@@ -1921,10 +1924,10 @@ mod tests {
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         "banned person post".to_string(),
         banned_person.id,
-        data.category.id,
       )
     };
     let banned_post = Post::create(pool, &post_form).await?;
@@ -1975,7 +1978,8 @@ mod tests {
 
       let post_form = PostInsertForm {
         url,
-        ..PostInsertForm::new(name, data.tegan.person.id, data.category.id)
+        category_id: Some(data.category.id),
+        ..PostInsertForm::new(name, data.tegan.person.id)
       };
       Post::create(pool, &post_form).await?;
     }
@@ -2017,11 +2021,11 @@ mod tests {
     let pool = &mut pool.into();
 
     // Mark category as private
-    category::update(
+    Category::update(
       pool,
       data.category.id,
-      &categoryUpdateForm {
-        visibility: Some(categoryVisibility::Private),
+      &CategoryUpdateForm {
+        visibility: Some(CategoryVisibility::Private),
         ..Default::default()
       },
     )
@@ -2171,34 +2175,36 @@ mod tests {
     let name_not_blocked = "post_with_name_not_blocked".to_string();
     let name_not_blocked2 = "post_with_name_not_blocked2".to_string();
 
-    let post_name_blocked =
-      PostInsertForm::new(name_blocked.clone(), data.tegan.person.id, data.category.id);
+    let post_name_blocked = PostInsertForm {
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new(name_blocked.clone(), data.tegan.person.id)
+    };
 
     let post_body_blocked = PostInsertForm {
       body: Some(body),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_not_blocked.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
 
     let post_url_blocked = PostInsertForm {
       url,
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_not_blocked2.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
 
     let post_name_blocked_but_not_body_and_url = PostInsertForm {
       body: Some("Some body".to_string()),
       url: Some(Url::parse("https://google.com")?.into()),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_blocked2.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
     Post::create(pool, &post_name_blocked).await?;
@@ -2266,9 +2272,12 @@ mod tests {
       "test_category_4".to_string(),
       "nada".to_owned(),
     );
-    let category_1 = category::create(pool, &form).await?;
+    let category_1 = Category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_1.id);
+    let form = PostInsertForm {
+      category_id: Some(category_1.id),
+      ..PostInsertForm::new(POST.to_string(), data.tegan.person.id)
+    };
     let post_1 = Post::create(pool, &form).await?;
 
     let form = CategoryInsertForm::new(
@@ -2276,9 +2285,12 @@ mod tests {
       "test_category_5".to_string(),
       "nada".to_owned(),
     );
-    let category_2 = category::create(pool, &form).await?;
+    let category_2 = Category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_2.id);
+    let form = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new(POST.to_string(), data.tegan.person.id)
+    };
     let post_2 = Post::create(pool, &form).await?;
 
     let listing = PostQuery {
@@ -2289,7 +2301,7 @@ mod tests {
 
     let listing_communities = listing
       .iter()
-      .map(|l| l.category.id)
+      .map(|l| l.category.as_ref().unwrap().id)
       .collect::<HashSet<_>>();
     assert_eq!(
       HashSet::from([category_1.id, category_2.id]),

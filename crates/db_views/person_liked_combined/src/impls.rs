@@ -254,7 +254,7 @@ mod tests {
   use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
@@ -300,15 +300,24 @@ mod tests {
       "test category pcv".to_string(),
       "nada".to_owned(),
     );
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
-    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
+    let timmy_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
+    };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
+    let timmy_post_form_2 = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
+    };
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category.id);
+    let sara_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("sara post prv".into(), sara.id)
+    };
     let _sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =

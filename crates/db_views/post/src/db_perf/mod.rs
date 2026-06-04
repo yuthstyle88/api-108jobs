@@ -3,7 +3,7 @@ mod series;
 use crate::{db_perf::series::ValuesFromSeries, impls::PostQuery, PostView};
 use app_108jobs_db_schema::{
   source::{
-    category::{category, CategoryInsertForm},
+    category::{category, Category, CategoryInsertForm},
     instance::Instance,
     person::{Person, PersonInsertForm},
     site::Site,
@@ -77,7 +77,7 @@ async fn db_perf() -> FastJobResult<()> {
   let mut category_ids = vec![];
   for i in 0..args.communities.get() {
     let form = CategoryInsertForm::new(instance.id, format!("c{i}"), i.to_string());
-    category_ids.push(category::create(&mut conn.into(), &form).await?.id);
+    category_ids.push(Category::create(&mut conn.into(), &form).await?.id);
   }
 
   let post_batches = args.people.get() * args.communities.get();
@@ -98,7 +98,7 @@ async fn db_perf() -> FastJobResult<()> {
           selection: (
             "AAAAAAAAAAA".into_sql::<sql_types::Text>(),
             person_id.into_sql::<sql_types::Integer>(),
-            category_id.into_sql::<sql_types::Integer>(),
+            category_id.into_sql::<sql_types::Nullable<sql_types::Integer>>(),
             series::current_value.eq(1),
             now()
               - sql::<sql_types::Interval>("make_interval(secs => ")

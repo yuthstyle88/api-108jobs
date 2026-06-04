@@ -574,22 +574,22 @@ mod tests {
   use app_108jobs_db_schema::{
     newtypes::PersonId,
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::Instance,
       mod_log::{
         admin::{
           AdminAllowInstance, AdminAllowInstanceForm, AdminBlockInstance, AdminBlockInstanceForm,
           AdminPurgeComment, AdminPurgeCommentForm, AdminPurgePerson, AdminPurgePersonForm,
-          AdminPurgePost, AdminPurgePostForm, AdminPurgecategory, AdminPurgecategoryForm,
+          AdminPurgePost, AdminPurgePostForm, AdminPurgeCategory, AdminPurgeCategoryForm,
         },
         moderator::{
-          ModAdd, ModAddForm, ModAddcategory, ModAddcategoryForm, ModBan, ModBanForm,
-          ModBanFromcategory, ModBanFromcategoryForm, ModChangecategoryVisibility,
-          ModChangecategoryVisibilityForm, ModFeaturePost, ModFeaturePostForm, ModLockPost,
+          ModAdd, ModAddForm, ModAddCategory, ModAddCategoryForm, ModBan, ModBanForm,
+          ModBanFromCategory, ModBanFromCategoryForm, ModChangeCategoryVisibility,
+          ModChangeCategoryVisibilityForm, ModFeaturePost, ModFeaturePostForm, ModLockPost,
           ModLockPostForm, ModRemoveComment, ModRemoveCommentForm, ModRemovePost,
-          ModRemovePostForm, ModRemovecategory, ModRemovecategoryForm, ModTransferCategory,
-          ModTransfercategoryForm,
+          ModRemovePostForm, ModRemoveCategory, ModRemoveCategoryForm, ModTransferCategory,
+          ModTransferCategoryForm,
         },
       },
       person::{Person, PersonInsertForm},
@@ -599,7 +599,7 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     ModlogActionType,
   };
-  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
@@ -609,8 +609,8 @@ mod tests {
     timmy: Person,
     sara: Person,
     jessica: Person,
-    category: category,
-    category_2: category,
+    category: Category,
+    category_2: Category,
     post: Post,
     post_2: Post,
     comment: Comment,
@@ -634,19 +634,25 @@ mod tests {
       "test category crv".to_string(),
       "nada".to_owned(),
     );
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
     let category_form_2 = CategoryInsertForm::new(
       instance.id,
       "test category crv 2".to_string(),
       "nada".to_owned(),
     );
-    let category_2 = category::create(pool, &category_form_2).await?;
+    let category_2 = Category::create(pool, &category_form_2).await?;
 
-    let post_form = PostInsertForm::new("A test post crv".into(), timmy.id, category.id);
+    let post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("A test post crv".into(), timmy.id)
+    };
     let post = Post::create(pool, &post_form).await?;
 
-    let new_post_2 = PostInsertForm::new("A test post crv 2".into(), sara.id, category_2.id);
+    let new_post_2 = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new("A test post crv 2".into(), sara.id)
+    };
     let post_2 = Post::create(pool, &new_post_2).await?;
 
     // Timmy creates a comment
@@ -708,11 +714,11 @@ mod tests {
     };
     AdminPurgeComment::create(pool, &form).await?;
 
-    let form = AdminPurgecategoryForm {
+    let form = AdminPurgeCategoryForm {
       admin_person_id: data.timmy.id,
       reason: None,
     };
-    AdminPurgecategory::create(pool, &form).await?;
+    AdminPurgeCategory::create(pool, &form).await?;
 
     let form = AdminPurgePersonForm {
       admin_person_id: data.timmy.id,
@@ -727,25 +733,25 @@ mod tests {
     };
     AdminPurgePost::create(pool, &form).await?;
 
-    let form = ModChangecategoryVisibilityForm {
+    let form = ModChangeCategoryVisibilityForm {
       mod_person_id: data.timmy.id,
       category_id: data.category.id,
-      visibility: categoryVisibility::Unlisted,
+      visibility: CategoryVisibility::Unlisted,
     };
-    ModChangecategoryVisibility::create(pool, &form).await?;
+    ModChangeCategoryVisibility::create(pool, &form).await?;
 
     // A 2nd mod hide category, but to a different category, and with jessica
-    let form = ModChangecategoryVisibilityForm {
+    let form = ModChangeCategoryVisibilityForm {
       mod_person_id: data.jessica.id,
       category_id: data.category_2.id,
-      visibility: categoryVisibility::Unlisted,
+      visibility: CategoryVisibility::Unlisted,
     };
-    ModChangecategoryVisibility::create(pool, &form).await?;
+    ModChangeCategoryVisibility::create(pool, &form).await?;
 
     let modlog = ModlogCombinedQuery::default().list(pool).await?;
     assert_eq!(8, modlog.len());
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog[0] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog[0] {
       assert_eq!(
         data.category_2.id,
         v.mod_change_category_visibility.category_id
@@ -759,7 +765,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog[1] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog[1] {
       assert_eq!(
         data.category.id,
         v.mod_change_category_visibility.category_id
@@ -775,7 +781,7 @@ mod tests {
 
     if let ModlogCombinedView::AdminPurgePost(v) = &modlog[2] {
       assert_eq!(data.category.id, v.admin_purge_post.category_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.admin.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -793,7 +799,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::AdminPurgecategory(v) = &modlog[4] {
+    if let ModlogCombinedView::AdminPurgeCategory(v) = &modlog[4] {
       assert_eq!(
         data.timmy.id,
         v.admin.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -868,7 +874,7 @@ mod tests {
     // 2 of these, one is jessicas
     assert_eq!(2, modlog_type_filter.len());
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog_type_filter[0] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog_type_filter[0] {
       assert_eq!(
         data.category_2.id,
         v.mod_change_category_visibility.category_id
@@ -882,7 +888,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog_type_filter[1] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog_type_filter[1] {
       assert_eq!(
         data.category.id,
         v.mod_change_category_visibility.category_id
@@ -915,13 +921,13 @@ mod tests {
     };
     ModAdd::create(pool, &form).await?;
 
-    let form = ModAddcategoryForm {
+    let form = ModAddCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
       removed: Some(false),
     };
-    ModAddcategory::create(pool, &form).await?;
+    ModAddCategory::create(pool, &form).await?;
 
     let form = ModBanForm {
       mod_person_id: data.timmy.id,
@@ -933,7 +939,7 @@ mod tests {
     };
     ModBan::create(pool, &form).await?;
 
-    let form = ModBanFromcategoryForm {
+    let form = ModBanFromCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
@@ -941,7 +947,7 @@ mod tests {
       reason: None,
       expires_at: None,
     };
-    ModBanFromcategory::create(pool, &form).await?;
+    ModBanFromCategory::create(pool, &form).await?;
 
     let form = ModFeaturePostForm {
       mod_person_id: data.timmy.id,
@@ -967,13 +973,13 @@ mod tests {
     };
     ModRemoveComment::create(pool, &form).await?;
 
-    let form = ModRemovecategoryForm {
+    let form = ModRemoveCategoryForm {
       mod_person_id: data.timmy.id,
       category_id: data.category.id,
       removed: Some(true),
       reason: None,
     };
-    ModRemovecategory::create(pool, &form).await?;
+    ModRemoveCategory::create(pool, &form).await?;
 
     let form = ModRemovePostForm {
       mod_person_id: data.timmy.id,
@@ -983,20 +989,20 @@ mod tests {
     };
     ModRemovePost::create(pool, &form).await?;
 
-    let form = ModTransfercategoryForm {
+    let form = ModTransferCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
     };
-    ModTransfercategory::create(pool, &form).await?;
+    ModTransferCategory::create(pool, &form).await?;
 
     // A few extra ones to test different filters
-    let form = ModTransfercategoryForm {
+    let form = ModTransferCategoryForm {
       mod_person_id: data.jessica.id,
       other_person_id: data.sara.id,
       category_id: data.category_2.id,
     };
-    ModTransfercategory::create(pool, &form).await?;
+    ModTransferCategory::create(pool, &form).await?;
 
     let form = ModRemovePostForm {
       mod_person_id: data.jessica.id,
@@ -1022,7 +1028,7 @@ mod tests {
       assert_eq!(data.comment_2.id, v.mod_remove_comment.comment_id);
       assert_eq!(data.comment_2.id, v.comment.id);
       assert_eq!(data.post_2.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.jessica.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1036,7 +1042,7 @@ mod tests {
       assert_eq!(data.post_2.id, v.mod_remove_post.post_id);
       assert_eq!(data.post_2.id, v.post.id);
       assert_eq!(data.sara.id, v.post.creator_id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.jessica.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1046,7 +1052,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModTransfercategory(v) = &modlog[2] {
+    if let ModlogCombinedView::ModTransferCategory(v) = &modlog[2] {
       assert_eq!(data.category_2.id, v.mod_transfer_category.category_id);
       assert_eq!(data.category_2.id, v.category.id);
       assert_eq!(
@@ -1058,7 +1064,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModTransfercategory(v) = &modlog[3] {
+    if let ModlogCombinedView::ModTransferCategory(v) = &modlog[3] {
       assert_eq!(data.category.id, v.mod_transfer_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1074,7 +1080,7 @@ mod tests {
       assert_eq!(data.post.id, v.mod_remove_post.post_id);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1084,7 +1090,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModRemovecategory(v) = &modlog[5] {
+    if let ModlogCombinedView::ModRemoveCategory(v) = &modlog[5] {
       assert_eq!(data.category.id, v.mod_remove_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1099,7 +1105,7 @@ mod tests {
       assert_eq!(data.comment.id, v.mod_remove_comment.comment_id);
       assert_eq!(data.comment.id, v.comment.id);
       assert_eq!(data.post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1114,7 +1120,7 @@ mod tests {
       assert!(v.mod_lock_post.locked);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1129,7 +1135,7 @@ mod tests {
       assert!(v.mod_feature_post.featured);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1139,7 +1145,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModBanFromcategory(v) = &modlog[9] {
+    if let ModlogCombinedView::ModBanFromCategory(v) = &modlog[9] {
       assert_eq!(data.category.id, v.mod_ban_from_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1161,7 +1167,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModAddcategory(v) = &modlog[11] {
+    if let ModlogCombinedView::ModAddCategory(v) = &modlog[11] {
       assert_eq!(data.category.id, v.mod_add_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(

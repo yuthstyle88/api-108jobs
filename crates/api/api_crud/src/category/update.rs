@@ -1,7 +1,6 @@
 use super::check_category_visibility_allowed;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
 use app_108jobs_api_utils::{
   build_response::build_category_response,
@@ -11,21 +10,22 @@ use app_108jobs_api_utils::{
 };
 use app_108jobs_db_schema::{
   source::{
-      actor_language::{CategoryLanguage, SiteLanguage},
-      category::{Category, CategoryUpdateForm},
+    actor_language::{CategoryLanguage, SiteLanguage},
+    category::{Category, CategoryUpdateForm},
   },
   traits::Crud,
   utils::diesel_string_update,
 };
-use app_108jobs_db_views_category::api::{CategoryResponse, EditCategory};
+use app_108jobs_db_views_category::api::{CategoryResponse, EditCategoryRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs_opt, validation::is_valid_body_field},
 };
+use chrono::Utc;
 
 pub async fn update_category(
-  data: Json<EditCategory>,
+  data: Json<EditCategoryRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CategoryResponse>> {

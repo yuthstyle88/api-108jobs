@@ -1,17 +1,5 @@
-use crate::api::EditPost;
-use crate::api::{CreatePost, CreatePostRequest, EditPostRequest};
 use crate::{PostPreview, PostView};
-use diesel::{
-  self, debug_query,
-  dsl::{exists, not},
-  pg::Pg,
-  query_builder::AsQuery,
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
-  TextExpressionMethods,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::{asc_if, SortDirection};
-use app_108jobs_db_schema::newtypes::LanguageId;
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
@@ -35,21 +23,29 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval, Commented, DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, TripStatus};
 use app_108jobs_db_schema_file::{
   enums::{
     CategoryFollowerState, CategoryVisibility, ListingType,
     PostSortType::{self, *},
   },
-  schema::{category, category_actions, local_user_language, person, post, post_actions},
+  schema::{
+    category, category_actions, delivery_details, local_user_language, person, post, post_actions,
+    ride_session,
+  },
 };
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::settings::SETTINGS;
-use app_108jobs_utils::utils::validation::is_valid_post_title;
-use slug::slugify;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  self, debug_query,
+  dsl::{exists, not},
+  pg::Pg,
+  query_builder::AsQuery,
+  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  TextExpressionMethods,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::{asc_if, SortDirection};
 use tracing::debug;
-#[cfg(feature = "full")]
-use url::Url;
 
 impl PaginationCursorBuilder for PostView {
   type CursorData = Post;
@@ -84,7 +80,7 @@ impl PostView {
 
     post::table
       .inner_join(person::table)
-      .inner_join(category::table)
+      .left_join(category::table) // Changed to left_join for nullable category_id (delivery posts)
       .left_join(image_details_join())
       .left_join(my_category_actions_join)
       .left_join(my_person_actions_join)
@@ -106,12 +102,10 @@ impl PostView {
     let conn = &mut get_conn(pool).await?;
     let my_person_id = my_local_user.person_id();
 
-    let mut query = Self::joins(my_person_id, local_instance_id)
+    let query = Self::joins(my_person_id, local_instance_id)
       .filter(post::id.eq(post_id))
       .select(Self::as_select())
       .into_boxed();
-
-    query = my_local_user.visible_communities_only(query);
 
     Commented::new(query)
       .text("PostView::read")
@@ -199,6 +193,8 @@ impl PostView {
     page_back: Option<bool>,
     limit: Option<i64>,
     no_limit: Option<bool>,
+    post_kind: Option<PostKind>,
+    logistics_status: Option<TripStatus>,
   ) -> FastJobResult<Vec<PostView>> {
     let conn = &mut get_conn(pool).await?;
 
@@ -215,6 +211,35 @@ impl PostView {
 
     if let Some(language_id) = language_id {
       query = query.filter(post::language_id.eq(language_id));
+    }
+
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(post_kind.unwrap_or(PostKind::Normal)));
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = logistics_status {
+      match post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
     }
 
     // Sorting by published_at (newest to oldest), tie-breaker by id
@@ -251,9 +276,12 @@ pub struct PostQuery<'a> {
   pub no_proposals_only: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget_min: Option<i64>,
-  pub budget_max: Option<i64>,
+  pub budget_min: Option<Coin>,
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<TripStatus>,
   pub cursor_data: Option<Post>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -332,6 +360,35 @@ impl PostQuery<'_> {
       .limit(limit)
       .into_boxed();
 
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(o.post_kind.unwrap_or(PostKind::Normal)));
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = o.logistics_status {
+      match o.post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
+    }
+
     // hide posts from deleted communities
     query = query.filter(category::deleted.eq(false));
 
@@ -407,10 +464,10 @@ impl PostQuery<'_> {
     }
 
     if let Some(min) = o.budget_min {
-      query = query.filter(post::budget.ge(min as f64));
+      query = query.filter(post::budget.ge(min));
     }
     if let Some(max) = o.budget_max {
-      query = query.filter(post::budget.le(max as f64));
+      query = query.filter(post::budget.le(max));
     }
 
     // Hide the hidden posts
@@ -540,97 +597,6 @@ impl PostQuery<'_> {
   }
 }
 
-impl TryFrom<CreatePostRequest> for CreatePost {
-  type Error = FastJobError;
-  fn try_from(data: CreatePostRequest) -> Result<Self, Self::Error> {
-    is_valid_post_title(&data.name)?;
-    validate_job_update_fields(&data)?;
-    if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    let domain = SETTINGS.get_protocol_and_hostname();
-    let raw_url = format!("{}/post/{}", domain, slugify(data.name.clone()));
-    let url = Url::parse(&raw_url)?;
-
-    Ok(CreatePost {
-      name: data.name,
-      category_id: data.category_id,
-      url: data.url,
-      body: data.body,
-      alt_text: data.alt_text,
-      language_id: data.language_id,
-      custom_thumbnail: data.custom_thumbnail,
-      honeypot: None,
-      self_promotion: None,
-      tags: None,
-      scheduled_publish_time_at: None,
-      budget: data.budget,
-      deadline: data.deadline,
-      intended_use: data.intended_use,
-      job_type: data.job_type,
-      is_english_required: data.is_english_required,
-      ap_id: Some(url.into()),
-    })
-  }
-}
-
-fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
-  // Validate budget (now required)
-  if data.budget <= 0f64 {
-    return Err(FastJobErrorType::InvalidField(
-      "budget must be greater than 0".to_string(),
-    ))?;
-  }
-
-  // Validate deadline: must be in the future, if set
-  if let Some(deadline) = data.deadline {
-    use chrono::Utc;
-    if deadline <= Utc::now() {
-      return Err(FastJobErrorType::InvalidField(
-        "deadline must be in the future".to_string(),
-      ))?;
-    }
-  }
-  Ok(())
-}
-
-impl TryFrom<EditPostRequest> for EditPost {
-  type Error = FastJobError;
-  fn try_from(data: EditPostRequest) -> Result<Self, Self::Error> {
-    if let Some(ref url_str) = data.url {
-      Url::parse(url_str).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    if let Some(ref thumb_url) = data.custom_thumbnail {
-      Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
-    }
-
-    Ok(EditPost {
-      post_id: data.post_id,
-      category_id: data.category_id,
-      name: data.name,
-      url: data.url,
-      body: data.body,
-      alt_text: data.alt_text,
-      language_id: data.language_id,
-      custom_thumbnail: data.custom_thumbnail,
-      self_promotion: None,
-      tags: None,
-      scheduled_publish_time_at: None,
-      budget: data.budget,
-      deadline: data.deadline,
-      intended_use: data.intended_use,
-      job_type: data.job_type,
-      is_english_required: data.is_english_required,
-    })
-  }
-}
-
 impl PostPreview {
   pub async fn read(pool: &mut DbPool<'_>, post_id: PostId) -> FastJobResult<Self> {
     use diesel::prelude::*;
@@ -663,15 +629,13 @@ mod tests {
     impls::{PostQuery, PostSortType},
     PostView,
   };
-  use chrono::Utc;
-  use diesel_async::SimpleAsyncConnection;
   use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
     source::{
       actor_language::LocalUserLanguage,
-      category::{category, categoryUpdateForm, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm, CategoryUpdateForm},
       comment::{Comment, CommentInsertForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
@@ -690,9 +654,11 @@ mod tests {
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
     utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
   };
-  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use app_108jobs_db_views_local_user::LocalUserView;
   use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+  use chrono::Utc;
+  use diesel_async::SimpleAsyncConnection;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use std::{
@@ -718,7 +684,7 @@ mod tests {
     tegan: LocalUserView,
     john: LocalUserView,
     bot: LocalUserView,
-    category: category,
+    category: Category,
     post: Post,
     bot_post: Post,
     post_with_tags: Post,
@@ -773,7 +739,7 @@ mod tests {
         "test_category_3".to_string(),
         "nada".to_owned(),
       );
-      let category = category::create(pool, &new_category).await?;
+      let category = Category::create(pool, &new_category).await?;
 
       // Test a person block, make sure the post query doesn't include their post
       let john_person_form = PersonInsertForm::test_form(data.instance.id, "john");
@@ -787,11 +753,7 @@ mod tests {
 
       let post_from_blocked_person = PostInsertForm {
         language_id: Some(LanguageId(1)),
-        ..PostInsertForm::new(
-          POST_BY_BLOCKED_PERSON.to_string(),
-          inserted_john_person.id,
-          category.id,
-        )
+        ..PostInsertForm::new(POST_BY_BLOCKED_PERSON.to_string(), inserted_john_person.id)
       };
       Post::create(pool, &post_from_blocked_person).await?;
 
@@ -827,22 +789,25 @@ mod tests {
       // A sample post
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
-        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id, category.id)
+        category_id: Some(category.id),
+        ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id)
       };
 
       let post = Post::create(pool, &new_post).await?;
 
-      let new_bot_post =
-        PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id, category.id);
+      let new_bot_post = PostInsertForm {
+        category_id: Some(category.id),
+        ..PostInsertForm::new(POST_BY_BOT.to_string(), inserted_bot_person.id)
+      };
       let bot_post = Post::create(pool, &new_bot_post).await?;
 
       // A sample post with tags
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
+        category_id: Some(category.id),
         ..PostInsertForm::new(
           POST_WITH_TAGS.to_string(),
           inserted_tegan_person.id,
-          category.id,
         )
       };
 
@@ -894,7 +859,7 @@ mod tests {
     async fn teardown(data: Data) -> FastJobResult<()> {
       let pool = &mut data.pool2();
       let num_deleted = Post::delete(pool, data.post.id).await?;
-      category::delete(pool, data.category.id).await?;
+      Category::delete(pool, data.category.id).await?;
       Person::delete(pool, data.tegan.person.id).await?;
       Person::delete(pool, data.bot.person.id).await?;
       Person::delete(pool, data.john.person.id).await?;
@@ -1123,11 +1088,10 @@ mod tests {
     let pool = &mut pool.into();
 
     // Create a 2nd bot post, to do multiple votes
-    let bot_post_2 = PostInsertForm::new(
-      "Bot post 2".to_string(),
-      data.bot.person.id,
-      data.category.id,
-    );
+    let bot_post_2 = PostInsertForm {
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new("Bot post 2".to_string(), data.bot.person.id)
+    };
     let bot_post_2 = Post::create(pool, &bot_post_2).await?;
 
     let post_like_form = PostLikeForm::new(data.bot_post.id, data.tegan.person.id, 1);
@@ -1415,7 +1379,8 @@ mod tests {
 
     let post_spanish = PostInsertForm {
       language_id: Some(spanish_id),
-      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id, data.category.id)
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id)
     };
     Post::create(pool, &post_spanish).await?;
 
@@ -1558,14 +1523,14 @@ mod tests {
       "test_category_4".to_string(),
       "none".to_owned(),
     );
-    let inserted_category = category::create(pool, &category_form).await?;
+    let inserted_category = Category::create(pool, &category_form).await?;
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
+      category_id: Some(inserted_category.id),
       ..PostInsertForm::new(
         POST_FROM_BLOCKED_INSTANCE.to_string(),
         data.bot.person.id,
-        inserted_category.id,
       )
     };
     let post_from_blocked_instance = Post::create(pool, &post_form).await?;
@@ -1606,7 +1571,7 @@ mod tests {
 
     let category_form =
       CategoryInsertForm::new(data.instance.id, "yes".to_string(), "yes".to_owned());
-    let inserted_category = category::create(pool, &category_form).await?;
+    let inserted_category = Category::create(pool, &category_form).await?;
 
     let mut inserted_post_ids = vec![];
     let mut inserted_comment_ids = vec![];
@@ -1619,10 +1584,10 @@ mod tests {
           featured_local: Some((comments % 2) == 0),
           featured_category: Some((comments % 2) == 0),
           published_at: Some(Utc::now() - Duration::from_secs(comments % 3)),
+          category_id: Some(inserted_category.id),
           ..PostInsertForm::new(
             "keep Christ in Christmas".to_owned(),
             data.tegan.person.id,
-            inserted_category.id,
           )
         };
         let inserted_post = Post::create(pool, &post_form).await?;
@@ -1696,7 +1661,7 @@ mod tests {
 
     assert_eq!(inserted_post_ids, listed_post_ids);
 
-    category::delete(pool, inserted_category.id).await?;
+    Category::delete(pool, inserted_category.id).await?;
     Ok(())
   }
 
@@ -1851,11 +1816,11 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    category::update(
+    Category::update(
       pool,
       data.category.id,
-      &categoryUpdateForm {
-        visibility: Some(categoryVisibility::LocalOnlyPrivate),
+      &CategoryUpdateForm {
+        visibility: Some(CategoryVisibility::LocalOnlyPrivate),
         ..Default::default()
       },
     )
@@ -1959,10 +1924,10 @@ mod tests {
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         "banned person post".to_string(),
         banned_person.id,
-        data.category.id,
       )
     };
     let banned_post = Post::create(pool, &post_form).await?;
@@ -2013,7 +1978,8 @@ mod tests {
 
       let post_form = PostInsertForm {
         url,
-        ..PostInsertForm::new(name, data.tegan.person.id, data.category.id)
+        category_id: Some(data.category.id),
+        ..PostInsertForm::new(name, data.tegan.person.id)
       };
       Post::create(pool, &post_form).await?;
     }
@@ -2055,11 +2021,11 @@ mod tests {
     let pool = &mut pool.into();
 
     // Mark category as private
-    category::update(
+    Category::update(
       pool,
       data.category.id,
-      &categoryUpdateForm {
-        visibility: Some(categoryVisibility::Private),
+      &CategoryUpdateForm {
+        visibility: Some(CategoryVisibility::Private),
         ..Default::default()
       },
     )
@@ -2209,34 +2175,36 @@ mod tests {
     let name_not_blocked = "post_with_name_not_blocked".to_string();
     let name_not_blocked2 = "post_with_name_not_blocked2".to_string();
 
-    let post_name_blocked =
-      PostInsertForm::new(name_blocked.clone(), data.tegan.person.id, data.category.id);
+    let post_name_blocked = PostInsertForm {
+      category_id: Some(data.category.id),
+      ..PostInsertForm::new(name_blocked.clone(), data.tegan.person.id)
+    };
 
     let post_body_blocked = PostInsertForm {
       body: Some(body),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_not_blocked.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
 
     let post_url_blocked = PostInsertForm {
       url,
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_not_blocked2.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
 
     let post_name_blocked_but_not_body_and_url = PostInsertForm {
       body: Some("Some body".to_string()),
       url: Some(Url::parse("https://google.com")?.into()),
+      category_id: Some(data.category.id),
       ..PostInsertForm::new(
         name_blocked2.clone(),
         data.tegan.person.id,
-        data.category.id,
       )
     };
     Post::create(pool, &post_name_blocked).await?;
@@ -2304,9 +2272,12 @@ mod tests {
       "test_category_4".to_string(),
       "nada".to_owned(),
     );
-    let category_1 = category::create(pool, &form).await?;
+    let category_1 = Category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_1.id);
+    let form = PostInsertForm {
+      category_id: Some(category_1.id),
+      ..PostInsertForm::new(POST.to_string(), data.tegan.person.id)
+    };
     let post_1 = Post::create(pool, &form).await?;
 
     let form = CategoryInsertForm::new(
@@ -2314,9 +2285,12 @@ mod tests {
       "test_category_5".to_string(),
       "nada".to_owned(),
     );
-    let category_2 = category::create(pool, &form).await?;
+    let category_2 = Category::create(pool, &form).await?;
 
-    let form = PostInsertForm::new(POST.to_string(), data.tegan.person.id, category_2.id);
+    let form = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new(POST.to_string(), data.tegan.person.id)
+    };
     let post_2 = Post::create(pool, &form).await?;
 
     let listing = PostQuery {
@@ -2327,7 +2301,7 @@ mod tests {
 
     let listing_communities = listing
       .iter()
-      .map(|l| l.category.id)
+      .map(|l| l.category.as_ref().unwrap().id)
       .collect::<HashSet<_>>();
     assert_eq!(
       HashSet::from([category_1.id, category_2.id]),

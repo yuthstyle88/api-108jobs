@@ -1,12 +1,12 @@
 use anyhow::anyhow;
-use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
-use extism_convert::Json;
 use app_108jobs_db_views_site::api::PluginMetadata;
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
   VERSION,
 };
+use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
+use extism_convert::Json;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -60,7 +60,6 @@ where
 }
 
 /// Call a plugin hook which can rewrite data
-
 
 pub fn plugin_metadata() -> Vec<PluginMetadata> {
   FastJobPlugins::init()

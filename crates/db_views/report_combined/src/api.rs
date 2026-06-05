@@ -1,7 +1,7 @@
 use crate::ReportCombinedView;
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, PaginationCursor, PostId},
-    ReportType,
+  newtypes::{CategoryId, PaginationCursor, PostId},
+  ReportType,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

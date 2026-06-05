@@ -14,11 +14,11 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::api::{DeletePost, PostResponse};
+use app_108jobs_db_views_post::api::{DeletePostRequest, PostResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_post(
-  data: Json<DeletePost>,
+  data: Json<DeletePostRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<PostResponse>> {
@@ -30,8 +30,11 @@ pub async fn delete_post(
     Err(FastJobErrorType::CouldntUpdatePost)?
   }
 
-  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
-  check_category_deleted_removed(&category)?;
+  // Check category if present
+  if let Some(category_id) = orig_post.category_id {
+    let category = Category::read(&mut context.pool(), category_id).await?;
+    check_category_deleted_removed(&category)?;
+  }
 
   // Verify that only the creator can delete
   if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {
@@ -54,10 +57,5 @@ pub async fn delete_post(
     &context,
   )?;
 
-  build_post_response(
-    &context,
-    local_user_view,
-    data.post_id,
-  )
-  .await
+  build_post_response(&context, local_user_view, data.post_id).await
 }

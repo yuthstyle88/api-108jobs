@@ -7,16 +7,17 @@ use app_108jobs_api_utils::{
   send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
 };
-use app_108jobs_db_schema::newtypes::{PersonId, PostId};
-use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::{
-  impls::actor_language::validate_post_language,
+  impls::actor_language::{validate_post_language, UNDETERMINED_ID},
+  newtypes::{PersonId, PostId},
   source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+  traits::Crud,
   traits::Likeable,
   utils::DbPool,
 };
-use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
+use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_schema_file::schema::comment::dsl::comment;
+use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
@@ -51,7 +52,24 @@ pub async fn create_comment(
   .await?;
 
   let post = post_view.post;
-  let category_id = post_view.category.id;
+
+  // Handle delivery/ridetaxi posts which have no category
+  let language_id = if let Some(category) = post_view.category {
+    // Normal post with a category - validate language
+    validate_post_language(
+      &mut context.pool(),
+      data.language_id,
+      category.id,
+      local_user_view.local_user.id,
+    )
+    .await?
+  } else if matches!(post.post_kind, PostKind::Delivery | PostKind::RideTaxi) {
+    // Delivery or RideTaxi post without a category - use provided language or UNDETERMINED_ID
+    data.language_id.unwrap_or(UNDETERMINED_ID)
+  } else {
+    // Non-delivery/ridetaxi post without a category should not happen
+    return Err(FastJobErrorType::NotFound)?;
+  };
 
   check_post_deleted_or_removed(&post)?;
 
@@ -60,21 +78,18 @@ pub async fn create_comment(
     Err(FastJobErrorType::Locked)?
   }
 
-  let language_id = validate_post_language(
-    &mut context.pool(),
-    data.language_id,
-    category_id,
-    local_user_view.local_user.id,
-  )
-  .await?;
-
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
     return Err(FastJobErrorType::CannotCommentOnOwnPost)?;
   }
 
   // Check if user has already commented on this post
-  check_user_already_commented(&mut context.pool(), local_user_view.person.id, data.post_id.clone()).await?;
+  check_user_already_commented(
+    &mut context.pool(),
+    local_user_view.person.id,
+    data.post_id.clone(),
+  )
+  .await?;
 
   let comment_form = CommentInsertForm {
     language_id: Some(language_id),
@@ -132,9 +147,9 @@ async fn check_user_already_commented(
   person_id: PersonId,
   current_post_id: PostId,
 ) -> FastJobResult<()> {
+  use app_108jobs_db_schema::utils::get_conn;
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
-  use app_108jobs_db_schema::utils::get_conn;
 
   let conn = &mut get_conn(pool).await?;
 

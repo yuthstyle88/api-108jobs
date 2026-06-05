@@ -53,6 +53,18 @@ pub mod sql_types {
   #[diesel(postgres_type(name = "job_type_enum"))]
   pub struct JobTypeEnum;
 
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_kind"))]
+  pub struct PostKind;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "trip_status"))]
+  pub struct TripStatus;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "payment_method"))]
+  pub struct PaymentMethod;
+
   #[derive(
     diesel::query_builder::QueryId,
     diesel::sql_types::SqlType,
@@ -963,6 +975,7 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::JobTypeEnum;
     use super::sql_types::IntendedUseEnum;
+    use super::sql_types::PostKind;
 
     post (id) {
         id -> Int4,
@@ -972,7 +985,7 @@ diesel::table! {
         url -> Nullable<Varchar>,
         body -> Nullable<Text>,
         creator_id -> Int4,
-        category_id -> Int4,
+        category_id -> Nullable<Int4>,
         removed -> Bool,
         locked -> Bool,
         published_at -> Timestamptz,
@@ -1006,10 +1019,94 @@ diesel::table! {
         unresolved_report_count -> Int2,
         intended_use -> IntendedUseEnum,
         job_type -> JobTypeEnum,
-        budget -> Float8,
+        budget -> Int4,
         deadline -> Nullable<Timestamptz>,
         is_english_required -> Bool,
+        post_kind -> PostKind,
         pending  -> Bool,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TripStatus;
+    use super::sql_types::VehicleType;
+
+    delivery_details (id) {
+        id -> Int4,
+        post_id -> Int4,
+        pickup_address -> Text,
+        pickup_lat -> Nullable<Float8>,
+        pickup_lng -> Nullable<Float8>,
+        dropoff_address -> Text,
+        dropoff_lat -> Nullable<Float8>,
+        dropoff_lng -> Nullable<Float8>,
+        package_description -> Nullable<Text>,
+        package_weight_kg -> Nullable<Float8>,
+        package_size -> Nullable<Varchar>,
+        fragile -> Bool,
+        requires_signature -> Bool,
+        vehicle_required -> Nullable<VehicleType>,
+        latest_pickup_at -> Nullable<Timestamptz>,
+        latest_dropoff_at -> Nullable<Timestamptz>,
+        sender_name -> Nullable<Varchar>,
+        sender_phone -> Nullable<Varchar>,
+        receiver_name -> Nullable<Varchar>,
+        receiver_phone -> Nullable<Varchar>,
+        cash_on_delivery -> Bool,
+        cod_amount -> Nullable<Float8>,
+        status -> TripStatus,
+        cancellation_reason -> Nullable<Text>,
+        assigned_rider_id -> Nullable<Int4>,
+        assigned_at -> Nullable<Timestamptz>,
+        assigned_by_person_id -> Nullable<Int4>,
+        linked_comment_id -> Nullable<Int4>,
+        delivery_fee -> Int4,
+        employer_confirmed_at -> Nullable<Timestamptz>,
+        employer_wallet_transaction_id -> Nullable<Int4>,
+        rider_wallet_transaction_id -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    trip_location_current (post_id) {
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    trip_location_history (id) {
+        id -> Int8,
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        recorded_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    delivery_rider_rating (id) {
+        id -> Int4,
+        post_id -> Int4,
+        employer_id -> Int4,
+        rider_id -> Int4,
+        rating -> Int2,
+        comment -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1196,6 +1293,20 @@ diesel::table! {
         is_platform -> Bool,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
+        version -> Int8,
+    }
+}
+
+diesel::table! {
+    wallet_hold (id) {
+        id -> Int8,
+        wallet_id -> Int4,
+        billing_id -> Int4,
+        amount -> Int4,
+        status -> Text,
+        idempotency_key -> Nullable<Text>,
+        created_at -> Timestamptz,
+        released_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -1384,7 +1495,9 @@ diesel::table! {
         id -> Int4,
         local_user_id -> Int4,
         amount -> Float8,
-        currency_name -> Text,
+        currency_id -> Int4,
+        amount_coin -> Int4,
+        conversion_rate_used -> Int4,
         qr_id -> Text,
         cs_ext_expiry_time -> Timestamptz,
         status -> TopUpStatus,
@@ -1405,6 +1518,9 @@ diesel::table! {
         wallet_id -> Int4,
         user_bank_account_id -> Int4,
         amount -> Int4,
+        currency_id -> Int4,
+        amount_currency -> Float8,
+        conversion_rate_used -> Int4,
         status -> WithdrawStatus,
         reason -> Nullable<Text>,
         created_at -> Timestamptz,
@@ -1544,6 +1660,8 @@ diesel::joinable!(password_reset_request -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_comment_mention -> comment (comment_id));
 diesel::joinable!(wallet_transaction -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> billing (billing_id));
 diesel::joinable!(person_comment_mention -> person (recipient_id));
 diesel::joinable!(person_content_combined -> comment (comment_id));
 diesel::joinable!(person_content_combined -> post (post_id));
@@ -1582,9 +1700,24 @@ diesel::joinable!(user_review -> workflow (workflow_id));
 diesel::joinable!(last_reads -> local_user (local_user_id));
 diesel::joinable!(last_reads -> chat_room (room_id));
 diesel::joinable!(top_up_requests -> local_user (local_user_id));
+diesel::joinable!(top_up_requests -> currency (currency_id));
 diesel::joinable!(withdraw_requests -> local_user (local_user_id));
 diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id));
+diesel::joinable!(withdraw_requests -> currency (currency_id));
 diesel::joinable!(rider -> person (person_id));
+diesel::joinable!(delivery_details -> post (post_id));
+diesel::joinable!(trip_location_current -> post (post_id));
+diesel::joinable!(trip_location_current -> rider (rider_id));
+diesel::joinable!(trip_location_history -> post (post_id));
+diesel::joinable!(trip_location_history -> rider (rider_id));
+diesel::joinable!(delivery_rider_rating -> post (post_id));
+diesel::joinable!(delivery_rider_rating -> rider (rider_id));
+diesel::joinable!(currency_rate_history -> currency (currency_id));
+diesel::joinable!(pricing_config -> currency (currency_id));
+diesel::joinable!(ride_session -> post (post_id));
+diesel::joinable!(ride_session -> rider (rider_id));
+diesel::joinable!(ride_session -> pricing_config (pricing_config_id));
+diesel::joinable!(ride_meter_snapshot -> ride_session (ride_session_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
@@ -1661,6 +1794,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   tag,
   tagline,
   wallet,
+  wallet_hold,
   wallet_transaction,
   banks,
   user_bank_accounts,
@@ -1670,5 +1804,130 @@ diesel::allow_tables_to_appear_in_same_query!(
   identity_cards,
   top_up_requests,
   withdraw_requests,
-  rider
+  rider,
+  delivery_details,
+  trip_location_current,
+  trip_location_history,
+  delivery_rider_rating,
+  currency,
+  currency_rate_history,
+  pricing_config,
+  ride_session,
+  ride_meter_snapshot
 );
+
+// Currency table schema
+diesel::table! {
+    use diesel::sql_types::*;
+
+    currency (id) {
+        id -> Int4,
+        code -> Varchar,
+        name -> Varchar,
+        symbol -> Varchar,
+        numeric_code -> Int4,
+        coin_to_currency_rate -> Int4,
+        decimal_places -> Int4,
+        thousands_separator -> Varchar,
+        decimal_separator -> Varchar,
+        symbol_position -> Varchar,
+        is_active -> Bool,
+        is_default -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        rate_last_updated_at -> Nullable<Timestamptz>,
+        rate_last_updated_by -> Nullable<Int4>,
+    }
+}
+
+// Currency rate history table schema
+diesel::table! {
+    currency_rate_history (id) {
+        id -> Int4,
+        currency_id -> Int4,
+        old_rate -> Int4,
+        new_rate -> Int4,
+        changed_by -> Nullable<Int4>,
+        changed_at -> Timestamptz,
+        reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+    }
+}
+
+// Pricing configuration table schema
+diesel::table! {
+    use diesel::sql_types::*;
+
+    pricing_config (id) {
+        id -> Int4,
+        currency_id -> Int4,
+        name -> Varchar,
+        base_fare_coin -> Int4,
+        time_charge_per_minute_coin -> Int4,
+        minimum_charge_minutes -> Int4,
+        distance_charge_per_km_coin -> Int4,
+        accepts_cash -> Bool,
+        accepts_coin -> Bool,
+        is_active -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Ride session table schema
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::TripStatus;
+    use crate::schema::sql_types::PaymentMethod;
+
+    ride_session (id) {
+        id -> Int4,
+        post_id -> Int4,
+        rider_id -> Nullable<Int4>,
+        employer_id -> Int4,
+        pricing_config_id -> Nullable<Int4>,
+        pickup_address -> Text,
+        pickup_lat -> Nullable<Float8>,
+        pickup_lng -> Nullable<Float8>,
+        dropoff_address -> Text,
+        dropoff_lat -> Nullable<Float8>,
+        dropoff_lng -> Nullable<Float8>,
+        pickup_note -> Nullable<Text>,
+        passenger_name -> Nullable<Text>,
+        passenger_phone -> Nullable<Text>,
+        payment_method -> PaymentMethod,
+        payment_status -> Varchar,
+        status -> TripStatus,
+        requested_at -> Timestamptz,
+        rider_assigned_at -> Nullable<Timestamptz>,
+        rider_confirmed_at -> Nullable<Timestamptz>,
+        arrived_at_pickup_at -> Nullable<Timestamptz>,
+        ride_started_at -> Nullable<Timestamptz>,
+        ride_completed_at -> Nullable<Timestamptz>,
+        current_price_coin -> Int4,
+        total_distance_km -> Nullable<Float8>,
+        total_duration_minutes -> Nullable<Int4>,
+        final_price_coin -> Nullable<Int4>,
+        base_fare_applied_coin -> Nullable<Int4>,
+        time_charge_applied_coin -> Nullable<Int4>,
+        distance_charge_applied_coin -> Nullable<Int4>,
+        cancellation_reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Ride meter snapshot table schema
+diesel::table! {
+    ride_meter_snapshot (id) {
+        id -> Int4,
+        ride_session_id -> Int4,
+        elapsed_minutes -> Int4,
+        distance_km -> Float8,
+        current_price_coin -> Int4,
+        base_fare_coin -> Int4,
+        time_charge_coin -> Int4,
+        distance_charge_coin -> Int4,
+        created_at -> Timestamptz,
+    }
+}

@@ -148,7 +148,19 @@ CREATE INDEX idx_post_aggregates_featured_category_most_comments ON post_aggrega
 
 CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time ON post_aggregates USING btree (category_id, featured_category DESC, newest_comment_time DESC, post_id DESC);
 
-CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time_necr ON post_aggregates USING btree (category_id, featured_category DESC, newest_comment_time_necro DESC, post_id DESC);
+-- Create the necro index only if the earlier migration hasn't done it yet.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'i'
+      AND n.nspname = 'public'
+      AND c.relname = 'idx_post_aggregates_featured_category_newest_comment_time_necro'
+  ) THEN
+    EXECUTE 'CREATE INDEX idx_post_aggregates_featured_category_newest_comment_time_necro ON post_aggregates USING btree (category_id, featured_category DESC, newest_comment_time_necro DESC, post_id DESC)';
+  END IF;
+END $$;
 
 CREATE INDEX idx_post_aggregates_featured_category_published ON post_aggregates USING btree (category_id, featured_category DESC, published DESC, post_id DESC);
 
@@ -199,7 +211,7 @@ DROP INDEX idx_search_combined_score;
 
 -- move category_aggregates back into separate table
 CREATE TABLE category_aggregates (
-    category_id int PRIMARY KEY NOT NULL REFERENCES COMMunity ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+    category_id int PRIMARY KEY NOT NULL REFERENCES category (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     subscribers bigint NOT NULL DEFAULT 0,
     posts bigint NOT NULL DEFAULT 0,
     comments bigint NOT NULL DEFAULT 0,
@@ -246,8 +258,23 @@ ALTER TABLE category
     DROP COLUMN subscribers_local,
     DROP COLUMN report_count,
     DROP COLUMN unresolved_report_count,
-    DROP COLUMN interactions_month,
-    ALTER CONSTRAINT category_instance_id_fkey NOT DEFERRABLE INITIALLY IMMEDIATE;
+    DROP COLUMN interactions_month;
+
+-- Make category.instance_id FK not deferrable only if the constraint exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE t.relname = 'category'
+      AND n.nspname = 'public'
+      AND c.conname = 'category_instance_id_fkey'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.category ALTER CONSTRAINT category_instance_id_fkey NOT DEFERRABLE INITIALLY IMMEDIATE';
+  END IF;
+END $$;
 
 SET CONSTRAINTS category_aggregates_category_id_fkey IMMEDIATE;
 

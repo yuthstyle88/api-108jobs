@@ -61,7 +61,7 @@ pub async fn delete_category_icon(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
-  
+
   let category = Category::read(&mut context.pool(), data.id).await?;
   delete_old_image(&category.icon, &context).await?;
 
@@ -80,7 +80,7 @@ pub async fn delete_category_banner(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   is_admin(&local_user_view)?;
-  
+
   let category = Category::read(&mut context.pool(), data.id).await?;
   delete_old_image(&category.icon, &context).await?;
 

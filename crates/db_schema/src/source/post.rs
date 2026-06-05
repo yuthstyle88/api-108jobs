@@ -1,12 +1,12 @@
-use crate::newtypes::{CategoryId, DbUrl, LanguageId, PersonId, PostId};
+use crate::newtypes::{CategoryId, Coin, DbUrl, LanguageId, PersonId, PostId};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, PostNotifications};
 use chrono::{DateTime, Utc};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostNotifications};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  i_love_jesus::CursorKeysModule,
   app_108jobs_db_schema_file::schema::{post, post_actions},
+  i_love_jesus::CursorKeysModule,
 };
 
 #[skip_serializing_none]
@@ -30,7 +30,8 @@ pub struct Post {
   /// An optional post body, in markdown.
   pub body: Option<String>,
   pub creator_id: PersonId,
-  pub category_id: CategoryId,
+  /// Category ID (nullable for delivery posts, which rely on post_kind for distinction)
+  pub category_id: Option<CategoryId>,
   /// Whether the post is removed.
   pub removed: bool,
   /// Whether the post is locked.
@@ -85,9 +86,10 @@ pub struct Post {
   pub unresolved_report_count: i16,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  pub post_kind: PostKind,
   pub pending: bool,
 }
 
@@ -101,7 +103,9 @@ pub struct Post {
 pub struct PostInsertForm {
   pub name: String,
   pub creator_id: PersonId,
-  pub category_id: CategoryId,
+  /// Category ID (nullable for delivery posts, which rely on post_kind for distinction)
+  #[new(default)]
+  pub category_id: Option<CategoryId>,
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]
@@ -143,7 +147,7 @@ pub struct PostInsertForm {
   #[new(default)]
   pub scheduled_publish_time_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub budget: f64,
+  pub budget: Coin,
   #[new(default)]
   pub intended_use: IntendedUse,
   #[new(default)]
@@ -152,6 +156,8 @@ pub struct PostInsertForm {
   pub deadline: Option<DateTime<Utc>>,
   #[new(default)]
   pub is_english_required: bool,
+  #[new(default)]
+  pub post_kind: Option<PostKind>,
   #[new(default)]
   pub pending: Option<bool>,
 }
@@ -181,7 +187,7 @@ pub struct PostUpdateForm {
   pub url_content_type: Option<Option<String>>,
   pub alt_text: Option<Option<String>>,
   pub scheduled_publish_time_at: Option<Option<DateTime<Utc>>>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
   pub deadline: Option<Option<DateTime<Utc>>>,

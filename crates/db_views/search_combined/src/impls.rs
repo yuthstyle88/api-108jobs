@@ -1,30 +1,43 @@
 use crate::{
   CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
-  SearchCombinedViewInternal,
+  SearchCombinedViewInternal, SearchPostView,
 };
+use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PostId};
+use app_108jobs_db_schema::{
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
+  source::{
+    combined::search::{search_combined_keys as key, SearchCombined},
+    site::Site,
+  },
+  traits::{InternalToCombinedView, PaginationCursorBuilder},
+  utils::{
+    fuzzy_search, get_conn, limit_fetch, now, paginate,
+    queries::{
+      creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
+    },
+    seconds_to_pg_interval, DbPool,
+  },
+  SearchSortType::{self, *},
+  SearchType,
+};
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, TripStatus};
+use app_108jobs_db_schema_file::schema::{
+  category, comment, delivery_details, person, post, ride_session, search_combined,
+};
+use app_108jobs_db_views_post::logistics::{
+  build_logistics_from_maps, fetch_logistics_maps_by_ids, LogisticsViewer,
+};
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
-  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  dsl::{exists, not},
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
   PgTextExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
-use app_108jobs_db_schema::newtypes::LanguageId;
-use app_108jobs_db_schema::{newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId}, source::{
-  combined::search::{search_combined_keys as key, SearchCombined},
-  site::Site,
-}, traits::{InternalToCombinedView, PaginationCursorBuilder}, utils::{
-  fuzzy_search, get_conn, limit_fetch, now, paginate,
-  queries::{
-    creator_category_actions_join, creator_home_instance_actions_join,
-    creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-    my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-    my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
-  },
-  seconds_to_pg_interval, DbPool,
-}, SearchSortType::{self, *}, SearchType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType};
-use app_108jobs_db_schema_file::schema::{category, comment, person, post, search_combined};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 impl SearchCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -65,7 +78,7 @@ impl SearchCombinedViewInternal {
     let category_join = category::table.on(
       search_combined::category_id
         .eq(category::id.nullable())
-        .or(post::category_id.eq(category::id))
+        .or(category::id.nullable().eq(post::category_id))
         .and(not(category::removed))
         .and(not(category::local_removed))
         .and(not(category::deleted)),
@@ -104,7 +117,7 @@ impl SearchCombinedView {
   /// Useful in combination with filter_map
   pub fn to_post_view(&self) -> Option<&PostView> {
     if let Self::Post(v) = self {
-      Some(v)
+      Some(&v.post_view)
     } else {
       None
     }
@@ -116,7 +129,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      SearchCombinedView::Post(v) => ('P', v.post.id.0),
+      SearchCombinedView::Post(v) => ('P', v.post_view.post.id.0),
       SearchCombinedView::Comment(v) => ('C', v.comment.id.0),
       SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
@@ -135,13 +148,13 @@ impl PaginationCursorBuilder for SearchCombinedView {
     }
     let prefix = s.chars().next().unwrap();
     let id_hex = &s[1..];
-    let id = i32::from_str_radix(id_hex, 16)
-        .map_err(|_| FastJobErrorType::CouldntParsePaginationToken)?;
+    let id =
+      i32::from_str_radix(id_hex, 16).map_err(|_| FastJobErrorType::CouldntParsePaginationToken)?;
 
     let conn = &mut get_conn(pool).await?;
     let mut query = search_combined::table
-        .select(Self::CursorData::as_select())
-        .into_boxed();
+      .select(Self::CursorData::as_select())
+      .into_boxed();
 
     query = match prefix {
       'P' => query.filter(search_combined::post_id.eq(id)),
@@ -167,9 +180,12 @@ pub struct SearchCombinedQuery {
   pub time_range_seconds: Option<i32>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget_min: Option<i64>,
-  pub budget_max: Option<i64>,
+  pub budget_min: Option<Coin>,
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<TripStatus>,
   pub cursor_data: Option<SearchCombined>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -224,11 +240,11 @@ impl SearchCombinedQuery {
     }
 
     if let Some(min) = self.budget_min {
-      query = query.filter(post::budget.ge(min as f64));
+      query = query.filter(post::budget.ge(min));
     }
 
     if let Some(max) = self.budget_max {
-      query = query.filter(post::budget.le(max as f64));
+      query = query.filter(post::budget.le(max));
     }
 
     if let Some(intended_use) = self.intended_use {
@@ -251,14 +267,42 @@ impl SearchCombinedQuery {
       let _ = item_creator.ne(my_id);
     };
 
-    // Type
     query = match self.type_.unwrap_or_default() {
       SearchType::All => query,
       SearchType::Posts => query.filter(is_post),
       SearchType::Comments => query.filter(is_comment),
-      SearchType::Communities => query.filter(is_category),
+      SearchType::Categories => query.filter(is_category),
       SearchType::Users => query.filter(is_person),
     };
+
+    // Filter by post_kind (Delivery, RideTaxi, Normal), defaults to Normal
+    query = query.filter(post::post_kind.eq(self.post_kind.unwrap_or(PostKind::Normal)));
+
+    // Filter by logistics status (for Delivery and RideTaxi posts)
+    // Uses EXISTS subqueries to avoid joins
+    if let Some(status) = self.logistics_status {
+      match self.post_kind.unwrap_or(PostKind::Normal) {
+        PostKind::Delivery => {
+          // Filter delivery posts by delivery_details status
+          query = query.filter(exists(
+            delivery_details::table
+              .filter(delivery_details::post_id.eq(post::id))
+              .filter(delivery_details::status.eq(status)),
+          ));
+        }
+        PostKind::RideTaxi => {
+          // Filter ride taxi posts by ride_session status
+          query = query.filter(exists(
+            ride_session::table
+              .filter(ride_session::post_id.eq(post::id))
+              .filter(ride_session::status.eq(status)),
+          ));
+        }
+        PostKind::Normal => {
+          // No logistics for Normal posts - don't apply filter
+        }
+      }
+    }
 
     // Filter by the time range
     if let Some(time_range_seconds) = self.time_range_seconds {
@@ -291,13 +335,72 @@ impl SearchCombinedQuery {
       .await?;
 
     // Map the query results to the enum
-    let out = res
+    let out: Vec<SearchCombinedView> = res
       .into_iter()
       .filter_map(InternalToCombinedView::map_to_enum)
       .collect();
 
     Ok(out)
   }
+}
+
+/// Batch load logistics for all post results in a search response.
+/// Optimized: Skips DB queries entirely if all posts are Normal kind.
+/// Reuses shared logistics functions from db_views_post.
+pub async fn load_logistics_for_results(
+  results: &mut Vec<SearchCombinedView>,
+  pool: &mut DbPool<'_>,
+  viewer: LogisticsViewer,
+  is_admin: bool,
+) -> FastJobResult<()> {
+  // Early return if no results
+  if results.is_empty() {
+    return Ok(());
+  }
+
+  // Check if any posts need logistics (before getting DB connection)
+  let has_delivery = results.iter().any(|r| {
+    matches!(r, SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::Delivery)
+  });
+  let has_ride = results.iter().any(|r| {
+    matches!(r, SearchCombinedView::Post(spv) if spv.post_view.post.post_kind == PostKind::RideTaxi)
+  });
+
+  // Early return if no delivery or ride posts - skip DB entirely
+  if !has_delivery && !has_ride {
+    return Ok(());
+  }
+
+  let conn = &mut get_conn(pool).await?;
+
+  // Collect post IDs by kind in a single pass
+  let (delivery_ids, ride_ids): (Vec<PostId>, Vec<PostId>) = results
+    .iter()
+    .filter_map(|r| match r {
+      SearchCombinedView::Post(spv) => Some(spv),
+      _ => None,
+    })
+    .fold((Vec::new(), Vec::new()), |(mut del, mut ride), spv| {
+      match spv.post_view.post.post_kind {
+        PostKind::Delivery => del.push(spv.post_view.post.id),
+        PostKind::RideTaxi => ride.push(spv.post_view.post.id),
+        PostKind::Normal => {}
+      }
+      (del, ride)
+    });
+
+  // Fetch maps using shared function
+  let maps = fetch_logistics_maps_by_ids(conn, &delivery_ids, &ride_ids).await?;
+
+  // Assign logistics to each post result using shared function
+  for result in results.iter_mut() {
+    if let SearchCombinedView::Post(search_post_view) = result {
+      search_post_view.logistics =
+        build_logistics_from_maps(&search_post_view.post_view, &maps, viewer, is_admin);
+    }
+  }
+
+  Ok(())
 }
 
 impl InternalToCombinedView for SearchCombinedViewInternal {
@@ -307,16 +410,13 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment), Some(creator), Some(post), Some(category)) = (
-      v.comment,
-      v.item_creator.clone(),
-      v.post.clone(),
-      v.category.clone(),
-    ) {
+    if let (Some(comment), Some(creator), Some(post)) =
+      (v.comment, v.item_creator.clone(), v.post.clone())
+    {
       Some(SearchCombinedView::Comment(CommentView {
         comment,
         post,
-        category,
+        category: v.category,
         creator,
         category_actions: v.category_actions,
         instance_actions: v.instance_actions,
@@ -329,12 +429,10 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         creator_is_moderator: v.creator_is_moderator,
         creator_banned_from_category: v.creator_banned_from_category,
       }))
-    } else if let (Some(post), Some(creator), Some(category)) =
-      (v.post, v.item_creator.clone(), v.category.clone())
-    {
-      Some(SearchCombinedView::Post(PostView {
+    } else if let (Some(post), Some(creator)) = (v.post, v.item_creator.clone()) {
+      let post_view = PostView {
         post,
-        category,
+        category: v.category,
         creator,
         creator_is_admin: v.item_creator_is_admin,
         image_details: v.image_details,
@@ -347,6 +445,10 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
         creator_banned: v.creator_banned,
         creator_is_moderator: v.creator_is_moderator,
         creator_banned_from_category: v.creator_banned_from_category,
+      };
+      Some(SearchCombinedView::Post(SearchPostView {
+        post_view,
+        logistics: None, // Logistics loaded separately via load_logistics_for_results
       }))
     } else if let Some(category) = v.category {
       Some(SearchCombinedView::Category(CategoryView {
@@ -373,11 +475,10 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::SearchCombinedQuery, LocalUserView, SearchCombinedView};
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
@@ -400,8 +501,8 @@ mod tests {
     timmy: Person,
     timmy_view: LocalUserView,
     sara: Person,
-    category: category,
-    category_2: category,
+    category: Category,
+    category_2: Category,
     timmy_post: Post,
     timmy_post_2: Post,
     sara_post: Post,
@@ -438,33 +539,41 @@ mod tests {
         "Ask FastJob".to_owned(),
       )
     };
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
     let category_form_2 = CategoryInsertForm::new(
       instance.id,
       "startrek_ds9".to_string(),
       "Star Trek - Deep Space Nine".to_owned(),
     );
-    let category_2 = category::create(pool, &category_form_2).await?;
+    let category_2 = Category::create(pool, &category_form_2).await?;
 
     let timmy_post_form = PostInsertForm {
       body: Some("postbody inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
-      ..PostInsertForm::new("timmy post prv".into(), timmy.id, category.id)
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
     };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
+    let timmy_post_form_2 = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
+    };
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category_2.id);
+    let sara_post_form = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new("sara post prv".into(), sara.id)
+    };
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let self_promotion_post_form = PostInsertForm {
       body: Some("self_promotion post inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
       self_promotion: Some(true),
-      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id, category.id)
+      category_id: Some(category.id),
+      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id)
     };
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
@@ -549,7 +658,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -557,7 +666,10 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(
+        data.category_2.id,
+        v.category.as_ref().unwrap().id
+      );
     } else {
       panic!("wrong type");
     }
@@ -565,39 +677,45 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[3] {
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(
+        data.category_2.id,
+        v.post_view.category.as_ref().unwrap().id
+      );
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[4] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &search[5] {
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &search[6] {
-      assert_eq!(data.category_2.id, v.category.id);
+    if let SearchCombinedView::Category(v) = &search[6] {
+      assert_eq!(
+        data.category_2.id,
+        v.category.id
+      );
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &search[7] {
+    if let SearchCombinedView::Category(v) = &search[7] {
       assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
@@ -723,13 +841,16 @@ mod tests {
     assert_length!(2, category_search);
 
     // Make sure the types are correct
-    if let SearchCombinedView::category(v) = &category_search[0] {
-      assert_eq!(data.category_2.id, v.category.id);
+    if let SearchCombinedView::Category(v) = &category_search[0] {
+      assert_eq!(
+        data.category_2.id,
+        v.category.id
+      );
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &category_search[1] {
+    if let SearchCombinedView::Category(v) = &category_search[1] {
       assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
@@ -753,7 +874,7 @@ mod tests {
     .await?;
 
     assert_length!(1, category_search_by_name);
-    if let SearchCombinedView::category(v) = &category_search_by_name[0] {
+    if let SearchCombinedView::Category(v) = &category_search_by_name[0] {
       // The askapp_108jobs category
       assert_eq!(data.category.id, v.category.id);
     } else {
@@ -871,22 +992,25 @@ mod tests {
 
     // Make sure the types are correct
     if let SearchCombinedView::Post(v) = &post_search[0] {
-      assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(
+        data.category_2.id,
+        v.post_view.category.as_ref().unwrap().id
+      );
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[1] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Post(v) = &post_search[2] {
-      assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -962,8 +1086,8 @@ mod tests {
 
     // Timmy_post_2 has a dislike, so it should be last
     if let SearchCombinedView::Post(v) = &post_search_sort_top[2] {
-      assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
+      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -989,8 +1113,8 @@ mod tests {
 
     // Make sure the first is the self_promotion
     if let SearchCombinedView::Post(v) = &self_promotion_post_search[0] {
-      assert_eq!(data.self_promotion_post.id, v.post.id);
-      assert!(v.post.self_promotion);
+      assert_eq!(data.self_promotion_post.id, v.post_view.post.id);
+      assert!(v.post_view.post.self_promotion);
     } else {
       panic!("wrong type");
     }
@@ -1047,7 +1171,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -1055,7 +1179,10 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(
+        data.category_2.id,
+        v.category.as_ref().unwrap().id
+      );
     } else {
       panic!("wrong type");
     }
@@ -1063,7 +1190,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
       assert_eq!(data.timmy_post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -1117,7 +1244,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search_sort_top[2] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
       assert_eq!(data.timmy_post_2.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }

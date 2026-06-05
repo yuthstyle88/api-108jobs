@@ -47,5 +47,4 @@ impl BillingView {
   ) -> FastJobResult<Vec<Billing>> {
     Self::list_by_user(pool, employer_id, true).await
   }
-
 }

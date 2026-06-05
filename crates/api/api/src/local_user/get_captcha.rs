@@ -5,14 +5,13 @@ use actix_web::{
     StatusCode,
   },
   web::{Data, Json},
-  HttpResponse,
-  HttpResponseBuilder,
+  HttpResponse, HttpResponseBuilder,
 };
-use captcha::{generate, Difficulty};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm};
 use app_108jobs_db_views_site::api::{CaptchaResponse, GetCaptchaResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use captcha::{generate, Difficulty};
 
 pub async fn get_captcha(context: Data<FastJobContext>) -> FastJobResult<HttpResponse> {
   let local_site = context.site_config().get().await?.site_view.local_site;

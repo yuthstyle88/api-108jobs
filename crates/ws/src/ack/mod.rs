@@ -11,32 +11,40 @@ use uuid::Uuid;
 
 /// Handle AckConfirm/SyncPending/Unknown events from the client.
 /// - Never panics; errors are swallowed (best-effort) to avoid breaking the WS stream.
-pub async fn handle_ack_event(any_event: AnyIncomingEvent, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    match any_event {
-        AnyIncomingEvent::AckConfirm(ev) => {
-            // Payload is already deserialized by upper layer. If missing, no-op.
-            if let Some(p) = ev.payload {
-                let room_id = p.room_id;       // ChatRoomId
-                let sender_id = p.sender_id;   // LocalUserId
+pub async fn handle_ack_event(
+  any_event: AnyIncomingEvent,
+  pool: &mut DbPool<'_>,
+) -> FastJobResult<()> {
+  match any_event {
+    AnyIncomingEvent::AckConfirm(ev) => {
+      // Payload is already deserialized by upper layer. If missing, no-op.
+      if let Some(p) = ev.payload {
+        let room_id = p.room_id; // ChatRoomId
+        let sender_id = p.sender_id; // LocalUserId
 
-                // NOTE: Current payload type for `client_ids` in this crate is not UUID.
-                // Until the FE/DTO aligns to Vec<Uuid>, we submit an empty list (idempotent call).
-                // This will be a no-op delete and keeps the flow safe.
-                let client_ids: Vec<Uuid> = Vec::new();
+        // NOTE: Current payload type for `client_ids` in this crate is not UUID.
+        // Until the FE/DTO aligns to Vec<Uuid>, we submit an empty list (idempotent call).
+        // This will be a no-op delete and keeps the flow safe.
+        let client_ids: Vec<Uuid> = Vec::new();
 
-                let req = AckConfirmRequest { room_id, sender_id, client_ids };
-                // Best-effort; idempotent. Swallow error to avoid breaking the WS stream.
-                let _res: Result<AckConfirmResponse, _> = app_108jobs_db_views_chat_pending_ack::ack_confirm(pool, &req).await;
-            }
-            Ok(())
-        }
-
-        AnyIncomingEvent::SyncPending(_ev) => {
-            // TODO(next): call ack_reminder + reconciliation (nack:missing) here.
-            Ok(())
-        }
-
-        AnyIncomingEvent::Unknown => Ok(()),
-        _ =>  Ok(())
+        let req = AckConfirmRequest {
+          room_id,
+          sender_id,
+          client_ids,
+        };
+        // Best-effort; idempotent. Swallow error to avoid breaking the WS stream.
+        let _res: Result<AckConfirmResponse, _> =
+          app_108jobs_db_views_chat_pending_ack::ack_confirm(pool, &req).await;
+      }
+      Ok(())
     }
+
+    AnyIncomingEvent::SyncPending(_ev) => {
+      // TODO(next): call ack_reminder + reconciliation (nack:missing) here.
+      Ok(())
+    }
+
+    AnyIncomingEvent::Unknown => Ok(()),
+    _ => Ok(()),
+  }
 }

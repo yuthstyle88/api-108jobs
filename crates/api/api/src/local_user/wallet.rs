@@ -2,10 +2,7 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_wallet::api::{
-  DepositWallet, GetWalletResponse,
-  WalletOperationResponse,
-};
+use app_108jobs_db_views_wallet::api::{DepositWallet, GetWalletResponse, WalletOperationResponse};
 use app_108jobs_utils::error::FastJobResult;
 
 use uuid::Uuid;

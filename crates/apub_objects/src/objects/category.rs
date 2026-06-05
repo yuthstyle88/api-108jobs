@@ -1,7 +1,4 @@
-use crate::{
-  protocol::group::Group,
-  utils::functions::GetActorType,
-};
+use crate::{protocol::group::Group, utils::functions::GetActorType};
 
 use crate::fake_trait::{Actor, Object};
 use actix_web::web::Data;
@@ -34,7 +31,6 @@ impl From<Category> for ApubCategory {
   }
 }
 
-
 impl Object for ApubCategory {
   type DataType = FastJobContext;
   type Kind = Group;
@@ -43,7 +39,6 @@ impl Object for ApubCategory {
   fn id(&self) -> &Url {
     self.ap_id.inner()
   }
-
 }
 
 impl Actor for ApubCategory {

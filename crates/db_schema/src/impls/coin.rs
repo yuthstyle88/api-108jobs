@@ -4,13 +4,13 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{
-  dsl::{insert_into, now},
-  ExpressionMethods, QueryDsl,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::coin;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::{insert_into, now},
+  ExpressionMethods, OptionalExtension, QueryDsl,
+};
+use diesel_async::RunQueryDsl;
 
 impl Crud for CoinModel {
   type InsertForm = CoinModelInsertForm;
@@ -49,6 +49,50 @@ impl Crud for CoinModel {
 }
 
 impl CoinModel {
+  /// Get the platform coin by code ("108JC"). Error if missing.
+  /// The platform coin should be seeded by migration.
+  pub async fn get_platform_coin(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    let coin = coin::table
+      .filter(coin::code.eq("108JC"))
+      .first::<Self>(conn)
+      .await
+      .optional()?;
+    match coin {
+      Some(c) => Ok(c),
+      None => Err(FastJobErrorType::CouldntFindCoin.into()),
+    }
+  }
+
+  /// Ensure platform coin exists (get or create).
+  /// Returns the platform coin, creating it if it doesn't exist.
+  /// Note: After migration runs, the platform coin should always exist.
+  pub async fn ensure_platform_coin(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+
+    // Try to get existing platform coin
+    let existing = coin::table
+      .filter(coin::code.eq("108JC"))
+      .first::<Self>(conn)
+      .await
+      .optional()?;
+
+    if let Some(c) = existing {
+      return Ok(c);
+    }
+
+    // Create if doesn't exist (fallback for systems without migration)
+    let total_supply = Coin(1_000_000_000); // 1 billion default
+    let coin_form = CoinModelInsertForm::new(
+      "108JC".to_string(),
+      "108Jobs Coin".to_string(),
+      Some(total_supply),
+      Some(total_supply),
+    );
+    let coin = Self::create(&mut conn.into(), &coin_form).await?;
+    Ok(coin)
+  }
+
   /// Update coin supply_total by **delta** (positive to increase, negative to decrease).
   /// - Reads current `supply_total` with `FOR UPDATE` to lock the row
   /// - Computes `new_total = round(current + delta, 2)` (two decimal places)
@@ -61,11 +105,11 @@ impl CoinModel {
   ) -> FastJobResult<CoinModel> {
     // 1) Lock & read current supply
     let current_total: i32 = coin::table
-        .find(coin_id)
-        .select(coin::supply_total)
-        .for_update()
-        .first::<i32>(conn)
-        .await?;
+      .find(coin_id)
+      .select(coin::supply_total)
+      .for_update()
+      .first::<i32>(conn)
+      .await?;
 
     // 2) Compute new total (integer, no decimals)
     let new_total = current_total + delta.0 as i32;
@@ -75,12 +119,9 @@ impl CoinModel {
 
     // 3) Persist
     let updated = diesel::update(coin::table.find(coin_id))
-        .set((
-          coin::supply_total.eq(new_total),
-          coin::updated_at.eq(now),
-        ))
-        .get_result::<CoinModel>(conn)
-        .await?;
+      .set((coin::supply_total.eq(new_total), coin::updated_at.eq(now)))
+      .get_result::<CoinModel>(conn)
+      .await?;
 
     Ok(updated)
   }

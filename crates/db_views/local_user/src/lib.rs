@@ -2,8 +2,8 @@ use app_108jobs_db_schema::source::{local_user::LocalUser, person::Person};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::creator_home_banned,
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;

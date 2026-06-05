@@ -4,10 +4,10 @@ use app_108jobs_db_schema::source::person::{Person, PersonUpdateForm, SaveUserPr
 
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::api::VisitProfileResponse;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
-use app_108jobs_db_views_person::api::VisitProfileResponse;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProfileResponse;

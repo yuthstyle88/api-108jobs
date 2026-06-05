@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+  workflow_dispatch: {}
+
+# Cancel in-progress runs for the same ref when a new commit is pushed.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Formatting — uses nightly rustfmt to match the project's .rustfmt.toml,
+  # which relies on nightly-only options (imports_granularity, group_imports…).
+  # ---------------------------------------------------------------------------
+  fmt:
+    name: cargo fmt
+    runs-on: [self-hosted, macOS, ARM64]
+    # Non-blocking: the existing codebase is not yet nightly-rustfmt clean.
+    # Reported for visibility; formatting cleanup is tracked separately.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly rustfmt
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        # `cargo +nightly fmt` alone does NOT use nightly rustfmt here: the
+        # rust-toolchain.toml pin (stable) overrides the rustfmt that cargo-fmt
+        # resolves, silently ignoring the nightly-only options in .rustfmt.toml.
+        # Pinning RUSTFMT to the nightly binary forces the correct formatter.
+        run: |
+          set -euo pipefail
+          RUSTFMT="$(rustup which --toolchain nightly rustfmt)" \
+            cargo +nightly fmt --all -- --check
+
+  # ---------------------------------------------------------------------------
+  # Clippy — workspace-wide, warnings denied. Uses the pinned toolchain from
+  # rust-toolchain.toml (1.89.0).
+  # ---------------------------------------------------------------------------
+  clippy:
+    name: cargo clippy
+    runs-on: [self-hosted, macOS, ARM64]
+    # Non-blocking: the existing codebase has pre-existing clippy lints that
+    # `-D warnings` turns into errors. Reported for visibility; cleanup is
+    # tracked separately.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain (clippy)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.89.0"
+          components: clippy
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: clippy
+
+      - name: Run clippy
+        run: cargo clippy --workspace --tests --all-targets -- -D warnings
+
+  # ---------------------------------------------------------------------------
+  # Tests — require a live Postgres. Mirrors the Woodpecker `cargo_test` step:
+  # a `app_108jobs` superuser/db, the DATABASE_URL env var, and the workspace
+  # config file.
+  # ---------------------------------------------------------------------------
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    # Non-blocking for now. The botched-rename breakage that stopped the suite
+    # from *compiling* is fixed, and with config/config.ci.hjson the job now
+    # actually runs. But the suite does not yet *pass*: there are pre-existing
+    # runtime failures unrelated to that fix — dominated by the deprecated
+    # `PersonInsertForm::test_form` helper producing a NULL `wallet_id` (the
+    # `person.wallet_id` NOT-NULL constraint), plus some test-isolation and
+    # assertion failures. Drop continue-on-error once those are addressed and
+    # the suite is green, so this becomes the enforced gate.
+    continue-on-error: true
+
+    services:
+      # 15-alpine is required by the diesel schema tests (see .woodpecker.yml).
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: app_108jobs
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      app_108jobs_DATABASE_URL: postgres://app_108jobs:password@localhost:5432/app_108jobs
+      DATABASE_URL: postgres://app_108jobs:password@localhost:5432/app_108jobs
+      app_108jobs_CONFIG_LOCATION: ${{ github.workspace }}/config/config.ci.hjson
+      # The persistent federation queue otherwise adds 30s–5min delays.
+      app_108jobs_TEST_FAST_FEDERATION: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.89.0"
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: test
+
+      - name: Install postgresql-client
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Create database user
+        # `DROP OWNED` and the schema tests need a dedicated superuser, the
+        # same setup the Woodpecker pipeline uses.
+        env:
+          PGPASSWORD: password
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d app_108jobs \
+            -c "CREATE USER app_108jobs WITH PASSWORD 'password' SUPERUSER;"
+
+      - name: Run tests
+        run: cargo test --workspace --no-fail-fast

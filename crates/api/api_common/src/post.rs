@@ -6,39 +6,21 @@ pub use app_108jobs_db_schema::{
 pub use app_108jobs_db_schema_file::enums::PostListingMode;
 pub use app_108jobs_db_views_post::{
   api::{
-    GetPost,
-    GetPostResponse,
-    GetPosts,
-    GetPostsResponse,
-    GetSiteMetadata,
-    GetSiteMetadataResponse,
-    LinkMetadata,
-    OpenGraphData,
-    PostResponse,
+    GetPost, GetPostResponse, GetPosts, GetPostsResponse, GetSiteMetadata, GetSiteMetadataResponse,
+    LinkMetadata, OpenGraphData, PostItem, PostResponse,
   },
   PostView,
 };
 
 pub mod actions {
   pub use app_108jobs_db_views_post::api::{
-    CreatePost,
-    CreatePostLike,
-    DeletePost,
-    EditPost,
-    HidePost,
-    MarkManyPostsAsRead,
-    MarkPostAsRead,
-    SavePost,
+    CreatePost, CreatePostLikeRequest, DeletePost, EditPost, HidePost, MarkManyPostsAsRead,
+    MarkPostAsRead, SavePost,
   };
 
   pub mod moderation {
     pub use app_108jobs_db_views_post::api::{
-      FeaturePost,
-      ListPostLikes,
-      ListPostLikesResponse,
-      LockPost,
-      PurgePost,
-      RemovePost,
+      FeaturePost, ListPostLikes, ListPostLikesResponse, LockPost, PurgePost, RemovePost,
     };
   }
 }

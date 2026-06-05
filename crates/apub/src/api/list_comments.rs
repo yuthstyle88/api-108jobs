@@ -7,7 +7,7 @@ use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instan
 use app_108jobs_apub_objects::objects::category::ApubCategory;
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
-  source::{comment::Comment, category::Category},
+  source::{category::Category, comment::Comment},
   traits::{Crud, PaginationCursorBuilder},
 };
 use app_108jobs_db_views_comment::{
@@ -34,11 +34,7 @@ async fn list_comments_common(
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let category_id = if let Some(name) = &data.category_name {
-    Some(
-      resolve_ap_identifier::<ApubCategory, Category>(name, &context, true)
-        .await?,
-    )
-    .map(|c| c.id)
+    Some(resolve_ap_identifier::<ApubCategory, Category>(name, &context, true).await?).map(|c| c.id)
   } else {
     data.category_id
   };

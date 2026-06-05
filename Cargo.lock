@@ -553,6 +553,7 @@ dependencies = [
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_chat",
  "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_currency",
  "app_108jobs_db_views_inbox_combined",
  "app_108jobs_db_views_local_image",
  "app_108jobs_db_views_local_user",
@@ -565,6 +566,7 @@ dependencies = [
  "app_108jobs_db_views_registration_applications",
  "app_108jobs_db_views_report_combined",
  "app_108jobs_db_views_reports",
+ "app_108jobs_db_views_rider",
  "app_108jobs_db_views_site",
  "app_108jobs_db_views_user_review",
  "app_108jobs_db_views_vote",
@@ -576,6 +578,7 @@ dependencies = [
  "bcrypt",
  "captcha",
  "chrono",
+ "diesel",
  "diesel-async",
  "either",
  "elementtree",
@@ -1007,6 +1010,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_db_views_currency"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_schema_file",
+ "app_108jobs_utils",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "i-love-jesus",
+ "pretty_assertions",
+ "serde",
+ "serde_with",
+ "serial_test",
+ "ts-rs",
+]
+
+[[package]]
 name = "app_108jobs_db_views_custom_emoji"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -1182,6 +1203,7 @@ dependencies = [
  "app_108jobs_db_schema_file",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_rider",
  "app_108jobs_db_views_vote",
  "app_108jobs_utils",
  "chrono",
@@ -1282,6 +1304,7 @@ dependencies = [
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_person",
  "app_108jobs_db_views_post",
+ "app_108jobs_db_views_rider",
  "app_108jobs_utils",
  "diesel",
  "diesel-async",
@@ -1501,6 +1524,8 @@ dependencies = [
  "diesel-async",
  "serde",
  "serde_json",
+ "serial_test",
+ "tokio",
  "tracing",
  "ts-rs",
  "uuid",

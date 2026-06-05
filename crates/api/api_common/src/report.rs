@@ -1,9 +1,7 @@
 pub use app_108jobs_db_schema::{
-  newtypes::{CommentReportId, CategoryReportId, PostReportId},
+  newtypes::{CategoryReportId, CommentReportId, PostReportId},
   source::{
-    comment_report::CommentReport,
-    category_report::CategoryReport,
-    post_report::PostReport,
+    category_report::CategoryReport, comment_report::CommentReport, post_report::PostReport,
   },
   ReportType,
 };
@@ -13,19 +11,9 @@ pub use app_108jobs_db_views_report_combined::{
 };
 pub use app_108jobs_db_views_reports::{
   api::{
-    CommentReportResponse,
-    CategoryReportResponse,
-    CreateCommentReport,
-    CreateCategoryReport,
-    CreatePostReport,
-    GetReportCount,
-    GetReportCountResponse,
-    PostReportResponse,
-    ResolveCommentReport,
-    ResolveCategoryReport,
-    ResolvePostReport,
+    CategoryReportResponse, CommentReportResponse, CreateCategoryReport, CreateCommentReport,
+    CreatePostReport, GetReportCount, GetReportCountResponse, PostReportResponse,
+    ResolveCategoryReport, ResolveCommentReport, ResolvePostReport,
   },
-  CommentReportView,
-  CategoryReportView,
-  PostReportView,
+  CategoryReportView, CommentReportView, PostReportView,
 };

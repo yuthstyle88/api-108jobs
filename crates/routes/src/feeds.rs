@@ -1,6 +1,5 @@
 use actix_web::{error::ErrorBadRequest, web, Error, HttpRequest, HttpResponse, Result};
 use anyhow::anyhow;
-use chrono::{DateTime, Utc};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_private_instance, local_user_view_from_jwt},
@@ -21,6 +20,7 @@ use app_108jobs_utils::{
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
+use chrono::{DateTime, Utc};
 use rss::{
   extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap},
   Channel, EnclosureBuilder, Guid, Item,
@@ -737,7 +737,13 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
 
   for p in posts {
     let post_url = p.post.local_url(settings)?;
-    let category_url = &p.category.actor_url(settings)?;
+    // Handle posts without categories (e.g., delivery posts)
+    let category_display = if let Some(ref category) = p.category {
+      let category_url = category.actor_url(settings)?;
+      format!("<a href=\"{}\">{}</a>", category_url, &category.name)
+    } else {
+      "(no category)".to_string()
+    };
     let dublin_core_ext = Some(DublinCoreExtension {
       creators: vec![],
       ..DublinCoreExtension::default()
@@ -746,14 +752,15 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
       permalink: true,
       value: post_url.to_string(),
     });
-    let mut description = format!("submitted by <a href=\"{}\">{}</a> to <a href=\"{}\">{}</a><br>{} points | <a href=\"{}\">{} comments</a>",
-    p.creator.actor_url(settings)?,
-    &p.creator.name,
-    category_url,
-    &p.category.name,
-    p.post.score,
-    post_url,
-    p.post.comments);
+    let mut description = format!(
+      "submitted by <a href=\"{}\">{}</a> to {}<br>{} points | <a href=\"{}\">{} comments</a>",
+      p.creator.actor_url(settings)?,
+      &p.creator.name,
+      category_display,
+      p.post.score,
+      post_url,
+      p.post.comments
+    );
 
     // If its a url post, add it to the description
     // and see if we can parse it as a media enclosure.

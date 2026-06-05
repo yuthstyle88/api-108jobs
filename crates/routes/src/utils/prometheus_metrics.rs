@@ -1,4 +1,4 @@
-use actix_web::{rt::System, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_utils::{
@@ -6,7 +6,7 @@ use app_108jobs_utils::{
   settings::structs::PrometheusConfig,
 };
 use prometheus::{default_registry, Encoder, Gauge, Opts, TextEncoder};
-use std::{sync::Arc, thread};
+use std::sync::Arc;
 use tracing::error;
 
 /// Creates a middleware that populates http metrics for each path, method, and status code
@@ -30,30 +30,39 @@ struct DbPoolMetrics {
   available: Gauge,
 }
 
-pub fn serve_prometheus(config: PrometheusConfig, app_108jobs_context: FastJobContext) -> FastJobResult<()> {
+pub fn serve_prometheus(
+  config: PrometheusConfig,
+  app_108jobs_context: FastJobContext,
+) -> FastJobResult<()> {
   let context = Arc::new(PromContext {
     app_108jobs: app_108jobs_context,
     db_pool_metrics: create_db_pool_metrics()?,
   });
 
-  // spawn thread that blocks on handling requests
-  // only mapping /metrics to a handler
-  thread::spawn(move || {
-    let sys = System::new();
-    sys.block_on(async {
-      let server = HttpServer::new(move || {
-        App::new()
-          .app_data(web::Data::new(Arc::clone(&context)))
-          .route("/metrics", web::get().to(metrics))
-      })
-      .bind((config.bind, config.port))
-      .unwrap_or_else(|e| panic!("Cannot bind to {}:{}: {e}", config.bind, config.port))
-      .run();
+  // Bind synchronously so a port conflict surfaces as a clean startup error
+  // rather than a silent background failure. Then drive the server on the
+  // existing tokio runtime — no extra OS thread, no nested block_on.
+  let bind = (config.bind, config.port);
+  let server = HttpServer::new(move || {
+    App::new()
+      .app_data(web::Data::new(Arc::clone(&context)))
+      .route("/metrics", web::get().to(metrics))
+  })
+  .bind(bind)
+  .map_err(|e| {
+    FastJobErrorType::Unknown(format!(
+      "Cannot bind prometheus server to {}:{}: {e}",
+      config.bind, config.port
+    ))
+  })?
+  .disable_signals()
+  .workers(1)
+  .run();
 
-      if let Err(err) = server.await {
-        error!("Prometheus server error: {err}");
-      }
-    })
+  tokio::spawn(async move {
+    if let Err(err) = server.await {
+      error!("Prometheus server error: {err}");
+    }
   });
   Ok(())
 }

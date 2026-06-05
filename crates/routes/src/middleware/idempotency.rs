@@ -2,13 +2,11 @@ use actix_web::{
   body::EitherBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
   http::Method,
-  Error,
-  HttpMessage,
-  HttpResponse,
+  Error, HttpMessage, HttpResponse,
 };
-use futures_util::future::LocalBoxFuture;
 use app_108jobs_db_schema::newtypes::LocalUserId;
 use app_108jobs_db_views_local_user::LocalUserView;
+use futures_util::future::LocalBoxFuture;
 use std::{
   collections::HashSet,
   future::{ready, Ready},

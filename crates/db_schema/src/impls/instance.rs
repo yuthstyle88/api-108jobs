@@ -1,30 +1,17 @@
 use crate::{
   newtypes::{InstanceId, PersonId},
-  source::{
-    instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm, InstanceForm},
-  },
+  source::instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm, InstanceForm},
   traits::{Bannable, Blockable},
-  utils::{
-    functions::lower,
-    get_conn,
-    uplete,
-    DbPool,
-  },
+  utils::{functions::lower, get_conn, uplete, DbPool},
 };
+use app_108jobs_db_schema_file::schema::{instance, instance_actions};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},
-  ExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
-  SelectableHelper,
+  ExpressionMethods, OptionalExtension, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::{
-  instance,
-  instance_actions,
-};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Instance {
   /// Attempt to read Instance column for the given domain. If it doesn't exist, insert a new one.
@@ -35,10 +22,10 @@ impl Instance {
 
     // First try to read the instance row and return directly if found
     let instance = instance::table
-     .filter(lower(domain).eq(&domain_.to_lowercase()))
-     .first(conn)
-     .await
-     .optional()?;
+      .filter(lower(domain).eq(&domain_.to_lowercase()))
+      .first(conn)
+      .await
+      .optional()?;
 
     // TODO could convert this to unwrap_or_else once async closures are stable
     match instance {
@@ -50,25 +37,25 @@ impl Instance {
           ..InstanceForm::new(domain_)
         };
         insert_into(instance::table)
-         .values(&form)
-         // Necessary because this method may be called concurrently for the same domain. This
-         // could be handled with a transaction, but nested transactions arent allowed
-         .on_conflict(instance::domain)
-         .do_update()
-         .set(&form)
-         .get_result::<Self>(conn)
-         .await
-         .with_fastjob_type(FastJobErrorType::CouldntCreateSite)
+          .values(&form)
+          // Necessary because this method may be called concurrently for the same domain. This
+          // could be handled with a transaction, but nested transactions arent allowed
+          .on_conflict(instance::domain)
+          .do_update()
+          .set(&form)
+          .get_result::<Self>(conn)
+          .await
+          .with_fastjob_type(FastJobErrorType::CouldntCreateSite)
       }
     }
   }
   pub async fn read(pool: &mut DbPool<'_>, instance_id: InstanceId) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     instance::table
-     .find(instance_id)
-     .first(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .find(instance_id)
+      .first(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
   pub async fn update(
@@ -78,29 +65,28 @@ impl Instance {
   ) -> FastJobResult<usize> {
     let mut conn = get_conn(pool).await?;
     diesel::update(instance::table.find(instance_id))
-     .set(form)
-     .execute(&mut conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::CouldntUpdateSite)
+      .set(form)
+      .execute(&mut conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateSite)
   }
 
   pub async fn delete(pool: &mut DbPool<'_>, instance_id: InstanceId) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(instance::table.find(instance_id))
-     .execute(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::Deleted)
+      .execute(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::Deleted)
   }
 
   pub async fn read_all(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Instance>> {
     let conn = &mut get_conn(pool).await?;
     instance::table
-     .select(Self::as_select())
-     .get_results(conn)
-     .await
-     .with_fastjob_type(FastJobErrorType::NotFound)
+      .select(Self::as_select())
+      .get_results(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
   }
-
 }
 impl Blockable for InstanceActions {
   type Form = InstanceBlockForm;
@@ -163,10 +149,7 @@ impl Blockable for InstanceActions {
 }
 
 impl InstanceActions {
-  pub async fn check_ban(
-    pool: &mut DbPool<'_>,
-    person_id: PersonId,
-  ) -> FastJobResult<()> {
+  pub async fn check_ban(pool: &mut DbPool<'_>, person_id: PersonId) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let ban_exists = select(exists(
       instance_actions::table

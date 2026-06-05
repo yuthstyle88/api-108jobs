@@ -1,9 +1,10 @@
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
-use diesel::{Queryable, Selectable};
 use app_108jobs_db_schema::source::{bank::Bank, user_bank_account::BankAccount};
+use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

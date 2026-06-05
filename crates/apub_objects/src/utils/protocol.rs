@@ -1,9 +1,6 @@
-
-use app_108jobs_db_schema::{
-  newtypes::{DbUrl},
-};
+use app_108jobs_db_schema::newtypes::DbUrl;
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref};
+use std::ops::Deref;
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -11,7 +8,6 @@ use url::Url;
 pub struct Source {
   pub(crate) content: String,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
@@ -92,4 +88,3 @@ pub struct Endpoints {
 pub trait Id {
   fn id(&self) -> &Url;
 }
-

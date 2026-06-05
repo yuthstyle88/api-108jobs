@@ -1,37 +1,16 @@
 use crate::newtypes::{
-    CommentId,
-    CategoryId,
-    InstanceId,
-    ModAddCategoryId,
-    ModAddId,
-    ModBanFromCategoryId,
-    ModBanId,
-    ModChangeCategoryVisibilityId,
-    ModFeaturePostId,
-    ModLockPostId,
-    ModRemoveCommentId,
-    ModRemoveCategoryId,
-    ModRemovePostId,
-    ModTransferCategoryId,
-    PersonId,
-    PostId,
+  CategoryId, CommentId, InstanceId, ModAddCategoryId, ModAddId, ModBanFromCategoryId, ModBanId,
+  ModChangeCategoryVisibilityId, ModFeaturePostId, ModLockPostId, ModRemoveCategoryId,
+  ModRemoveCommentId, ModRemovePostId, ModTransferCategoryId, PersonId, PostId,
 };
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema_file::enums::CategoryVisibility;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::{
-  mod_add,
-  mod_add_category,
-  mod_ban,
-  mod_ban_from_category,
-  mod_change_category_visibility,
-  mod_feature_post,
-  mod_lock_post,
-  mod_remove_comment,
-  mod_remove_category,
-  mod_remove_post,
+  mod_add, mod_add_category, mod_ban, mod_ban_from_category, mod_change_category_visibility,
+  mod_feature_post, mod_lock_post, mod_remove_category, mod_remove_comment, mod_remove_post,
   mod_transfer_category,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

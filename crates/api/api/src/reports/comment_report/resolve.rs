@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use either::Either;
 use app_108jobs_api_utils::utils::check_category_deleted_removed;
 use app_108jobs_api_utils::{
   context::FastJobContext,
@@ -12,7 +11,8 @@ use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, ResolveCommentReport},
   CommentReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use either::Either;
 
 /// Resolves or unresolves a comment report and notifies the moderators of the category
 pub async fn resolve_comment_report(
@@ -25,7 +25,7 @@ pub async fn resolve_comment_report(
   let report = CommentReportView::read(&mut context.pool(), report_id, person_id).await?;
 
   let person_id = local_user_view.person.id;
-  check_category_deleted_removed(&report.category)?;
+  check_category_deleted_removed(report.category.as_ref().ok_or(FastJobErrorType::NotFound)?)?;
 
   if data.resolved {
     CommentReport::resolve(&mut context.pool(), report_id, person_id).await?;
@@ -41,7 +41,12 @@ pub async fn resolve_comment_report(
     SendActivityData::SendResolveReport {
       actor: local_user_view.person,
       report_creator: report.creator,
-      receiver: Either::Right(comment_report_view.category.clone()),
+      receiver: Either::Right(
+        comment_report_view
+          .category
+          .clone()
+          .ok_or(FastJobErrorType::NotFound)?,
+      ),
     },
     &context,
   )?;

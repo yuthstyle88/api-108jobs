@@ -7,10 +7,10 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::{local_site, site};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel_async::RunQueryDsl;
 use url::Url;
 
 impl Crud for Site {

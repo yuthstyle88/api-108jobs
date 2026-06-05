@@ -1,17 +1,17 @@
+use crate::logistics::PostLogisticsView;
 use crate::PostView;
-use chrono::{DateTime, Utc};
-use app_108jobs_db_schema::{newtypes::{
-  CommentId,
-  CategoryId,
-  DbUrl,
-  LanguageId,
-  PaginationCursor,
-  PostId,
-  TagId,
-}, PostFeatureType};
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostNotifications, PostSortType};
+use app_108jobs_db_schema::{
+  newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
+  source::delivery_details::DeliveryDetailsPayload,
+  PostFeatureType,
+};
+use app_108jobs_db_schema_file::enums::{
+  IntendedUse, JobType, ListingType, PaymentMethod, PostKind, PostNotifications, PostSortType,
+  TripStatus,
+};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -22,7 +22,8 @@ use serde_with::skip_serializing_none;
 /// Create a post.
 pub struct CreatePost {
   pub name: String,
-  pub category_id: CategoryId,
+  /// Category ID (optional for delivery posts, resolved in handler)
+  pub category_id: Option<CategoryId>,
   pub url: Option<String>,
   /// An optional body for the post in markdown.
   pub body: Option<String>,
@@ -40,9 +41,13 @@ pub struct CreatePost {
   pub scheduled_publish_time_at: Option<i64>,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  // NEW: kind and optional logistics payloads (carried through to handler layer)
+  pub post_kind: PostKind,
+  pub delivery_details: Option<DeliveryDetailsPayload>,
+  pub ride_payload: Option<RideSessionCreatePayload>,
 }
 
 #[skip_serializing_none]
@@ -53,7 +58,8 @@ pub struct CreatePost {
 #[serde(rename_all = "camelCase")]
 pub struct CreatePostRequest {
   pub name: String,
-  pub category_id: CategoryId,
+  /// Category ID (optional for delivery posts, will use default)
+  pub category_id: Option<CategoryId>,
   /// Portfolio url
   pub url: Option<String>,
   /// An optional body for the post in markdown.
@@ -68,9 +74,32 @@ pub struct CreatePostRequest {
   pub custom_thumbnail: Option<String>,
   pub intended_use: IntendedUse,
   pub job_type: JobType,
-  pub budget: f64,
+  pub budget: Coin,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: bool,
+  // NEW
+  pub post_kind: Option<PostKind>,
+  pub delivery_details: Option<DeliveryDetailsPayload>,
+  pub ride_payload: Option<RideSessionCreatePayload>,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+/// Minimal payload to create a RideSession attached to a post
+pub struct RideSessionCreatePayload {
+  pub pickup_address: String,
+  pub pickup_lat: Option<f64>,
+  pub pickup_lng: Option<f64>,
+  pub dropoff_address: String,
+  pub dropoff_lat: Option<f64>,
+  pub dropoff_lng: Option<f64>,
+  pub pickup_note: Option<String>,
+  pub passenger_name: Option<String>,
+  pub passenger_phone: Option<String>,
+  pub payment_method: PaymentMethod,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -78,10 +107,19 @@ pub struct CreatePostRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Like a post.
 #[serde(rename_all = "camelCase")]
-pub struct CreatePostLike {
+pub struct CreatePostLikeRequest {
   pub post_id: PostId,
   /// Score must be -1, 0, or 1.
   pub score: i16,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Delete a post.
+pub struct DeletePost {
+  pub post_id: PostId,
+  pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -89,7 +127,7 @@ pub struct CreatePostLike {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete a post.
 #[serde(rename_all = "camelCase")]
-pub struct DeletePost {
+pub struct DeletePostRequest {
   pub post_id: PostId,
   pub deleted: bool,
 }
@@ -118,9 +156,11 @@ pub struct EditPost {
   pub tags: Option<Vec<TagId>>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: Option<bool>,
+  /// Delivery details for delivery posts. Only applicable when post_kind is Delivery.
+  pub delivery_details: Option<DeliveryDetailsPayload>,
 }
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
@@ -146,9 +186,11 @@ pub struct EditPostRequest {
   pub tags: Option<Vec<TagId>>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  pub budget: Option<f64>,
+  pub budget: Option<Coin>,
   pub deadline: Option<DateTime<Utc>>,
   pub is_english_required: Option<bool>,
+  /// Delivery details for delivery posts. Only applicable when post_kind is Delivery.
+  pub delivery_details: Option<DeliveryDetailsPayload>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -162,12 +204,21 @@ pub struct FeaturePost {
   pub feature_type: PostFeatureType,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Disable reply notifications for a post and all comments inside it
+pub struct UpdatePostNotifications {
+  pub post_id: PostId,
+  pub new_state: PostNotifications,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Disable reply notifications for a post and all comments inside it
 #[serde(rename_all = "camelCase")]
-pub struct UpdatePostNotifications {
+pub struct UpdatePostNotificationsRequest {
   pub post_id: PostId,
   pub new_state: PostNotifications,
 }
@@ -192,9 +243,11 @@ pub struct GetPost {
 #[serde(rename_all = "camelCase")]
 pub struct GetPostResponse {
   pub post_view: PostView,
-  pub category_view: CategoryView,
+  pub category_view: Option<CategoryView>,
   /// A list of cross-posts, or other times / communities this link has been posted to.
   pub cross_posts: Vec<PostView>,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
 }
 
 #[skip_serializing_none]
@@ -223,11 +276,14 @@ pub struct GetPosts {
   pub no_proposals_only: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  /// Minimum budget in your preferred currency
-  pub budget_min: Option<i64>,
-  /// Maximum budget in your preferred currency
-  pub budget_max: Option<i64>,
+  /// Minimum budget in cents (Coin type)
+  pub budget_min: Option<Coin>,
+  /// Maximum budget in cents (Coin type)
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<TripStatus>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -240,7 +296,7 @@ pub struct GetPosts {
 /// The post list response.
 #[serde(rename_all = "camelCase")]
 pub struct GetPostsResponse {
-  pub posts: Vec<PostView>,
+  pub posts: Vec<PostItem>,
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
@@ -347,12 +403,25 @@ pub struct OpenGraphData {
   pub embed_video_url: Option<DbUrl>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct PostItem {
+  #[serde(flatten)]
+  pub post_view: PostView,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct PostResponse {
   pub post_view: PostView,
+  /// Unified logistics view for Delivery or Ride posts (None for Normal)
+  pub logistics: Option<PostLogisticsView>,
 }
 
 #[skip_serializing_none]

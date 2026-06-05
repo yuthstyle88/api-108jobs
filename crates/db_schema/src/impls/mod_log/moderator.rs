@@ -1,60 +1,27 @@
 use crate::{
   newtypes::{
-    ModAddCategoryId,
-    ModAddId,
-    ModBanFromCategoryId,
-    ModBanId,
-    ModChangeCategoryVisibilityId,
-    ModFeaturePostId,
-    ModLockPostId,
-    ModRemoveCommentId,
-    ModRemoveCategoryId,
-    ModRemovePostId,
+    ModAddCategoryId, ModAddId, ModBanFromCategoryId, ModBanId, ModChangeCategoryVisibilityId,
+    ModFeaturePostId, ModLockPostId, ModRemoveCategoryId, ModRemoveCommentId, ModRemovePostId,
     ModTransferCategoryId,
   },
   source::mod_log::moderator::{
-    ModAdd,
-    ModAddCategory,
-    ModAddCategoryForm,
-    ModAddForm,
-    ModBan,
-    ModBanForm,
-    ModBanFromCategory,
-    ModBanFromCategoryForm,
-    ModChangeCategoryVisibility,
-    ModChangeCategoryVisibilityForm,
-    ModFeaturePost,
-    ModFeaturePostForm,
-    ModLockPost,
-    ModLockPostForm,
-    ModRemoveComment,
-    ModRemoveCommentForm,
-    ModRemoveCategory,
-    ModRemoveCategoryForm,
-    ModRemovePost,
-    ModRemovePostForm,
-    ModTransferCategory,
-    ModTransferCategoryForm,
+    ModAdd, ModAddCategory, ModAddCategoryForm, ModAddForm, ModBan, ModBanForm, ModBanFromCategory,
+    ModBanFromCategoryForm, ModChangeCategoryVisibility, ModChangeCategoryVisibilityForm,
+    ModFeaturePost, ModFeaturePostForm, ModLockPost, ModLockPostForm, ModRemoveCategory,
+    ModRemoveCategoryForm, ModRemoveComment, ModRemoveCommentForm, ModRemovePost,
+    ModRemovePostForm, ModTransferCategory, ModTransferCategoryForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{dsl::insert_into, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::{
-  mod_add,
-  mod_add_category,
-  mod_ban,
-  mod_ban_from_category,
-  mod_change_category_visibility,
-  mod_feature_post,
-  mod_lock_post,
-  mod_remove_comment,
-  mod_remove_category,
-  mod_remove_post,
+  mod_add, mod_add_category, mod_ban, mod_ban_from_category, mod_change_category_visibility,
+  mod_feature_post, mod_lock_post, mod_remove_category, mod_remove_comment, mod_remove_post,
   mod_transfer_category,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::insert_into, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl Crud for ModRemovePost {
   type InsertForm = ModRemovePostForm;

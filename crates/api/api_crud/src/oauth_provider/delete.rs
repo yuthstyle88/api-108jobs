@@ -3,11 +3,11 @@ use actix_web::web::Json;
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::{source::oauth_provider::OAuthProvider, traits::Crud};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{DeleteOAuthProvider, SuccessResponse};
+use app_108jobs_db_views_site::api::{DeleteOAuthProviderRequest, SuccessResponse};
 use app_108jobs_utils::error::FastJobError;
 
 pub async fn delete_oauth_provider(
-  data: Json<DeleteOAuthProvider>,
+  data: Json<DeleteOAuthProviderRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> Result<Json<SuccessResponse>, FastJobError> {

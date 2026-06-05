@@ -1,13 +1,13 @@
-use chrono::{DateTime, Utc};
-#[cfg(feature = "full")]
-use diesel::{Queryable, Selectable};
 use app_108jobs_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
 use app_108jobs_db_schema::source::workflow::Workflow;
 use app_108jobs_db_schema::source::{
   chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser,
 };
-use serde::{Deserialize, Serialize};
 use app_108jobs_db_views_post::PostPreview;
+use chrono::{DateTime, Utc};
+#[cfg(feature = "full")]
+use diesel::{Queryable, Selectable};
+use serde::{Deserialize, Serialize};
 
 pub mod api;
 #[cfg(feature = "full")]

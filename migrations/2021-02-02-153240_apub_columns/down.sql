@@ -8,7 +8,7 @@ ALTER TABLE category
     DROP COLUMN shared_inbox_url;
 
 ALTER TABLE user_
-    DROP COLUMN inbox_url;
+    DROP COLUMN inbox_url CASCADE;
 
 ALTER TABLE user_
     DROP COLUMN shared_inbox_url;

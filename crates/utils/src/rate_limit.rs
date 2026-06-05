@@ -1,11 +1,6 @@
 use actix_extensible_rate_limit::{
   backend::{
-    memory::InMemoryBackend,
-    raw_ip_key,
-    MyIpAddr,
-    SimpleInput,
-    SimpleInputFuture,
-    SimpleOutput,
+    memory::InMemoryBackend, raw_ip_key, MyIpAddr, SimpleInput, SimpleInputFuture, SimpleOutput,
   },
   RateLimiter,
 };
@@ -27,6 +22,8 @@ pub enum ActionType {
   Comment,
   Search,
   ImportUserSettings,
+  /// Per-IP bucket for `/login` to slow credential-stuffing.
+  Login,
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -78,6 +75,12 @@ impl RateLimit {
       ActionType::ImportUserSettings => BucketConfig {
         max_requests: 1,
         interval: 24 * 60 * 60,
+      },
+      ActionType::Login => BucketConfig {
+        // 10 attempts per minute per IP. Sane default — credential stuffing
+        // hits much higher rates, legitimate users much lower.
+        max_requests: 10,
+        interval: 60,
       },
     })
   }
@@ -167,6 +170,17 @@ impl RateLimit {
     impl Fn(&ServiceRequest) -> SimpleInputFuture<MyIpAddr> + 'static,
   > {
     self.build_rate_limiter(ActionType::ImportUserSettings)
+  }
+
+  /// Per-IP throttle for `/account/auth/login`.
+  pub fn login(
+    &self,
+  ) -> RateLimiter<
+    InMemoryBackend<MyIpAddr>,
+    SimpleOutput,
+    impl Fn(&ServiceRequest) -> SimpleInputFuture<MyIpAddr> + 'static,
+  > {
+    self.build_rate_limiter(ActionType::Login)
   }
 }
 

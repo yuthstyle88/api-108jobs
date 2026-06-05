@@ -1,16 +1,14 @@
 use crate::{
   diesel::OptionalExtension,
   source::local_site_rate_limit::{
-    LocalSiteRateLimit,
-    LocalSiteRateLimitInsertForm,
-    LocalSiteRateLimitUpdateForm,
+    LocalSiteRateLimit, LocalSiteRateLimitInsertForm, LocalSiteRateLimitUpdateForm,
   },
   utils::{get_conn, DbPool},
 };
-use diesel::dsl::insert_into;
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::local_site_rate_limit;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::dsl::insert_into;
+use diesel_async::RunQueryDsl;
 
 impl LocalSiteRateLimit {
   pub async fn read(pool: &mut DbPool<'_>) -> FastJobResult<Option<Self>> {

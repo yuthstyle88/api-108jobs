@@ -10,6 +10,7 @@ use std::{
 use url::Url;
 #[cfg(feature = "full")]
 use {
+  app_108jobs_utils::error::{FastJobErrorType, FastJobResult},
   diesel::{
     backend::Backend,
     deserialize::FromSql,
@@ -18,7 +19,6 @@ use {
     sql_types::Text,
   },
   diesel_ltree::Ltree,
-  app_108jobs_utils::error::{FastJobErrorType, FastJobResult},
 };
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -27,8 +27,8 @@ use {
 /// The post id.
 pub struct PostId(pub i32);
 
-impl fmt::Display for PostId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for PostId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }
@@ -46,8 +46,8 @@ pub struct ChatMessageId(pub i64);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The chat message id.
 pub struct ChatMessageRefId(pub String);
-impl fmt::Display for ChatMessageRefId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for ChatMessageRefId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }
@@ -73,6 +73,12 @@ pub struct PersonId(pub i32);
 /// The rider id.
 pub struct RiderId(pub i32);
 
+impl fmt::Display for RiderId {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
+
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -80,7 +86,7 @@ pub struct RiderId(pub i32);
 /// The comment id.
 pub struct CommentId(pub i32);
 
-impl fmt::Display for CommentId {
+impl Display for CommentId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
@@ -143,6 +149,13 @@ pub struct WalletId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The wallet hold ledger id (BIGSERIAL).
+pub struct WalletHoldId(pub i64);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The Top-up Request id.
 pub struct TopUpRequestId(pub i32);
 
@@ -177,6 +190,41 @@ pub struct CoinId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Currency id.
+pub struct CurrencyId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The CurrencyRateHistory id.
+pub struct CurrencyRateHistoryId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The delivery details id.
+pub struct DeliveryDetailsId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The trip location history id.
+pub struct TripLocationHistoryId(pub i64);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The delivery rider rating id.
+pub struct DeliveryRiderRatingId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The Workflow id.
 pub struct WorkflowId(pub i32);
 
@@ -186,6 +234,20 @@ pub struct WorkflowId(pub i32);
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// The Job Budget Plan id.
 pub struct JobBudgetPlanId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Pricing Config id.
+pub struct PricingConfigId(pub i32);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(DieselNewType))]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// The Ride Session id.
+pub struct RideSessionId(pub i32);
 #[derive(
   Debug, Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Default, Serialize, Deserialize,
 )]
@@ -846,10 +908,10 @@ impl PaginationCursor {
   /* ───────── composite ───────── */
   pub fn v2_composite(parts: &[(char, i32)]) -> Self {
     let encoded = parts
-        .iter()
-        .map(|(p, id)| format!("{p}{:x}", id))
-        .collect::<Vec<_>>()
-        .join(",");
+      .iter()
+      .map(|(p, id)| format!("{p}{:x}", id))
+      .collect::<Vec<_>>()
+      .join(",");
     Self(format!("v2:C:{encoded}"))
   }
 
@@ -864,29 +926,38 @@ impl PaginationCursor {
     match it.next() {
       Some("I") => {
         let id = i32::from_str_radix(
-          it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
+          it.next()
+            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
           16,
         )?;
         Ok(DecodedCursor::I32(id))
       }
 
       Some("L") => {
-        let high = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
-        let low = u32::from_str_radix(it.next().ok_or(FastJobErrorType::CouldntParsePaginationToken)?, 16)? as i64;
+        let high = u32::from_str_radix(
+          it.next()
+            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
+          16,
+        )? as i64;
+        let low = u32::from_str_radix(
+          it.next()
+            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?,
+          16,
+        )? as i64;
         Ok(DecodedCursor::I64((high << 32) | low))
       }
 
       Some("C") => {
         let parts = it
-            .next()
-            .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
-            .split(',')
-            .map(|s| {
-              let (p, rest) = s.split_at(1);
-              let id = i32::from_str_radix(rest, 16)?;
-              Ok((p.chars().next().unwrap(), id))
-            })
-            .collect::<FastJobResult<Vec<_>>>()?;
+          .next()
+          .ok_or(FastJobErrorType::CouldntParsePaginationToken)?
+          .split(',')
+          .map(|s| {
+            let (p, rest) = s.split_at(1);
+            let id = i32::from_str_radix(rest, 16)?;
+            Ok((p.chars().next().unwrap(), id))
+          })
+          .collect::<FastJobResult<Vec<_>>>()?;
 
         Ok(DecodedCursor::Composite(parts))
       }
@@ -897,14 +968,14 @@ impl PaginationCursor {
 
   fn decode_legacy(&self) -> FastJobResult<DecodedCursor> {
     let parts = self
-        .0
-        .split('-')
-        .map(|segment| {
-          let (p, id) = segment.split_at(1);
-          let id = i32::from_str_radix(id, 16)?;
-          Ok((p.chars().next().unwrap(), id))
-        })
-        .collect::<FastJobResult<Vec<_>>>()?;
+      .0
+      .split('-')
+      .map(|segment| {
+        let (p, id) = segment.split_at(1);
+        let id = i32::from_str_radix(id, 16)?;
+        Ok((p.chars().next().unwrap(), id))
+      })
+      .collect::<FastJobResult<Vec<_>>>()?;
 
     if parts.len() == 1 {
       Ok(DecodedCursor::I32(parts[0].1))

@@ -2,17 +2,15 @@ use crate::{
   diesel::OptionalExtension,
   newtypes::{PersonId, PersonPostMentionId, PostId},
   source::person_post_mention::{
-    PersonPostMention,
-    PersonPostMentionInsertForm,
-    PersonPostMentionUpdateForm,
+    PersonPostMention, PersonPostMentionInsertForm, PersonPostMentionUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::person_post_mention;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl Crud for PersonPostMention {
   type InsertForm = PersonPostMentionInsertForm;

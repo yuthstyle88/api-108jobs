@@ -1,6 +1,7 @@
 pub mod account;
-pub mod comment;
+pub mod bank_account;
 pub mod category;
+pub mod comment;
 pub mod custom_emoji;
 pub mod error;
 pub mod inbox;
@@ -16,7 +17,6 @@ pub mod search;
 pub mod site;
 pub mod tagline;
 pub mod wallet;
-pub mod bank_account;
 
 pub use app_108jobs_db_schema::{newtypes::DbUrl, sensitive::SensitiveString};
 pub use app_108jobs_db_schema_file::enums::VoteShow;

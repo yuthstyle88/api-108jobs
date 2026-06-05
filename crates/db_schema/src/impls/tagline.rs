@@ -4,11 +4,11 @@ use crate::{
   traits::Crud,
   utils::{functions::random, get_conn, limit_fetch, paginate, DbPool},
 };
+use app_108jobs_db_schema_file::schema::tagline;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
-use app_108jobs_db_schema_file::schema::tagline;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Crud for Tagline {
   type InsertForm = TaglineInsertForm;
@@ -72,7 +72,10 @@ impl Tagline {
     PaginationCursor::new_single('T', self.id.0)
   }
 
-  pub async fn from_cursor(cursor: &PaginationCursor, pool: &mut DbPool<'_>) -> FastJobResult<Self> {
+  pub async fn from_cursor(
+    cursor: &PaginationCursor,
+    pool: &mut DbPool<'_>,
+  ) -> FastJobResult<Self> {
     let id = cursor.first_id()?;
     Self::read(pool, TaglineId(id)).await
   }

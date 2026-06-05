@@ -15,7 +15,7 @@ pub trait Object: Sized + Debug {
   fn id(&self) -> &Url;
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct PublicKey(Url,String);
+pub struct PublicKey(Url, String);
 
 pub struct Note;
 impl PublicKey {

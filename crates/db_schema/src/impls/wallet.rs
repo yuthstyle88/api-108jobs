@@ -8,14 +8,15 @@ use crate::{
 
 use crate::newtypes::{Coin, CoinId, LocalUserId};
 use crate::source::coin::CoinModel;
-use crate::source::wallet::{TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm};
+use crate::source::wallet::{
+  TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm,
+};
+use app_108jobs_db_schema_file::schema::{local_user, person, wallet, wallet_transaction};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::scoped_futures::ScopedFutureExt;
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::{person,local_user, wallet, wallet_transaction};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-
 
 /// Internal enum for modeling balance mutations only (not transaction kinds).
 enum BalanceOp {
@@ -27,8 +28,12 @@ enum BalanceOp {
 }
 
 impl WalletModel {
-  pub fn new(platform_wallet_id: WalletId, balance_total: Coin,
-             balance_available: Coin, balance_outstanding: Coin) -> Self {
+  pub fn new(
+    platform_wallet_id: WalletId,
+    balance_total: Coin,
+    balance_available: Coin,
+    balance_outstanding: Coin,
+  ) -> Self {
     Self {
       platform_wallet_id,
       balance_total,
@@ -51,9 +56,13 @@ impl WalletModel {
   }
 
   /// Compute new balances for a balance operation. Returns (total, available, outstanding)
-  fn compute_new_balances(w: &Wallet, op: &BalanceOp, amount: Coin) -> FastJobResult<(Coin, Coin, Coin)> {
+  fn compute_new_balances(
+    w: &Wallet,
+    op: &BalanceOp,
+    amount: Coin,
+  ) -> FastJobResult<(Coin, Coin, Coin)> {
     if amount <= 0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into());
+      return Err(FastJobErrorType::AmountMustBePositive.into());
     }
     let (mut t, mut a, mut o) = (w.balance_total, w.balance_available, w.balance_outstanding);
     match op {
@@ -83,7 +92,7 @@ impl WalletModel {
       BalanceOp::Release => {
         // Cancel hold: outstanding -= amount; available += amount; total unchanged
         if o < amount {
-          return Err(FastJobErrorType::InvalidField("Release exceeds outstanding".into()).into());
+          return Err(FastJobErrorType::ReleaseExceedsOutstanding.into());
         }
         o -= amount;
         a += amount;
@@ -91,7 +100,7 @@ impl WalletModel {
       BalanceOp::Capture => {
         // Finalize hold: outstanding -= amount; total -= amount; available unchanged
         if o < amount || t < amount {
-          return Err(FastJobErrorType::InvalidField("Capture exceeds outstanding/total".into()).into());
+          return Err(FastJobErrorType::CaptureExceedsOutstandingOrTotal.into());
         }
         o -= amount;
         t -= amount;
@@ -104,7 +113,14 @@ impl WalletModel {
     Ok((t, a, o))
   }
 
-  /// Apply a balance operation using WalletUpdateForm as the single source of truth
+  /// Apply a balance operation using WalletUpdateForm as the single source of truth.
+  ///
+  /// Concurrency contract:
+  ///   * Row is locked via `SELECT ... FOR UPDATE` (primary control).
+  ///   * UPDATE includes `WHERE version = current.version` and bumps version
+  ///     by one. 0 rows affected → another writer slipped past the lock
+  ///     (shouldn't happen, but we return `ConcurrentWalletModification`
+  ///     rather than silently corrupt).
   async fn apply_op_on(
     conn: &mut diesel_async::AsyncPgConnection,
     id: WalletId,
@@ -115,31 +131,122 @@ impl WalletModel {
     let current = Self::load_for_update(conn, id).await?;
     // 2) Compute next balances for this op
     let (t, a, o) = Self::compute_new_balances(&current, &op, amount)?;
-    // 3) Persist
+    // 3) Persist with version CAS
     let form = WalletUpdateForm {
       balance_total: Some(t),
       balance_available: Some(a),
       balance_outstanding: Some(o),
       is_platform: None,
       updated_at: Some(Utc::now()),
+      version: Some(current.version.saturating_add(1)),
     };
-    let w = diesel::update(wallet::table.find(id))
-      .set(&form)
-      .get_result::<Wallet>(conn)
-      .await?;
-    Ok(w)
+    let w = diesel::update(
+      wallet::table
+        .find(id)
+        .filter(wallet::version.eq(current.version)),
+    )
+    .set(&form)
+    .get_result::<Wallet>(conn)
+    .await
+    .optional()?;
+    match w {
+      Some(w) => Ok(w),
+      None => Err(FastJobErrorType::ConcurrentWalletModification.into()),
+    }
+  }
+
+  /// Apply a balance operation to the platform wallet WITHOUT balance validation.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  /// Only supports TransferIn and TransferOut operations.
+  async fn apply_op_on_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    id: WalletId,
+    op: BalanceOp,
+    amount: Coin,
+  ) -> FastJobResult<Wallet> {
+    if amount <= 0 {
+      return Err(FastJobErrorType::AmountMustBePositive.into());
+    }
+
+    // 1) Lock current row
+    let current = Self::load_for_update(conn, id).await?;
+
+    // 2) Compute new balances WITHOUT validation (platform wallet can go negative)
+    let (mut t, mut a, o) = (
+      current.balance_total,
+      current.balance_available,
+      current.balance_outstanding,
+    );
+    match op {
+      BalanceOp::TransferOut => {
+        // Direct transfer out: can go negative
+        a -= amount;
+        t -= amount;
+        // outstanding unchanged
+      }
+      BalanceOp::TransferIn => {
+        // Direct transfer in
+        a += amount;
+        t += amount;
+        // outstanding unchanged
+      }
+      _ => {
+        return Err(FastJobErrorType::InvalidOperation.into());
+      }
+    }
+
+    // 3) Persist with version CAS (mirrors apply_op_on contract)
+    let form = WalletUpdateForm {
+      balance_total: Some(t),
+      balance_available: Some(a),
+      balance_outstanding: Some(o),
+      is_platform: None,
+      updated_at: Some(Utc::now()),
+      version: Some(current.version.saturating_add(1)),
+    };
+    let w = diesel::update(
+      wallet::table
+        .find(id)
+        .filter(wallet::version.eq(current.version)),
+    )
+    .set(&form)
+    .get_result::<Wallet>(conn)
+    .await
+    .optional()?;
+    match w {
+      Some(w) => Ok(w),
+      None => Err(FastJobErrorType::ConcurrentWalletModification.into()),
+    }
   }
 
   #[inline]
-  fn validate_positive_amount(amount:  Coin) -> FastJobResult<()> {
+  fn validate_positive_amount(amount: Coin) -> FastJobResult<()> {
     if amount <= 0 {
-      return Err(FastJobErrorType::InvalidField("Amount must be positive".to_string()).into());
+      return Err(FastJobErrorType::AmountMustBePositive.into());
     }
     Ok(())
   }
 
   /// Get a wallet by user ID
-  pub async fn get_by_user(pool: &mut DbPool<'_>, local_user_id: LocalUserId) -> FastJobResult<Wallet> {
+  /// Read a wallet row by id on the supplied connection. Useful inside a
+  /// `run_transaction` where the caller has already mutated the wallet
+  /// and wants to surface the new balance without releasing the
+  /// connection back to the pool.
+  pub async fn read_by_id_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    wallet_id: WalletId,
+  ) -> FastJobResult<Wallet> {
+    wallet::table
+      .find(wallet_id)
+      .first::<Wallet>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntFindWalletByUser)
+  }
+
+  pub async fn get_by_user(
+    pool: &mut DbPool<'_>,
+    local_user_id: LocalUserId,
+  ) -> FastJobResult<Wallet> {
     let conn = &mut get_conn(pool).await?;
 
     let wallet = person::table
@@ -173,9 +280,7 @@ impl WalletModel {
         Self::withdraw_to_platform(pool, form, coin_id, platform_wallet_id).await?
       }
       TxKind::Transfer => {
-        return Err(FastJobErrorType::InvalidField(
-          "Transfer requires two forms; use transfer_between_wallets with outgoing and incoming entries sharing the same idempotency_key".into(),
-        ).into());
+        return Err(FastJobErrorType::BothFormsMustBeKindTransfer.into());
       }
       TxKind::Reserve => {
         // Move available -> outstanding within the same wallet
@@ -211,10 +316,10 @@ impl WalletModel {
       created_at: Some(Utc::now()),
     };
     let w = diesel::insert_into(wallet::table)
-    .values(&form)
-    .get_result::<Wallet>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntCreateWallet)?;
+      .values(&form)
+      .get_result::<Wallet>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntCreateWallet)?;
     Ok(w)
   }
 
@@ -236,15 +341,51 @@ impl WalletModel {
     conn: &mut diesel_async::AsyncPgConnection,
   ) -> FastJobResult<WalletId> {
     let id = wallet::table
-    .filter(wallet::is_platform.eq(true))
-    .select(wallet::id)
-    .first::<WalletId>(conn)
-    .await
-    .optional()?;
+      .filter(wallet::is_platform.eq(true))
+      .select(wallet::id)
+      .first::<WalletId>(conn)
+      .await
+      .optional()?;
     match id {
       Some(wid) => Ok(wid),
-      None => Err(FastJobErrorType::InvalidField("Platform wallet not initialized".into()).into()),
+      None => Err(FastJobErrorType::PlatformWalletNotInitialized.into()),
     }
+  }
+
+  /// Get the platform wallet (must be pre-seeded by migration). Error if missing.
+  pub async fn get_platform_wallet(pool: &mut DbPool<'_>) -> FastJobResult<Wallet> {
+    let conn = &mut get_conn(pool).await?;
+    let wallet = wallet::table
+      .filter(wallet::is_platform.eq(true))
+      .first::<Wallet>(conn)
+      .await
+      .optional()?;
+    match wallet {
+      Some(w) => Ok(w),
+      None => Err(FastJobErrorType::PlatformWalletNotInitialized.into()),
+    }
+  }
+
+  /// Ensure platform wallet exists (get or create).
+  /// Returns the platform wallet, creating it if it doesn't exist.
+  /// Note: After migration runs, the platform wallet should always exist.
+  pub async fn ensure_platform_wallet(pool: &mut DbPool<'_>) -> FastJobResult<Wallet> {
+    let conn = &mut get_conn(pool).await?;
+
+    // Try to get existing platform wallet
+    let existing = wallet::table
+      .filter(wallet::is_platform.eq(true))
+      .first::<Wallet>(conn)
+      .await
+      .optional()?;
+
+    if let Some(w) = existing {
+      return Ok(w);
+    }
+
+    // Create if doesn't exist (fallback for systems without migration)
+    let wallet = Self::create_for_platform(conn).await?;
+    Ok(wallet)
   }
 
   /// Deposit funds *from platform to user*.
@@ -252,13 +393,114 @@ impl WalletModel {
   /// and the user wallet is credited, with mirrored journal rows recorded.
   /// Callers must provide a `WalletTransactionInsertForm` with `kind = TxKind::Deposit`.
   pub async fn deposit(
-      pool: &mut DbPool<'_>,
-      form: &WalletTransactionInsertForm,
-      coin_id: CoinId,
-      platform_wallet_id: WalletId,
+    pool: &mut DbPool<'_>,
+    form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
-      // Delegate to platform-backed deposit so coins are deducted from platform escrow.
-      Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await
+    // Delegate to platform-backed deposit so coins are deducted from platform escrow.
+    Self::deposit_from_platform(pool, form, coin_id, platform_wallet_id).await
+  }
+
+  /// Connection-scoped variant of `hold` for callers that are already inside
+  /// a `run_transaction`. Does NOT open a new transaction. Performs the same
+  /// user-wallet -> platform-wallet escrow movement + mirrored journal entries
+  /// the public `hold` wraps.
+  ///
+  /// Lives in the `db_schema` crate so the `workflow` crate can call it without
+  /// duplicating the balance/journal logic.
+  pub async fn hold_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    form_out: &WalletTransactionInsertForm,
+  ) -> FastJobResult<()> {
+    let amount = form_out.amount;
+    Self::validate_positive_amount(amount)?;
+    if !matches!(form_out.kind, TxKind::Transfer) {
+      return Err(FastJobErrorType::HoldRequiresKindTransfer.into());
+    }
+    let platform_id = Self::platform_wallet_id(conn).await?;
+
+    // Move funds: user -> platform (no balance check on platform).
+    Self::withdraw_from_user_to_platform(conn, form_out.wallet_id, platform_id, amount).await?;
+
+    // Journal user-side entry (will collide on the existing wallet_transaction
+    // unique index if duplicated).
+    let _ = Self::insert_wallet_tx(conn, form_out).await?;
+
+    // Mirror entry on platform side, same idempotency key.
+    let mut mirror = form_out.clone();
+    mirror.wallet_id = platform_id;
+    mirror.description = if mirror.description.is_empty() {
+      "escrow reserve".to_string()
+    } else {
+      format!("{} (escrow)", mirror.description)
+    };
+    let _ = Self::insert_wallet_tx(conn, &mirror).await?;
+    Ok(())
+  }
+
+  /// Connection-scoped variant of `deposit_from_platform` (platform -> user)
+  /// for callers that are already inside a `run_transaction`. Does NOT open a
+  /// new transaction. Used by the hardened workflow approve-work path so the
+  /// escrow release + hold-ledger update + workflow status change are atomic.
+  pub async fn deposit_from_platform_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
+  ) -> FastJobResult<()> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+    Self::deposit_to_user_from_platform(conn, platform_wallet_id, form.wallet_id, amount).await?;
+    let _ = CoinModel::update_balance(conn, coin_id, -amount).await?;
+    let _ = Self::insert_wallet_tx(conn, form).await?;
+    let mut mirror = form.clone();
+    mirror.wallet_id = platform_wallet_id;
+    mirror.description = format!("platform counter: {}", mirror.description);
+    let _ = Self::insert_wallet_tx(conn, &mirror).await?;
+    Ok(())
+  }
+
+  /// Connection-scoped variant of `withdraw_to_platform` (user -> platform)
+  /// for callers that are already inside a `run_transaction`. Does NOT open
+  /// a new transaction. Used by the hardened admin-withdraw path so the
+  /// wallet debit + supply update + journal rows + withdraw_request status
+  /// change are atomic.
+  pub async fn withdraw_to_platform_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    form: &WalletTransactionInsertForm,
+    coin_id: CoinId,
+    platform_wallet_id: WalletId,
+  ) -> FastJobResult<()> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+    Self::withdraw_from_user_to_platform(conn, form.wallet_id, platform_wallet_id, amount).await?;
+    let _ = CoinModel::update_balance(conn, coin_id, amount).await?;
+    let _ = Self::insert_wallet_tx(conn, form).await?;
+    let mut mirror = form.clone();
+    mirror.wallet_id = platform_wallet_id;
+    mirror.description = format!("platform counter: {}", mirror.description);
+    let _ = Self::insert_wallet_tx(conn, &mirror).await?;
+    Ok(())
+  }
+
+  /// Refund variant of `deposit_from_platform_on_conn`. Reverses an escrow
+  /// hold without re-touching `CoinModel` supply (because the original hold
+  /// already accounted for it on the way in). Caller must be inside a txn.
+  pub async fn refund_from_platform_on_conn(
+    conn: &mut diesel_async::AsyncPgConnection,
+    form: &WalletTransactionInsertForm,
+  ) -> FastJobResult<()> {
+    let amount = form.amount;
+    Self::validate_positive_amount(amount)?;
+    let platform_id = Self::platform_wallet_id(conn).await?;
+    Self::deposit_to_user_from_platform(conn, platform_id, form.wallet_id, amount).await?;
+    let _ = Self::insert_wallet_tx(conn, form).await?;
+    let mut mirror = form.clone();
+    mirror.wallet_id = platform_id;
+    mirror.description = format!("platform counter: {}", mirror.description);
+    let _ = Self::insert_wallet_tx(conn, &mirror).await?;
+    Ok(())
   }
 
   /// Reserve to escrow (no real "hold" balance):
@@ -271,7 +513,7 @@ impl WalletModel {
     let amount = form_out.amount;
     Self::validate_positive_amount(amount)?;
     if !matches!(form_out.kind, TxKind::Transfer) {
-      return Err(FastJobErrorType::InvalidField("hold requires kind=Transfer".into()).into());
+      return Err(FastJobErrorType::HoldRequiresKindTransfer.into());
     }
 
     // Figure out the platform (escrow) wallet id first
@@ -383,32 +625,33 @@ impl WalletModel {
     Ok(tx)
   }
 
-
   /// Validate paired transfer forms and return (from, to, amount_rounded).
   fn validate_transfer_pair(
     form_out: &WalletTransactionInsertForm,
-    form_in:  &WalletTransactionInsertForm,
+    form_in: &WalletTransactionInsertForm,
   ) -> FastJobResult<(WalletId, WalletId, Coin)> {
     // both must be Transfer
     if !matches!(form_out.kind, TxKind::Transfer) || !matches!(form_in.kind, TxKind::Transfer) {
-      return Err(FastJobErrorType::InvalidField("Both forms must be kind=Transfer".into()).into());
+      return Err(FastJobErrorType::BothFormsMustBeKindTransfer.into());
     }
     // idempotency must match
     if form_out.idempotency_key != form_in.idempotency_key {
-      return Err(FastJobErrorType::InvalidField("Idempotency key must match for transfer pair".into()).into());
+      return Err(FastJobErrorType::IdempotencyKeyMustMatchForTransferPair.into());
     }
     // wallet ids
     let from = form_out.wallet_id;
-    let to   = form_in.wallet_id;
+    let to = form_in.wallet_id;
     if from == to {
-      return Err(FastJobErrorType::InvalidField("Cannot transfer to the same wallet".into()).into());
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
     }
     // amounts must match exactly and be positive
     let a_out = form_out.amount;
-    let a_in  = form_in.amount;
-    if a_out <= 0 { return Err(FastJobErrorType::InvalidField("Amount must be positive".into()).into()); }
+    let a_in = form_in.amount;
+    if a_out <= 0 {
+      return Err(FastJobErrorType::AmountMustBePositive.into());
+    }
     if a_out != a_in {
-      return Err(FastJobErrorType::InvalidField("Mismatched amounts for transfer pair".into()).into());
+      return Err(FastJobErrorType::MismatchedAmountsForTransferPair.into());
     }
     Ok((from, to, a_out))
   }
@@ -417,21 +660,24 @@ impl WalletModel {
   pub async fn transfer_between_wallets(
     pool: &mut DbPool<'_>,
     form_out: &WalletTransactionInsertForm, // from -> ...
-    form_in:  &WalletTransactionInsertForm, // ... -> to
+    form_in: &WalletTransactionInsertForm,  // ... -> to
   ) -> FastJobResult<()> {
     let (from, to, amount) = Self::validate_transfer_pair(form_out, form_in)?;
 
     let conn = &mut get_conn(pool).await?;
-    conn.run_transaction(|conn| {
-      async move {
-        // move balances first
-        Self::move_funds(conn, from, to, amount).await?;
-        // journal both sides
-        let _ = Self::insert_wallet_tx(conn, form_out).await?;
-        let _ = Self::insert_wallet_tx(conn, form_in).await?;
-        Ok::<_, app_108jobs_utils::error::FastJobError>(())
-      }.scope_boxed()
-    }).await?;
+    conn
+      .run_transaction(|conn| {
+        async move {
+          // move balances first
+          Self::move_funds(conn, from, to, amount).await?;
+          // journal both sides
+          let _ = Self::insert_wallet_tx(conn, form_out).await?;
+          let _ = Self::insert_wallet_tx(conn, form_in).await?;
+          Ok::<_, app_108jobs_utils::error::FastJobError>(())
+        }
+        .scope_boxed()
+      })
+      .await?;
     Ok(())
   }
 
@@ -449,8 +695,9 @@ impl WalletModel {
     conn
       .run_transaction(|conn| {
         async move {
-          // move funds: platform -> user
-          Self::move_funds(conn, platform_wallet_id, form.wallet_id, amount).await?;
+          // move funds: platform -> user (no balance check on platform)
+          Self::deposit_to_user_from_platform(conn, platform_wallet_id, form.wallet_id, amount)
+            .await?;
           let _ = CoinModel::update_balance(conn, coin_id, -amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
@@ -482,8 +729,9 @@ impl WalletModel {
     return conn
       .run_transaction(|conn| {
         async move {
-          // move funds: user -> platform
-          Self::move_funds(conn, form.wallet_id, platform_wallet_id, amount).await?;
+          // move funds: user -> platform (no balance check on platform)
+          Self::withdraw_from_user_to_platform(conn, form.wallet_id, platform_wallet_id, amount)
+            .await?;
           let _ = CoinModel::update_balance(conn.into(), coin_id, amount).await?;
           // journal user side
           let _ = Self::insert_wallet_tx(conn, form).await?;
@@ -509,12 +757,54 @@ impl WalletModel {
     // basic validation
     Self::validate_positive_amount(amount)?;
     if from_wallet == to_wallet {
-      return Err(FastJobErrorType::InvalidField("Cannot transfer to the same wallet".into()).into());
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
     }
 
     // Direct transfer: decrease from.available & from.total; increase to.available & to.total
     let _ = Self::apply_op_on(conn, from_wallet, BalanceOp::TransferOut, amount).await?;
-    let _ = Self::apply_op_on(conn, to_wallet,   BalanceOp::TransferIn,  amount).await?;
+    let _ = Self::apply_op_on(conn, to_wallet, BalanceOp::TransferIn, amount).await?;
+    Ok(())
+  }
+
+  /// Move funds from platform wallet to user wallet WITHOUT checking platform balance.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  async fn deposit_to_user_from_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    platform_wallet_id: WalletId,
+    user_wallet_id: WalletId,
+    amount: Coin,
+  ) -> FastJobResult<()> {
+    Self::validate_positive_amount(amount)?;
+    if platform_wallet_id == user_wallet_id {
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
+    }
+
+    // Credit user wallet normally
+    let _ = Self::apply_op_on(conn, user_wallet_id, BalanceOp::TransferIn, amount).await?;
+    // Debit platform wallet WITHOUT balance validation (can go negative)
+    let _ =
+      Self::apply_op_on_platform(conn, platform_wallet_id, BalanceOp::TransferOut, amount).await?;
+    Ok(())
+  }
+
+  /// Move funds from user wallet to platform wallet WITHOUT checking platform balance.
+  /// This allows the platform wallet to have negative balance (accounting only).
+  async fn withdraw_from_user_to_platform(
+    conn: &mut diesel_async::AsyncPgConnection,
+    user_wallet_id: WalletId,
+    platform_wallet_id: WalletId,
+    amount: Coin,
+  ) -> FastJobResult<()> {
+    Self::validate_positive_amount(amount)?;
+    if platform_wallet_id == user_wallet_id {
+      return Err(FastJobErrorType::CannotTransferToTheSameWallet.into());
+    }
+
+    // Debit user wallet normally
+    let _ = Self::apply_op_on(conn, user_wallet_id, BalanceOp::TransferOut, amount).await?;
+    // Credit platform wallet WITHOUT balance validation
+    let _ =
+      Self::apply_op_on_platform(conn, platform_wallet_id, BalanceOp::TransferIn, amount).await?;
     Ok(())
   }
 }

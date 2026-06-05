@@ -1,19 +1,12 @@
-use chrono::Utc;
-use diesel::{
-  dsl::{exists, not, select},
-  query_builder::AsQuery,
-};
-use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use app_108jobs_api_utils::plugins::plugin_metadata;
 use app_108jobs_api_utils::utils::generate_inbox_url;
 use app_108jobs_db_schema::source::actor_language::SiteLanguage;
+use app_108jobs_db_schema::source::coin::CoinModel;
 use app_108jobs_db_schema::source::language::Language;
 use app_108jobs_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
 use app_108jobs_db_schema::source::oauth_provider::OAuthProvider;
 use app_108jobs_db_schema::source::tagline::Tagline;
 use app_108jobs_db_schema::source::wallet::WalletModel;
-use app_108jobs_db_schema::source::coin::{CoinModel, CoinModelInsertForm};
-use app_108jobs_db_schema::newtypes::Coin;
 use app_108jobs_db_schema::{
   source::{
     instance::Instance,
@@ -35,6 +28,12 @@ use app_108jobs_utils::{
   settings::structs::Settings,
   VERSION,
 };
+use chrono::Utc;
+use diesel::{
+  dsl::{exists, not, select},
+  query_builder::AsQuery,
+};
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use tracing::info;
 use url::Url;
 
@@ -53,19 +52,21 @@ pub async fn setup_local_site(
     let domain = settings
       .get_hostname_without_port()
       .with_fastjob_type(FastJobErrorType::Unknown("must have domain".into()))?;
-     let supply_minted_total = settings.supply_minted_total;
     conn
       .run_transaction(|conn| {
         async move {
           // Upsert this to the instance table
           let instance = Instance::read_or_create(&mut conn.into(), domain).await?;
 
+          // Ensure platform assets exist (idempotent - seeded by migration)
+          let platform_wallet = WalletModel::ensure_platform_wallet(&mut conn.into()).await?;
+          let platform_coin = CoinModel::ensure_platform_coin(&mut conn.into()).await?;
+
           if let Some(setup) = &settings.setup {
             let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = Some("public_key".to_string());
             let private_key = Some("private_key".to_string());
-            let wallet = WalletModel::create_for_platform(conn).await?;
-            let wallet_id = Some(wallet.id);
+            let wallet_id = Some(platform_wallet.id);
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
               ap_id: Some(person_ap_id.clone()),
@@ -103,21 +104,11 @@ pub async fn setup_local_site(
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;
 
-          // Create default platform coin
-          let total_supply = Coin(supply_minted_total);
-          let coin_form = CoinModelInsertForm::new(
-            "108JC".to_string(),
-            "108Jobs Coin".to_string(),
-            Some(total_supply),
-            Some(total_supply), // Set minted equal to total initially
-          );
-          let coin = CoinModel::create(&mut conn.into(), &coin_form).await?;
-
-          // Finally create the local_site row with coin reference
+          // Finally create the local_site row with platform coin reference
           let local_site_form = LocalSiteInsertForm {
             site_setup: Some(settings.setup.is_some()),
             category_creation_admin_only: Some(true),
-            coin_id: Some(coin.id),
+            coin_id: Some(platform_coin.id),
             ..LocalSiteInsertForm::new(site.id)
           };
           let local_site = LocalSite::create(&mut conn.into(), &local_site_form).await?;

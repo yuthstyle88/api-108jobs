@@ -9,15 +9,13 @@ use app_108jobs_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
 };
-use app_108jobs_db_views_comment::{
-  api::DeleteComment,
-  CommentView,
-};
+use app_108jobs_db_views_comment::api::DeleteCommentRequest;
+use app_108jobs_db_views_comment::{api::DeleteComment, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_comment(
-  data: Json<DeleteComment>,
+  data: Json<DeleteCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<DeleteComment>> {
@@ -36,7 +34,12 @@ pub async fn delete_comment(
     Err(FastJobErrorType::CouldntUpdateComment)?
   }
 
-  check_category_deleted_removed(&orig_comment.category)?;
+  check_category_deleted_removed(
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?,
+  )?;
 
   // Verify that only the creator can delete
   if local_user_view.person.id != orig_comment.creator.id {
@@ -54,20 +57,18 @@ pub async fn delete_comment(
     },
   )
   .await?;
-  
+
   ActivityChannel::submit_activity(
     SendActivityData::DeleteComment(
       updated_comment,
       local_user_view.person.clone(),
-      orig_comment.category,
+      orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
     ),
     &context,
   )?;
 
-  Ok(Json(
-    DeleteComment {
-      comment_id,
-      deleted: true,
-    }
-  ))
+  Ok(Json(DeleteComment {
+    comment_id,
+    deleted: true,
+  }))
 }

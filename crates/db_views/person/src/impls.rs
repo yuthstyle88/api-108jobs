@@ -1,18 +1,12 @@
 use crate::PersonView;
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::person::{person_keys as key, Person},
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
       my_person_actions_join,
     },
     DbPool,
@@ -20,6 +14,9 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{local_user, person};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl PaginationCursorBuilder for PersonView {
   type CursorData = Person;

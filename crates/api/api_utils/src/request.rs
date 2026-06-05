@@ -4,9 +4,6 @@ use crate::{
   utils::proxy_image_link,
 };
 use actix_web::web::Data;
-use chrono::{DateTime, Utc};
-use encoding_rs::{Encoding, UTF_8};
-use futures::StreamExt;
 use app_108jobs_db_schema::{
   source::{
     images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
@@ -19,16 +16,16 @@ use app_108jobs_db_views_post::api::{LinkMetadata, OpenGraphData};
 use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::{PictrsImageMode, Settings},
-  REQWEST_TIMEOUT,
-  VERSION,
+  REQWEST_TIMEOUT, VERSION,
 };
+use chrono::{DateTime, Utc};
+use encoding_rs::{Encoding, UTF_8};
+use futures::StreamExt;
 use mime::{Mime, TEXT_HTML};
 use reqwest::{
   header::{CONTENT_TYPE, LOCATION, RANGE},
   redirect::Policy,
-  Client,
-  ClientBuilder,
-  Response,
+  Client, ClientBuilder, Response,
 };
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
@@ -41,7 +38,10 @@ use urlencoding::encode;
 use webpage::HTML;
 
 pub fn client_builder(settings: &Settings) -> ClientBuilder {
-  let user_agent = format!("FastJob/{VERSION}; +{}", settings.get_protocol_and_hostname());
+  let user_agent = format!(
+    "FastJob/{VERSION}; +{}",
+    settings.get_protocol_and_hostname()
+  );
 
   Client::builder()
     .user_agent(user_agent.clone())

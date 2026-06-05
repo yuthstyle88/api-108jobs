@@ -1,6 +1,10 @@
 use crate::{
-    newtypes::{CategoryId, DbUrl, PaginationCursor, PersonId},
-    utils::{get_conn, uplete, DbPool},
+  newtypes::{CategoryId, DbUrl, PaginationCursor, PersonId},
+  utils::{get_conn, uplete, DbPool},
+};
+use app_108jobs_utils::{
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
 };
 use diesel::{
   associations::HasTable,
@@ -11,12 +15,7 @@ use diesel::{
 };
 use diesel_async::{
   methods::{ExecuteDsl, LoadQuery},
-  AsyncPgConnection,
-  RunQueryDsl,
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
+  AsyncPgConnection, RunQueryDsl,
 };
 use std::future::Future;
 use url::Url;
@@ -49,7 +48,10 @@ where
     form: &Self::InsertForm,
   ) -> impl Future<Output = FastJobResult<Self>> + Send;
 
-  fn read(pool: &mut DbPool<'_>, id: Self::IdType) -> impl Future<Output = FastJobResult<Self>> + Send
+  fn read(
+    pool: &mut DbPool<'_>,
+    id: Self::IdType,
+  ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Send,
   {
@@ -96,9 +98,9 @@ pub trait Followable {
   where
     Self: Sized;
   fn follow_accepted(
-      pool: &mut DbPool<'_>,
-      category_id: CategoryId,
-      person_id: PersonId,
+    pool: &mut DbPool<'_>,
+    category_id: CategoryId,
+    person_id: PersonId,
   ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
@@ -152,9 +154,9 @@ pub trait Likeable {
     Self: Sized;
 
   fn remove_likes_in_category(
-      pool: &mut DbPool<'_>,
-      creator_id: PersonId,
-      category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    creator_id: PersonId,
+    category_id: CategoryId,
   ) -> impl Future<Output = FastJobResult<uplete::Count>> + Send
   where
     Self: Sized;
@@ -328,7 +330,7 @@ pub trait ApubActor {
     object_id: &DbUrl,
   ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
   where
-   Self: Sized;
+    Self: Sized;
   /// - actor_name is the name of the category or user to read.
   /// - include_deleted, if true, will return communities or users that were deleted/removed
   fn read_from_name(

@@ -6,6 +6,13 @@ use crate::{
   newtypes::{InstanceId, PersonId},
   Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple,
 };
+use app_108jobs_db_schema_file::{
+  enums::{CategoryFollowerState, CategoryVisibility},
+  schema::{
+    category, category_actions, comment, comment_actions, image_details, instance_actions,
+    local_user, person, person_actions, post, post_actions, post_tag, tag,
+  },
+};
 use diesel::{
   dsl::{case_when, exists, not},
   expression::SqlLiteral,
@@ -13,13 +20,6 @@ use diesel::{
   sql_types::Json,
   BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
   PgExpressionMethods, QueryDsl,
-};
-use app_108jobs_db_schema_file::{
-  enums::{CategoryFollowerState, CategoryVisibility},
-  schema::{
-    category, category_actions, comment, comment_actions, image_details, instance_actions,
-    local_user, person, person_actions, post, post_actions, post_tag, tag,
-  },
 };
 
 /// Hide all content from blocked communities and persons. Content from blocked instances is also
@@ -244,8 +244,10 @@ pub fn person2_select() -> Person2AliasAllColumnsTuple {
   person2.fields(person::all_columns)
 }
 
-type IsSubscribedType =
-  Eq<app_108jobs_db_schema_file::schema::category_actions::follow_state, Option<CategoryFollowerState>>;
+type IsSubscribedType = Eq<
+  app_108jobs_db_schema_file::schema::category_actions::follow_state,
+  Option<CategoryFollowerState>,
+>;
 
 pub fn filter_is_subscribed() -> IsSubscribedType {
   category_actions::follow_state.eq(Some(CategoryFollowerState::Accepted))
@@ -263,7 +265,8 @@ pub fn filter_not_unlisted_or_is_subscribed() -> _ {
 
 #[diesel::dsl::auto_type]
 pub fn category_join() -> _ {
-  category::table.on(post::category_id.eq(category::id))
+  // Use nullable().eq() since post.category_id is now nullable (for delivery posts)
+  category::table.on(category::id.nullable().eq(post::category_id))
 }
 
 #[diesel::dsl::auto_type]

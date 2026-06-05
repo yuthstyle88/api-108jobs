@@ -1,33 +1,38 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_api_utils::utils::list_withdraw_requests_inner;
+use app_108jobs_db_schema::source::currency::Currency;
 use app_108jobs_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm};
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_db_views_wallet::api::{
+use app_108jobs_db_views_wallet::{
   ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest,
-  ValidWithdrawRequest,
+  ValidSubmitWithdrawRequest,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn submit_withdraw(
   data: Json<SubmitWithdrawRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
-  let validated: ValidWithdrawRequest = match data.into_inner().try_into() {
-    Ok(v) => v,
-    Err(msg) => {
-      return Err(FastJobErrorType::InvalidField(msg).into());
-    }
-  };
+  let validated: ValidSubmitWithdrawRequest = data.into_inner().try_into()?;
+
+  // Get the currency to calculate the conversion rate
+  let currency = Currency::read(&mut context.pool(), validated.0.currency_id).await?;
+
+  // Calculate amount in the selected currency
+  let amount_currency = currency.coins_to_currency(validated.0.amount.0);
 
   let insert_form = WithdrawRequestInsertForm {
     local_user_id: local_user_view.local_user.id,
     wallet_id: validated.0.wallet_id,
     user_bank_account_id: validated.0.bank_account_id,
     amount: validated.0.amount,
+    currency_id: validated.0.currency_id,
+    amount_currency,
+    conversion_rate_used: currency.coin_to_currency_rate,
     reason: Some(validated.0.reason),
   };
 

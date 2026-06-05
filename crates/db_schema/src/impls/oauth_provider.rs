@@ -8,9 +8,9 @@ use crate::{
 };
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::oauth_provider;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel_async::RunQueryDsl;
 
 impl Crud for OAuthProvider {
   type InsertForm = OAuthProviderInsertForm;

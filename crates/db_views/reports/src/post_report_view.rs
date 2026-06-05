@@ -1,29 +1,18 @@
 use crate::PostReportView;
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{PersonId, PostReportId},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-    category,
-    category_actions,
-    local_user,
-    person,
-    person_actions,
-    post,
-    post_actions,
-    post_report,
+  category, category_actions, local_user, person, person_actions, post, post_actions, post_report,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
 
 impl PostReportView {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -31,7 +20,7 @@ impl PostReportView {
     let recipient_id = aliases::person1.field(person::id);
     let resolver_id = aliases::person2.field(person::id);
 
-    let category_join = category::table.on(post::category_id.eq(category::id));
+    let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
     let report_creator_join = person::table.on(post_report::creator_id.eq(person::id));
 
@@ -40,6 +29,7 @@ impl PostReportView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -49,7 +39,8 @@ impl PostReportView {
     );
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
+        .nullable()
         .eq(post::category_id)
         .and(category_actions::person_id.eq(my_person_id)),
     );
@@ -76,7 +67,7 @@ impl PostReportView {
 
     post_report::table
       .inner_join(post::table)
-      .inner_join(category_join)
+      .left_join(category_join)
       .inner_join(report_creator_join)
       .inner_join(post_creator_join)
       .left_join(creator_category_actions_join)

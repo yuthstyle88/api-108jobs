@@ -216,6 +216,11 @@ pub fn honeypot_check(honeypot: &Option<String>) -> FastJobResult<()> {
 pub fn local_site_rate_limit_to_rate_limit_config(
   l: &LocalSiteRateLimit,
 ) -> EnumMap<ActionType, BucketConfig> {
+  // Login throttle is not yet tunable from the admin UI — it lives in the
+  // local_site_rate_limit table as a future column. Using a hardcoded
+  // default keeps this change reversible without a migration.
+  const LOGIN_MAX_REQUESTS: i32 = 10;
+  const LOGIN_INTERVAL_SECONDS: i32 = 60;
   enum_map! {
     ActionType::Message => (l.message_max_requests, l.message_interval_seconds),
     ActionType::Post => (l.post_max_requests, l.post_interval_seconds),
@@ -224,6 +229,7 @@ pub fn local_site_rate_limit_to_rate_limit_config(
     ActionType::Comment => (l.comment_max_requests, l.comment_interval_seconds),
     ActionType::Search => (l.search_max_requests, l.search_interval_seconds),
     ActionType::ImportUserSettings => (l.import_user_settings_max_requests, l.import_user_settings_interval_seconds),
+    ActionType::Login => (LOGIN_MAX_REQUESTS, LOGIN_INTERVAL_SECONDS),
   }
   .map(|_key, (max_requests, interval)| BucketConfig {
     max_requests: u32::try_from(max_requests).unwrap_or(0),
@@ -571,6 +577,20 @@ pub fn check_conflicting_like_filters(
     Err(FastJobErrorType::ContradictingFilters)?
   } else {
     Ok(())
+  }
+}
+
+/// Maximum allowed limit for pagination
+pub const MAX_FETCH_LIMIT: i64 = 30;
+
+/// Validate that the limit parameter doesn't exceed MAX_FETCH_LIMIT.
+/// Returns the limit capped at MAX_FETCH_LIMIT if it was too large.
+pub fn check_fetch_limit(limit: Option<i64>) -> FastJobResult<i64> {
+  let limit = limit.unwrap_or(20);
+  if limit > MAX_FETCH_LIMIT {
+    Err(FastJobErrorType::InvalidFetchLimit.into())
+  } else {
+    Ok(limit)
   }
 }
 
@@ -942,6 +962,65 @@ pub async fn flush_room_and_update_last_message(
   let _ = redis.srem("chat:active_rooms", room_id.to_string()).await;
 
   Ok(())
+}
+
+/// Verify that the user is the post creator (employer).
+///
+/// Returns an error if the person is not the creator of the post.
+pub async fn verify_post_creator(
+  pool: &mut DbPool<'_>,
+  post_id: PostId,
+  employer_person_id: PersonId,
+) -> FastJobResult<()> {
+  let post = Post::read(pool, post_id).await?;
+
+  if post.creator_id != employer_person_id {
+    return Err(FastJobErrorType::NotPostCreator.into());
+  }
+
+  Ok(())
+}
+
+/// Verify that a comment exists and is on the specified post.
+///
+/// Returns an error if the comment is not on this post.
+pub async fn verify_comment_on_post(
+  pool: &mut DbPool<'_>,
+  comment_id: CommentId,
+  post_id: PostId,
+) -> FastJobResult<Comment> {
+  let comment = Comment::read(pool, comment_id).await?;
+
+  if comment.post_id != post_id {
+    return Err(FastJobErrorType::CommentNotOnDeliveryPost.into());
+  }
+
+  Ok(comment)
+}
+
+/// Verify that a comment's author matches the expected person_id.
+///
+/// Returns an error if the comment author does not match.
+pub fn verify_comment_author(comment: &Comment, expected_person_id: PersonId) -> FastJobResult<()> {
+  if comment.creator_id != expected_person_id.into() {
+    return Err(FastJobErrorType::CommentAuthorMismatch.into());
+  }
+
+  Ok(())
+}
+
+/// Get and verify an active rider by person_id.
+///
+/// Returns the rider if found and active, otherwise returns an error.
+pub async fn get_active_rider_by_person(
+  pool: &mut DbPool<'_>,
+  person_id: PersonId,
+) -> FastJobResult<app_108jobs_db_schema::source::rider::Rider> {
+  use app_108jobs_db_schema::source::rider::Rider;
+
+  Rider::get_by_person_id(pool, person_id)
+    .await?
+    .ok_or(FastJobErrorType::NotAnActiveRider.into())
 }
 
 #[cfg(test)]

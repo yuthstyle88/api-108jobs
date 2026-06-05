@@ -224,9 +224,17 @@ ALTER TABLE registration_application
     ALTER COLUMN published TYPE timestamp
     USING published;
 
-ALTER TABLE mod_hide_category
-    ALTER COLUMN when_ TYPE timestamp
-    USING when_;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'mod_hide_category'
+      AND column_name = 'when_'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.mod_hide_category ALTER COLUMN when_ TYPE timestamp USING when_';
+  END IF;
+END $$;
 
 ALTER TABLE site
     ALTER COLUMN published TYPE timestamp

@@ -5,10 +5,10 @@ use crate::{
   source::language::Language,
   utils::{get_conn, DbPool},
 };
-use diesel::QueryDsl;
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::language;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::QueryDsl;
+use diesel_async::RunQueryDsl;
 
 impl Language {
   pub async fn read_all(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {

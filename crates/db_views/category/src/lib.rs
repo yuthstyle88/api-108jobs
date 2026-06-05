@@ -7,13 +7,16 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
+  app_108jobs_db_schema::utils::queries::{
+    category_post_tags_fragment, local_user_category_can_mod,
+  },
   diesel::{Queryable, Selectable},
-  app_108jobs_db_schema::utils::queries::{category_post_tags_fragment, local_user_category_can_mod},
 };
 
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

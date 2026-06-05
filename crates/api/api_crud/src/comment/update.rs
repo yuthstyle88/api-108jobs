@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::utils::check_category_deleted_removed;
 use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
@@ -15,7 +14,7 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_comment::{
-  api::{CommentResponse, EditComment},
+  api::{CommentResponse, EditCommentRequest},
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -23,9 +22,10 @@ use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
+use chrono::Utc;
 
 pub async fn update_comment(
-  data: Json<EditComment>,
+  data: Json<EditCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {
@@ -39,7 +39,12 @@ pub async fn update_comment(
   )
   .await?;
 
-  check_category_deleted_removed(&orig_comment.category)?;
+  check_category_deleted_removed(
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?,
+  )?;
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {
@@ -49,7 +54,11 @@ pub async fn update_comment(
   let language_id = validate_post_language(
     &mut context.pool(),
     data.language_id,
-    orig_comment.category.id,
+    orig_comment
+      .category
+      .as_ref()
+      .ok_or(FastJobErrorType::NotFound)?
+      .id,
     local_user_view.local_user.id,
   )
   .await?;
@@ -60,7 +69,6 @@ pub async fn update_comment(
   if let Some(content) = &content {
     is_valid_body_field(content, false)?;
   }
-
 
   let comment_id = data.comment_id;
   let form = CommentUpdateForm {
@@ -97,4 +105,3 @@ pub async fn update_comment(
     .await?,
   ))
 }
-

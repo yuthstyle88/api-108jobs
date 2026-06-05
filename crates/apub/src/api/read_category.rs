@@ -1,8 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  utils::check_private_instance,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
 use app_108jobs_db_schema::source::actor_language::CategoryLanguage;
 use app_108jobs_db_views_category::{
   api::{GetCategory, GetCategoryResponse},
@@ -28,13 +25,7 @@ pub async fn get_category(
 
   let category_id = data.id.unwrap();
 
-
-  let category_view = CategoryView::read(
-    &mut context.pool(),
-    category_id,
-    local_user,
-  )
-  .await?;
+  let category_view = CategoryView::read(&mut context.pool(), category_id, local_user).await?;
 
   let category_id = category_view.category.id;
   let discussion_languages = CategoryLanguage::read(&mut context.pool(), category_id).await?;

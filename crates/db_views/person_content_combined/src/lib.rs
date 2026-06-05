@@ -1,9 +1,10 @@
 use app_108jobs_db_schema::{
   newtypes::{PaginationCursor, PersonId},
   source::{
+    category::{Category, CategoryActions},
     combined::person_content::PersonContentCombined,
     comment::{Comment, CommentActions},
-    category::{Category, CategoryActions},
+    delivery_details::DeliveryDetails,
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
@@ -18,15 +19,12 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::{
-    creator_banned,
-    creator_is_admin,
-    local_user_can_mod,
-    post_tags_fragment,
+    creator_banned, creator_is_admin, local_user_can_mod, post_tags_fragment,
   },
   app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
   app_108jobs_db_views_local_user::LocalUserView,
+  diesel::{Queryable, Selectable},
 };
 
 #[cfg(feature = "full")]
@@ -59,6 +57,8 @@ pub(crate) struct PersonContentCombinedViewInternal {
   pub comment_actions: Option<CommentActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub delivery_details: Option<DeliveryDetails>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = creator_is_admin()

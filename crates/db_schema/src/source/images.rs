@@ -5,8 +5,8 @@ use serde_with::skip_serializing_none;
 use std::fmt::Debug;
 #[cfg(feature = "full")]
 use {
-  i_love_jesus::CursorKeysModule,
   app_108jobs_db_schema_file::schema::{image_details, local_image, remote_image},
+  i_love_jesus::CursorKeysModule,
 };
 
 #[skip_serializing_none]

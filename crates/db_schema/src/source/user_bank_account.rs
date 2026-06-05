@@ -1,8 +1,8 @@
 use crate::newtypes::{BankAccountId, BankId, LocalUserId};
-use chrono::{DateTime, Utc};
-use i_love_jesus::CursorKeysModule;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::user_bank_accounts;
+use chrono::{DateTime, Utc};
+use i_love_jesus::CursorKeysModule;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

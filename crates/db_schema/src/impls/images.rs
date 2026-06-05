@@ -3,17 +3,12 @@ use crate::{
   source::images::{ImageDetails, ImageDetailsInsertForm, LocalImage, LocalImageForm, RemoteImage},
   utils::{get_conn, DbPool},
 };
-use diesel::{
-  dsl::exists,
-  insert_into,
-  select,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  QueryDsl,
-};
-use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use app_108jobs_db_schema_file::schema::{image_details, local_image, remote_image};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::exists, insert_into, select, BoolExpressionMethods, ExpressionMethods, QueryDsl,
+};
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use url::Url;
 
 impl LocalImage {
@@ -70,7 +65,10 @@ impl LocalImage {
   }
 
   /// Delete many aliases. Should be used with a pictrs purge.
-  pub async fn delete_by_aliases(pool: &mut DbPool<'_>, aliases: &[String]) -> FastJobResult<usize> {
+  pub async fn delete_by_aliases(
+    pool: &mut DbPool<'_>,
+    aliases: &[String],
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
     diesel::delete(local_image::table.filter(local_image::pictrs_alias.eq_any(aliases)))
       .execute(conn)
@@ -108,7 +106,10 @@ impl RemoteImage {
 }
 
 impl ImageDetails {
-  pub async fn create(pool: &mut DbPool<'_>, form: &ImageDetailsInsertForm) -> FastJobResult<usize> {
+  pub async fn create(
+    pool: &mut DbPool<'_>,
+    form: &ImageDetailsInsertForm,
+  ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(image_details::table)

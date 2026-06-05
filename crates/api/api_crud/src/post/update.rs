@@ -1,26 +1,22 @@
 use super::convert_published_time;
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
   request::generate_post_link_metadata,
   send_activity::SendActivityData,
   tags::update_post_tags,
-  utils::{
-    check_self_promotion_allowed,
-    get_url_blocklist,
-    process_markdown_opt,
-    slur_regex,
-  },
+  utils::{check_self_promotion_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
 use app_108jobs_db_schema::{
-  impls::actor_language::validate_post_language,
+  impls::actor_language::{validate_post_language, UNDETERMINED_ID},
+  source::delivery_details::DeliveryDetails,
   source::post::{Post, PostUpdateForm},
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
+use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::EditPostRequest;
@@ -33,14 +29,12 @@ use app_108jobs_utils::{
   utils::{
     slurs::check_slurs,
     validation::{
-      is_url_blocked,
-      is_valid_alt_text_field,
-      is_valid_body_field,
-      is_valid_post_title,
+      is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_post_title,
       is_valid_url,
     },
   },
 };
+use chrono::Utc;
 use std::ops::Deref;
 
 pub async fn update_post(
@@ -92,13 +86,12 @@ pub async fn update_post(
   }
 
   let post_id = data.post_id;
-  let orig_post =
-    PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
+  let orig_post = PostView::read(&mut context.pool(), post_id, None, local_instance_id).await?;
 
   if let Some(tags) = &data.tags {
     // post view does not include categoryview.post_tags
-    let category_view =
-      CategoryView::read(&mut context.pool(), orig_post.category.id, None).await?;
+    let category = orig_post.category.ok_or(FastJobErrorType::NotFound)?;
+    let category_view = CategoryView::read(&mut context.pool(), category.id, None).await?;
     update_post_tags(
       &context,
       &orig_post.post,
@@ -114,13 +107,18 @@ pub async fn update_post(
     Err(FastJobErrorType::NoPostEditAllowed)?
   }
 
-  let language_id = validate_post_language(
-    &mut context.pool(),
-    data.language_id,
-    orig_post.post.category_id,
-    local_user_view.local_user.id,
-  )
-  .await?;
+  let language_id = if let Some(category_id) = orig_post.post.category_id {
+    validate_post_language(
+      &mut context.pool(),
+      data.language_id,
+      category_id,
+      local_user_view.local_user.id,
+    )
+    .await?
+  } else {
+    // For delivery posts without a category, use default language
+    data.language_id.unwrap_or(UNDETERMINED_ID)
+  };
 
   // handle changes to scheduled_publish_time
   let scheduled_publish_time_at = match (
@@ -158,13 +156,34 @@ pub async fn update_post(
   let post_id = data.post_id;
   let updated_post = Post::update(&mut context.pool(), post_id, &post_form).await?;
 
-  send_local_notifs(
-    &updated_post,
-    None,
-    &local_user_view.person,
-    &context,
-  )
-  .await?;
+  // Handle delivery details updates for delivery posts
+  if orig_post.post.post_kind == PostKind::Delivery {
+    if let Some(delivery_payload) = data.delivery_details {
+      // Get the current delivery details
+      let current_delivery = DeliveryDetails::get_by_post_id(&mut context.pool(), post_id).await?;
+
+      // Convert payload to update form
+      let delivery_update_form = delivery_payload.to_update_form();
+
+      // Update the delivery details
+      DeliveryDetails::update(
+        &mut context.pool(),
+        current_delivery.id,
+        &delivery_update_form,
+      )
+      .await?;
+    }
+  } else if data.delivery_details.is_some() {
+    // Delivery details provided but this is not a delivery post
+    return Err(
+      FastJobErrorType::InvalidField(
+        "delivery_details can only be provided for delivery posts".to_string(),
+      )
+      .into(),
+    );
+  }
+
+  send_local_notifs(&updated_post, None, &local_user_view.person, &context).await?;
 
   // send out federation/webmention if necessary
   match (
@@ -195,10 +214,5 @@ pub async fn update_post(
     (Some(_), Some(_)) => {}
   };
 
-  build_post_response(
-    context.deref(),
-    local_user_view,
-    post_id,
-  )
-  .await
+  build_post_response(context.deref(), local_user_view, post_id).await
 }

@@ -1,39 +1,36 @@
+use app_108jobs_db_schema::newtypes::LanguageId;
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, PaginationCursor, PersonId},
-    source::{
+  newtypes::{CategoryId, Coin, PaginationCursor, PersonId},
+  source::{
+    category::{Category, CategoryActions},
     combined::search::SearchCombined,
     comment::{Comment, CommentActions},
-    category::{Category, CategoryActions},
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
     tag::TagsView,
   },
-    SearchSortType,
-    SearchType,
+  SearchSortType, SearchType,
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType};
-use app_108jobs_db_views_comment::CommentView;
+use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
+use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_person::PersonView;
+use app_108jobs_db_views_post::logistics::PostLogisticsView;
 use app_108jobs_db_views_post::PostView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::{
-    category_post_tags_fragment,
-    creator_banned,
-    creator_is_admin,
-    local_user_can_mod,
+    category_post_tags_fragment, creator_banned, creator_is_admin, local_user_can_mod,
     post_tags_fragment,
   },
   app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
   app_108jobs_db_views_local_user::LocalUserView,
+  diesel::{Queryable, Selectable},
 };
-use app_108jobs_db_schema::newtypes::LanguageId;
 
 #[cfg(feature = "full")]
 pub mod impls;
@@ -111,13 +108,26 @@ pub(crate) struct SearchCombinedViewInternal {
   pub creator_banned_from_category: bool,
 }
 
+/// A post view with logistics for search results
+#[skip_serializing_none]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+#[serde(rename_all = "camelCase")]
+pub struct SearchPostView {
+  #[serde(flatten)]
+  pub post_view: PostView,
+  /// Logistics data for Delivery/RideTaxi posts
+  pub logistics: Option<PostLogisticsView>,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 // Use serde's internal tagging, to work easier with javascript libraries
 #[serde(tag = "type_")]
 pub enum SearchCombinedView {
-  Post(PostView),
+  Post(SearchPostView),
   Comment(CommentView),
   Category(CategoryView),
   Person(PersonView),
@@ -149,11 +159,14 @@ pub struct Search {
   pub self_promotion: Option<bool>,
   pub intended_use: Option<IntendedUse>,
   pub job_type: Option<JobType>,
-  /// Minimum budget in your preferred currency
-  pub budget_min: Option<i64>,
-  /// Maximum budget in your preferred currency
-  pub budget_max: Option<i64>,
+  /// Minimum budget in cents (Coin type)
+  pub budget_min: Option<Coin>,
+  /// Maximum budget in cents (Coin type)
+  pub budget_max: Option<Coin>,
   pub requires_english: Option<bool>,
+  pub post_kind: Option<PostKind>,
+  /// Filter by logistics status (Pending, InProgress, Completed, etc.) for Delivery/RideTaxi posts
+  pub logistics_status: Option<TripStatus>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

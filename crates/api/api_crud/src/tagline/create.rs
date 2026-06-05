@@ -9,11 +9,11 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{CreateTagline, TaglineResponse};
+use app_108jobs_db_views_site::api::{CreateTaglineRequest, TaglineResponse};
 use app_108jobs_utils::error::FastJobError;
 
 pub async fn create_tagline(
-  data: Json<CreateTagline>,
+  data: Json<CreateTaglineRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> Result<Json<TaglineResponse>, FastJobError> {

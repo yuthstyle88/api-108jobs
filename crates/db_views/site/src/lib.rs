@@ -1,16 +1,14 @@
+use app_108jobs_db_schema::source::{
+  instance::Instance, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit, site::Site,
+};
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
-use app_108jobs_db_schema::source::{
-  instance::Instance,
-  local_site::LocalSite,
-  local_site_rate_limit::LocalSiteRateLimit,
-  site::Site,
-};
 use serde::{Deserialize, Serialize};
 
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable))]

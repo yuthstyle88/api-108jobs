@@ -1,7 +1,3 @@
--- Some fixes
-ALTER TABLE category
-    ALTER COLUMN hidden DROP NOT NULL;
-
 ALTER TABLE category
     ALTER COLUMN posting_restricted_to_mods DROP NOT NULL;
 
@@ -19,9 +15,6 @@ ALTER TABLE mod_ban
 
 ALTER TABLE mod_ban_from_category
     ALTER COLUMN banned DROP NOT NULL;
-
-ALTER TABLE mod_hide_category
-    ALTER COLUMN hidden DROP NOT NULL;
 
 ALTER TABLE mod_lock_post
     ALTER COLUMN LOCKED DROP NOT NULL;

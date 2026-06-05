@@ -1,22 +1,23 @@
-use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
-use captcha::Captcha;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::slurs::check_slurs,
 };
+use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
+use captcha::Captcha;
 use regex::Regex;
 use std::io::Cursor;
 use totp_rs::{Secret, TOTP};
 
 pub mod admin;
-pub mod comment;
 pub mod category;
+pub mod chat;
+pub mod comment;
+pub mod delivery;
 pub mod local_user;
 pub mod post;
 pub mod reports;
 pub mod site;
-pub mod chat;
 /// Converts the captcha to a base64 encoded wav audio file
 pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> FastJobResult<String> {
   let letters = captcha.as_wav();

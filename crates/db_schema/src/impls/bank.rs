@@ -1,4 +1,3 @@
-use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::BankId,
@@ -6,16 +5,17 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+use diesel::ExpressionMethods;
 
-#[cfg(feature = "full")]
-use diesel::QueryDsl;
-#[cfg(feature = "full")]
-use diesel_async::RunQueryDsl;
+use crate::source::bank::BanksResponse;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::banks;
 #[cfg(feature = "full")]
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::source::bank::BanksResponse;
+#[cfg(feature = "full")]
+use diesel::QueryDsl;
+#[cfg(feature = "full")]
+use diesel_async::RunQueryDsl;
 
 #[cfg(feature = "full")]
 impl Crud for Bank {

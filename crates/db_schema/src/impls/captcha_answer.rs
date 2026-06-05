@@ -2,10 +2,10 @@ use crate::{
   source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm, CheckCaptchaAnswer},
   utils::{functions::lower, get_conn, DbPool},
 };
-use diesel::{delete, dsl::exists, insert_into, select, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::captcha_answer::dsl::{answer, captcha_answer};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{delete, dsl::exists, insert_into, select, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl CaptchaAnswer {
   pub async fn insert(pool: &mut DbPool<'_>, captcha: &CaptchaAnswerForm) -> FastJobResult<Self> {

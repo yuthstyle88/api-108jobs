@@ -4,16 +4,14 @@ use crate::{
   traits::Reportable,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::post_report;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods,
-  ExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::post_report;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for PostReport {
   type Form = PostReportForm;
@@ -111,10 +109,10 @@ mod tests {
   use super::*;
   use crate::{
     source::{
-        category::{Category, CategoryInsertForm},
-        instance::Instance,
-        person::{Person, PersonInsertForm},
-        post::{Post, PostInsertForm},
+      category::{Category, CategoryInsertForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::{Post, PostInsertForm},
     },
     traits::Crud,
     utils::build_db_pool_for_tests,
@@ -122,8 +120,11 @@ mod tests {
   use serial_test::serial;
 
   async fn init(pool: &mut DbPool<'_>) -> FastJobResult<(Person, PostReport)> {
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-    let person_form = PersonInsertForm::test_form(inserted_instance.id, "jim");
+    let inserted_instance =
+      Instance::read_or_create(pool, crate::test_data::unique_test_domain("post-report")).await?;
+    crate::test_data::reset_category_sequence(pool).await?;
+    let (person_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jim").await?;
     let person = Person::create(pool, &person_form).await?;
 
     let category_form = CategoryInsertForm::new(
@@ -133,7 +134,7 @@ mod tests {
     );
     let category = Category::create(pool, &category_form).await?;
 
-    let form = PostInsertForm::new("A test post".into(), person.id, category.id);
+    let form = PostInsertForm::new("A test post".into(), person.id);
     let post = Post::create(pool, &form).await?;
 
     let report_form = PostReportForm {

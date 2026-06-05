@@ -1,12 +1,15 @@
-use diesel::{Queryable, Selectable};
 use app_108jobs_db_schema::source::local_user::LocalUser;
 use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
 use app_108jobs_db_schema::source::user_bank_account::BankAccount;
 use app_108jobs_db_schema::source::wallet::Wallet;
 use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
+use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod validator;
+pub use api::{ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest};
+pub use validator::ValidSubmitWithdrawRequest;
 #[cfg(feature = "full")]
 pub mod impls;
 

@@ -1,32 +1,33 @@
 use crate::context::FastJobContext;
 use actix_web::web::Json;
 use app_108jobs_db_schema::{
-    newtypes::{CommentId, CategoryId, InstanceId, PostId},
-    source::{
-      actor_language::CategoryLanguage,
-      comment::Comment,
-      category::Category,
-      person::Person,
-      person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
-      person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
-      post::Post,
+  newtypes::{CategoryId, CommentId, InstanceId, PostId},
+  source::{
+    actor_language::CategoryLanguage,
+    category::Category,
+    comment::Comment,
+    person::Person,
+    person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
+    person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+    post::Post,
   },
-    traits::Crud,
+  traits::Crud,
 };
-use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
 use app_108jobs_db_views_category::api::ListCategoriesTreeResponse;
 use app_108jobs_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
+use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{api::PostResponse, PostView};
 use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
 
 pub async fn build_comment_response(
-    context: &FastJobContext,
-    comment_id: CommentId,
-    local_user_view: Option<LocalUserView>,
-    local_instance_id: InstanceId,
+  context: &FastJobContext,
+  comment_id: CommentId,
+  local_user_view: Option<LocalUserView>,
+  local_instance_id: InstanceId,
 ) -> FastJobResult<CommentResponse> {
   let local_user = local_user_view.map(|l| l.local_user);
   let comment_view = CommentView::read(
@@ -35,14 +36,14 @@ pub async fn build_comment_response(
     local_user.as_ref(),
     local_instance_id,
   )
-   .await?;
+  .await?;
   Ok(CommentResponse { comment_view })
 }
 
 pub async fn build_category_response(
-    context: &FastJobContext,
-    local_user_view: LocalUserView,
-    category_id: CategoryId,
+  context: &FastJobContext,
+  local_user_view: LocalUserView,
+  category_id: CategoryId,
 ) -> FastJobResult<Json<CategoryResponse>> {
   let local_user = local_user_view.local_user;
   let category_view =
@@ -68,7 +69,31 @@ pub async fn build_post_response(
     local_user_view.person.instance_id,
   )
   .await?;
-  Ok(Json(PostResponse { post_view }))
+  // Determine viewer role for logistics projection
+  let is_admin = local_user.admin;
+  let viewer = if is_admin {
+    LogisticsViewer::Admin
+  } else if local_user_view.person.id == post_view.creator.id {
+    LogisticsViewer::Employer(post_view.creator.id)
+  } else {
+    LogisticsViewer::Public
+  };
+
+  // Load unified logistics view if applicable
+  let logistics = logistics::load_post_logistics(
+    &mut context.pool(),
+    post_id,
+    post_view.post.post_kind,
+    post_view.creator.id,
+    viewer,
+    is_admin,
+  )
+  .await?;
+
+  Ok(Json(PostResponse {
+    post_view,
+    logistics,
+  }))
 }
 
 pub fn build_category_tree(

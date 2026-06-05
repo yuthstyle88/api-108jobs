@@ -1,6 +1,6 @@
 use crate::{TopUpRequestView, WithdrawRequestView};
 use app_108jobs_db_schema::newtypes::{
-  BankAccountId, Coin, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
+  BankAccountId, Coin, CurrencyId, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
 };
 use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use serde::{Deserialize, Serialize};
@@ -12,9 +12,16 @@ pub struct GetWallet {
   pub user_id: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 /// Update wallet balance.
 pub struct UpdateWallet {
+  pub amount: Coin,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+/// Update wallet balance.
+pub struct UpdateWalletRequest {
   pub amount: Coin,
 }
 
@@ -55,10 +62,10 @@ pub struct WalletOperationResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Admin top up user wallet.
+/// Note: amount is no longer needed here - it's fetched from the TopUpRequest
 pub struct AdminTopUpWallet {
   pub target_user_id: LocalUserId,
   pub qr_id: String,
-  pub amount: Coin,
   pub reason: String,
 }
 
@@ -129,42 +136,8 @@ pub struct SubmitWithdrawRequest {
   pub wallet_id: WalletId,
   pub bank_account_id: BankAccountId,
   pub amount: Coin,
+  pub currency_id: CurrencyId,
   pub reason: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct ValidWithdrawRequest(pub SubmitWithdrawRequest);
-
-impl TryFrom<SubmitWithdrawRequest> for ValidWithdrawRequest {
-  type Error = String;
-
-  fn try_from(value: SubmitWithdrawRequest) -> Result<Self, Self::Error> {
-    // Validate wallet_id
-    if value.wallet_id.0 <= 0 {
-      return Err("Wallet ID is required and must be valid.".to_string());
-    }
-
-    // Validate bank_account_id
-    if value.bank_account_id.0 <= 0 {
-      return Err("Bank account ID is required and must be valid.".to_string());
-    }
-
-    // Validate amount
-    if value.amount <= 0 {
-      return Err("Withdrawal amount must be greater than zero.".to_string());
-    }
-
-    // Validate reason
-    if value.reason.trim().is_empty() {
-      return Err("Reason cannot be empty.".to_string());
-    }
-
-    if value.reason.len() > 500 {
-      return Err("Reason is too long (max 500 characters).".to_string());
-    }
-
-    Ok(ValidWithdrawRequest(value))
-  }
 }
 
 #[skip_serializing_none]

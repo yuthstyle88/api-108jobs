@@ -4,12 +4,8 @@ pub use app_108jobs_db_schema::{
 };
 pub use app_108jobs_db_views_custom_emoji::{
   api::{
-    CreateCustomEmoji,
-    CustomEmojiResponse,
-    DeleteCustomEmoji,
-    EditCustomEmoji,
-    ListCustomEmojis,
-    ListCustomEmojisResponse,
+    CreateCustomEmoji, CustomEmojiResponse, DeleteCustomEmojiRequest, EditCustomEmoji,
+    ListCustomEmojis, ListCustomEmojisResponse,
   },
   CustomEmojiView,
 };

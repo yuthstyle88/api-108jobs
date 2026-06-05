@@ -8,11 +8,11 @@ use app_108jobs_db_schema::{
     comment::Comment,
     post::{Post, PostActions, PostReadForm},
   },
-  traits::{Crud, Readable}
-  ,
+  traits::{Crud, Readable},
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{GetPost, GetPostResponse},
   PostView,
@@ -73,12 +73,11 @@ pub async fn get_post(
   }
 
   // Necessary for the sidebar subscribed
-  let category_view = CategoryView::read(
-    &mut context.pool(),
-    category_id,
-    local_user.as_ref(),
-  )
-  .await?;
+  let category_view = if let Some(cid) = category_id {
+    Some(CategoryView::read(&mut context.pool(), cid, local_user.as_ref()).await?)
+  } else {
+    None
+  };
 
   // Fetch the cross_posts
   let cross_posts = if let Some(url) = &post_view.post.url {
@@ -100,9 +99,37 @@ pub async fn get_post(
   };
 
   // Return the jwt
+  // Compute viewer and load logistics view if applicable
+  let (viewer, is_admin) = if let Some(lu) = local_user.as_ref() {
+    if lu.admin {
+      (LogisticsViewer::Admin, true)
+    } else if let Some(p) = person_id {
+      if p == post_view.creator.id {
+        (LogisticsViewer::Employer(post_view.creator.id), false)
+      } else {
+        (LogisticsViewer::Public, false)
+      }
+    } else {
+      (LogisticsViewer::Public, false)
+    }
+  } else {
+    (LogisticsViewer::Public, false)
+  };
+
+  let logistics = logistics::load_post_logistics(
+    &mut context.pool(),
+    post_id,
+    post_view.post.post_kind,
+    post_view.creator.id,
+    viewer,
+    is_admin,
+  )
+  .await?;
+
   Ok(Json(GetPostResponse {
     post_view,
     category_view,
     cross_posts,
+    logistics,
   }))
 }

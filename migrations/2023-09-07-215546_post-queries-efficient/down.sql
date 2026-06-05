@@ -1,20 +1,20 @@
-DROP INDEX idx_post_aggregates_featured_category_active;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_active;
 
-DROP INDEX idx_post_aggregates_featured_category_controversy;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_controversy;
 
-DROP INDEX idx_post_aggregates_featured_category_hot;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_hot;
 
-DROP INDEX idx_post_aggregates_featured_category_scaled;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_scaled;
 
-DROP INDEX idx_post_aggregates_featured_category_most_comments;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_most_comments;
 
-DROP INDEX idx_post_aggregates_featured_category_newest_comment_time;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_newest_comment_time;
 
-DROP INDEX idx_post_aggregates_featured_category_newest_comment_time_necro;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_newest_comment_time_necro;
 
-DROP INDEX idx_post_aggregates_featured_category_published;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_published;
 
-DROP INDEX idx_post_aggregates_featured_category_score;
+DROP INDEX IF EXISTS idx_post_aggregates_featured_category_score;
 
 CREATE INDEX idx_post_aggregates_featured_category_active ON post_aggregates (featured_category DESC, hot_rank_active DESC, published DESC);
 
@@ -34,21 +34,21 @@ CREATE INDEX idx_post_aggregates_featured_category_published ON post_aggregates 
 
 CREATE INDEX idx_post_aggregates_featured_category_score ON post_aggregates (featured_category DESC, score DESC, published DESC);
 
-DROP INDEX idx_post_aggregates_category_active;
+DROP INDEX IF EXISTS idx_post_aggregates_category_active;
 
-DROP INDEX idx_post_aggregates_category_controversy;
+DROP INDEX IF EXISTS idx_post_aggregates_category_controversy;
 
-DROP INDEX idx_post_aggregates_category_hot;
+DROP INDEX IF EXISTS idx_post_aggregates_category_hot;
 
-DROP INDEX idx_post_aggregates_category_scaled;
+DROP INDEX IF EXISTS idx_post_aggregates_category_scaled;
 
-DROP INDEX idx_post_aggregates_category_most_comments;
+DROP INDEX IF EXISTS idx_post_aggregates_category_most_comments;
 
-DROP INDEX idx_post_aggregates_category_newest_comment_time;
+DROP INDEX IF EXISTS idx_post_aggregates_category_newest_comment_time;
 
-DROP INDEX idx_post_aggregates_category_newest_comment_time_necro;
+DROP INDEX IF EXISTS idx_post_aggregates_category_newest_comment_time_necro;
 
-DROP INDEX idx_post_aggregates_category_published;
+DROP INDEX IF EXISTS idx_post_aggregates_category_published;
 
-DROP INDEX idx_post_aggregates_category_score;
+DROP INDEX IF EXISTS idx_post_aggregates_category_score;
 

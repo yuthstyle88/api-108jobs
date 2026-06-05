@@ -4,12 +4,7 @@ use diesel::{
   pg::Pg,
   query_builder::{AsQuery, AstPass, QueryFragment},
   result::Error,
-  sql_types,
-  AppearsOnTable,
-  Expression,
-  Insertable,
-  QueryId,
-  SelectableExpression,
+  sql_types, AppearsOnTable, Expression, Insertable, QueryId, SelectableExpression,
 };
 
 /// Gererates a series of rows for insertion.

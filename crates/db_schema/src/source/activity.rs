@@ -1,9 +1,9 @@
 use crate::newtypes::{ActivityId, CategoryId, DbUrl};
-use chrono::{DateTime, Utc};
 use app_108jobs_db_schema_file::{
   enums::ActorType,
-  schema::{sent_activity, received_activity},
+  schema::{received_activity, sent_activity},
 };
+use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::{collections::HashSet, fmt::Debug};
 use url::Url;

@@ -4,7 +4,7 @@ use actix_web::web::Json;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{UpdateTotp, UpdateTotpResponse};
+use app_108jobs_db_views_site::api::{UpdateTotpRequest, UpdateTotpResponse};
 use app_108jobs_utils::error::FastJobResult;
 
 /// Enable or disable two-factor-authentication. The current setting is determined from
@@ -16,7 +16,7 @@ use app_108jobs_utils::error::FastJobResult;
 /// Disabling is only possible if 2FA was previously enabled. Again it is necessary to pass a valid
 /// token.
 pub async fn update_totp(
-  data: Json<UpdateTotp>,
+  data: Json<UpdateTotpRequest>,
   local_user_view: LocalUserView,
   context: Data<FastJobContext>,
 ) -> FastJobResult<Json<UpdateTotpResponse>> {

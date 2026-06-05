@@ -1,8 +1,5 @@
 use crate::api::ListBankAccountQuery;
 use crate::BankAccountView;
-use diesel::{prelude::*, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::source::user_bank_account::user_bank_accounts_keys as key;
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::utils::{limit_fetch, paginate};
@@ -15,6 +12,9 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::schema::{banks, user_bank_accounts};
 use app_108jobs_utils::apply_date_filters;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{prelude::*, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl PaginationCursorBuilder for BankAccountView {
   type CursorData = BankAccount;

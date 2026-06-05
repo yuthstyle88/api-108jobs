@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
 use app_108jobs_db_schema::{
@@ -10,12 +9,15 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
 };
-use app_108jobs_db_views_category::api::{CreateCategoryTag, DeleteCategoryTag, UpdateCategoryTag};
+use app_108jobs_db_views_category::api::{
+  CreateCategoryTagRequest, DeleteCategoryTagRequest, UpdateCategoryTagRequest,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{error::FastJobResult, utils::validation::tag_name_length_check};
+use chrono::Utc;
 
 pub async fn create_category_tag(
-  data: Json<CreateCategoryTag>,
+  data: Json<CreateCategoryTagRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {
@@ -39,7 +41,7 @@ pub async fn create_category_tag(
 }
 
 pub async fn update_category_tag(
-  data: Json<UpdateCategoryTag>,
+  data: Json<UpdateCategoryTagRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {
@@ -65,7 +67,7 @@ pub async fn update_category_tag(
 }
 
 pub async fn delete_category_tag(
-  data: Json<DeleteCategoryTag>,
+  data: Json<DeleteCategoryTagRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Tag>> {

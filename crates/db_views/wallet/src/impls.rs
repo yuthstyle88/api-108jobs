@@ -1,9 +1,8 @@
 use crate::api::{ListTopUpRequestQuery, ListWithdrawRequestQuery};
 use crate::{TopUpRequestView, WalletView, WithdrawRequestView};
-use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
-use app_108jobs_db_schema::newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId};
+use app_108jobs_db_schema::newtypes::{
+  LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId,
+};
 use app_108jobs_db_schema::source::top_up_request::top_up_requests_keys as t_key;
 use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
 use app_108jobs_db_schema::source::wallet::Wallet;
@@ -21,6 +20,9 @@ use app_108jobs_db_schema_file::schema::{
 };
 use app_108jobs_utils::apply_date_filters;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl WalletView {
   pub async fn read(pool: &mut DbPool<'_>, wallet_id: WalletId) -> Result<Self, Error> {
@@ -93,8 +95,8 @@ impl TopUpRequestView {
     cursor_data: Option<TopUpRequest>,
     params: ListTopUpRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
-    use diesel::prelude::*;
     use app_108jobs_db_schema_file::schema::top_up_requests;
+    use diesel::prelude::*;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(params.limit)?;
@@ -192,8 +194,8 @@ impl WithdrawRequestView {
     cursor_data: Option<WithdrawRequest>,
     params: ListWithdrawRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
-    use diesel::prelude::*;
     use app_108jobs_db_schema_file::schema::withdraw_requests;
+    use diesel::prelude::*;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(params.limit)?;

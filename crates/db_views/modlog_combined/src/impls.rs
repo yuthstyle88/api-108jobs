@@ -1,82 +1,43 @@
 use crate::{
-  AdminAllowInstanceView,
-  AdminBlockInstanceView,
-  AdminPurgeCommentView,
-  AdminPurgeCategoryView,
-  AdminPurgePersonView,
-  AdminPurgePostView,
-  ModAddCategoryView,
-  ModAddView,
-  ModBanFromCategoryView,
-  ModBanView,
-  ModChangeCategoryVisibilityView,
-  ModFeaturePostView,
-  ModLockPostView,
-  ModRemoveCommentView,
-  ModRemoveCategoryView,
-  ModRemovePostView,
-  ModTransferCategoryView,
-  ModlogCombinedView,
-  ModlogCombinedViewInternal,
+  AdminAllowInstanceView, AdminBlockInstanceView, AdminPurgeCategoryView, AdminPurgeCommentView,
+  AdminPurgePersonView, AdminPurgePostView, ModAddCategoryView, ModAddView, ModBanFromCategoryView,
+  ModBanView, ModChangeCategoryVisibilityView, ModFeaturePostView, ModLockPostView,
+  ModRemoveCategoryView, ModRemoveCommentView, ModRemovePostView, ModTransferCategoryView,
+  ModlogCombinedView, ModlogCombinedViewInternal,
 };
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
-    aliases,
-    impls::local_user::LocalUserOptionHelper,
-    newtypes::{CommentId, CategoryId, PaginationCursor, PersonId, PostId},
-    source::{
+  aliases,
+  impls::local_user::LocalUserOptionHelper,
+  newtypes::{CategoryId, CommentId, PaginationCursor, PersonId, PostId},
+  source::{
     combined::modlog::{modlog_combined_keys as key, ModlogCombined},
     local_user::LocalUser,
   },
-    traits::{InternalToCombinedView, PaginationCursorBuilder},
-    utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+  traits::{InternalToCombinedView, PaginationCursorBuilder},
+  utils::{
+    get_conn, limit_fetch, paginate,
     queries::{filter_is_subscribed, filter_not_unlisted_or_is_subscribed},
     DbPool,
   },
-    ModlogActionType,
+  ModlogActionType,
 };
 use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{
-      admin_allow_instance,
-      admin_block_instance,
-      admin_purge_comment,
-      admin_purge_category,
-      admin_purge_person,
-      admin_purge_post,
-      comment,
-      category,
-      category_actions,
-      instance,
-      mod_add,
-      mod_add_category,
-      mod_ban,
-      mod_ban_from_category,
-      mod_change_category_visibility,
-      mod_feature_post,
-      mod_lock_post,
-      mod_remove_comment,
-      mod_remove_category,
-      mod_remove_post,
-      mod_transfer_category,
-      modlog_combined,
-      person,
-      post,
+    admin_allow_instance, admin_block_instance, admin_purge_category, admin_purge_comment,
+    admin_purge_person, admin_purge_post, category, category_actions, comment, instance, mod_add,
+    mod_add_category, mod_ban, mod_ban_from_category, mod_change_category_visibility,
+    mod_feature_post, mod_lock_post, mod_remove_category, mod_remove_comment, mod_remove_post,
+    mod_transfer_category, modlog_combined, person, post,
   },
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl ModlogCombinedViewInternal {
   #[diesel::dsl::auto_type(no_type_alias)]
@@ -159,26 +120,34 @@ impl ModlogCombinedViewInternal {
         .or(mod_add_category::category_id.eq(category::id))
         .or(mod_ban_from_category::category_id.eq(category::id))
         .or(
-          mod_feature_post::id
-            .is_not_null()
-            .and(post::category_id.eq(category::id)),
+          mod_feature_post::id.is_not_null().and(
+            post::category_id
+              .is_null()
+              .or(category::id.nullable().eq(post::category_id)),
+          ),
         )
         .or(mod_change_category_visibility::category_id.eq(category::id))
         .or(
-          mod_lock_post::id
-            .is_not_null()
-            .and(post::category_id.eq(category::id)),
+          mod_lock_post::id.is_not_null().and(
+            post::category_id
+              .is_null()
+              .or(category::id.nullable().eq(post::category_id)),
+          ),
         )
         .or(
-          mod_remove_comment::id
-            .is_not_null()
-            .and(post::category_id.eq(category::id)),
+          mod_remove_comment::id.is_not_null().and(
+            post::category_id
+              .is_null()
+              .or(category::id.nullable().eq(post::category_id)),
+          ),
         )
         .or(mod_remove_category::category_id.eq(category::id))
         .or(
-          mod_remove_post::id
-            .is_not_null()
-            .and(post::category_id.eq(category::id)),
+          mod_remove_post::id.is_not_null().and(
+            post::category_id
+              .is_null()
+              .or(category::id.nullable().eq(post::category_id)),
+          ),
         )
         .or(mod_transfer_category::category_id.eq(category::id)),
     );
@@ -190,7 +159,7 @@ impl ModlogCombinedViewInternal {
     );
 
     let category_actions_join = category_actions::table.on(
-        category_actions::category_id
+      category_actions::category_id
         .eq(category::id)
         .and(category_actions::person_id.nullable().eq(my_person_id)),
     );
@@ -350,9 +319,7 @@ impl ModlogCombinedQuery<'_> {
         ModFeaturePost => query.filter(modlog_combined::mod_feature_post_id.is_not_null()),
         ModRemoveComment => query.filter(modlog_combined::mod_remove_comment_id.is_not_null()),
         ModRemovecategory => query.filter(modlog_combined::mod_remove_category_id.is_not_null()),
-        ModBanFromcategory => {
-          query.filter(modlog_combined::mod_ban_from_category_id.is_not_null())
-        }
+        ModBanFromcategory => query.filter(modlog_combined::mod_ban_from_category_id.is_not_null()),
         ModAddcategory => query.filter(modlog_combined::mod_add_category_id.is_not_null()),
         ModTransfercategory => {
           query.filter(modlog_combined::mod_transfer_category_id.is_not_null())
@@ -363,9 +330,7 @@ impl ModlogCombinedQuery<'_> {
           query.filter(modlog_combined::mod_change_category_visibility_id.is_not_null())
         }
         AdminPurgePerson => query.filter(modlog_combined::admin_purge_person_id.is_not_null()),
-        AdminPurgecategory => {
-          query.filter(modlog_combined::admin_purge_category_id.is_not_null())
-        }
+        AdminPurgecategory => query.filter(modlog_combined::admin_purge_category_id.is_not_null()),
         AdminPurgePost => query.filter(modlog_combined::admin_purge_post_id.is_not_null()),
         AdminPurgeComment => query.filter(modlog_combined::admin_purge_comment_id.is_not_null()),
         AdminBlockInstance => query.filter(modlog_combined::admin_block_instance_id.is_not_null()),
@@ -475,13 +440,11 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
         admin_purge_person,
         admin: v.moderator,
       }))
-    } else if let (Some(admin_purge_post), Some(category)) =
-      (v.admin_purge_post, v.category.clone())
-    {
+    } else if let Some(admin_purge_post) = v.admin_purge_post {
       Some(ModlogCombinedView::AdminPurgePost(AdminPurgePostView {
         admin_purge_post,
         admin: v.moderator,
-        category,
+        category: v.category.clone(),
       }))
     } else if let (Some(mod_add), Some(other_person)) = (v.mod_add, v.other_person.clone()) {
       Some(ModlogCombinedView::ModAdd(ModAddView {
@@ -519,17 +482,14 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_feature_post), Some(other_person), Some(category), Some(post)) = (
-      v.mod_feature_post,
-      v.other_person.clone(),
-      v.category.clone(),
-      v.post.clone(),
-    ) {
+    } else if let (Some(mod_feature_post), Some(other_person), Some(post)) =
+      (v.mod_feature_post, v.other_person.clone(), v.post.clone())
+    {
       Some(ModlogCombinedView::ModFeaturePost(ModFeaturePostView {
         mod_feature_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
     } else if let (Some(mod_change_category_visibility), Some(category)) =
@@ -542,29 +502,19 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_lock_post), Some(other_person), Some(category), Some(post)) = (
-      v.mod_lock_post,
-      v.other_person.clone(),
-      v.category.clone(),
-      v.post.clone(),
-    ) {
+    } else if let (Some(mod_lock_post), Some(other_person), Some(post)) =
+      (v.mod_lock_post, v.other_person.clone(), v.post.clone())
+    {
       Some(ModlogCombinedView::ModLockPost(ModLockPostView {
         mod_lock_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
-    } else if let (
-      Some(mod_remove_comment),
-      Some(other_person),
-      Some(category),
-      Some(post),
-      Some(comment),
-    ) = (
+    } else if let (Some(mod_remove_comment), Some(other_person), Some(post), Some(comment)) = (
       v.mod_remove_comment,
       v.other_person.clone(),
-      v.category.clone(),
       v.post.clone(),
       v.comment,
     ) {
@@ -572,7 +522,7 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
         mod_remove_comment,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
         comment,
       }))
@@ -586,17 +536,14 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           category,
         },
       ))
-    } else if let (Some(mod_remove_post), Some(other_person), Some(category), Some(post)) = (
-      v.mod_remove_post,
-      v.other_person.clone(),
-      v.category.clone(),
-      v.post.clone(),
-    ) {
+    } else if let (Some(mod_remove_post), Some(other_person), Some(post)) =
+      (v.mod_remove_post, v.other_person.clone(), v.post.clone())
+    {
       Some(ModlogCombinedView::ModRemovePost(ModRemovePostView {
         mod_remove_post,
         moderator: v.moderator,
         other_person,
-        category,
+        category: v.category.clone(),
         post,
       }))
     } else if let (Some(mod_transfer_category), Some(other_person), Some(category)) = (
@@ -623,72 +570,47 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
 mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     newtypes::PersonId,
     source::{
-        comment::{Comment, CommentInsertForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        mod_log::{
+      category::{category, Category, CategoryInsertForm},
+      comment::{Comment, CommentInsertForm},
+      instance::Instance,
+      mod_log::{
         admin::{
-          AdminAllowInstance,
-          AdminAllowInstanceForm,
-          AdminBlockInstance,
-          AdminBlockInstanceForm,
-          AdminPurgeComment,
-          AdminPurgeCommentForm,
-          AdminPurgecategory,
-          AdminPurgecategoryForm,
-          AdminPurgePerson,
-          AdminPurgePersonForm,
-          AdminPurgePost,
-          AdminPurgePostForm,
+          AdminAllowInstance, AdminAllowInstanceForm, AdminBlockInstance, AdminBlockInstanceForm,
+          AdminPurgeComment, AdminPurgeCommentForm, AdminPurgePerson, AdminPurgePersonForm,
+          AdminPurgePost, AdminPurgePostForm, AdminPurgeCategory, AdminPurgeCategoryForm,
         },
         moderator::{
-          ModAdd,
-          ModAddcategory,
-          ModAddcategoryForm,
-          ModAddForm,
-          ModBan,
-          ModBanForm,
-          ModBanFromcategory,
-          ModBanFromcategoryForm,
-          ModChangecategoryVisibility,
-          ModChangecategoryVisibilityForm,
-          ModFeaturePost,
-          ModFeaturePostForm,
-          ModLockPost,
-          ModLockPostForm,
-          ModRemoveComment,
-          ModRemoveCommentForm,
-          ModRemovecategory,
-          ModRemovecategoryForm,
-          ModRemovePost,
-          ModRemovePostForm,
-          ModTransferCategory,
-          ModTransfercategoryForm,
+          ModAdd, ModAddForm, ModAddCategory, ModAddCategoryForm, ModBan, ModBanForm,
+          ModBanFromCategory, ModBanFromCategoryForm, ModChangeCategoryVisibility,
+          ModChangeCategoryVisibilityForm, ModFeaturePost, ModFeaturePostForm, ModLockPost,
+          ModLockPostForm, ModRemoveComment, ModRemoveCommentForm, ModRemovePost,
+          ModRemovePostForm, ModRemoveCategory, ModRemoveCategoryForm, ModTransferCategory,
+          ModTransferCategoryForm,
         },
       },
-        person::{Person, PersonInsertForm},
-        post::{Post, PostInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostInsertForm},
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
     ModlogActionType,
   };
-  use app_108jobs_db_schema_file::enums::categoryVisibility;
+  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
     timmy: Person,
     sara: Person,
     jessica: Person,
-    category: category,
-    category_2: category,
+    category: Category,
+    category_2: Category,
     post: Post,
     post_2: Post,
     comment: Comment,
@@ -712,29 +634,35 @@ mod tests {
       "test category crv".to_string(),
       "nada".to_owned(),
     );
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
     let category_form_2 = CategoryInsertForm::new(
       instance.id,
       "test category crv 2".to_string(),
       "nada".to_owned(),
     );
-    let category_2 = category::create(pool, &category_form_2).await?;
+    let category_2 = Category::create(pool, &category_form_2).await?;
 
-    let post_form = PostInsertForm::new("A test post crv".into(), timmy.id, category.id);
+    let post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("A test post crv".into(), timmy.id)
+    };
     let post = Post::create(pool, &post_form).await?;
 
-    let new_post_2 = PostInsertForm::new("A test post crv 2".into(), sara.id, category_2.id);
+    let new_post_2 = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new("A test post crv 2".into(), sara.id)
+    };
     let post_2 = Post::create(pool, &new_post_2).await?;
 
     // Timmy creates a comment
     let comment_form = CommentInsertForm::new(timmy.id, post.id, "A test comment rv".into());
-    let comment = Comment::create(pool, &comment_form, ).await?;
+    let comment = Comment::create(pool, &comment_form).await?;
 
     // jessica creates a comment
     let comment_form_2 =
       CommentInsertForm::new(jessica.id, post_2.id, "A test comment rv 2".into());
-    let comment_2 = Comment::create(pool, &comment_form_2, ).await?;
+    let comment_2 = Comment::create(pool, &comment_form_2).await?;
 
     Ok(Data {
       instance,
@@ -786,11 +714,11 @@ mod tests {
     };
     AdminPurgeComment::create(pool, &form).await?;
 
-    let form = AdminPurgecategoryForm {
+    let form = AdminPurgeCategoryForm {
       admin_person_id: data.timmy.id,
       reason: None,
     };
-    AdminPurgecategory::create(pool, &form).await?;
+    AdminPurgeCategory::create(pool, &form).await?;
 
     let form = AdminPurgePersonForm {
       admin_person_id: data.timmy.id,
@@ -805,25 +733,25 @@ mod tests {
     };
     AdminPurgePost::create(pool, &form).await?;
 
-    let form = ModChangecategoryVisibilityForm {
+    let form = ModChangeCategoryVisibilityForm {
       mod_person_id: data.timmy.id,
       category_id: data.category.id,
-      visibility: categoryVisibility::Unlisted,
+      visibility: CategoryVisibility::Unlisted,
     };
-    ModChangecategoryVisibility::create(pool, &form).await?;
+    ModChangeCategoryVisibility::create(pool, &form).await?;
 
     // A 2nd mod hide category, but to a different category, and with jessica
-    let form = ModChangecategoryVisibilityForm {
+    let form = ModChangeCategoryVisibilityForm {
       mod_person_id: data.jessica.id,
       category_id: data.category_2.id,
-      visibility: categoryVisibility::Unlisted,
+      visibility: CategoryVisibility::Unlisted,
     };
-    ModChangecategoryVisibility::create(pool, &form).await?;
+    ModChangeCategoryVisibility::create(pool, &form).await?;
 
     let modlog = ModlogCombinedQuery::default().list(pool).await?;
     assert_eq!(8, modlog.len());
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog[0] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog[0] {
       assert_eq!(
         data.category_2.id,
         v.mod_change_category_visibility.category_id
@@ -837,7 +765,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog[1] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog[1] {
       assert_eq!(
         data.category.id,
         v.mod_change_category_visibility.category_id
@@ -853,7 +781,7 @@ mod tests {
 
     if let ModlogCombinedView::AdminPurgePost(v) = &modlog[2] {
       assert_eq!(data.category.id, v.admin_purge_post.category_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.admin.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -871,7 +799,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::AdminPurgecategory(v) = &modlog[4] {
+    if let ModlogCombinedView::AdminPurgeCategory(v) = &modlog[4] {
       assert_eq!(
         data.timmy.id,
         v.admin.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -946,7 +874,7 @@ mod tests {
     // 2 of these, one is jessicas
     assert_eq!(2, modlog_type_filter.len());
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog_type_filter[0] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog_type_filter[0] {
       assert_eq!(
         data.category_2.id,
         v.mod_change_category_visibility.category_id
@@ -960,7 +888,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModChangecategoryVisibility(v) = &modlog_type_filter[1] {
+    if let ModlogCombinedView::ModChangeCategoryVisibility(v) = &modlog_type_filter[1] {
       assert_eq!(
         data.category.id,
         v.mod_change_category_visibility.category_id
@@ -993,13 +921,13 @@ mod tests {
     };
     ModAdd::create(pool, &form).await?;
 
-    let form = ModAddcategoryForm {
+    let form = ModAddCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
       removed: Some(false),
     };
-    ModAddcategory::create(pool, &form).await?;
+    ModAddCategory::create(pool, &form).await?;
 
     let form = ModBanForm {
       mod_person_id: data.timmy.id,
@@ -1011,7 +939,7 @@ mod tests {
     };
     ModBan::create(pool, &form).await?;
 
-    let form = ModBanFromcategoryForm {
+    let form = ModBanFromCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
@@ -1019,7 +947,7 @@ mod tests {
       reason: None,
       expires_at: None,
     };
-    ModBanFromcategory::create(pool, &form).await?;
+    ModBanFromCategory::create(pool, &form).await?;
 
     let form = ModFeaturePostForm {
       mod_person_id: data.timmy.id,
@@ -1045,13 +973,13 @@ mod tests {
     };
     ModRemoveComment::create(pool, &form).await?;
 
-    let form = ModRemovecategoryForm {
+    let form = ModRemoveCategoryForm {
       mod_person_id: data.timmy.id,
       category_id: data.category.id,
       removed: Some(true),
       reason: None,
     };
-    ModRemovecategory::create(pool, &form).await?;
+    ModRemoveCategory::create(pool, &form).await?;
 
     let form = ModRemovePostForm {
       mod_person_id: data.timmy.id,
@@ -1061,20 +989,20 @@ mod tests {
     };
     ModRemovePost::create(pool, &form).await?;
 
-    let form = ModTransfercategoryForm {
+    let form = ModTransferCategoryForm {
       mod_person_id: data.timmy.id,
       other_person_id: data.jessica.id,
       category_id: data.category.id,
     };
-    ModTransfercategory::create(pool, &form).await?;
+    ModTransferCategory::create(pool, &form).await?;
 
     // A few extra ones to test different filters
-    let form = ModTransfercategoryForm {
+    let form = ModTransferCategoryForm {
       mod_person_id: data.jessica.id,
       other_person_id: data.sara.id,
       category_id: data.category_2.id,
     };
-    ModTransfercategory::create(pool, &form).await?;
+    ModTransferCategory::create(pool, &form).await?;
 
     let form = ModRemovePostForm {
       mod_person_id: data.jessica.id,
@@ -1100,7 +1028,7 @@ mod tests {
       assert_eq!(data.comment_2.id, v.mod_remove_comment.comment_id);
       assert_eq!(data.comment_2.id, v.comment.id);
       assert_eq!(data.post_2.id, v.post.id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.jessica.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1114,7 +1042,7 @@ mod tests {
       assert_eq!(data.post_2.id, v.mod_remove_post.post_id);
       assert_eq!(data.post_2.id, v.post.id);
       assert_eq!(data.sara.id, v.post.creator_id);
-      assert_eq!(data.category_2.id, v.category.id);
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.jessica.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1124,7 +1052,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModTransfercategory(v) = &modlog[2] {
+    if let ModlogCombinedView::ModTransferCategory(v) = &modlog[2] {
       assert_eq!(data.category_2.id, v.mod_transfer_category.category_id);
       assert_eq!(data.category_2.id, v.category.id);
       assert_eq!(
@@ -1136,7 +1064,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModTransfercategory(v) = &modlog[3] {
+    if let ModlogCombinedView::ModTransferCategory(v) = &modlog[3] {
       assert_eq!(data.category.id, v.mod_transfer_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1152,7 +1080,7 @@ mod tests {
       assert_eq!(data.post.id, v.mod_remove_post.post_id);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1162,7 +1090,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModRemovecategory(v) = &modlog[5] {
+    if let ModlogCombinedView::ModRemoveCategory(v) = &modlog[5] {
       assert_eq!(data.category.id, v.mod_remove_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1177,7 +1105,7 @@ mod tests {
       assert_eq!(data.comment.id, v.mod_remove_comment.comment_id);
       assert_eq!(data.comment.id, v.comment.id);
       assert_eq!(data.post.id, v.post.id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1192,7 +1120,7 @@ mod tests {
       assert!(v.mod_lock_post.locked);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1207,7 +1135,7 @@ mod tests {
       assert!(v.mod_feature_post.featured);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);
-      assert_eq!(data.category.id, v.category.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
         data.timmy.id,
         v.moderator.as_ref().map(|a| a.id).unwrap_or(PersonId(-1))
@@ -1217,7 +1145,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModBanFromcategory(v) = &modlog[9] {
+    if let ModlogCombinedView::ModBanFromCategory(v) = &modlog[9] {
       assert_eq!(data.category.id, v.mod_ban_from_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(
@@ -1239,7 +1167,7 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModAddcategory(v) = &modlog[11] {
+    if let ModlogCombinedView::ModAddCategory(v) = &modlog[11] {
       assert_eq!(data.category.id, v.mod_add_category.category_id);
       assert_eq!(data.category.id, v.category.id);
       assert_eq!(

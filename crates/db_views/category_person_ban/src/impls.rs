@@ -1,23 +1,21 @@
 use crate::CategoryPersonBanView;
-use diesel::{
-  dsl::{exists, not},
-  select,
-  ExpressionMethods,
-  QueryDsl,
-};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema::{
-    newtypes::{CategoryId, PersonId},
-    utils::{get_conn, DbPool},
+  newtypes::{CategoryId, PersonId},
+  utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::category_actions;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::{exists, not},
+  select, ExpressionMethods, QueryDsl,
+};
+use diesel_async::RunQueryDsl;
 
 impl CategoryPersonBanView {
   pub async fn check(
-      pool: &mut DbPool<'_>,
-      from_person_id: PersonId,
-      from_category_id: CategoryId,
+    pool: &mut DbPool<'_>,
+    from_person_id: PersonId,
+    from_category_id: CategoryId,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     let find_action = category_actions::table

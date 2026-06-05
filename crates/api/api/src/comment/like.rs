@@ -2,34 +2,27 @@ use actix_web::web::Data;
 use actix_web::web::Json;
 use app_108jobs_api_utils::{
   build_response::build_comment_response,
-  context::FastJobContext
-  ,
+  context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
 };
 use app_108jobs_db_schema::{
-  source::{
-    comment::CommentActions,
-    person::PersonActions,
-  },
+  source::{comment::CommentActions, person::PersonActions},
   traits::Likeable,
 };
-use app_108jobs_db_views_comment::{
-  api::{CommentResponse, CreateCommentLike},
-  CommentView,
-};
+use app_108jobs_db_views_comment::api::CreateCommentLikeRequest;
+use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 
 pub async fn like_comment(
-  data: Json<CreateCommentLike>,
+  data: Json<CreateCommentLikeRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CommentResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
   let comment_id = data.comment_id;
   let my_person_id = local_user_view.person.id;
-
 
   let orig_comment = CommentView::read(
     &mut context.pool(),
@@ -57,7 +50,7 @@ pub async fn like_comment(
   ActivityChannel::submit_activity(
     SendActivityData::LikePostOrComment {
       actor: local_user_view.person.clone(),
-      category: orig_comment.category,
+      category: orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
       previous_score,
       new_score: data.score,
     },

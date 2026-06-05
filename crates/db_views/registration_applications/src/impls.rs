@@ -1,10 +1,5 @@
 use crate::api::{Register, RegisterRequest};
 use crate::RegistrationApplicationView;
-use diesel::{
-  dsl::count, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::sensitive::SensitiveString;
 use app_108jobs_db_schema::utils::get_required_sensitive;
 use app_108jobs_db_schema::{
@@ -16,8 +11,13 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::schema::{local_user, person, registration_application};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::utils::helper::rand_number5;
+use app_108jobs_utils::utils::random::rand_number5;
 use app_108jobs_utils::utils::validation::is_valid_email;
+use diesel::{
+  dsl::count, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl PaginationCursorBuilder for RegistrationApplicationView {
   type CursorData = RegistrationApplication;

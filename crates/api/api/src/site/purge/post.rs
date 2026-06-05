@@ -41,13 +41,15 @@ pub async fn purge_post(
 
   Post::delete(&mut context.pool(), data.post_id).await?;
 
-  // Mod tables
-  let form = AdminPurgePostForm {
-    admin_person_id: local_user_view.person.id,
-    reason: data.reason.clone(),
-    category_id: post.category_id,
-  };
-  AdminPurgePost::create(&mut context.pool(), &form).await?;
+  // Mod tables - only create admin purge record if post has a category
+  if let Some(category_id) = post.category_id {
+    let form = AdminPurgePostForm {
+      admin_person_id: local_user_view.person.id,
+      reason: data.reason.clone(),
+      category_id,
+    };
+    AdminPurgePost::create(&mut context.pool(), &form).await?;
+  }
 
   ActivityChannel::submit_activity(
     SendActivityData::RemovePost {

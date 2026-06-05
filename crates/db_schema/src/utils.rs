@@ -2,6 +2,13 @@ pub mod queries;
 pub mod uplete;
 
 use crate::newtypes::DbUrl;
+use crate::sensitive::SensitiveString;
+use app_108jobs_utils::settings::structs::Settings;
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::SETTINGS,
+  utils::validation::clean_url,
+};
 use chrono::TimeDelta;
 use deadpool::Runtime;
 use diesel::{
@@ -12,39 +19,31 @@ use diesel::{
   query_builder::{Query, QueryFragment},
   query_dsl::methods::LimitDsl,
   result::{
-    ConnectionError,
-    ConnectionResult,
+    ConnectionError, ConnectionResult,
     Error::{self as DieselError, QueryBuilderError},
   },
   sql_types::{self, Timestamptz},
-  Expression,
-  IntoSql,
+  Expression, IntoSql,
 };
-use diesel_async::{pg::AsyncPgConnection, pooled_connection::{
-  deadpool::{Hook, HookError, Object as PooledConnection, Pool},
-  AsyncDieselConnectionManager,
-  ManagerConfig,
-}, scoped_futures::ScopedBoxFuture, AsyncConnection, RunQueryDsl};
+use diesel_async::{
+  pg::AsyncPgConnection,
+  pooled_connection::{
+    deadpool::{Hook, HookError, Object as PooledConnection, Pool},
+    AsyncDieselConnectionManager, ManagerConfig,
+  },
+  scoped_futures::ScopedBoxFuture,
+  AsyncConnection, RunQueryDsl,
+};
 use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::{SETTINGS},
-  utils::validation::clean_url,
-};
 use regex::Regex;
 use rustls::{
   client::danger::{
-    DangerousClientConfigBuilder,
-    HandshakeSignatureValid,
-    ServerCertVerified,
-    ServerCertVerifier,
+    DangerousClientConfigBuilder, HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier,
   },
   crypto::{self, verify_tls12_signature, verify_tls13_signature},
   pki_types::{CertificateDer, ServerName, UnixTime},
-  ClientConfig,
-  DigitallySignedStruct,
-  SignatureScheme,
+  ClientConfig, DigitallySignedStruct, SignatureScheme,
 };
 use std::{
   ops::{Deref, DerefMut},
@@ -53,8 +52,6 @@ use std::{
 };
 use tracing::error;
 use url::Url;
-use app_108jobs_utils::settings::structs::Settings;
-use crate::sensitive::SensitiveString;
 
 const FETCH_LIMIT_DEFAULT: i64 = 500;
 pub const FETCH_LIMIT_MAX: usize = 50;
@@ -90,15 +87,15 @@ pub async fn get_conn<'a, 'b: 'a>(pool: &'a mut DbPool<'b>) -> Result<DbConn<'a>
 impl DbConn<'_> {
   pub async fn run_transaction<'a, R, F>(&mut self, callback: F) -> FastJobResult<R>
   where
-   F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, FastJobResult<R>>
-   + Send
-   + 'a,
-   R: Send + 'a,
+    F: for<'r> FnOnce(&'r mut AsyncPgConnection) -> ScopedBoxFuture<'a, 'r, FastJobResult<R>>
+      + Send
+      + 'a,
+    R: Send + 'a,
   {
     self
-     .deref_mut()
-     .transaction::<_, FastJobError, _>(callback)
-     .await
+      .deref_mut()
+      .transaction::<_, FastJobError, _>(callback)
+      .await
   }
 }
 
@@ -185,7 +182,7 @@ pub struct LowerKey<K>(pub K);
 
 impl<K, C> CursorKey<C> for LowerKey<K>
 where
- K: CursorKey<C, SqlType = sql_types::Text>,
+  K: CursorKey<C, SqlType = sql_types::Text>,
 {
   type SqlType = sql_types::Text;
   type CursorValue = functions::lower<K::CursorValue>;
@@ -205,7 +202,7 @@ pub struct Subpath<K>(pub K);
 
 impl<K, C> CursorKey<C> for Subpath<K>
 where
- K: CursorKey<C, SqlType = diesel_ltree::sql_types::Ltree>,
+  K: CursorKey<C, SqlType = diesel_ltree::sql_types::Ltree>,
 {
   type SqlType = diesel_ltree::sql_types::Ltree;
   type CursorValue = diesel_ltree::subpath<K::CursorValue, i32, i32>;
@@ -283,10 +280,10 @@ impl<T: LimitDsl> LimitDsl for Commented<T> {
 
 pub fn fuzzy_search(q: &str) -> String {
   let replaced = q
-   .replace('\\', "\\\\")
-   .replace('%', "\\%")
-   .replace('_', "\\_")
-   .replace(' ', "%");
+    .replace('\\', "\\\\")
+    .replace('%', "\\%")
+    .replace('_', "\\_")
+    .replace(' ', "%");
   format!("%{replaced}%")
 }
 
@@ -380,16 +377,16 @@ fn build_config_options_uri_segment(config: &str) -> FastJobResult<String> {
 
   // Set `app_108jobs.protocol_and_hostname` so triggers can use it
   let app_108jobs_protocol_and_hostname_option =
-   "app_108jobs.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
+    "app_108jobs.protocol_and_hostname=".to_owned() + &SETTINGS.get_protocol_and_hostname();
   let mut options = CONNECTION_OPTIONS.to_vec();
   options.push(&app_108jobs_protocol_and_hostname_option);
 
   // Create the connection uri portion
   let options_segments = options
-   .iter()
-   .map(|o| "-c ".to_owned() + o)
-   .collect::<Vec<String>>()
-   .join(" ");
+    .iter()
+    .map(|o| "-c ".to_owned() + o)
+    .collect::<Vec<String>>()
+    .join(" ");
 
   url.set_query(Some(&format!("options={options_segments}")));
   Ok(url.into())
@@ -402,8 +399,8 @@ fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<AsyncPgC
 
     let config = POSTGRES_CONFIG_WITH_OPTIONS.get_or_init(|| {
       build_config_options_uri_segment(config)
-       .inspect_err(|e| error!("Couldn't parse postgres connection URI: {e}"))
-       .unwrap_or_default()
+        .inspect_err(|e| error!("Couldn't parse postgres connection URI: {e}"))
+        .unwrap_or_default()
     });
 
     // We only support TLS with sslmode=require currently
@@ -411,13 +408,13 @@ fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<AsyncPgC
       let rustls_config = DangerousClientConfigBuilder {
         cfg: ClientConfig::builder(),
       }
-       .with_custom_certificate_verifier(Arc::new(NoCertVerifier {}))
-       .with_no_client_auth();
+      .with_custom_certificate_verifier(Arc::new(NoCertVerifier {}))
+      .with_no_client_auth();
 
       let tls = tokio_postgres_rustls::MakeRustlsConnect::new(rustls_config);
       let (client, conn) = tokio_postgres::connect(config, tls)
-       .await
-       .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
+        .await
+        .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
       tokio::spawn(async move {
         if let Err(e) = conn.await {
           error!("Database connection failed: {e}");
@@ -479,8 +476,8 @@ impl ServerCertVerifier for NoCertVerifier {
 
   fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
     crypto::ring::default_provider()
-     .signature_verification_algorithms
-     .supported_schemes()
+      .signature_verification_algorithms
+      .supported_schemes()
   }
 }
 
@@ -496,56 +493,74 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
     SETTINGS.database.pool_size
   } else {
     // Default to number of CPU cores * 2 for optimal performance
-    std::thread::available_parallelism().map(|p| p.get() * 2).unwrap_or(10)
+    std::thread::available_parallelism()
+      .map(|p| p.get() * 2)
+      .unwrap_or(10)
   };
 
   let pool = Pool::builder(manager)
-   .max_size(pool_size)
-   .runtime(Runtime::Tokio1)
-   // Set connection timeout to prevent hanging connections
-   .create_timeout(Option::from(Duration::from_secs(10)))
-   // Set idle timeout to free up unused connections
-   .recycle_timeout(Some(Duration::from_secs(60 * 5))) // 5 minutes
-   // Set connection acquisition timeout
-   .wait_timeout(Some(Duration::from_secs(15)))
-   // Limit connection age to prevent use of prepared statements that have query plans based on
-   // very old statistics
-   .pre_recycle(Hook::sync_fn(|_conn, metrics| {
-     // Preventing the first recycle can cause an infinite loop when trying to get a new connection
-     // from the pool
-     let conn_was_used = metrics.recycled.is_some();
-     if metrics.age() > Duration::from_secs(3 * 24 * 60 * 60) && conn_was_used {
-       Err(HookError::Message("Connection is too old".into()))
-     } else {
-       Ok(())
-     }
-   }))
-   // Add post-create hook to verify connection is healthy
-   .post_create(Hook::async_fn(|conn: &mut AsyncPgConnection, _metrics| {
-     Box::pin(async move {
-       // Simple query to verify connection is working
-       match diesel::sql_query("SELECT 1").execute(conn).await {
-         Ok(_) => Ok(()),
-         Err(_) => Err(HookError::Message("Connection failed health check".into())),
-       }
-     })
-   }))
-   .build()?;
+    .max_size(pool_size)
+    .runtime(Runtime::Tokio1)
+    // Set connection timeout to prevent hanging connections
+    .create_timeout(Option::from(Duration::from_secs(10)))
+    // Set idle timeout to free up unused connections
+    .recycle_timeout(Some(Duration::from_secs(60 * 5))) // 5 minutes
+    // Set connection acquisition timeout
+    .wait_timeout(Some(Duration::from_secs(15)))
+    // Limit connection age to prevent use of prepared statements that have query plans based on
+    // very old statistics
+    .pre_recycle(Hook::sync_fn(|_conn, metrics| {
+      // Preventing the first recycle can cause an infinite loop when trying to get a new connection
+      // from the pool
+      let conn_was_used = metrics.recycled.is_some();
+      if metrics.age() > Duration::from_secs(3 * 24 * 60 * 60) && conn_was_used {
+        Err(HookError::Message("Connection is too old".into()))
+      } else {
+        Ok(())
+      }
+    }))
+    // Add post-create hook to verify connection is healthy
+    .post_create(Hook::async_fn(|conn: &mut AsyncPgConnection, _metrics| {
+      Box::pin(async move {
+        // Simple query to verify connection is working
+        match diesel::sql_query("SELECT 1").execute(conn).await {
+          Ok(_) => Ok(()),
+          Err(_) => Err(HookError::Message("Connection failed health check".into())),
+        }
+      })
+    }))
+    .build()?;
 
-  app_108jobs_db_schema_setup::run(app_108jobs_db_schema_setup::Options::default().run(), &db_url)?;
+  app_108jobs_db_schema_setup::run(
+    app_108jobs_db_schema_setup::Options::default().run(),
+    &db_url,
+  )?;
 
   Ok(pool)
 }
 
 #[allow(clippy::expect_used)]
 pub fn build_db_pool_for_tests() -> ActualDbPool {
+  // Resolve the workspace config relative to this crate's manifest dir so
+  // tests work whether `cargo test` runs from the workspace root or from
+  // any crate dir (where `config/config.hjson` would otherwise be missing).
+  // No-op if `app_108jobs_CONFIG_LOCATION` is already set externally (CI).
+  if std::env::var("app_108jobs_CONFIG_LOCATION").is_err() {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    // SAFETY: idempotent — same value on every call; this runs before any
+    // test touches the SETTINGS LazyLock.
+    std::env::set_var(
+      "app_108jobs_CONFIG_LOCATION",
+      format!("{manifest_dir}/../../config/config.hjson"),
+    );
+  }
   build_db_pool().expect("db pool missing")
 }
 
 #[allow(clippy::expect_used)]
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$")
-   .expect("compile email regex")
+    .expect("compile email regex")
 });
 
 pub mod functions {
@@ -599,12 +614,12 @@ pub fn seconds_to_pg_interval(seconds: i32) -> PgInterval {
 /// Trait alias for a type that can be converted to an SQL tuple using `IntoSql::into_sql`
 pub trait AsRecord: Expression + AsExpression<sql_types::Record<Self::SqlType>>
 where
- Self::SqlType: 'static,
+  Self::SqlType: 'static,
 {
 }
 
 impl<T: Expression + AsExpression<sql_types::Record<T::SqlType>>> AsRecord for T where
- T::SqlType: 'static
+  T::SqlType: 'static
 {
 }
 
@@ -632,13 +647,13 @@ pub fn paginate<Q, C>(
 
   if page_back.unwrap_or_default() {
     query = query
-     .before(page_after)
-     .after_or_equal(page_before_or_equal)
-     .limit_and_offset_from_end();
+      .before(page_after)
+      .after_or_equal(page_before_or_equal)
+      .limit_and_offset_from_end();
   } else {
     query = query
-     .after(page_after)
-     .before_or_equal(page_before_or_equal);
+      .after(page_after)
+      .before_or_equal(page_before_or_equal);
   }
 
   query
@@ -649,7 +664,7 @@ pub(crate) fn format_actor_url(
   domain: &str,
   prefix: char,
   settings: &Settings,
-) ->FastJobResult<Url> {
+) -> FastJobResult<Url> {
   let local_protocol_and_hostname = settings.get_protocol_and_hostname();
   let local_hostname = &settings.hostname;
   let url = if domain != local_hostname {
@@ -675,10 +690,7 @@ pub fn get_required_sensitive(
   field: &Option<SensitiveString>,
   err: FastJobErrorType,
 ) -> Result<SensitiveString, FastJobError> {
-  field
-      .as_ref()
-      .cloned()
-      .ok_or_else(|| err.into())
+  field.as_ref().cloned().ok_or_else(|| err.into())
 }
 
 // crates/db_schema/src/utils.rs  (or any shared utils file)

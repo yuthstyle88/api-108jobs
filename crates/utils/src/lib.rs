@@ -12,8 +12,8 @@ cfg_if! {
   }
 }
 
-pub mod error;
 pub mod crypto;
+pub mod error;
 pub mod redis;
 
 use std::time::Duration;

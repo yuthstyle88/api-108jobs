@@ -49,6 +49,17 @@ impl RedisClient {
 
   // === Basic Operations ===
 
+  /// Publish a text payload to a Redis pub/sub channel
+  pub async fn publish(&mut self, channel: &str, payload: &str) -> FastJobResult<()> {
+    let _: () = redis::cmd("PUBLISH")
+      .arg(channel)
+      .arg(payload)
+      .query_async(&mut self.connection)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+    Ok(())
+  }
+
   pub async fn set_value_with_expiry<T: serde::Serialize>(
     &mut self,
     key: &str,
@@ -99,12 +110,12 @@ impl RedisClient {
   /// Append a JSON-serialized value to a Redis list
   pub async fn rpush<T: serde::Serialize>(&mut self, key: &str, value: T) -> FastJobResult<()> {
     let value_str =
-        serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
+      serde_json::to_string(&value).with_fastjob_type(FastJobErrorType::SerializationFailed)?;
     let _: () = self
-        .connection
-        .rpush(key, value_str)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
+      .connection
+      .rpush(key, value_str)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
   }
 
@@ -122,14 +133,14 @@ impl RedisClient {
       FastJobErrorType::InvalidInput("stop index out of range for isize".to_string())
     })?;
     let value_strs: Vec<String> = self
-        .connection
-        .lrange(key, start_isize, stop_isize)
-        .await
-        .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
+      .connection
+      .lrange(key, start_isize, stop_isize)
+      .await
+      .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
     let mut values = Vec::new();
     for value_str in value_strs {
       let value = serde_json::from_str(&value_str)
-          .with_fastjob_type(FastJobErrorType::DeserializationFailed)?;
+        .with_fastjob_type(FastJobErrorType::DeserializationFailed)?;
       values.push(value);
     }
     Ok(values)

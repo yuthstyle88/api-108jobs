@@ -1,7 +1,7 @@
 use crate::newtypes::{ChatRoomId, LocalUserId};
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::pending_sender_ack;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -35,6 +35,6 @@ pub struct PendingSenderAckInsertForm {
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "full", derive(Serialize, Deserialize, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = pending_sender_ack))]
-pub struct PendingSenderAckUpdateForm{
+pub struct PendingSenderAckUpdateForm {
   pub sender_id: Option<LocalUserId>,
 }

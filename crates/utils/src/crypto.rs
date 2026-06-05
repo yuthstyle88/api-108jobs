@@ -1,6 +1,9 @@
 use aes_gcm::aead::rand_core::{OsRng, RngCore};
 use aes_gcm::Nonce;
-use aes_gcm::{aead::{generic_array::GenericArray, Aead, Payload}, Aes256Gcm, KeyInit};
+use aes_gcm::{
+  aead::{generic_array::GenericArray, Aead, Payload},
+  Aes256Gcm, KeyInit,
+};
 use base64::engine::general_purpose;
 use base64::Engine;
 use hex;
@@ -87,7 +90,9 @@ pub fn public_key_to_hex(pk: &PublicKey) -> String {
 
 /// Import peer public key from base64 (accepts compressed 33B or uncompressed 65B).
 pub fn public_key_from_base64(b64: &str) -> Result<PublicKey, CryptoError> {
-  let raw = general_purpose::STANDARD.decode(b64).map_err(|_| CryptoError::Decode)?;
+  let raw = general_purpose::STANDARD
+    .decode(b64)
+    .map_err(|_| CryptoError::Decode)?;
   import_peer_public_key_raw(&raw)
 }
 
@@ -103,7 +108,9 @@ pub fn normalize_pubkey_to_uncompressed_hex(s: &str) -> Result<String, CryptoErr
   // try hex first then base64
   let raw = match hex::decode(s.trim()) {
     Ok(b) => b,
-    Err(_) => general_purpose::STANDARD.decode(s.trim()).map_err(|_| CryptoError::Decode)?,
+    Err(_) => general_purpose::STANDARD
+      .decode(s.trim())
+      .map_err(|_| CryptoError::Decode)?,
   };
   let pk = import_peer_public_key_raw(&raw)?;
   let uncompressed = pk.to_encoded_point(false);
@@ -113,7 +120,10 @@ pub fn normalize_pubkey_to_uncompressed_hex(s: &str) -> Result<String, CryptoErr
 /// Derive a 32-byte AES key directly from ECDH shared secret.
 /// `my_sk_der` = PKCS#8 DER of our private key,
 /// `peer_pub_raw` = peer public key SEC1 (compressed 33B or uncompressed 65B).
-pub fn derive_aes256_from_ecdh(my_sk_der: &[u8], peer_pub_raw: &[u8]) -> Result<[u8; 32], CryptoError> {
+pub fn derive_aes256_from_ecdh(
+  my_sk_der: &[u8],
+  peer_pub_raw: &[u8],
+) -> Result<[u8; 32], CryptoError> {
   let my_sk = import_private_pkcs8_der(my_sk_der)?;
   let peer_pk = import_peer_public_key_raw(peer_pub_raw)?;
   // ECDH shared secret (P-256 gives 32 bytes)
@@ -129,22 +139,36 @@ pub fn derive_aes256_from_ecdh(my_sk_der: &[u8], peer_pub_raw: &[u8]) -> Result<
 
 /// Build Aes256Gcm from a 32-byte key (AES-256).
 pub fn aes256_from_key_bytes(key: &[u8]) -> Result<Aes256Gcm, CryptoError> {
-  if key.len() != 32 { return Err(CryptoError::InvalidLength); }
+  if key.len() != 32 {
+    return Err(CryptoError::InvalidLength);
+  }
   let k = GenericArray::from_slice(key).clone();
   Ok(Aes256Gcm::new(&k))
 }
 
 /// Encrypt with optional AAD, returning a structured box {iv, ct} (both base64).
-pub fn aes_gcm_encrypt_box_b64(key: &[u8], plaintext: &[u8], aad: Option<&[u8]>) -> Result<GcmBox, CryptoError> {
+pub fn aes_gcm_encrypt_box_b64(
+  key: &[u8],
+  plaintext: &[u8],
+  aad: Option<&[u8]>,
+) -> Result<GcmBox, CryptoError> {
   let aes = aes256_from_key_bytes(key)?;
   let mut nonce_bytes = [0u8; GCM_NONCE_LEN];
   OsRng.fill_bytes(&mut nonce_bytes);
   let nonce = Nonce::from_slice(&nonce_bytes);
   let payload = match aad {
-    Some(a) => Payload { msg: plaintext, aad: a },
-    None => Payload { msg: plaintext, aad: &[] },
+    Some(a) => Payload {
+      msg: plaintext,
+      aad: a,
+    },
+    None => Payload {
+      msg: plaintext,
+      aad: &[],
+    },
   };
-  let ct = aes.encrypt(nonce, payload).map_err(|_| CryptoError::Encrypt)?;
+  let ct = aes
+    .encrypt(nonce, payload)
+    .map_err(|_| CryptoError::Encrypt)?;
   Ok(GcmBox {
     iv: general_purpose::STANDARD.encode(nonce_bytes),
     ct: general_purpose::STANDARD.encode(ct),
@@ -152,17 +176,35 @@ pub fn aes_gcm_encrypt_box_b64(key: &[u8], plaintext: &[u8], aad: Option<&[u8]>)
 }
 
 /// Decrypt a structured box {iv, ct} (both base64), with optional AAD.
-pub fn aes_gcm_decrypt_box_b64(key: &[u8], boxed: &GcmBox, aad: Option<&[u8]>) -> Result<Vec<u8>, CryptoError> {
+pub fn aes_gcm_decrypt_box_b64(
+  key: &[u8],
+  boxed: &GcmBox,
+  aad: Option<&[u8]>,
+) -> Result<Vec<u8>, CryptoError> {
   let aes = aes256_from_key_bytes(key)?;
-  let nonce_bytes = general_purpose::STANDARD.decode(&boxed.iv).map_err(|_| CryptoError::Decode)?;
-  if nonce_bytes.len() != GCM_NONCE_LEN { return Err(CryptoError::CiphertextTooShort); }
-  let ct = general_purpose::STANDARD.decode(&boxed.ct).map_err(|_| CryptoError::Decode)?;
+  let nonce_bytes = general_purpose::STANDARD
+    .decode(&boxed.iv)
+    .map_err(|_| CryptoError::Decode)?;
+  if nonce_bytes.len() != GCM_NONCE_LEN {
+    return Err(CryptoError::CiphertextTooShort);
+  }
+  let ct = general_purpose::STANDARD
+    .decode(&boxed.ct)
+    .map_err(|_| CryptoError::Decode)?;
   let nonce = Nonce::from_slice(&nonce_bytes);
   let payload = match aad {
-    Some(a) => Payload { msg: ct.as_ref(), aad: a },
-    None => Payload { msg: ct.as_ref(), aad: &[] },
+    Some(a) => Payload {
+      msg: ct.as_ref(),
+      aad: a,
+    },
+    None => Payload {
+      msg: ct.as_ref(),
+      aad: &[],
+    },
   };
-  let pt = aes.decrypt(nonce, payload).map_err(|_| CryptoError::Decrypt)?;
+  let pt = aes
+    .decrypt(nonce, payload)
+    .map_err(|_| CryptoError::Decrypt)?;
   Ok(pt)
 }
 
@@ -172,7 +214,15 @@ pub fn aes_gcm_encrypt_b64(key: &[u8], plaintext: &[u8]) -> Result<String, Crypt
   let mut nonce_bytes = [0u8; GCM_NONCE_LEN];
   OsRng.fill_bytes(&mut nonce_bytes);
   let nonce = Nonce::from_slice(&nonce_bytes);
-  let ct = aes.encrypt(nonce, Payload { msg: plaintext, aad: &[] }).map_err(|_| CryptoError::Encrypt)?;
+  let ct = aes
+    .encrypt(
+      nonce,
+      Payload {
+        msg: plaintext,
+        aad: &[],
+      },
+    )
+    .map_err(|_| CryptoError::Encrypt)?;
   let mut out = Vec::with_capacity(GCM_NONCE_LEN + ct.len());
   out.extend_from_slice(&nonce_bytes);
   out.extend_from_slice(&ct);
@@ -182,11 +232,17 @@ pub fn aes_gcm_encrypt_b64(key: &[u8], plaintext: &[u8]) -> Result<String, Crypt
 /// Decrypt base64(nonce12 || ciphertext_with_tag) into plaintext bytes.
 pub fn aes_gcm_decrypt_b64(key: &[u8], b64: &str) -> Result<Vec<u8>, CryptoError> {
   let aes = aes256_from_key_bytes(key)?;
-  let combined = general_purpose::STANDARD.decode(b64).map_err(|_| CryptoError::Decode)?;
-  if combined.len() < GCM_NONCE_LEN { return Err(CryptoError::CiphertextTooShort); }
+  let combined = general_purpose::STANDARD
+    .decode(b64)
+    .map_err(|_| CryptoError::Decode)?;
+  if combined.len() < GCM_NONCE_LEN {
+    return Err(CryptoError::CiphertextTooShort);
+  }
   let (nonce_bytes, ct) = combined.split_at(GCM_NONCE_LEN);
   let nonce = Nonce::from_slice(nonce_bytes);
-  let pt = aes.decrypt(nonce, Payload { msg: ct, aad: &[] }).map_err(|_| CryptoError::Decrypt)?;
+  let pt = aes
+    .decrypt(nonce, Payload { msg: ct, aad: &[] })
+    .map_err(|_| CryptoError::Decrypt)?;
   Ok(pt)
 }
 
@@ -206,13 +262,17 @@ pub fn decrypt_string_b64(key: &[u8], b64: &str) -> Result<String, CryptoError> 
 
 /// Encode 32-byte key to hex.
 pub fn key_bytes_to_hex(key: &[u8]) -> Result<String, CryptoError> {
-  if key.len() != 32 { return Err(CryptoError::InvalidLength); }
+  if key.len() != 32 {
+    return Err(CryptoError::InvalidLength);
+  }
   Ok(hex::encode(key))
 }
-pub fn key_hex_to_bytes(hex_key: &str) -> Result<[u8;32], CryptoError> {
+pub fn key_hex_to_bytes(hex_key: &str) -> Result<[u8; 32], CryptoError> {
   let v = hex::decode(hex_key).map_err(|_| CryptoError::Decode)?;
-  if v.len() != 32 { return Err(CryptoError::InvalidLength); }
-  let mut out = [0u8;32];
+  if v.len() != 32 {
+    return Err(CryptoError::InvalidLength);
+  }
+  let mut out = [0u8; 32];
   out.copy_from_slice(&v);
   Ok(out)
 }
@@ -282,8 +342,12 @@ mod tests {
 
     let mut boxed = aes_gcm_encrypt_box_b64(&key, b"data", None).expect("enc");
     // flip one byte in ct
-    let mut ct = base64::engine::general_purpose::STANDARD.decode(&boxed.ct).unwrap();
-    if !ct.is_empty() { ct[0] ^= 0x01; }
+    let mut ct = base64::engine::general_purpose::STANDARD
+      .decode(&boxed.ct)
+      .unwrap();
+    if !ct.is_empty() {
+      ct[0] ^= 0x01;
+    }
     boxed.ct = base64::engine::general_purpose::STANDARD.encode(ct);
 
     let res = aes_gcm_decrypt_box_b64(&key, &boxed, None);

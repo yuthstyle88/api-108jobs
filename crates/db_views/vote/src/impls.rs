@@ -1,13 +1,4 @@
 use crate::VoteView;
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   aliases::creator_category_actions,
   newtypes::{CommentId, PaginationCursor, PersonId, PostId},
@@ -15,14 +6,14 @@ use app_108jobs_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-    comment,
-    comment_actions,
-    category_actions,
-    person,
-    post,
-    post_actions,
+  category_actions, comment, comment_actions, person, post, post_actions,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 impl VoteView {
   pub fn to_post_actions_cursor(&self) -> PaginationCursor {
@@ -64,6 +55,7 @@ impl VoteView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -138,6 +130,7 @@ impl VoteView {
     let creator_category_actions_join = creator_category_actions.on(
       creator_category_actions
         .field(category_actions::category_id)
+        .nullable()
         .eq(post::category_id)
         .and(
           creator_category_actions
@@ -179,13 +172,14 @@ impl VoteView {
 #[cfg(test)]
 mod tests {
   use crate::VoteView;
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     source::{
-        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-        category::{Category, CategoryInsertForm},
-        instance::Instance,
-        person::{Person, PersonInsertForm},
-        post::{Post, PostActions, PostInsertForm, PostLikeForm},
+      category::{Category, CategoryInsertForm},
+      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
     traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
@@ -193,7 +187,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   #[tokio::test]
   #[serial]
@@ -218,11 +211,13 @@ mod tests {
     );
     let inserted_category = Category::create(pool, &new_category).await?;
 
-    let new_post = PostInsertForm::new(
-      "A test post vv".into(),
-      inserted_timmy.id,
-      inserted_category.id,
-    );
+    let new_post = PostInsertForm {
+      category_id: Some(inserted_category.id),
+      ..PostInsertForm::new(
+        "A test post vv".into(),
+        inserted_timmy.id,
+      )
+    };
     let inserted_post = Post::create(pool, &new_post).await?;
 
     let comment_form = CommentInsertForm::new(
@@ -230,7 +225,7 @@ mod tests {
       inserted_post.id,
       "A test comment vv".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form,).await?;
+    let inserted_comment = Comment::create(pool, &comment_form).await?;
 
     // Timmy upvotes his own post
     let timmy_post_vote_form = PostLikeForm::new(inserted_post.id, inserted_timmy.id, 1);

@@ -9,7 +9,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Adds an admin to a site.
-pub struct AddAdmin {
+pub struct AddAdminRequest {
   pub person_id: PersonId,
   pub added: bool,
 }
@@ -23,13 +23,30 @@ pub struct AddAdminResponse {
   pub admins: Vec<PersonView>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
+/// Ban a person from the site.
+pub struct BanPerson {
+  pub person_id: PersonId,
+  pub ban: bool,
+  /// Optionally remove or restore all their data. Useful for new troll accounts.
+  /// If ban is true, then this means remove. If ban is false, it means restore.
+  pub remove_or_restore_data: Option<bool>,
+  pub reason: Option<String>,
+  /// A time that the ban will expire, in unix epoch seconds.
+  ///
+  /// An i64 unix timestamp is used for a simpler API client implementation.
+  pub expires_at: Option<i64>,
+}
+
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Ban a person from the site.
-pub struct BanPerson {
+pub struct BanPersonRequest {
   pub person_id: PersonId,
   pub ban: bool,
   /// Optionally remove or restore all their data. Useful for new troll accounts.

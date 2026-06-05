@@ -3,10 +3,10 @@ use crate::{
   source::email_verification::{EmailVerification, EmailVerificationForm},
   utils::{get_conn, now, DbPool},
 };
-use diesel::{dsl::IntervalDsl, insert_into, ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::schema::email_verification;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::IntervalDsl, insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl EmailVerification {
   pub async fn create(pool: &mut DbPool<'_>, form: &EmailVerificationForm) -> FastJobResult<Self> {

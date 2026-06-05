@@ -3,16 +3,15 @@ use crate::{
   source::password_reset_request::{PasswordResetRequest, PasswordResetRequestForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::password_reset_request;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{insert_into, now, IntervalDsl},
   sql_types::Timestamptz,
-  ExpressionMethods,
-  IntoSql,
+  ExpressionMethods, IntoSql,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::password_reset_request;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl PasswordResetRequest {
   pub async fn create(
@@ -68,7 +67,8 @@ mod tests {
 
     // Setup
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "thommy prw");
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "thommy prw").await?;
     let inserted_person = Person::create(pool, &new_person).await?;
     let new_local_user = LocalUserInsertForm::test_form(inserted_person.id);
     let inserted_local_user = LocalUser::create(pool, &new_local_user, vec![]).await?;

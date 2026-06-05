@@ -20,8 +20,7 @@ pub async fn get_random_category(
   let local_user = local_user_view.as_ref().map(|u| &u.local_user);
 
   let random_category_id =
-    Category::get_random_category_id(&mut context.pool(), &data.type_, data.self_promotion)
-      .await?;
+    Category::get_random_category_id(&mut context.pool(), &data.type_, data.self_promotion).await?;
 
   let category_view =
     CategoryView::read(&mut context.pool(), random_category_id, local_user).await?;

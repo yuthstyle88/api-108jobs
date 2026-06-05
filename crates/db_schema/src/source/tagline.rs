@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {i_love_jesus::CursorKeysModule, app_108jobs_db_schema_file::schema::tagline};
+use {app_108jobs_db_schema_file::schema::tagline, i_love_jesus::CursorKeysModule};
 
 #[skip_serializing_none]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

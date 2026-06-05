@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use chrono::Utc;
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::utils::diesel_required_url_update;
 use app_108jobs_db_schema::{
@@ -9,11 +8,12 @@ use app_108jobs_db_schema::{
   utils::diesel_required_string_update,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::EditOAuthProvider;
+use app_108jobs_db_views_site::api::EditOAuthProviderRequest;
 use app_108jobs_utils::error::FastJobError;
+use chrono::Utc;
 
 pub async fn update_oauth_provider(
-  data: Json<EditOAuthProvider>,
+  data: Json<EditOAuthProviderRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> Result<Json<OAuthProvider>, FastJobError> {

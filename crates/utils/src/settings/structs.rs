@@ -152,6 +152,10 @@ pub struct DatabaseConfig {
   /// Configure the database by specifying URI pointing to a postgres instance. This parameter can
   /// also be set by environment variable `app_108jobs_DATABASE_URL`.
   ///
+  /// IMPORTANT: do NOT embed a password in this URI. Pass the password (and ideally the
+  /// full URI) via `app_108jobs_DATABASE_URL` instead. The startup validator will refuse
+  /// to start if a password is detected here.
+  ///
   /// For an explanation of how to use connection URIs, see PostgreSQL's documentation:
   /// https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6
   #[default("postgres://postgres@localhost:5432/fastwork")]
@@ -164,6 +168,20 @@ pub struct DatabaseConfig {
   /// it is necessary to increase shared memory size in Docker: https://stackoverflow.com/a/56754077
   #[default(3)]
   pub pool_size: usize,
+}
+
+impl DatabaseConfig {
+  /// Raw connection string as read from the config file. Used by the secret
+  /// resolver to decide whether the file value can stand on its own.
+  pub fn connection_raw(&self) -> &str {
+    &self.connection
+  }
+
+  /// Overwrite the connection string. Only called by the secret resolver after
+  /// env-var injection has been validated.
+  pub fn set_connection(&mut self, value: String) {
+    self.connection = value;
+  }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Document, SmartDefault)]
@@ -210,8 +228,11 @@ pub struct SetupConfig {
   /// Username for the admin user
   #[doku(example = "admin")]
   pub admin_username: String,
-  /// Password for the admin user. It must be between 10 and 60 characters.
-  #[doku(example = "tf6HHDS4RolWfFhk4Rq9")]
+  /// Password for the admin user. Must be 10..=60 characters.
+  ///
+  /// This value is loaded from the env var `app_108jobs_ADMIN_PASSWORD` at
+  /// startup and MUST NOT be set in the config file.
+  #[doku(example = "<provided via app_108jobs_ADMIN_PASSWORD env var>")]
   pub admin_password: String,
   /// Name of the site, can be changed later. Maximum 20 characters.
   #[doku(example = "My app_108jobs Instance")]

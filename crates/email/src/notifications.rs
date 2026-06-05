@@ -5,9 +5,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{
-  error::FastJobResult,
-  settings::structs::Settings,
-  utils::markdown::markdown_to_html,
+  error::FastJobResult, settings::structs::Settings, utils::markdown::markdown_to_html,
 };
 use tracing::warn;
 

@@ -1,15 +1,9 @@
-use crate::newtypes::{
-    CommentId,
-    CategoryId,
-    PersonId,
-    PostId,
-    SearchCombinedId,
-};
+use crate::newtypes::{CategoryId, CommentId, PersonId, PostId, SearchCombinedId};
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::search_combined;
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::search_combined;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

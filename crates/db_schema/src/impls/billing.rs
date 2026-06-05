@@ -1,21 +1,21 @@
-use diesel::OptionalExtension;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::BillingId,
   source::billing::{Billing, BillingInsertForm, BillingUpdateForm},
   traits::Crud,
-  utils::{get_conn, DbPool}
+  utils::{get_conn, DbPool},
 };
+use diesel::OptionalExtension;
 
-#[cfg(feature = "full")]
-use diesel::QueryDsl;
-#[cfg(feature = "full")]
-use diesel_async::RunQueryDsl;
 use app_108jobs_db_schema_file::enums::BillingStatus;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::billing;
 #[cfg(feature = "full")]
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+#[cfg(feature = "full")]
+use diesel::QueryDsl;
+#[cfg(feature = "full")]
+use diesel_async::RunQueryDsl;
 
 #[cfg(feature = "full")]
 impl Crud for Billing {
@@ -26,10 +26,10 @@ impl Crud for Billing {
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::insert_into(billing::table)
-    .values(form)
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)
+      .values(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 
   async fn update(
@@ -39,10 +39,10 @@ impl Crud for Billing {
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     diesel::update(billing::table.find(id))
-    .set(form)
-    .get_result::<Self>(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::DatabaseError)
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 }
 
@@ -56,12 +56,12 @@ impl Billing {
     use diesel::ExpressionMethods;
     let conn = &mut get_conn(pool).await?;
     billing::table
-        .filter(billing::comment_id.eq(comment_id))
-        .filter(billing::status.eq(status))
-        .first::<Self>(conn)
-        .await
-        .optional()
-        .with_fastjob_type(FastJobErrorType::DatabaseError)
+      .filter(billing::comment_id.eq(comment_id))
+      .filter(billing::status.eq(status))
+      .first::<Self>(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 
   pub async fn get_by_room_and_status(
@@ -72,12 +72,11 @@ impl Billing {
     use diesel::ExpressionMethods;
     let conn = &mut get_conn(pool).await?;
     billing::table
-        .filter(billing::room_id.eq(room_id))
-        .filter(billing::status.eq(status))
-        .first::<Self>(conn)
-        .await
-        .optional()
-        .with_fastjob_type(FastJobErrorType::DatabaseError)
+      .filter(billing::room_id.eq(room_id))
+      .filter(billing::status.eq(status))
+      .first::<Self>(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::DatabaseError)
   }
 }
-

@@ -18,6 +18,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{PostResponse, RemovePost};
+use app_108jobs_utils::error::FastJobErrorType;
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn remove_post(
@@ -31,17 +32,25 @@ pub async fn remove_post(
   // by default. So we would have to pass in `is_mod_or_admin`, but that is impossible without
   // knowing which category the post belongs to.
   let orig_post = Post::read(&mut context.pool(), post_id).await?;
-  let category = Category::read(&mut context.pool(), orig_post.category_id).await?;
 
-  check_category_deleted_removed(&category)?;
+  // For posts with a category, check category permissions
+  if let Some(category_id) = orig_post.category_id {
+    let category = Category::read(&mut context.pool(), category_id).await?;
+    check_category_deleted_removed(&category)?;
 
-  LocalUser::is_higher_mod_or_admin_check(
-    &mut context.pool(),
-    orig_post.category_id,
-    local_user_view.person.id,
-    vec![orig_post.creator_id],
-  )
-  .await?;
+    LocalUser::is_higher_mod_or_admin_check(
+      &mut context.pool(),
+      category_id,
+      local_user_view.person.id,
+      vec![orig_post.creator_id],
+    )
+    .await?;
+  } else {
+    // For delivery posts without a category, only admins can remove
+    if !local_user_view.local_user.admin {
+      return Err(FastJobErrorType::NoPostEditAllowed.into());
+    }
+  }
 
   // Update the post
   let post_id = data.post_id;

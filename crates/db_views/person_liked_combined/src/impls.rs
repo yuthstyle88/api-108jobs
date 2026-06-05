@@ -1,50 +1,33 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonLikedCombinedView,
-  PersonLikedCombinedViewInternal,
-  PostView,
+  CommentView, LocalUserView, PersonLikedCombinedView, PersonLikedCombinedViewInternal, PostView,
 };
-use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-use i_love_jesus::SortDirection;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_liked::{person_liked_combined_keys as key, PersonLikedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_category_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_comment_actions_join,
-      my_category_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_category_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_local_user_admin_join, image_details_join, my_category_actions_join,
+      my_comment_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
-  LikeType,
-  PersonContentType,
+  LikeType, PersonContentType,
 };
-use app_108jobs_db_schema_file::schema::{comment, person, person_liked_combined, post};
+use app_108jobs_db_schema_file::schema::{
+  comment, delivery_details, person, person_liked_combined, post,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use diesel::{
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
+use i_love_jesus::SortDirection;
 
 #[derive(Default)]
 pub struct PersonLikedCombinedQuery {
@@ -149,6 +132,7 @@ impl PersonLikedCombinedViewInternal {
       .left_join(my_person_actions_join)
       .left_join(my_comment_actions_join)
       .left_join(image_details_join())
+      .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
 }
 
@@ -228,7 +212,7 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
       Some(PersonLikedCombinedView::Comment(CommentView {
         comment,
         post: v.post,
-        category: v.category,
+        category: Some(v.category),
         creator: v.item_creator,
         category_actions: v.category_actions,
         comment_actions: v.comment_actions,
@@ -244,7 +228,7 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
     } else {
       Some(PersonLikedCombinedView::Post(PostView {
         post: v.post,
-        category: v.category,
+        category: Some(v.category),
         creator: v.item_creator,
         image_details: v.image_details,
         category_actions: v.category_actions,
@@ -267,14 +251,15 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonLikedCombinedQuery, LocalUserView, PersonLikedCombinedView};
+  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     source::{
-        comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-        category::{category, CategoryInsertForm},
-        instance::Instance,
-        local_user::{LocalUser, LocalUserInsertForm},
-        person::{Person, PersonInsertForm},
-        post::{Post, PostActions, PostInsertForm, PostLikeForm},
+      category::{category, Category, CategoryInsertForm},
+      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -283,7 +268,6 @@ mod tests {
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use app_108jobs_db_schema::newtypes::DbUrl;
 
   struct Data {
     instance: Instance,
@@ -316,15 +300,24 @@ mod tests {
       "test category pcv".to_string(),
       "nada".to_owned(),
     );
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
-    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
+    let timmy_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
+    };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
+    let timmy_post_form_2 = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
+    };
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category.id);
+    let sara_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("sara post prv".into(), sara.id)
+    };
     let _sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =

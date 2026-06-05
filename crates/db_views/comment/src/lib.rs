@@ -1,6 +1,6 @@
 use app_108jobs_db_schema::source::{
-  comment::{Comment, CommentActions},
   category::{Category, CategoryActions},
+  comment::{Comment, CommentActions},
   instance::InstanceActions,
   person::{Person, PersonActions},
   post::Post,
@@ -10,23 +10,20 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{Queryable, Selectable},
   app_108jobs_db_schema::utils::queries::{
-    comment_creator_is_admin,
-    comment_select_remove_deletes,
-    local_user_can_mod_comment,
+    comment_creator_is_admin, comment_select_remove_deletes, local_user_can_mod_comment,
     post_tags_fragment,
   },
   app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category,
-    creator_banned_within_category,
-    creator_is_moderator,
+    creator_banned_from_category, creator_banned_within_category, creator_is_moderator,
   },
+  diesel::{Queryable, Selectable},
 };
 
 pub mod api;
 #[cfg(feature = "full")]
 pub mod impls;
+pub mod validator;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -48,7 +45,7 @@ pub struct CommentView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub category: Category,
+  pub category: Option<Category>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]

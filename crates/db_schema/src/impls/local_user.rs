@@ -1,15 +1,20 @@
 use crate::{
-    newtypes::{CategoryId, DbUrl, LanguageId, LocalUserId, PersonId},
-    source::{
+  newtypes::{CategoryId, DbUrl, LanguageId, LocalUserId, PersonId},
+  source::{
     actor_language::LocalUserLanguage,
     local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
     site::Site,
   },
-    utils::{
+  utils::{
     functions::{coalesce, lower},
     get_conn, now, DbPool,
   },
 };
+use app_108jobs_db_schema_file::{
+  enums::CategoryVisibility,
+  schema::{category, category_actions, local_user, person, registration_application},
+};
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},
@@ -17,11 +22,6 @@ use diesel::{
   CombineDsl, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::{
-  enums::CategoryVisibility,
-  schema::{category, category_actions, local_user, person, registration_application},
-};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl LocalUser {
   pub async fn create(
@@ -164,11 +164,16 @@ impl LocalUser {
   pub async fn check_is_email_taken(
     pool: &mut DbPool<'_>,
     email: &str,
-  ) -> FastJobResult<Option<(LocalUserId, PersonId,  bool, bool)>> {
+  ) -> FastJobResult<Option<(LocalUserId, PersonId, bool, bool)>> {
     let conn = &mut get_conn(pool).await?;
     let local_user = local_user::table
       .filter(lower(coalesce(local_user::email, "")).eq(email.to_lowercase()))
-      .select((local_user::id, local_user::person_id, local_user::accepted_terms, local_user::email_verified))
+      .select((
+        local_user::id,
+        local_user::person_id,
+        local_user::accepted_terms,
+        local_user::email_verified,
+      ))
       .first::<(LocalUserId, PersonId, bool, bool)>(conn)
       .await;
 
@@ -237,10 +242,10 @@ impl LocalUser {
 
   /// Checks to make sure the acting moderator is higher than the target moderator
   pub async fn is_higher_mod_or_admin_check(
-      pool: &mut DbPool<'_>,
-      for_category_id: CategoryId,
-      admin_person_id: PersonId,
-      target_person_ids: Vec<PersonId>,
+    pool: &mut DbPool<'_>,
+    for_category_id: CategoryId,
+    admin_person_id: PersonId,
+    target_person_ids: Vec<PersonId>,
   ) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
 
@@ -384,14 +389,16 @@ mod tests {
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let fiona_person = PersonInsertForm::test_form(inserted_instance.id, "fiona");
+    let (fiona_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "fiona").await?;
     let inserted_fiona_person = Person::create(pool, &fiona_person).await?;
 
     let fiona_local_user_form = LocalUserInsertForm::test_form_admin(inserted_fiona_person.id);
     let _inserted_fiona_local_user =
       LocalUser::create(pool, &fiona_local_user_form, vec![]).await?;
 
-    let delores_person = PersonInsertForm::test_form(inserted_instance.id, "delores");
+    let (delores_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "delores").await?;
     let inserted_delores_person = Person::create(pool, &delores_person).await?;
     let delores_local_user_form = LocalUserInsertForm::test_form_admin(inserted_delores_person.id);
     let _inserted_delores_local_user =
@@ -421,11 +428,19 @@ mod tests {
     let pool = &build_db_pool_for_tests();
     let pool = &mut pool.into();
 
-    let darwin_email = "charles.darwin@gmail.com";
+    // Use a UUID-suffixed email so prior runs that leaked rows don't collide
+    // on the global `local_user_email_key` unique constraint.
+    let darwin_email_owned = format!(
+      "charles.darwin-{}@example.test",
+      uuid::Uuid::new_v4().simple()
+    );
+    let darwin_email = darwin_email_owned.as_str();
 
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
+    let inserted_instance =
+      Instance::read_or_create(pool, crate::test_data::unique_test_domain("email-taken")).await?;
 
-    let darwin_person = PersonInsertForm::test_form(inserted_instance.id, "darwin");
+    let (darwin_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "darwin").await?;
     let inserted_darwin_person = Person::create(pool, &darwin_person).await?;
 
     let mut darwin_local_user_form =

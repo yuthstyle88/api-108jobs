@@ -1,14 +1,12 @@
 use app_108jobs_db_schema::source::{
-  local_user::LocalUser,
-  person::Person,
-  registration_application::RegistrationApplication,
+  local_user::LocalUser, person::Person, registration_application::RegistrationApplication,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
   app_108jobs_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
+  diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 
 pub mod api;

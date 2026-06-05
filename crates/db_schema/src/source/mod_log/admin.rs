@@ -1,25 +1,13 @@
 use crate::newtypes::{
-    AdminAllowInstanceId,
-    AdminBlockInstanceId,
-    AdminPurgeCommentId,
-    AdminPurgeCategoryId,
-    AdminPurgePersonId,
-    AdminPurgePostId,
-    CategoryId,
-    InstanceId,
-    PersonId,
-    PostId,
+  AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgeCommentId,
+  AdminPurgePersonId, AdminPurgePostId, CategoryId, InstanceId, PersonId, PostId,
 };
-use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::{
-  admin_allow_instance,
-  admin_block_instance,
-  admin_purge_comment,
-  admin_purge_category,
-  admin_purge_person,
-  admin_purge_post,
+  admin_allow_instance, admin_block_instance, admin_purge_category, admin_purge_comment,
+  admin_purge_person, admin_purge_post,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -1,12 +1,12 @@
 use crate::newtypes::{Coin, LocalUserId, WalletId};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 pub use app_108jobs_db_schema_file::enums::TxKind;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::wallet;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::wallet_transaction;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -25,6 +25,10 @@ pub struct Wallet {
   pub is_platform: bool,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
+  /// Monotonic write counter. Bumped on every balance mutation in
+  /// `WalletModel::apply_op_on*`. See migration
+  /// `2026-05-25-180000_add_wallet_versioning_and_hold_ledger`.
+  pub version: i64,
 }
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -38,7 +42,6 @@ pub struct WalletModel {
   pub balance_available: Coin,
   pub balance_outstanding: Coin,
 }
-
 
 #[derive(Clone, derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable))]
@@ -65,6 +68,10 @@ pub struct WalletUpdateForm {
   pub balance_outstanding: Option<Coin>,
   pub is_platform: Option<bool>,
   pub updated_at: Option<DateTime<Utc>>,
+  /// New write-counter value. Always set to `current.version + 1` by the
+  /// balance-mutation path. Callers that bypass `apply_op_on` may also set
+  /// this to participate in CAS-style updates against a known prior version.
+  pub version: Option<i64>,
 }
 
 // crates/db_schema/src/source/wallet_transaction.rs
@@ -117,7 +124,7 @@ impl From<&WalletTransactionForm> for WalletTransactionInsertForm {
       reference_type: f.reference_type.clone(),
       reference_id: f.reference_id,
       kind: f.kind,
-      amount: f.amount, 
+      amount: f.amount,
       description: f.description.clone(),
       counter_user_id: f.counter_user_id,
       idempotency_key: f.idempotency_key.clone(),

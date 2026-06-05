@@ -1,10 +1,15 @@
-use diesel::{Queryable, Selectable};
 use app_108jobs_db_schema::source::person::Person;
 use app_108jobs_db_schema::source::user_review::UserReview;
 use app_108jobs_db_schema::source::workflow::Workflow;
+use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod validator;
+pub use api::{
+  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
+};
+pub use validator::ValidSubmitUserReviewRequest;
 
 #[cfg(feature = "full")]
 pub mod impls;
@@ -17,12 +22,12 @@ pub mod impls;
 #[serde(rename_all = "camelCase")]
 /// A user review view, including sender and room.
 pub struct UserReviewView {
-    #[cfg_attr(feature = "full", diesel(embed))]
-    pub review: UserReview,
-    #[cfg_attr(feature = "full", diesel(embed))]
-    pub reviewer: Person,
-    #[cfg_attr(feature = "full", diesel(embed))]
-    pub reviewee: Person,
-    #[cfg_attr(feature = "full", diesel(embed))]
-    pub workflow: Workflow,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub review: UserReview,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub reviewer: Person,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub reviewee: Person,
+  #[cfg_attr(feature = "full", diesel(embed))]
+  pub workflow: Workflow,
 }

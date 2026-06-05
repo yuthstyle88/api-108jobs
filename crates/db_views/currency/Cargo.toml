@@ -1,0 +1,42 @@
+[package]
+name = "app_108jobs_db_views_currency"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "app_108jobs_db_views_currency"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+full = [
+    "app_108jobs_db_schema/full",
+    "diesel-async",
+    "i-love-jesus",
+]
+ts-rs = ["dep:ts-rs"]
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+app_108jobs_db_schema = { workspace = true }
+app_108jobs_db_schema_file = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true, optional = true }
+app_108jobs_utils = { workspace = true }
+ts-rs = { workspace = true, optional = true }
+i-love-jesus = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serial_test = { workspace = true }

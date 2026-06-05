@@ -1,10 +1,31 @@
 use actix_web::{guard, web::*};
 use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
+use app_108jobs_api::admin::currency::{
+  admin_create_currency, admin_create_pricing_config, admin_get_currency, admin_get_pricing_config,
+  admin_list_currencies, admin_list_pricing_configs, admin_update_currency,
+  admin_update_pricing_config,
+};
+use app_108jobs_api::admin::platform::{admin_get_platform_assets, admin_get_platform_balance};
 use app_108jobs_api::admin::wallet::{
   admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
   admin_top_up_wallet, admin_withdraw_wallet,
 };
 use app_108jobs_api::chat::list::list_chat_rooms;
+use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
+use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
+use app_108jobs_api::delivery::list::{
+  get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
+};
+use app_108jobs_api::delivery::location::{
+  get_location as get_trip_location, post_location as post_trip_location,
+  post_locations_bulk as post_trip_locations_bulk,
+};
+use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
+use app_108jobs_api::delivery::ride::{
+  cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config,
+  list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status,
+};
+use app_108jobs_api::delivery::status::update_delivery_status;
 use app_108jobs_api::local_user::bank_account::{
   create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
   set_default_bank_account, update_bank_account,
@@ -12,6 +33,7 @@ use app_108jobs_api::local_user::bank_account::{
 use app_108jobs_api::local_user::exchange::exchange_key;
 use app_108jobs_api::local_user::list_top_up_requests::list_top_up_requests;
 use app_108jobs_api::local_user::profile::visit_profile;
+use app_108jobs_api::local_user::refresh::refresh_token;
 use app_108jobs_api::local_user::review::{list_user_reviews, submit_user_review};
 use app_108jobs_api::local_user::update_term::update_term;
 use app_108jobs_api::local_user::wallet::get_wallet;
@@ -95,6 +117,7 @@ use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
 use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
 use app_108jobs_api_crud::rider::create::create_rider;
 use app_108jobs_api_crud::rider::list::list_riders;
+use app_108jobs_api_crud::rider::profile::{heartbeat, set_accepting, set_online, update_rider};
 use app_108jobs_api_crud::rider::read::get_rider;
 use app_108jobs_api_crud::rider::update::admin_verify_rider;
 use app_108jobs_api_crud::site::read::health;
@@ -143,6 +166,7 @@ use app_108jobs_routes::images::{
 use app_108jobs_routes::payments::create_qrcode::create_qrcode;
 use app_108jobs_routes::payments::inquire::inquire_qrcode;
 use app_108jobs_utils::rate_limit::RateLimit;
+use app_108jobs_ws::server::handler::trip_location_ws;
 use app_108jobs_ws::server::handler::{
   get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
   phoenix_ws,
@@ -151,6 +175,8 @@ use app_108jobs_ws::server::handler::{
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
   cfg
     .service(resource("/socket/websocket").route(get().to(phoenix_ws)))
+    // WS endpoints for trip tracking (shared by delivery and ride taxi)
+    .service(scope("/ws").route("/trips/{postId}/location", get().to(trip_location_ws)))
     .service(
       scope("/api/v4")
         // .wrap(rate_limit.message())
@@ -227,9 +253,40 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               post().to(update_post_notifications),
             ),
         )
+        // Deliveries (rider location tracking & status updates)
+        .service(
+          scope("/deliveries")
+            .route("/active", get().to(get_active_deliveries))
+            .route("/completed", get().to(get_completed_deliveries))
+            .route("/cancelled", get().to(get_cancelled_deliveries))
+            .route("/{postId}/location", post().to(post_trip_location))
+            .route("/{postId}/location", get().to(get_trip_location))
+            .route(
+              "/{postId}/locations/bulk",
+              post().to(post_trip_locations_bulk),
+            )
+            .route("/{postId}/status", put().to(update_delivery_status))
+            .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
+            .route("/{postId}/confirm", post().to(confirm_delivery_completion)),
+        )
+        // Rides (taxi-style rides with dynamic pricing)
+        .service(
+          scope("/rides")
+            .route("/create", post().to(create_ride_session))
+            .route("/my-sessions", get().to(list_my_ride_sessions))
+            .route("/available", get().to(list_available_rides))
+            .route("/{sessionId}/confirm", post().to(confirm_ride_assignment))
+            .route(
+              "/{sessionId}/pricing-config",
+              get().to(get_ride_pricing_config),
+            )
+            .route("/{sessionId}/meter", put().to(update_ride_meter))
+            .route("/{sessionId}/status", put().to(update_ride_status))
+            .route("/{sessionId}/cancel", post().to(cancel_ride_session)),
+        )
         // Comment
         .service(
-          // Handle POST to /comment separately to add the comment() rate limitter
+          // Handle POST to /comment separately to add the comment() rate limiter
           resource("/comment")
             .guard(guard::Post())
             // .wrap(rate_limit.comment())
@@ -259,10 +316,18 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         // User
         .service(
           scope("/account/auth")
-            // .wrap(rate_limit.register())
-            .route("/register", post().to(register))
-            .route("/login", post().to(login))
+            .service(
+              resource("/register")
+                .wrap(rate_limit.register())
+                .route(post().to(register)),
+            )
+            .service(
+              resource("/login")
+                .wrap(rate_limit.login())
+                .route(post().to(login)),
+            )
             .route("/logout", post().to(logout))
+            .route("/refresh", post().to(refresh_token))
             .route("/password-reset", post().to(reset_password))
             .route("/password-change", post().to(change_password_after_reset))
             .route("/change-password", put().to(change_password))
@@ -277,6 +342,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               post().to(resend_verification_email),
             ),
         )
+        // Compat alias: current clients call `/auth/refresh` (missing the
+        // `/account` prefix). Canonical route is `/account/auth/refresh`.
+        .route("/auth/refresh", post().to(refresh_token))
         .route("/files/{user_id}/{filename}", get().to(get_file))
         .service(
           scope("/account")
@@ -435,6 +503,25 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/riders")
                 .route("/list", get().to(list_riders))
                 .route("/verify", post().to(admin_verify_rider)),
+            )
+            .service(
+              scope("/currency")
+                .route("/list", get().to(admin_list_currencies))
+                .route("", get().to(admin_get_currency))
+                .route("", post().to(admin_create_currency))
+                .route("", put().to(admin_update_currency)),
+            )
+            .service(
+              scope("/pricing-config")
+                .route("/list", post().to(admin_list_pricing_configs))
+                .route("", get().to(admin_get_pricing_config))
+                .route("", post().to(admin_create_pricing_config))
+                .route("", put().to(admin_update_pricing_config)),
+            )
+            .service(
+              scope("/platform")
+                .route("/assets", get().to(admin_get_platform_assets))
+                .route("/balance", get().to(admin_get_platform_balance)),
             ),
         )
         .service(
@@ -457,7 +544,13 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
           scope("/riders")
             .route("/profile", post().to(create_rider))
             .route("/profile", get().to(get_rider)) // this is for get current rider profile
-            .route("/profile/{id}", get().to(get_rider)),
+            .route("/profile", put().to(update_rider)) // rider updates own profile
+            .route("/status/online", patch().to(set_online))
+            .route("/status/accepting", patch().to(set_accepting))
+            .route("/heartbeat", post().to(heartbeat))
+            .route("/profile/{id}", get().to(get_rider))
+            .route("/rate", post().to(rate_rider))
+            .route("/{riderId}/ratings", get().to(get_rider_ratings)),
         )
         .service(
           scope("/custom-emoji")

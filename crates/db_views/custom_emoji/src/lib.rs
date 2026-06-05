@@ -1,9 +1,8 @@
+use app_108jobs_db_schema::source::{
+  custom_emoji::CustomEmoji, custom_emoji_keyword::CustomEmojiKeyword,
+};
 #[cfg(feature = "full")]
 use diesel::Queryable;
-use app_108jobs_db_schema::source::{
-  custom_emoji::CustomEmoji,
-  custom_emoji_keyword::CustomEmojiKeyword,
-};
 use serde::{Deserialize, Serialize};
 
 pub mod api;

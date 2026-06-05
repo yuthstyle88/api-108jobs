@@ -2,9 +2,9 @@ use app_108jobs_db_schema::source::person::{Person, PersonActions};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
   app_108jobs_db_schema::utils::{functions::coalesce, queries::creator_banned},
   app_108jobs_db_schema_file::schema::local_user,
+  diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 
 pub mod api;

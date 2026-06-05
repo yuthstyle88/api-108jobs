@@ -12,9 +12,7 @@ use app_108jobs_utils::{
 use lettre::{
   message::{Mailbox, MultiPart},
   transport::smtp::extension::ClientId,
-  Address,
-  AsyncTransport,
-  Message,
+  Address, AsyncTransport, Message,
 };
 use rosetta_i18n::{Language, LanguageId};
 use std::{str::FromStr, sync::OnceLock};
@@ -24,6 +22,7 @@ use uuid::Uuid;
 pub mod account;
 pub mod admin;
 pub mod notifications;
+pub mod rider;
 
 mod translations {
   rosetta_i18n::include_translations!();
@@ -43,7 +42,10 @@ async fn send_email(
   settings: &Settings,
 ) -> FastJobResult<()> {
   static MAILER: OnceLock<AsyncSmtpTransport> = OnceLock::new();
-  let email_config = settings.email.clone().ok_or(FastJobErrorType::NoEmailSetup)?;
+  let email_config = settings
+    .email
+    .clone()
+    .ok_or(FastJobErrorType::NoEmailSetup)?;
 
   #[expect(clippy::expect_used)]
   let mailer = MAILER.get_or_init(|| {
@@ -79,13 +81,10 @@ async fn send_email(
     ))
     .with_fastjob_type(FastJobErrorType::EmailSendFailed)?;
 
-  mailer
-      .send(email)
-      .await
-      .map_err(|err| {
-        tracing::error!("Failed to send email: {}", err); // optional: log
-        FastJobError::from(FastJobErrorType::EmailSendFailed)
-      })?;
+  mailer.send(email).await.map_err(|err| {
+    tracing::error!("Failed to send email: {}", err); // optional: log
+    FastJobError::from(FastJobErrorType::EmailSendFailed)
+  })?;
 
   Ok(())
 }

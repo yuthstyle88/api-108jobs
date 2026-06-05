@@ -1,4 +1,4 @@
-DROP TABLE modlog_combined;
+DROP TABLE IF EXISTS modlog_combined;
 
 -- Rename the columns back to when_
 ALTER TABLE admin_allow_instance RENAME COLUMN published TO when_;
@@ -23,7 +23,18 @@ ALTER TABLE mod_ban_from_category RENAME COLUMN published TO when_;
 
 ALTER TABLE mod_feature_post RENAME COLUMN published TO when_;
 
-ALTER TABLE mod_hide_category RENAME COLUMN published TO when_;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'mod_hide_category'
+      AND column_name = 'published'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.mod_hide_category RENAME COLUMN published TO when_';
+  END IF;
+END $$;
 
 ALTER TABLE mod_lock_post RENAME COLUMN published TO when_;
 

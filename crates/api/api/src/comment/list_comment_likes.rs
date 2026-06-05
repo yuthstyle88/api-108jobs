@@ -13,7 +13,7 @@ pub async fn list_comment_likes(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ListCommentLikesResponse>> {
   is_admin(&local_user_view)?;
-  
+
   let cursor_data = if let Some(cursor) = &data.page_cursor {
     Some(VoteView::from_comment_actions_cursor(cursor, &mut context.pool()).await?)
   } else {

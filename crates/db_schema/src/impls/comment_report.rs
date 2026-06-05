@@ -4,16 +4,14 @@ use crate::{
   traits::Reportable,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_db_schema_file::schema::comment_report;
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods,
-  ExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
-use app_108jobs_db_schema_file::schema::comment_report;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 
 impl Reportable for CommentReport {
   type Form = CommentReportForm;

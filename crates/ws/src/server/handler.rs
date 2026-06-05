@@ -1,6 +1,8 @@
-use crate::broker::manager::{FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager};
-use crate::server::session::PhoenixSession;
+use crate::broker::manager::{
+  FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager,
+};
 use crate::presence::{IsUserOnline, PresenceManager};
+use crate::server::session::{PhoenixSession, TripLocationSession};
 use actix::Addr;
 use actix_web::{
   web,
@@ -10,7 +12,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_api_utils::utils::local_user_view_from_jwt;
-use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_db_schema::newtypes::{LocalUserId, PostId};
 use app_108jobs_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType};
@@ -86,15 +88,14 @@ pub async fn get_presence_snapshot(
   local_user_view: LocalUserView,
 ) -> actix_web::Result<HttpResponse> {
   let resp = presence
-      .send(GetPresenceSnapshot {
-        local_user_id: local_user_view.local_user.id,
-      })
-      .await
-      .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
+    .send(GetPresenceSnapshot {
+      local_user_id: local_user_view.local_user.id,
+    })
+    .await
+    .map_err(|e| actix_web::error::ErrorInternalServerError(e))??;
 
   Ok(HttpResponse::Ok().json(resp))
 }
-
 
 pub async fn phoenix_ws(
   req: HttpRequest,
@@ -105,18 +106,58 @@ pub async fn phoenix_ws(
   // Extract query parameters similar to chat_ws
   let auth_token = query.token.clone();
 
-  let (shared_key, local_user_id): (Option<String>, Option<LocalUserId>) = if let Some(jwt_token) = auth_token {
-    match local_user_view_from_jwt(&jwt_token, &context).await {
-      Ok((local_user_view, _session)) => (local_user_view.person.shared_key, Some(local_user_view.local_user.id)),
-      Err(_) => {
-        return Err(Error::from(FastJobError::from(
-          FastJobErrorType::IncorrectLogin,
-        )));
+  let (shared_key, local_user_id): (Option<String>, Option<LocalUserId>) =
+    if let Some(jwt_token) = auth_token {
+      match local_user_view_from_jwt(&jwt_token, &context).await {
+        Ok((local_user_view, _session)) => (
+          local_user_view.person.shared_key,
+          Some(local_user_view.local_user.id),
+        ),
+        Err(_) => {
+          return Err(Error::from(FastJobError::from(
+            FastJobErrorType::IncorrectLogin,
+          )));
+        }
       }
-    }
-  } else {
-    (None, None)
-  };
+    } else {
+      (None, None)
+    };
   let ph_session = PhoenixSession::new(shared_key, local_user_id);
   ws::start(ph_session, &req, stream)
+}
+
+// ============ Trip location WS (employer/rider viewer) ============
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct TokenQuery {
+  pub token: Option<String>,
+}
+
+/// WebSocket that streams trip location updates for a given postId.
+/// Auth: JWT in `?token=` query; must resolve to a valid user. Authorization to
+/// a specific trip should be enforced at a higher layer when assignment flow is implemented.
+pub async fn trip_location_ws(
+  req: HttpRequest,
+  path: web::Path<PostId>,
+  query: Query<TokenQuery>,
+  stream: web::Payload,
+  context: Data<FastJobContext>,
+) -> Result<HttpResponse, Error> {
+  // Authenticate via token (same pattern as phoenix_ws)
+  if let Some(jwt_token) = &query.token {
+    // If invalid, return 401
+    if local_user_view_from_jwt(jwt_token, &context).await.is_err() {
+      return Err(Error::from(FastJobError::from(
+        FastJobErrorType::IncorrectLogin,
+      )));
+    }
+  } else {
+    return Err(Error::from(FastJobError::from(
+      FastJobErrorType::IncorrectLogin,
+    )));
+  }
+
+  let post_id = *path;
+  let session = TripLocationSession::new(post_id, context.get_ref().clone());
+  ws::start(session, &req, stream)
 }

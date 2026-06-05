@@ -1,14 +1,9 @@
-use crate::utils::protocol::{
-  AttributedTo,
-  LanguageTag
-  ,
-  Source,
-};
+use crate::utils::protocol::{AttributedTo, LanguageTag, Source};
 use actix_web::web::Data;
 
-use chrono::{DateTime, Utc};
 use app_108jobs_api_utils::{context::FastJobContext, utils::proxy_image_link};
 use app_108jobs_utils::error::FastJobResult;
+use chrono::{DateTime, Utc};
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
@@ -89,7 +84,6 @@ pub enum Attachment {
 }
 
 impl Attachment {
-
   pub(crate) async fn as_markdown(&self, context: &Data<FastJobContext>) -> FastJobResult<String> {
     let (url, name, media_type) = match self {
       Attachment::Image(i) => (i.url.clone(), i.name.clone(), Some(String::from("image"))),
@@ -125,10 +119,6 @@ pub enum HashtagType {
   Hashtag,
 }
 
-
-
-
-
 /// Only allows deserialization if the field is missing or null. If it is present, throws an error.
 pub fn deserialize_not_present<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
@@ -140,5 +130,3 @@ where
     Some(_) => Err(D::Error::custom("Post must not have inReplyTo property")),
   }
 }
-
-

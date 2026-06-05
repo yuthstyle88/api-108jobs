@@ -1,6 +1,5 @@
 use actix_web::web::Data;
 use actix_web::web::Json;
-use diesel_async::scoped_futures::ScopedFutureExt;
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::{
   source::{
@@ -16,6 +15,7 @@ use app_108jobs_db_views_registration_applications::{
   RegistrationApplicationView,
 };
 use app_108jobs_utils::error::FastJobResult;
+use diesel_async::scoped_futures::ScopedFutureExt;
 
 pub async fn approve_registration_application(
   data: Json<ApproveRegistrationApplication>,
@@ -31,32 +31,32 @@ pub async fn approve_registration_application(
   let conn = &mut get_conn(pool).await?;
   let tx_data = data.clone();
   conn
-      .run_transaction(|conn| {
-        async move {
-          // Update the registration with reason, admin_id
-          let deny_reason = diesel_string_update(tx_data.deny_reason.as_deref());
-          let app_form = RegistrationApplicationUpdateForm {
-            admin_id: Some(Some(local_user_view.person.id)),
-            deny_reason,
-          };
+    .run_transaction(|conn| {
+      async move {
+        // Update the registration with reason, admin_id
+        let deny_reason = diesel_string_update(tx_data.deny_reason.as_deref());
+        let app_form = RegistrationApplicationUpdateForm {
+          admin_id: Some(Some(local_user_view.person.id)),
+          deny_reason,
+        };
 
-          let registration_application =
-              RegistrationApplication::update(&mut conn.into(), app_id, &app_form).await?;
+        let registration_application =
+          RegistrationApplication::update(&mut conn.into(), app_id, &app_form).await?;
 
-          // Update the local_user row
-          let local_user_form = LocalUserUpdateForm {
-            accepted_application: Some(tx_data.approve),
-            ..Default::default()
-          };
+        // Update the local_user row
+        let local_user_form = LocalUserUpdateForm {
+          accepted_application: Some(tx_data.approve),
+          ..Default::default()
+        };
 
-          let approved_user_id = registration_application.local_user_id;
-          LocalUser::update(&mut conn.into(), approved_user_id, &local_user_form).await?;
+        let approved_user_id = registration_application.local_user_id;
+        LocalUser::update(&mut conn.into(), approved_user_id, &local_user_form).await?;
 
-          Ok(approved_user_id)
-        }
-            .scope_boxed()
-      })
-      .await?;
+        Ok(approved_user_id)
+      }
+      .scope_boxed()
+    })
+    .await?;
 
   // Read the view
   let registration_application =

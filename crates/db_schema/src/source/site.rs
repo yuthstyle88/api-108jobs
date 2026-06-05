@@ -1,12 +1,10 @@
-use crate::{
-  newtypes::{DbUrl, InstanceId, SiteId},
-};
-use chrono::{DateTime, Utc};
+use crate::newtypes::{DbUrl, InstanceId, SiteId};
+use crate::sensitive::SensitiveString;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::site;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use crate::sensitive::SensitiveString;
 
 #[skip_serializing_none]
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]

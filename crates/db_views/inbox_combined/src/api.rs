@@ -1,7 +1,5 @@
 use app_108jobs_db_schema::newtypes::{
-  CommentReplyId,
-  PersonCommentMentionId,
-  PersonPostMentionId,
+  CommentReplyId, PersonCommentMentionId, PersonPostMentionId,
 };
 use serde::{Deserialize, Serialize};
 

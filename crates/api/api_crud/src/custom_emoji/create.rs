@@ -9,14 +9,14 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_custom_emoji::{
-  api::{CreateCustomEmoji, CustomEmojiResponse},
+  api::{CreateCustomEmojiRequest, CustomEmojiResponse},
   CustomEmojiView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn create_custom_emoji(
-  data: Json<CreateCustomEmoji>,
+  data: Json<CreateCustomEmojiRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<CustomEmojiResponse>> {

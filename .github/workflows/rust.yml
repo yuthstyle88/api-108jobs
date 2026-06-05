@@ -77,7 +77,13 @@ jobs:
             echo "Fetch & checkout ${BRANCH}"
             git fetch --all --prune
             git checkout "$BRANCH"
-            git pull --ff-only origin "$BRANCH"
+            # Use reset --hard instead of pull --ff-only so the deploy is not
+            # blocked when a file that is now tracked upstream still exists as an
+            # untracked file on the server (e.g. crates/email/translations/*).
+            # This only overwrites tracked paths and untracked files that collide
+            # with them; gitignored runtime data (uploads/, .env, target/) is left
+            # untouched.
+            git reset --hard "origin/$BRANCH"
           fi
           
           echo "Checking for migration changes since last commit..."

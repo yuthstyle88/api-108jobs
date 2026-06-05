@@ -399,7 +399,7 @@ mod tests {
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       category_report::{CategoryReport, CategoryReportForm},
       comment::{Comment, CommentInsertForm},
       comment_report::{CommentReport, CommentReportForm},
@@ -428,7 +428,7 @@ mod tests {
     jessica: Person,
     timmy_view: LocalUserView,
     admin_view: LocalUserView,
-    category: category,
+    category: Category,
     post: Post,
     post_2: Post,
     comment: Comment,
@@ -469,20 +469,24 @@ mod tests {
       "test category crv".to_string(),
       "nada".to_owned(),
     );
-    let inserted_category = category::create(pool, &category_form).await?;
+    let inserted_category = Category::create(pool, &category_form).await?;
 
-    let post_form = PostInsertForm::new(
-      "A test post crv".into(),
-      inserted_timmy.id,
-      inserted_category.id,
-    );
+    let post_form = PostInsertForm {
+      category_id: Some(inserted_category.id),
+      ..PostInsertForm::new(
+        "A test post crv".into(),
+        inserted_timmy.id,
+      )
+    };
     let inserted_post = Post::create(pool, &post_form).await?;
 
-    let new_post_2 = PostInsertForm::new(
-      "A test post crv 2".into(),
-      inserted_timmy.id,
-      inserted_category.id,
-    );
+    let new_post_2 = PostInsertForm {
+      category_id: Some(inserted_category.id),
+      ..PostInsertForm::new(
+        "A test post crv 2".into(),
+        inserted_timmy.id,
+      )
+    };
     let inserted_post_2 = Post::create(pool, &new_post_2).await?;
 
     // Timmy creates a comment
@@ -521,7 +525,7 @@ mod tests {
     let data = init_data(pool).await?;
 
     // Sara reports the category
-    let sara_report_category_form = categoryReportForm {
+    let sara_report_category_form = CategoryReportForm {
       creator_id: data.sara.id,
       category_id: data.category.id,
       original_category_name: data.category.name.clone(),
@@ -532,7 +536,7 @@ mod tests {
       original_category_icon: None,
       reason: "from sara".into(),
     };
-    categoryReport::report(pool, &sara_report_category_form).await?;
+    CategoryReport::report(pool, &sara_report_category_form).await?;
 
     // sara reports the post
     let sara_report_post_form = PostReportForm {
@@ -566,8 +570,8 @@ mod tests {
     assert_length!(4, reports);
 
     // Make sure the report types are correct
-    if let ReportCombinedView::category(v) = &reports[3] {
-      assert_eq!(data.category.id, v.category.id);
+    if let ReportCombinedView::Category(v) = &reports[3] {
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -864,7 +868,7 @@ mod tests {
     let data = init_data(pool).await?;
 
     // jessica reports category
-    let category_report_form = categoryReportForm {
+    let category_report_form = CategoryReportForm {
       creator_id: data.jessica.id,
       category_id: data.category.id,
       original_category_name: data.category.name.clone(),
@@ -875,7 +879,7 @@ mod tests {
       original_category_icon: None,
       reason: "the ice cream incident".into(),
     };
-    let category_report = categoryReport::report(pool, &category_report_form).await?;
+    let category_report = CategoryReport::report(pool, &category_report_form).await?;
 
     let reports = ReportCombinedQuery {
       show_category_rule_violations: Some(true),
@@ -884,12 +888,12 @@ mod tests {
     .list(pool, &data.admin_view)
     .await?;
     assert_length!(1, reports);
-    if let ReportCombinedView::category(v) = &reports[0] {
+    if let ReportCombinedView::Category(v) = &reports[0] {
       assert!(!v.category_report.resolved);
       assert_eq!(data.jessica.name, v.creator.name);
       assert_eq!(category_report.reason, v.category_report.reason);
-      assert_eq!(data.category.name, v.category.name);
-      assert_eq!(data.category.title, v.category.title);
+      assert_eq!(data.category.name, v.category.as_ref().unwrap().name);
+      assert_eq!(data.category.title, v.category.as_ref().unwrap().title);
     } else {
       panic!("wrong type");
     }
@@ -901,7 +905,7 @@ mod tests {
     .list(pool, &data.admin_view)
     .await?;
     assert_length!(1, reports);
-    if let ReportCombinedView::category(v) = &reports[0] {
+    if let ReportCombinedView::Category(v) = &reports[0] {
       assert!(v.category_report.resolved);
     } else {
       panic!("wrong type");

@@ -478,7 +478,7 @@ mod tests {
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
@@ -501,8 +501,8 @@ mod tests {
     timmy: Person,
     timmy_view: LocalUserView,
     sara: Person,
-    category: category,
-    category_2: category,
+    category: Category,
+    category_2: Category,
     timmy_post: Post,
     timmy_post_2: Post,
     sara_post: Post,
@@ -539,33 +539,41 @@ mod tests {
         "Ask FastJob".to_owned(),
       )
     };
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
     let category_form_2 = CategoryInsertForm::new(
       instance.id,
       "startrek_ds9".to_string(),
       "Star Trek - Deep Space Nine".to_owned(),
     );
-    let category_2 = category::create(pool, &category_form_2).await?;
+    let category_2 = Category::create(pool, &category_form_2).await?;
 
     let timmy_post_form = PostInsertForm {
       body: Some("postbody inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
-      ..PostInsertForm::new("timmy post prv".into(), timmy.id, category.id)
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
     };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let timmy_post_form_2 = PostInsertForm::new("timmy post prv 2".into(), timmy.id, category.id);
+    let timmy_post_form_2 = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
+    };
     let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
 
-    let sara_post_form = PostInsertForm::new("sara post prv".into(), sara.id, category_2.id);
+    let sara_post_form = PostInsertForm {
+      category_id: Some(category_2.id),
+      ..PostInsertForm::new("sara post prv".into(), sara.id)
+    };
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let self_promotion_post_form = PostInsertForm {
       body: Some("self_promotion post inside here".into()),
       url: Some(Url::parse("https://google.com")?.into()),
       self_promotion: Some(true),
-      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id, category.id)
+      category_id: Some(category.id),
+      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id)
     };
     let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
 
@@ -649,18 +657,18 @@ mod tests {
     // Make sure the types are correct
     if let SearchCombinedView::Comment(v) = &search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.timmy_post_2.id, v.post.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
-      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.sara_post.id, v.post.id);
       assert_eq!(
         data.category_2.id,
-        v.post_view.category.as_ref().unwrap().id
+        v.category.as_ref().unwrap().id
       );
     } else {
       panic!("wrong type");
@@ -668,8 +676,8 @@ mod tests {
 
     if let SearchCombinedView::Comment(v) = &search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
-      assert_eq!(data.timmy_post.id, v.post_view.post.id);
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.timmy_post.id, v.post.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -698,17 +706,17 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &search[6] {
+    if let SearchCombinedView::Category(v) = &search[6] {
       assert_eq!(
         data.category_2.id,
-        v.post_view.category.as_ref().unwrap().id
+        v.category.id
       );
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &search[7] {
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+    if let SearchCombinedView::Category(v) = &search[7] {
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -833,17 +841,17 @@ mod tests {
     assert_length!(2, category_search);
 
     // Make sure the types are correct
-    if let SearchCombinedView::category(v) = &category_search[0] {
+    if let SearchCombinedView::Category(v) = &category_search[0] {
       assert_eq!(
         data.category_2.id,
-        v.post_view.category.as_ref().unwrap().id
+        v.category.id
       );
     } else {
       panic!("wrong type");
     }
 
-    if let SearchCombinedView::category(v) = &category_search[1] {
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+    if let SearchCombinedView::Category(v) = &category_search[1] {
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -866,9 +874,9 @@ mod tests {
     .await?;
 
     assert_length!(1, category_search_by_name);
-    if let SearchCombinedView::category(v) = &category_search_by_name[0] {
+    if let SearchCombinedView::Category(v) = &category_search_by_name[0] {
       // The askapp_108jobs category
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.category.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -1133,8 +1141,8 @@ mod tests {
     // Make sure the first is the self_promotion
     if let SearchCombinedView::Comment(v) = &self_promotion_comment_search[0] {
       assert_eq!(data.comment_in_self_promotion_post.id, v.comment.id);
-      assert_eq!(data.self_promotion_post.id, v.post_view.post.id);
-      assert!(v.post_view.post.self_promotion);
+      assert_eq!(data.self_promotion_post.id, v.post.id);
+      assert!(v.post.self_promotion);
     } else {
       panic!("wrong type");
     }
@@ -1162,18 +1170,18 @@ mod tests {
     // Make sure the types are correct
     if let SearchCombinedView::Comment(v) = &comment_search[0] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.timmy_post_2.id, v.post.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
 
     if let SearchCombinedView::Comment(v) = &comment_search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
-      assert_eq!(data.sara_post.id, v.post_view.post.id);
+      assert_eq!(data.sara_post.id, v.post.id);
       assert_eq!(
         data.category_2.id,
-        v.post_view.category.as_ref().unwrap().id
+        v.category.as_ref().unwrap().id
       );
     } else {
       panic!("wrong type");
@@ -1181,8 +1189,8 @@ mod tests {
 
     if let SearchCombinedView::Comment(v) = &comment_search[2] {
       assert_eq!(data.timmy_comment.id, v.comment.id);
-      assert_eq!(data.timmy_post.id, v.post_view.post.id);
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.timmy_post.id, v.post.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -1235,8 +1243,8 @@ mod tests {
     // Sara comment 2 is disliked, so should be last
     if let SearchCombinedView::Comment(v) = &comment_search_sort_top[2] {
       assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.timmy_post_2.id, v.post_view.post.id);
-      assert_eq!(data.category.id, v.post_view.category.as_ref().unwrap().id);
+      assert_eq!(data.timmy_post_2.id, v.post.id);
+      assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }

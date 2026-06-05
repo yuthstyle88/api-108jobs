@@ -384,7 +384,7 @@ mod tests {
   use app_108jobs_db_schema::{
     assert_length,
     source::{
-      category::{category, CategoryInsertForm},
+      category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
       instance::Instance,
@@ -429,12 +429,18 @@ mod tests {
       "test category pcv".to_string(),
       "nada".to_owned(),
     );
-    let category = category::create(pool, &category_form).await?;
+    let category = Category::create(pool, &category_form).await?;
 
-    let timmy_post_form = PostInsertForm::new("timmy post prv".into(), timmy.id, category.id);
+    let timmy_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
+    };
     let timmy_post = Post::create(pool, &timmy_post_form).await?;
 
-    let jessica_post_form = PostInsertForm::new("jessica post prv".into(), jessica.id, category.id);
+    let jessica_post_form = PostInsertForm {
+      category_id: Some(category.id),
+      ..PostInsertForm::new("jessica post prv".into(), jessica.id)
+    };
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =

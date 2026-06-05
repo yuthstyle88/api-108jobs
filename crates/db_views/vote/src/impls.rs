@@ -211,11 +211,13 @@ mod tests {
     );
     let inserted_category = Category::create(pool, &new_category).await?;
 
-    let new_post = PostInsertForm::new(
-      "A test post vv".into(),
-      inserted_timmy.id,
-      inserted_category.id,
-    );
+    let new_post = PostInsertForm {
+      category_id: Some(inserted_category.id),
+      ..PostInsertForm::new(
+        "A test post vv".into(),
+        inserted_timmy.id,
+      )
+    };
     let inserted_post = Post::create(pool, &new_post).await?;
 
     let comment_form = CommentInsertForm::new(

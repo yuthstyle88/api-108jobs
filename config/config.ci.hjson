@@ -1,0 +1,48 @@
+{
+  # ---------------------------------------------------------------------------
+  # CI / TEST configuration.
+  #
+  # Used only by the GitHub Actions `cargo test` job (app_108jobs_CONFIG_LOCATION
+  # points here). The real database URL — including the password — is supplied
+  # at runtime via app_108jobs_DATABASE_URL; the connection string below is
+  # intentionally passwordless because the startup validator refuses to load a
+  # config file that embeds a password. All secret-bearing sections are left
+  # empty so no other env secrets are required.
+  #
+  # This file is committed (config/ is otherwise gitignored) so the test suite
+  # can load settings in CI without provisioning a developer config.
+  # ---------------------------------------------------------------------------
+
+  hostname: localhost:8536
+  port: 8536
+  database: {
+    connection: "postgres://app_108jobs@localhost:5432/app_108jobs"
+    pool_size: 5
+  }
+  json_logging: false
+  cors_origin: []
+  tls_enabled: false
+  setup: {
+    admin_username: ""
+    admin_password: ""
+    site_name: "FastJob CI"
+    admin_email: "admin@localhost"
+  }
+  phoenix_url: "ws://localhost:4000/socket/websocket?vsn=2.0.0"
+  email: {
+    connection: ""
+    smtp_from_address: ""
+  }
+  redis: {
+    host: "localhost"
+    port: 6379
+    redirect_url: ""
+  }
+  scb: {
+    url: ""
+    api_key: ""
+    api_secret: ""
+    merchant_id: ""
+    terminal_id: ""
+  }
+}

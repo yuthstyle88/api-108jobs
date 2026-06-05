@@ -103,7 +103,7 @@ jobs:
     env:
       app_108jobs_DATABASE_URL: postgres://app_108jobs:password@localhost:5432/app_108jobs
       DATABASE_URL: postgres://app_108jobs:password@localhost:5432/app_108jobs
-      app_108jobs_CONFIG_LOCATION: ${{ github.workspace }}/config/config.hjson
+      app_108jobs_CONFIG_LOCATION: ${{ github.workspace }}/config/config.ci.hjson
       # The persistent federation queue otherwise adds 30s–5min delays.
       app_108jobs_TEST_FAST_FEDERATION: "1"
 

@@ -1,0 +1,19 @@
+# cargo-nextest configuration.
+#
+# The test job runs `cargo nextest run` instead of `cargo test`: nextest runs
+# every test in its own process across one global parallel pool, which roughly
+# halves the suite wall-time here (~61s -> ~30s measured locally) versus
+# `cargo test`, which runs each test binary's suite back-to-back.
+#
+# nextest does not run doctests; the workspace sets `doctest = false`, so nothing
+# is lost.
+
+[profile.ci]
+# Run the whole suite and report every failure rather than stopping at the
+# first. The job is still non-blocking (continue-on-error in ci.yml) while the
+# known pre-existing failures are worked through.
+fail-fast = false
+# No retries while the suite is red: its remaining failures are deterministic
+# (e.g. the NULL wallet_id seed issue), so retrying them only multiplies work.
+# Raise this to absorb transient flakes once the suite is green.
+retries = 0

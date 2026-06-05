@@ -142,5 +142,15 @@ jobs:
           psql -h localhost -U postgres -d app_108jobs \
             -c "CREATE USER app_108jobs WITH PASSWORD 'password' SUPERUSER;"
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Run tests
-        run: cargo test --workspace --no-fail-fast
+        # cargo-nextest runs every test in its own process across one parallel
+        # pool, roughly halving the suite wall-time (~61s -> ~30s measured) vs
+        # `cargo test`, which runs each binary's suite sequentially. nextest does
+        # not run doctests; the workspace sets `doctest = false`, so none are lost.
+        # Still non-blocking (continue-on-error above) until the pre-existing
+        # failures are fixed; the `ci` profile disables fail-fast (see
+        # .config/nextest.toml).
+        run: cargo nextest run --workspace --no-fail-fast --profile ci

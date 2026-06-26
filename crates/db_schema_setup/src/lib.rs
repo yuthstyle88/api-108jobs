@@ -180,52 +180,32 @@ pub fn run(options: Options, db_url: &str) -> anyhow::Result<Branch> {
   // Migrations don't support async connection, and this function doesn't need to be async
   let mut conn = PgConnection::establish(db_url)?;
 
-  // Whether the database already has every migration applied and the
-  // replaceable (`r`) schema in sync. Checked twice below — once lock-free (the
-  // fast path) and once under the advisory lock (to close the race) — so it must
-  // be side-effect free. Returns false whenever a migration run is requested
-  // (revert / limited / non-run options) so those callers always migrate.
-  let db_up_to_date = |conn: &mut PgConnection| -> anyhow::Result<bool> {
-    if !options.revert
-      && options.run
-      && options.limit.is_none()
-      && !conn
-        .has_pending_migration(migrations())
-        .map_err(convert_err)?
-    {
-      // No pending migration implies the migration that creates the
-      // previously_run_sql table already ran, so these checks are safe.
-      let sql_unchanged = exists(
-        previously_run_sql::table.filter(previously_run_sql::content.eq(replaceable_schema())),
-      );
-      let schema_exists = exists(pg_namespace::table.find("r"));
-      Ok(select(sql_unchanged.and(schema_exists)).get_result(conn)?)
-    } else {
-      Ok(false)
-    }
-  };
+  // If possible, skip getting a lock and recreating the "r" schema, so
+  // app_108jobs_server processes in a horizontally scaled setup can start without causing locks
+  if !options.revert
+    && options.run
+    && options.limit.is_none()
+    && !conn
+      .has_pending_migration(migrations())
+      .map_err(convert_err)?
+  {
+    // The condition above implies that the migration that creates the previously_run_sql table was
+    // already run
+    let sql_unchanged = exists(
+      previously_run_sql::table.filter(previously_run_sql::content.eq(replaceable_schema())),
+    );
 
-  // Fast path: if the database is already up to date, skip getting a lock and
-  // recreating the "r" schema, so app_108jobs_server processes in a horizontally
-  // scaled setup can start without causing locks.
-  if db_up_to_date(&mut conn)? {
-    return Ok(Branch::EarlyReturn);
+    let schema_exists = exists(pg_namespace::table.find("r"));
+
+    if select(sql_unchanged.and(schema_exists)).get_result(&mut conn)? {
+      return Ok(Branch::EarlyReturn);
+    }
   }
 
   // Block concurrent attempts to run migrations until `conn` is closed and disable the
   // trigger that prevents the Diesel CLI from running migrations
   options.print("Waiting for lock...");
   conn.batch_execute("SELECT pg_advisory_lock(0);")?;
-
-  // Double-checked locking: another process may have applied the migrations
-  // while we waited for the lock. Without this re-check, two processes that both
-  // passed the fast path on a fresh database (e.g. parallel test binaries sharing
-  // one Postgres) would each run the enum migrations and collide with
-  // `duplicate key value violates unique constraint "pg_type_typname_nsp_index"`.
-  if db_up_to_date(&mut conn)? {
-    return Ok(Branch::EarlyReturn);
-  }
-
   options.print("Running Database migrations (This may take a long time)...");
 
   // Drop `r` schema, so migrations don't need to be made to work both with and without things in

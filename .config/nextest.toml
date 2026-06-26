@@ -9,6 +9,13 @@
 # is lost.
 
 [profile.ci]
+# Run tests one at a time. Every test calls build_db_pool_for_tests(), which
+# migrates and seeds the ONE shared CI Postgres. Running tests in parallel
+# processes makes them race on the enum migrations (duplicate key on
+# pg_type_typname_nsp_index) and clobber each other's table data (left==right
+# assertion failures). The suite has no per-test DB isolation, so serial
+# execution is the correct fix here — slower, but no cross-process interference.
+test-threads = 1
 # Run the whole suite and report every failure rather than stopping at the
 # first. The job is still non-blocking (continue-on-error in ci.yml) while the
 # known pre-existing failures are worked through.

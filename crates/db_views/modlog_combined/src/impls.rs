@@ -1,9 +1,23 @@
 use crate::{
-  AdminAllowInstanceView, AdminBlockInstanceView, AdminPurgeCategoryView, AdminPurgeCommentView,
-  AdminPurgePersonView, AdminPurgePostView, ModAddCategoryView, ModAddView, ModBanFromCategoryView,
-  ModBanView, ModChangeCategoryVisibilityView, ModFeaturePostView, ModLockPostView,
-  ModRemoveCategoryView, ModRemoveCommentView, ModRemovePostView, ModTransferCategoryView,
-  ModlogCombinedView, ModlogCombinedViewInternal,
+  AdminAllowInstanceView,
+  AdminBlockInstanceView,
+  AdminPurgeCategoryView,
+  AdminPurgeCommentView,
+  AdminPurgePersonView,
+  AdminPurgePostView,
+  ModAddCategoryView,
+  ModAddView,
+  ModBanFromCategoryView,
+  ModBanView,
+  ModChangeCategoryVisibilityView,
+  ModFeaturePostView,
+  ModLockPostView,
+  ModRemoveCategoryView,
+  ModRemoveCommentView,
+  ModRemovePostView,
+  ModTransferCategoryView,
+  ModlogCombinedView,
+  ModlogCombinedViewInternal,
 };
 use app_108jobs_db_schema::{
   aliases,
@@ -15,7 +29,9 @@ use app_108jobs_db_schema::{
   },
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, paginate,
+    get_conn,
+    limit_fetch,
+    paginate,
     queries::{filter_is_subscribed, filter_not_unlisted_or_is_subscribed},
     DbPool,
   },
@@ -24,16 +40,39 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{
-    admin_allow_instance, admin_block_instance, admin_purge_category, admin_purge_comment,
-    admin_purge_person, admin_purge_post, category, category_actions, comment, instance, mod_add,
-    mod_add_category, mod_ban, mod_ban_from_category, mod_change_category_visibility,
-    mod_feature_post, mod_lock_post, mod_remove_category, mod_remove_comment, mod_remove_post,
-    mod_transfer_category, modlog_combined, person, post,
+    admin_allow_instance,
+    admin_block_instance,
+    admin_purge_category,
+    admin_purge_comment,
+    admin_purge_person,
+    admin_purge_post,
+    category,
+    category_actions,
+    comment,
+    instance,
+    mod_add,
+    mod_add_category,
+    mod_ban,
+    mod_ban_from_category,
+    mod_change_category_visibility,
+    mod_feature_post,
+    mod_lock_post,
+    mod_remove_category,
+    mod_remove_comment,
+    mod_remove_post,
+    mod_transfer_category,
+    modlog_combined,
+    person,
+    post,
   },
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
@@ -570,25 +609,49 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
 mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
-    newtypes::PersonId,
+    newtypes::{DbUrl, PersonId},
     source::{
       category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::Instance,
       mod_log::{
         admin::{
-          AdminAllowInstance, AdminAllowInstanceForm, AdminBlockInstance, AdminBlockInstanceForm,
-          AdminPurgeComment, AdminPurgeCommentForm, AdminPurgePerson, AdminPurgePersonForm,
-          AdminPurgePost, AdminPurgePostForm, AdminPurgeCategory, AdminPurgeCategoryForm,
+          AdminAllowInstance,
+          AdminAllowInstanceForm,
+          AdminBlockInstance,
+          AdminBlockInstanceForm,
+          AdminPurgeCategory,
+          AdminPurgeCategoryForm,
+          AdminPurgeComment,
+          AdminPurgeCommentForm,
+          AdminPurgePerson,
+          AdminPurgePersonForm,
+          AdminPurgePost,
+          AdminPurgePostForm,
         },
         moderator::{
-          ModAdd, ModAddForm, ModAddCategory, ModAddCategoryForm, ModBan, ModBanForm,
-          ModBanFromCategory, ModBanFromCategoryForm, ModChangeCategoryVisibility,
-          ModChangeCategoryVisibilityForm, ModFeaturePost, ModFeaturePostForm, ModLockPost,
-          ModLockPostForm, ModRemoveComment, ModRemoveCommentForm, ModRemovePost,
-          ModRemovePostForm, ModRemoveCategory, ModRemoveCategoryForm, ModTransferCategory,
+          ModAdd,
+          ModAddCategory,
+          ModAddCategoryForm,
+          ModAddForm,
+          ModBan,
+          ModBanForm,
+          ModBanFromCategory,
+          ModBanFromCategoryForm,
+          ModChangeCategoryVisibility,
+          ModChangeCategoryVisibilityForm,
+          ModFeaturePost,
+          ModFeaturePostForm,
+          ModLockPost,
+          ModLockPostForm,
+          ModRemoveCategory,
+          ModRemoveCategoryForm,
+          ModRemoveComment,
+          ModRemoveCommentForm,
+          ModRemovePost,
+          ModRemovePostForm,
+          ModTransferCategory,
           ModTransferCategoryForm,
         },
       },
@@ -620,13 +683,16 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_rcv");
+    let (timmy_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_rcv").await?;
     let timmy = Person::create(pool, &timmy_form).await?;
 
-    let sara_form = PersonInsertForm::test_form(instance.id, "sara_rcv");
+    let (sara_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_rcv").await?;
     let sara = Person::create(pool, &sara_form).await?;
 
-    let jessica_form = PersonInsertForm::test_form(instance.id, "jessica_mrv");
+    let (jessica_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "jessica_mrv").await?;
     let jessica = Person::create(pool, &jessica_form).await?;
 
     let category_form = CategoryInsertForm::new(

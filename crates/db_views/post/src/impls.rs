@@ -1,8 +1,7 @@
 use crate::{PostPreview, PostView};
-use app_108jobs_db_schema::newtypes::{Coin, LanguageId};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
   source::{
     category::CategoryActions,
     local_user::LocalUser,
@@ -12,35 +11,64 @@ use app_108jobs_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::{
-      creator_category_actions_join, creator_category_instance_actions_join,
-      creator_home_instance_actions_join, creator_local_instance_actions_join, filter_blocked,
-      filter_is_subscribed, filter_not_unlisted_or_is_subscribed, image_details_join,
-      my_category_actions_join, my_instance_actions_category_join, my_local_user_admin_join,
-      my_person_actions_join, my_post_actions_join,
+      creator_category_actions_join,
+      creator_category_instance_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      filter_blocked,
+      filter_is_subscribed,
+      filter_not_unlisted_or_is_subscribed,
+      image_details_join,
+      my_category_actions_join,
+      my_instance_actions_category_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
+      my_post_actions_join,
     },
-    seconds_to_pg_interval, Commented, DbPool,
+    seconds_to_pg_interval,
+    Commented,
+    DbPool,
   },
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, TripStatus};
 use app_108jobs_db_schema_file::{
   enums::{
-    CategoryFollowerState, CategoryVisibility, ListingType,
+    CategoryFollowerState,
+    CategoryVisibility,
+    IntendedUse,
+    JobType,
+    ListingType,
+    PostKind,
     PostSortType::{self, *},
+    TripStatus,
   },
   schema::{
-    category, category_actions, delivery_details, local_user_language, person, post, post_actions,
+    category,
+    category_actions,
+    delivery_details,
+    local_user_language,
+    person,
+    post,
+    post_actions,
     ride_session,
   },
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  self, debug_query,
+  self,
+  debug_query,
   dsl::{exists, not},
   pg::Pg,
   query_builder::AsQuery,
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
   TextExpressionMethods,
 };
 use diesel_async::RunQueryDsl;
@@ -629,10 +657,9 @@ mod tests {
     impls::{PostQuery, PostSortType},
     PostView,
   };
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
-    newtypes::LanguageId,
+    newtypes::{DbUrl, LanguageId},
     source::{
       actor_language::LocalUserLanguage,
       category::{category, Category, CategoryInsertForm, CategoryUpdateForm},
@@ -644,7 +671,13 @@ mod tests {
       local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
       post::{
-        Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadForm, PostUpdateForm,
+        Post,
+        PostActions,
+        PostHideForm,
+        PostInsertForm,
+        PostLikeForm,
+        PostReadForm,
+        PostUpdateForm,
       },
       post_tag::{PostTag, PostTagForm},
       site::Site,
@@ -713,7 +746,8 @@ mod tests {
       let pool = &mut (&actual_pool).into();
       let data = TestData::create(pool).await?;
 
-      let tegan_person_form = PersonInsertForm::test_form(data.instance.id, "tegan");
+      let (tegan_person_form, _) =
+        PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "tegan").await?;
       let inserted_tegan_person = Person::create(pool, &tegan_person_form).await?;
       let tegan_local_user_form = LocalUserInsertForm {
         admin: Some(true),
@@ -722,9 +756,11 @@ mod tests {
       let inserted_tegan_local_user =
         LocalUser::create(pool, &tegan_local_user_form, vec![]).await?;
 
+      let (mybot_base, _) =
+        PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "mybot").await?;
       let bot_person_form = PersonInsertForm {
         bot_account: Some(true),
-        ..PersonInsertForm::test_form(data.instance.id, "mybot")
+        ..mybot_base
       };
       let inserted_bot_person = Person::create(pool, &bot_person_form).await?;
       let inserted_bot_local_user = LocalUser::create(
@@ -742,7 +778,8 @@ mod tests {
       let category = Category::create(pool, &new_category).await?;
 
       // Test a person block, make sure the post query doesn't include their post
-      let john_person_form = PersonInsertForm::test_form(data.instance.id, "john");
+      let (john_person_form, _) =
+        PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "john").await?;
       let inserted_john_person = Person::create(pool, &john_person_form).await?;
       let inserted_john_local_user = LocalUser::create(
         pool,
@@ -805,10 +842,7 @@ mod tests {
       let new_post = PostInsertForm {
         language_id: Some(LanguageId(47)),
         category_id: Some(category.id),
-        ..PostInsertForm::new(
-          POST_WITH_TAGS.to_string(),
-          inserted_tegan_person.id,
-        )
+        ..PostInsertForm::new(POST_WITH_TAGS.to_string(), inserted_tegan_person.id)
       };
 
       let post_with_tags = Post::create(pool, &new_post).await?;
@@ -1528,10 +1562,7 @@ mod tests {
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
       category_id: Some(inserted_category.id),
-      ..PostInsertForm::new(
-        POST_FROM_BLOCKED_INSTANCE.to_string(),
-        data.bot.person.id,
-      )
+      ..PostInsertForm::new(POST_FROM_BLOCKED_INSTANCE.to_string(), data.bot.person.id)
     };
     let post_from_blocked_instance = Post::create(pool, &post_form).await?;
 
@@ -1585,10 +1616,7 @@ mod tests {
           featured_category: Some((comments % 2) == 0),
           published_at: Some(Utc::now() - Duration::from_secs(comments % 3)),
           category_id: Some(inserted_category.id),
-          ..PostInsertForm::new(
-            "keep Christ in Christmas".to_owned(),
-            data.tegan.person.id,
-          )
+          ..PostInsertForm::new("keep Christ in Christmas".to_owned(), data.tegan.person.id)
         };
         let inserted_post = Post::create(pool, &post_form).await?;
         inserted_post_ids.push(inserted_post.id);
@@ -1864,7 +1892,8 @@ mod tests {
     let pool = &mut pool.into();
 
     // Test that post view shows if local user is blocked from category
-    let banned_from_comm_person = PersonInsertForm::test_form(data.instance.id, "jill");
+    let (banned_from_comm_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "jill").await?;
 
     let inserted_banned_from_comm_person = Person::create(pool, &banned_from_comm_person).await?;
 
@@ -1918,17 +1947,15 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    let banned_person_form = PersonInsertForm::test_form(data.instance.id, "jill");
+    let (banned_person_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, data.instance.id, "jill").await?;
 
     let banned_person = Person::create(pool, &banned_person_form).await?;
 
     let post_form = PostInsertForm {
       language_id: Some(LanguageId(1)),
       category_id: Some(data.category.id),
-      ..PostInsertForm::new(
-        "banned person post".to_string(),
-        banned_person.id,
-      )
+      ..PostInsertForm::new("banned person post".to_string(), banned_person.id)
     };
     let banned_post = Post::create(pool, &post_form).await?;
 
@@ -2183,29 +2210,20 @@ mod tests {
     let post_body_blocked = PostInsertForm {
       body: Some(body),
       category_id: Some(data.category.id),
-      ..PostInsertForm::new(
-        name_not_blocked.clone(),
-        data.tegan.person.id,
-      )
+      ..PostInsertForm::new(name_not_blocked.clone(), data.tegan.person.id)
     };
 
     let post_url_blocked = PostInsertForm {
       url,
       category_id: Some(data.category.id),
-      ..PostInsertForm::new(
-        name_not_blocked2.clone(),
-        data.tegan.person.id,
-      )
+      ..PostInsertForm::new(name_not_blocked2.clone(), data.tegan.person.id)
     };
 
     let post_name_blocked_but_not_body_and_url = PostInsertForm {
       body: Some("Some body".to_string()),
       url: Some(Url::parse("https://google.com")?.into()),
       category_id: Some(data.category.id),
-      ..PostInsertForm::new(
-        name_blocked2.clone(),
-        data.tegan.person.id,
-      )
+      ..PostInsertForm::new(name_blocked2.clone(), data.tegan.person.id)
     };
     Post::create(pool, &post_name_blocked).await?;
     Post::create(pool, &post_body_blocked).await?;

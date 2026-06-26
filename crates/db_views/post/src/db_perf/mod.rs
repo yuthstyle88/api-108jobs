@@ -15,7 +15,9 @@ use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
 use app_108jobs_utils::error::FastJobResult;
 use diesel::{
   dsl::{self, sql},
-  sql_types, ExpressionMethods, IntoSql,
+  sql_types,
+  ExpressionMethods,
+  IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;
@@ -69,7 +71,9 @@ async fn db_perf() -> FastJobResult<()> {
   println!("🫃 creating {} people", args.people);
   let mut person_ids = vec![];
   for i in 0..args.people.get() {
-    let form = PersonInsertForm::test_form(instance.id, &format!("p{i}"));
+    let (form, _) =
+      PersonInsertForm::test_form_with_wallet(&mut conn.into(), instance.id, &format!("p{i}"))
+        .await?;
     person_ids.push(Person::create(&mut conn.into(), &form).await?.id);
   }
 

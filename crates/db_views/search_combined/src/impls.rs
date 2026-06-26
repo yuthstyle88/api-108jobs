@@ -1,40 +1,64 @@
 use crate::{
-  CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
-  SearchCombinedViewInternal, SearchPostView,
+  CategoryView,
+  CommentView,
+  LocalUserView,
+  PersonView,
+  PostView,
+  SearchCombinedView,
+  SearchCombinedViewInternal,
+  SearchPostView,
 };
-use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PostId};
 use app_108jobs_db_schema::{
-  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId},
+  newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
   source::{
     combined::search::{search_combined_keys as key, SearchCombined},
     site::Site,
   },
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    fuzzy_search, get_conn, limit_fetch, now, paginate,
+    fuzzy_search,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::{
-      creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
+      creator_category_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      creator_local_user_admin_join,
+      image_details_join,
+      my_category_actions_join,
+      my_comment_actions_join,
+      my_instance_actions_person_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
+      my_post_actions_join,
     },
-    seconds_to_pg_interval, DbPool,
+    seconds_to_pg_interval,
+    DbPool,
   },
   SearchSortType::{self, *},
   SearchType,
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, PostKind, TripStatus};
-use app_108jobs_db_schema_file::schema::{
-  category, comment, delivery_details, person, post, ride_session, search_combined,
+use app_108jobs_db_schema_file::{
+  enums::{IntendedUse, JobType, PostKind, TripStatus},
+  schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
 };
 use app_108jobs_db_views_post::logistics::{
-  build_logistics_from_maps, fetch_logistics_maps_by_ids, LogisticsViewer,
+  build_logistics_from_maps,
+  fetch_logistics_maps_by_ids,
+  LogisticsViewer,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgTextExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgTextExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -488,7 +512,8 @@ mod tests {
     },
     traits::{Crud, Likeable},
     utils::{build_db_pool_for_tests, DbPool},
-    SearchSortType, SearchType,
+    SearchSortType,
+    SearchType,
   };
   use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
@@ -518,10 +543,12 @@ mod tests {
     let site_form = SiteInsertForm::new("test_site".to_string(), instance.id);
     let site = Site::create(pool, &site_form).await?;
 
-    let sara_form = PersonInsertForm::test_form(instance.id, "sara_pcv");
+    let (sara_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_pcv").await?;
     let sara = Person::create(pool, &sara_form).await?;
 
-    let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
+    let (timmy_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_pcv").await?;
     let timmy = Person::create(pool, &timmy_form).await?;
     let timmy_local_user_form = LocalUserInsertForm::test_form(timmy.id);
     let timmy_local_user = LocalUser::create(pool, &timmy_local_user_form, vec![]).await?;
@@ -666,10 +693,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(
-        data.category_2.id,
-        v.category.as_ref().unwrap().id
-      );
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }
@@ -707,10 +731,7 @@ mod tests {
     }
 
     if let SearchCombinedView::Category(v) = &search[6] {
-      assert_eq!(
-        data.category_2.id,
-        v.category.id
-      );
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -842,10 +863,7 @@ mod tests {
 
     // Make sure the types are correct
     if let SearchCombinedView::Category(v) = &category_search[0] {
-      assert_eq!(
-        data.category_2.id,
-        v.category.id
-      );
+      assert_eq!(data.category_2.id, v.category.id);
     } else {
       panic!("wrong type");
     }
@@ -1179,10 +1197,7 @@ mod tests {
     if let SearchCombinedView::Comment(v) = &comment_search[1] {
       assert_eq!(data.sara_comment.id, v.comment.id);
       assert_eq!(data.sara_post.id, v.post.id);
-      assert_eq!(
-        data.category_2.id,
-        v.category.as_ref().unwrap().id
-      );
+      assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
     } else {
       panic!("wrong type");
     }

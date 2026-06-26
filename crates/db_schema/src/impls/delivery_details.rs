@@ -1,6 +1,13 @@
 use crate::{
   newtypes::{
-    CoinId, CommentId, DeliveryDetailsId, LocalUserId, PersonId, PostId, RiderId, WalletId,
+    CoinId,
+    CommentId,
+    DeliveryDetailsId,
+    LocalUserId,
+    PersonId,
+    PostId,
+    RiderId,
+    WalletId,
   },
   source::{
     delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm, DeliveryDetailsUpdateForm},
@@ -12,20 +19,19 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use chrono::{DateTime, Utc};
-use diesel::dsl::{insert_into, update};
-use diesel::ExpressionMethods;
-use diesel::QueryDsl;
-use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
-use uuid::Uuid;
-
-use app_108jobs_db_schema_file::enums::{PostKind, RiderVerificationStatus, TripStatus};
-use app_108jobs_db_schema_file::schema::delivery_details;
-use app_108jobs_db_schema_file::schema::{
-  local_user as local_user_tbl, post as post_tbl, rider as rider_tbl,
+use app_108jobs_db_schema_file::{
+  enums::{PostKind, RiderVerificationStatus, TripStatus},
+  schema::{delivery_details, local_user as local_user_tbl, post as post_tbl, rider as rider_tbl},
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use chrono::{DateTime, Utc};
+use diesel::{
+  dsl::{insert_into, update},
+  ExpressionMethods,
+  QueryDsl,
+};
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
+use uuid::Uuid;
 
 impl Crud for DeliveryDetails {
   type InsertForm = DeliveryDetailsInsertForm;
@@ -65,8 +71,7 @@ impl DeliveryDetails {
     person_id: PersonId,
     post_id: PostId,
   ) -> FastJobResult<RiderId> {
-    use diesel::dsl::select;
-    use diesel::ExpressionMethods;
+    use diesel::{dsl::select, ExpressionMethods};
 
     let conn = &mut get_conn(pool).await?;
 
@@ -214,7 +219,8 @@ impl DeliveryDetails {
       .map_err(|_| FastJobErrorType::NotFound.into())
   }
 
-  /// Get all active deliveries (in progress: Assigned, EnRouteToPickup, PickedUp, EnRouteToDropoff).
+  /// Get all active deliveries (in progress: Assigned, EnRouteToPickup, PickedUp,
+  /// EnRouteToDropoff).
   pub async fn get_all_active(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     use diesel::QueryDsl;
     let conn = &mut get_conn(pool).await?;
@@ -616,12 +622,11 @@ impl DeliveryDetails {
 // DB-backed tests for the delivery lifecycle.
 //
 // Coverage:
-//   * can_transition_to: every legal forward + cancel transition allowed,
-//     terminal states rejected, every illegal pair rejected.
+//   * can_transition_to: every legal forward + cancel transition allowed, terminal states rejected,
+//     every illegal pair rejected.
 //   * update_status enforces those rules (Pending -> Delivered blocked).
 //   * Status transitions persist the new status and updated_at.
-//   * Cancellation persists the supplied reason; non-cancel transitions
-//     clear the reason field.
+//   * Cancellation persists the supplied reason; non-cancel transitions clear the reason field.
 //
 // NOTE on the escrow/confirm flows (`assign_from_comment_with_escrow`,
 // `confirm_completion_and_release_payment`): these were exercised by hand
@@ -636,10 +641,14 @@ impl DeliveryDetails {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::source::post::PostInsertForm;
-  use crate::test_data::pool_for_tests;
+  use crate::{
+    source::{
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::PostInsertForm,
+    },
+    test_data::pool_for_tests,
+  };
   use app_108jobs_db_schema_file::schema::post;
   use diesel_async::RunQueryDsl;
   use serial_test::serial;
@@ -832,6 +841,183 @@ mod tests {
       moved.cancellation_reason.is_none(),
       "non-cancel transition must clear cancellation_reason; got {:?}",
       moved.cancellation_reason
+    );
+    cleanup(pool, instance_id).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn get_by_post_id_returns_correct_delivery() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, delivery) = fixture_with_status(pool, TripStatus::Pending).await;
+
+    let found = DeliveryDetails::get_by_post_id(pool, post_id)
+      .await
+      .expect("should find delivery by post_id");
+
+    assert_eq!(found.post_id, delivery.post_id);
+    assert_eq!(found.status, TripStatus::Pending);
+    assert_eq!(found.pickup_address, delivery.pickup_address);
+    cleanup(pool, instance_id).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn get_by_post_id_missing_returns_not_found() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    let missing_id = PostId(i32::MAX);
+    let err = DeliveryDetails::get_by_post_id(pool, missing_id)
+      .await
+      .expect_err("should error for missing post_id");
+
+    let msg = format!("{err:?}");
+    assert!(
+      msg.contains("NotFound"),
+      "expected NotFound error, got {msg}"
+    );
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn get_all_active_includes_in_progress_excludes_terminal() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    // Assigned is in-progress → must appear; Delivered + Cancelled are terminal → must not appear
+    let (inst1, pid1, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+    let (inst2, pid2, _) = fixture_with_status(pool, TripStatus::Delivered).await;
+    let (inst3, pid3, _) = fixture_with_status(pool, TripStatus::Cancelled).await;
+
+    let active = DeliveryDetails::get_all_active(pool)
+      .await
+      .expect("get_all_active");
+
+    let ids: Vec<PostId> = active.iter().map(|d| d.post_id).collect();
+    assert!(
+      ids.contains(&pid1),
+      "Assigned delivery must be in active list"
+    );
+    assert!(
+      !ids.contains(&pid2),
+      "Delivered delivery must not be in active list"
+    );
+    assert!(
+      !ids.contains(&pid3),
+      "Cancelled delivery must not be in active list"
+    );
+
+    cleanup(pool, inst1).await;
+    cleanup(pool, inst2).await;
+    cleanup(pool, inst3).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn get_all_completed_returns_delivered_only() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    let (inst1, pid1, _) = fixture_with_status(pool, TripStatus::Delivered).await;
+    let (inst2, pid2, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+    let (inst3, pid3, _) = fixture_with_status(pool, TripStatus::Cancelled).await;
+
+    let completed = DeliveryDetails::get_all_completed(pool)
+      .await
+      .expect("get_all_completed");
+
+    let ids: Vec<PostId> = completed.iter().map(|d| d.post_id).collect();
+    assert!(
+      ids.contains(&pid1),
+      "Delivered delivery must be in completed list"
+    );
+    assert!(
+      !ids.contains(&pid2),
+      "Assigned delivery must not be in completed list"
+    );
+    assert!(
+      !ids.contains(&pid3),
+      "Cancelled delivery must not be in completed list"
+    );
+
+    cleanup(pool, inst1).await;
+    cleanup(pool, inst2).await;
+    cleanup(pool, inst3).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn get_all_cancelled_returns_cancelled_only() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    let (inst1, pid1, _) = fixture_with_status(pool, TripStatus::Cancelled).await;
+    let (inst2, pid2, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    let cancelled = DeliveryDetails::get_all_cancelled(pool)
+      .await
+      .expect("get_all_cancelled");
+
+    let ids: Vec<PostId> = cancelled.iter().map(|d| d.post_id).collect();
+    assert!(
+      ids.contains(&pid1),
+      "Cancelled delivery must be in cancelled list"
+    );
+    assert!(
+      !ids.contains(&pid2),
+      "Assigned delivery must not be in cancelled list"
+    );
+
+    cleanup(pool, inst1).await;
+    cleanup(pool, inst2).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn validate_rider_identity_rejects_terminal_delivery() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Delivered).await;
+
+    let dummy_person = crate::newtypes::PersonId(i32::MAX);
+    let err = DeliveryDetails::validate_rider_identity(pool, dummy_person, post_id)
+      .await
+      .expect_err("terminal delivery must be rejected before rider check");
+
+    let msg = format!("{err:?}");
+    assert!(
+      msg.contains("DeliveryIsNotActive"),
+      "expected DeliveryIsNotActive, got {msg}"
+    );
+    cleanup(pool, instance_id).await;
+  }
+
+  #[tokio::test]
+  #[serial]
+  async fn validate_rider_identity_rejects_non_rider() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    // Create a plain person with no rider record
+    let (person_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance_id, "plain_user_vri")
+        .await
+        .expect("test_form_with_wallet");
+    let person = Person::create(pool, &person_form)
+      .await
+      .expect("create person");
+
+    let err = DeliveryDetails::validate_rider_identity(pool, person.id, post_id)
+      .await
+      .expect_err("person without rider record must be rejected");
+
+    let msg = format!("{err:?}");
+    assert!(
+      msg.contains("NotAnActiveRider"),
+      "expected NotAnActiveRider, got {msg}"
     );
     cleanup(pool, instance_id).await;
   }

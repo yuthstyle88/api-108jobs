@@ -1,5 +1,7 @@
-use crate::api::{CreateCategory, CreateCategoryRequest};
-use crate::CategoryView;
+use crate::{
+  api::{CreateCategory, CreateCategoryRequest},
+  CategoryView,
+};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, PaginationCursor, PersonId},
@@ -10,12 +12,20 @@ use app_108jobs_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::{
-      filter_is_subscribed, filter_not_unlisted_or_is_subscribed, my_category_actions_join,
-      my_instance_actions_category_join, my_local_user_admin_join,
+      filter_is_subscribed,
+      filter_not_unlisted_or_is_subscribed,
+      my_category_actions_join,
+      my_instance_actions_category_join,
+      my_local_user_admin_join,
     },
-    seconds_to_pg_interval, DbPool, LowerKey,
+    seconds_to_pg_interval,
+    DbPool,
+    LowerKey,
   },
   CategorySortType,
 };
@@ -23,10 +33,11 @@ use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{category, category_actions},
 };
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::utils::validation::get_required_trimmed;
-use diesel::pg::Pg;
-use diesel::{debug_query, ExpressionMethods, QueryDsl, SelectableHelper};
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  utils::validation::get_required_trimmed,
+};
+use diesel::{debug_query, pg::Pg, ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use diesel_ltree::nlevel;
 use i_love_jesus::asc_if;
@@ -126,8 +137,8 @@ impl CategoryQuery<'_> {
       };
     }
 
-    // Don't show blocked communities and communities on blocked instances. self_promotion communities are
-    // also hidden (based on profile setting)
+    // Don't show blocked communities and communities on blocked instances. self_promotion
+    // communities are also hidden (based on profile setting)
     if !(o.local_user.self_promotion(site) || o.self_promotion.unwrap_or_default()) {
       query = query.filter(category::self_promotion.eq(false));
     }
@@ -234,7 +245,8 @@ mod tests {
 
     let person_name = "tegan".to_string();
 
-    let new_person = PersonInsertForm::test_form(instance.id, &person_name);
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, &person_name).await?;
 
     let inserted_person = Person::create(pool, &new_person).await?;
 

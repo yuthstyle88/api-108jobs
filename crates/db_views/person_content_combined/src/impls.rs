@@ -1,5 +1,8 @@
 use crate::{
-  CommentView, LocalUserView, PersonContentCombinedView, PersonContentCombinedViewInternal,
+  CommentView,
+  LocalUserView,
+  PersonContentCombinedView,
+  PersonContentCombinedViewInternal,
   PostView,
 };
 use app_108jobs_db_schema::{
@@ -8,23 +11,41 @@ use app_108jobs_db_schema::{
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, paginate,
+    get_conn,
+    limit_fetch,
+    paginate,
     queries::{
-      category_join, creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
+      category_join,
+      creator_category_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      creator_local_user_admin_join,
+      image_details_join,
+      my_category_actions_join,
+      my_comment_actions_join,
+      my_instance_actions_person_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
+      my_post_actions_join,
     },
     DbPool,
   },
   PersonContentType,
 };
 use app_108jobs_db_schema_file::schema::{
-  comment, delivery_details, person, person_content_combined, post,
+  comment,
+  delivery_details,
+  person,
+  person_content_combined,
+  post,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
@@ -262,8 +283,10 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
 
-  use crate::impls::app_108jobs_db_schema::newtypes::DbUrl;
-  use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
+  use crate::{
+    impls::{app_108jobs_db_schema::newtypes::DbUrl, PersonContentCombinedQuery},
+    PersonContentCombinedView,
+  };
   use app_108jobs_db_schema::{
     source::{
       category::{category, Category, CategoryInsertForm},
@@ -293,10 +316,12 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
+    let (timmy_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_pcv").await?;
     let timmy = Person::create(pool, &timmy_form).await?;
 
-    let sara_form = PersonInsertForm::test_form(instance.id, "sara_pcv");
+    let (sara_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_pcv").await?;
     let sara = Person::create(pool, &sara_form).await?;
 
     let category_form = CategoryInsertForm::new(

@@ -1,5 +1,8 @@
 use crate::{
-  CommentReplyView, InboxCombinedView, InboxCombinedViewInternal, PersonCommentMentionView,
+  CommentReplyView,
+  InboxCombinedView,
+  InboxCombinedViewInternal,
+  PersonCommentMentionView,
   PersonPostMentionView,
 };
 use app_108jobs_db_schema::{
@@ -8,24 +11,46 @@ use app_108jobs_db_schema::{
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, paginate,
+    get_conn,
+    limit_fetch,
+    paginate,
     queries::{
-      category_join, creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
+      category_join,
+      creator_category_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      creator_local_user_admin_join,
+      image_details_join,
+      my_category_actions_join,
+      my_comment_actions_join,
+      my_instance_actions_person_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
+      my_post_actions_join,
     },
     DbPool,
   },
   InboxDataType,
 };
 use app_108jobs_db_schema_file::schema::{
-  comment, comment_reply, inbox_combined, instance_actions, person, person_actions,
-  person_comment_mention, person_post_mention, post,
+  comment,
+  comment_reply,
+  inbox_combined,
+  instance_actions,
+  person,
+  person_actions,
+  person_comment_mention,
+  person_post_mention,
+  post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
+  dsl::not,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -380,9 +405,9 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
+    newtypes::DbUrl,
     source::{
       category::{category, Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
@@ -415,13 +440,16 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let timmy_form = PersonInsertForm::test_form(instance.id, "timmy_pcv");
+    let (timmy_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_pcv").await?;
     let timmy = Person::create(pool, &timmy_form).await?;
 
-    let sara_form = PersonInsertForm::test_form(instance.id, "sara_pcv");
+    let (sara_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_pcv").await?;
     let sara = Person::create(pool, &sara_form).await?;
 
-    let jessica_form = PersonInsertForm::test_form(instance.id, "jessica_mrv");
+    let (jessica_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "jessica_mrv").await?;
     let jessica = Person::create(pool, &jessica_form).await?;
 
     let category_form = CategoryInsertForm::new(

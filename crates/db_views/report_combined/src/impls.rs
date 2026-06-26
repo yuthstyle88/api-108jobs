@@ -1,5 +1,9 @@
 use crate::{
-  CategoryReportView, CommentReportView, LocalUserView, PostReportView, ReportCombinedView,
+  CategoryReportView,
+  CommentReportView,
+  LocalUserView,
+  PostReportView,
+  ReportCombinedView,
   ReportCombinedViewInternal,
 };
 use app_108jobs_db_schema::{
@@ -11,14 +15,30 @@ use app_108jobs_db_schema::{
   ReportType,
 };
 use app_108jobs_db_schema_file::schema::{
-  category, category_actions, category_report, comment, comment_actions, comment_report,
-  local_user, person, person_actions, post, post_actions, post_report, report_combined,
+  category,
+  category_actions,
+  category_report,
+  comment,
+  comment_actions,
+  comment_report,
+  local_user,
+  person,
+  person_actions,
+  post,
+  post_actions,
+  post_report,
+  report_combined,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Days, Utc};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -393,11 +413,14 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
 mod tests {
 
   use crate::{
-    impls::ReportCombinedQuery, LocalUserView, ReportCombinedView, ReportCombinedViewInternal,
+    impls::ReportCombinedQuery,
+    LocalUserView,
+    ReportCombinedView,
+    ReportCombinedViewInternal,
   };
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
     assert_length,
+    newtypes::DbUrl,
     source::{
       category::{category, Category, CategoryInsertForm},
       category_report::{CategoryReport, CategoryReportForm},
@@ -437,7 +460,8 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let timmy_form = PersonInsertForm::test_form(inserted_instance.id, "timmy_rcv");
+    let (timmy_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "timmy_rcv").await?;
     let inserted_timmy = Person::create(pool, &timmy_form).await?;
     let timmy_local_user_form = LocalUserInsertForm::test_form(inserted_timmy.id);
     let timmy_local_user = LocalUser::create(pool, &timmy_local_user_form, vec![]).await?;
@@ -448,7 +472,8 @@ mod tests {
     };
 
     // Make an admin, to be able to see private message reports.
-    let admin_form = PersonInsertForm::test_form(inserted_instance.id, "admin_rcv");
+    let (admin_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "admin_rcv").await?;
     let inserted_admin = Person::create(pool, &admin_form).await?;
     let admin_local_user_form = LocalUserInsertForm::test_form_admin(inserted_admin.id);
     let admin_local_user = LocalUser::create(pool, &admin_local_user_form, vec![]).await?;
@@ -458,10 +483,12 @@ mod tests {
       banned: false,
     };
 
-    let sara_form = PersonInsertForm::test_form(inserted_instance.id, "sara_rcv");
+    let (sara_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "sara_rcv").await?;
     let inserted_sara = Person::create(pool, &sara_form).await?;
 
-    let jessica_form = PersonInsertForm::test_form(inserted_instance.id, "jessica_mrv");
+    let (jessica_form, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jessica_mrv").await?;
     let inserted_jessica = Person::create(pool, &jessica_form).await?;
 
     let category_form = CategoryInsertForm::new(
@@ -473,19 +500,13 @@ mod tests {
 
     let post_form = PostInsertForm {
       category_id: Some(inserted_category.id),
-      ..PostInsertForm::new(
-        "A test post crv".into(),
-        inserted_timmy.id,
-      )
+      ..PostInsertForm::new("A test post crv".into(), inserted_timmy.id)
     };
     let inserted_post = Post::create(pool, &post_form).await?;
 
     let new_post_2 = PostInsertForm {
       category_id: Some(inserted_category.id),
-      ..PostInsertForm::new(
-        "A test post crv 2".into(),
-        inserted_timmy.id,
-      )
+      ..PostInsertForm::new("A test post crv 2".into(), inserted_timmy.id)
     };
     let inserted_post_2 = Post::create(pool, &new_post_2).await?;
 

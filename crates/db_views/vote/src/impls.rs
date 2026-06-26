@@ -6,11 +6,20 @@ use app_108jobs_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  category_actions, comment, comment_actions, person, post, post_actions,
+  category_actions,
+  comment,
+  comment_actions,
+  person,
+  post,
+  post_actions,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -172,8 +181,8 @@ impl VoteView {
 #[cfg(test)]
 mod tests {
   use crate::VoteView;
-  use app_108jobs_db_schema::newtypes::DbUrl;
   use app_108jobs_db_schema::{
+    newtypes::DbUrl,
     source::{
       category::{Category, CategoryInsertForm},
       comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
@@ -196,11 +205,13 @@ mod tests {
 
     let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
-    let new_person = PersonInsertForm::test_form(inserted_instance.id, "timmy_vv");
+    let (new_person, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "timmy_vv").await?;
 
     let inserted_timmy = Person::create(pool, &new_person).await?;
 
-    let new_person_2 = PersonInsertForm::test_form(inserted_instance.id, "sara_vv");
+    let (new_person_2, _) =
+      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "sara_vv").await?;
 
     let inserted_sara = Person::create(pool, &new_person_2).await?;
 
@@ -213,10 +224,7 @@ mod tests {
 
     let new_post = PostInsertForm {
       category_id: Some(inserted_category.id),
-      ..PostInsertForm::new(
-        "A test post vv".into(),
-        inserted_timmy.id,
-      )
+      ..PostInsertForm::new("A test post vv".into(), inserted_timmy.id)
     };
     let inserted_post = Post::create(pool, &new_post).await?;
 

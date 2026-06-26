@@ -4,9 +4,12 @@ use app_108jobs_db_schema::{
   source::person::{person_keys as key, Person},
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, paginate,
+    get_conn,
+    limit_fetch,
+    paginate,
     queries::{
-      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
       my_person_actions_join,
     },
     DbPool,
@@ -147,18 +150,21 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
+    let (alice_base, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "alice").await?;
     let alice_form = PersonInsertForm {
       local: Some(true),
-      ..PersonInsertForm::test_form(instance.id, "alice")
+      ..alice_base
     };
     let alice = Person::create(pool, &alice_form).await?;
     let alice_local_user_form = LocalUserInsertForm::test_form(alice.id);
     let alice_local_user = LocalUser::create(pool, &alice_local_user_form, vec![]).await?;
 
+    let (bob_base, _) = PersonInsertForm::test_form_with_wallet(pool, instance.id, "bob").await?;
     let bob_form = PersonInsertForm {
       bot_account: Some(true),
       local: Some(false),
-      ..PersonInsertForm::test_form(instance.id, "bob")
+      ..bob_base
     };
     let bob = Person::create(pool, &bob_form).await?;
     let bob_local_user_form = LocalUserInsertForm::test_form(bob.id);

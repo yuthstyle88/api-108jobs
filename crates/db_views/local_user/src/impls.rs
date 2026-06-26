@@ -1,6 +1,5 @@
 use crate::LocalUserView;
 use actix_web::{dev::Payload, FromRequest, HttpMessage, HttpRequest};
-use app_108jobs_db_schema::utils::limit_fetch;
 use app_108jobs_db_schema::{
   aliases::creator_home_instance_actions,
   newtypes::{LocalUserId, OAuthProviderId, PaginationCursor, PersonId},
@@ -12,7 +11,10 @@ use app_108jobs_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{
     functions::{coalesce, lower},
-    get_conn, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::creator_home_instance_actions_join,
     DbPool,
   },
@@ -20,7 +22,11 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -127,10 +133,11 @@ impl LocalUserView {
     let instance_id = Instance::read_or_create(pool, "example.com".to_string())
       .await?
       .id;
+    let (person_base, _) = PersonInsertForm::test_form_with_wallet(pool, instance_id, name).await?;
     let person_form = PersonInsertForm {
       display_name: Some(name.to_owned()),
       bio: Some(bio.to_owned()),
-      ..PersonInsertForm::test_form(instance_id, name)
+      ..person_base
     };
     let person = Person::create(pool, &person_form).await?;
 
@@ -252,9 +259,11 @@ mod tests {
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
     let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
 
+    let (alice_base, _) =
+      PersonInsertForm::test_form_with_wallet(pool, instance.id, "alice").await?;
     let alice_form = PersonInsertForm {
       local: Some(true),
-      ..PersonInsertForm::test_form(instance.id, "alice")
+      ..alice_base
     };
     let alice = Person::create(pool, &alice_form).await?;
     let alice_local_user_form = LocalUserInsertForm::test_form(alice.id);

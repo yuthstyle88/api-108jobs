@@ -15,6 +15,7 @@ use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
 use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
 use app_108jobs_api::delivery::list::{
   get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
+  get_delivery,
 };
 use app_108jobs_api::delivery::location::{
   get_location as get_trip_location, post_location as post_trip_location,
@@ -267,7 +268,10 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             .route("/{postId}/status", put().to(update_delivery_status))
             .route("/{postId}/assign", post().to(assign_delivery_from_proposal))
-            .route("/{postId}/confirm", post().to(confirm_delivery_completion)),
+            .route("/{postId}/confirm", post().to(confirm_delivery_completion))
+            // Registered last so the literal /active|/completed|/cancelled
+            // routes above are matched before this single-segment dynamic one.
+            .route("/{postId}", get().to(get_delivery)),
         )
         // Rides (taxi-style rides with dynamic pricing)
         .service(

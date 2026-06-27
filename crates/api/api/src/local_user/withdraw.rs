@@ -1,6 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::list_withdraw_requests_inner};
 use app_108jobs_db_schema::{
+  newtypes::WithdrawRequestId,
   source::{
     currency::Currency,
     withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm},
@@ -58,4 +59,14 @@ pub async fn list_withdraw_requests(
   )
   .await?;
   Ok(Json(res))
+}
+
+pub async fn retract_withdraw(
+  path: actix_web::web::Path<WithdrawRequestId>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  let id = path.into_inner();
+  WithdrawRequest::cancel_by_user(&mut context.pool(), id, local_user_view.local_user.id).await?;
+  Ok(Json(SuccessResponse::default()))
 }

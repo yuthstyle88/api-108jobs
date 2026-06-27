@@ -722,12 +722,15 @@ impl DeliveryDetails {
     post_id: PostId,
     employer_person_id: PersonId,
   ) -> FastJobResult<Self> {
-    let delivery = Self::get_by_post_id(pool, post_id).await?;
-    let post = Post::read(pool, post_id).await?;
-    if post.creator_id != employer_person_id {
-      return Err(FastJobErrorType::NotFound.into());
-    }
-    Ok(delivery)
+    let conn = &mut get_conn(pool).await?;
+    delivery_details::dsl::delivery_details
+      .inner_join(post_tbl::dsl::post)
+      .filter(delivery_details::dsl::post_id.eq(post_id.0))
+      .filter(post_tbl::dsl::creator_id.eq(employer_person_id.0))
+      .select(delivery_details::all_columns)
+      .first::<Self>(conn)
+      .await
+      .map_err(|_| FastJobErrorType::NotFound.into())
   }
 }
 

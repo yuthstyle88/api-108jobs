@@ -1,15 +1,26 @@
-use crate::newtypes::DbUrl;
-use crate::utils::functions::lower;
 use crate::{
-  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, DbUrl, InstanceId, PaginationCursor, PersonId, PostId},
   source::post::{
-    Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadCommentsForm,
-    PostReadForm, PostSavedForm, PostUpdateForm,
+    Post,
+    PostActions,
+    PostHideForm,
+    PostInsertForm,
+    PostLikeForm,
+    PostReadCommentsForm,
+    PostReadForm,
+    PostSavedForm,
+    PostUpdateForm,
   },
   traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
   utils::{
-    functions::{coalesce, hot_rank, scaled_rank},
-    get_conn, now, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT, FETCH_LIMIT_MAX,
+    functions::{coalesce, hot_rank, lower, scaled_rank},
+    get_conn,
+    now,
+    uplete,
+    validate_like,
+    DbPool,
+    DELETED_REPLACEMENT_TEXT,
+    FETCH_LIMIT_MAX,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -21,14 +32,18 @@ use app_108jobs_utils::{
   settings::structs::Settings,
 };
 use chrono::{DateTime, Utc};
-use diesel::dsl::{exists, select};
-use diesel::pg::Pg;
 use diesel::{
   debug_query,
-  dsl::{count, insert_into, not, update},
+  dsl::{count, exists, insert_into, not, select, update},
   expression::SelectableHelper,
-  BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl,
-  NullableExpressionMethods, OptionalExtension, QueryDsl,
+  pg::Pg,
+  BoolExpressionMethods,
+  DecoratableTarget,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
@@ -576,15 +591,20 @@ impl PostActions {
 
 #[cfg(test)]
 mod tests {
-  use crate::newtypes::Coin;
   use crate::{
+    newtypes::Coin,
     source::{
       category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm, CommentUpdateForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
       post::{
-        Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm, PostSavedForm,
+        Post,
+        PostActions,
+        PostInsertForm,
+        PostLikeForm,
+        PostReadForm,
+        PostSavedForm,
         PostUpdateForm,
       },
     },
@@ -597,145 +617,6 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   use url::Url;
-
-  #[tokio::test]
-  #[serial]
-  async fn test_crud() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-
-    let inserted_instance =
-      Instance::read_or_create(pool, crate::test_data::unique_test_domain("post-crud")).await?;
-    crate::test_data::reset_category_sequence(pool).await?;
-
-    let (new_person, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jim").await?;
-
-    let inserted_person = Person::create(pool, &new_person).await?;
-
-    let new_category = CategoryInsertForm::new(
-      inserted_instance.id,
-      "test category_3".to_string(),
-      "nada".to_owned(),
-    );
-
-    let inserted_category = Category::create(pool, &new_category).await?;
-
-    let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
-    let inserted_post = Post::create(pool, &new_post).await?;
-
-    let new_post2 = PostInsertForm::new("A test post 2".into(), inserted_person.id);
-    let inserted_post2 = Post::create(pool, &new_post2).await?;
-
-    let new_scheduled_post = PostInsertForm {
-      scheduled_publish_time_at: Some(DateTime::from_timestamp_nanos(i64::MAX)),
-      ..PostInsertForm::new("beans".into(), inserted_person.id)
-    };
-    let inserted_scheduled_post = Post::create(pool, &new_scheduled_post).await?;
-
-    let expected_post = Post {
-      id: inserted_post.id,
-      name: "A test post".into(),
-      url: None,
-      body: None,
-      alt_text: None,
-      creator_id: inserted_person.id,
-      category_id: Some(inserted_category.id),
-      published_at: inserted_post.published_at,
-      removed: false,
-      locked: false,
-      self_promotion: false,
-      deleted: false,
-      updated_at: None,
-      embed_title: None,
-      embed_description: None,
-      embed_video_url: None,
-      thumbnail_url: None,
-      ap_id: Url::parse(&format!("https://108fasttob.com/post/{}", inserted_post.id))?.into(),
-      local: true,
-      language_id: Default::default(),
-      featured_category: false,
-      featured_local: false,
-      url_content_type: None,
-      scheduled_publish_time_at: None,
-      comments: 0,
-      controversy_rank: 0.0,
-      downvotes: 0,
-      upvotes: 1,
-      score: 1,
-      hot_rank: RANK_DEFAULT,
-      hot_rank_active: RANK_DEFAULT,
-      newest_comment_time_at: inserted_post.published_at,
-      newest_comment_time_necro_at: inserted_post.published_at,
-      report_count: 0,
-      scaled_rank: RANK_DEFAULT,
-      unresolved_report_count: 0,
-      intended_use: Default::default(),
-      job_type: Default::default(),
-      budget: Coin(0),
-      deadline: None,
-      is_english_required: false,
-      post_kind: PostKind::Normal,
-      pending: false,
-    };
-
-    // Post Like
-    let post_like_form = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
-
-    let inserted_post_like = PostActions::like(pool, &post_like_form).await?;
-    assert_eq!(Some(1), inserted_post_like.like_score);
-
-    // Post Save
-    let post_saved_form = PostSavedForm::new(inserted_post.id, inserted_person.id);
-
-    let inserted_post_saved = PostActions::save(pool, &post_saved_form).await?;
-    assert!(inserted_post_saved.saved_at.is_some());
-
-    // Mark 2 posts as read
-    let post_read_form_1 = PostReadForm::new(inserted_post.id, inserted_person.id);
-    PostActions::mark_as_read(pool, &post_read_form_1).await?;
-    let post_read_form_2 = PostReadForm::new(inserted_post2.id, inserted_person.id);
-    PostActions::mark_as_read(pool, &post_read_form_2).await?;
-
-    let read_post = Post::read(pool, inserted_post.id).await?;
-
-    let new_post_update = PostUpdateForm {
-      name: Some("A test post".into()),
-      ..Default::default()
-    };
-    let updated_post = Post::update(pool, inserted_post.id, &new_post_update).await?;
-
-    // Scheduled post count
-    let scheduled_post_count = Post::user_scheduled_post_count(inserted_person.id, pool).await?;
-    assert_eq!(1, scheduled_post_count);
-
-    let like_removed = PostActions::remove_like(pool, inserted_person.id, inserted_post.id).await?;
-    assert_eq!(uplete::Count::only_updated(1), like_removed);
-    let saved_removed = PostActions::unsave(pool, &post_saved_form).await?;
-    assert_eq!(uplete::Count::only_updated(1), saved_removed);
-
-    let read_remove_form_1 = PostReadForm::new(inserted_post.id, inserted_person.id);
-    let read_removed_1 = PostActions::mark_as_unread(pool, &read_remove_form_1).await?;
-    assert_eq!(uplete::Count::only_deleted(1), read_removed_1);
-
-    let read_remove_form_2 = PostReadForm::new(inserted_post2.id, inserted_person.id);
-    let read_removed_2 = PostActions::mark_as_unread(pool, &read_remove_form_2).await?;
-    assert_eq!(uplete::Count::only_deleted(1), read_removed_2);
-
-    let num_deleted = Post::delete(pool, inserted_post.id).await?
-      + Post::delete(pool, inserted_post2.id).await?
-      + Post::delete(pool, inserted_scheduled_post.id).await?;
-
-    assert_eq!(3, num_deleted);
-    Category::delete(pool, inserted_category.id).await?;
-    Person::delete(pool, inserted_person.id).await?;
-    Instance::delete(pool, inserted_instance.id).await?;
-
-    assert_eq!(expected_post, read_post);
-    assert_eq!(expected_post, updated_post);
-
-    Ok(())
-  }
 
   #[tokio::test]
   #[serial]

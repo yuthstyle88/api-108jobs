@@ -286,6 +286,14 @@ pub(crate) async fn admin_withdraw_wallet_inner(
               .into(),
             );
           }
+          WithdrawStatus::Cancelled => {
+            return Err(
+              FastJobErrorType::InvalidField(
+                "This withdraw request was cancelled by the user".to_string(),
+              )
+              .into(),
+            );
+          }
         }
 
         // 3) The amount paid is the request's recorded amount; the `data.amount` field on the API
@@ -393,6 +401,12 @@ pub(crate) async fn admin_reject_withdraw_request_inner(
           WithdrawStatus::Completed => Err(
             FastJobErrorType::InvalidField(
               "This withdraw request has already been processed".to_string(),
+            )
+            .into(),
+          ),
+          WithdrawStatus::Cancelled => Err(
+            FastJobErrorType::InvalidField(
+              "This withdraw request was cancelled by the user".to_string(),
             )
             .into(),
           ),

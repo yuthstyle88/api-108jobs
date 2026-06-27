@@ -1,5 +1,4 @@
-use actix_web::web::Json;
-use actix_web::web::{Data, Query};
+use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::{

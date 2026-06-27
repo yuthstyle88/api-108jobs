@@ -1,15 +1,22 @@
-use crate::api::{GetChatRoomRequest, ListUserChatRooms};
-use crate::{ChatMessageView, ChatParticipantView, ChatRoomView};
-use app_108jobs_db_schema::source::workflow::Workflow;
+use crate::{
+  api::{GetChatRoomRequest, ListUserChatRooms},
+  ChatMessageView,
+  ChatParticipantView,
+  ChatRoomView,
+};
 use app_108jobs_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_room::ChatRoom},
+  source::{chat_message::ChatMessage, chat_room::ChatRoom, workflow::Workflow},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  chat_message, chat_participant, chat_room, local_user, person,
+  chat_message,
+  chat_participant,
+  chat_room,
+  local_user,
+  person,
 };
 use app_108jobs_db_views_post::PostPreview;
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};

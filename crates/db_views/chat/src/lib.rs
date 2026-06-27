@@ -1,7 +1,11 @@
-use app_108jobs_db_schema::newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId};
-use app_108jobs_db_schema::source::workflow::Workflow;
-use app_108jobs_db_schema::source::{
-  chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser,
+use app_108jobs_db_schema::{
+  newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId},
+  source::{
+    chat_message::ChatMessage,
+    chat_room::ChatRoom,
+    local_user::LocalUser,
+    workflow::Workflow,
+  },
 };
 use app_108jobs_db_views_post::PostPreview;
 use chrono::{DateTime, Utc};

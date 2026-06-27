@@ -1,8 +1,7 @@
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::net::IpAddr;
-use std::time::Duration;
+use std::{net::IpAddr, time::Duration};
 
 /// Hard cap for geolocation lookups. Used to be unbounded; an unresponsive
 /// third-party would stall request threads. ip-api responds in <100ms on a

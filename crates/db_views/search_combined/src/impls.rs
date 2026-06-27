@@ -1,6 +1,12 @@
 use crate::{
-  CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
-  SearchCombinedViewInternal, SearchPostView,
+  CategoryView,
+  CommentView,
+  LocalUserView,
+  PersonView,
+  PostView,
+  SearchCombinedView,
+  SearchCombinedViewInternal,
+  SearchPostView,
 };
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
@@ -10,14 +16,26 @@ use app_108jobs_db_schema::{
   },
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    fuzzy_search, get_conn, limit_fetch, now, paginate,
+    fuzzy_search,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::{
-      creator_category_actions_join, creator_home_instance_actions_join,
-      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
-      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
+      creator_category_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      creator_local_user_admin_join,
+      image_details_join,
+      my_category_actions_join,
+      my_comment_actions_join,
+      my_instance_actions_person_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
+      my_post_actions_join,
     },
-    seconds_to_pg_interval, DbPool,
+    seconds_to_pg_interval,
+    DbPool,
   },
   SearchSortType::{self, *},
   SearchType,
@@ -27,13 +45,20 @@ use app_108jobs_db_schema_file::{
   schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
 };
 use app_108jobs_db_views_post::logistics::{
-  build_logistics_from_maps, fetch_logistics_maps_by_ids, LogisticsViewer,
+  build_logistics_from_maps,
+  fetch_logistics_maps_by_ids,
+  LogisticsViewer,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgTextExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgTextExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;

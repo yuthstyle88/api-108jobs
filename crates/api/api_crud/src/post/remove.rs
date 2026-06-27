@@ -1,10 +1,9 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
-use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
+  utils::check_category_deleted_removed,
 };
 use app_108jobs_db_schema::{
   source::{
@@ -18,8 +17,7 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{PostResponse, RemovePost};
-use app_108jobs_utils::error::FastJobErrorType;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn remove_post(
   data: Json<RemovePost>,

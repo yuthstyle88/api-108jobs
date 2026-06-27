@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::{
   source::instance::{InstanceActions, InstanceBlockForm},

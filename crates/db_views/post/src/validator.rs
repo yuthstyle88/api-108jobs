@@ -1,12 +1,13 @@
 //! Validation logic for post requests
 use crate::api::{CreatePost, CreatePostRequest, EditPost, EditPostRequest};
 use app_108jobs_db_schema_file::enums::PostKind;
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  settings::SETTINGS,
+};
 use chrono::Utc;
-use url::Url;
-
-use app_108jobs_utils::settings::SETTINGS;
 use slug::slugify;
+use url::Url;
 
 fn is_valid_post_title(title: &str) -> FastJobResult<()> {
   if title.trim().is_empty() {

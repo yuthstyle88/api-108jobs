@@ -1,27 +1,37 @@
-use crate::protocol::api::{
-  ChatEvent, GenericIncomingEvent, IncomingEvent, ReadPayload, StoreChatMessage,
+use crate::{
+  bridge_message::{BridgeMessage, OutboundMessage},
+  broker::connect_now::ConnectNow,
+  presence::{IsUserOnline, PresenceManager},
+  protocol::{
+    api::{
+      ChatEvent,
+      GenericIncomingEvent,
+      IncomingEvent,
+      PresenceSnapshotItem,
+      ReadPayload,
+      StoreChatMessage,
+    },
+    phx_helper::{get_or_create_channel, send_event_to_channel},
+  },
 };
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
+use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
 use app_108jobs_db_schema::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_message::ChatMessageInsertForm, chat_room::ChatRoom, last_read::LastRead},
   utils::{ActualDbPool, DbPool},
 };
-use app_108jobs_db_views_chat::api::ChatMessagesResponse;
-use app_108jobs_db_views_chat::api::LastReadResponse;
-use app_108jobs_db_views_chat::api::PeerReadResponse;
-use app_108jobs_db_views_chat::api::UnreadSnapshotItem;
-
-use crate::protocol::api::PresenceSnapshotItem;
-
-use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::connect_now::ConnectNow;
-use crate::presence::{IsUserOnline, PresenceManager};
-use crate::protocol::phx_helper::{get_or_create_channel, send_event_to_channel};
-use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_db_views_chat::api::{
+  ChatMessagesResponse,
+  LastReadResponse,
+  PeerReadResponse,
+  UnreadSnapshotItem,
+};
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  redis::RedisClient,
+};
 use chrono::{DateTime, Utc};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -184,7 +194,8 @@ impl PhoenixManager {
     room_id: ChatRoomId,
     payload: ReadPayload,
   ) -> Result<(), FastJobError> {
-    // Local broker broadcast to other clients on this node via BridgeMessage(AnyIncomingEvent::Read)
+    // Local broker broadcast to other clients on this node via
+    // BridgeMessage(AnyIncomingEvent::Read)
     let wrapped = GenericIncomingEvent::<ReadPayload> {
       event: ChatEvent::Read,
       room_id: room_id.clone(),

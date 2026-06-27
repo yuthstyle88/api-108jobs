@@ -1,6 +1,11 @@
 use actix_extensible_rate_limit::{
   backend::{
-    memory::InMemoryBackend, raw_ip_key, MyIpAddr, SimpleInput, SimpleInputFuture, SimpleOutput,
+    memory::InMemoryBackend,
+    raw_ip_key,
+    MyIpAddr,
+    SimpleInput,
+    SimpleInputFuture,
+    SimpleOutput,
   },
   RateLimiter,
 };

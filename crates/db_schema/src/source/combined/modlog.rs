@@ -1,8 +1,22 @@
 use crate::newtypes::{
-  AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgeCommentId,
-  AdminPurgePersonId, AdminPurgePostId, ModAddCategoryId, ModAddId, ModBanFromCategoryId, ModBanId,
-  ModChangeCategoryVisibilityId, ModFeaturePostId, ModLockPostId, ModRemoveCategoryId,
-  ModRemoveCommentId, ModRemovePostId, ModTransferCategoryId, ModlogCombinedId,
+  AdminAllowInstanceId,
+  AdminBlockInstanceId,
+  AdminPurgeCategoryId,
+  AdminPurgeCommentId,
+  AdminPurgePersonId,
+  AdminPurgePostId,
+  ModAddCategoryId,
+  ModAddId,
+  ModBanFromCategoryId,
+  ModBanId,
+  ModChangeCategoryVisibilityId,
+  ModFeaturePostId,
+  ModLockPostId,
+  ModRemoveCategoryId,
+  ModRemoveCommentId,
+  ModRemovePostId,
+  ModTransferCategoryId,
+  ModlogCombinedId,
 };
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::modlog_combined;

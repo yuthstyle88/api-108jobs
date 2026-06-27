@@ -4,9 +4,12 @@ use app_108jobs_db_schema::{
   source::person::{person_keys as key, Person},
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, paginate,
+    get_conn,
+    limit_fetch,
+    paginate,
     queries::{
-      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
       my_person_actions_join,
     },
     DbPool,

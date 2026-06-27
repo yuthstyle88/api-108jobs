@@ -1,7 +1,6 @@
 use crate::broker::manager::{GetUnreadSnapshot, PhoenixManager};
 use actix::{Context, Handler, ResponseFuture};
-use app_108jobs_db_schema::source::chat_unread::ChatUnread;
-use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_schema::{source::chat_unread::ChatUnread, utils::DbPool};
 use app_108jobs_db_views_chat::api::UnreadSnapshotItem;
 use app_108jobs_utils::error::FastJobResult;
 

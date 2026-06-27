@@ -1,11 +1,13 @@
 use super::not_zero;
 use crate::site::{application_question_check, site_default_post_listing_type_check};
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
-    get_url_blocklist, is_admin, local_site_rate_limit_to_rate_limit_config, process_markdown_opt,
+    get_url_blocklist,
+    is_admin,
+    local_site_rate_limit_to_rate_limit_config,
+    process_markdown_opt,
     slur_regex,
   },
 };
@@ -32,7 +34,10 @@ use app_108jobs_utils::{
   utils::{
     slurs::check_slurs_opt,
     validation::{
-      build_and_check_regex, check_urls_are_valid, is_valid_body_field, site_name_length_check,
+      build_and_check_regex,
+      check_urls_are_valid,
+      is_valid_body_field,
+      site_name_length_check,
       site_or_category_description_length_check,
     },
   },

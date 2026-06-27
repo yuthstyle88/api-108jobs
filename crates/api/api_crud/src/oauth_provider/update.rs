@@ -1,11 +1,9 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
-use app_108jobs_db_schema::utils::diesel_required_url_update;
 use app_108jobs_db_schema::{
   source::oauth_provider::{OAuthProvider, OAuthProviderUpdateForm},
   traits::Crud,
-  utils::diesel_required_string_update,
+  utils::{diesel_required_string_update, diesel_required_url_update},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::EditOAuthProviderRequest;

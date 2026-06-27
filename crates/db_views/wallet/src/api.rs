@@ -1,6 +1,12 @@
 use crate::{TopUpRequestView, WithdrawRequestView};
 use app_108jobs_db_schema::newtypes::{
-  BankAccountId, Coin, CurrencyId, LocalUserId, PaginationCursor, WalletId, WithdrawRequestId,
+  BankAccountId,
+  Coin,
+  CurrencyId,
+  LocalUserId,
+  PaginationCursor,
+  WalletId,
+  WithdrawRequestId,
 };
 use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use serde::{Deserialize, Serialize};

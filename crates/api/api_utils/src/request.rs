@@ -16,7 +16,8 @@ use app_108jobs_db_views_post::api::{LinkMetadata, OpenGraphData};
 use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::{PictrsImageMode, Settings},
-  REQWEST_TIMEOUT, VERSION,
+  REQWEST_TIMEOUT,
+  VERSION,
 };
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
@@ -25,12 +26,13 @@ use mime::{Mime, TEXT_HTML};
 use reqwest::{
   header::{CONTENT_TYPE, LOCATION, RANGE},
   redirect::Policy,
-  Client, ClientBuilder, Response,
+  Client,
+  ClientBuilder,
+  Response,
 };
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
-use std::net::IpAddr;
-use std::time::Duration;
+use std::{net::IpAddr, time::Duration};
 use tokio::net::lookup_host;
 use tracing::{info, warn};
 use url::Url;

@@ -1,10 +1,9 @@
 use crate::newtypes::{PostId, RiderId, TripLocationHistoryId};
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::trip_location_history;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::trip_location_history;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

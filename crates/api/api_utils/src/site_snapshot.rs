@@ -1,18 +1,18 @@
 use crate::plugins::plugin_metadata;
-use app_108jobs_db_schema::source::actor_language::SiteLanguage;
-use app_108jobs_db_schema::source::language::Language;
-use app_108jobs_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
-use app_108jobs_db_schema::source::oauth_provider::OAuthProvider;
-use app_108jobs_db_schema::source::tagline::Tagline;
-use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
+use app_108jobs_db_schema::{
+  source::{
+    actor_language::SiteLanguage,
+    language::Language,
+    local_site_url_blocklist::LocalSiteUrlBlocklist,
+    oauth_provider::OAuthProvider,
+    tagline::Tagline,
+  },
+  utils::{ActualDbPool, DbPool},
+};
 use app_108jobs_db_views_person::impls::PersonQuery;
-use app_108jobs_db_views_site::api::SiteSnapshot;
-use app_108jobs_db_views_site::SiteView;
-use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::settings::structs::Settings;
-use app_108jobs_utils::VERSION;
-use futures::future::BoxFuture;
-use futures::FutureExt;
+use app_108jobs_db_views_site::{api::SiteSnapshot, SiteView};
+use app_108jobs_utils::{error::FastJobResult, settings::structs::Settings, VERSION};
+use futures::{future::BoxFuture, FutureExt};
 use std::sync::{Arc, RwLock};
 
 pub trait SiteConfigProvider: Send + Sync {

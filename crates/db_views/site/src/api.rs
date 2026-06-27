@@ -1,6 +1,4 @@
 use crate::SiteView;
-use app_108jobs_db_schema::source::person::{PortfolioPic, WorkSample};
-use app_108jobs_db_schema::source::wallet::Wallet;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
@@ -13,14 +11,21 @@ use app_108jobs_db_schema::{
     local_user::LocalUser,
     login_token::LoginToken,
     oauth_provider::{OAuthProvider, PublicOAuthProvider},
-    person::Person,
+    person::{Person, PortfolioPic, WorkSample},
     post::Post,
     tagline::Tagline,
+    wallet::Wallet,
   },
 };
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, ListingType, PostKind, PostListingMode, PostSortType, RegistrationMode,
-  TripStatus, VoteShow,
+  CommentSortType,
+  ListingType,
+  PostKind,
+  PostListingMode,
+  PostSortType,
+  RegistrationMode,
+  TripStatus,
+  VoteShow,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::PersonView;
@@ -382,8 +387,8 @@ pub struct EditSite {
   pub registration_mode: Option<RegistrationMode>,
   /// Whether to multilang admins for new reports.
   pub reports_email_admins: Option<bool>,
-  /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
-  /// when the site is first opened by a user.
+  /// If present, self_promotion content is visible by default. Should be displayed by
+  /// frontends/clients when the site is first opened by a user.
   pub content_warning: Option<String>,
   /// Whether or not external auth methods can auto-register users.
   pub oauth_registration: Option<bool>,
@@ -466,8 +471,8 @@ pub struct EditSiteRequest {
   pub registration_mode: Option<RegistrationMode>,
   /// Whether to multilang admins for new reports.
   pub reports_email_admins: Option<bool>,
-  /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
-  /// when the site is first opened by a user.
+  /// If present, self_promotion content is visible by default. Should be displayed by
+  /// frontends/clients when the site is first opened by a user.
   pub content_warning: Option<String>,
   /// Whether or not external auth methods can auto-register users.
   pub oauth_registration: Option<bool>,

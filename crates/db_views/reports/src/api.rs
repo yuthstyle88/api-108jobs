@@ -1,6 +1,11 @@
 use crate::{CategoryReportView, CommentReportView, PostReportView};
 use app_108jobs_db_schema::newtypes::{
-  CategoryId, CategoryReportId, CommentId, CommentReportId, PostId, PostReportId,
+  CategoryId,
+  CategoryReportId,
+  CommentId,
+  CommentReportId,
+  PostId,
+  PostReportId,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

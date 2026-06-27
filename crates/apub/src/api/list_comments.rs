@@ -1,8 +1,6 @@
 use super::comment_sort_type_with_default;
-use actix_web::web::Data;
-
 use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};
-use actix_web::web::{Json, Query};
+use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
 use app_108jobs_apub_objects::objects::category::ApubCategory;
 use app_108jobs_db_schema::{

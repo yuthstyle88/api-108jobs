@@ -1,15 +1,17 @@
-use aes_gcm::aead::rand_core::{OsRng, RngCore};
-use aes_gcm::Nonce;
 use aes_gcm::{
-  aead::{generic_array::GenericArray, Aead, Payload},
-  Aes256Gcm, KeyInit,
+  aead::{
+    generic_array::GenericArray,
+    rand_core::{OsRng, RngCore},
+    Aead,
+    Payload,
+  },
+  Aes256Gcm,
+  KeyInit,
+  Nonce,
 };
-use base64::engine::general_purpose;
-use base64::Engine;
+use base64::{engine::general_purpose, Engine};
 use hex;
-use p256::ecdh::diffie_hellman;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{PublicKey, SecretKey};
+use p256::{ecdh::diffie_hellman, elliptic_curve::sec1::ToEncodedPoint, PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
 
 /// ====== Errors ======

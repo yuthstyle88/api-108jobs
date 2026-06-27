@@ -8,7 +8,11 @@ pub use app_108jobs_db_schema::{
 pub use app_108jobs_db_schema_file::enums::CategoryVisibility;
 pub use app_108jobs_db_views_category::{
   api::{
-    CategoryResponse, GetCategory, GetCategoryResponse, GetRandomCategory, ListCategories,
+    CategoryResponse,
+    GetCategory,
+    GetCategoryResponse,
+    GetRandomCategory,
+    ListCategories,
     ListCategoriesResponse,
   },
   CategoryView,
@@ -20,8 +24,14 @@ pub mod actions {
   pub mod moderation {
     pub use app_108jobs_db_schema_file::enums::CategoryFollowerState;
     pub use app_108jobs_db_views_category::api::{
-      CategoryIdQuery, CreateCategoryTag, DeleteCategory, DeleteCategoryTag, EditCategory,
-      PurgeCategory, RemoveCategory, UpdateCategoryTag,
+      CategoryIdQuery,
+      CreateCategoryTag,
+      DeleteCategory,
+      DeleteCategoryTag,
+      EditCategory,
+      PurgeCategory,
+      RemoveCategory,
+      UpdateCategoryTag,
     };
   }
 }

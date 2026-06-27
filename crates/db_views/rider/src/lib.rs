@@ -3,13 +3,11 @@ mod impls;
 pub mod ride_session_view;
 pub mod validator;
 
-use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
-
 use app_108jobs_db_schema::source::{person::Person, rider::Rider};
-
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

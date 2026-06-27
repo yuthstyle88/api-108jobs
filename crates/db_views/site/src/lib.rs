@@ -1,5 +1,8 @@
 use app_108jobs_db_schema::source::{
-  instance::Instance, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit, site::Site,
+  instance::Instance,
+  local_site::LocalSite,
+  local_site_rate_limit::LocalSiteRateLimit,
+  site::Site,
 };
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};

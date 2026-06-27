@@ -1,20 +1,18 @@
 use crate::{
   newtypes::{DeliveryRiderRatingId, PersonId, PostId, RiderId},
   source::delivery_rider_rating::{
-    DeliveryRiderRating, DeliveryRiderRatingInsertForm, DeliveryRiderRatingUpdateForm,
+    DeliveryRiderRating,
+    DeliveryRiderRatingInsertForm,
+    DeliveryRiderRatingUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use chrono::Utc;
-use diesel::dsl::insert_into;
-use diesel::OptionalExtension;
-use diesel::{ExpressionMethods, QueryDsl};
-use diesel_async::RunQueryDsl;
-
 use app_108jobs_db_schema_file::schema::delivery_rider_rating;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use chrono::Utc;
+use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel_async::RunQueryDsl;
 
 impl Crud for DeliveryRiderRating {
   type InsertForm = DeliveryRiderRatingInsertForm;

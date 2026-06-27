@@ -11,7 +11,8 @@ use app_108jobs_db_schema::{
     post::{Post, PostActions},
     tag::TagsView,
   },
-  LikeType, PersonContentType,
+  LikeType,
+  PersonContentType,
 };
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_post::PostView;
@@ -20,10 +21,14 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category, creator_banned_within_category, creator_is_moderator,
+    creator_banned_from_category,
+    creator_banned_within_category,
+    creator_is_moderator,
   },
   app_108jobs_db_schema::utils::queries::{
-    creator_is_admin, local_user_can_mod, post_tags_fragment,
+    creator_is_admin,
+    local_user_can_mod,
+    post_tags_fragment,
   },
   app_108jobs_db_views_local_user::LocalUserView,
   diesel::{Queryable, Selectable},

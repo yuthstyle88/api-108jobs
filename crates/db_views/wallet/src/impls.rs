@@ -1,25 +1,30 @@
-use crate::api::{ListTopUpRequestQuery, ListWithdrawRequestQuery};
-use crate::{TopUpRequestView, WalletView, WithdrawRequestView};
-use app_108jobs_db_schema::newtypes::{
-  LocalUserId, PaginationCursor, TopUpRequestId, WithdrawRequestId,
+use crate::{
+  api::{ListTopUpRequestQuery, ListWithdrawRequestQuery},
+  TopUpRequestView,
+  WalletView,
+  WithdrawRequestView,
 };
-use app_108jobs_db_schema::source::top_up_request::top_up_requests_keys as t_key;
-use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
-use app_108jobs_db_schema::source::wallet::Wallet;
-use app_108jobs_db_schema::source::withdraw_request::withdraw_requests_keys as w_key;
-use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
-use app_108jobs_db_schema::traits::{Crud, PaginationCursorBuilder};
-use app_108jobs_db_schema::utils::{limit_fetch, paginate};
 use app_108jobs_db_schema::{
-  newtypes::WalletId,
-  source::wallet::WalletModel,
-  utils::{get_conn, DbPool},
+  newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WalletId, WithdrawRequestId},
+  source::{
+    top_up_request::{top_up_requests_keys as t_key, TopUpRequest},
+    wallet::{Wallet, WalletModel},
+    withdraw_request::{withdraw_requests_keys as w_key, WithdrawRequest},
+  },
+  traits::{Crud, PaginationCursorBuilder},
+  utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  local_user, top_up_requests, user_bank_accounts, wallet, withdraw_requests,
+  local_user,
+  top_up_requests,
+  user_bank_accounts,
+  wallet,
+  withdraw_requests,
 };
-use app_108jobs_utils::apply_date_filters;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_utils::{
+  apply_date_filters,
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+};
 use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

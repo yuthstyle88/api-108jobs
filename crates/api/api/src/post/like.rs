@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
@@ -14,8 +13,10 @@ use app_108jobs_db_schema::{
   traits::{Likeable, Readable},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::api::CreatePostLikeRequest;
-use app_108jobs_db_views_post::{api::PostResponse, PostView};
+use app_108jobs_db_views_post::{
+  api::{CreatePostLikeRequest, PostResponse},
+  PostView,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use std::ops::Deref;
 

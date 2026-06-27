@@ -438,8 +438,9 @@ pub enum PostKind {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 /// Transport workflow status - works for both cargo delivery and taxi rides
-/// Taxi flow: Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
-/// Cargo flow: Pending → Assigned → EnRouteToPickup → PickedUp → EnRouteToDropoff → Delivered
+/// Taxi flow: Pending → Assigned → RiderConfirmed → EnRouteToPickup → PickedUp → EnRouteToDropoff →
+/// Delivered Cargo flow: Pending → Assigned → EnRouteToPickup → PickedUp → EnRouteToDropoff →
+/// Delivered
 pub enum TripStatus {
   #[default]
   Pending,

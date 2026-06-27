@@ -3,13 +3,10 @@ use crate::{
   source::trip_location_history::{TripLocationHistory, TripLocationHistoryInsertForm},
   utils::{get_conn, DbPool},
 };
-
-use diesel::dsl::insert_into;
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
-use diesel_async::RunQueryDsl;
-
 use app_108jobs_db_schema_file::schema::trip_location_history;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel_async::RunQueryDsl;
 
 impl TripLocationHistory {
   pub async fn create(

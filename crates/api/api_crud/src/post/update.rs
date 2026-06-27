@@ -1,6 +1,5 @@
 use super::convert_published_time;
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
@@ -11,17 +10,18 @@ use app_108jobs_api_utils::{
 };
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
-  source::delivery_details::DeliveryDetails,
-  source::post::{Post, PostUpdateForm},
+  source::{
+    delivery_details::DeliveryDetails,
+    post::{Post, PostUpdateForm},
+  },
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
 use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::api::EditPostRequest;
 use app_108jobs_db_views_post::{
-  api::{EditPost, PostResponse},
+  api::{EditPost, EditPostRequest, PostResponse},
   PostView,
 };
 use app_108jobs_utils::{
@@ -29,7 +29,10 @@ use app_108jobs_utils::{
   utils::{
     slurs::check_slurs,
     validation::{
-      is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_post_title,
+      is_url_blocked,
+      is_valid_alt_text_field,
+      is_valid_body_field,
+      is_valid_post_title,
       is_valid_url,
     },
   },

@@ -1,15 +1,18 @@
-use crate::newtypes::{ChatRoomId, LocalUserId};
-use crate::source::chat_participant::{ChatParticipantInsertForm, ChatParticipantUpdateForm};
-use crate::traits::Crud;
 use crate::{
-  source::chat_participant::ChatParticipant,
-  source::chat_room::ChatRoom,
+  newtypes::{ChatRoomId, LocalUserId},
+  source::{
+    chat_participant::{ChatParticipant, ChatParticipantInsertForm, ChatParticipantUpdateForm},
+    chat_room::ChatRoom,
+  },
+  traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{chat_participant, chat_room};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::{insert_into, update};
-use diesel::prelude::*;
+use diesel::{
+  dsl::{insert_into, update},
+  prelude::*,
+};
 use diesel_async::RunQueryDsl;
 
 impl Crud for ChatParticipant {

@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
-use std::str::FromStr;
 use std::{
+  cmp::Ordering,
   fmt,
   fmt::{Display, Formatter},
-  ops::Deref,
+  ops::{Add, AddAssign, Deref, Neg, Sub, SubAssign},
+  str::FromStr,
 };
 use url::Url;
 #[cfg(feature = "full")]
@@ -360,7 +359,8 @@ impl ChatRoomId {
   fn clean(s: &str) -> String {
     s.chars()
       .filter(|&c| {
-        // Remove control chars (U+0000..U+001F, U+007F), and common zero-width (U+200B..U+200F, U+FEFF)
+        // Remove control chars (U+0000..U+001F, U+007F), and common zero-width (U+200B..U+200F,
+        // U+FEFF)
         !(c.is_control()
           || matches!(
             c,

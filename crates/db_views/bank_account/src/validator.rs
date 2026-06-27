@@ -1,11 +1,18 @@
 //! Validation logic for bank account requests
 use crate::api::{
-  BankAccountForm, CreateBankAccount, CreateBankAccountRequest, DeleteBankAccount,
-  DeleteBankAccountRequest, UpdateBankAccount, UpdateBankAccountRequest,
+  BankAccountForm,
+  CreateBankAccount,
+  CreateBankAccountRequest,
+  DeleteBankAccount,
+  DeleteBankAccountRequest,
+  UpdateBankAccount,
+  UpdateBankAccountRequest,
 };
 use app_108jobs_db_schema::newtypes::{BankAccountId, BankId};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::utils::validation::validate_bank_account;
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  utils::validation::validate_bank_account,
+};
 
 /// Validates bank account number by country
 pub fn validate_account_number(country_id: &str, account_number: &str) -> FastJobResult<()> {
@@ -101,7 +108,8 @@ impl TryFrom<UpdateBankAccountRequest> for ValidUpdateBankAccountRequest {
       validate_bank_id(bank_id)?;
     }
     if let Some(ref account_number) = value.account_number {
-      // Note: can't validate account_number without country_id, which is not in UpdateBankAccountRequest
+      // Note: can't validate account_number without country_id, which is not in
+      // UpdateBankAccountRequest
       if account_number.trim().is_empty() {
         return Err(FastJobErrorType::InvalidAccountNumber.into());
       }

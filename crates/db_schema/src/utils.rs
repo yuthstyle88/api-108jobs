@@ -1,12 +1,10 @@
 pub mod queries;
 pub mod uplete;
 
-use crate::newtypes::DbUrl;
-use crate::sensitive::SensitiveString;
-use app_108jobs_utils::settings::structs::Settings;
+use crate::{newtypes::DbUrl, sensitive::SensitiveString};
 use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::SETTINGS,
+  settings::{structs::Settings, SETTINGS},
   utils::validation::clean_url,
 };
 use chrono::TimeDelta;
@@ -19,31 +17,40 @@ use diesel::{
   query_builder::{Query, QueryFragment},
   query_dsl::methods::LimitDsl,
   result::{
-    ConnectionError, ConnectionResult,
+    ConnectionError,
+    ConnectionResult,
     Error::{self as DieselError, QueryBuilderError},
   },
   sql_types::{self, Timestamptz},
-  Expression, IntoSql,
+  Expression,
+  IntoSql,
 };
 use diesel_async::{
   pg::AsyncPgConnection,
   pooled_connection::{
     deadpool::{Hook, HookError, Object as PooledConnection, Pool},
-    AsyncDieselConnectionManager, ManagerConfig,
+    AsyncDieselConnectionManager,
+    ManagerConfig,
   },
   scoped_futures::ScopedBoxFuture,
-  AsyncConnection, RunQueryDsl,
+  AsyncConnection,
+  RunQueryDsl,
 };
 use futures_util::{future::BoxFuture, FutureExt};
 use i_love_jesus::{CursorKey, PaginatedQueryBuilder, SortDirection};
 use regex::Regex;
 use rustls::{
   client::danger::{
-    DangerousClientConfigBuilder, HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier,
+    DangerousClientConfigBuilder,
+    HandshakeSignatureValid,
+    ServerCertVerified,
+    ServerCertVerifier,
   },
   crypto::{self, verify_tls12_signature, verify_tls13_signature},
   pki_types::{CertificateDer, ServerName, UnixTime},
-  ClientConfig, DigitallySignedStruct, SignatureScheme,
+  ClientConfig,
+  DigitallySignedStruct,
+  SignatureScheme,
 };
 use std::{
   ops::{Deref, DerefMut},

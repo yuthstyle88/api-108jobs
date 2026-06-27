@@ -4,7 +4,11 @@ use crate::{
   source::{
     actor_language::CategoryLanguage,
     category::{
-      Category, CategoryActions, CategoryChangeset, CategoryInsertForm, CategoryUpdateForm,
+      Category,
+      CategoryActions,
+      CategoryChangeset,
+      CategoryInsertForm,
+      CategoryUpdateForm,
     },
     post::Post,
   },
@@ -12,7 +16,9 @@ use crate::{
   utils::{
     format_actor_url,
     functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
-    get_conn, uplete, DbPool,
+    get_conn,
+    uplete,
+    DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -28,7 +34,12 @@ use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
-  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
+  select,
+  update,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use moka::future::Cache;

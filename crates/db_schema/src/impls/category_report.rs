@@ -9,7 +9,9 @@ use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult}
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods, ExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

@@ -1,8 +1,8 @@
 use crate::BillingView;
-use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::{
   newtypes::{BillingId, LocalUserId},
   source::billing::Billing,
+  traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::billing;

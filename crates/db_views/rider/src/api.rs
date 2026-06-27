@@ -1,7 +1,15 @@
-use crate::ride_session_view::{RidePublic, RideSessionView};
-use crate::RiderView;
+use crate::{
+  ride_session_view::{RidePublic, RideSessionView},
+  RiderView,
+};
 use app_108jobs_db_schema::newtypes::{
-  CommentId, PaginationCursor, PersonId, PostId, PricingConfigId, RideSessionId, RiderId,
+  CommentId,
+  PaginationCursor,
+  PersonId,
+  PostId,
+  PricingConfigId,
+  RideSessionId,
+  RiderId,
 };
 use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus, VehicleType};
 use app_108jobs_utils::error::{FastJobError, FastJobResult};

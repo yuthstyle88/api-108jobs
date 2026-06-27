@@ -1,18 +1,25 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_common::bank_account::BankAccountOperationResponse;
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::ensure_bank_account_unique_for_user;
-use app_108jobs_db_schema::source::bank::{Bank, BanksResponse};
-use app_108jobs_db_schema::source::user_bank_account::{
-  BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm,
+use app_108jobs_api_utils::{context::FastJobContext, utils::ensure_bank_account_unique_for_user};
+use app_108jobs_db_schema::{
+  source::{
+    bank::{Bank, BanksResponse},
+    user_bank_account::{BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm},
+  },
+  traits::Crud,
 };
-use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_views_bank_account::api::{
-  CreateBankAccountRequest, DeleteBankAccountRequest, GetBankAccounts, ListBankAccountsResponse,
-  SetDefaultBankAccount, UpdateBankAccountRequest,
+use app_108jobs_db_views_bank_account::{
+  api::{
+    CreateBankAccountRequest,
+    DeleteBankAccountRequest,
+    GetBankAccounts,
+    ListBankAccountsResponse,
+    SetDefaultBankAccount,
+    UpdateBankAccountRequest,
+  },
+  validator::ValidCreateBankAccountRequest,
+  BankAccountView,
 };
-use app_108jobs_db_views_bank_account::validator::ValidCreateBankAccountRequest;
-use app_108jobs_db_views_bank_account::BankAccountView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};

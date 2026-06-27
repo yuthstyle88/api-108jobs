@@ -79,7 +79,8 @@ pub struct BillingUpdateForm {
 }
 
 /// Helper input for creating BillingInsertForm from a quotation context.
-/// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule issues.
+/// This stays in the same crate as BillingInsertForm to allow a From impl without orphan rule
+/// issues.
 #[derive(Clone, Default)]
 pub struct BillingFromQuotation {
   pub freelancer_id: LocalUserId,

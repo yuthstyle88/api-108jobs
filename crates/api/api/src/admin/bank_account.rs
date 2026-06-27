@@ -1,12 +1,13 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::is_admin;
-use app_108jobs_db_schema::source::user_bank_account::{BankAccount, UserBankAccountUpdateForm};
-use app_108jobs_db_schema::traits::{Crud, PaginationCursorBuilder};
-use app_108jobs_db_views_bank_account::api::{
-  ListBankAccountQuery, ListBankAccountsResponse, VerifyBankAccount,
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{
+  source::user_bank_account::{BankAccount, UserBankAccountUpdateForm},
+  traits::{Crud, PaginationCursorBuilder},
 };
-use app_108jobs_db_views_bank_account::BankAccountView;
+use app_108jobs_db_views_bank_account::{
+  api::{ListBankAccountQuery, ListBankAccountsResponse, VerifyBankAccount},
+  BankAccountView,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::FastJobResult;

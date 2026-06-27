@@ -1,9 +1,10 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{GetSiteResponse, SuccessResponse};
-use app_108jobs_db_views_site::SiteView;
+use app_108jobs_db_views_site::{
+  api::{GetSiteResponse, SuccessResponse},
+  SiteView,
+};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_site(

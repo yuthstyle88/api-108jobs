@@ -1,5 +1,9 @@
 use crate::{
-  CategoryReportView, CommentReportView, LocalUserView, PostReportView, ReportCombinedView,
+  CategoryReportView,
+  CommentReportView,
+  LocalUserView,
+  PostReportView,
+  ReportCombinedView,
   ReportCombinedViewInternal,
 };
 use app_108jobs_db_schema::{
@@ -11,14 +15,30 @@ use app_108jobs_db_schema::{
   ReportType,
 };
 use app_108jobs_db_schema_file::schema::{
-  category, category_actions, category_report, comment, comment_actions, comment_report,
-  local_user, person, person_actions, post, post_actions, post_report, report_combined,
+  category,
+  category_actions,
+  category_report,
+  comment,
+  comment_actions,
+  comment_report,
+  local_user,
+  person,
+  person_actions,
+  post,
+  post_actions,
+  post_report,
+  report_combined,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Days, Utc};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;

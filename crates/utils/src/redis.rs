@@ -1,8 +1,7 @@
 #![cfg(feature = "full")]
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use redis::aio::MultiplexedConnection;
 pub use redis::AsyncCommands;
-use redis::{Pipeline, Value};
+use redis::{aio::MultiplexedConnection, Pipeline, Value};
 use serde_json;
 
 #[derive(Clone)]

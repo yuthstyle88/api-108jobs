@@ -1,11 +1,10 @@
-use crate::newtypes::{ActivityId, DbUrl};
 use crate::{
+  newtypes::{ActivityId, DbUrl},
   source::activity::{SentActivity, SentActivityForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::insert_into;
-use diesel::{ExpressionMethods, QueryDsl};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 
 impl SentActivity {

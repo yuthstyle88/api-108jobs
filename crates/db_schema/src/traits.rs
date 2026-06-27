@@ -15,7 +15,8 @@ use diesel::{
 };
 use diesel_async::{
   methods::{ExecuteDsl, LoadQuery},
-  AsyncPgConnection, RunQueryDsl,
+  AsyncPgConnection,
+  RunQueryDsl,
 };
 use std::future::Future;
 use url::Url;

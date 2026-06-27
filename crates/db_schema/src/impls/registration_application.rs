@@ -1,7 +1,9 @@
 use crate::{
   newtypes::{LocalUserId, RegistrationApplicationId},
   source::registration_application::{
-    RegistrationApplication, RegistrationApplicationInsertForm, RegistrationApplicationUpdateForm,
+    RegistrationApplication,
+    RegistrationApplicationInsertForm,
+    RegistrationApplicationUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

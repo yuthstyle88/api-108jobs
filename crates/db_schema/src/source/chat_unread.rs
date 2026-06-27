@@ -1,8 +1,8 @@
 use crate::newtypes::{ChatRoomId, LocalUserId};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 // Bring the generated diesel schema table into scope for annotations
 use app_108jobs_db_schema_file::schema::chat_unread;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(
   Clone, PartialEq, Eq, Debug, Serialize, Deserialize, diesel::Queryable, diesel::Selectable,

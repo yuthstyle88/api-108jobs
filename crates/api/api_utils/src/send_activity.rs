@@ -1,14 +1,13 @@
 use crate::context::FastJobContext;
+use actix_web::web::Data;
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, PersonId},
   source::{category::Category, comment::Comment, person::Person, post::Post, site::Site},
 };
-use either::Either;
-use futures::future::BoxFuture;
-
-use actix_web::web::Data;
 use app_108jobs_db_views_post::api::DeletePostRequest;
 use app_108jobs_utils::error::FastJobResult;
+use either::Either;
+use futures::future::BoxFuture;
 use std::sync::{LazyLock, OnceLock};
 use tokio::{
   sync::{

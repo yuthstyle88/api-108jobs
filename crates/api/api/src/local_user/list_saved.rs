@@ -3,7 +3,9 @@ use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instan
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person_saved_combined::{
-  impls::PersonSavedCombinedQuery, ListPersonSaved, ListPersonSavedResponse,
+  impls::PersonSavedCombinedQuery,
+  ListPersonSaved,
+  ListPersonSavedResponse,
   PersonSavedCombinedView,
 };
 use app_108jobs_utils::error::FastJobResult;

@@ -2,7 +2,8 @@ use actix_web::{
   body::MessageBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
   http::header::{HeaderValue, CACHE_CONTROL},
-  Error, HttpMessage,
+  Error,
+  HttpMessage,
 };
 use app_108jobs_api_utils::{
   context::FastJobContext,

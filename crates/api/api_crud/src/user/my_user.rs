@@ -1,10 +1,11 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use app_108jobs_db_schema::{
   source::{
-    actor_language::LocalUserLanguage, instance::InstanceActions,
-    keyword_block::LocalUserKeywordBlock, person::PersonActions,
+    actor_language::LocalUserLanguage,
+    instance::InstanceActions,
+    keyword_block::LocalUserKeywordBlock,
+    person::PersonActions,
   },
   traits::Blockable,
 };

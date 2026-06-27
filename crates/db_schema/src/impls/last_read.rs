@@ -1,24 +1,20 @@
 use crate::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
-use chrono::{DateTime, Utc};
-
 #[cfg(feature = "full")]
 use crate::{
   source::last_read::{LastRead, LastReadInsertForm},
   utils::{get_conn, DbPool},
 };
-
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::last_reads;
+use app_108jobs_db_schema_file::schema::last_reads::dsl as lr;
+#[cfg(feature = "full")]
+use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
-
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::last_reads;
-use app_108jobs_db_schema_file::schema::last_reads::dsl as lr;
-
-#[cfg(feature = "full")]
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 #[cfg(feature = "full")]
 impl LastRead {
   pub async fn get_one(

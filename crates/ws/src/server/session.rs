@@ -1,7 +1,11 @@
-use crate::bridge_message::{BridgeMessage, GlobalOffline, GlobalOnline, OutboundMessage};
-use crate::protocol::api::{ChatEvent, IncomingEvent};
-use crate::protocol::impls::AnyIncomingEvent;
-use crate::protocol::phx_helper::{is_base64_like, parse_phx, phx_push, phx_reply};
+use crate::{
+  bridge_message::{BridgeMessage, GlobalOffline, GlobalOnline, OutboundMessage},
+  protocol::{
+    api::{ChatEvent, IncomingEvent},
+    impls::AnyIncomingEvent,
+    phx_helper::{is_base64_like, parse_phx, phx_push, phx_reply},
+  },
+};
 use actix::{Actor, ActorContext, AsyncContext, Handler, StreamHandler};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;

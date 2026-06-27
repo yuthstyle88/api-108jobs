@@ -1,14 +1,16 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::{
-  check_conflicting_like_filters, check_fetch_limit, check_private_instance,
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{check_conflicting_like_filters, check_fetch_limit, check_private_instance},
 };
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::logistics::LogisticsViewer;
 use app_108jobs_db_views_search_combined::{
   impls::{load_logistics_for_results, SearchCombinedQuery},
-  Search, SearchCombinedView, SearchResponse,
+  Search,
+  SearchCombinedView,
+  SearchResponse,
 };
 use app_108jobs_utils::error::FastJobResult;
 

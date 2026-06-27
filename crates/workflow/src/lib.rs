@@ -1,5 +1,4 @@
-use app_108jobs_db_schema::newtypes::WorkflowId;
-use app_108jobs_db_schema::source::workflow::WorkflowUpdateForm;
+use app_108jobs_db_schema::{newtypes::WorkflowId, source::workflow::WorkflowUpdateForm};
 use app_108jobs_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
 
@@ -34,7 +33,8 @@ struct SubmitWorkTransition {
 struct CancelTransition {
   pub form: WorkflowUpdateForm,
 }
-// NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
+// NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a
+// new one.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

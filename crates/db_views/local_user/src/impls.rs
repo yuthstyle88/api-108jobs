@@ -11,7 +11,10 @@ use app_108jobs_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{
     functions::{coalesce, lower},
-    get_conn, limit_fetch, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::creator_home_instance_actions_join,
     DbPool,
   },
@@ -19,7 +22,11 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

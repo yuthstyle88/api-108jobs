@@ -1,62 +1,79 @@
 use actix_web::{guard, web::*};
-use app_108jobs_api::admin::bank_account::{admin_list_bank_accounts, admin_verify_bank_account};
-use app_108jobs_api::admin::currency::{
-  admin_create_currency, admin_create_pricing_config, admin_get_currency, admin_get_pricing_config,
-  admin_list_currencies, admin_list_pricing_configs, admin_update_currency,
-  admin_update_pricing_config,
-};
-use app_108jobs_api::admin::platform::{admin_get_platform_assets, admin_get_platform_balance};
-use app_108jobs_api::admin::wallet::{
-  admin_list_top_up_requests, admin_list_withdraw_requests, admin_reject_withdraw_request,
-  admin_top_up_wallet, admin_withdraw_wallet,
-};
-use app_108jobs_api::chat::list::list_chat_rooms;
-use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
-use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
-use app_108jobs_api::delivery::list::{
-  get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries, get_delivery,
-};
-use app_108jobs_api::delivery::location::{
-  get_location as get_trip_location, post_location as post_trip_location,
-  post_locations_bulk as post_trip_locations_bulk,
-};
-use app_108jobs_api::delivery::rate::{get_rider_ratings, rate_rider};
-use app_108jobs_api::delivery::ride::{
-  cancel_ride_session, confirm_ride_assignment, create_ride_session, get_ride_pricing_config,
-  list_available_rides, list_my_ride_sessions, update_ride_meter, update_ride_status,
-};
-use app_108jobs_api::delivery::status::update_delivery_status;
-use app_108jobs_api::local_user::bank_account::{
-  create_bank_account, delete_bank_account, list_banks, list_user_bank_accounts,
-  set_default_bank_account, update_bank_account,
-};
-use app_108jobs_api::local_user::exchange::exchange_key;
-use app_108jobs_api::local_user::list_top_up_requests::list_top_up_requests;
-use app_108jobs_api::local_user::profile::visit_profile;
-use app_108jobs_api::local_user::refresh::refresh_token;
-use app_108jobs_api::local_user::review::{list_user_reviews, submit_user_review};
-use app_108jobs_api::local_user::update_term::update_term;
-use app_108jobs_api::local_user::wallet::get_wallet;
-use app_108jobs_api::local_user::withdraw::{list_withdraw_requests, submit_withdraw};
-use app_108jobs_api::local_user::workflow::{
-  approve_quotation, approve_work, cancel_job, create_quotation, get_billing_by_room,
-  request_revision, start_workflow, submit_start_work, submit_work, update_budget_plan_status,
-};
 use app_108jobs_api::{
+  admin::{
+    bank_account::{admin_list_bank_accounts, admin_verify_bank_account},
+    currency::{
+      admin_create_currency,
+      admin_create_pricing_config,
+      admin_get_currency,
+      admin_get_pricing_config,
+      admin_list_currencies,
+      admin_list_pricing_configs,
+      admin_update_currency,
+      admin_update_pricing_config,
+    },
+    platform::{admin_get_platform_assets, admin_get_platform_balance},
+    wallet::{
+      admin_list_top_up_requests,
+      admin_list_withdraw_requests,
+      admin_reject_withdraw_request,
+      admin_top_up_wallet,
+      admin_withdraw_wallet,
+    },
+  },
   category::{
     random::get_random_category,
     tag::{create_category_tag, delete_category_tag, update_category_tag},
   },
+  chat::list::list_chat_rooms,
   comment::{
-    distinguish::distinguish_comment, like::like_comment, list_comment_likes::list_comment_likes,
+    distinguish::distinguish_comment,
+    like::like_comment,
+    list_comment_likes::list_comment_likes,
     save::save_comment,
+  },
+  delivery::{
+    assign::assign_delivery_from_proposal,
+    confirm::confirm_delivery_completion,
+    list::{
+      get_active_deliveries,
+      get_cancelled_deliveries,
+      get_completed_deliveries,
+      get_delivery,
+    },
+    location::{
+      get_location as get_trip_location,
+      post_location as post_trip_location,
+      post_locations_bulk as post_trip_locations_bulk,
+    },
+    rate::{get_rider_ratings, rate_rider},
+    ride::{
+      cancel_ride_session,
+      confirm_ride_assignment,
+      create_ride_session,
+      get_ride_pricing_config,
+      list_available_rides,
+      list_my_ride_sessions,
+      update_ride_meter,
+      update_ride_status,
+    },
+    status::update_delivery_status,
   },
   local_user::{
     add_admin::add_admin,
     ban_person::ban_from_site,
+    bank_account::{
+      create_bank_account,
+      delete_bank_account,
+      list_banks,
+      list_user_bank_accounts,
+      set_default_bank_account,
+      update_bank_account,
+    },
     change_password::change_password,
     change_password_after_reset::change_password_after_reset,
     donation_dialog_shown::donation_dialog_shown,
+    exchange::exchange_key,
     export_data::export_data,
     generate_totp_secret::generate_totp_secret,
     get_captcha::get_captcha,
@@ -67,27 +84,55 @@ use app_108jobs_api::{
     list_media::list_media,
     list_read::list_person_read,
     list_saved::list_person_saved,
+    list_top_up_requests::list_top_up_requests,
     login::login,
     logout::logout,
     note_person::user_note_person,
     notifications::{
-      list_inbox::list_inbox, mark_all_read::mark_all_notifications_read,
+      list_inbox::list_inbox,
+      mark_all_read::mark_all_notifications_read,
       mark_comment_mention_read::mark_comment_mention_as_read,
-      mark_post_mention_read::mark_post_mention_as_read, mark_reply_read::mark_reply_as_read,
+      mark_post_mention_read::mark_post_mention_as_read,
+      mark_reply_read::mark_reply_as_read,
       unread_count::unread_count,
     },
+    profile::visit_profile,
+    refresh::refresh_token,
     report_count::report_count,
     resend_verification_email::resend_verification_email,
     reset_password::reset_password,
+    review::{list_user_reviews, submit_user_review},
     save_settings::save_user_settings,
+    update_term::update_term,
     update_totp::update_totp,
     validate_auth::validate_auth,
     verify_email::verify_email,
+    wallet::get_wallet,
+    withdraw::{list_withdraw_requests, submit_withdraw},
+    workflow::{
+      approve_quotation,
+      approve_work,
+      cancel_job,
+      create_quotation,
+      get_billing_by_room,
+      request_revision,
+      start_workflow,
+      submit_start_work,
+      submit_work,
+      update_budget_plan_status,
+    },
   },
   post::{
-    feature::feature_post, get_link_metadata::get_link_metadata, hide::hide_post, like::like_post,
-    list_post_likes::list_post_likes, lock::lock_post, mark_many_read::mark_posts_as_read,
-    mark_read::mark_post_as_read, save::save_post, update_notifications::update_post_notifications,
+    feature::feature_post,
+    get_link_metadata::get_link_metadata,
+    hide::hide_post,
+    like::like_post,
+    list_post_likes::list_post_likes,
+    lock::lock_post,
+    mark_many_read::mark_posts_as_read,
+    mark_read::mark_post_as_read,
+    save::save_post,
+    update_notifications::update_post_notifications,
   },
   reports::{
     category_report::{create::create_category_report, resolve::resolve_category_report},
@@ -103,41 +148,58 @@ use app_108jobs_api::{
     mod_log::get_mod_log,
     purge::{comment::purge_comment, person::purge_person, post::purge_post},
     registration_applications::{
-      approve::approve_registration_application, get::get_registration_application,
+      approve::approve_registration_application,
+      get::get_registration_application,
       list::list_registration_applications,
       unread_count::get_unread_registration_application_count,
     },
   },
 };
-use app_108jobs_api_crud::category::list::list_categories;
-use app_108jobs_api_crud::chat::create::create_chat_room;
-use app_108jobs_api_crud::chat::read::get_chat_room;
-use app_108jobs_api_crud::oauth_provider::create::create_oauth_provider;
-use app_108jobs_api_crud::oauth_provider::delete::delete_oauth_provider;
-use app_108jobs_api_crud::oauth_provider::update::update_oauth_provider;
-use app_108jobs_api_crud::rider::create::create_rider;
-use app_108jobs_api_crud::rider::list::list_riders;
-use app_108jobs_api_crud::rider::profile::{heartbeat, set_accepting, set_online, update_rider};
-use app_108jobs_api_crud::rider::read::get_rider;
-use app_108jobs_api_crud::rider::update::admin_verify_rider;
-use app_108jobs_api_crud::site::read::health;
 use app_108jobs_api_crud::{
-  category::update::update_category,
+  category::{list::list_categories, update::update_category},
+  chat::{create::create_chat_room, read::get_chat_room},
   comment::{
-    create::create_comment, delete::delete_comment, read::get_comment, remove::remove_comment,
+    create::create_comment,
+    delete::delete_comment,
+    read::get_comment,
+    remove::remove_comment,
     update::update_comment,
   },
   custom_emoji::{
-    create::create_custom_emoji, delete::delete_custom_emoji, list::list_custom_emojis,
+    create::create_custom_emoji,
+    delete::delete_custom_emoji,
+    list::list_custom_emojis,
     update::update_custom_emoji,
   },
+  oauth_provider::{
+    create::create_oauth_provider,
+    delete::delete_oauth_provider,
+    update::update_oauth_provider,
+  },
   post::{
-    create::create_post, delete::delete_post, read::get_post, remove::remove_post,
+    create::create_post,
+    delete::delete_post,
+    read::get_post,
+    remove::remove_post,
     update::update_post,
   },
-  site::{create::create_site, read::get_site, update::update_site},
+  rider::{
+    create::create_rider,
+    list::list_riders,
+    profile::{heartbeat, set_accepting, set_online, update_rider},
+    read::get_rider,
+    update::admin_verify_rider,
+  },
+  site::{
+    create::create_site,
+    read::{get_site, health},
+    update::update_site,
+  },
   tagline::{
-    create::create_tagline, delete::delete_tagline, list::list_taglines, update::update_tagline,
+    create::create_tagline,
+    delete::delete_tagline,
+    list::list_taglines,
+    update::update_tagline,
   },
   user::{
     create::{authenticate_with_oauth, register},
@@ -145,31 +207,43 @@ use app_108jobs_api_crud::{
     my_user::get_my_user,
   },
 };
-use app_108jobs_apub::api::list_comments::list_comments;
-use app_108jobs_apub::api::list_posts::list_posts;
-use app_108jobs_apub::api::search::search;
-use app_108jobs_routes::files::delete::delete_file;
-use app_108jobs_routes::files::download::get_file;
-use app_108jobs_routes::files::upload::upload_file;
-use app_108jobs_routes::images::{
-  delete::{
-    delete_category_banner, delete_category_icon, delete_image, delete_image_admin,
-    delete_site_banner, delete_site_icon, delete_user_avatar, delete_user_banner,
+use app_108jobs_apub::api::{list_comments::list_comments, list_posts::list_posts, search::search};
+use app_108jobs_routes::{
+  files::{delete::delete_file, download::get_file, upload::upload_file},
+  images::{
+    delete::{
+      delete_category_banner,
+      delete_category_icon,
+      delete_image,
+      delete_image_admin,
+      delete_site_banner,
+      delete_site_icon,
+      delete_user_avatar,
+      delete_user_banner,
+    },
+    download::{get_image, image_proxy},
+    pictrs_health,
+    upload::{
+      upload_category_banner,
+      upload_category_icon,
+      upload_image,
+      upload_site_banner,
+      upload_site_icon,
+      upload_user_avatar,
+      upload_user_banner,
+    },
   },
-  download::{get_image, image_proxy},
-  pictrs_health,
-  upload::{
-    upload_category_banner, upload_category_icon, upload_image, upload_site_banner,
-    upload_site_icon, upload_user_avatar, upload_user_banner,
-  },
+  payments::{create_qrcode::create_qrcode, inquire::inquire_qrcode},
 };
-use app_108jobs_routes::payments::create_qrcode::create_qrcode;
-use app_108jobs_routes::payments::inquire::inquire_qrcode;
 use app_108jobs_utils::rate_limit::RateLimit;
-use app_108jobs_ws::server::handler::trip_location_ws;
 use app_108jobs_ws::server::handler::{
-  get_history, get_last_read, get_peer_status, get_presence_snapshot, get_unread_snapshot,
+  get_history,
+  get_last_read,
+  get_peer_status,
+  get_presence_snapshot,
+  get_unread_snapshot,
   phoenix_ws,
+  trip_location_ws,
 };
 
 pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {

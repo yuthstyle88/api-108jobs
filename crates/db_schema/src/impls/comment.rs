@@ -2,7 +2,11 @@ use crate::{
   diesel::{NullableExpressionMethods, OptionalExtension},
   newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId},
   source::comment::{
-    Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentSavedForm,
+    Comment,
+    CommentActions,
+    CommentInsertForm,
+    CommentLikeForm,
+    CommentSavedForm,
     CommentUpdateForm,
   },
   traits::{Crud, Likeable, Saveable},
@@ -15,7 +19,12 @@ use app_108jobs_utils::{
 };
 use chrono::Utc;
 use diesel::{
-  dsl::insert_into, expression::SelectableHelper, update, ExpressionMethods, JoinOnDsl, QueryDsl,
+  dsl::insert_into,
+  expression::SelectableHelper,
+  update,
+  ExpressionMethods,
+  JoinOnDsl,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use url::Url;

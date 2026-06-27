@@ -3,7 +3,11 @@ use crate::{
   sensitive::SensitiveString,
 };
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, VoteShow,
+  CommentSortType,
+  ListingType,
+  PostListingMode,
+  PostSortType,
+  VoteShow,
 };
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::local_user;

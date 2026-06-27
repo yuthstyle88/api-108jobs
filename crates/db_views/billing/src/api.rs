@@ -1,8 +1,7 @@
-use app_108jobs_db_schema::newtypes::{
-  BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId,
+use app_108jobs_db_schema::{
+  newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId},
+  source::{billing::WorkStep, job_budget_plan::JobBudgetPlan},
 };
-use app_108jobs_db_schema::source::billing::WorkStep;
-use app_108jobs_db_schema::source::job_budget_plan::JobBudgetPlan;
 use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};

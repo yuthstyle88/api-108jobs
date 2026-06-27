@@ -1,9 +1,7 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_email_verified};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{PasswordReset, SuccessResponse};
-
 use app_108jobs_email::account::send_password_reset_email;
 use app_108jobs_utils::error::FastJobResult;
 use tracing::error;

@@ -2,11 +2,9 @@ use crate::newtypes::{BankAccountId, Coin, CurrencyId, LocalUserId, WalletId, Wi
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::enums::WithdrawStatus;
 use chrono::{DateTime, Utc};
-
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
 #[cfg(feature = "full")]
 use {app_108jobs_db_schema_file::schema::withdraw_requests, i_love_jesus::CursorKeysModule};
 

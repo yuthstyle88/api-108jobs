@@ -1,5 +1,7 @@
-use crate::files::DeleteFileRequest;
-use crate::utils::{sanitize_filename, user_files_dir};
+use crate::{
+  files::DeleteFileRequest,
+  utils::{sanitize_filename, user_files_dir},
+};
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_views_local_user::LocalUserView;

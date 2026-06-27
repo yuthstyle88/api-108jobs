@@ -1,12 +1,17 @@
-use crate::payments::get_token::fetch_scb_token;
-use crate::payments::http_client::scb_client;
-use actix_web::web::{Data, Json};
-use actix_web::HttpResponse;
+use crate::payments::{get_token::fetch_scb_token, http_client::scb_client};
+use actix_web::{
+  web::{Data, Json},
+  HttpResponse,
+};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::Coin;
-use app_108jobs_db_schema::source::currency::Currency;
-use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestInsertForm};
-use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_db_schema::{
+  newtypes::Coin,
+  source::{
+    currency::Currency,
+    top_up_request::{TopUpRequest, TopUpRequestInsertForm},
+  },
+  traits::Crud,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::{Duration, Utc};

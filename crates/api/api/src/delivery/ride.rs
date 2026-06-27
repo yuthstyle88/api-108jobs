@@ -1,22 +1,43 @@
 use actix_web::web::{Data, Json, Path, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::{check_fetch_limit, get_active_rider_by_person};
-use app_108jobs_db_schema::newtypes::RideSessionId;
-use app_108jobs_db_schema::source::currency::Currency;
-use app_108jobs_db_schema::source::pricing_config::PricingConfig;
-use app_108jobs_db_schema::source::ride_session::{RideSession, RideSessionUpdateForm};
-use app_108jobs_db_schema::source::rider::{Rider, RiderUpdateForm};
-use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{check_fetch_limit, get_active_rider_by_person},
+};
+use app_108jobs_db_schema::{
+  newtypes::RideSessionId,
+  source::{
+    currency::Currency,
+    pricing_config::PricingConfig,
+    ride_session::{RideSession, RideSessionUpdateForm},
+    rider::{Rider, RiderUpdateForm},
+  },
+  traits::Crud,
+};
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::api::{
-  CancelRideSessionRequest, CancelRideSessionResponse, ConfirmRideRequest,
-  CreateRideSessionRequest, ListAvailableRides, ListAvailableRidesResponse, ListMyRideSessions,
-  ListMyRideSessionsResponse, PricingBreakdown, PricingConfigSnapshot,
-  PricingConfigSnapshotResponse, RideMeterEvent, RideMeterResponse, RideSessionResponse,
-  RideStatusEvent, UpdateRideMeterRequest, UpdateRideStatusRequest, UpdateRideStatusResponse,
+use app_108jobs_db_views_rider::{
+  api::{
+    CancelRideSessionRequest,
+    CancelRideSessionResponse,
+    ConfirmRideRequest,
+    CreateRideSessionRequest,
+    ListAvailableRides,
+    ListAvailableRidesResponse,
+    ListMyRideSessions,
+    ListMyRideSessionsResponse,
+    PricingBreakdown,
+    PricingConfigSnapshot,
+    PricingConfigSnapshotResponse,
+    RideMeterEvent,
+    RideMeterResponse,
+    RideSessionResponse,
+    RideStatusEvent,
+    UpdateRideMeterRequest,
+    UpdateRideStatusRequest,
+    UpdateRideStatusResponse,
+  },
+  ride_session_view::{project_ride_session, RideViewer},
 };
-use app_108jobs_db_views_rider::ride_session_view::{project_ride_session, RideViewer};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
 

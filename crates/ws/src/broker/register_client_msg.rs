@@ -1,9 +1,13 @@
-use crate::broker::manager::PhoenixManager;
-use crate::presence::OnlineJoin;
-use crate::protocol::api::RegisterClientMsg;
+use crate::{
+  broker::manager::PhoenixManager,
+  presence::OnlineJoin,
+  protocol::api::RegisterClientMsg,
+};
 use actix::{Context, Handler};
-use app_108jobs_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
-use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_schema::{
+  source::chat_participant::{ChatParticipant, ChatParticipantInsertForm},
+  utils::DbPool,
+};
 use chrono::Utc;
 
 impl Handler<RegisterClientMsg> for PhoenixManager {

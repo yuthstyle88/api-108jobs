@@ -1,4 +1,4 @@
-use actix_web::web::Data;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown_opt, slur_regex},
@@ -16,20 +16,21 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{SaveUserSettings, SuccessResponse};
-
-use actix_web::web::Json;
 use app_108jobs_email::account::send_verification_email;
-use app_108jobs_utils::utils::slurs::check_slurs_opt;
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
-  utils::validation::{
-    check_blocking_keywords_are_valid, is_valid_bio_field, is_valid_display_name,
-    is_valid_matrix_id,
+  utils::{
+    slurs::check_slurs_opt,
+    validation::{
+      check_blocking_keywords_are_valid,
+      is_valid_bio_field,
+      is_valid_display_name,
+      is_valid_matrix_id,
+    },
   },
 };
 use serde_json::json;
-use std::ops::Deref;
-use std::str::FromStr;
+use std::{ops::Deref, str::FromStr};
 
 pub async fn save_user_settings(
   data: Json<SaveUserSettings>,
@@ -80,8 +81,8 @@ pub async fn save_user_settings(
     }
   }
 
-  // When the site requires multilang, make sure multilang is not Some(None). IE, an overwrite to a None
-  // value
+  // When the site requires multilang, make sure multilang is not Some(None). IE, an overwrite to a
+  // None value
   if let Some(email) = &email {
     if email.is_none() && site_view.local_site.require_email_verification {
       Err(FastJobErrorType::EmailRequired)?

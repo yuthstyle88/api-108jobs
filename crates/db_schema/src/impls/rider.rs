@@ -1,20 +1,19 @@
 use crate::{
-  newtypes::{PersonId, RiderId},
+  newtypes::{LocalUserId, PersonId, RiderId},
   source::rider::{Rider, RiderInsertForm, RiderUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use diesel::dsl::{exists, select};
-use diesel::{
-  dsl::{insert_into, update},
-  ExpressionMethods, OptionalExtension, QueryDsl, SelectableHelper,
-};
-use diesel_async::RunQueryDsl;
-
-use crate::newtypes::LocalUserId;
 use app_108jobs_db_schema_file::schema::rider;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::{exists, insert_into, select, update},
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+  SelectableHelper,
+};
+use diesel_async::RunQueryDsl;
 
 impl Crud for Rider {
   type InsertForm = RiderInsertForm;
@@ -95,21 +94,27 @@ impl Rider {
 // `api_crud/rider/{create, update}` and the `/admin/riders/verify` route.
 //
 // Coverage:
-//   * Create defaults: is_verified=false, verification_status=Pending,
-//     is_active=true (per schema), accepting_jobs=true.
-//   * admin_verify_rider flips is_verified=true, verification_status=Approved,
-//     and is repeat-safe (idempotent).
+//   * Create defaults: is_verified=false, verification_status=Pending, is_active=true (per schema),
+//     accepting_jobs=true.
+//   * admin_verify_rider flips is_verified=true, verification_status=Approved, and is repeat-safe
+//     (idempotent).
 //   * get_by_person_id finds active riders only.
 //   * exists_for_user is true after creation.
 // ============================================================================
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::test_data::pool_for_tests;
-  use app_108jobs_db_schema_file::enums::{RiderVerificationStatus, VehicleType};
-  use app_108jobs_db_schema_file::schema::local_user;
+  use crate::{
+    source::{
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+    },
+    test_data::pool_for_tests,
+  };
+  use app_108jobs_db_schema_file::{
+    enums::{RiderVerificationStatus, VehicleType},
+    schema::local_user,
+  };
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;
   use serial_test::serial;

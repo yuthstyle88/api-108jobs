@@ -1,17 +1,24 @@
-use crate::broker::manager::{
-  FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager,
+use crate::{
+  broker::manager::{
+    FetchHistoryDirect,
+    GetLastRead,
+    GetPresenceSnapshot,
+    GetUnreadSnapshot,
+    PhoenixManager,
+  },
+  presence::{IsUserOnline, PresenceManager},
+  server::session::{PhoenixSession, TripLocationSession},
 };
-use crate::presence::{IsUserOnline, PresenceManager};
-use crate::server::session::{PhoenixSession, TripLocationSession};
 use actix::Addr;
 use actix_web::{
   web,
   web::{Data, Query},
-  Error, HttpRequest, HttpResponse,
+  Error,
+  HttpRequest,
+  HttpResponse,
 };
 use actix_web_actors::ws;
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::local_user_view_from_jwt;
+use app_108jobs_api_utils::{context::FastJobContext, utils::local_user_view_from_jwt};
 use app_108jobs_db_schema::newtypes::{LocalUserId, PostId};
 use app_108jobs_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
 use app_108jobs_db_views_local_user::LocalUserView;

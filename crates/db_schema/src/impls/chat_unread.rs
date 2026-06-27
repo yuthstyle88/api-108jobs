@@ -1,14 +1,18 @@
-use crate::newtypes::{ChatRoomId, LocalUserId};
-use crate::source::chat_unread::{ChatUnread, ChatUnreadUpsertForm};
-use crate::utils::{get_conn, DbPool};
+use crate::{
+  newtypes::{ChatRoomId, LocalUserId},
+  source::chat_unread::{ChatUnread, ChatUnreadUpsertForm},
+  utils::{get_conn, DbPool},
+};
 use app_108jobs_db_schema_file::schema::chat_unread;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
-use diesel::dsl::{insert_into, now, update};
-use diesel::prelude::*;
-use diesel::sql_query;
-use diesel::sql_types::{Integer, Nullable, Text, Timestamptz, Varchar};
-use diesel::upsert::excluded;
+use diesel::{
+  dsl::{insert_into, now, update},
+  prelude::*,
+  sql_query,
+  sql_types::{Integer, Nullable, Text, Timestamptz, Varchar},
+  upsert::excluded,
+};
 use diesel_async::RunQueryDsl;
 
 impl ChatUnread {
@@ -104,7 +108,6 @@ impl ChatUnread {
 
   /// Fetch unread snapshot for a user across all rooms they participate in.
   /// Returns tuples of (room_id, unread_count, last_message_id, last_message_at) for every room.
-  ///
   pub async fn unread_snapshot_for_user(
     pool: &mut DbPool<'_>,
     user_id: LocalUserId,

@@ -69,8 +69,7 @@ macro_rules! location_info {
 #[macro_export]
 macro_rules! apply_date_filters {
   ($query:ident, $params:expr, $created_at:expr) => {{
-    use diesel::dsl::sql;
-    use diesel::sql_types::Bool;
+    use diesel::{dsl::sql, sql_types::Bool};
 
     let mut q = $query;
     if let Some(y) = $params.year {

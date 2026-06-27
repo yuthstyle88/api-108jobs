@@ -1,19 +1,22 @@
-use app_108jobs_db_schema::newtypes::{
-  BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId,
+use app_108jobs_db_schema::{
+  newtypes::{BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId},
+  source::{
+    billing::{Billing, BillingInsertForm, BillingUpdateForm},
+    chat_room::{ChatRoom, ChatRoomUpdateForm},
+    wallet::{TxKind, WalletModel, WalletTransactionInsertForm},
+    wallet_hold::{HoldStatus, WalletHold},
+    workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
+  },
+  traits::Crud,
+  utils::{get_conn, DbPool},
 };
-use app_108jobs_db_schema::source::billing::BillingInsertForm;
-use app_108jobs_db_schema::source::billing::{Billing, BillingUpdateForm};
-use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
-use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
-use app_108jobs_db_schema::source::wallet_hold::{HoldStatus, WalletHold};
-use app_108jobs_db_schema::source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm};
-use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema::utils::{get_conn, DbPool};
-use app_108jobs_db_schema_file::enums::BillingStatus::QuotePendingReview;
-use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
+use app_108jobs_db_schema_file::enums::{
+  BillingStatus,
+  BillingStatus::QuotePendingReview,
+  WorkFlowStatus,
+};
 use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
-use app_108jobs_utils::error::FastJobErrorExt2;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 
@@ -442,8 +445,8 @@ impl QuotationPendingReviewTS {
   /// Idempotency: a deterministic key derived from `billing_id` is used for both
   /// the wallet_transaction journal entry and the wallet_hold row. A duplicate
   /// approve call hits either:
-  ///   * the partial unique index `uq_wallet_hold_active_per_billing` →
-  ///     `DuplicateWalletHold` (mapped from PG unique violation)
+  ///   * the partial unique index `uq_wallet_hold_active_per_billing` → `DuplicateWalletHold`
+  ///     (mapped from PG unique violation)
   ///   * or the `wallet_transaction` unique index (existing behavior)
   ///
   /// In either case, the entire transaction rolls back — no partial state.
@@ -479,8 +482,8 @@ impl QuotationPendingReviewTS {
     conn
       .run_transaction(|tx| {
         async move {
-          // 1) Pre-flight existence check on the ledger. If already Active,
-          //    treat as a successful idempotent re-call (no second debit).
+          // 1) Pre-flight existence check on the ledger. If already Active, treat as a successful
+          //    idempotent re-call (no second debit).
           if WalletHold::find_active_for_billing(tx, billing_id)
             .await?
             .is_some()
@@ -498,16 +501,15 @@ impl QuotationPendingReviewTS {
             return Ok::<_, app_108jobs_utils::error::FastJobError>(());
           }
 
-          // 2) Insert the ledger row first. If we race with another approver,
-          //    the partial unique index fires here and rolls back the txn.
+          // 2) Insert the ledger row first. If we race with another approver, the partial unique
+          //    index fires here and rolls back the txn.
           let _hold =
             WalletHold::insert_active(tx, wallet_id, billing_id, amount, Some(idem.clone()))
               .await?;
 
-          // 3) Move funds (wallet_transaction journal + balance change). Note:
-          //    `WalletModel::hold` opens its OWN sub-transaction. With diesel-async
-          //    that nests as a SAVEPOINT inside this outer txn, so we still get
-          //    atomicity for the whole flow.
+          // 3) Move funds (wallet_transaction journal + balance change). Note: `WalletModel::hold`
+          //    opens its OWN sub-transaction. With diesel-async that nests as a SAVEPOINT inside
+          //    this outer txn, so we still get atomicity for the whole flow.
           let tx_form = WalletTransactionInsertForm {
             wallet_id,
             reference_type: "billing".to_string(),
@@ -522,8 +524,8 @@ impl QuotationPendingReviewTS {
           // existing connection by going through `move_funds_in_txn`.
           move_funds_to_escrow_in_txn(tx, &tx_form).await?;
 
-          // 4) Advance workflow status from QuotationPendingReview -> OrderApproved
-          //    within the same transaction.
+          // 4) Advance workflow status from QuotationPendingReview -> OrderApproved within the same
+          //    transaction.
           advance_status_in_txn(
             tx,
             workflow_id,
@@ -599,8 +601,8 @@ impl WorkSubmittedTS {
   /// ledger as `Captured`, advance billing + workflow status. All within a
   /// single DB transaction. Idempotent on retry via:
   ///   * deterministic `idempotency_key` (collides on `wallet_transaction` unique)
-  ///   * `WalletHold::transition_from_active` which is a no-op if already
-  ///     `Captured` from a prior run.
+  ///   * `WalletHold::transition_from_active` which is a no-op if already `Captured` from a prior
+  ///     run.
   pub async fn approve_work_on(
     self,
     pool: &mut DbPool<'_>,
@@ -624,9 +626,9 @@ impl WorkSubmittedTS {
     conn
       .run_transaction(|tx| {
         async move {
-          // 1) Locate the active hold for this billing. We DO require one to
-          //    exist — releasing money without a prior hold would mean someone
-          //    called approve_work without a previous approve.
+          // 1) Locate the active hold for this billing. We DO require one to exist — releasing
+          //    money without a prior hold would mean someone called approve_work without a previous
+          //    approve.
           let hold = WalletHold::find_active_for_billing(tx, billing_id).await?;
           let Some(hold) = hold else {
             // If no active hold exists, also no past Captured row should be
@@ -641,9 +643,9 @@ impl WorkSubmittedTS {
             );
           };
 
-          // 2) Move funds platform -> freelancer (no balance check on platform).
-          //    Same idempotency key collides on wallet_transaction unique index
-          //    on retry, rolling back the whole txn.
+          // 2) Move funds platform -> freelancer (no balance check on platform). Same idempotency
+          //    key collides on wallet_transaction unique index on retry, rolling back the whole
+          //    txn.
           let tx_form = WalletTransactionInsertForm {
             wallet_id: freelancer_wallet_id,
             reference_type: "billing".to_string(),
@@ -657,8 +659,7 @@ impl WorkSubmittedTS {
           WalletModel::deposit_from_platform_on_conn(tx, &tx_form, coin_id, platform_wallet_id)
             .await?;
 
-          // 3) Mark hold as Captured. Idempotent: if already Captured, returns
-          //    None and we proceed.
+          // 3) Mark hold as Captured. Idempotent: if already Captured, returns None and we proceed.
           let _ = WalletHold::transition_from_active(tx, hold.id, HoldStatus::Captured).await?;
 
           // 4) Bump billing status.
@@ -730,11 +731,11 @@ impl WorkflowService {
   /// architecture) `wallet.balance_outstanding` on the employer's wallet.
   ///
   /// Idempotent:
-  ///   * No active hold found → already refunded (or no hold ever existed),
-  ///     returns Ok(()) silently.
+  ///   * No active hold found → already refunded (or no hold ever existed), returns Ok(())
+  ///     silently.
   ///   * `transition_from_active` is a no-op if the hold is already Released.
-  ///   * The reversed wallet transfer uses a deterministic idempotency key,
-  ///     so a retry collides on `wallet_transaction` unique index.
+  ///   * The reversed wallet transfer uses a deterministic idempotency key, so a retry collides on
+  ///     `wallet_transaction` unique index.
   pub async fn refund_on_cancel(
     pool: &mut DbPool<'_>,
     workflow_id: WorkflowId,
@@ -1048,13 +1049,12 @@ mod idempotency_tests {
 // hardened approve / approve-work / cancel-refund paths.
 //
 // Each test:
-//   1. Builds a fresh fixture (instance, site, persons, wallets, post, room,
-//      workflow, billing). Employer wallet is funded via the normal
-//      `WalletModel::deposit_from_platform` API (never via raw UPDATE).
+//   1. Builds a fresh fixture (instance, site, persons, wallets, post, room, workflow, billing).
+//      Employer wallet is funded via the normal `WalletModel::deposit_from_platform` API (never via
+//      raw UPDATE).
 //   2. Exercises a workflow transition.
-//   3. Asserts the resulting (a) wallet_hold rows, (b) wallet_transaction
-//      journal rows, (c) final wallet balances on employer + freelancer +
-//      platform.
+//   3. Asserts the resulting (a) wallet_hold rows, (b) wallet_transaction journal rows, (c) final
+//      wallet balances on employer + freelancer + platform.
 //
 // Tests are `#[serial]` because the seeded platform wallet + coin are
 // process-wide singletons and parallel races would clobber the assertions.
@@ -1062,22 +1062,24 @@ mod idempotency_tests {
 #[cfg(test)]
 mod workflow_flow_tests {
   use super::*;
-  use app_108jobs_db_schema::newtypes::{ChatRoomId, Coin, WalletId};
-  use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomInsertForm};
-  use app_108jobs_db_schema::source::coin::CoinModel;
-  use app_108jobs_db_schema::source::person::{Person, PersonInsertForm};
-  use app_108jobs_db_schema::source::post::PostInsertForm;
-  use app_108jobs_db_schema::source::wallet::{
-    TxKind, Wallet, WalletModel, WalletTransactionInsertForm,
+  use app_108jobs_db_schema::{
+    newtypes::{ChatRoomId, Coin, WalletId},
+    source::{
+      chat_room::{ChatRoom, ChatRoomInsertForm},
+      coin::CoinModel,
+      person::{Person, PersonInsertForm},
+      post::PostInsertForm,
+      wallet::{TxKind, Wallet, WalletModel, WalletTransactionInsertForm},
+      wallet_hold::hold_status,
+      workflow::{Workflow, WorkflowInsertForm},
+    },
+    test_data::TestData,
+    traits::Crud,
+    utils::get_conn,
   };
-  use app_108jobs_db_schema::source::wallet_hold::hold_status;
-  use app_108jobs_db_schema::source::workflow::{Workflow, WorkflowInsertForm};
-  use app_108jobs_db_schema::test_data::TestData;
-  use app_108jobs_db_schema::traits::Crud;
-  use app_108jobs_db_schema::utils::get_conn;
-  use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
-  use app_108jobs_db_schema_file::schema::{
-    billing, local_user, post, wallet, wallet_hold as wallet_hold_t, wallet_transaction,
+  use app_108jobs_db_schema_file::{
+    enums::{BillingStatus, WorkFlowStatus},
+    schema::{billing, local_user, post, wallet, wallet_hold as wallet_hold_t, wallet_transaction},
   };
   use diesel::{ExpressionMethods, QueryDsl};
   use diesel_async::RunQueryDsl;
@@ -1292,8 +1294,8 @@ mod workflow_flow_tests {
   // ============= TESTS =============
 
   /// Happy path: approve quotation -> approve work. Asserts:
-  ///   * Active hold created during approve, transitions to Captured on
-  ///     approve_work (never deleted; ledger is append-only).
+  ///   * Active hold created during approve, transitions to Captured on approve_work (never
+  ///     deleted; ledger is append-only).
   ///   * Exactly one wallet_transaction journal entry per side per stage.
   ///   * Freelancer balance increases by exactly BILLING_AMOUNT once.
   ///   * Employer balance decreases by exactly BILLING_AMOUNT.

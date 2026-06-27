@@ -1,14 +1,13 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::{
   source::post::{PostActions, PostHideForm},
   traits::Hideable,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{HidePost, PostResponse},
+  logistics::{self, LogisticsViewer},
   PostView,
 };
 use app_108jobs_utils::error::FastJobResult;

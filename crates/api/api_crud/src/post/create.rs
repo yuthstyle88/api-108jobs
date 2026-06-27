@@ -1,21 +1,25 @@
 use super::convert_published_time;
-use actix_web::web::Data;
-use actix_web::web::Json;
-use app_108jobs_api_utils::utils::check_category_deleted_removed;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
   tags::update_post_tags,
   utils::{
-    check_self_promotion_allowed, get_url_blocklist, honeypot_check, process_markdown_opt,
+    check_category_deleted_removed,
+    check_self_promotion_allowed,
+    get_url_blocklist,
+    honeypot_check,
+    process_markdown_opt,
     slur_regex,
   },
 };
-use app_108jobs_db_schema::source::delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm};
-use app_108jobs_db_schema::source::ride_session::RideSessionInsertForm;
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
-  source::post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
+  source::{
+    delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm},
+    post::{Post, PostActions, PostInsertForm, PostLikeForm, PostReadForm},
+    ride_session::RideSessionInsertForm,
+  },
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
@@ -23,10 +27,8 @@ use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
-use app_108jobs_utils::error::FastJobErrorExt2;
-use app_108jobs_utils::error::FastJobErrorType;
 use app_108jobs_utils::{
-  error::FastJobResult,
+  error::{FastJobErrorExt2, FastJobErrorType, FastJobResult},
   utils::{
     slurs::check_slurs,
     validation::{is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_url},

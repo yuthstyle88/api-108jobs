@@ -1,29 +1,41 @@
-use crate::api::{CreateComment, CreateCommentRequest};
-use crate::{CommentSlimView, CommentView};
-use app_108jobs_db_schema::impls::local_user::LocalUserOptionHelper;
-use app_108jobs_db_schema::newtypes::CategoryId;
-use app_108jobs_db_schema::source::local_user::LocalUser;
+use crate::{
+  api::{CreateComment, CreateCommentRequest},
+  CommentSlimView,
+  CommentView,
+};
 use app_108jobs_db_schema::{
-  newtypes::{CommentId, InstanceId, PaginationCursor, PersonId, PostId},
+  impls::local_user::LocalUserOptionHelper,
+  newtypes::{CategoryId, CommentId, InstanceId, PaginationCursor, PersonId, PostId},
   source::{
     comment::{comment_keys as key, Comment},
+    local_user::LocalUser,
     site::Site,
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn, limit_fetch, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::{
-      creator_category_actions_join, creator_category_instance_actions_join,
-      creator_home_instance_actions_join, creator_local_instance_actions_join,
-      my_category_actions_join, my_comment_actions_join, my_instance_actions_category_join,
-      my_local_user_admin_join, my_person_actions_join,
+      creator_category_actions_join,
+      creator_category_instance_actions_join,
+      creator_home_instance_actions_join,
+      creator_local_instance_actions_join,
+      my_category_actions_join,
+      my_comment_actions_join,
+      my_instance_actions_category_join,
+      my_local_user_admin_join,
+      my_person_actions_join,
     },
-    seconds_to_pg_interval, DbPool,
+    seconds_to_pg_interval,
+    DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
   enums::{
-    CategoryFollowerState, CategoryVisibility,
+    CategoryFollowerState,
+    CategoryVisibility,
     CommentSortType::{self, *},
     ListingType,
   },
@@ -31,7 +43,11 @@ use app_108jobs_db_schema_file::{
 };
 use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

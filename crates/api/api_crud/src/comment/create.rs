@@ -1,29 +1,32 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
-use app_108jobs_api_utils::utils::get_url_blocklist;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_post_deleted_or_removed, process_markdown, slur_regex, update_read_comments},
+  utils::{
+    check_post_deleted_or_removed,
+    get_url_blocklist,
+    process_markdown,
+    slur_regex,
+    update_read_comments,
+  },
 };
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   newtypes::{PersonId, PostId},
   source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-  traits::Crud,
-  traits::Likeable,
+  traits::{Crud, Likeable},
   utils::DbPool,
 };
-use app_108jobs_db_schema_file::enums::PostKind;
-use app_108jobs_db_schema_file::schema::comment::dsl::comment;
-use app_108jobs_db_schema_file::schema::comment::{creator_id, deleted, post_id, removed};
+use app_108jobs_db_schema_file::{
+  enums::PostKind,
+  schema::comment::{creator_id, deleted, dsl::comment, post_id, removed},
+};
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
-use app_108jobs_utils::error::FastJobError;
 use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
+  error::{FastJobError, FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
 

@@ -6,11 +6,20 @@ use app_108jobs_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  category_actions, comment, comment_actions, person, post, post_actions,
+  category_actions,
+  comment,
+  comment_actions,
+  person,
+  post,
+  post_actions,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

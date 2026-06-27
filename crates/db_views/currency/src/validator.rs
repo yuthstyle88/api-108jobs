@@ -1,7 +1,13 @@
 //! Validation logic for currency requests
 use crate::api::{
-  CreateCurrency, CreateCurrencyRequest, CreatePricingConfig, CreatePricingConfigRequest,
-  UpdateCurrency, UpdateCurrencyRequest, UpdatePricingConfig, UpdatePricingConfigRequest,
+  CreateCurrency,
+  CreateCurrencyRequest,
+  CreatePricingConfig,
+  CreatePricingConfigRequest,
+  UpdateCurrency,
+  UpdateCurrencyRequest,
+  UpdatePricingConfig,
+  UpdatePricingConfigRequest,
 };
 use app_108jobs_db_schema::newtypes::{CurrencyId, PricingConfigId};
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};

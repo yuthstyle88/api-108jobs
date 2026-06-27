@@ -1,13 +1,14 @@
-use app_108jobs_db_schema::source::person::Person;
-use app_108jobs_db_schema::source::user_review::UserReview;
-use app_108jobs_db_schema::source::workflow::Workflow;
+use app_108jobs_db_schema::source::{person::Person, user_review::UserReview, workflow::Workflow};
 use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 
 pub mod api;
 pub mod validator;
 pub use api::{
-  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
+  ListUserReviewsQuery,
+  ListUserReviewsResponse,
+  SubmitUserReviewForm,
+  SubmitUserReviewResponse,
 };
 pub use validator::ValidSubmitUserReviewRequest;
 

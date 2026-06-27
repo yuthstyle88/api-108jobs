@@ -1,6 +1,7 @@
-use crate::utils::protocol::{Endpoints, Source};
-
-use crate::fake_trait::PublicKey;
+use crate::{
+  fake_trait::PublicKey,
+  utils::protocol::{Endpoints, Source},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

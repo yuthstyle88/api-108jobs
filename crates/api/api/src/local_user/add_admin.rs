@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::{
   source::{
@@ -9,8 +8,10 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_person::api::AddAdminRequest;
-use app_108jobs_db_views_person::{api::AddAdminResponse, impls::PersonQuery};
+use app_108jobs_db_views_person::{
+  api::{AddAdminRequest, AddAdminResponse},
+  impls::PersonQuery,
+};
 use app_108jobs_utils::error::FastJobResult;
 
 pub async fn add_admin(

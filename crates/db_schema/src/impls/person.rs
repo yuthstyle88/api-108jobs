@@ -2,14 +2,23 @@ use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
   source::person::{
-    Person, PersonActions, PersonBlockForm, PersonFollowerForm, PersonInsertForm, PersonNoteForm,
+    Person,
+    PersonActions,
+    PersonBlockForm,
+    PersonFollowerForm,
+    PersonInsertForm,
+    PersonNoteForm,
     PersonUpdateForm,
   },
   traits::{ApubActor, Blockable, Crud, Followable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  instance, instance_actions, local_user, person, person_actions,
+  instance,
+  instance_actions,
+  local_user,
+  person,
+  person_actions,
 };
 use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
@@ -19,7 +28,9 @@ use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},
   expression::SelectableHelper,
-  ExpressionMethods, JoinOnDsl, QueryDsl,
+  ExpressionMethods,
+  JoinOnDsl,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use url::Url;
@@ -167,7 +178,8 @@ impl Person {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  // New helper: read person either by username (case-insensitive) or by LocalUser id (numeric string)
+  // New helper: read person either by username (case-insensitive) or by LocalUser id (numeric
+  // string)
   pub async fn read_by_name_or_local_user_id(
     pool: &mut DbPool<'_>,
     username_or_id: &str,

@@ -5,8 +5,10 @@ use crate::{
 };
 use actix_web::web::Data;
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::PersonId;
-use app_108jobs_db_schema::source::{category::Category, instance::InstanceActions};
+use app_108jobs_db_schema::{
+  newtypes::PersonId,
+  source::{category::Category, instance::InstanceActions},
+};
 use app_108jobs_db_schema_file::enums::{ActorType, CategoryVisibility};
 use app_108jobs_db_views_category_person_ban::CategoryPersonBanView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};

@@ -4,10 +4,13 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::{insert_into, update};
-use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+  dsl::{insert_into, update},
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+};
 use diesel_async::RunQueryDsl;
 
 impl Crud for Currency {

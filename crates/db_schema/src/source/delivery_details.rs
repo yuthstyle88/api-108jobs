@@ -1,13 +1,24 @@
-use crate::newtypes::{Coin, CommentId, DeliveryDetailsId, PersonId, PostId, RiderId};
-use crate::newtypes::{PersonId as PersonIdNew, RiderId as RiderIdNew};
-use crate::utils;
+use crate::{
+  newtypes::{
+    Coin,
+    CommentId,
+    DeliveryDetailsId,
+    PersonId,
+    PersonId as PersonIdNew,
+    PostId,
+    RiderId,
+    RiderId as RiderIdNew,
+  },
+  utils,
+};
 use app_108jobs_db_schema_file::enums::{TripStatus, VehicleType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema_file::schema::delivery_details, diesel::prelude::*,
+  app_108jobs_db_schema_file::schema::delivery_details,
+  diesel::prelude::*,
   diesel_async::RunQueryDsl,
 };
 

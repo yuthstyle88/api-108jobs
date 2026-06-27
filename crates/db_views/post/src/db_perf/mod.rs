@@ -15,7 +15,9 @@ use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
 use app_108jobs_utils::error::FastJobResult;
 use diesel::{
   dsl::{self, sql},
-  sql_types, ExpressionMethods, IntoSql,
+  sql_types,
+  ExpressionMethods,
+  IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;

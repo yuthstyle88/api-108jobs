@@ -1,6 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::is_admin;
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{ListPostLikes, ListPostLikesResponse};
 use app_108jobs_db_views_vote::VoteView;

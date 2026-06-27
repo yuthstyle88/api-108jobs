@@ -1,8 +1,12 @@
-use crate::broker::manager::{FetchHistoryDirect, PhoenixManager};
-use crate::persistence::{ensure_room_membership, list_chat_messages};
+use crate::{
+  broker::manager::{FetchHistoryDirect, PhoenixManager},
+  persistence::{ensure_room_membership, list_chat_messages},
+};
 use actix::{Context, Handler, ResponseFuture};
-use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
-use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_schema::{
+  source::chat_message::{ChatMessage, ChatMessageInsertForm},
+  utils::DbPool,
+};
 use app_108jobs_db_views_chat::api::ChatMessagesResponse;
 use app_108jobs_utils::error::FastJobResult;
 

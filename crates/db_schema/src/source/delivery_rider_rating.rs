@@ -1,10 +1,9 @@
 use crate::newtypes::{DeliveryRiderRatingId, PersonId, PostId, RiderId};
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::delivery_rider_rating;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::delivery_rider_rating;
 
 /// Employer rating of a rider for a completed delivery.
 #[skip_serializing_none]

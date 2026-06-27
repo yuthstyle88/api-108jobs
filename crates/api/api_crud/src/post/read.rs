@@ -12,9 +12,9 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
 use app_108jobs_db_views_post::{
   api::{GetPost, GetPostResponse},
+  logistics::{self, LogisticsViewer},
   PostView,
 };
 use app_108jobs_db_views_search_combined::impls::SearchCombinedQuery;

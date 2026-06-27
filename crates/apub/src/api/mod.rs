@@ -1,5 +1,7 @@
-use app_108jobs_db_schema::newtypes::CategoryId;
-use app_108jobs_db_schema::source::{local_site::LocalSite, local_user::LocalUser};
+use app_108jobs_db_schema::{
+  newtypes::CategoryId,
+  source::{local_site::LocalSite, local_user::LocalUser},
+};
 use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
 pub mod list_comments;

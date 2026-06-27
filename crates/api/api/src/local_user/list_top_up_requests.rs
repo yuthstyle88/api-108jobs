@@ -1,6 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::list_top_up_requests_inner;
+use app_108jobs_api_utils::{context::FastJobContext, utils::list_top_up_requests_inner};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_wallet::api::{ListTopUpRequestQuery, ListTopUpRequestResponse};
 use app_108jobs_utils::error::FastJobResult;

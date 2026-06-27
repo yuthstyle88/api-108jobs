@@ -1,13 +1,12 @@
-use crate::broker::{CONNECT_TIMEOUT_SECS, JOIN_TIMEOUT_SECS};
-use crate::protocol::api::{ChatEvent, IncomingEvent};
+use crate::{
+  broker::{CONNECT_TIMEOUT_SECS, JOIN_TIMEOUT_SECS},
+  protocol::api::{ChatEvent, IncomingEvent},
+};
 use app_108jobs_db_schema::newtypes::ChatRoomId;
 use app_108jobs_utils::error::FastJobResult;
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{collections::HashMap, str::FromStr, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
 pub async fn connect(socket: Arc<Socket>) -> FastJobResult<Arc<Socket>> {

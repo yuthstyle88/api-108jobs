@@ -1,7 +1,9 @@
 use actix_cors::Cors;
 use app_108jobs_utils::settings::structs::Settings;
-use std::env;
-use std::path::{Path, PathBuf};
+use std::{
+  env,
+  path::{Path, PathBuf},
+};
 
 pub mod prometheus_metrics;
 pub mod scheduled_tasks;

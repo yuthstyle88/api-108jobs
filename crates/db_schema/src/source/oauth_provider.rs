@@ -7,7 +7,8 @@ use app_108jobs_db_schema_file::schema::oauth_provider;
 use chrono::{DateTime, Utc};
 use serde::{
   ser::{SerializeStruct, Serializer},
-  Deserialize, Serialize,
+  Deserialize,
+  Serialize,
 };
 use serde_with::skip_serializing_none;
 

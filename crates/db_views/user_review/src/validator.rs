@@ -4,7 +4,7 @@ use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that a rating is between 1 and 5 (inclusive)
 pub fn validate_rating(rating: i16) -> FastJobResult<()> {
-  if rating < 1 || rating > 5 {
+  if !(1..=5).contains(&rating) {
     return Err(FastJobErrorType::InvalidArgument.into());
   }
   Ok(())

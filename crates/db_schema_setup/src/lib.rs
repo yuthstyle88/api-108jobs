@@ -137,12 +137,6 @@ pub struct Options {
 }
 
 impl Options {
-  #[cfg(test)]
-  fn enable_diff_check(mut self) -> Self {
-    self.enable_diff_check = true;
-    self
-  }
-
   pub fn run(mut self) -> Self {
     self.run = true;
     self

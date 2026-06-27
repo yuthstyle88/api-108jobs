@@ -10,7 +10,7 @@ use slug::slugify;
 
 fn is_valid_post_title(title: &str) -> FastJobResult<()> {
   if title.trim().is_empty() {
-    return Err(FastJobErrorType::InvalidField(
+    Err(FastJobErrorType::InvalidField(
       "title cannot be empty".to_string(),
     ))?;
   }
@@ -20,7 +20,7 @@ fn is_valid_post_title(title: &str) -> FastJobResult<()> {
 fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
   // Validate budget (now required)
   if data.budget.0 <= 0 {
-    return Err(FastJobErrorType::InvalidField(
+    Err(FastJobErrorType::InvalidField(
       "budget must be greater than 0".to_string(),
     ))?;
   }
@@ -28,7 +28,7 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
   // Validate deadline: must be in the future, if set
   if let Some(deadline) = data.deadline {
     if deadline <= Utc::now() {
-      return Err(FastJobErrorType::InvalidField(
+      Err(FastJobErrorType::InvalidField(
         "deadline must be in the future".to_string(),
       ))?;
     }
@@ -38,7 +38,7 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
   if matches!(data.post_kind.unwrap_or(PostKind::Normal), PostKind::Normal)
     && data.category_id.is_none()
   {
-    return Err(FastJobErrorType::InvalidDeliveryPost)?;
+    Err(FastJobErrorType::InvalidDeliveryPost)?;
   }
 
   // Delivery-specific validation (request level only)
@@ -57,11 +57,11 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
           .as_ref()
           .map_or(true, |s| s.trim().is_empty())
       {
-        return Err(FastJobErrorType::InvalidDeliveryPost)?;
+        Err(FastJobErrorType::InvalidDeliveryPost)?;
       }
       if let Some(true) = dd.cash_on_delivery {
         if dd.cod_amount.unwrap_or(0.0) <= 0.0 {
-          return Err(FastJobErrorType::InvalidField(
+          Err(FastJobErrorType::InvalidField(
             "cod_amount must be > 0 when cash_on_delivery is true".to_string(),
           ))?;
         }
@@ -72,14 +72,14 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
       };
       if let (Some(lat), Some(lng)) = (dd.pickup_lat, dd.pickup_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
+          Err(FastJobErrorType::InvalidField(
             "invalid pickup lat/lng".to_string(),
           ))?;
         }
       }
       if let (Some(lat), Some(lng)) = (dd.dropoff_lat, dd.dropoff_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
+          Err(FastJobErrorType::InvalidField(
             "invalid dropoff lat/lng".to_string(),
           ))?;
         }
@@ -93,7 +93,7 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
         ))?;
 
       if r.pickup_address.trim().is_empty() || r.dropoff_address.trim().is_empty() {
-        return Err(FastJobErrorType::InvalidField(
+        Err(FastJobErrorType::InvalidField(
           "pickup_address and dropoff_address are required".to_string(),
         ))?;
       }
@@ -102,29 +102,27 @@ fn validate_job_update_fields(data: &CreatePostRequest) -> FastJobResult<()> {
       };
       if let (Some(lat), Some(lng)) = (r.pickup_lat, r.pickup_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
+          Err(FastJobErrorType::InvalidField(
             "invalid pickup lat/lng".to_string(),
           ))?;
         }
       }
       if let (Some(lat), Some(lng)) = (r.dropoff_lat, r.dropoff_lng) {
         if !ok(lat, lng) {
-          return Err(FastJobErrorType::InvalidField(
+          Err(FastJobErrorType::InvalidField(
             "invalid dropoff lat/lng".to_string(),
           ))?;
         }
       }
       if data.delivery_details.is_some() {
-        return Err(FastJobErrorType::InvalidField(
+        Err(FastJobErrorType::InvalidField(
           "delivery_details not allowed for RideTaxi post".to_string(),
         ))?;
       }
-    } else {
-      if data.delivery_details.is_some() || data.ride_payload.is_some() {
-        return Err(FastJobErrorType::InvalidField(
-          "logistics payload not allowed for Normal post".to_string(),
-        ))?;
-      }
+    } else if data.delivery_details.is_some() || data.ride_payload.is_some() {
+      Err(FastJobErrorType::InvalidField(
+        "logistics payload not allowed for Normal post".to_string(),
+      ))?;
     }
   }
   Ok(())

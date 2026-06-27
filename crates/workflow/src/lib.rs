@@ -8,7 +8,7 @@ mod impls;
 
 pub use crate::impls::WorkflowService;
 
-/// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
+// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
 // ===== Typestate State Machine (structs-only) =====
 // Each state is a distinct struct; allowed transitions are methods that
 // consume the current state and return the next state's struct + a domain transition payload.

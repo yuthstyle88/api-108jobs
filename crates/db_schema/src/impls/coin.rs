@@ -112,7 +112,7 @@ impl CoinModel {
       .await?;
 
     // 2) Compute new total (integer, no decimals)
-    let new_total = current_total + delta.0 as i32;
+    let new_total = current_total + delta.0;
     if new_total < 0 {
       return Err(FastJobErrorType::InvalidField("coin supply cannot be negative".into()).into());
     }

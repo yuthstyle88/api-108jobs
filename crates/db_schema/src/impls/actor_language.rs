@@ -3,12 +3,8 @@ use crate::{
   newtypes::{CategoryId, InstanceId, LanguageId, LocalUserId, SiteId},
   source::{
     actor_language::{
-      CategoryLanguage,
-      CategoryLanguageForm,
-      LocalUserLanguage,
-      LocalUserLanguageForm,
-      SiteLanguage,
-      SiteLanguageForm,
+      CategoryLanguage, CategoryLanguageForm, LocalUserLanguage, LocalUserLanguageForm,
+      SiteLanguage, SiteLanguageForm,
     },
     language::Language,
     site::Site,
@@ -16,20 +12,13 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  category_language,
-  local_site,
-  local_user_language,
-  site,
-  site_language,
+  category_language, local_site, local_user_language, site, site_language,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{count, exists},
-  insert_into,
-  select,
-  ExpressionMethods,
-  QueryDsl,
+  insert_into, select, ExpressionMethods, QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use tokio::sync::OnceCell;
@@ -217,9 +206,7 @@ impl CategoryLanguage {
     for_instance_id: InstanceId,
   ) -> FastJobResult<()> {
     use app_108jobs_db_schema_file::schema::{
-      category::dsl as c,
-      category_language::dsl as cl,
-      site_language::dsl as sl,
+      category::dsl as c, category_language::dsl as cl, site_language::dsl as sl,
     };
     let category_languages: Vec<LanguageId> = cl::category_language
       .left_outer_join(sl::site_language.on(cl::language_id.eq(sl::language_id)))
@@ -243,9 +230,7 @@ impl CategoryLanguage {
     for_category_id: CategoryId,
   ) -> FastJobResult<Vec<LanguageId>> {
     use app_108jobs_db_schema_file::schema::category_language::dsl::{
-      category_id,
-      category_language,
-      language_id,
+      category_id, category_language, language_id,
     };
     let conn = &mut get_conn(pool).await?;
     let langs = category_language
@@ -318,8 +303,7 @@ pub async fn validate_post_language(
   local_user_id: LocalUserId,
 ) -> FastJobResult<LanguageId> {
   use app_108jobs_db_schema_file::schema::{
-    category_language::dsl as cl,
-    local_user_language::dsl as ul,
+    category_language::dsl as cl, local_user_language::dsl as ul,
   };
   let conn = &mut get_conn(pool).await?;
   let language_id = match language_id {

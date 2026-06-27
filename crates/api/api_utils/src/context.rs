@@ -125,6 +125,7 @@ impl FastJobContext {
   }
 
   #[allow(clippy::expect_used)]
+  #[allow(clippy::unused_async)]
   pub async fn init_test_federation_config() -> FastJobResult<()> {
     // call this to run migrations
     Ok(())

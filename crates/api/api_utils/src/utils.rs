@@ -746,7 +746,7 @@ pub fn read_auth_token(req: &HttpRequest) -> FastJobResult<Option<String>> {
 
 /// Extracts the username from an multilang address by taking the part before the @ symbol
 pub fn extract_username(email: String) -> Option<String> {
-  email.split('@').next().map(|s| s.to_string())
+  email.split('@').next().map(ToString::to_string)
 }
 
 /// Generates a unique username from an multilang address

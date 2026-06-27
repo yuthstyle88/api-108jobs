@@ -1,8 +1,5 @@
 use crate::{
-  CommentReplyView,
-  InboxCombinedView,
-  InboxCombinedViewInternal,
-  PersonCommentMentionView,
+  CommentReplyView, InboxCombinedView, InboxCombinedViewInternal, PersonCommentMentionView,
   PersonPostMentionView,
 };
 use app_108jobs_db_schema::{
@@ -11,46 +8,24 @@ use app_108jobs_db_schema::{
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_category_actions_join,
-      my_comment_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
   InboxDataType,
 };
 use app_108jobs_db_schema_file::schema::{
-  comment,
-  comment_reply,
-  inbox_combined,
-  instance_actions,
-  person,
-  person_actions,
-  person_comment_mention,
-  person_post_mention,
-  post,
+  comment, comment_reply, inbox_combined, instance_actions, person, person_actions,
+  person_comment_mention, person_post_mention, post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  dsl::not,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  QueryDsl,
-  SelectableHelper,
+  dsl::not, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -407,9 +382,8 @@ mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
   use app_108jobs_db_schema::{
     assert_length,
-    newtypes::DbUrl,
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
       instance::Instance,

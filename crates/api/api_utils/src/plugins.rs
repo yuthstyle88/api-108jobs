@@ -60,7 +60,6 @@ where
 }
 
 /// Call a plugin hook which can rewrite data
-
 pub fn plugin_metadata() -> Vec<PluginMetadata> {
   FastJobPlugins::init()
     .0

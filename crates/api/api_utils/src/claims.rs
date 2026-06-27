@@ -133,7 +133,7 @@ mod ttl_tests {
   use std::collections::HashMap;
 
   fn reader_from<'a>(map: &'a HashMap<&'a str, &'a str>) -> impl Fn(&str) -> Option<String> + 'a {
-    move |k: &str| map.get(k).map(|s| s.to_string())
+    move |k: &str| map.get(k).copied().map(ToString::to_string)
   }
 
   #[test]

@@ -1,9 +1,5 @@
 use crate::{
-  CategoryReportView,
-  CommentReportView,
-  LocalUserView,
-  PostReportView,
-  ReportCombinedView,
+  CategoryReportView, CommentReportView, LocalUserView, PostReportView, ReportCombinedView,
   ReportCombinedViewInternal,
 };
 use app_108jobs_db_schema::{
@@ -15,30 +11,14 @@ use app_108jobs_db_schema::{
   ReportType,
 };
 use app_108jobs_db_schema_file::schema::{
-  category,
-  category_actions,
-  category_report,
-  comment,
-  comment_actions,
-  comment_report,
-  local_user,
-  person,
-  person_actions,
-  post,
-  post_actions,
-  post_report,
-  report_combined,
+  category, category_actions, category_report, comment, comment_actions, comment_report,
+  local_user, person, person_actions, post, post_actions, post_report, report_combined,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Days, Utc};
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -406,136 +386,4 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
       None
     }
   }
-}
-
-#[cfg(test)]
-#[expect(clippy::indexing_slicing)]
-mod tests {
-
-  use crate::{
-    impls::ReportCombinedQuery,
-    LocalUserView,
-    ReportCombinedView,
-    ReportCombinedViewInternal,
-  };
-  use app_108jobs_db_schema::{
-    assert_length,
-    newtypes::DbUrl,
-    source::{
-      category::{category, Category, CategoryInsertForm},
-      category_report::{CategoryReport, CategoryReportForm},
-      comment::{Comment, CommentInsertForm},
-      comment_report::{CommentReport, CommentReportForm},
-      instance::Instance,
-      local_user::{LocalUser, LocalUserInsertForm},
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
-      post_report::{PostReport, PostReportForm},
-    },
-    traits::{Crud, Reportable},
-    utils::{build_db_pool_for_tests, get_conn, DbPool},
-    ReportType,
-  };
-  use app_108jobs_db_schema_file::schema::report_combined;
-  use app_108jobs_utils::error::FastJobResult;
-  use chrono::{Days, Utc};
-  use diesel::{update, ExpressionMethods, QueryDsl};
-  use diesel_async::RunQueryDsl;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-  struct Data {
-    instance: Instance,
-    timmy: Person,
-    sara: Person,
-    jessica: Person,
-    timmy_view: LocalUserView,
-    admin_view: LocalUserView,
-    category: Category,
-    post: Post,
-    post_2: Post,
-    comment: Comment,
-  }
-
-  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
-    let inserted_instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-
-    let (timmy_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "timmy_rcv").await?;
-    let inserted_timmy = Person::create(pool, &timmy_form).await?;
-    let timmy_local_user_form = LocalUserInsertForm::test_form(inserted_timmy.id);
-    let timmy_local_user = LocalUser::create(pool, &timmy_local_user_form, vec![]).await?;
-    let timmy_view = LocalUserView {
-      local_user: timmy_local_user,
-      person: inserted_timmy.clone(),
-      banned: false,
-    };
-
-    // Make an admin, to be able to see private message reports.
-    let (admin_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "admin_rcv").await?;
-    let inserted_admin = Person::create(pool, &admin_form).await?;
-    let admin_local_user_form = LocalUserInsertForm::test_form_admin(inserted_admin.id);
-    let admin_local_user = LocalUser::create(pool, &admin_local_user_form, vec![]).await?;
-    let admin_view = LocalUserView {
-      local_user: admin_local_user,
-      person: inserted_admin.clone(),
-      banned: false,
-    };
-
-    let (sara_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "sara_rcv").await?;
-    let inserted_sara = Person::create(pool, &sara_form).await?;
-
-    let (jessica_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "jessica_mrv").await?;
-    let inserted_jessica = Person::create(pool, &jessica_form).await?;
-
-    let category_form = CategoryInsertForm::new(
-      inserted_instance.id,
-      "test category crv".to_string(),
-      "nada".to_owned(),
-    );
-    let inserted_category = Category::create(pool, &category_form).await?;
-
-    let post_form = PostInsertForm {
-      category_id: Some(inserted_category.id),
-      ..PostInsertForm::new("A test post crv".into(), inserted_timmy.id)
-    };
-    let inserted_post = Post::create(pool, &post_form).await?;
-
-    let new_post_2 = PostInsertForm {
-      category_id: Some(inserted_category.id),
-      ..PostInsertForm::new("A test post crv 2".into(), inserted_timmy.id)
-    };
-    let inserted_post_2 = Post::create(pool, &new_post_2).await?;
-
-    // Timmy creates a comment
-    let comment_form = CommentInsertForm::new(
-      inserted_timmy.id,
-      inserted_post.id,
-      "A test comment rv".into(),
-    );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
-
-    Ok(Data {
-      instance: inserted_instance,
-      timmy: inserted_timmy,
-      sara: inserted_sara,
-      jessica: inserted_jessica,
-      admin_view,
-      timmy_view,
-      category: inserted_category,
-      post: inserted_post,
-      post_2: inserted_post_2,
-      comment: inserted_comment,
-    })
-  }
-
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    Instance::delete(pool, data.instance.id).await?;
-
-    Ok(())
-  }
-
 }

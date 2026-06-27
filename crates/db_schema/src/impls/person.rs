@@ -531,7 +531,7 @@ mod tests {
       instance::Instance,
       person::{Person, PersonActions, PersonFollowerForm, PersonInsertForm},
     },
-    traits::{Crud, Followable},
+    traits::Followable,
     utils::{build_db_pool_for_tests, uplete},
   };
   use app_108jobs_utils::error::FastJobResult;

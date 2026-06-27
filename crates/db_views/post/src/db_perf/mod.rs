@@ -3,7 +3,7 @@ mod series;
 use crate::{db_perf::series::ValuesFromSeries, impls::PostQuery, PostView};
 use app_108jobs_db_schema::{
   source::{
-    category::{category, Category, CategoryInsertForm},
+    category::{Category, CategoryInsertForm},
     instance::Instance,
     person::{Person, PersonInsertForm},
     site::Site,
@@ -15,9 +15,7 @@ use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
 use app_108jobs_utils::error::FastJobResult;
 use diesel::{
   dsl::{self, sql},
-  sql_types,
-  ExpressionMethods,
-  IntoSql,
+  sql_types, ExpressionMethods, IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;
@@ -190,7 +188,7 @@ fn site() -> FastJobResult<Site> {
     last_refreshed_at: Default::default(),
     inbox_url: Url::parse("http://example.com")?.into(),
     private_key: None,
-    public_key: "".to_string(),
+    public_key: String::new(),
     instance_id: Default::default(),
     content_warning: None,
   })

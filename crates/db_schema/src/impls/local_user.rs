@@ -7,9 +7,7 @@ use crate::{
   },
   utils::{
     functions::{coalesce, lower},
-    get_conn,
-    now,
-    DbPool,
+    get_conn, now, DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -21,9 +19,7 @@ use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},
   result::Error,
-  CombineDsl,
-  ExpressionMethods,
-  QueryDsl,
+  CombineDsl, ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

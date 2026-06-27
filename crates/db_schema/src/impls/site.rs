@@ -19,7 +19,6 @@ impl Crud for Site {
   type IdType = SiteId;
 
   /// Use SiteView::read_local, or Site::read_from_apub_id instead
-
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let is_new_site = match &form.ap_id {
       Some(id) => Site::read_from_apub_id(pool, id).await?.is_none(),

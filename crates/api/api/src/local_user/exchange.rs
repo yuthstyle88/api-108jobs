@@ -54,12 +54,13 @@ pub async fn exchange_key(
 
   // Derive and store an AES-256 session key for this user (per-process)
   // 1) decode client pubkey (uncompressed hex -> raw bytes)
-  let client_pub_raw = hex::decode(&client_hex).map_err(|_| FastJobErrorType::DecodeError)?;
+  let client_pub_raw = hex::decode(&client_hex).map_err(|_e| FastJobErrorType::DecodeError)?;
 
   // 2) export server secret to DER and derive shared AES key
-  let server_sk_der = export_private_pkcs8_der(&server_secret);
+  let server_sk_der =
+    export_private_pkcs8_der(&server_secret).map_err(|_e| FastJobErrorType::EncryptingError)?;
   let aes_key = derive_aes256_from_ecdh(&server_sk_der, &client_pub_raw)
-    .map_err(|_| FastJobErrorType::EncryptingError)?;
+    .map_err(|_e| FastJobErrorType::EncryptingError)?;
 
   // Persist the derived session shared key (hex) for this user
   let server_share_key = hex::encode(&aes_key);

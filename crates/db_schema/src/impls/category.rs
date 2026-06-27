@@ -4,11 +4,7 @@ use crate::{
   source::{
     actor_language::CategoryLanguage,
     category::{
-      Category,
-      CategoryActions,
-      CategoryChangeset,
-      CategoryInsertForm,
-      CategoryUpdateForm,
+      Category, CategoryActions, CategoryChangeset, CategoryInsertForm, CategoryUpdateForm,
     },
     post::Post,
   },
@@ -16,9 +12,7 @@ use crate::{
   utils::{
     format_actor_url,
     functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
-    get_conn,
-    uplete,
-    DbPool,
+    get_conn, uplete, DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -34,12 +28,7 @@ use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
-  select,
-  update,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  QueryDsl,
+  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use moka::future::Cache;
@@ -490,25 +479,4 @@ impl ApubActor for Category {
     let domain = settings.get_protocol_and_hostname();
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
   }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use crate::{
-    source::{
-      category::{Category, CategoryActions, CategoryInsertForm, CategoryUpdateForm},
-      instance::Instance,
-      local_user::LocalUser,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
-    },
-    traits::Crud,
-    utils::{build_db_pool_for_tests, RANK_DEFAULT},
-  };
-  use app_108jobs_utils::error::FastJobResult;
-  use diesel_ltree::Ltree;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
 }

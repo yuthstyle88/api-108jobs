@@ -82,7 +82,7 @@ impl ChatParticipant {
       return Ok(vec![]);
     }
 
-    let ids: Vec<String> = room_ids.iter().map(|r| r.to_string()).collect();
+    let ids: Vec<String> = room_ids.iter().map(ToString::to_string).collect();
 
     let query = chat_participant::table
       .filter(chat_participant::room_id.eq_any(ids))

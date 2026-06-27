@@ -151,5 +151,4 @@ mod tests {
     let links = find_urls::<Image>("![test](https://example.com/%C3%A4%C3%B6%C3%BC.jpg)");
     assert_eq!(vec![(8, 50)], links);
   }
-
 }

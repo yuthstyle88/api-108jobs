@@ -52,7 +52,7 @@ impl TryFrom<AuthenticateWithOauthRequest> for ValidAuthenticateWithOauth {
       oauth_provider_id: value.oauth_provider_id,
       redirect_uri: value.redirect_uri,
       self_promotion: Some(false),
-      username: value.email.map(|e| e.into()),
+      username: value.email.map(Into::into),
       name: value.name,
       answer: value.answer,
       pkce_code_verifier: None,

@@ -1,8 +1,5 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonContentCombinedView,
-  PersonContentCombinedViewInternal,
+  CommentView, LocalUserView, PersonContentCombinedView, PersonContentCombinedViewInternal,
   PostView,
 };
 use app_108jobs_db_schema::{
@@ -11,41 +8,23 @@ use app_108jobs_db_schema::{
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_category_actions_join,
-      my_comment_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
   PersonContentType,
 };
 use app_108jobs_db_schema_file::schema::{
-  comment,
-  delivery_details,
-  person,
-  person_content_combined,
-  post,
+  comment, delivery_details, person, person_content_combined, post,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
@@ -283,13 +262,10 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
 
-  use crate::{
-    impls::{app_108jobs_db_schema::newtypes::DbUrl, PersonContentCombinedQuery},
-    PersonContentCombinedView,
-  };
+  use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
   use app_108jobs_db_schema::{
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::Instance,
       person::{Person, PersonInsertForm},

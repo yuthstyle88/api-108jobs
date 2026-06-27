@@ -1,13 +1,6 @@
 use crate::{
   newtypes::{
-    CoinId,
-    CommentId,
-    DeliveryDetailsId,
-    LocalUserId,
-    PersonId,
-    PostId,
-    RiderId,
-    WalletId,
+    CoinId, CommentId, DeliveryDetailsId, LocalUserId, PersonId, PostId, RiderId, WalletId,
   },
   source::{
     delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm, DeliveryDetailsUpdateForm},
@@ -27,8 +20,7 @@ use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult}
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, update},
-  ExpressionMethods,
-  QueryDsl,
+  ExpressionMethods, QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use uuid::Uuid;

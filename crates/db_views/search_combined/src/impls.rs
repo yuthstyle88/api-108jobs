@@ -1,12 +1,6 @@
 use crate::{
-  CategoryView,
-  CommentView,
-  LocalUserView,
-  PersonView,
-  PostView,
-  SearchCombinedView,
-  SearchCombinedViewInternal,
-  SearchPostView,
+  CategoryView, CommentView, LocalUserView, PersonView, PostView, SearchCombinedView,
+  SearchCombinedViewInternal, SearchPostView,
 };
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
@@ -16,26 +10,14 @@ use app_108jobs_db_schema::{
   },
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    fuzzy_search,
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    fuzzy_search, get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_category_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_category_actions_join,
-      my_comment_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_comment_actions_join, my_instance_actions_person_join,
+      my_local_user_admin_join, my_person_actions_join, my_post_actions_join,
     },
-    seconds_to_pg_interval,
-    DbPool,
+    seconds_to_pg_interval, DbPool,
   },
   SearchSortType::{self, *},
   SearchType,
@@ -45,20 +27,13 @@ use app_108jobs_db_schema_file::{
   schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
 };
 use app_108jobs_db_views_post::logistics::{
-  build_logistics_from_maps,
-  fetch_logistics_maps_by_ids,
-  LogisticsViewer,
+  build_logistics_from_maps, fetch_logistics_maps_by_ids, LogisticsViewer,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  PgTextExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+  PgTextExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;
@@ -493,179 +468,4 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
       None
     }
   }
-}
-
-#[cfg(test)]
-#[expect(clippy::indexing_slicing)]
-mod tests {
-  use crate::{impls::SearchCombinedQuery, LocalUserView, SearchCombinedView};
-  use app_108jobs_db_schema::{
-    assert_length,
-    source::{
-      category::{category, Category, CategoryInsertForm},
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm, CommentUpdateForm},
-      instance::Instance,
-      local_user::{LocalUser, LocalUserInsertForm},
-      person::{Person, PersonInsertForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm, PostUpdateForm},
-      site::{Site, SiteInsertForm},
-    },
-    traits::{Crud, Likeable},
-    utils::{build_db_pool_for_tests, DbPool},
-    SearchSortType,
-    SearchType,
-  };
-  use app_108jobs_utils::error::FastJobResult;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-  use url::Url;
-
-  struct Data {
-    instance: Instance,
-    site: Site,
-    timmy: Person,
-    timmy_view: LocalUserView,
-    sara: Person,
-    category: Category,
-    category_2: Category,
-    timmy_post: Post,
-    timmy_post_2: Post,
-    sara_post: Post,
-    self_promotion_post: Post,
-    timmy_comment: Comment,
-    sara_comment: Comment,
-    sara_comment_2: Comment,
-    comment_in_self_promotion_post: Comment,
-  }
-
-  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
-    let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-    let site_form = SiteInsertForm::new("test_site".to_string(), instance.id);
-    let site = Site::create(pool, &site_form).await?;
-
-    let (sara_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_pcv").await?;
-    let sara = Person::create(pool, &sara_form).await?;
-
-    let (timmy_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_pcv").await?;
-    let timmy = Person::create(pool, &timmy_form).await?;
-    let timmy_local_user_form = LocalUserInsertForm::test_form(timmy.id);
-    let timmy_local_user = LocalUser::create(pool, &timmy_local_user_form, vec![]).await?;
-    let timmy_view = LocalUserView {
-      local_user: timmy_local_user,
-      person: timmy.clone(),
-      banned: false,
-    };
-
-    let category_form = CategoryInsertForm {
-      description: Some("ask app_108jobs things".into()),
-      ..CategoryInsertForm::new(
-        instance.id,
-        "askapp_108jobs".to_string(),
-        "Ask FastJob".to_owned(),
-      )
-    };
-    let category = Category::create(pool, &category_form).await?;
-
-    let category_form_2 = CategoryInsertForm::new(
-      instance.id,
-      "startrek_ds9".to_string(),
-      "Star Trek - Deep Space Nine".to_owned(),
-    );
-    let category_2 = Category::create(pool, &category_form_2).await?;
-
-    let timmy_post_form = PostInsertForm {
-      body: Some("postbody inside here".into()),
-      url: Some(Url::parse("https://google.com")?.into()),
-      category_id: Some(category.id),
-      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
-    };
-    let timmy_post = Post::create(pool, &timmy_post_form).await?;
-
-    let timmy_post_form_2 = PostInsertForm {
-      category_id: Some(category.id),
-      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
-    };
-    let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
-
-    let sara_post_form = PostInsertForm {
-      category_id: Some(category_2.id),
-      ..PostInsertForm::new("sara post prv".into(), sara.id)
-    };
-    let sara_post = Post::create(pool, &sara_post_form).await?;
-
-    let self_promotion_post_form = PostInsertForm {
-      body: Some("self_promotion post inside here".into()),
-      url: Some(Url::parse("https://google.com")?.into()),
-      self_promotion: Some(true),
-      category_id: Some(category.id),
-      ..PostInsertForm::new("self_promotion post prv".into(), timmy.id)
-    };
-    let self_promotion_post = Post::create(pool, &self_promotion_post_form).await?;
-
-    let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv gold".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
-
-    let sara_comment_form =
-      CommentInsertForm::new(sara.id, sara_post.id, "sara comment prv gold".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
-
-    let sara_comment_form_2 =
-      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
-
-    let comment_in_self_promotion_post_form = CommentInsertForm::new(
-      sara.id,
-      self_promotion_post.id,
-      "sara comment in self_promotion post prv 2".into(),
-    );
-    let comment_in_self_promotion_post =
-      Comment::create(pool, &comment_in_self_promotion_post_form).await?;
-
-    // Timmy likes and dislikes a few things
-    let timmy_like_post_form = PostLikeForm::new(timmy_post.id, timmy.id, 1);
-    PostActions::like(pool, &timmy_like_post_form).await?;
-
-    let timmy_like_sara_post_form = PostLikeForm::new(sara_post.id, timmy.id, 1);
-    PostActions::like(pool, &timmy_like_sara_post_form).await?;
-
-    let timmy_dislike_post_form = PostLikeForm::new(timmy_post_2.id, timmy.id, -1);
-    PostActions::like(pool, &timmy_dislike_post_form).await?;
-
-    let timmy_like_comment_form = CommentLikeForm::new(timmy.id, timmy_comment.id, 1);
-    CommentActions::like(pool, &timmy_like_comment_form).await?;
-
-    let timmy_like_sara_comment_form = CommentLikeForm::new(timmy.id, sara_comment.id, 1);
-    CommentActions::like(pool, &timmy_like_sara_comment_form).await?;
-
-    let timmy_dislike_sara_comment_form = CommentLikeForm::new(timmy.id, sara_comment_2.id, -1);
-    CommentActions::like(pool, &timmy_dislike_sara_comment_form).await?;
-
-    Ok(Data {
-      instance,
-      site,
-      timmy,
-      timmy_view,
-      sara,
-      category,
-      category_2,
-      timmy_post,
-      timmy_post_2,
-      sara_post,
-      self_promotion_post,
-      timmy_comment,
-      sara_comment,
-      sara_comment_2,
-      comment_in_self_promotion_post,
-    })
-  }
-
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    Instance::delete(pool, data.instance.id).await?;
-
-    Ok(())
-  }
-
 }

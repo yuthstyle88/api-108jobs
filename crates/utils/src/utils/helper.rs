@@ -12,8 +12,16 @@ pub fn lang_to_country_code(lang: Option<&str>) -> Option<String> {
     if let Ok(mut langid) = LanguageIdentifier::from_str(code) {
       if langid.region.is_none() {
         match code {
-          "vi" => langid.region = Some("VN".parse().unwrap()),
-          "th" => langid.region = Some("TH".parse().unwrap()),
+          "vi" => {
+            if let Ok(region) = "VN".parse() {
+              langid.region = Some(region);
+            }
+          }
+          "th" => {
+            if let Ok(region) = "TH".parse() {
+              langid.region = Some(region);
+            }
+          }
           _ => {}
         }
       }

@@ -166,15 +166,7 @@ impl ChatRoomView {
     }
 
     // 2. Load full ChatRoomView in parallel (your existing battle-tested logic)
-    let room_ids = serial_ids
-      .into_iter()
-      .map(|serial_id| {
-        // You need a way to get ChatRoomId from serial_id.
-        // Assuming you added a helper or can query by serial_id:
-        // We'll do a fast lookup below
-        serial_id
-      })
-      .collect::<Vec<_>>();
+    let room_ids = serial_ids;
 
     // Fast path: lookup ChatRoomId by serial_id in one query
     let id_map: std::collections::HashMap<i64, ChatRoomId> = chat_room::table

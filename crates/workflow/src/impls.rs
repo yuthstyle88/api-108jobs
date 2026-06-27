@@ -445,6 +445,7 @@ impl QuotationPendingReviewTS {
   ///   * the partial unique index `uq_wallet_hold_active_per_billing` →
   ///     `DuplicateWalletHold` (mapped from PG unique violation)
   ///   * or the `wallet_transaction` unique index (existing behavior)
+  ///
   /// In either case, the entire transaction rolls back — no partial state.
   pub async fn approve_on(
     self,

@@ -132,7 +132,7 @@ mod tests {
       "test category_4".to_string(),
       "nada".to_owned(),
     );
-    let category = Category::create(pool, &category_form).await?;
+    let _category = Category::create(pool, &category_form).await?;
 
     let form = PostInsertForm::new("A test post".into(), person.id);
     let post = Post::create(pool, &form).await?;

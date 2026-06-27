@@ -14,8 +14,7 @@ use app_108jobs_api::chat::list::list_chat_rooms;
 use app_108jobs_api::delivery::assign::assign_delivery_from_proposal;
 use app_108jobs_api::delivery::confirm::confirm_delivery_completion;
 use app_108jobs_api::delivery::list::{
-  get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries,
-  get_delivery,
+  get_active_deliveries, get_cancelled_deliveries, get_completed_deliveries, get_delivery,
 };
 use app_108jobs_api::delivery::location::{
   get_location as get_trip_location, post_location as post_trip_location,

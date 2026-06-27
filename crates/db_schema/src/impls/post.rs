@@ -1,26 +1,13 @@
 use crate::{
   newtypes::{CategoryId, DbUrl, InstanceId, PaginationCursor, PersonId, PostId},
   source::post::{
-    Post,
-    PostActions,
-    PostHideForm,
-    PostInsertForm,
-    PostLikeForm,
-    PostReadCommentsForm,
-    PostReadForm,
-    PostSavedForm,
-    PostUpdateForm,
+    Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadCommentsForm,
+    PostReadForm, PostSavedForm, PostUpdateForm,
   },
   traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
   utils::{
     functions::{coalesce, hot_rank, lower, scaled_rank},
-    get_conn,
-    now,
-    uplete,
-    validate_like,
-    DbPool,
-    DELETED_REPLACEMENT_TEXT,
-    FETCH_LIMIT_MAX,
+    get_conn, now, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT, FETCH_LIMIT_MAX,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -37,13 +24,8 @@ use diesel::{
   dsl::{count, exists, insert_into, not, select, update},
   expression::SelectableHelper,
   pg::Pg,
-  BoolExpressionMethods,
-  DecoratableTarget,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
+  BoolExpressionMethods, DecoratableTarget, ExpressionMethods, JoinOnDsl,
+  NullableExpressionMethods, OptionalExtension, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
@@ -592,31 +574,19 @@ impl PostActions {
 #[cfg(test)]
 mod tests {
   use crate::{
-    newtypes::Coin,
     source::{
       category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm, CommentUpdateForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
-      post::{
-        Post,
-        PostActions,
-        PostInsertForm,
-        PostLikeForm,
-        PostReadForm,
-        PostSavedForm,
-        PostUpdateForm,
-      },
+      post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
-    traits::{Crud, Likeable, Readable, Saveable},
-    utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
+    traits::{Crud, Likeable},
+    utils::build_db_pool_for_tests,
   };
-  use app_108jobs_db_schema_file::enums::PostKind;
   use app_108jobs_utils::error::FastJobResult;
-  use chrono::DateTime;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use url::Url;
 
   #[tokio::test]
   #[serial]

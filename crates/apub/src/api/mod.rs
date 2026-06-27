@@ -42,9 +42,9 @@ fn post_sort_type_with_default(
   )
 }
 
-/// Returns a default post_time_range.
-/// Order is the given, then local user default, then site default.
-/// If zero is given, then the output is None.
+// Returns a default post_time_range.
+// Order is the given, then local user default, then site default.
+// If zero is given, then the output is None.
 
 /// Returns a default instance-level comment sort type, if none is given by the user.
 /// Order is type, local user default, then site default.

@@ -538,7 +538,7 @@ cfg_if! {
     mod tests {
       #![allow(clippy::indexing_slicing)]
       use super::*;
-      use actix_web::{body::MessageBody, ResponseError};
+      use actix_web::ResponseError;
       use pretty_assertions::assert_eq;
       use std::fs::read_to_string;
       use strum::IntoEnumIterator;

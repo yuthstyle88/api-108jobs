@@ -818,7 +818,6 @@ pub enum DecodedCursor {
 }
 
 #[cfg(feature = "full")]
-#[cfg(feature = "full")]
 impl PaginationCursor {
   pub fn new_single(prefix: char, id: i32) -> Self {
     Self::new_i64(prefix, id as i64)

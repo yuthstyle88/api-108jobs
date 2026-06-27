@@ -8,6 +8,7 @@ use app_108jobs_db_schema::newtypes::{CoinId, LocalUserId, WalletId};
 use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
 use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
 use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
+#[cfg(test)]
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::utils::{get_conn, DbPool};
 use app_108jobs_db_schema_file::enums::TopUpStatus;

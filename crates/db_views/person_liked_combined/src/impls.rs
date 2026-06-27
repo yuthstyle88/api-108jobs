@@ -1,52 +1,29 @@
 use crate::{
-  CommentView,
-  LocalUserView,
-  PersonLikedCombinedView,
-  PersonLikedCombinedViewInternal,
-  PostView,
+  CommentView, LocalUserView, PersonLikedCombinedView, PersonLikedCombinedViewInternal, PostView,
 };
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::combined::person_liked::{person_liked_combined_keys as key, PersonLikedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_category_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_category_actions_join,
-      my_comment_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
+      category_join, creator_category_actions_join, creator_category_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      creator_local_user_admin_join, image_details_join, my_category_actions_join,
+      my_comment_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join,
     },
     DbPool,
   },
-  LikeType,
-  PersonContentType,
+  LikeType, PersonContentType,
 };
 use app_108jobs_db_schema_file::schema::{
-  comment,
-  delivery_details,
-  person,
-  person_liked_combined,
-  post,
+  comment, delivery_details, person, person_liked_combined, post,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
@@ -267,111 +244,4 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
       }))
     }
   }
-}
-
-#[cfg(test)]
-#[expect(clippy::indexing_slicing)]
-mod tests {
-
-  use crate::{impls::PersonLikedCombinedQuery, LocalUserView, PersonLikedCombinedView};
-  use app_108jobs_db_schema::{
-    newtypes::DbUrl,
-    source::{
-      category::{category, Category, CategoryInsertForm},
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-      instance::Instance,
-      local_user::{LocalUser, LocalUserInsertForm},
-      person::{Person, PersonInsertForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm},
-    },
-    traits::{Crud, Likeable},
-    utils::{build_db_pool_for_tests, DbPool},
-    LikeType,
-  };
-  use app_108jobs_utils::error::FastJobResult;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-  struct Data {
-    instance: Instance,
-    timmy: Person,
-    timmy_view: LocalUserView,
-    sara: Person,
-    timmy_post: Post,
-    sara_comment: Comment,
-    sara_comment_2: Comment,
-  }
-
-  async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
-    let instance = Instance::read_or_create(pool, "my_domain.tld".to_string()).await?;
-
-    let (timmy_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, instance.id, "timmy_pcv").await?;
-    let timmy = Person::create(pool, &timmy_form).await?;
-    let timmy_local_user_form = LocalUserInsertForm::test_form(timmy.id);
-    let timmy_local_user = LocalUser::create(pool, &timmy_local_user_form, vec![]).await?;
-    let timmy_view = LocalUserView {
-      local_user: timmy_local_user,
-      person: timmy.clone(),
-      banned: false,
-    };
-
-    let (sara_form, _) =
-      PersonInsertForm::test_form_with_wallet(pool, instance.id, "sara_pcv").await?;
-    let sara = Person::create(pool, &sara_form).await?;
-
-    let category_form = CategoryInsertForm::new(
-      instance.id,
-      "test category pcv".to_string(),
-      "nada".to_owned(),
-    );
-    let category = Category::create(pool, &category_form).await?;
-
-    let timmy_post_form = PostInsertForm {
-      category_id: Some(category.id),
-      ..PostInsertForm::new("timmy post prv".into(), timmy.id)
-    };
-    let timmy_post = Post::create(pool, &timmy_post_form).await?;
-
-    let timmy_post_form_2 = PostInsertForm {
-      category_id: Some(category.id),
-      ..PostInsertForm::new("timmy post prv 2".into(), timmy.id)
-    };
-    let timmy_post_2 = Post::create(pool, &timmy_post_form_2).await?;
-
-    let sara_post_form = PostInsertForm {
-      category_id: Some(category.id),
-      ..PostInsertForm::new("sara post prv".into(), sara.id)
-    };
-    let _sara_post = Post::create(pool, &sara_post_form).await?;
-
-    let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let _timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
-
-    let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
-
-    let sara_comment_form_2 =
-      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
-
-    Ok(Data {
-      instance,
-      timmy,
-      timmy_view,
-      sara,
-      timmy_post,
-      sara_comment,
-      sara_comment_2,
-    })
-  }
-
-  async fn cleanup(data: Data, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    Instance::delete(pool, data.instance.id).await?;
-
-    Ok(())
-  }
-
 }

@@ -19,7 +19,7 @@ use std::collections::HashSet;
 use std::time::Duration;
 use tracing;
 
-/// ===== PresenceManager Actor =====
+// ===== PresenceManager Actor =====
 
 /// Tracks online presence using heartbeats and explicit joins/leaves.
 /// Emits OnlineStopped when a user misses heartbeats beyond `heartbeat_ttl`.

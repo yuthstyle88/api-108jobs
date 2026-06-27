@@ -570,8 +570,8 @@ impl DeliveryDetails {
   /// fee is zero, no escrow was ever held — delegates straight to
   /// `update_status`.  Otherwise runs a single DB transaction:
   ///   1. Resolve employer via `post.creator_id → local_user → wallet`.
-  ///   2. `WalletModel::refund_from_platform_on_conn` — platform → employer
-  ///      (reverses the original `hold`; no CoinModel change).
+  ///   2. `WalletModel::refund_from_platform_on_conn` — platform → employer (reverses the original
+  ///      `hold`; no CoinModel change).
   ///   3. Set `status = Cancelled` + `cancellation_reason` in the same tx.
   ///
   /// Idempotency key `cancel-refund:{post_id}:{employer_local_user_id}` makes
@@ -612,16 +612,10 @@ impl DeliveryDetails {
             reference_id: post_id.0,
             kind: TxKind::Transfer,
             amount: delivery_fee,
-            description: format!(
-              "escrow refund for cancelled delivery: post {}",
-              post_id.0
-            ),
+            description: format!("escrow refund for cancelled delivery: post {}", post_id.0),
             counter_user_id: Some(employer_local_user_id),
             // Deterministic: retrying the same cancellation is idempotent.
-            idempotency_key: format!(
-              "cancel-refund:{}:{}",
-              post_id.0, employer_local_user_id.0
-            ),
+            idempotency_key: format!("cancel-refund:{}:{}", post_id.0, employer_local_user_id.0),
           };
 
           let conn3 = &mut get_conn(&mut pool).await?;
@@ -1173,7 +1167,9 @@ mod tests {
       PersonInsertForm::test_form_with_wallet(pool, instance_id, &format!("rd-{}", &suffix[..8]))
         .await
         .expect("rider person");
-    let rider_person = Person::create(pool, &rp_form).await.expect("create rider person");
+    let rider_person = Person::create(pool, &rp_form)
+      .await
+      .expect("create rider person");
     let rider_lu_id: i32 = {
       let conn = &mut get_conn(pool).await.expect("get conn");
       diesel::insert_into(local_user_tbl::table)
@@ -1202,7 +1198,10 @@ mod tests {
     {
       let conn = &mut get_conn(pool).await.expect("get conn");
       diesel::update(dd::table.filter(dd::post_id.eq(post_id.0)))
-        .set((dd::delivery_fee.eq(FEE), dd::assigned_rider_id.eq(rider.id.0)))
+        .set((
+          dd::delivery_fee.eq(FEE),
+          dd::assigned_rider_id.eq(rider.id.0),
+        ))
         .execute(conn)
         .await
         .expect("patch delivery");
@@ -1213,13 +1212,10 @@ mod tests {
       .await
       .expect("wallet before");
 
-    let cancelled = DeliveryDetails::cancel_and_refund_escrow(
-      pool,
-      post_id,
-      Some("rider cancelled".to_string()),
-    )
-    .await
-    .expect("cancel with refund");
+    let cancelled =
+      DeliveryDetails::cancel_and_refund_escrow(pool, post_id, Some("rider cancelled".to_string()))
+        .await
+        .expect("cancel with refund");
 
     assert_eq!(cancelled.status, TripStatus::Cancelled);
     assert_eq!(

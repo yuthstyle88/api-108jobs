@@ -72,10 +72,14 @@ pub async fn update_delivery_status(
     }));
   }
 
-  // Update the delivery status
+  // Update status — for assigned cancellations, also refund held escrow.
   let updated_delivery = {
     let mut pool = context.pool();
-    DeliveryDetails::update_status(&mut pool, post_id, new_status, data.reason.clone()).await?
+    if new_status == TripStatus::Cancelled && current_delivery.assigned_rider_id.is_some() {
+      DeliveryDetails::cancel_and_refund_escrow(&mut pool, post_id, data.reason.clone()).await?
+    } else {
+      DeliveryDetails::update_status(&mut pool, post_id, new_status, data.reason.clone()).await?
+    }
   };
 
   let response = TripStatusResponse {

@@ -696,6 +696,42 @@ impl DeliveryDetails {
 
     Ok(results)
   }
+
+  /// List all deliveries created by the given employer (post.creator_id = employer_person_id).
+  /// Returns all statuses, ordered by created_at descending.
+  pub async fn list_by_employer(
+    pool: &mut DbPool<'_>,
+    employer_person_id: PersonId,
+  ) -> FastJobResult<Vec<Self>> {
+    let conn = &mut get_conn(pool).await?;
+
+    delivery_details::dsl::delivery_details
+      .inner_join(post_tbl::dsl::post)
+      .filter(post_tbl::dsl::creator_id.eq(employer_person_id.0))
+      .select(delivery_details::all_columns)
+      .order(delivery_details::dsl::created_at.desc())
+      .load::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)
+  }
+
+  /// Fetch a delivery by post_id, returning NotFound if the post was not
+  /// created by employer_person_id (ownership check — does not reveal existence).
+  pub async fn get_by_post_id_for_employer(
+    pool: &mut DbPool<'_>,
+    post_id: PostId,
+    employer_person_id: PersonId,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    delivery_details::dsl::delivery_details
+      .inner_join(post_tbl::dsl::post)
+      .filter(delivery_details::dsl::post_id.eq(post_id.0))
+      .filter(post_tbl::dsl::creator_id.eq(employer_person_id.0))
+      .select(delivery_details::all_columns)
+      .first::<Self>(conn)
+      .await
+      .map_err(|_| FastJobErrorType::NotFound.into())
+  }
 }
 
 // ============================================================================
@@ -1233,5 +1269,81 @@ mod tests {
     );
 
     cleanup(pool, instance_id).await;
+  }
+
+  /// list_by_employer returns only the deliveries whose post was created
+  /// by the given employer PersonId, ignoring all other employers' deliveries.
+  #[tokio::test]
+  #[serial]
+  async fn list_by_employer_returns_own_only() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    // Two employers, each with one delivery.
+    let (inst1, pid1, _) = fixture_with_status(pool, TripStatus::Pending).await;
+    let (inst2, pid2, _) = fixture_with_status(pool, TripStatus::Assigned).await;
+
+    let post1 = Post::read(pool, pid1).await.expect("read post1");
+    let post2 = Post::read(pool, pid2).await.expect("read post2");
+
+    let list1 = DeliveryDetails::list_by_employer(pool, post1.creator_id)
+      .await
+      .expect("list for employer 1");
+    let list2 = DeliveryDetails::list_by_employer(pool, post2.creator_id)
+      .await
+      .expect("list for employer 2");
+
+    let ids1: Vec<PostId> = list1.iter().map(|d| d.post_id).collect();
+    let ids2: Vec<PostId> = list2.iter().map(|d| d.post_id).collect();
+
+    assert!(ids1.contains(&pid1), "employer 1 must see own delivery");
+    assert!(
+      !ids1.contains(&pid2),
+      "employer 1 must NOT see employer 2's delivery"
+    );
+    assert!(ids2.contains(&pid2), "employer 2 must see own delivery");
+    assert!(
+      !ids2.contains(&pid1),
+      "employer 2 must NOT see employer 1's delivery"
+    );
+
+    cleanup(pool, inst1).await;
+    cleanup(pool, inst2).await;
+  }
+
+  /// get_by_post_id_for_employer returns Ok when the caller owns the delivery,
+  /// and NotFound when they don't.
+  #[tokio::test]
+  #[serial]
+  async fn get_by_post_id_for_employer_rejects_wrong_owner() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    let (inst1, pid1, _) = fixture_with_status(pool, TripStatus::Pending).await;
+    let post1 = Post::read(pool, pid1).await.expect("read post1");
+    let owner_id = post1.creator_id;
+
+    // Create a second employer (different person) to obtain a different PersonId.
+    let (inst2, pid2, _) = fixture_with_status(pool, TripStatus::Pending).await;
+    let post2 = Post::read(pool, pid2).await.expect("read post2");
+    let other_id = post2.creator_id;
+
+    // Owner can fetch their own delivery.
+    let result = DeliveryDetails::get_by_post_id_for_employer(pool, pid1, owner_id)
+      .await
+      .expect("owner must be able to fetch their delivery");
+    assert_eq!(result.post_id, pid1);
+
+    // Different person gets NotFound.
+    let err = DeliveryDetails::get_by_post_id_for_employer(pool, pid1, other_id)
+      .await
+      .expect_err("wrong owner must get NotFound");
+    assert!(
+      format!("{err:?}").contains("NotFound"),
+      "expected NotFound, got {err:?}"
+    );
+
+    cleanup(pool, inst1).await;
+    cleanup(pool, inst2).await;
   }
 }

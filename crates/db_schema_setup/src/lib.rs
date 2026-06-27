@@ -27,7 +27,13 @@ diesel::table! {
 }
 
 fn migrations() -> diesel_migrations::EmbeddedMigrations {
-  // Using `const` here is required by the borrow checker
+  // Using `const` here is required by the borrow checker.
+  //
+  // `embed_migrations!()` snapshots the `migrations/` directory at compile
+  // time. Adding a migration directory does not change any source file, so an
+  // incremental/cached build can otherwise keep a stale embedded list. Bump the
+  // marker below whenever a migration is added to force this crate to rebuild.
+  // Migrations marker: 2026-06-27 (advance_category_id_seq).
   const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
   MIGRATIONS
 }

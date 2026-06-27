@@ -3,8 +3,12 @@ use crate::{
   newtypes::{CategoryId, InstanceId, LanguageId, LocalUserId, SiteId},
   source::{
     actor_language::{
-      CategoryLanguage, CategoryLanguageForm, LocalUserLanguage, LocalUserLanguageForm,
-      SiteLanguage, SiteLanguageForm,
+      CategoryLanguage,
+      CategoryLanguageForm,
+      LocalUserLanguage,
+      LocalUserLanguageForm,
+      SiteLanguage,
+      SiteLanguageForm,
     },
     language::Language,
     site::Site,
@@ -12,13 +16,20 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  category_language, local_site, local_user_language, site, site_language,
+  category_language,
+  local_site,
+  local_user_language,
+  site,
+  site_language,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{count, exists},
-  insert_into, select, ExpressionMethods, QueryDsl,
+  insert_into,
+  select,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use tokio::sync::OnceCell;
@@ -206,7 +217,9 @@ impl CategoryLanguage {
     for_instance_id: InstanceId,
   ) -> FastJobResult<()> {
     use app_108jobs_db_schema_file::schema::{
-      category::dsl as c, category_language::dsl as cl, site_language::dsl as sl,
+      category::dsl as c,
+      category_language::dsl as cl,
+      site_language::dsl as sl,
     };
     let category_languages: Vec<LanguageId> = cl::category_language
       .left_outer_join(sl::site_language.on(cl::language_id.eq(sl::language_id)))
@@ -230,7 +243,9 @@ impl CategoryLanguage {
     for_category_id: CategoryId,
   ) -> FastJobResult<Vec<LanguageId>> {
     use app_108jobs_db_schema_file::schema::category_language::dsl::{
-      category_id, category_language, language_id,
+      category_id,
+      category_language,
+      language_id,
     };
     let conn = &mut get_conn(pool).await?;
     let langs = category_language
@@ -303,7 +318,8 @@ pub async fn validate_post_language(
   local_user_id: LocalUserId,
 ) -> FastJobResult<LanguageId> {
   use app_108jobs_db_schema_file::schema::{
-    category_language::dsl as cl, local_user_language::dsl as ul,
+    category_language::dsl as cl,
+    local_user_language::dsl as ul,
   };
   let conn = &mut get_conn(pool).await?;
   let language_id = match language_id {
@@ -396,17 +412,18 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
+  // This deployment seeds only four languages: und, en, th, vi (migration
+  // 2022-06-21-123144_language-tags). The two helper sets must stay disjoint
+  // for the overlap checks below, and `test_langs2` must contain exactly two
+  // languages (see `test_user_languages`). With und reserved that leaves the
+  // only viable split: {en} and {th, vi}.
   async fn test_langs1(pool: &mut DbPool<'_>) -> FastJobResult<Vec<LanguageId>> {
-    Ok(vec![
-      Language::read_id_from_code(pool, "en").await?,
-      Language::read_id_from_code(pool, "fr").await?,
-      Language::read_id_from_code(pool, "ru").await?,
-    ])
+    Ok(vec![Language::read_id_from_code(pool, "en").await?])
   }
   async fn test_langs2(pool: &mut DbPool<'_>) -> FastJobResult<Vec<LanguageId>> {
     Ok(vec![
-      Language::read_id_from_code(pool, "fi").await?,
-      Language::read_id_from_code(pool, "se").await?,
+      Language::read_id_from_code(pool, "th").await?,
+      Language::read_id_from_code(pool, "vi").await?,
     ])
   }
 
@@ -419,7 +436,7 @@ mod tests {
     // call with empty vec, returns all languages
     let conn = &mut get_conn(pool).await?;
     let converted1 = convert_update_languages(conn, vec![]).await?;
-    assert_eq!(184, converted1.len());
+    assert_eq!(4, converted1.len());
 
     // call with nonempty vec, returns same vec
     let test_langs = test_langs1(&mut conn.into()).await?;
@@ -457,8 +474,8 @@ mod tests {
 
     let data = TestData::create(pool).await?;
     let site_languages1 = SiteLanguage::read_local_raw(pool).await?;
-    // site is created with all languages
-    assert_eq!(184, site_languages1.len());
+    // site is created with all languages (this deployment seeds four)
+    assert_eq!(4, site_languages1.len());
 
     let test_langs = test_langs1(pool).await?;
     SiteLanguage::update(pool, test_langs.clone(), &data.site).await?;
@@ -592,18 +609,19 @@ mod tests {
       def1.err().map(|e| e.error_type)
     );
 
-    let ru = Language::read_id_from_code(pool, "ru").await?;
+    // `en` is the one language shared with the category (test_langs1 = [en]).
+    let en = Language::read_id_from_code(pool, "en").await?;
     let test_langs3 = vec![
-      ru,
-      Language::read_id_from_code(pool, "fi").await?,
-      Language::read_id_from_code(pool, "se").await?,
+      en,
+      Language::read_id_from_code(pool, "th").await?,
+      Language::read_id_from_code(pool, "vi").await?,
       UNDETERMINED_ID,
     ];
     LocalUserLanguage::update(pool, test_langs3, local_user.id).await?;
 
-    // this time, both have ru as common lang
+    // this time, both have en as common lang
     let def2 = validate_post_language(pool, None, category.id, local_user.id).await?;
-    assert_eq!(ru, def2);
+    assert_eq!(en, def2);
 
     Person::delete(pool, person.id).await?;
     Category::delete(pool, category.id).await?;

@@ -59,10 +59,15 @@ mod tests {
 
     let all = Language::read_all(pool).await?;
 
-    assert_eq!(184, all.len());
-    assert_eq!("ak", all[5].code);
-    assert_eq!("lv", all[99].code);
-    assert_eq!("yi", all[179].code);
+    // This deployment seeds only four languages (see migration
+    // 2022-06-21-123144_language-tags): und, en, th, vi. `read_all` has no
+    // explicit ordering, so assert on membership rather than position.
+    assert_eq!(4, all.len());
+    let codes: Vec<&str> = all.iter().map(|l| l.code.as_str()).collect();
+    assert!(codes.contains(&"und"), "missing und in {codes:?}");
+    assert!(codes.contains(&"en"), "missing en in {codes:?}");
+    assert!(codes.contains(&"th"), "missing th in {codes:?}");
+    assert!(codes.contains(&"vi"), "missing vi in {codes:?}");
 
     Ok(())
   }

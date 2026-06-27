@@ -825,7 +825,7 @@ mod tests {
 
       // A sample post
       let new_post = PostInsertForm {
-        language_id: Some(LanguageId(47)),
+        language_id: Some(LanguageId(66)),
         category_id: Some(category.id),
         ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id)
       };
@@ -840,7 +840,7 @@ mod tests {
 
       // A sample post with tags
       let new_post = PostInsertForm {
-        language_id: Some(LanguageId(47)),
+        language_id: Some(LanguageId(66)),
         category_id: Some(category.id),
         ..PostInsertForm::new(POST_WITH_TAGS.to_string(), inserted_tegan_person.id)
       };
@@ -1407,16 +1407,19 @@ mod tests {
     let pool = &data.pool();
     let pool = &mut pool.into();
 
-    let spanish_id = Language::read_id_from_code(pool, "es").await?;
+    // This deployment seeds only und/en/th/vi. The fixture posts POST and
+    // POST_WITH_TAGS are created in Thai (language 66); use Vietnamese as the
+    // distinct "other" language that EL_POSTO is posted in.
+    let vietnamese_id = Language::read_id_from_code(pool, "vi").await?;
 
-    let french_id = Language::read_id_from_code(pool, "fr").await?;
+    let thai_id = Language::read_id_from_code(pool, "th").await?;
 
-    let post_spanish = PostInsertForm {
-      language_id: Some(spanish_id),
+    let post_vietnamese = PostInsertForm {
+      language_id: Some(vietnamese_id),
       category_id: Some(data.category.id),
       ..PostInsertForm::new(EL_POSTO.to_string(), data.tegan.person.id)
     };
-    Post::create(pool, &post_spanish).await?;
+    Post::create(pool, &post_vietnamese).await?;
 
     let post_listings_all = data.default_post_query().list(&data.site, pool).await?;
 
@@ -1426,38 +1429,38 @@ mod tests {
       names(&post_listings_all)
     );
 
-    LocalUserLanguage::update(pool, vec![french_id], data.tegan.local_user.id).await?;
+    LocalUserLanguage::update(pool, vec![thai_id], data.tegan.local_user.id).await?;
 
-    let post_listing_french = data.default_post_query().list(&data.site, pool).await?;
+    let post_listing_thai = data.default_post_query().list(&data.site, pool).await?;
 
-    // only one post in french and one undetermined should be returned
-    assert_eq!(vec![POST_WITH_TAGS, POST], names(&post_listing_french));
+    // only the two thai posts should be returned
+    assert_eq!(vec![POST_WITH_TAGS, POST], names(&post_listing_thai));
     assert_eq!(
-      Some(french_id),
-      post_listing_french.get(1).map(|p| p.post.language_id)
+      Some(thai_id),
+      post_listing_thai.get(1).map(|p| p.post.language_id)
     );
 
     LocalUserLanguage::update(
       pool,
-      vec![french_id, UNDETERMINED_ID],
+      vec![thai_id, UNDETERMINED_ID],
       data.tegan.local_user.id,
     )
     .await?;
-    let post_listings_french_und = data
+    let post_listings_thai_und = data
       .default_post_query()
       .list(&data.site, pool)
       .await?
       .into_iter()
       .map(|p| (p.post.name, p.post.language_id))
       .collect::<Vec<_>>();
-    let expected_post_listings_french_und = vec![
-      (POST_WITH_TAGS.to_owned(), french_id),
+    let expected_post_listings_thai_und = vec![
+      (POST_WITH_TAGS.to_owned(), thai_id),
       (POST_BY_BOT.to_owned(), UNDETERMINED_ID),
-      (POST.to_owned(), french_id),
+      (POST.to_owned(), thai_id),
     ];
 
-    // french post and undetermined language post should be returned
-    assert_eq!(expected_post_listings_french_und, post_listings_french_und);
+    // thai posts and the undetermined language post should be returned
+    assert_eq!(expected_post_listings_thai_und, post_listings_thai_und);
 
     Ok(())
   }

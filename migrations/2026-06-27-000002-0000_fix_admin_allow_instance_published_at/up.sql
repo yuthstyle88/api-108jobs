@@ -1,0 +1,11 @@
+-- `admin_allow_instance.when_` was renamed to `published` in migration
+-- 2024-12-08-165614_add_modlog_combined_table, then the bulk rename in
+-- 2025-06-08-084651_rename_timestamp_add_at renamed `published` ->
+-- `published_at` for every modlog table EXCEPT this one (it was missed).
+--
+-- The Diesel schema (`schema.rs`) and the modlog_combined view expect
+-- `published_at`, so every query touching this table fails with
+-- `column admin_allow_instance.published_at does not exist`. Apply the
+-- rename that the 2025-06-08 migration omitted. Additive column rename;
+-- data preserved.
+ALTER TABLE admin_allow_instance RENAME COLUMN published TO published_at;

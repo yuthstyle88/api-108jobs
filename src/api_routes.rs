@@ -40,6 +40,8 @@ use app_108jobs_api::{
       get_cancelled_deliveries,
       get_completed_deliveries,
       get_delivery,
+      get_employer_delivery,
+      list_employer_deliveries,
     },
     location::{
       get_location as get_trip_location,
@@ -496,6 +498,12 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             )
             // Bank account management scope
             .service(scope("/banks").route("", get().to(list_banks)))
+            // Employer delivery list + single ride detail
+            .service(
+              scope("/deliveries")
+                .route("", get().to(list_employer_deliveries))
+                .route("/{postId}", get().to(get_employer_delivery)),
+            )
             // Services scope for workflow service
             .service(
               scope("/services")

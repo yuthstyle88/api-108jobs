@@ -31,7 +31,6 @@ use diesel::{
   QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
-use uuid::Uuid;
 
 impl Crud for DeliveryDetails {
   type InsertForm = DeliveryDetailsInsertForm;
@@ -375,7 +374,8 @@ impl DeliveryDetails {
             amount: delivery_fee,
             description: format!("escrow hold for delivery assignment: post {}", post_id.0),
             counter_user_id: Some(employer_local_user_id),
-            idempotency_key: Uuid::new_v4().to_string(),
+            // Deterministic key: retrying the same assignment is idempotent.
+            idempotency_key: format!("assign:{}:{}", post_id.0, employer_local_user_id.0),
           };
           let _ = WalletModel::hold(&mut pool, &tx_form).await?;
 
@@ -537,7 +537,8 @@ impl DeliveryDetails {
             amount: delivery_fee,
             description: format!("delivery payment released: post {}", post_id.0),
             counter_user_id: Some(rider_local_user_id),
-            idempotency_key: Uuid::new_v4().to_string(),
+            // Deterministic key: retrying payment release is idempotent.
+            idempotency_key: format!("release:{}:{}", post_id.0, rider_local_user_id.0),
           };
           WalletModel::deposit_from_platform(&mut pool, &tx_form, coin_id, platform_wallet_id)
             .await?;

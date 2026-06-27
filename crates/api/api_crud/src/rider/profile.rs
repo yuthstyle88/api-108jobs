@@ -5,7 +5,10 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_rider::api::{SetAcceptingRequest, SetOnlineRequest, UpdateRiderRequest};
+use app_108jobs_db_views_rider::{
+  api::{SetAcceptingRequest, SetOnlineRequest, UpdateRiderRequest},
+  validator::validate_license_expiry,
+};
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
@@ -28,6 +31,8 @@ pub async fn update_rider(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<Rider>> {
   let rider = current_rider(&context, &local_user_view).await?;
+
+  validate_license_expiry(data.license_expiry_date)?;
 
   let form = RiderUpdateForm {
     vehicle_type: data.vehicle_type.clone(),

@@ -80,8 +80,12 @@ pub async fn post_location(
     DeliveryDetails::validate_rider_identity(&mut pool, person_id, post_id).await?
   };
 
-  // Basic coordinate validation
-  if !data.lat.is_finite() || !data.lng.is_finite() {
+  // Validate coordinate values: must be finite and within geographic bounds.
+  if !data.lat.is_finite()
+    || !data.lng.is_finite()
+    || !(-90.0..=90.0).contains(&data.lat)
+    || !(-180.0..=180.0).contains(&data.lng)
+  {
     return Err(FastJobErrorType::InvalidLatitudeOrLongitude.into());
   }
 

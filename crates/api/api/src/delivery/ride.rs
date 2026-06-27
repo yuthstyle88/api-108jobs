@@ -264,6 +264,13 @@ pub async fn update_ride_meter(
   let elapsed_minutes = data.elapsed_minutes;
   let distance_km = data.distance_km;
 
+  if elapsed_minutes < 0 {
+    return Err(FastJobErrorType::InvalidField("elapsed_minutes must be >= 0".to_string()).into());
+  }
+  if distance_km < 0.0 || !distance_km.is_finite() {
+    return Err(FastJobErrorType::InvalidField("distance_km must be >= 0".to_string()).into());
+  }
+
   // Get the session
   let session = RideSession::read(&mut context.pool(), session_id).await?;
 
@@ -288,11 +295,18 @@ pub async fn update_ride_meter(
     .ok_or(FastJobErrorType::NotFound)?;
   let pricing_config = PricingConfig::read(&mut context.pool(), pricing_config_id).await?;
 
-  // Calculate pricing
-  let time_charge_coin = ((elapsed_minutes / pricing_config.minimum_charge_minutes).max(1)
-    * pricing_config.time_charge_per_minute_coin) as i32;
+  // Calculate pricing using f64 to avoid integer-division truncation.
+  // Billing interval: charge for each started block of minimum_charge_minutes.
+  let min_block = pricing_config.minimum_charge_minutes as f64;
+  let intervals = if min_block > 0.0 {
+    (elapsed_minutes as f64 / min_block).ceil().max(1.0)
+  } else {
+    1.0
+  };
+  let time_charge_coin =
+    (intervals * pricing_config.time_charge_per_minute_coin as f64).round() as i32;
   let distance_charge_coin =
-    (distance_km * pricing_config.distance_charge_per_km_coin as f64) as i32;
+    (distance_km * pricing_config.distance_charge_per_km_coin as f64).round() as i32;
   let total_coin = pricing_config.base_fare_coin + time_charge_coin + distance_charge_coin;
 
   // Update session

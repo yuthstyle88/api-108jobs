@@ -564,6 +564,91 @@ impl DeliveryDetails {
       .await
   }
 
+  /// Cancel a delivery and refund any held escrow back to the employer.
+  ///
+  /// Guard: if no rider is assigned (`assigned_rider_id.is_none()`) or the
+  /// fee is zero, no escrow was ever held — delegates straight to
+  /// `update_status`.  Otherwise runs a single DB transaction:
+  ///   1. Resolve employer via `post.creator_id → local_user → wallet`.
+  ///   2. `WalletModel::refund_from_platform_on_conn` — platform → employer
+  ///      (reverses the original `hold`; no CoinModel change).
+  ///   3. Set `status = Cancelled` + `cancellation_reason` in the same tx.
+  ///
+  /// Idempotency key `cancel-refund:{post_id}:{employer_local_user_id}` makes
+  /// retried cancellations safe.
+  pub async fn cancel_and_refund_escrow(
+    pool: &mut DbPool<'_>,
+    post_id: PostId,
+    reason: Option<String>,
+  ) -> FastJobResult<Self> {
+    // Cheap guard — read outside the transaction.
+    let current = Self::get_by_post_id(pool, post_id).await?;
+    if current.assigned_rider_id.is_none() || current.delivery_fee.0 == 0 {
+      return Self::update_status(pool, post_id, TripStatus::Cancelled, reason).await;
+    }
+
+    let delivery_fee = current.delivery_fee;
+    let conn = &mut get_conn(pool).await?;
+
+    conn
+      .run_transaction(|conn| {
+        async move {
+          let mut pool: DbPool<'_> = conn.into();
+
+          // Resolve employer: post.creator_id -> local_user -> wallet.
+          let post = Post::read(&mut pool, post_id).await?;
+          let conn2 = &mut get_conn(&mut pool).await?;
+          let employer_lu = local_user_tbl::dsl::local_user
+            .filter(local_user_tbl::dsl::person_id.eq(post.creator_id.0))
+            .first::<LocalUser>(conn2)
+            .await
+            .map_err(|_| FastJobErrorType::NotFound)?;
+          let employer_local_user_id = employer_lu.id;
+          let employer_wallet = WalletModel::get_by_user(&mut pool, employer_local_user_id).await?;
+
+          let tx_form = WalletTransactionInsertForm {
+            wallet_id: employer_wallet.id,
+            reference_type: "delivery".to_string(),
+            reference_id: post_id.0,
+            kind: TxKind::Transfer,
+            amount: delivery_fee,
+            description: format!(
+              "escrow refund for cancelled delivery: post {}",
+              post_id.0
+            ),
+            counter_user_id: Some(employer_local_user_id),
+            // Deterministic: retrying the same cancellation is idempotent.
+            idempotency_key: format!(
+              "cancel-refund:{}:{}",
+              post_id.0, employer_local_user_id.0
+            ),
+          };
+
+          let conn3 = &mut get_conn(&mut pool).await?;
+          WalletModel::refund_from_platform_on_conn(conn3, &tx_form).await?;
+
+          // Update status and reason in the same transaction.
+          let conn4 = &mut get_conn(&mut pool).await?;
+          let updated = update(
+            delivery_details::dsl::delivery_details
+              .filter(delivery_details::dsl::post_id.eq(post_id.0)),
+          )
+          .set((
+            delivery_details::dsl::status.eq(TripStatus::Cancelled),
+            delivery_details::dsl::cancellation_reason.eq(reason),
+            delivery_details::dsl::updated_at.eq(Utc::now()),
+          ))
+          .get_result::<Self>(conn4)
+          .await
+          .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
+
+          Ok::<_, app_108jobs_utils::error::FastJobError>(updated)
+        }
+        .scope_boxed()
+      })
+      .await
+  }
+
   /// Get the active delivery assignment for a specific rider.
   /// Returns the delivery if the rider has an active assignment.
   pub async fn get_active_for_rider(
@@ -1020,6 +1105,137 @@ mod tests {
       msg.contains("NotAnActiveRider"),
       "expected NotAnActiveRider, got {msg}"
     );
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Unassigned delivery: cancel_and_refund_escrow must delegate to
+  /// update_status (no wallet changes) and set status = Cancelled.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_unassigned_delivery_skips_refund() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Pending).await;
+
+    let result = DeliveryDetails::cancel_and_refund_escrow(
+      pool,
+      post_id,
+      Some("no rider, just cancel".to_string()),
+    )
+    .await
+    .expect("cancel unassigned delivery");
+
+    assert_eq!(result.status, TripStatus::Cancelled);
+    assert_eq!(
+      result.cancellation_reason.as_deref(),
+      Some("no rider, just cancel")
+    );
+    cleanup(pool, instance_id).await;
+  }
+
+  /// Assigned delivery: cancel_and_refund_escrow must credit the employer
+  /// wallet by the delivery_fee and set status = Cancelled.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_assigned_delivery_refunds_employer_wallet() {
+    use crate::{newtypes::Coin, source::rider::RiderInsertForm};
+    use app_108jobs_db_schema_file::{enums::VehicleType, schema::delivery_details as dd};
+
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+
+    // Employer + post + delivery (Pending, unassigned)
+    let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Pending).await;
+
+    // fixture_with_status creates Person+Wallet for the employer but no local_user.
+    // cancel_and_refund_escrow resolves the employer wallet via
+    //   post.creator_id -> local_user -> wallet
+    // so we must create a local_user for the employer person here.
+    let post = Post::read(pool, post_id).await.expect("read post");
+    let employer_lu_id: LocalUserId = {
+      let conn = &mut get_conn(pool).await.expect("get conn");
+      LocalUserId(
+        diesel::insert_into(local_user_tbl::table)
+          .values((
+            local_user_tbl::person_id.eq(post.creator_id.0),
+            local_user_tbl::password_encrypted.eq::<Option<String>>(None),
+          ))
+          .returning(local_user_tbl::id)
+          .get_result(conn)
+          .await
+          .expect("employer local_user"),
+      )
+    };
+
+    // Create a rider so we have a valid FK value for assigned_rider_id
+    let suffix = uuid::Uuid::new_v4().simple().to_string();
+    let (rp_form, _rw) =
+      PersonInsertForm::test_form_with_wallet(pool, instance_id, &format!("rd-{}", &suffix[..8]))
+        .await
+        .expect("rider person");
+    let rider_person = Person::create(pool, &rp_form).await.expect("create rider person");
+    let rider_lu_id: i32 = {
+      let conn = &mut get_conn(pool).await.expect("get conn");
+      diesel::insert_into(local_user_tbl::table)
+        .values((
+          local_user_tbl::person_id.eq(rider_person.id),
+          local_user_tbl::password_encrypted.eq::<Option<String>>(None),
+        ))
+        .returning(local_user_tbl::id)
+        .get_result(conn)
+        .await
+        .expect("rider local_user")
+    };
+    let rider = Rider::create(
+      pool,
+      &RiderInsertForm::new(
+        LocalUserId(rider_lu_id),
+        rider_person.id,
+        VehicleType::Motorcycle,
+      ),
+    )
+    .await
+    .expect("create rider");
+
+    // Patch delivery: set delivery_fee and assigned_rider_id directly
+    const FEE: i32 = 500;
+    {
+      let conn = &mut get_conn(pool).await.expect("get conn");
+      diesel::update(dd::table.filter(dd::post_id.eq(post_id.0)))
+        .set((dd::delivery_fee.eq(FEE), dd::assigned_rider_id.eq(rider.id.0)))
+        .execute(conn)
+        .await
+        .expect("patch delivery");
+    }
+
+    // Capture employer wallet balance before cancellation
+    let wallet_before = WalletModel::get_by_user(pool, employer_lu_id)
+      .await
+      .expect("wallet before");
+
+    let cancelled = DeliveryDetails::cancel_and_refund_escrow(
+      pool,
+      post_id,
+      Some("rider cancelled".to_string()),
+    )
+    .await
+    .expect("cancel with refund");
+
+    assert_eq!(cancelled.status, TripStatus::Cancelled);
+    assert_eq!(
+      cancelled.cancellation_reason.as_deref(),
+      Some("rider cancelled")
+    );
+
+    let wallet_after = WalletModel::get_by_user(pool, employer_lu_id)
+      .await
+      .expect("wallet after");
+    assert_eq!(
+      wallet_after.balance_available - wallet_before.balance_available,
+      Coin(FEE),
+      "employer wallet must be credited by the full delivery fee"
+    );
+
     cleanup(pool, instance_id).await;
   }
 }

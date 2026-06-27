@@ -366,6 +366,8 @@ pub enum WithdrawStatus {
   Rejected,
   /// Completed
   Completed,
+  /// Cancelled by the user before admin processing
+  Cancelled,
 }
 
 #[derive(

@@ -119,6 +119,50 @@ impl WithdrawRequest {
     }
     Ok(())
   }
+
+  /// Cancel a `Pending` withdrawal request on behalf of the owning user.
+  ///
+  /// Returns `FastJobErrorType::NotFound` if the row doesn't exist OR belongs
+  /// to a different user (to avoid leaking existence). Returns
+  /// `FastJobErrorType::InvalidField` if the request is not in `Pending` status.
+  pub async fn cancel_by_user(
+    pool: &mut DbPool<'_>,
+    id: WithdrawRequestId,
+    caller_local_user_id: crate::newtypes::LocalUserId,
+  ) -> FastJobResult<()> {
+    use diesel::QueryDsl;
+
+    let conn = &mut get_conn(pool).await?;
+    let row = withdraw_requests::table
+      .find(id)
+      .first::<Self>(conn)
+      .await
+      .map_err(|_| FastJobErrorType::NotFound)?;
+
+    // Ownership check — returns NotFound to avoid leaking row existence.
+    if row.local_user_id != caller_local_user_id {
+      return Err(FastJobErrorType::NotFound.into());
+    }
+
+    // Status guard — only Pending requests can be retracted.
+    if row.status != app_108jobs_db_schema_file::enums::WithdrawStatus::Pending {
+      return Err(
+        FastJobErrorType::InvalidField("This withdrawal request cannot be cancelled".to_string())
+          .into(),
+      );
+    }
+
+    diesel::update(withdraw_requests::table.find(id))
+      .set((
+        withdraw_requests::status.eq(app_108jobs_db_schema_file::enums::WithdrawStatus::Cancelled),
+        withdraw_requests::updated_at.eq(chrono::Utc::now()),
+      ))
+      .execute(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+
+    Ok(())
+  }
 }
 
 // ============================================================================
@@ -365,6 +409,96 @@ mod tests {
       .all(|r| r.local_user_id == alice.local_user_id));
     assert_eq!(bob_rows.len(), 1);
     assert_eq!(bob_rows[0].local_user_id, bob.local_user_id);
+
+    cleanup(pool, alice.instance_id).await;
+    cleanup(pool, bob.instance_id).await;
+  }
+
+  /// cancel_by_user on a Pending request sets status to Cancelled.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_pending_sets_cancelled() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let ctx = make_user(pool, "cp").await;
+
+    let created = WithdrawRequest::create(pool, &insert_form(&ctx, 400))
+      .await
+      .expect("create");
+    assert_eq!(created.status, WithdrawStatus::Pending);
+
+    WithdrawRequest::cancel_by_user(pool, created.id, ctx.local_user_id)
+      .await
+      .expect("cancel");
+
+    // Re-fetch and verify status
+    let updated = WithdrawRequest::read(pool, created.id)
+      .await
+      .expect("read after cancel");
+    assert_eq!(updated.status, WithdrawStatus::Cancelled);
+
+    cleanup(pool, ctx.instance_id).await;
+  }
+
+  /// cancel_by_user on a non-Pending request must return InvalidField.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_non_pending_is_rejected() {
+    use chrono::Utc;
+
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let ctx = make_user(pool, "cnp").await;
+
+    let created = WithdrawRequest::create(pool, &insert_form(&ctx, 200))
+      .await
+      .expect("create");
+
+    // Mark it Completed first (simulates already-approved request)
+    WithdrawRequest::update(
+      pool,
+      created.id,
+      &WithdrawRequestUpdateForm {
+        status: Some(WithdrawStatus::Completed),
+        updated_at: Some(Utc::now()),
+        reason: None,
+      },
+    )
+    .await
+    .expect("mark completed");
+
+    let err = WithdrawRequest::cancel_by_user(pool, created.id, ctx.local_user_id)
+      .await
+      .expect_err("should fail on non-Pending");
+
+    let msg = format!("{err:?}");
+    assert!(
+      msg.contains("InvalidField"),
+      "expected InvalidField, got {msg}"
+    );
+
+    cleanup(pool, ctx.instance_id).await;
+  }
+
+  /// cancel_by_user for a different user's request must return NotFound.
+  #[tokio::test]
+  #[serial]
+  async fn cancel_other_users_request_is_forbidden() {
+    let pool = pool_for_tests();
+    let pool = &mut (&pool).into();
+    let alice = make_user(pool, "alice-c").await;
+    let bob = make_user(pool, "bob-c").await;
+
+    let alices_request = WithdrawRequest::create(pool, &insert_form(&alice, 300))
+      .await
+      .expect("create alice request");
+
+    let err = WithdrawRequest::cancel_by_user(pool, alices_request.id, bob.local_user_id)
+      .await
+      .expect_err("bob must not cancel alice's request");
+
+    let msg = format!("{err:?}");
+    assert!(msg.contains("NotFound"), "expected NotFound, got {msg}");
 
     cleanup(pool, alice.instance_id).await;
     cleanup(pool, bob.instance_id).await;

@@ -108,7 +108,7 @@ use app_108jobs_api::{
     validate_auth::validate_auth,
     verify_email::verify_email,
     wallet::get_wallet,
-    withdraw::{list_withdraw_requests, submit_withdraw},
+    withdraw::{list_withdraw_requests, retract_withdraw, submit_withdraw},
     workflow::{
       approve_quotation,
       approve_work,
@@ -489,7 +489,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                     // GET /wallet/withdraw-requests → list withdrawal requests
                     .route("", get().to(list_withdraw_requests))
                     // POST /wallet/withdraw-requests → create new withdrawal request
-                    .route("", post().to(submit_withdraw)),
+                    .route("", post().to(submit_withdraw))
+                    // DELETE /wallet/withdraw-requests/{id} → user retracts a pending request
+                    .route("/{id}", delete().to(retract_withdraw)),
                 ),
             )
             // Bank account management scope

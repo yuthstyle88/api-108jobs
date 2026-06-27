@@ -1290,7 +1290,10 @@ dependencies = [
  "i-love-jesus",
  "serde",
  "serde_with",
+ "serial_test",
+ "tokio",
  "ts-rs",
+ "uuid",
 ]
 
 [[package]]

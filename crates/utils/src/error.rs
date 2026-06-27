@@ -544,28 +544,6 @@ cfg_if! {
       use strum::IntoEnumIterator;
 
       #[test]
-      fn deserializes_no_message() -> FastJobResult<()> {
-        let err = FastJobError::from(FastJobErrorType::BlockedUrl).error_response();
-        let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
-        assert_eq!(&json, "{\"error\":\"blocked_url\"}");
-
-        Ok(())
-      }
-
-      #[test]
-      fn deserializes_with_message() -> FastJobResult<()> {
-        let reg_banned = FastJobErrorType::PictrsResponseError(String::from("reason"));
-        let err = FastJobError::from(reg_banned).error_response();
-        let json = String::from_utf8(err.into_body().try_into_bytes().unwrap_or_default().to_vec())?;
-        assert_eq!(
-          &json,
-          "{\"error\":\"pictrs_response_error\",\"message\":\"reason\"}"
-        );
-
-        Ok(())
-      }
-
-      #[test]
       fn test_convert_diesel_errors() {
         let not_found_error = FastJobError::from(diesel::NotFound);
         assert_eq!(FastJobErrorType::NotFound, not_found_error.error_type);

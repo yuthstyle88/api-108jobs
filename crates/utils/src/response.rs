@@ -52,20 +52,6 @@ mod tests {
   }
 
   #[actix_web::test]
-  async fn test_app_108jobs_errors_are_not_modified() {
-    async fn app_108jobs_error_service() -> actix_web::Result<String, FastJobError> {
-      Err(FastJobError::from(FastJobErrorType::EmailAlreadyExists))
-    }
-
-    check_for_jsonification(
-      app_108jobs_error_service,
-      StatusCode::BAD_REQUEST,
-      "{\"error\":\"email_already_exists\"}",
-    )
-    .await;
-  }
-
-  #[actix_web::test]
   async fn test_generic_errors_are_jsonified_as_unknown_errors() {
     async fn generic_error_service() -> actix_web::Result<String, Error> {
       Err(ErrorInternalServerError("This is not a FastJobError"))

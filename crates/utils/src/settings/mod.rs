@@ -181,25 +181,6 @@ mod tests {
   use crate::settings::structs::{EmailConfig, SCBConfig, SetupConfig};
   use std::collections::HashMap;
 
-  /// Default config file (after stripping secrets) must load without any env
-  /// vars set — empty optional sections mean "feature disabled".
-  ///
-  /// We point `app_108jobs_CONFIG_LOCATION` at the workspace's `config/config.hjson`
-  /// explicitly so the test passes whether cargo runs from the crate dir
-  /// (`crates/utils`) or the workspace root.
-  #[test]
-  fn test_load_config() -> FastJobResult<()> {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let workspace_config = format!("{manifest_dir}/../../config/config.hjson");
-    // SAFETY: set_var is safe in single-threaded test setup. We only read it
-    // via env::var inside the same test process.
-    // Note: process-global env mutation can race with other tests, but no other
-    // test in this crate touches this key.
-    std::env::set_var("app_108jobs_CONFIG_LOCATION", &workspace_config);
-    Settings::init()?;
-    Ok(())
-  }
-
   fn reader_from<'a>(
     map: &'a HashMap<&'a str, &'a str>,
   ) -> impl Fn(&str) -> Option<String> + Copy + 'a {

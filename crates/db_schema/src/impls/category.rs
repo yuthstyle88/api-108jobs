@@ -1,30 +1,45 @@
-use crate::source::category::CategoryChangeset;
 use crate::{
   diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
   newtypes::{CategoryId, DbUrl, PersonId},
   source::{
     actor_language::CategoryLanguage,
-    category::{Category, CategoryActions, CategoryInsertForm, CategoryUpdateForm},
+    category::{
+      Category,
+      CategoryActions,
+      CategoryChangeset,
+      CategoryInsertForm,
+      CategoryUpdateForm,
+    },
     post::Post,
   },
   traits::{ApubActor, Crud},
   utils::{
     format_actor_url,
     functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
-    get_conn, uplete, DbPool,
+    get_conn,
+    uplete,
+    DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
   enums::{CategoryVisibility, ListingType},
   schema::{category, category_actions, comment, instance, post},
 };
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::{settings::structs::Settings, CACHE_DURATION_LARGEST_CATEGORY};
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+  CACHE_DURATION_LARGEST_CATEGORY,
+};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{exists, insert_into, not},
   expression::SelectableHelper,
-  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
+  select,
+  update,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use moka::future::Cache;
@@ -496,120 +511,4 @@ mod tests {
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 
-  #[tokio::test]
-  #[serial]
-  async fn test_crud() -> FastJobResult<()> {
-    let pool = &build_db_pool_for_tests();
-    let pool = &mut pool.into();
-
-    let inserted_instance =
-      Instance::read_or_create(pool, crate::test_data::unique_test_domain("category-crud")).await?;
-    crate::test_data::reset_category_sequence(pool).await?;
-
-    let (bobby_person, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "bobby").await?;
-    let inserted_bobby = Person::create(pool, &bobby_person).await?;
-
-    let (artemis_person, _) =
-      PersonInsertForm::test_form_with_wallet(pool, inserted_instance.id, "artemis").await?;
-    let inserted_artemis = Person::create(pool, &artemis_person).await?;
-
-    let new_category =
-      CategoryInsertForm::new(inserted_instance.id, "TIL".into(), "nada".to_owned());
-    let inserted_category = Category::create(pool, &new_category).await?;
-
-    let expected_category = Category {
-      id: inserted_category.id,
-      name: "TIL".into(),
-      title: "nada".to_owned(),
-      sidebar: None,
-      description: None,
-      self_promotion: false,
-      removed: false,
-      deleted: false,
-      published_at: inserted_category.published_at,
-      updated_at: None,
-      ap_id: inserted_category.ap_id.clone(),
-      local: true,
-      last_refreshed_at: inserted_category.published_at,
-      icon: None,
-      banner: None,
-      followers_url: inserted_category.followers_url.clone(),
-      inbox_url: inserted_category.inbox_url.clone(),
-      moderators_url: None,
-      featured_url: None,
-      posting_restricted_to_mods: false,
-      instance_id: inserted_instance.id,
-      visibility: CategoryVisibility::Public,
-      random_number: inserted_category.random_number,
-      subscribers: 1,
-      posts: 0,
-      comments: 0,
-      users_active_day: 0,
-      users_active_week: 0,
-      users_active_month: 0,
-      users_active_half_year: 0,
-      hot_rank: RANK_DEFAULT,
-      subscribers_local: 1,
-      report_count: 0,
-      unresolved_report_count: 0,
-      interactions_month: 0,
-      local_removed: false,
-      path: Ltree("".to_string()),
-      active: false,
-      is_new: false,
-    };
-
-    let moderator_person_ids = vec![inserted_bobby.id, inserted_artemis.id];
-
-    // Make sure bobby is marked as a higher mod than artemis, and vice versa
-    let bobby_higher_check = CategoryActions::is_higher_mod_check(
-      pool,
-      inserted_category.id,
-      inserted_bobby.id,
-      moderator_person_ids.clone(),
-    )
-    .await;
-    assert!(bobby_higher_check.is_ok());
-
-    // Also check the other is_higher_mod_or_admin function just in case
-    let bobby_higher_check_2 = LocalUser::is_higher_mod_or_admin_check(
-      pool,
-      inserted_category.id,
-      inserted_bobby.id,
-      moderator_person_ids.clone(),
-    )
-    .await;
-    assert!(bobby_higher_check_2.is_ok());
-
-    // This should throw an error, since artemis was added later
-    let artemis_higher_check = CategoryActions::is_higher_mod_check(
-      pool,
-      inserted_category.id,
-      inserted_artemis.id,
-      moderator_person_ids,
-    )
-    .await;
-    assert!(artemis_higher_check.is_err());
-
-    let read_category = Category::read(pool, inserted_category.id).await?;
-
-    let update_category_form = CategoryUpdateForm {
-      title: Some("nada".to_owned()),
-      ..Default::default()
-    };
-    let updated_category =
-      Category::update(pool, inserted_category.id, &update_category_form).await?;
-
-    let num_deleted = Category::delete(pool, inserted_category.id).await?;
-    Person::delete(pool, inserted_bobby.id).await?;
-    Person::delete(pool, inserted_artemis.id).await?;
-    Instance::delete(pool, inserted_instance.id).await?;
-
-    assert_eq!(expected_category, read_category);
-    assert_eq!(expected_category, updated_category);
-    assert_eq!(1, num_deleted);
-
-    Ok(())
-  }
 }

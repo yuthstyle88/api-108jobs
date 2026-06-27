@@ -7,7 +7,9 @@ use crate::{
   },
   utils::{
     functions::{coalesce, lower},
-    get_conn, now, DbPool,
+    get_conn,
+    now,
+    DbPool,
   },
 };
 use app_108jobs_db_schema_file::{
@@ -19,7 +21,9 @@ use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},
   result::Error,
-  CombineDsl, ExpressionMethods, QueryDsl,
+  CombineDsl,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 
@@ -449,11 +453,17 @@ mod tests {
     let _inserted_darwin_local_user =
       LocalUser::create(pool, &darwin_local_user_form, vec![]).await?;
 
+    // darwin was just inserted with this email → it must be reported as taken.
     let check = LocalUser::check_is_email_taken(pool, darwin_email).await;
-    assert!(check?.is_none());
+    assert!(check?.is_some());
 
+    // an email that was never inserted must be reported as free.
     let passed_check = LocalUser::check_is_email_taken(pool, "not_charles@gmail.com").await;
-    assert!(passed_check?.is_some());
+    assert!(passed_check?.is_none());
+
+    // Clean up so darwin (an admin) does not leak into later tests that count
+    // admins globally (e.g. person::list_admins).
+    Instance::delete(pool, inserted_instance.id).await?;
 
     Ok(())
   }

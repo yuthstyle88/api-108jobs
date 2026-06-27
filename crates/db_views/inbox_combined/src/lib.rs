@@ -21,7 +21,11 @@ use serde_with::skip_serializing_none;
 use {
   app_108jobs_db_schema::{
     utils::queries::{
-      creator_banned, creator_is_admin, local_user_can_mod, person1_select, post_tags_fragment,
+      creator_banned,
+      creator_is_admin,
+      local_user_can_mod,
+      person1_select,
+      post_tags_fragment,
     },
     utils::queries::{creator_banned_from_category, creator_is_moderator},
     Person1AliasAllColumnsTuple,

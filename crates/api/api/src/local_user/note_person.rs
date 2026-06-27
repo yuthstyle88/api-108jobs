@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, process_markdown, slur_regex},

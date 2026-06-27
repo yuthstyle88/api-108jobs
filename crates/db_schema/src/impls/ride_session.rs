@@ -4,12 +4,14 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use app_108jobs_db_schema_file::enums::TripStatus;
-use app_108jobs_db_schema_file::schema::ride_session;
+use app_108jobs_db_schema_file::{enums::TripStatus, schema::ride_session};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::{insert_into, update};
-use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+  dsl::{insert_into, update},
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+};
 use diesel_async::RunQueryDsl;
 
 impl Crud for RideSession {
@@ -143,8 +145,8 @@ impl RideSession {
   }
 
   /// Check if a rider has any active (non-terminal) ride sessions
-  /// Active statuses: Pending, Assigned, EnRouteToPickup, PickedUp, EnRouteToDropoff, RiderConfirmed
-  /// Terminal statuses: Delivered, Cancelled
+  /// Active statuses: Pending, Assigned, EnRouteToPickup, PickedUp, EnRouteToDropoff,
+  /// RiderConfirmed Terminal statuses: Delivered, Cancelled
   pub async fn has_active_session(pool: &mut DbPool<'_>, rider_id: RiderId) -> FastJobResult<bool> {
     let conn = &mut get_conn(pool).await?;
 
@@ -188,11 +190,11 @@ impl RideSession {
 //
 // Coverage:
 //   * create defaults: status from form, payment_status="pending" via NULL fallback
-//   * update flips status to RiderConfirmed / Delivered / Cancelled with the
-//     corresponding timestamp fields populated
-//   * has_active_session detects each non-terminal status and is false once
-//     the session is Delivered/Cancelled (the "rider is available again" cue
-//     used by update_ride_status and cancel_ride_session)
+//   * update flips status to RiderConfirmed / Delivered / Cancelled with the corresponding
+//     timestamp fields populated
+//   * has_active_session detects each non-terminal status and is false once the session is
+//     Delivered/Cancelled (the "rider is available again" cue used by update_ride_status and
+//     cancel_ride_session)
 //   * list_available_for_rider returns only Pending rows with NULL rider_id
 //
 // The ride flow has no implemented escrow/payment release — see the
@@ -201,13 +203,19 @@ impl RideSession {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::source::post::PostInsertForm;
-  use crate::source::rider::{Rider, RiderInsertForm};
-  use crate::test_data::pool_for_tests;
-  use app_108jobs_db_schema_file::enums::{PaymentMethod, PostKind, VehicleType};
-  use app_108jobs_db_schema_file::schema::{local_user, post};
+  use crate::{
+    source::{
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      post::PostInsertForm,
+      rider::{Rider, RiderInsertForm},
+    },
+    test_data::pool_for_tests,
+  };
+  use app_108jobs_db_schema_file::{
+    enums::{PaymentMethod, PostKind, VehicleType},
+    schema::{local_user, post},
+  };
   use chrono::Utc;
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

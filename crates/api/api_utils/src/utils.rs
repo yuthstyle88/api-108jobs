@@ -5,31 +5,44 @@ use crate::{
 };
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
-use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, ChatRoomId, LanguageId, LocalUserId};
-use app_108jobs_db_schema::source::actor_language::SiteLanguage;
-use app_108jobs_db_schema::source::chat_message::{ChatMessage, ChatMessageInsertForm};
-use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomUpdateForm};
-use app_108jobs_db_schema::source::language::Language;
-use app_108jobs_db_schema::source::user_bank_account::BankAccount;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_schema::{
-  newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId, PostId},
+  newtypes::{
+    BankAccountId,
+    BankId,
+    CategoryId,
+    ChatRoomId,
+    CommentId,
+    DbUrl,
+    InstanceId,
+    LanguageId,
+    LocalUserId,
+    PersonId,
+    PostId,
+  },
   source::{
+    actor_language::SiteLanguage,
     category::{Category, CategoryActions},
+    chat_message::{ChatMessage, ChatMessageInsertForm},
+    chat_room::{ChatRoom, ChatRoomUpdateForm},
     comment::{Comment, CommentActions},
     images::{ImageDetails, RemoteImage},
+    language::Language,
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
     mod_log::moderator::{
-      ModRemoveComment, ModRemoveCommentForm, ModRemovePost, ModRemovePostForm,
+      ModRemoveComment,
+      ModRemoveCommentForm,
+      ModRemovePost,
+      ModRemovePostForm,
     },
     oauth_account::OAuthAccount,
     person::{Person, PersonUpdateForm},
     post::{Post, PostActions, PostReadCommentsForm},
     registration_application::RegistrationApplication,
+    user_bank_account::BankAccount,
   },
-  traits::{Crud, Likeable, ReadComments},
+  traits::{Crud, Likeable, PaginationCursorBuilder, ReadComments},
   utils::DbPool,
 };
 use app_108jobs_db_schema_file::enums::RegistrationMode;
@@ -37,22 +50,29 @@ use app_108jobs_db_views_local_image::LocalImageView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::PersonView;
 use app_108jobs_db_views_site::SiteView;
-use app_108jobs_db_views_wallet::api::{
-  ListTopUpRequestQuery, ListTopUpRequestResponse, ListWithdrawRequestQuery,
-  ListWithdrawRequestResponse,
+use app_108jobs_db_views_wallet::{
+  api::{
+    ListTopUpRequestQuery,
+    ListTopUpRequestResponse,
+    ListWithdrawRequestQuery,
+    ListWithdrawRequestResponse,
+  },
+  TopUpRequestView,
+  WithdrawRequestView,
 };
-use app_108jobs_db_views_wallet::{TopUpRequestView, WithdrawRequestView};
-use app_108jobs_utils::redis::RedisClient;
 use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
+  redis::RedisClient,
   settings::{structs::PictrsImageMode, SETTINGS},
   utils::{
     markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
     slurs::remove_slurs,
     validation::{build_and_check_regex, clean_urls_in_text},
   },
-  CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT,
+  CacheLock,
+  CACHE_DURATION_FEDERATION,
+  MAX_COMMENT_DEPTH_LIMIT,
 };
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
@@ -60,8 +80,7 @@ use enum_map::{enum_map, EnumMap};
 use moka::future::Cache;
 use rand::Rng;
 use regex::{escape, Regex, RegexSet};
-use std::collections::HashSet;
-use std::sync::LazyLock;
+use std::{collections::HashSet, sync::LazyLock};
 use tracing::info;
 use url::{ParseError, Url};
 use urlencoding::encode;
@@ -746,7 +765,7 @@ pub fn read_auth_token(req: &HttpRequest) -> FastJobResult<Option<String>> {
 
 /// Extracts the username from an multilang address by taking the part before the @ symbol
 pub fn extract_username(email: String) -> Option<String> {
-  email.split('@').next().map(|s| s.to_string())
+  email.split('@').next().map(ToString::to_string)
 }
 
 /// Generates a unique username from an multilang address

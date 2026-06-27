@@ -1,14 +1,18 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::{PostId, RiderId};
-use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
-use app_108jobs_db_schema::source::trip_location_current::{
-  TripLocationCurrent, TripLocationCurrentInsertForm, TripLocationCurrentUpdateForm,
+use app_108jobs_db_schema::{
+  newtypes::{PostId, RiderId},
+  source::{
+    delivery_details::DeliveryDetails,
+    trip_location_current::{
+      TripLocationCurrent,
+      TripLocationCurrentInsertForm,
+      TripLocationCurrentUpdateForm,
+    },
+    trip_location_history::{TripLocationHistory, TripLocationHistoryInsertForm},
+  },
+  traits::Crud,
 };
-use app_108jobs_db_schema::source::trip_location_history::{
-  TripLocationHistory, TripLocationHistoryInsertForm,
-};
-use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};

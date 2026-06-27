@@ -1,6 +1,6 @@
 use crate::utils::user_files_dir;
-use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::{
+  http::header::{ContentDisposition, DispositionParam, DispositionType},
   web::{Data, Path},
   HttpResponse,
 };

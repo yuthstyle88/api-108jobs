@@ -1,14 +1,12 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
-use app_108jobs_db_schema::newtypes::ChatRoomId;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
-use app_108jobs_db_schema::utils::DbPool;
-use app_108jobs_db_views_chat::api::{ListUserChatRooms, ListUserChatRoomsResponse};
-use app_108jobs_db_views_chat::ChatRoomView;
+use app_108jobs_api_utils::{context::FastJobContext, utils::flush_room_and_update_last_message};
+use app_108jobs_db_schema::{newtypes::ChatRoomId, traits::PaginationCursorBuilder, utils::DbPool};
+use app_108jobs_db_views_chat::{
+  api::{ListUserChatRooms, ListUserChatRoomsResponse},
+  ChatRoomView,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::redis::RedisClient;
+use app_108jobs_utils::{error::FastJobResult, redis::RedisClient};
 use tracing::{error, warn};
 
 pub async fn list_chat_rooms(

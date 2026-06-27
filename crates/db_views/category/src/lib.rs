@@ -8,7 +8,8 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   app_108jobs_db_schema::utils::queries::{
-    category_post_tags_fragment, local_user_category_can_mod,
+    category_post_tags_fragment,
+    local_user_category_can_mod,
   },
   diesel::{Queryable, Selectable},
 };

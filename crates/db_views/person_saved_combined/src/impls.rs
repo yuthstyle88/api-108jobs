@@ -265,9 +265,8 @@ mod tests {
 
   use crate::{impls::PersonSavedCombinedQuery, LocalUserView, PersonSavedCombinedView};
   use app_108jobs_db_schema::{
-    newtypes::DbUrl,
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentActions, CommentInsertForm, CommentSavedForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},

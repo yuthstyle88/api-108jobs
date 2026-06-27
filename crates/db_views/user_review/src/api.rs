@@ -1,6 +1,8 @@
 use crate::UserReviewView;
-use app_108jobs_db_schema::newtypes::{PaginationCursor, PersonId, WorkflowId};
-use app_108jobs_db_schema::source::user_review::UserReview;
+use app_108jobs_db_schema::{
+  newtypes::{PaginationCursor, PersonId, WorkflowId},
+  source::user_review::UserReview,
+};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

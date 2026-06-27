@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::{cookie::Cookie, HttpRequest, HttpResponse};
+use actix_web::{cookie::Cookie, web::Data, HttpRequest, HttpResponse};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{read_auth_token, AUTH_COOKIE_NAME},

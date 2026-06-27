@@ -1,5 +1,4 @@
-use crate::objects::person::ApubPerson;
-use crate::objects::post::ApubPost;
+use crate::objects::{person::ApubPerson, post::ApubPost};
 use either::Either;
 
 pub mod category;

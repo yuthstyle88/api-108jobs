@@ -50,7 +50,7 @@ impl From<String> for ChatMessageContent {
     if content.starts_with("file:") {
       ChatMessageContent::File {
         name: content,
-        file_type: "".to_string(),
+        file_type: String::new(),
       }
     } else {
       ChatMessageContent::Text { content }

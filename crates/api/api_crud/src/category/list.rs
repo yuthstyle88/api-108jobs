@@ -1,20 +1,29 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::build_response::build_category_tree;
-use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
-use app_108jobs_db_schema::newtypes::PaginationCursor;
-use app_108jobs_db_schema::source::category::Category;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
-use app_108jobs_db_schema::CategorySortType;
-use app_108jobs_db_schema_file::enums::ListingType;
-use app_108jobs_db_views_category::api::{
-  ListCategories, ListCategoriesResponse, ListCategoriesTreeResponse,
+use app_108jobs_api_utils::{
+  build_response::build_category_tree,
+  context::FastJobContext,
+  utils::check_private_instance,
 };
-use app_108jobs_db_views_category::{impls::CategoryQuery, CategoryView};
+use app_108jobs_db_schema::{
+  newtypes::PaginationCursor,
+  source::category::Category,
+  traits::PaginationCursorBuilder,
+  CategorySortType,
+};
+use app_108jobs_db_schema_file::enums::ListingType;
+use app_108jobs_db_views_category::{
+  api::{ListCategories, ListCategoriesResponse, ListCategoriesTreeResponse},
+  impls::CategoryQuery,
+  CategoryView,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
 use moka::future::Cache;
-use std::hash::{Hash, Hasher};
-use std::{sync::LazyLock, time::Duration};
+use std::{
+  hash::{Hash, Hasher},
+  sync::LazyLock,
+  time::Duration,
+};
 
 // Define a cache key type based on query parameters
 #[derive(Clone, Debug, Eq)]

@@ -610,9 +610,9 @@ mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
   use app_108jobs_db_schema::{
-    newtypes::{DbUrl, PersonId},
+    newtypes::PersonId,
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::Instance,
       mod_log::{

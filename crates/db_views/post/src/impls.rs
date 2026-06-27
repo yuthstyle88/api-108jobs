@@ -659,15 +659,14 @@ mod tests {
   };
   use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
-    newtypes::{DbUrl, LanguageId},
+    newtypes::LanguageId,
     source::{
       actor_language::LocalUserLanguage,
-      category::{category, Category, CategoryInsertForm, CategoryUpdateForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
       language::Language,
-      local_site::{LocalSite, LocalSiteUpdateForm},
       local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonNoteForm},
       post::{
@@ -685,21 +684,15 @@ mod tests {
     },
     test_data::TestData,
     traits::{Bannable, Blockable, Crud, Hideable, Likeable, Readable},
-    utils::{build_db_pool, get_conn, uplete, ActualDbPool, DbPool},
+    utils::{build_db_pool, uplete, ActualDbPool, DbPool},
   };
-  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use app_108jobs_db_views_local_user::LocalUserView;
   use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use chrono::Utc;
-  use diesel_async::SimpleAsyncConnection;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use std::{
-    collections::HashSet,
-    time::{Duration, Instant},
-  };
+  use std::time::Duration;
   use test_context::{test_context, AsyncTestContext};
-  use url::Url;
 
   const POST_BY_BLOCKED_PERSON: &str = "post by blocked person";
   const POST_BY_BOT: &str = "post by bot";
@@ -1853,5 +1846,4 @@ mod tests {
 
     Ok(())
   }
-
 }

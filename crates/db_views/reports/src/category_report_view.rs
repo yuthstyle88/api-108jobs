@@ -7,7 +7,11 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::schema::{category, category_actions, category_report, person};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

@@ -177,6 +177,7 @@ fn pictrs_placeholder_url() -> Url {
 
 #[cfg(test)]
 mod tests {
+  #![allow(clippy::unwrap_used)]
   use super::*;
   use crate::settings::structs::{EmailConfig, SCBConfig, SetupConfig};
   use std::collections::HashMap;
@@ -184,7 +185,7 @@ mod tests {
   fn reader_from<'a>(
     map: &'a HashMap<&'a str, &'a str>,
   ) -> impl Fn(&str) -> Option<String> + Copy + 'a {
-    move |k: &str| map.get(k).map(|s| s.to_string())
+    move |k: &str| map.get(k).copied().map(ToString::to_string)
   }
 
   #[test]

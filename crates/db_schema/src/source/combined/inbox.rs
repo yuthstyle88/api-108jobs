@@ -1,5 +1,8 @@
 use crate::newtypes::{
-  CommentReplyId, InboxCombinedId, PersonCommentMentionId, PersonPostMentionId,
+  CommentReplyId,
+  InboxCombinedId,
+  PersonCommentMentionId,
+  PersonPostMentionId,
 };
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::inbox_combined;

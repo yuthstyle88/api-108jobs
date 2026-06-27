@@ -1,5 +1,7 @@
-use app_108jobs_db_schema::newtypes::{PersonId, RiderId};
-use app_108jobs_db_schema::source::ride_session::RideSession;
+use app_108jobs_db_schema::{
+  newtypes::{PersonId, RiderId},
+  source::ride_session::RideSession,
+};
 use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

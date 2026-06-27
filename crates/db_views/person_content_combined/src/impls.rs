@@ -283,13 +283,10 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
 
-  use crate::{
-    impls::{app_108jobs_db_schema::newtypes::DbUrl, PersonContentCombinedQuery},
-    PersonContentCombinedView,
-  };
+  use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
   use app_108jobs_db_schema::{
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       instance::Instance,
       person::{Person, PersonInsertForm},

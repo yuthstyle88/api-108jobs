@@ -1,19 +1,18 @@
-use app_108jobs_db_schema::newtypes::{PersonId, PostId, RiderId};
-use app_108jobs_db_schema::utils::{get_conn, DbPool};
-use app_108jobs_db_schema_file::enums::PostKind;
-use app_108jobs_utils::error::FastJobResult;
-use std::collections::HashMap;
-
-use crate::api::PostItem;
-use crate::PostView;
-use app_108jobs_db_schema::source::delivery_details as dd_src;
-use app_108jobs_db_schema::source::ride_session as ride_src;
+use crate::{api::PostItem, PostView};
+use app_108jobs_db_schema::{
+  newtypes::{PersonId, PostId, RiderId},
+  source::{delivery_details as dd_src, ride_session as ride_src},
+  utils::{get_conn, DbPool},
+};
+use app_108jobs_db_schema_file::{
+  enums::PostKind,
+  schema::{delivery_details, ride_session},
+};
 use app_108jobs_db_views_rider::ride_session_view as rider_view;
-
+use app_108jobs_utils::error::FastJobResult;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-
-use app_108jobs_db_schema_file::schema::{delivery_details, ride_session};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
 pub enum LogisticsViewer {

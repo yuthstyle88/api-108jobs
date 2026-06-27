@@ -7,7 +7,9 @@ use app_108jobs_db_schema_file::schema::category_actions;
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
-  select, ExpressionMethods, QueryDsl,
+  select,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

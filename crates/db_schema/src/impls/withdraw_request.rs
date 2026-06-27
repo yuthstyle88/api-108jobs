@@ -1,14 +1,16 @@
-use crate::newtypes::WithdrawRequestId;
-use crate::source::withdraw_request::{
-  WithdrawRequest, WithdrawRequestInsertForm, WithdrawRequestUpdateForm,
+use crate::{
+  newtypes::WithdrawRequestId,
+  source::withdraw_request::{
+    WithdrawRequest,
+    WithdrawRequestInsertForm,
+    WithdrawRequestUpdateForm,
+  },
 };
-
 #[cfg(feature = "full")]
 use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::withdraw_requests;
 #[cfg(feature = "full")]
@@ -138,17 +140,23 @@ impl WithdrawRequest {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::newtypes::{BankAccountId, Coin, LocalUserId};
-  use crate::source::bank::BankInsertForm;
-  use crate::source::currency::Currency;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::source::user_bank_account::{BankAccount, UserBankAccountInsertForm};
-  use crate::test_data::pool_for_tests;
-  use crate::traits::Crud;
-  use crate::utils::get_conn;
-  use app_108jobs_db_schema_file::enums::WithdrawStatus;
-  use app_108jobs_db_schema_file::schema::{banks, local_user};
+  use crate::{
+    newtypes::{BankAccountId, Coin, LocalUserId},
+    source::{
+      bank::BankInsertForm,
+      currency::Currency,
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+      user_bank_account::{BankAccount, UserBankAccountInsertForm},
+    },
+    test_data::pool_for_tests,
+    traits::Crud,
+    utils::get_conn,
+  };
+  use app_108jobs_db_schema_file::{
+    enums::WithdrawStatus,
+    schema::{banks, local_user},
+  };
   use chrono::Utc;
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

@@ -1,14 +1,19 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::ChatRoomId;
-use app_108jobs_db_schema::source::chat_participant::{ChatParticipant, ChatParticipantInsertForm};
-use app_108jobs_db_schema::source::chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm};
-use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_views_chat::api::{ChatRoomResponse, CreateChatRoomRequest};
-use app_108jobs_db_views_chat::ChatRoomView;
+use app_108jobs_db_schema::{
+  newtypes::ChatRoomId,
+  source::{
+    chat_participant::{ChatParticipant, ChatParticipantInsertForm},
+    chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm},
+  },
+  traits::Crud,
+};
+use app_108jobs_db_views_chat::{
+  api::{ChatRoomResponse, CreateChatRoomRequest},
+  ChatRoomView,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::utils::keys::contacts_key;
+use app_108jobs_utils::{error::FastJobResult, utils::keys::contacts_key};
 use chrono::Utc;
 
 /// POST /api/v4/chat/rooms

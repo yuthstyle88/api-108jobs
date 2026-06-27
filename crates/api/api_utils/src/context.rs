@@ -3,10 +3,10 @@ use app_108jobs_db_schema::{
   source::secret::Secret,
   utils::{ActualDbPool, DbPool},
 };
-use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::redis::RedisClient;
 use app_108jobs_utils::{
+  error::FastJobResult,
   rate_limit::RateLimit,
+  redis::RedisClient,
   settings::{structs::Settings, SETTINGS},
 };
 use reqwest_middleware::ClientWithMiddleware;
@@ -125,6 +125,7 @@ impl FastJobContext {
   }
 
   #[allow(clippy::expect_used)]
+  #[allow(clippy::unused_async)]
   pub async fn init_test_federation_config() -> FastJobResult<()> {
     // call this to run migrations
     Ok(())

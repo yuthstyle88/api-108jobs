@@ -1,15 +1,22 @@
-use crate::api::{GetChatRoomRequest, ListUserChatRooms};
-use crate::{ChatMessageView, ChatParticipantView, ChatRoomView};
-use app_108jobs_db_schema::source::workflow::Workflow;
+use crate::{
+  api::{GetChatRoomRequest, ListUserChatRooms},
+  ChatMessageView,
+  ChatParticipantView,
+  ChatRoomView,
+};
 use app_108jobs_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
-  source::{chat_message::ChatMessage, chat_room::ChatRoom},
+  source::{chat_message::ChatMessage, chat_room::ChatRoom, workflow::Workflow},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  chat_message, chat_participant, chat_room, local_user, person,
+  chat_message,
+  chat_participant,
+  chat_room,
+  local_user,
+  person,
 };
 use app_108jobs_db_views_post::PostPreview;
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
@@ -166,15 +173,7 @@ impl ChatRoomView {
     }
 
     // 2. Load full ChatRoomView in parallel (your existing battle-tested logic)
-    let room_ids = serial_ids
-      .into_iter()
-      .map(|serial_id| {
-        // You need a way to get ChatRoomId from serial_id.
-        // Assuming you added a helper or can query by serial_id:
-        // We'll do a fast lookup below
-        serial_id
-      })
-      .collect::<Vec<_>>();
+    let room_ids = serial_ids;
 
     // Fast path: lookup ChatRoomId by serial_id in one query
     let id_map: std::collections::HashMap<i64, ChatRoomId> = chat_room::table

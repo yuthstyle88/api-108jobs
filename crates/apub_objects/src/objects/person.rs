@@ -1,6 +1,8 @@
-use crate::{protocol::person::Person, utils::functions::GetActorType};
-
-use crate::fake_trait::{Actor, Object};
+use crate::{
+  fake_trait::{Actor, Object},
+  protocol::person::Person,
+  utils::functions::GetActorType,
+};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::person::Person as DbPerson;
 use app_108jobs_db_schema_file::enums::ActorType;

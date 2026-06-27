@@ -1,6 +1,5 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::check_local_user_valid;
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_report_combined::ReportCombinedViewInternal;
 use app_108jobs_db_views_reports::api::{GetReportCount, GetReportCountResponse};

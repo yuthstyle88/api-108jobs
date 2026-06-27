@@ -3,15 +3,18 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use app_108jobs_api_utils::utils::check_local_user_valid;
 use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
-  utils::{check_email_verified, check_local_user_deleted, check_registration_application},
+  utils::{
+    check_email_verified,
+    check_local_user_deleted,
+    check_local_user_valid,
+    check_registration_application,
+  },
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::LoginRequest;
-use app_108jobs_db_views_site::api::{Login, LoginResponse};
+use app_108jobs_db_views_site::api::{Login, LoginRequest, LoginResponse};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use bcrypt::verify;
 

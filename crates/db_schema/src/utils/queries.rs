@@ -1,16 +1,33 @@
 use crate::{
   aliases::{
-    creator_category_actions, creator_category_instance_actions, creator_home_instance_actions,
-    creator_local_instance_actions, creator_local_user, person1, person2,
+    creator_category_actions,
+    creator_category_instance_actions,
+    creator_home_instance_actions,
+    creator_local_instance_actions,
+    creator_local_user,
+    person1,
+    person2,
   },
   newtypes::{InstanceId, PersonId},
-  Person1AliasAllColumnsTuple, Person2AliasAllColumnsTuple,
+  Person1AliasAllColumnsTuple,
+  Person2AliasAllColumnsTuple,
 };
 use app_108jobs_db_schema_file::{
   enums::{CategoryFollowerState, CategoryVisibility},
   schema::{
-    category, category_actions, comment, comment_actions, image_details, instance_actions,
-    local_user, person, person_actions, post, post_actions, post_tag, tag,
+    category,
+    category_actions,
+    comment,
+    comment_actions,
+    image_details,
+    instance_actions,
+    local_user,
+    person,
+    person_actions,
+    post,
+    post_actions,
+    post_tag,
+    tag,
   },
 };
 use diesel::{
@@ -18,8 +35,12 @@ use diesel::{
   expression::SqlLiteral,
   helper_types::{Eq, NotEq},
   sql_types::Json,
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgExpressionMethods,
+  QueryDsl,
 };
 
 /// Hide all content from blocked communities and persons. Content from blocked instances is also

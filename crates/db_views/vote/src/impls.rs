@@ -177,24 +177,3 @@ impl VoteView {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::VoteView;
-  use app_108jobs_db_schema::{
-    newtypes::DbUrl,
-    source::{
-      category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
-      instance::Instance,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostActions, PostInsertForm, PostLikeForm},
-    },
-    traits::{Crud, Likeable},
-    utils::build_db_pool_for_tests,
-  };
-  use app_108jobs_utils::error::FastJobResult;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-}

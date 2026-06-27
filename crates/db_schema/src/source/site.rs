@@ -1,5 +1,7 @@
-use crate::newtypes::{DbUrl, InstanceId, SiteId};
-use crate::sensitive::SensitiveString;
+use crate::{
+  newtypes::{DbUrl, InstanceId, SiteId},
+  sensitive::SensitiveString,
+};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::site;
 use chrono::{DateTime, Utc};
@@ -40,8 +42,8 @@ pub struct Site {
   // TODO: mark as `serde(skip)` in next major release as its not needed for api
   pub public_key: String,
   pub instance_id: InstanceId,
-  /// If present, self_promotion content is visible by default. Should be displayed by frontends/clients
-  /// when the site is first opened by a user.
+  /// If present, self_promotion content is visible by default. Should be displayed by
+  /// frontends/clients when the site is first opened by a user.
   pub content_warning: Option<String>,
 }
 

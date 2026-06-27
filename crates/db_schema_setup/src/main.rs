@@ -1,5 +1,5 @@
-/// Very minimal wrapper around `app_108jobs_db_schema_setup::run` to allow running migrations without
-/// compiling everything.
+/// Very minimal wrapper around `app_108jobs_db_schema_setup::run` to allow running migrations
+/// without compiling everything.
 fn main() -> anyhow::Result<()> {
   if std::env::args().len() > 1 {
     anyhow::bail!("To set parameters for running migrations, use the app_108jobs_server command.");

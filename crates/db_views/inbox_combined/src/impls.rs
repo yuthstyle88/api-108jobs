@@ -407,9 +407,8 @@ mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
   use app_108jobs_db_schema::{
     assert_length,
-    newtypes::DbUrl,
     source::{
-      category::{category, Category, CategoryInsertForm},
+      category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm},
       comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
       instance::Instance,

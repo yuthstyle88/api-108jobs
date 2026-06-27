@@ -1,5 +1,4 @@
-use app_108jobs_db_schema::newtypes::WorkflowId;
-use app_108jobs_db_schema::source::workflow::WorkflowUpdateForm;
+use app_108jobs_db_schema::{newtypes::WorkflowId, source::workflow::WorkflowUpdateForm};
 use app_108jobs_db_schema_file::enums::WorkFlowStatus;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +7,7 @@ mod impls;
 
 pub use crate::impls::WorkflowService;
 
-/// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
+// Workflow/command operations for billing lifecycle (create, approve, submit, revise, complete).
 // ===== Typestate State Machine (structs-only) =====
 // Each state is a distinct struct; allowed transitions are methods that
 // consume the current state and return the next state's struct + a domain transition payload.
@@ -34,7 +33,8 @@ struct SubmitWorkTransition {
 struct CancelTransition {
   pub form: WorkflowUpdateForm,
 }
-// NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a new one.
+// NOTE: No rollback (prev) transitions are supported. To restart, cancel this billing and open a
+// new one.
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]

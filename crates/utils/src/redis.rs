@@ -1,8 +1,7 @@
 #![cfg(feature = "full")]
 use crate::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use redis::aio::MultiplexedConnection;
 pub use redis::AsyncCommands;
-use redis::{Pipeline, Value};
+use redis::{aio::MultiplexedConnection, Pipeline, Value};
 use serde_json;
 
 #[derive(Clone)]
@@ -71,7 +70,7 @@ impl RedisClient {
 
     let _: () = self
       .connection
-      .set_ex(key, value_str, expiry as u64)
+      .set_ex(key, value_str, u64::try_from(expiry).unwrap_or(0))
       .await
       .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(())
@@ -126,10 +125,10 @@ impl RedisClient {
     start: i64,
     stop: i64,
   ) -> FastJobResult<Vec<T>> {
-    let start_isize = start.try_into().map_err(|_| {
+    let start_isize = start.try_into().map_err(|_e| {
       FastJobErrorType::InvalidInput("start index out of range for isize".to_string())
     })?;
-    let stop_isize = stop.try_into().map_err(|_| {
+    let stop_isize = stop.try_into().map_err(|_e| {
       FastJobErrorType::InvalidInput("stop index out of range for isize".to_string())
     })?;
     let value_strs: Vec<String> = self
@@ -190,7 +189,7 @@ impl RedisClient {
       .scard(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
-    Ok(count as usize)
+    Ok(usize::try_from(count).unwrap_or(0))
   }
 
   // === Key Operations ===
@@ -198,7 +197,7 @@ impl RedisClient {
   pub async fn expire(&mut self, key: &str, seconds: usize) -> FastJobResult<bool> {
     let ok: bool = self
       .connection
-      .expire(key, seconds as i64)
+      .expire(key, i64::try_from(seconds).unwrap_or(i64::MAX))
       .await
       .with_fastjob_type(FastJobErrorType::RedisSetFailed)?;
     Ok(ok)
@@ -210,7 +209,7 @@ impl RedisClient {
       .ttl(key)
       .await
       .with_fastjob_type(FastJobErrorType::RedisGetFailed)?;
-    Ok((ttl > 0).then(|| ttl))
+    Ok((ttl > 0).then_some(ttl))
   }
 
   pub async fn keys(&mut self, pattern: &str) -> FastJobResult<Vec<String>> {

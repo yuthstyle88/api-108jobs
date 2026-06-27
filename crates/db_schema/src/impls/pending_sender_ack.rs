@@ -1,7 +1,9 @@
-use crate::source::pending_sender_ack::{
-  PendingSenderAck, PendingSenderAckInsertForm, PendingSenderAckUpdateForm,
-};
 use crate::{
+  source::pending_sender_ack::{
+    PendingSenderAck,
+    PendingSenderAckInsertForm,
+    PendingSenderAckUpdateForm,
+  },
   traits::Crud,
   utils::{get_conn, DbPool},
 };

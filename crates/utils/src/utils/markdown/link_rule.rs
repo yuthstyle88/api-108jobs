@@ -1,6 +1,11 @@
 use crate::utils::mention::MENTIONS_REGEX;
 use markdown_it::{
-  generics::inline::full_link, parser::inline::Text, MarkdownIt, Node, NodeValue, Renderer,
+  generics::inline::full_link,
+  parser::inline::Text,
+  MarkdownIt,
+  Node,
+  NodeValue,
+  Renderer,
 };
 
 /// Renders markdown links. Copied directly from markdown-it source, unlike original code it also

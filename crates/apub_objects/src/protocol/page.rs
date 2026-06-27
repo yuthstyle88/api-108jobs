@@ -1,6 +1,5 @@
 use crate::utils::protocol::{AttributedTo, LanguageTag, Source};
 use actix_web::web::Data;
-
 use app_108jobs_api_utils::{context::FastJobContext, utils::proxy_image_link};
 use app_108jobs_utils::error::FastJobResult;
 use chrono::{DateTime, Utc};

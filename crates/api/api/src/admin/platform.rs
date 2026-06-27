@@ -3,9 +3,10 @@
 
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::Coin;
-use app_108jobs_db_schema::source::coin::CoinModel;
-use app_108jobs_db_schema::source::wallet::WalletModel;
+use app_108jobs_db_schema::{
+  newtypes::Coin,
+  source::{coin::CoinModel, wallet::WalletModel},
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};

@@ -1,8 +1,8 @@
 use crate::{ChatMessageView, ChatRoomView};
-use app_108jobs_db_schema::newtypes::{
-  ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId,
+use app_108jobs_db_schema::{
+  newtypes::{ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId},
+  source::last_read::LastRead,
 };
-use app_108jobs_db_schema::source::last_read::LastRead;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

@@ -43,7 +43,6 @@ impl Language {
 }
 
 #[cfg(test)]
-#[expect(clippy::indexing_slicing)]
 mod tests {
 
   use crate::{source::language::Language, utils::build_db_pool_for_tests};

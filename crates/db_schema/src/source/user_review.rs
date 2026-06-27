@@ -5,7 +5,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Need use PersonId instead of LocalUserId because Person is public info can be (this feature is public)
+/// Need use PersonId instead of LocalUserId because Person is public info can be (this feature is
+/// public)
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

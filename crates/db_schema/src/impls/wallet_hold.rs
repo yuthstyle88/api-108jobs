@@ -4,15 +4,25 @@
 //! control of the surrounding `run_transaction` boundary — these are NEVER
 //! meant to be called outside a transaction that also mutates the wallet.
 
-use crate::newtypes::{BillingId, Coin, WalletHoldId, WalletId};
-use crate::source::wallet_hold::{
-  hold_status, HoldStatus, WalletHold, WalletHoldInsertForm, WalletHoldUpdateForm,
+use crate::{
+  newtypes::{BillingId, Coin, WalletHoldId, WalletId},
+  source::wallet_hold::{
+    hold_status,
+    HoldStatus,
+    WalletHold,
+    WalletHoldInsertForm,
+    WalletHoldUpdateForm,
+  },
 };
 use app_108jobs_db_schema_file::schema::wallet_hold;
 use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use chrono::Utc;
-use diesel::result::{DatabaseErrorKind, Error as DieselError};
-use diesel::{ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+  result::{DatabaseErrorKind, Error as DieselError},
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 
 impl WalletHold {
@@ -127,10 +137,14 @@ impl WalletHold {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::test_data::pool_for_tests;
-  use crate::utils::get_conn;
+  use crate::{
+    source::{
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+    },
+    test_data::pool_for_tests,
+    utils::get_conn,
+  };
   use app_108jobs_db_schema_file::schema::{billing, local_user, post};
   use diesel::sql_query;
   use diesel_async::RunQueryDsl;
@@ -206,8 +220,10 @@ mod tests {
     // Chat room. billing.room_id has an FK on chat_room.id; we need a unique
     // room id across cargo invocations because chat_room has no FK to instance
     // and therefore isn't cleaned up by cleanup() cascade.
-    use crate::source::chat_room::{ChatRoom, ChatRoomInsertForm};
-    use crate::traits::Crud;
+    use crate::{
+      source::chat_room::{ChatRoom, ChatRoomInsertForm},
+      traits::Crud,
+    };
     let room_id_str = format!(
       "wh-test-{}-{}-{}",
       std::process::id(),

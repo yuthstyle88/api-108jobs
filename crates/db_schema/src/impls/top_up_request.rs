@@ -1,5 +1,7 @@
-use crate::newtypes::TopUpRequestId;
-use crate::source::top_up_request::{TopUpRequest, TopUpRequestInsertForm, TopUpRequestUpdateForm};
+use crate::{
+  newtypes::TopUpRequestId,
+  source::top_up_request::{TopUpRequest, TopUpRequestInsertForm, TopUpRequestUpdateForm},
+};
 #[cfg(feature = "full")]
 use crate::{
   traits::Crud,
@@ -126,14 +128,17 @@ impl TopUpRequest {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::newtypes::{Coin, LocalUserId};
-  use crate::source::currency::Currency;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::test_data::pool_for_tests;
-  use crate::utils::get_conn;
-  use app_108jobs_db_schema_file::enums::TopUpStatus;
-  use app_108jobs_db_schema_file::schema::local_user;
+  use crate::{
+    newtypes::{Coin, LocalUserId},
+    source::{
+      currency::Currency,
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+    },
+    test_data::pool_for_tests,
+    utils::get_conn,
+  };
+  use app_108jobs_db_schema_file::{enums::TopUpStatus, schema::local_user};
   use chrono::{Duration, Utc};
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

@@ -1,10 +1,9 @@
 use crate::newtypes::{PostId, RiderId};
+#[cfg(feature = "full")]
+use app_108jobs_db_schema_file::schema::trip_location_current;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
-#[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::trip_location_current;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

@@ -1,8 +1,7 @@
 use crate::UserReviewView;
-use app_108jobs_db_schema::newtypes::DecodedCursor;
 use app_108jobs_db_schema::{
   aliases,
-  newtypes::{PaginationCursor, PersonId, UserReviewId, WorkflowId},
+  newtypes::{DecodedCursor, PaginationCursor, PersonId, UserReviewId, WorkflowId},
   source::user_review::UserReview,
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},

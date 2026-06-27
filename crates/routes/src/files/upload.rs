@@ -1,5 +1,7 @@
-use crate::files::{file_url, FileUploadResponse};
-use crate::utils::{sanitize_filename, unique_target_filename, user_files_dir};
+use crate::{
+  files::{file_url, FileUploadResponse},
+  utils::{sanitize_filename, unique_target_filename, user_files_dir},
+};
 use actix_multipart::Multipart;
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;

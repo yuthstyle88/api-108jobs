@@ -1,22 +1,30 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::{
-  is_admin, list_top_up_requests_inner, list_withdraw_requests_inner,
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{is_admin, list_top_up_requests_inner, list_withdraw_requests_inner},
 };
-use app_108jobs_db_schema::newtypes::{Coin, WithdrawRequestId};
-use app_108jobs_db_schema::newtypes::{CoinId, LocalUserId, WalletId};
-use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
-use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransactionInsertForm};
-use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
+#[cfg(test)]
 use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema::utils::{get_conn, DbPool};
-use app_108jobs_db_schema_file::enums::TopUpStatus;
-use app_108jobs_db_schema_file::enums::WithdrawStatus;
+use app_108jobs_db_schema::{
+  newtypes::{Coin, CoinId, LocalUserId, WalletId, WithdrawRequestId},
+  source::{
+    top_up_request::TopUpRequest,
+    wallet::{TxKind, WalletModel, WalletTransactionInsertForm},
+    withdraw_request::WithdrawRequest,
+  },
+  utils::{get_conn, DbPool},
+};
+use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_db_views_wallet::api::{
-  AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListTopUpRequestQuery,
-  ListTopUpRequestResponse, ListWithdrawRequestQuery, ListWithdrawRequestResponse,
+  AdminTopUpWallet,
+  AdminWalletOperationResponse,
+  AdminWithdrawWallet,
+  ListTopUpRequestQuery,
+  ListTopUpRequestResponse,
+  ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
   RejectWithdrawalRequest,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
@@ -87,20 +95,17 @@ pub async fn admin_top_up_wallet(
 /// FastJobContext / SCB client.
 ///
 /// Invariants enforced in a single DB transaction:
-///   1. The `top_up_requests` row is re-read with `SELECT ... FOR UPDATE`
-///      so concurrent admin calls serialize on this row.
-///   2. `transferred == false` and `status == Success` are checked under
-///      the lock; a second concurrent call sees `transferred = true` and
-///      returns `InvalidField("...already processed")` without crediting.
-///   3. The wallet credit is journaled with a deterministic
-///      `idempotency_key` derived from `qr_id`. If a retry somehow
-///      bypasses the `transferred` flag (e.g. lost update from an older
-///      code path), the
-///      `wallet_transaction(idempotency_key, wallet_id)` unique index
-///      rolls the whole txn back instead of producing a second credit.
-///   4. `transferred` is flipped to `true` on the SAME connection inside
-///      the txn, so the flag and the credit commit together or not at
-///      all.
+///   1. The `top_up_requests` row is re-read with `SELECT ... FOR UPDATE` so concurrent admin calls
+///      serialize on this row.
+///   2. `transferred == false` and `status == Success` are checked under the lock; a second
+///      concurrent call sees `transferred = true` and returns `InvalidField("...already
+///      processed")` without crediting.
+///   3. The wallet credit is journaled with a deterministic `idempotency_key` derived from `qr_id`.
+///      If a retry somehow bypasses the `transferred` flag (e.g. lost update from an older code
+///      path), the `wallet_transaction(idempotency_key, wallet_id)` unique index rolls the whole
+///      txn back instead of producing a second credit.
+///   4. `transferred` is flipped to `true` on the SAME connection inside the txn, so the flag and
+///      the credit commit together or not at all.
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn admin_top_up_wallet_inner(
   pool: &mut DbPool<'_>,
@@ -117,8 +122,8 @@ pub(crate) async fn admin_top_up_wallet_inner(
   let (new_balance, amount_coin) = conn
     .run_transaction(|tx| {
       async move {
-        // 1) Re-read the request with FOR UPDATE so concurrent callers
-        //    serialize and the transferred check is racing-safe.
+        // 1) Re-read the request with FOR UPDATE so concurrent callers serialize and the
+        //    transferred check is racing-safe.
         let locked = TopUpRequest::lock_for_credit_on_conn(tx, qr_id).await?;
 
         if locked.transferred {
@@ -144,9 +149,8 @@ pub(crate) async fn admin_top_up_wallet_inner(
 
         let amount_coin = locked.amount_coin;
 
-        // 2) Credit the target wallet via the connection-scoped helper so
-        //    everything stays inside this txn. The deterministic
-        //    idempotency_key collides on retries via the
+        // 2) Credit the target wallet via the connection-scoped helper so everything stays inside
+        //    this txn. The deterministic idempotency_key collides on retries via the
         //    `wallet_transaction(idempotency_key, wallet_id)` unique index.
         let form = WalletTransactionInsertForm {
           wallet_id: target_wallet_id,
@@ -233,19 +237,16 @@ pub async fn admin_withdraw_wallet(
 /// a FastJobContext.
 ///
 /// Invariants enforced in a single DB transaction:
-///   1. The `withdraw_requests` row is re-read with `SELECT ... FOR UPDATE`
-///      so concurrent admin approvals serialize on this row.
-///   2. `status == Pending` is checked under the lock; an already-Completed
-///      or already-Rejected withdrawal returns `InvalidField` without
-///      debiting the user wallet a second time.
-///   3. The wallet debit is journaled with a deterministic
-///      `idempotency_key` derived from `withdrawal_id`. If a retry bypasses
-///      the status flag (e.g. lost update from an older code path), the
-///      `wallet_transaction(idempotency_key, wallet_id)` unique index rolls
-///      the whole txn back instead of producing a second debit.
-///   4. `status = Completed` is set on the SAME connection inside the txn,
-///      so the wallet movement and the status flip commit together or not
-///      at all.
+///   1. The `withdraw_requests` row is re-read with `SELECT ... FOR UPDATE` so concurrent admin
+///      approvals serialize on this row.
+///   2. `status == Pending` is checked under the lock; an already-Completed or already-Rejected
+///      withdrawal returns `InvalidField` without debiting the user wallet a second time.
+///   3. The wallet debit is journaled with a deterministic `idempotency_key` derived from
+///      `withdrawal_id`. If a retry bypasses the status flag (e.g. lost update from an older code
+///      path), the `wallet_transaction(idempotency_key, wallet_id)` unique index rolls the whole
+///      txn back instead of producing a second debit.
+///   4. `status = Completed` is set on the SAME connection inside the txn, so the wallet movement
+///      and the status flip commit together or not at all.
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn admin_withdraw_wallet_inner(
   pool: &mut DbPool<'_>,
@@ -263,8 +264,7 @@ pub(crate) async fn admin_withdraw_wallet_inner(
   let (new_balance, debit_amount) = conn
     .run_transaction(|tx| {
       async move {
-        // 1) Re-read the request with FOR UPDATE so concurrent callers
-        //    serialize on this row.
+        // 1) Re-read the request with FOR UPDATE so concurrent callers serialize on this row.
         let locked = WithdrawRequest::lock_for_approval_on_conn(tx, withdrawal_id).await?;
 
         // 2) Status guard. Only Pending withdrawals can be approved.
@@ -288,18 +288,16 @@ pub(crate) async fn admin_withdraw_wallet_inner(
           }
         }
 
-        // 3) The amount paid is the request's recorded amount; the
-        //    `data.amount` field on the API is an admin-supplied value
-        //    that historically didn't match the request. We trust the
-        //    request row (locked under FOR UPDATE) as the source of
-        //    truth. The handler's `request_amount` is preserved in the
-        //    response for parity with the previous API shape.
+        // 3) The amount paid is the request's recorded amount; the `data.amount` field on the API
+        //    is an admin-supplied value that historically didn't match the request. We trust the
+        //    request row (locked under FOR UPDATE) as the source of truth. The handler's
+        //    `request_amount` is preserved in the response for parity with the previous API shape.
         let _ = request_amount;
         let amount = locked.amount;
 
-        // 4) Debit the user wallet to the platform escrow via the
-        //    connection-scoped helper so everything stays inside this
-        //    txn. The deterministic idempotency_key collides on retries.
+        // 4) Debit the user wallet to the platform escrow via the connection-scoped helper so
+        //    everything stays inside this txn. The deterministic idempotency_key collides on
+        //    retries.
         let form = WalletTransactionInsertForm {
           wallet_id: target_wallet_id,
           reference_type: "admin_withdraw".to_string(),
@@ -411,11 +409,10 @@ pub(crate) async fn admin_reject_withdraw_request_inner(
 // real FastJobContext.
 //
 // What it asserts:
-//   1. A TopUpRequest with status=Success, transferred=false credits the
-//      target wallet exactly once.
-//   2. A second invocation with the same qr_id returns
-//      InvalidField("...already been processed") and does NOT produce a
-//      second wallet_transaction row.
+//   1. A TopUpRequest with status=Success, transferred=false credits the target wallet exactly
+//      once.
+//   2. A second invocation with the same qr_id returns InvalidField("...already been processed")
+//      and does NOT produce a second wallet_transaction row.
 //   3. The TopUpRequest.transferred flag is true after the first call.
 //
 // Before the fix at the top of this file, idempotency_key was
@@ -427,14 +424,18 @@ pub(crate) async fn admin_reject_withdraw_request_inner(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use app_108jobs_db_schema::newtypes::{Coin, LocalUserId as LUID};
-  use app_108jobs_db_schema::source::coin::CoinModel;
-  use app_108jobs_db_schema::source::currency::Currency;
-  use app_108jobs_db_schema::source::instance::Instance;
-  use app_108jobs_db_schema::source::local_user::{LocalUser, LocalUserInsertForm};
-  use app_108jobs_db_schema::source::person::{Person, PersonInsertForm};
-  use app_108jobs_db_schema::source::top_up_request::TopUpRequestInsertForm;
-  use app_108jobs_db_schema::test_data::pool_for_tests;
+  use app_108jobs_db_schema::{
+    newtypes::{Coin, LocalUserId as LUID},
+    source::{
+      coin::CoinModel,
+      currency::Currency,
+      instance::Instance,
+      local_user::{LocalUser, LocalUserInsertForm},
+      person::{Person, PersonInsertForm},
+      top_up_request::TopUpRequestInsertForm,
+    },
+    test_data::pool_for_tests,
+  };
   use app_108jobs_db_schema_file::schema::wallet_transaction;
   use chrono::Duration;
   use diesel::{ExpressionMethods, QueryDsl};
@@ -685,10 +686,14 @@ mod tests {
   //       idempotency_key never collided on the
   //       `wallet_transaction(idempotency_key, wallet_id)` unique index.
   // ==========================================================================
-  use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, WithdrawRequestId};
-  use app_108jobs_db_schema::source::bank::BankInsertForm;
-  use app_108jobs_db_schema::source::user_bank_account::{BankAccount, UserBankAccountInsertForm};
-  use app_108jobs_db_schema::source::withdraw_request::WithdrawRequestInsertForm;
+  use app_108jobs_db_schema::{
+    newtypes::{BankAccountId, BankId, WithdrawRequestId},
+    source::{
+      bank::BankInsertForm,
+      user_bank_account::{BankAccount, UserBankAccountInsertForm},
+      withdraw_request::WithdrawRequestInsertForm,
+    },
+  };
   use app_108jobs_db_schema_file::schema::{banks, withdraw_requests};
 
   struct WithdrawCtx {

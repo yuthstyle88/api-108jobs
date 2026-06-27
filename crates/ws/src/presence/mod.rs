@@ -1,25 +1,35 @@
-use crate::bridge_message::{GlobalOffline, GlobalOnline};
-use crate::broker::bridge_message::EmitTopics;
-use crate::broker::manager::{GetPresenceSnapshot, PhoenixManager};
-use crate::protocol::api::{ChatEvent, ChatsSignalPayload, PresenceSnapshotItem, PresenceStatus};
-use actix::{Actor, Context, Handler, Message};
-use actix::{Addr, ResponseFuture};
+use crate::{
+  bridge_message::{GlobalOffline, GlobalOnline},
+  broker::{
+    bridge_message::EmitTopics,
+    manager::{GetPresenceSnapshot, PhoenixManager},
+  },
+  protocol::api::{ChatEvent, ChatsSignalPayload, PresenceSnapshotItem, PresenceStatus},
+};
+use actix::{Actor, Addr, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId};
-use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
-use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
-use app_108jobs_utils::error::FastJobResult;
-use app_108jobs_utils::redis::{AsyncCommands, RedisClient};
-use app_108jobs_utils::utils::keys::{
-  contacts_key, presence_conn_count_key, presence_conn_key, rooms_key, user_events_topic,
+use app_108jobs_db_schema::{
+  newtypes::{ChatRoomId, LocalUserId},
+  source::chat_participant::ChatParticipant,
+  utils::{ActualDbPool, DbPool},
+};
+use app_108jobs_utils::{
+  error::FastJobResult,
+  redis::{AsyncCommands, RedisClient},
+  utils::keys::{
+    contacts_key,
+    presence_conn_count_key,
+    presence_conn_key,
+    rooms_key,
+    user_events_topic,
+  },
 };
 use chrono::{DateTime, Utc};
 use serde_json::json;
-use std::collections::HashSet;
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 use tracing;
 
-/// ===== PresenceManager Actor =====
+// ===== PresenceManager Actor =====
 
 /// Tracks online presence using heartbeats and explicit joins/leaves.
 /// Emits OnlineStopped when a user misses heartbeats beyond `heartbeat_ttl`.

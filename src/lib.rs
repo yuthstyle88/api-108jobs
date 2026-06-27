@@ -5,11 +5,14 @@ use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
   web::{scope, Data, JsonConfig, PayloadConfig},
-  App, HttpResponse, HttpServer,
+  App,
+  HttpResponse,
+  HttpServer,
 };
-use app_108jobs_api_utils::site_snapshot::CachedSiteConfigProvider;
 use app_108jobs_api_utils::{
-  context::FastJobContext, request::client_builder,
+  context::FastJobContext,
+  request::client_builder,
+  site_snapshot::CachedSiteConfigProvider,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
 use app_108jobs_db_schema::{source::secret::Secret, utils::build_db_pool};
@@ -23,27 +26,28 @@ use app_108jobs_routes::{
   utils::{
     cors_config,
     prometheus_metrics::{new_prometheus_metrics, serve_prometheus},
+    scheduled_tasks::setup,
     setup_local_site::setup_local_site,
   },
 };
-use app_108jobs_utils::redis::RedisClient;
 use app_108jobs_utils::{
   error::FastJobResult,
   rate_limit::RateLimit,
+  redis::RedisClient,
   response::jsonify_plain_text_errors,
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
+use app_108jobs_ws::{
+  broker::manager::PhoenixManager,
+  presence::{AttachPhoenix, PresenceManager},
+};
 use clap::{Parser, Subcommand};
-use std::time::Duration;
-
-use app_108jobs_routes::utils::scheduled_tasks::setup;
-use app_108jobs_ws::broker::manager::PhoenixManager;
-use app_108jobs_ws::presence::{AttachPhoenix, PresenceManager};
 use mimalloc::MiMalloc;
 use reqwest_middleware::ClientBuilder;
 use reqwest_tracing::TracingMiddleware;
 use serde_json::json;
+use std::time::Duration;
 use tokio::signal::unix::SignalKind;
 use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 
@@ -66,8 +70,9 @@ static GLOBAL: MiMalloc = MiMalloc;
 pub struct CmdArgs {
   /// Don't run scheduled tasks.
   ///
-  /// If you are running multiple app_108jobs server processes, you probably want to disable scheduled
-  /// tasks on all but one of the processes, to avoid running the tasks more often than intended.
+  /// If you are running multiple app_108jobs server processes, you probably want to disable
+  /// scheduled tasks on all but one of the processes, to avoid running the tasks more often than
+  /// intended.
   #[arg(
     long,
     default_value_t = false,
@@ -76,8 +81,8 @@ pub struct CmdArgs {
   disable_scheduled_tasks: bool,
   /// Disables the HTTP server.
   ///
-  /// This can be used to run a app_108jobs server process that only performs scheduled tasks or activity
-  /// sending.
+  /// This can be used to run a app_108jobs server process that only performs scheduled tasks or
+  /// activity sending.
   #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_HTTP_SERVER")]
   disable_http_server: bool,
   /// Disable sending outgoing ActivityPub messages.

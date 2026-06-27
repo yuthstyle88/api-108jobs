@@ -1,5 +1,4 @@
-/// Redis & pubsub keys for presence, contacts, rooms, and pubsub topics.
-
+//! Redis & pubsub keys for presence, contacts, rooms, and pubsub topics.
 #[inline]
 pub fn contacts_key(user_id: i32) -> String {
   format!("contacts:user:{}", user_id)

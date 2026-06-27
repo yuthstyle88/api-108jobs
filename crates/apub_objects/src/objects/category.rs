@@ -1,6 +1,8 @@
-use crate::{protocol::group::Group, utils::functions::GetActorType};
-
-use crate::fake_trait::{Actor, Object};
+use crate::{
+  fake_trait::{Actor, Object},
+  protocol::group::Group,
+  utils::functions::GetActorType,
+};
 use actix_web::web::Data;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::source::category::Category;

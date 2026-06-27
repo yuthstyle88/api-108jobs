@@ -1,28 +1,30 @@
-use crate::ack::handle_ack_event;
-use crate::bridge_message::{BridgeMessage, OutboundMessage};
-use crate::broker::manager::PhoenixManager;
-use crate::broker::JOIN_TIMEOUT_SECS;
-use crate::presence::{Heartbeat, OnlineJoin};
-use crate::protocol::api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus};
-use crate::protocol::impls::AnyIncomingEvent;
-use crate::protocol::phx_helper::{get_or_create_channel, send_event_to_channel};
-use actix::prelude::*;
-use actix::{Context, Handler, ResponseFuture};
+use crate::{
+  ack::handle_ack_event,
+  bridge_message::{BridgeMessage, OutboundMessage},
+  broker::{manager::PhoenixManager, JOIN_TIMEOUT_SECS},
+  presence::{Heartbeat, OnlineJoin},
+  protocol::{
+    api::{ChatEvent, ChatsSignalPayload, IncomingEvent, MessageStatus},
+    impls::AnyIncomingEvent,
+    phx_helper::{get_or_create_channel, send_event_to_channel},
+  },
+};
+use actix::{prelude::*, Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use app_108jobs_db_schema::newtypes::ChatRoomId;
-use app_108jobs_db_schema::source::chat_message::ChatMessageInsertForm;
-use app_108jobs_db_schema::source::chat_unread::ChatUnread;
-use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db_schema::{
+  newtypes::ChatRoomId,
+  source::{chat_message::ChatMessageInsertForm, chat_unread::ChatUnread},
+  utils::DbPool,
+};
 use app_108jobs_db_views_chat_pending_ack::AckReminderQuery;
 use chrono::Utc;
 use phoenix_channels_client::{ChannelStatus, Event, Payload};
-use serde_json;
-use serde_json::{json, Value};
-use std::sync::Arc;
-use std::time::Duration;
+use serde_json::{self, json, Value};
+use std::{sync::Arc, time::Duration};
 use tokio::time::timeout;
 
-// Message to route arbitrary topic emissions back through PhoenixManager (so we can use issue_async safely)
+// Message to route arbitrary topic emissions back through PhoenixManager (so we can use issue_async
+// safely)
 #[derive(Message, Debug, Clone)]
 #[rtype(result = "()")]
 pub struct EmitTopics {
@@ -51,7 +53,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
       self.issue_async::<SystemBroker, _>(OutboundMessage { out_event });
     };
 
-    // Note: arbitrary-topic emission is handled via EmitTopics message to avoid borrowing self in async tasks
+    // Note: arbitrary-topic emission is handled via EmitTopics message to avoid borrowing self in
+    // async tasks
 
     match any_event {
       // ---------------------- MESSAGE ----------------------
@@ -114,7 +117,8 @@ impl Handler<BridgeMessage> for PhoenixManager {
               });
             }
 
-            // 3) Bulk increment unread for all participants (except sender) and emit per-user signals
+            // 3) Bulk increment unread for all participants (except sender) and emit per-user
+            //    signals
             let pool_owned = self.pool.clone();
             let room_id_signal = ev.room_id.clone();
             let sender_id_signal = payload.sender_id;
@@ -228,9 +232,9 @@ impl Handler<BridgeMessage> for PhoenixManager {
         Box::pin(async move {})
       }
       AnyIncomingEvent::AckConfirm(ev) => {
-        // 2) NEW: run DB-side removal from pending_sender_ack (idempotent)
-        //    Use helper to parse camelCase payload and call chat_pending_ack::ack_confirm.
-        //    Fire-and-forget to avoid blocking the actor loop.
+        // 2) NEW: run DB-side removal from pending_sender_ack (idempotent) Use helper to parse
+        //    camelCase payload and call chat_pending_ack::ack_confirm. Fire-and-forget to avoid
+        //    blocking the actor loop.
         {
           // Clone the pool to avoid borrowing `self` across the spawned task.
           let pool_owned = self.pool.clone();

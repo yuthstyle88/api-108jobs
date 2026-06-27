@@ -1,13 +1,18 @@
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::list_withdraw_requests_inner;
-use app_108jobs_db_schema::source::currency::Currency;
-use app_108jobs_db_schema::source::withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm};
-use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_api_utils::{context::FastJobContext, utils::list_withdraw_requests_inner};
+use app_108jobs_db_schema::{
+  source::{
+    currency::Currency,
+    withdraw_request::{WithdrawRequest, WithdrawRequestInsertForm},
+  },
+  traits::Crud,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_db_views_wallet::{
-  ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest,
+  ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
+  SubmitWithdrawRequest,
   ValidSubmitWithdrawRequest,
 };
 use app_108jobs_utils::error::FastJobResult;

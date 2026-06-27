@@ -1,15 +1,17 @@
-use aes_gcm::aead::rand_core::{OsRng, RngCore};
-use aes_gcm::Nonce;
 use aes_gcm::{
-  aead::{generic_array::GenericArray, Aead, Payload},
-  Aes256Gcm, KeyInit,
+  aead::{
+    generic_array::GenericArray,
+    rand_core::{OsRng, RngCore},
+    Aead,
+    Payload,
+  },
+  Aes256Gcm,
+  KeyInit,
+  Nonce,
 };
-use base64::engine::general_purpose;
-use base64::Engine;
+use base64::{engine::general_purpose, Engine};
 use hex;
-use p256::ecdh::diffie_hellman;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{PublicKey, SecretKey};
+use p256::{ecdh::diffie_hellman, elliptic_curve::sec1::ToEncodedPoint, PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
 
 /// ====== Errors ======
@@ -30,7 +32,7 @@ pub enum CryptoError {
 }
 
 /// ====== ECDH (P-256) helpers ======
-
+///
 /// Common sizes
 pub const AES_KEY_LEN: usize = 32;
 pub const GCM_NONCE_LEN: usize = 12;
@@ -54,21 +56,26 @@ pub fn ecdh_generate_keypair() -> (SecretKey, Vec<u8>) {
 }
 
 /// Export SecretKey to PKCS#8 DER bytes (for storage if needed).
-pub fn export_private_pkcs8_der(sk: &SecretKey) -> Vec<u8> {
+pub fn export_private_pkcs8_der(sk: &SecretKey) -> Result<Vec<u8>, CryptoError> {
   use p256::pkcs8::EncodePrivateKey;
-  sk.to_pkcs8_der().expect("pkcs8 encode").as_bytes().to_vec()
+  Ok(
+    sk.to_pkcs8_der()
+      .map_err(|_e| CryptoError::Decode)?
+      .as_bytes()
+      .to_vec(),
+  )
 }
 
 /// Import SecretKey from PKCS#8 DER bytes.
 pub fn import_private_pkcs8_der(der: &[u8]) -> Result<SecretKey, CryptoError> {
   use p256::pkcs8::DecodePrivateKey;
-  SecretKey::from_pkcs8_der(der).map_err(|_| CryptoError::Decode)
+  SecretKey::from_pkcs8_der(der).map_err(|_e| CryptoError::Decode)
 }
 
 /// Import peer public key from either uncompressed (65B) or compressed (33B) SEC1 raw bytes.
 pub fn import_peer_public_key_raw(bytes: &[u8]) -> Result<PublicKey, CryptoError> {
   // Accept compressed (33B) or uncompressed (65B) SEC1 encodings
-  PublicKey::from_sec1_bytes(bytes).map_err(|_| CryptoError::InvalidKey)
+  PublicKey::from_sec1_bytes(bytes).map_err(|_e| CryptoError::InvalidKey)
 }
 
 /// Convert a public key to uncompressed SEC1 raw (65B).
@@ -92,13 +99,13 @@ pub fn public_key_to_hex(pk: &PublicKey) -> String {
 pub fn public_key_from_base64(b64: &str) -> Result<PublicKey, CryptoError> {
   let raw = general_purpose::STANDARD
     .decode(b64)
-    .map_err(|_| CryptoError::Decode)?;
+    .map_err(|_e| CryptoError::Decode)?;
   import_peer_public_key_raw(&raw)
 }
 
 /// Import peer public key from hex (accepts compressed 33B or uncompressed 65B).
 pub fn public_key_from_hex_str(hex_str: &str) -> Result<PublicKey, CryptoError> {
-  let raw = hex::decode(hex_str.trim()).map_err(|_| CryptoError::Decode)?;
+  let raw = hex::decode(hex_str.trim()).map_err(|_e| CryptoError::Decode)?;
   import_peer_public_key_raw(&raw)
 }
 
@@ -110,7 +117,7 @@ pub fn normalize_pubkey_to_uncompressed_hex(s: &str) -> Result<String, CryptoErr
     Ok(b) => b,
     Err(_) => general_purpose::STANDARD
       .decode(s.trim())
-      .map_err(|_| CryptoError::Decode)?,
+      .map_err(|_e| CryptoError::Decode)?,
   };
   let pk = import_peer_public_key_raw(&raw)?;
   let uncompressed = pk.to_encoded_point(false);
@@ -136,13 +143,13 @@ pub fn derive_aes256_from_ecdh(
 }
 
 /// ====== AES-GCM-256 helpers ======
-
+///
 /// Build Aes256Gcm from a 32-byte key (AES-256).
 pub fn aes256_from_key_bytes(key: &[u8]) -> Result<Aes256Gcm, CryptoError> {
   if key.len() != 32 {
     return Err(CryptoError::InvalidLength);
   }
-  let k = GenericArray::from_slice(key).clone();
+  let k = *GenericArray::from_slice(key);
   Ok(Aes256Gcm::new(&k))
 }
 
@@ -168,7 +175,7 @@ pub fn aes_gcm_encrypt_box_b64(
   };
   let ct = aes
     .encrypt(nonce, payload)
-    .map_err(|_| CryptoError::Encrypt)?;
+    .map_err(|_e| CryptoError::Encrypt)?;
   Ok(GcmBox {
     iv: general_purpose::STANDARD.encode(nonce_bytes),
     ct: general_purpose::STANDARD.encode(ct),
@@ -184,13 +191,13 @@ pub fn aes_gcm_decrypt_box_b64(
   let aes = aes256_from_key_bytes(key)?;
   let nonce_bytes = general_purpose::STANDARD
     .decode(&boxed.iv)
-    .map_err(|_| CryptoError::Decode)?;
+    .map_err(|_e| CryptoError::Decode)?;
   if nonce_bytes.len() != GCM_NONCE_LEN {
     return Err(CryptoError::CiphertextTooShort);
   }
   let ct = general_purpose::STANDARD
     .decode(&boxed.ct)
-    .map_err(|_| CryptoError::Decode)?;
+    .map_err(|_e| CryptoError::Decode)?;
   let nonce = Nonce::from_slice(&nonce_bytes);
   let payload = match aad {
     Some(a) => Payload {
@@ -204,7 +211,7 @@ pub fn aes_gcm_decrypt_box_b64(
   };
   let pt = aes
     .decrypt(nonce, payload)
-    .map_err(|_| CryptoError::Decrypt)?;
+    .map_err(|_e| CryptoError::Decrypt)?;
   Ok(pt)
 }
 
@@ -222,7 +229,7 @@ pub fn aes_gcm_encrypt_b64(key: &[u8], plaintext: &[u8]) -> Result<String, Crypt
         aad: &[],
       },
     )
-    .map_err(|_| CryptoError::Encrypt)?;
+    .map_err(|_e| CryptoError::Encrypt)?;
   let mut out = Vec::with_capacity(GCM_NONCE_LEN + ct.len());
   out.extend_from_slice(&nonce_bytes);
   out.extend_from_slice(&ct);
@@ -234,7 +241,7 @@ pub fn aes_gcm_decrypt_b64(key: &[u8], b64: &str) -> Result<Vec<u8>, CryptoError
   let aes = aes256_from_key_bytes(key)?;
   let combined = general_purpose::STANDARD
     .decode(b64)
-    .map_err(|_| CryptoError::Decode)?;
+    .map_err(|_e| CryptoError::Decode)?;
   if combined.len() < GCM_NONCE_LEN {
     return Err(CryptoError::CiphertextTooShort);
   }
@@ -242,7 +249,7 @@ pub fn aes_gcm_decrypt_b64(key: &[u8], b64: &str) -> Result<Vec<u8>, CryptoError
   let nonce = Nonce::from_slice(nonce_bytes);
   let pt = aes
     .decrypt(nonce, Payload { msg: ct, aad: &[] })
-    .map_err(|_| CryptoError::Decrypt)?;
+    .map_err(|_e| CryptoError::Decrypt)?;
   Ok(pt)
 }
 
@@ -254,12 +261,12 @@ pub fn encrypt_string_b64(key: &[u8], s: &str) -> Result<String, CryptoError> {
 /// Convenience: decrypt base64 payload to UTF-8 string.
 pub fn decrypt_string_b64(key: &[u8], b64: &str) -> Result<String, CryptoError> {
   let pt = aes_gcm_decrypt_b64(key, b64)?;
-  let decrypted = String::from_utf8(pt).map_err(|_| CryptoError::Decode)?;
+  let decrypted = String::from_utf8(pt).map_err(|_e| CryptoError::Decode)?;
   Ok(decrypted)
 }
 
 /// ====== Hex helpers (optional) ======
-
+///
 /// Encode 32-byte key to hex.
 pub fn key_bytes_to_hex(key: &[u8]) -> Result<String, CryptoError> {
   if key.len() != 32 {
@@ -268,7 +275,7 @@ pub fn key_bytes_to_hex(key: &[u8]) -> Result<String, CryptoError> {
   Ok(hex::encode(key))
 }
 pub fn key_hex_to_bytes(hex_key: &str) -> Result<[u8; 32], CryptoError> {
-  let v = hex::decode(hex_key).map_err(|_| CryptoError::Decode)?;
+  let v = hex::decode(hex_key).map_err(|_e| CryptoError::Decode)?;
   if v.len() != 32 {
     return Err(CryptoError::InvalidLength);
   }
@@ -282,109 +289,103 @@ mod tests {
   use p256::elliptic_curve::sec1::ToEncodedPoint;
 
   #[test]
-  fn test_ecdh_derive_same_key() {
+  fn test_ecdh_derive_same_key() -> Result<(), CryptoError> {
     let (sk_a, pub_a_raw) = ecdh_generate_keypair();
     let (sk_b, pub_b_raw) = ecdh_generate_keypair();
 
-    let der_a = export_private_pkcs8_der(&sk_a);
-    let der_b = export_private_pkcs8_der(&sk_b);
+    let der_a = export_private_pkcs8_der(&sk_a)?;
+    let der_b = export_private_pkcs8_der(&sk_b)?;
 
-    let key_ab = derive_aes256_from_ecdh(&der_a, &pub_b_raw).expect("derive A");
-    let key_ba = derive_aes256_from_ecdh(&der_b, &pub_a_raw).expect("derive B");
+    let key_ab = derive_aes256_from_ecdh(&der_a, &pub_b_raw)?;
+    let key_ba = derive_aes256_from_ecdh(&der_b, &pub_a_raw)?;
 
     assert_eq!(key_ab.len(), AES_KEY_LEN);
     assert_eq!(key_ab, key_ba, "Shared keys must match on both sides");
+    Ok(())
   }
 
   #[test]
-  fn test_encrypt_decrypt_roundtrip_b64() {
-    // derive a key
+  fn test_encrypt_decrypt_roundtrip_b64() -> Result<(), CryptoError> {
     let (sk_a, _pub_a_raw) = ecdh_generate_keypair();
     let (_sk_b, pub_b_raw) = ecdh_generate_keypair();
-    let der_a = export_private_pkcs8_der(&sk_a);
-    let key = derive_aes256_from_ecdh(&der_a, &pub_b_raw).expect("derive");
+    let der_a = export_private_pkcs8_der(&sk_a)?;
+    let key = derive_aes256_from_ecdh(&der_a, &pub_b_raw)?;
 
-    // round trip
     let payload = "hello world";
-    let b64 = aes_gcm_encrypt_b64(&key, payload.as_bytes()).expect("enc");
-    let pt = aes_gcm_decrypt_b64(&key, &b64).expect("dec");
+    let b64 = aes_gcm_encrypt_b64(&key, payload.as_bytes())?;
+    let pt = aes_gcm_decrypt_b64(&key, &b64)?;
     assert_eq!(payload.as_bytes(), pt.as_slice());
+    Ok(())
   }
 
   #[test]
-  fn test_encrypt_decrypt_box_with_aad() {
+  fn test_encrypt_decrypt_box_with_aad() -> Result<(), CryptoError> {
     let (sk_a, pub_a_raw) = ecdh_generate_keypair();
     let (sk_b, pub_b_raw) = ecdh_generate_keypair();
-    let der_a = export_private_pkcs8_der(&sk_a);
-    let der_b = export_private_pkcs8_der(&sk_b);
+    let der_a = export_private_pkcs8_der(&sk_a)?;
+    let der_b = export_private_pkcs8_der(&sk_b)?;
 
-    let key_ab = derive_aes256_from_ecdh(&der_a, &pub_b_raw).expect("derive A");
-    let key_ba = derive_aes256_from_ecdh(&der_b, &pub_a_raw).expect("derive B");
+    let key_ab = derive_aes256_from_ecdh(&der_a, &pub_b_raw)?;
+    let key_ba = derive_aes256_from_ecdh(&der_b, &pub_a_raw)?;
     assert_eq!(key_ab, key_ba);
 
     let aad = b"session-123";
-    let boxed = aes_gcm_encrypt_box_b64(&key_ab, b"secret", Some(aad)).expect("enc");
-    // correct AAD
-    let pt = aes_gcm_decrypt_box_b64(&key_ba, &boxed, Some(aad)).expect("dec ok");
+    let boxed = aes_gcm_encrypt_box_b64(&key_ab, b"secret", Some(aad))?;
+    let pt = aes_gcm_decrypt_box_b64(&key_ba, &boxed, Some(aad))?;
     assert_eq!(pt, b"secret");
 
-    // wrong AAD should fail
     let bad = aes_gcm_decrypt_box_b64(&key_ba, &boxed, Some(b"wrong"));
     assert!(matches!(bad, Err(CryptoError::Decrypt)));
+    Ok(())
   }
 
   #[test]
-  fn test_tamper_detected() {
+  fn test_tamper_detected() -> Result<(), CryptoError> {
     let (sk, _pub_raw) = ecdh_generate_keypair();
-    let der = export_private_pkcs8_der(&sk);
-    // derive against our own public just to get a key quickly
-    let key = derive_aes256_from_ecdh(&der, &_pub_raw).expect("derive");
+    let der = export_private_pkcs8_der(&sk)?;
+    let key = derive_aes256_from_ecdh(&der, &_pub_raw)?;
 
-    let mut boxed = aes_gcm_encrypt_box_b64(&key, b"data", None).expect("enc");
-    // flip one byte in ct
-    let mut ct = base64::engine::general_purpose::STANDARD
+    let mut boxed = aes_gcm_encrypt_box_b64(&key, b"data", None)?;
+    let mut ct = general_purpose::STANDARD
       .decode(&boxed.ct)
-      .unwrap();
-    if !ct.is_empty() {
-      ct[0] ^= 0x01;
+      .map_err(|_e| CryptoError::Decode)?;
+    if let Some(first) = ct.first_mut() {
+      *first ^= 0x01;
     }
-    boxed.ct = base64::engine::general_purpose::STANDARD.encode(ct);
+    boxed.ct = general_purpose::STANDARD.encode(ct);
 
     let res = aes_gcm_decrypt_box_b64(&key, &boxed, None);
     assert!(matches!(res, Err(CryptoError::Decrypt)));
+    Ok(())
   }
 
   #[test]
-  fn test_pubkey_normalization_and_parsing() {
-    // generate a key and compress it to simulate a compressed input
+  fn test_pubkey_normalization_and_parsing() -> Result<(), CryptoError> {
     let (sk, _pub_uncompressed) = ecdh_generate_keypair();
     let pk: PublicKey = sk.public_key();
     let compressed = pk.to_encoded_point(true);
-    let b64 = base64::engine::general_purpose::STANDARD.encode(compressed.as_bytes());
+    let b64 = general_purpose::STANDARD.encode(compressed.as_bytes());
 
-    // parse from base64 (compressed) and normalize to uncompressed hex
-    let parsed = public_key_from_base64(&b64).expect("parse compressed b64");
-    let norm_hex = normalize_pubkey_to_uncompressed_hex(&b64).expect("normalize");
+    let parsed = public_key_from_base64(&b64)?;
+    let norm_hex = normalize_pubkey_to_uncompressed_hex(&b64)?;
 
-    // ensure normalization length equals 130 hex chars (65 bytes * 2)
     assert_eq!(norm_hex.len(), 130);
 
-    // and converting parsed->uncompressed raw is 65 bytes
     let raw = public_key_to_uncompressed_raw(&parsed);
     assert_eq!(raw.len(), 65);
+    Ok(())
   }
 
   #[test]
-  fn test_errors() {
-    // wrong key length for AES
+  fn test_errors() -> Result<(), CryptoError> {
     let err = aes256_from_key_bytes(&[0u8; 16]);
     assert!(matches!(err, Err(CryptoError::InvalidLength)));
 
-    // bad base64 payload
     let (sk, pub_raw) = ecdh_generate_keypair();
-    let der = export_private_pkcs8_der(&sk);
-    let key = derive_aes256_from_ecdh(&der, &pub_raw).expect("derive");
+    let der = export_private_pkcs8_der(&sk)?;
+    let key = derive_aes256_from_ecdh(&der, &pub_raw)?;
     let res = aes_gcm_decrypt_b64(&key, "!!!not-base64!!!");
     assert!(matches!(res, Err(CryptoError::Decode)));
+    Ok(())
   }
 }

@@ -1,5 +1,5 @@
-use crate::newtypes::ChatRoomId;
 use crate::{
+  newtypes::ChatRoomId,
   source::chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},

@@ -2,19 +2,21 @@ use actix_web::{
   web::{Data, Json},
   HttpRequest,
 };
-use app_108jobs_api_utils::utils::prepare_user_languages;
 use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{
-    check_email_verified, check_local_user_valid, check_registration_application,
-    generate_inbox_url, honeypot_check, slur_regex,
+    check_email_verified,
+    check_local_user_valid,
+    check_registration_application,
+    generate_inbox_url,
+    honeypot_check,
+    prepare_user_languages,
+    slur_regex,
   },
 };
-use app_108jobs_db_schema::newtypes::LanguageId;
-use app_108jobs_db_schema::source::wallet::WalletModel;
 use app_108jobs_db_schema::{
-  newtypes::OAuthProviderId,
+  newtypes::{LanguageId, OAuthProviderId},
   source::{
     captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer},
     local_site::LocalSite,
@@ -23,6 +25,7 @@ use app_108jobs_db_schema::{
     oauth_provider::OAuthProvider,
     person::{Person, PersonInsertForm},
     registration_application::{RegistrationApplication, RegistrationApplicationInsertForm},
+    wallet::WalletModel,
   },
   traits::{ApubActor, Crud},
   utils::get_conn,
@@ -30,11 +33,18 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::{Register, RegisterRequest};
-use app_108jobs_db_views_site::api::{AuthenticateWithOauth, LoginResponse};
-use app_108jobs_db_views_site::api::{AuthenticateWithOauthRequest, RegisterWithOauthRequest};
-use app_108jobs_db_views_site::SiteView;
+use app_108jobs_db_views_site::{
+  api::{
+    AuthenticateWithOauth,
+    AuthenticateWithOauthRequest,
+    LoginResponse,
+    RegisterWithOauthRequest,
+  },
+  SiteView,
+};
 use app_108jobs_email::{
-  account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
+  account::send_verification_email_if_required,
+  admin::send_new_applicant_email_to_admins,
 };
 use app_108jobs_utils::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
@@ -721,7 +731,8 @@ async fn create_local_user(
   let inserted_local_user =
     LocalUser::create(&mut conn.into(), &local_user_form, language_ids).await?;
 
-  // Return the local user (the wallet_id will be updated in the database but not in our local object)
+  // Return the local user (the wallet_id will be updated in the database but not in our local
+  // object)
   Ok(inserted_local_user)
 }
 

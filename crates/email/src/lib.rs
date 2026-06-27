@@ -4,15 +4,16 @@
 
 use app_108jobs_db_schema::sensitive::SensitiveString;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobError;
 use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
 use lettre::{
   message::{Mailbox, MultiPart},
   transport::smtp::extension::ClientId,
-  Address, AsyncTransport, Message,
+  Address,
+  AsyncTransport,
+  Message,
 };
 use rosetta_i18n::{Language, LanguageId};
 use std::{str::FromStr, sync::OnceLock};

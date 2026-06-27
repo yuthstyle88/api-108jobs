@@ -4,7 +4,6 @@ use app_108jobs_db_schema::source::wallet::{TxKind, WalletModel, WalletTransacti
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_wallet::api::{DepositWallet, GetWalletResponse, WalletOperationResponse};
 use app_108jobs_utils::error::FastJobResult;
-
 use uuid::Uuid;
 
 pub async fn get_wallet(

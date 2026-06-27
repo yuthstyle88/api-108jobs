@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
@@ -13,8 +12,10 @@ use app_108jobs_db_schema::{
   traits::Bannable,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_person::api::BanPersonRequest;
-use app_108jobs_db_views_person::{api::BanPersonResponse, PersonView};
+use app_108jobs_db_views_person::{
+  api::{BanPersonRequest, BanPersonResponse},
+  PersonView,
+};
 use app_108jobs_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_site(

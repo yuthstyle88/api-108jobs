@@ -1,16 +1,21 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::verify_post_creator;
-use app_108jobs_db_schema::newtypes::RiderId;
-use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
-use app_108jobs_db_schema::source::delivery_rider_rating::DeliveryRiderRating;
-use app_108jobs_db_schema::source::post::Post;
-use app_108jobs_db_schema::source::rider::Rider;
-use app_108jobs_db_schema::traits::Crud;
+use app_108jobs_api_utils::{context::FastJobContext, utils::verify_post_creator};
+use app_108jobs_db_schema::{
+  newtypes::RiderId,
+  source::{
+    delivery_details::DeliveryDetails,
+    delivery_rider_rating::DeliveryRiderRating,
+    post::Post,
+    rider::Rider,
+  },
+  traits::Crud,
+};
 use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  DeliveryRiderRatingData, RateRiderRequest, RateRiderResponse,
+  DeliveryRiderRatingData,
+  RateRiderRequest,
+  RateRiderResponse,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 

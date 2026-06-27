@@ -13,12 +13,18 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
 };
-use app_108jobs_db_views_category::api::ListCategoriesTreeResponse;
-use app_108jobs_db_views_category::{api::CategoryResponse, CategoryNodeView, CategoryView};
+use app_108jobs_db_views_category::{
+  api::{CategoryResponse, ListCategoriesTreeResponse},
+  CategoryNodeView,
+  CategoryView,
+};
 use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_post::logistics::{self, LogisticsViewer};
-use app_108jobs_db_views_post::{api::PostResponse, PostView};
+use app_108jobs_db_views_post::{
+  api::PostResponse,
+  logistics::{self, LogisticsViewer},
+  PostView,
+};
 use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;

@@ -6,7 +6,8 @@ use markdown_it::{
     block::fence,
     inline::{image, image::Image},
   },
-  MarkdownIt, NodeValue,
+  MarkdownIt,
+  NodeValue,
 };
 use std::sync::LazyLock;
 use url::Url;
@@ -151,5 +152,4 @@ mod tests {
     let links = find_urls::<Image>("![test](https://example.com/%C3%A4%C3%B6%C3%BC.jpg)");
     assert_eq!(vec![(8, 50)], links);
   }
-
 }

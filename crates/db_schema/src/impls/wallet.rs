@@ -5,18 +5,24 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use crate::newtypes::{Coin, CoinId, LocalUserId};
-use crate::source::coin::CoinModel;
-use crate::source::wallet::{
-  TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm,
+use crate::{
+  newtypes::{Coin, CoinId, LocalUserId},
+  source::{
+    coin::CoinModel,
+    wallet::{
+      TxKind,
+      Wallet,
+      WalletTransaction,
+      WalletTransactionInsertForm,
+      WalletTransactionUpdateForm,
+    },
+  },
 };
 use app_108jobs_db_schema_file::schema::{local_user, person, wallet, wallet_transaction};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
-use diesel_async::scoped_futures::ScopedFutureExt;
-use diesel_async::RunQueryDsl;
+use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 
 /// Internal enum for modeling balance mutations only (not transaction kinds).
 enum BalanceOp {
@@ -117,10 +123,9 @@ impl WalletModel {
   ///
   /// Concurrency contract:
   ///   * Row is locked via `SELECT ... FOR UPDATE` (primary control).
-  ///   * UPDATE includes `WHERE version = current.version` and bumps version
-  ///     by one. 0 rows affected → another writer slipped past the lock
-  ///     (shouldn't happen, but we return `ConcurrentWalletModification`
-  ///     rather than silently corrupt).
+  ///   * UPDATE includes `WHERE version = current.version` and bumps version by one. 0 rows
+  ///     affected → another writer slipped past the lock (shouldn't happen, but we return
+  ///     `ConcurrentWalletModification` rather than silently corrupt).
   async fn apply_op_on(
     conn: &mut diesel_async::AsyncPgConnection,
     id: WalletId,
@@ -269,7 +274,8 @@ impl WalletModel {
     coin_id: CoinId,
     platform_wallet_id: WalletId,
   ) -> FastJobResult<Wallet> {
-    // Façade kept for compatibility; forwards to appropriate handler and returns the updated user wallet.
+    // Façade kept for compatibility; forwards to appropriate handler and returns the updated user
+    // wallet.
     let w = match form.kind {
       TxKind::Deposit => {
         // Credit user wallet using platform escrow (mirrored journals)
@@ -323,7 +329,8 @@ impl WalletModel {
     Ok(w)
   }
 
-  /// Create a wallet for a user (non-platform) on the given connection (caller links to local_user).
+  /// Create a wallet for a user (non-platform) on the given connection (caller links to
+  /// local_user).
   pub async fn create_for_user(
     conn: &mut diesel_async::AsyncPgConnection,
   ) -> FastJobResult<Wallet> {
@@ -505,7 +512,8 @@ impl WalletModel {
 
   /// Reserve to escrow (no real "hold" balance):
   /// Maps a logical hold to a transfer from user -> platform (escrow) and journals both sides.
-  /// Requires `form_out.kind = TxKind::Transfer` and uses the same `idempotency_key` for both entries.
+  /// Requires `form_out.kind = TxKind::Transfer` and uses the same `idempotency_key` for both
+  /// entries.
   pub async fn hold(
     pool: &mut DbPool<'_>,
     form_out: &WalletTransactionInsertForm,
@@ -656,7 +664,8 @@ impl WalletModel {
     Ok((from, to, a_out))
   }
 
-  /// Paired transfer: requires two mirrored forms (outgoing + incoming) with the same idempotency_key.
+  /// Paired transfer: requires two mirrored forms (outgoing + incoming) with the same
+  /// idempotency_key.
   pub async fn transfer_between_wallets(
     pool: &mut DbPool<'_>,
     form_out: &WalletTransactionInsertForm, // from -> ...

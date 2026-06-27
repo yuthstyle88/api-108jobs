@@ -1,5 +1,4 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::{source::post::PostActions, traits::Readable};
 use app_108jobs_db_views_local_user::LocalUserView;

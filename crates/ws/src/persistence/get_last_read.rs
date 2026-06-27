@@ -1,5 +1,7 @@
-use crate::broker::manager::{GetLastRead, PhoenixManager};
-use crate::persistence::get_last_read;
+use crate::{
+  broker::manager::{GetLastRead, PhoenixManager},
+  persistence::get_last_read,
+};
 use actix::{Context, Handler, ResponseFuture};
 use app_108jobs_db_views_chat::api::LastReadResponse;
 use app_108jobs_utils::error::FastJobResult;

@@ -3,21 +3,25 @@ use actix_web::{
   HttpRequest,
 };
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::sensitive::SensitiveString;
-use app_108jobs_db_schema::source::person::Person;
+use app_108jobs_db_schema::{sensitive::SensitiveString, source::person::Person};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use p256::{PublicKey, SecretKey};
-
-use app_108jobs_utils::crypto::{
-  derive_aes256_from_ecdh, export_private_pkcs8_der, normalize_pubkey_to_uncompressed_hex,
-  public_key_to_hex,
+use app_108jobs_utils::{
+  crypto::{
+    derive_aes256_from_ecdh,
+    export_private_pkcs8_der,
+    normalize_pubkey_to_uncompressed_hex,
+    public_key_to_hex,
+  },
+  error::{FastJobErrorType, FastJobResult},
 };
 use hex;
+use p256::{PublicKey, SecretKey};
 use rand::rngs::OsRng;
-use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
+use std::{
+  collections::HashMap,
+  sync::{Mutex, OnceLock},
+};
 
 // Per-process ephemeral ECDH secrets, keyed by local user id
 static SERVER_EPHEMERAL: OnceLock<Mutex<HashMap<i64, SecretKey>>> = OnceLock::new();
@@ -32,7 +36,8 @@ pub async fn exchange_key(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ExchangeKeyResponse>> {
   // Read current person
-  // Accept both hex or base64, compressed or uncompressed SEC1, normalize to uncompressed-hex before storing
+  // Accept both hex or base64, compressed or uncompressed SEC1, normalize to uncompressed-hex
+  // before storing
   let raw_in = data.public_key.trim();
   // Normalize any (hex/base64, compressed/uncompressed) input to uncompressed-hex for storage
   let client_hex =
@@ -54,12 +59,13 @@ pub async fn exchange_key(
 
   // Derive and store an AES-256 session key for this user (per-process)
   // 1) decode client pubkey (uncompressed hex -> raw bytes)
-  let client_pub_raw = hex::decode(&client_hex).map_err(|_| FastJobErrorType::DecodeError)?;
+  let client_pub_raw = hex::decode(&client_hex).map_err(|_e| FastJobErrorType::DecodeError)?;
 
   // 2) export server secret to DER and derive shared AES key
-  let server_sk_der = export_private_pkcs8_der(&server_secret);
+  let server_sk_der =
+    export_private_pkcs8_der(&server_secret).map_err(|_e| FastJobErrorType::EncryptingError)?;
   let aes_key = derive_aes256_from_ecdh(&server_sk_der, &client_pub_raw)
-    .map_err(|_| FastJobErrorType::EncryptingError)?;
+    .map_err(|_e| FastJobErrorType::EncryptingError)?;
 
   // Persist the derived session shared key (hex) for this user
   let server_share_key = hex::encode(&aes_key);

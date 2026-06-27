@@ -1,28 +1,26 @@
-use app_108jobs_api_utils::plugins::plugin_metadata;
-use app_108jobs_api_utils::utils::generate_inbox_url;
-use app_108jobs_db_schema::source::actor_language::SiteLanguage;
-use app_108jobs_db_schema::source::coin::CoinModel;
-use app_108jobs_db_schema::source::language::Language;
-use app_108jobs_db_schema::source::local_site_url_blocklist::LocalSiteUrlBlocklist;
-use app_108jobs_db_schema::source::oauth_provider::OAuthProvider;
-use app_108jobs_db_schema::source::tagline::Tagline;
-use app_108jobs_db_schema::source::wallet::WalletModel;
+use app_108jobs_api_utils::{plugins::plugin_metadata, utils::generate_inbox_url};
 use app_108jobs_db_schema::{
   source::{
+    actor_language::SiteLanguage,
+    coin::CoinModel,
     instance::Instance,
+    language::Language,
     local_site::{LocalSite, LocalSiteInsertForm},
     local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitInsertForm},
+    local_site_url_blocklist::LocalSiteUrlBlocklist,
     local_user::{LocalUser, LocalUserInsertForm},
+    oauth_provider::OAuthProvider,
     person::{Person, PersonInsertForm},
     site::{Site, SiteInsertForm},
+    tagline::Tagline,
+    wallet::WalletModel,
   },
   traits::{ApubActor, Crud},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::local_site;
 use app_108jobs_db_views_person::impls::PersonQuery;
-use app_108jobs_db_views_site::api::SiteSnapshot;
-use app_108jobs_db_views_site::SiteView;
+use app_108jobs_db_views_site::{api::SiteSnapshot, SiteView};
 use app_108jobs_utils::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,

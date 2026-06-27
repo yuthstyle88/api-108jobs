@@ -1,8 +1,10 @@
-use app_108jobs_db_schema::source::local_user::LocalUser;
-use app_108jobs_db_schema::source::top_up_request::TopUpRequest;
-use app_108jobs_db_schema::source::user_bank_account::BankAccount;
-use app_108jobs_db_schema::source::wallet::Wallet;
-use app_108jobs_db_schema::source::withdraw_request::WithdrawRequest;
+use app_108jobs_db_schema::source::{
+  local_user::LocalUser,
+  top_up_request::TopUpRequest,
+  user_bank_account::BankAccount,
+  wallet::Wallet,
+  withdraw_request::WithdrawRequest,
+};
 use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 

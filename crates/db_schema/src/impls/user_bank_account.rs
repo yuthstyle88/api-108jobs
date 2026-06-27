@@ -1,3 +1,4 @@
+use crate::newtypes::{BankId, LocalUserId};
 #[cfg(feature = "full")]
 use crate::{
   newtypes::BankAccountId,
@@ -5,17 +6,14 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use chrono::Utc;
-use diesel::dsl::count_star;
-use diesel::ExpressionMethods;
-
-use crate::newtypes::{BankId, LocalUserId};
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::user_bank_accounts;
 #[cfg(feature = "full")]
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use chrono::Utc;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
+use diesel::{dsl::count_star, ExpressionMethods};
 use diesel_async::scoped_futures::ScopedFutureExt;
 #[cfg(feature = "full")]
 use diesel_async::RunQueryDsl;
@@ -142,18 +140,22 @@ impl BankAccount {
 // Coverage:
 //   * set_default keeps the "only one default per user" invariant atomically
 //   * set_default does NOT cross tenant boundaries
-//   * admin_verify_bank_account is idempotent (re-applying the same is_verified
-//     update yields the same row)
+//   * admin_verify_bank_account is idempotent (re-applying the same is_verified update yields the
+//     same row)
 //   * exists_for_user_by_bank_and_number powers the create-time uniqueness check
 // ============================================================================
 #[cfg(feature = "full")]
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::source::bank::BankInsertForm;
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::test_data::pool_for_tests;
+  use crate::{
+    source::{
+      bank::BankInsertForm,
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+    },
+    test_data::pool_for_tests,
+  };
   use app_108jobs_db_schema_file::schema::{banks, local_user};
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

@@ -1,18 +1,20 @@
 use crate::{
   newtypes::PostId,
   source::trip_location_current::{
-    TripLocationCurrent, TripLocationCurrentInsertForm, TripLocationCurrentUpdateForm,
+    TripLocationCurrent,
+    TripLocationCurrentInsertForm,
+    TripLocationCurrentUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-
-use diesel::dsl::{insert_into, update};
-use diesel::QueryDsl;
-use diesel_async::RunQueryDsl;
-
 use app_108jobs_db_schema_file::schema::trip_location_current;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{
+  dsl::{insert_into, update},
+  QueryDsl,
+};
+use diesel_async::RunQueryDsl;
 
 impl Crud for TripLocationCurrent {
   type InsertForm = TripLocationCurrentInsertForm;

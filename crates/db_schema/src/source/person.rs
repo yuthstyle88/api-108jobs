@@ -1,7 +1,6 @@
-use crate::newtypes::WalletId;
-use crate::sensitive::SensitiveString;
 use crate::{
-  newtypes::{DbUrl, InstanceId, PersonId},
+  newtypes::{DbUrl, InstanceId, PersonId, WalletId},
+  sensitive::SensitiveString,
   source::placeholder_apub_url,
 };
 #[cfg(feature = "full")]

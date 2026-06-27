@@ -1,11 +1,12 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::newtypes::PostId;
-use app_108jobs_db_schema::source::delivery_details::DeliveryDetails;
+use app_108jobs_db_schema::{newtypes::PostId, source::delivery_details::DeliveryDetails};
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  TripStatusEvent, TripStatusResponse, UpdateTripStatusRequest,
+  TripStatusEvent,
+  TripStatusResponse,
+  UpdateTripStatusRequest,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 

@@ -4,17 +4,26 @@ pub use app_108jobs_db_schema::{
 };
 pub use app_108jobs_db_views_comment::{
   api::{CommentResponse, GetComment, GetComments, GetCommentsResponse, GetCommentsSlimResponse},
-  CommentSlimView, CommentView,
+  CommentSlimView,
+  CommentView,
 };
 
 pub mod actions {
   pub use app_108jobs_db_views_comment::api::{
-    CreateComment, CreateCommentLike, DeleteComment, EditComment, SaveComment,
+    CreateComment,
+    CreateCommentLike,
+    DeleteComment,
+    EditComment,
+    SaveComment,
   };
 
   pub mod moderation {
     pub use app_108jobs_db_views_comment::api::{
-      DistinguishComment, ListCommentLikes, ListCommentLikesResponse, PurgeComment, RemoveComment,
+      DistinguishComment,
+      ListCommentLikes,
+      ListCommentLikesResponse,
+      PurgeComment,
+      RemoveComment,
     };
   }
 }

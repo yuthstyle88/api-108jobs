@@ -1,20 +1,27 @@
-use crate::api::{Register, RegisterRequest};
-use crate::RegistrationApplicationView;
-use app_108jobs_db_schema::sensitive::SensitiveString;
-use app_108jobs_db_schema::utils::get_required_sensitive;
+use crate::{
+  api::{Register, RegisterRequest},
+  RegistrationApplicationView,
+};
 use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
+  sensitive::SensitiveString,
   source::registration_application::RegistrationApplication,
   traits::{Crud, PaginationCursorBuilder},
-  utils::{get_conn, limit_fetch, paginate, DbPool},
+  utils::{get_conn, get_required_sensitive, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{local_user, person, registration_application};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_utils::utils::random::rand_number5;
-use app_108jobs_utils::utils::validation::is_valid_email;
+use app_108jobs_utils::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  utils::{random::rand_number5, validation::is_valid_email},
+};
 use diesel::{
-  dsl::count, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  dsl::count,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

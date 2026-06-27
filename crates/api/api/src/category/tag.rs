@@ -1,7 +1,8 @@
-use actix_web::web::Data;
-use actix_web::web::Json;
-use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{check_category_deleted_removed, is_admin},
+};
 use app_108jobs_db_schema::{
   source::{
     category::Category,
@@ -10,7 +11,9 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_category::api::{
-  CreateCategoryTagRequest, DeleteCategoryTagRequest, UpdateCategoryTagRequest,
+  CreateCategoryTagRequest,
+  DeleteCategoryTagRequest,
+  UpdateCategoryTagRequest,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::{error::FastJobResult, utils::validation::tag_name_length_check};

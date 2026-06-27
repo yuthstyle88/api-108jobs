@@ -272,13 +272,14 @@ fn file_conn_contains_password(conn: &str) -> bool {
 // ---------------------------------------------------------------------------
 #[cfg(test)]
 mod tests {
+  #![allow(clippy::unwrap_used)]
   use super::*;
   use std::collections::HashMap;
 
   fn reader_from<'a>(
     map: &'a HashMap<&'a str, &'a str>,
   ) -> impl Fn(&str) -> Option<String> + Copy + 'a {
-    move |k: &str| map.get(k).map(|s| s.to_string())
+    move |k: &str| map.get(k).copied().map(ToString::to_string)
   }
 
   fn baseline_req() -> SecretRequirements<'static> {

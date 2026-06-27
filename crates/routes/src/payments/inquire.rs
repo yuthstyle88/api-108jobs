@@ -1,5 +1,4 @@
-use crate::payments::get_token::fetch_scb_token;
-use crate::payments::http_client::scb_client;
+use crate::payments::{get_token::fetch_scb_token, http_client::scb_client};
 use actix_web::{
   web::{Data, Json},
   HttpResponse,

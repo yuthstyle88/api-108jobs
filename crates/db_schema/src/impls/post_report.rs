@@ -9,7 +9,9 @@ use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult}
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods, ExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 
@@ -132,7 +134,7 @@ mod tests {
       "test category_4".to_string(),
       "nada".to_owned(),
     );
-    let category = Category::create(pool, &category_form).await?;
+    let _category = Category::create(pool, &category_form).await?;
 
     let form = PostInsertForm::new("A test post".into(), person.id);
     let post = Post::create(pool, &form).await?;

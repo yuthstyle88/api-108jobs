@@ -1,6 +1,10 @@
 use crate::newtypes::{CoinId, LocalSiteId, SiteId};
 use app_108jobs_db_schema_file::enums::{
-  CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode,
+  CommentSortType,
+  ListingType,
+  PostListingMode,
+  PostSortType,
+  RegistrationMode,
 };
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::local_site;

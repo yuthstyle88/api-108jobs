@@ -1,15 +1,17 @@
 use crate::{
   newtypes::OAuthProviderId,
   source::oauth_provider::{
-    OAuthProvider, OAuthProviderInsertForm, OAuthProviderUpdateForm, PublicOAuthProvider,
+    OAuthProvider,
+    OAuthProviderInsertForm,
+    OAuthProviderUpdateForm,
+    PublicOAuthProvider,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
-
 use app_108jobs_db_schema_file::schema::oauth_provider;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 
 impl Crud for OAuthProvider {

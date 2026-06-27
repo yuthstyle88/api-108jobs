@@ -6,7 +6,13 @@ use diesel::{
   dsl::exists,
   migration::{Migration, MigrationVersion},
   pg::Pg,
-  select, update, BoolExpressionMethods, Connection, ExpressionMethods, PgConnection, QueryDsl,
+  select,
+  update,
+  BoolExpressionMethods,
+  Connection,
+  ExpressionMethods,
+  PgConnection,
+  QueryDsl,
   RunQueryDsl,
 };
 use diesel_migrations::MigrationHarness;
@@ -137,12 +143,6 @@ pub struct Options {
 }
 
 impl Options {
-  #[cfg(test)]
-  fn enable_diff_check(mut self) -> Self {
-    self.enable_diff_check = true;
-    self
-  }
-
   pub fn run(mut self) -> Self {
     self.run = true;
     self

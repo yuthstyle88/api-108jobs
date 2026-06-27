@@ -1,14 +1,17 @@
-use crate::newtypes::ChatRoomId;
 use crate::{
-  newtypes::ChatMessageId,
+  newtypes::{ChatMessageId, ChatRoomId},
   source::chat_message::{ChatMessage, ChatMessageInsertForm, ChatMessageUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::chat_message;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::update;
-use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+  dsl::{insert_into, update},
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+};
 use diesel_async::RunQueryDsl;
 
 impl Crud for ChatMessage {
@@ -151,8 +154,8 @@ impl ChatMessage {
 // Coverage:
 //   * bulk_insert preserves order and returns the inserted rows.
 //   * list_by_room returns messages oldest -> newest (reversed internally).
-//   * list_by_room_after_id powers cursor pagination — returns only ids
-//     strictly greater than the cursor.
+//   * list_by_room_after_id powers cursor pagination — returns only ids strictly greater than the
+//     cursor.
 //   * last_by_room finds the latest row by created_at.
 //   * Cross-room isolation: messages in room A are never returned for room B.
 //
@@ -164,11 +167,15 @@ impl ChatMessage {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::newtypes::LocalUserId;
-  use crate::source::chat_room::{ChatRoom, ChatRoomInsertForm};
-  use crate::source::instance::Instance;
-  use crate::source::person::{Person, PersonInsertForm};
-  use crate::test_data::pool_for_tests;
+  use crate::{
+    newtypes::LocalUserId,
+    source::{
+      chat_room::{ChatRoom, ChatRoomInsertForm},
+      instance::Instance,
+      person::{Person, PersonInsertForm},
+    },
+    test_data::pool_for_tests,
+  };
   use app_108jobs_db_schema_file::schema::local_user;
   use chrono::{Duration, Utc};
   use diesel::ExpressionMethods;

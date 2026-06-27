@@ -491,24 +491,3 @@ impl ApubActor for Category {
     Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use crate::{
-    source::{
-      category::{Category, CategoryActions, CategoryInsertForm, CategoryUpdateForm},
-      instance::Instance,
-      local_user::LocalUser,
-      person::{Person, PersonInsertForm},
-      post::{Post, PostInsertForm},
-    },
-    traits::Crud,
-    utils::{build_db_pool_for_tests, RANK_DEFAULT},
-  };
-  use app_108jobs_utils::error::FastJobResult;
-  use diesel_ltree::Ltree;
-  use pretty_assertions::assert_eq;
-  use serial_test::serial;
-
-}

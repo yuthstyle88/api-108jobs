@@ -8,9 +8,10 @@ use app_108jobs_db_schema::{
   utils::DbPool,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::utils::random::rand_number5;
 use app_108jobs_utils::{
-  error::FastJobResult, settings::structs::Settings, utils::markdown::markdown_to_html,
+  error::FastJobResult,
+  settings::structs::Settings,
+  utils::{markdown::markdown_to_html, random::rand_number5},
 };
 
 pub async fn send_password_reset_email(

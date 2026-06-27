@@ -1,19 +1,36 @@
 use crate::{
   newtypes::{
-    AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgeCommentId,
-    AdminPurgePersonId, AdminPurgePostId,
+    AdminAllowInstanceId,
+    AdminBlockInstanceId,
+    AdminPurgeCategoryId,
+    AdminPurgeCommentId,
+    AdminPurgePersonId,
+    AdminPurgePostId,
   },
   source::mod_log::admin::{
-    AdminAllowInstance, AdminAllowInstanceForm, AdminBlockInstance, AdminBlockInstanceForm,
-    AdminPurgeCategory, AdminPurgeCategoryForm, AdminPurgeComment, AdminPurgeCommentForm,
-    AdminPurgePerson, AdminPurgePersonForm, AdminPurgePost, AdminPurgePostForm,
+    AdminAllowInstance,
+    AdminAllowInstanceForm,
+    AdminBlockInstance,
+    AdminBlockInstanceForm,
+    AdminPurgeCategory,
+    AdminPurgeCategoryForm,
+    AdminPurgeComment,
+    AdminPurgeCommentForm,
+    AdminPurgePerson,
+    AdminPurgePersonForm,
+    AdminPurgePost,
+    AdminPurgePostForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  admin_allow_instance, admin_block_instance, admin_purge_category, admin_purge_comment,
-  admin_purge_person, admin_purge_post,
+  admin_allow_instance,
+  admin_block_instance,
+  admin_purge_category,
+  admin_purge_comment,
+  admin_purge_person,
+  admin_purge_post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{dsl::insert_into, QueryDsl};

@@ -21,7 +21,8 @@ pub struct CoinModel {
   /// Human-readable name
   pub name: String,
   pub supply_total: Coin,
-  /// Circulating supply (mint - burn). Derived from wallet transactions; keep in sync via reconciliation.
+  /// Circulating supply (mint - burn). Derived from wallet transactions; keep in sync via
+  /// reconciliation.
   pub supply_minted_total: Coin,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,

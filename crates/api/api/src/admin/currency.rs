@@ -1,19 +1,30 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::source::currency::{Currency, CurrencyInsertForm, CurrencyUpdateForm};
-use app_108jobs_db_schema::source::currency_rate_history::{
-  CurrencyRateHistory, CurrencyRateHistoryInsertForm,
+use app_108jobs_db_schema::{
+  source::{
+    currency::{Currency, CurrencyInsertForm, CurrencyUpdateForm},
+    currency_rate_history::{CurrencyRateHistory, CurrencyRateHistoryInsertForm},
+    pricing_config::{PricingConfig, PricingConfigInsertForm, PricingConfigUpdateForm},
+  },
+  traits::Crud,
 };
-use app_108jobs_db_schema::source::pricing_config::{
-  PricingConfig, PricingConfigInsertForm, PricingConfigUpdateForm,
+use app_108jobs_db_views_currency::{
+  api::{
+    CreateCurrencyRequest,
+    CreatePricingConfigRequest,
+    CurrencyListResponse,
+    CurrencyResponse,
+    GetCurrency,
+    GetPricingConfig,
+    ListPricingConfigs,
+    PricingConfigListResponse,
+    PricingConfigResponse,
+    UpdateCurrencyRequest,
+    UpdatePricingConfigRequest,
+  },
+  CurrencyView,
+  PricingConfigView,
 };
-use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_views_currency::api::{
-  CreateCurrencyRequest, CreatePricingConfigRequest, CurrencyListResponse, CurrencyResponse,
-  GetCurrency, GetPricingConfig, ListPricingConfigs, PricingConfigListResponse,
-  PricingConfigResponse, UpdateCurrencyRequest, UpdatePricingConfigRequest,
-};
-use app_108jobs_db_views_currency::{CurrencyView, PricingConfigView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;

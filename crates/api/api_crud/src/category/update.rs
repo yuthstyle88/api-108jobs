@@ -1,12 +1,17 @@
 use super::check_category_visibility_allowed;
-use actix_web::web::Data;
-use actix_web::web::Json;
-use app_108jobs_api_utils::utils::{check_category_deleted_removed, is_admin};
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_category_response,
   context::FastJobContext,
   send_activity::{ActivityChannel, SendActivityData},
-  utils::{check_self_promotion_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
+  utils::{
+    check_category_deleted_removed,
+    check_self_promotion_allowed,
+    get_url_blocklist,
+    is_admin,
+    process_markdown_opt,
+    slur_regex,
+  },
 };
 use app_108jobs_db_schema::{
   source::{

@@ -6,13 +6,12 @@
 //! scaffold via [`TestData`].
 //!
 //! Surface:
-//!   * [`TestData::create`] creates a fresh `Instance`, a `Site` row that
-//!     references it, and a `LocalSite` row that references the `Site`.
-//!   * `data.instance` and `data.site` are exposed as plain public fields so
-//!     the existing test code can use `data.instance.id` / `&data.site` as it
-//!     does today.
-//!   * [`TestData::delete`] deletes the `Instance`; the cascading FKs on
-//!     `site(instance_id)` and `local_site(site_id)` clean up the rest.
+//!   * [`TestData::create`] creates a fresh `Instance`, a `Site` row that references it, and a
+//!     `LocalSite` row that references the `Site`.
+//!   * `data.instance` and `data.site` are exposed as plain public fields so the existing test code
+//!     can use `data.instance.id` / `&data.site` as it does today.
+//!   * [`TestData::delete`] deletes the `Instance`; the cascading FKs on `site(instance_id)` and
+//!     `local_site(site_id)` clean up the rest.
 //!
 //! The module is gated `#[cfg(test)]` because nothing in production should
 //! ever depend on it.

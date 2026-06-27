@@ -1,5 +1,5 @@
-use crate::newtypes::{Coin, CoinId};
 use crate::{
+  newtypes::{Coin, CoinId},
   source::coin::{CoinModel, CoinModelInsertForm, CoinModelUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
@@ -8,7 +8,9 @@ use app_108jobs_db_schema_file::schema::coin;
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{insert_into, now},
-  ExpressionMethods, OptionalExtension, QueryDsl,
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 
@@ -112,7 +114,7 @@ impl CoinModel {
       .await?;
 
     // 2) Compute new total (integer, no decimals)
-    let new_total = current_total + delta.0 as i32;
+    let new_total = current_total + delta.0;
     if new_total < 0 {
       return Err(FastJobErrorType::InvalidField("coin supply cannot be negative".into()).into());
     }

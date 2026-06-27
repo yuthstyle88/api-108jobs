@@ -9,10 +9,9 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::OAuthUserUpdateRequest;
 use app_108jobs_db_views_site::api::LoginResponse;
 use app_108jobs_email::admin::send_new_applicant_email_to_admins;
-use app_108jobs_utils::utils::validation::password_length_check;
 use app_108jobs_utils::{
   error::{FastJobErrorType, FastJobResult},
-  utils::slurs::check_slurs,
+  utils::{slurs::check_slurs, validation::password_length_check},
 };
 
 pub async fn update_term(

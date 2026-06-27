@@ -5,12 +5,23 @@ use app_108jobs_db_schema::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{
-  category, category_actions, comment, comment_actions, comment_report, local_user, person,
-  person_actions, post,
+  category,
+  category_actions,
+  comment,
+  comment_actions,
+  comment_report,
+  local_user,
+  person,
+  person_actions,
+  post,
 };
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

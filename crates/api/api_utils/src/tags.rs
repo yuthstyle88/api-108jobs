@@ -1,5 +1,4 @@
-use crate::context::FastJobContext;
-use crate::utils::check_category_deleted_removed;
+use crate::{context::FastJobContext, utils::check_category_deleted_removed};
 use app_108jobs_db_schema::{
   newtypes::TagId,
   source::{

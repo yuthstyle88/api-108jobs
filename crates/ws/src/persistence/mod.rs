@@ -2,13 +2,16 @@ pub mod fetch_history_direct;
 pub mod get_last_read;
 pub mod get_unread_snapshot;
 
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
-use app_108jobs_db_schema::source::chat_participant::ChatParticipant;
-use app_108jobs_db_schema::source::last_read::LastRead;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
-use app_108jobs_db_schema::utils::{ActualDbPool, DbPool};
-use app_108jobs_db_views_chat::api::{ChatMessagesResponse, LastReadResponse};
-use app_108jobs_db_views_chat::ChatMessageView;
+use app_108jobs_db_schema::{
+  newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
+  source::{chat_participant::ChatParticipant, last_read::LastRead},
+  traits::PaginationCursorBuilder,
+  utils::{ActualDbPool, DbPool},
+};
+use app_108jobs_db_views_chat::{
+  api::{ChatMessagesResponse, LastReadResponse},
+  ChatMessageView,
+};
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// List chat messages using cursor pagination

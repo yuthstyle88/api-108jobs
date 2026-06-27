@@ -15,10 +15,14 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category, creator_banned_within_category,
+    creator_banned_from_category,
+    creator_banned_within_category,
   },
   app_108jobs_db_schema::utils::queries::{
-    creator_is_moderator, local_user_can_mod_post, post_creator_is_admin, post_tags_fragment,
+    creator_is_moderator,
+    local_user_can_mod_post,
+    post_creator_is_admin,
+    post_tags_fragment,
   },
   diesel::{Queryable, Selectable},
 };

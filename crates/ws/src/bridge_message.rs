@@ -1,5 +1,4 @@
-use crate::protocol::api::IncomingEvent;
-use crate::protocol::impls::AnyIncomingEvent;
+use crate::protocol::{api::IncomingEvent, impls::AnyIncomingEvent};
 use actix::Message;
 use app_108jobs_db_schema::newtypes::LocalUserId;
 use chrono::{DateTime, Utc};

@@ -592,31 +592,19 @@ impl PostActions {
 #[cfg(test)]
 mod tests {
   use crate::{
-    newtypes::Coin,
     source::{
       category::{Category, CategoryInsertForm},
       comment::{Comment, CommentInsertForm, CommentUpdateForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
-      post::{
-        Post,
-        PostActions,
-        PostInsertForm,
-        PostLikeForm,
-        PostReadForm,
-        PostSavedForm,
-        PostUpdateForm,
-      },
+      post::{Post, PostActions, PostInsertForm, PostLikeForm},
     },
-    traits::{Crud, Likeable, Readable, Saveable},
-    utils::{build_db_pool_for_tests, uplete, RANK_DEFAULT},
+    traits::{Crud, Likeable},
+    utils::build_db_pool_for_tests,
   };
-  use app_108jobs_db_schema_file::enums::PostKind;
   use app_108jobs_utils::error::FastJobResult;
-  use chrono::DateTime;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
-  use url::Url;
 
   #[tokio::test]
   #[serial]

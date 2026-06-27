@@ -2,7 +2,9 @@ use crate::{
   diesel::OptionalExtension,
   newtypes::{CommentId, PersonCommentMentionId, PersonId},
   source::person_comment_mention::{
-    PersonCommentMention, PersonCommentMentionInsertForm, PersonCommentMentionUpdateForm,
+    PersonCommentMention,
+    PersonCommentMentionInsertForm,
+    PersonCommentMentionUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

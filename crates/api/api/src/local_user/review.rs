@@ -1,13 +1,16 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::source::user_review::UserReview;
-use app_108jobs_db_schema::source::workflow::Workflow;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db_schema::{
+  source::{user_review::UserReview, workflow::Workflow},
+  traits::PaginationCursorBuilder,
+};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_user_review::api::SubmitUserReviewRequest;
-use app_108jobs_db_views_user_review::UserReviewView;
 use app_108jobs_db_views_user_review::{
-  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewResponse,
+  api::SubmitUserReviewRequest,
+  ListUserReviewsQuery,
+  ListUserReviewsResponse,
+  SubmitUserReviewResponse,
+  UserReviewView,
   ValidSubmitUserReviewRequest,
 };
 use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};

@@ -35,10 +35,17 @@ pub fn jsonify_plain_text_errors<BODY>(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::error::{FastJobError, FastJobErrorType};
+  use crate::error::FastJobError;
   use actix_web::{
-    error::ErrorInternalServerError, http::StatusCode, middleware::ErrorHandlers, test, web, App,
-    Error, Handler, Responder,
+    error::ErrorInternalServerError,
+    http::StatusCode,
+    middleware::ErrorHandlers,
+    test,
+    web,
+    App,
+    Error,
+    Handler,
+    Responder,
   };
   use pretty_assertions::assert_eq;
 

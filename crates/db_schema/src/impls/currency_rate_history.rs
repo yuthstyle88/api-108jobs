@@ -1,10 +1,11 @@
-use crate::newtypes::CurrencyId;
-use crate::source::currency_rate_history::{CurrencyRateHistory, CurrencyRateHistoryInsertForm};
-use crate::traits::Crud;
-use crate::utils::{get_conn, DbPool};
+use crate::{
+  newtypes::CurrencyId,
+  source::currency_rate_history::{CurrencyRateHistory, CurrencyRateHistoryInsertForm},
+  traits::Crud,
+  utils::{get_conn, DbPool},
+};
 use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::dsl::insert_into;
-use diesel::{ExpressionMethods, QueryDsl};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 
 impl Crud for CurrencyRateHistory {

@@ -156,10 +156,12 @@ mod tests {
   }
 
   async fn make_rider_fixture(pool: &mut DbPool<'_>) -> RiderFixture {
-    let inst =
-      Instance::read_or_create(pool, format!("rv-smoke-{}.tld", uuid::Uuid::new_v4().simple()))
-        .await
-        .expect("create instance");
+    let inst = Instance::read_or_create(
+      pool,
+      format!("rv-smoke-{}.tld", uuid::Uuid::new_v4().simple()),
+    )
+    .await
+    .expect("create instance");
     let suffix = uuid::Uuid::new_v4().simple().to_string();
     let (p_form, _wallet) =
       PersonInsertForm::test_form_with_wallet(pool, inst.id, &format!("rv-{}", &suffix[..8]))

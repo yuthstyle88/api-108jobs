@@ -1,5 +1,5 @@
 use crate::LocalUserView;
-use app_108jobs_db_schema::newtypes::PaginationCursor;
+use app_108jobs_db::newtypes::PaginationCursor;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

@@ -5,7 +5,7 @@ use app_108jobs_api_utils::{
   utils::{check_comment_deleted_or_removed, slur_regex},
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::comment_report::{CommentReport, CommentReportForm},
   traits::Reportable,
 };

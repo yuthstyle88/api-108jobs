@@ -1,8 +1,8 @@
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{PaymentMethod, TripStatus},
   newtypes::{PersonId, RiderId},
   source::ride_session::RideSession,
 };
-use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -21,8 +21,8 @@ pub enum RideViewer {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct RidePublic {
-  pub id: app_108jobs_db_schema::newtypes::RideSessionId,
-  pub post_id: app_108jobs_db_schema::newtypes::PostId,
+  pub id: app_108jobs_db::newtypes::RideSessionId,
+  pub post_id: app_108jobs_db::newtypes::PostId,
   pub pickup_address: String,
   pub dropoff_address: String,
   pub status: TripStatus,
@@ -36,11 +36,11 @@ pub struct RidePublic {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 pub struct RidePrivate {
-  pub id: app_108jobs_db_schema::newtypes::RideSessionId,
-  pub post_id: app_108jobs_db_schema::newtypes::PostId,
-  pub employer_id: app_108jobs_db_schema::newtypes::LocalUserId,
+  pub id: app_108jobs_db::newtypes::RideSessionId,
+  pub post_id: app_108jobs_db::newtypes::PostId,
+  pub employer_id: app_108jobs_db::newtypes::LocalUserId,
   pub rider_id: Option<RiderId>,
-  pub pricing_config_id: Option<app_108jobs_db_schema::newtypes::PricingConfigId>,
+  pub pricing_config_id: Option<app_108jobs_db::newtypes::PricingConfigId>,
   pub pickup_address: String,
   pub pickup_lat: Option<f64>,
   pub pickup_lng: Option<f64>,

@@ -1,0 +1,23 @@
+use crate::{
+  schema::secret::dsl::secret,
+  source::secret::Secret,
+  utils::{get_conn, DbPool},
+};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use diesel_async::RunQueryDsl;
+
+impl Secret {
+  /// Initialize the Secrets from the DB.
+  /// Warning: You should only call this once.
+  pub async fn init(pool: &mut DbPool<'_>) -> FastJobResult<Secret> {
+    Self::read_secrets(pool).await
+  }
+
+  async fn read_secrets(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    secret
+      .first(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+}

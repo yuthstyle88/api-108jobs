@@ -3,8 +3,9 @@ use app_108jobs_core::{
   apply_date_filters,
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{BankAccountId, LocalUserId, PaginationCursor},
+  schema::{banks, user_bank_accounts},
   source::{
     bank::Bank,
     user_bank_account::{user_bank_accounts_keys as key, BankAccount},
@@ -12,7 +13,6 @@ use app_108jobs_db_schema::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{banks, user_bank_accounts};
 use diesel::{prelude::*, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

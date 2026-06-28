@@ -55,10 +55,9 @@ app_108jobs_db_views_registration_applications = { workspace = true, features = 
     "full",
 ] }
 app_108jobs_core = { workspace = true }
-app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_db = { workspace = true, features = ["full"] }
 app_108jobs_api_utils = { workspace = true }
 app_108jobs_api_common = { workspace = true }
-app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_email = { workspace = true }
 app_108jobs_workflow = { workspace = true }
 tracing = { workspace = true }
@@ -90,7 +89,7 @@ pretty_assertions = { workspace = true }
 app_108jobs_api_crud = { workspace = true }
 # Re-enable test-utils on the db_schema dep so admin_top_up_wallet's
 # integration test can use `pool_for_tests` and `TestData`.
-app_108jobs_db_schema = { workspace = true, features = ["full", "test-utils"] }
+app_108jobs_db = { workspace = true, features = ["full", "test-utils"] }
 uuid = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true, features = ["deadpool", "postgres"] }

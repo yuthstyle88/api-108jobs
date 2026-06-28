@@ -1,4 +1,4 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
   newtypes::{CommentReplyId, PersonCommentMentionId, PersonPostMentionId},
   source::{
     comment_reply::CommentReply,

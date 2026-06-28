@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::list_withdraw_requests_inner};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::WithdrawRequestId,
   source::{
     currency::Currency,

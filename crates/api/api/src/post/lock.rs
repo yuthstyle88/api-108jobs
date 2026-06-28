@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{build_response::build_post_response, context::FastJobContext};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     mod_log::moderator::{ModLockPost, ModLockPostForm},
     post::{Post, PostUpdateForm},

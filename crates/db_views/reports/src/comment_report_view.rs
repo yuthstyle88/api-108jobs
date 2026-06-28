@@ -1,20 +1,20 @@
 use crate::CommentReportView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases::{self, creator_category_actions},
   newtypes::{CommentReportId, PersonId},
+  schema::{
+    category,
+    category_actions,
+    comment,
+    comment_actions,
+    comment_report,
+    local_user,
+    person,
+    person_actions,
+    post,
+  },
   utils::{get_conn, DbPool},
-};
-use app_108jobs_db_schema_file::schema::{
-  category,
-  category_actions,
-  comment,
-  comment_actions,
-  comment_report,
-  local_user,
-  person,
-  person_actions,
-  post,
 };
 use diesel::{
   BoolExpressionMethods,

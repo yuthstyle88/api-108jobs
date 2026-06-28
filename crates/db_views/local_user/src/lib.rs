@@ -1,8 +1,8 @@
-use app_108jobs_db_schema::source::{local_user::LocalUser, person::Person};
+use app_108jobs_db::source::{local_user::LocalUser, person::Person};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::utils::queries::creator_home_banned,
+  app_108jobs_db::utils::queries::creator_home_banned,
   diesel::{Queryable, Selectable},
 };
 

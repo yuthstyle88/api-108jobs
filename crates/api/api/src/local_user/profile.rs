@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::person::{Person, PersonUpdateForm, SaveUserProfileForm},
   traits::Crud,
 };

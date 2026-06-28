@@ -1,0 +1,90 @@
+[package]
+name = "app_108jobs_db"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "app_108jobs_db"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+full = [
+    "app_108jobs_core/full",
+    "diesel",
+    "diesel-derive-newtype",
+    "bcrypt",
+    "app_108jobs_core",
+    "regex",
+    "serde_json",
+    "diesel_ltree",
+    "diesel-async",
+    "deadpool",
+    "tokio",
+    "tokio-postgres",
+    "tokio-postgres-rustls",
+    "rustls",
+    "i-love-jesus",
+    "tuplex",
+    "moka",
+    "diesel-derive-enum",
+    "dep:diesel_migrations",
+]
+ts-rs = [
+    "dep:ts-rs",
+]
+# Exposes `crate::test_data::TestData` (instance + site + local_site scaffold)
+# to downstream crates' test targets. Production builds NEVER enable this.
+test-utils = []
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+strum = { workspace = true }
+url = { workspace = true }
+serde_json = { workspace = true, optional = true }
+app_108jobs_core = { workspace = true, optional = true }
+bcrypt = { workspace = true, optional = true }
+diesel = { workspace = true, optional = true }
+diesel-derive-newtype = { workspace = true, optional = true }
+diesel-derive-enum = { workspace = true, optional = true }
+diesel-async = { workspace = true, features = [
+    "deadpool",
+    "postgres",
+], optional = true }
+diesel_migrations = { workspace = true, optional = true }
+regex = { workspace = true, optional = true }
+diesel_ltree = { workspace = true, optional = true }
+tracing = { workspace = true }
+deadpool = { version = "0.12.2", optional = true, features = ["rt_tokio_1"] }
+ts-rs = { workspace = true, optional = true }
+futures-util = { workspace = true }
+tokio = { workspace = true, optional = true }
+tokio-postgres = { workspace = true, optional = true }
+tokio-postgres-rustls = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true }
+uuid.workspace = true
+i-love-jesus = { workspace = true, optional = true }
+derive-new.workspace = true
+tuplex = { workspace = true, optional = true }
+moka = { workspace = true, optional = true }
+validator = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+pretty_assertions = { workspace = true }
+diff = "0.1.13"
+itertools = { workspace = true }
+pathfinding = "4.14.0"
+unified-diff = { workspace = true }

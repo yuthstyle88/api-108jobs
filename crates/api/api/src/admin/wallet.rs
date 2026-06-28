@@ -5,8 +5,9 @@ use app_108jobs_api_utils::{
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 #[cfg(test)]
-use app_108jobs_db_schema::traits::Crud;
-use app_108jobs_db_schema::{
+use app_108jobs_db::traits::Crud;
+use app_108jobs_db::{
+  enums::{TopUpStatus, WithdrawStatus},
   newtypes::{Coin, CoinId, LocalUserId, WalletId, WithdrawRequestId},
   source::{
     top_up_request::TopUpRequest,
@@ -15,7 +16,6 @@ use app_108jobs_db_schema::{
   },
   utils::{get_conn, DbPool},
 };
-use app_108jobs_db_schema_file::enums::{TopUpStatus, WithdrawStatus};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_db_views_wallet::api::{
@@ -129,8 +129,8 @@ pub(crate) async fn admin_top_up_wallet_inner(
         if locked.transferred {
           return Err::<
             (
-              app_108jobs_db_schema::newtypes::Coin,
-              app_108jobs_db_schema::newtypes::Coin,
+              app_108jobs_db::newtypes::Coin,
+              app_108jobs_db::newtypes::Coin,
             ),
             app_108jobs_core::error::FastJobError,
           >(
@@ -438,8 +438,9 @@ pub(crate) async fn admin_reject_withdraw_request_inner(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     newtypes::{Coin, LocalUserId as LUID},
+    schema::wallet_transaction,
     source::{
       coin::CoinModel,
       currency::Currency,
@@ -450,14 +451,13 @@ mod tests {
     },
     test_data::pool_for_tests,
   };
-  use app_108jobs_db_schema_file::schema::wallet_transaction;
   use chrono::Duration;
   use diesel::{ExpressionMethods, QueryDsl};
   use diesel_async::RunQueryDsl;
   use serial_test::serial;
 
   struct Ctx {
-    instance_id: app_108jobs_db_schema::newtypes::InstanceId,
+    instance_id: app_108jobs_db::newtypes::InstanceId,
     admin_user_id: LUID,
     target_user_id: LUID,
     target_wallet_id: WalletId,
@@ -540,7 +540,7 @@ mod tests {
     let _ = TopUpRequest::update_by_qr_id(
       pool,
       qr_id.clone(),
-      &app_108jobs_db_schema::source::top_up_request::TopUpRequestUpdateForm {
+      &app_108jobs_db::source::top_up_request::TopUpRequestUpdateForm {
         status: Some(TopUpStatus::Success),
         updated_at: Some(chrono::Utc::now()),
         paid_at: Some(Some(chrono::Utc::now())),
@@ -564,10 +564,7 @@ mod tests {
     }
   }
 
-  async fn cleanup(
-    pool: &mut DbPool<'_>,
-    instance_id: app_108jobs_db_schema::newtypes::InstanceId,
-  ) {
+  async fn cleanup(pool: &mut DbPool<'_>, instance_id: app_108jobs_db::newtypes::InstanceId) {
     let _ = Instance::delete(pool, instance_id).await;
   }
 
@@ -588,7 +585,7 @@ mod tests {
   }
 
   async fn read_wallet_balance(pool: &mut DbPool<'_>, wallet_id: WalletId) -> Coin {
-    use app_108jobs_db_schema_file::schema::wallet;
+    use app_108jobs_db::schema::wallet;
     let conn = &mut get_conn(pool).await.expect("conn");
     wallet::table
       .find(wallet_id)
@@ -700,18 +697,18 @@ mod tests {
   //       idempotency_key never collided on the
   //       `wallet_transaction(idempotency_key, wallet_id)` unique index.
   // ==========================================================================
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     newtypes::{BankAccountId, BankId, WithdrawRequestId},
+    schema::{banks, withdraw_requests},
     source::{
       bank::BankInsertForm,
       user_bank_account::{BankAccount, UserBankAccountInsertForm},
       withdraw_request::WithdrawRequestInsertForm,
     },
   };
-  use app_108jobs_db_schema_file::schema::{banks, withdraw_requests};
 
   struct WithdrawCtx {
-    instance_id: app_108jobs_db_schema::newtypes::InstanceId,
+    instance_id: app_108jobs_db::newtypes::InstanceId,
     admin_user_id: LUID,
     target_user_id: LUID,
     target_wallet_id: WalletId,

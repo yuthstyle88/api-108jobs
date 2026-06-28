@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   local_user::LocalUser,
   top_up_request::TopUpRequest,
   user_bank_account::BankAccount,

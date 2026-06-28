@@ -1,12 +1,8 @@
 use crate::{CommentSlimView, CommentView};
-use app_108jobs_db_schema::newtypes::{
-  CategoryId,
-  CommentId,
-  LanguageId,
-  PaginationCursor,
-  PostId,
+use app_108jobs_db::{
+  enums::{CommentSortType, ListingType},
+  newtypes::{CategoryId, CommentId, LanguageId, PaginationCursor, PostId},
 };
-use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType};
 use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

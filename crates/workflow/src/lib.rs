@@ -1,5 +1,8 @@
-use app_108jobs_db_schema::{newtypes::WorkflowId, source::workflow::WorkflowUpdateForm};
-use app_108jobs_db_schema_file::enums::WorkFlowStatus;
+use app_108jobs_db::{
+  enums::WorkFlowStatus,
+  newtypes::WorkflowId,
+  source::workflow::WorkflowUpdateForm,
+};
 use serde::{Deserialize, Serialize};
 
 mod api;

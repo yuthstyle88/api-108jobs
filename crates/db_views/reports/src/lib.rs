@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   category_report::CategoryReport,
   comment::{Comment, CommentActions},
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::{
+  app_108jobs_db::{
     utils::queries::{comment_creator_is_admin, person1_select, post_creator_is_admin},
     Person1AliasAllColumnsTuple,
   },

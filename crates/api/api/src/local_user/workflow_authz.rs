@@ -12,7 +12,7 @@
 //! See `docs/superpowers/specs/2026-06-28-workflow-escrow-authorization-design.md`.
 
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::newtypes::{LocalUserId, PersonId};
+use app_108jobs_db::newtypes::{LocalUserId, PersonId};
 
 /// Which side of a job the caller is on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

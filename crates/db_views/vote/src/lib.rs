@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::person::Person;
+use app_108jobs_db::source::person::Person;
 #[cfg(feature = "full")]
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};

@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::Category,
   comment::Comment,
   instance::Instance,
@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
+  app_108jobs_db::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
   diesel::{dsl::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 

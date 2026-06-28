@@ -29,9 +29,8 @@ app_108jobs_db_views_person_content_combined = { workspace = true, features = [
 app_108jobs_db_views_person = { workspace = true, features = ["full"] }
 app_108jobs_db_views_site = { workspace = true, features = ["full"] }
 app_108jobs_core = { workspace = true, features = ["full"] }
-app_108jobs_db_schema = { workspace = true }
+app_108jobs_db = { workspace = true }
 app_108jobs_api_utils = { workspace = true }
-app_108jobs_db_schema_file = { workspace = true }
 actix-web = { workspace = true, features = ["cookies"] }
 actix-multipart = "0.7"
 anyhow = { workspace = true }

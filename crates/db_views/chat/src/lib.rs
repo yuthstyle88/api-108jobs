@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId},
   source::{
     chat_message::ChatMessage,

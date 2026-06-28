@@ -1,6 +1,6 @@
 use app_108jobs_api_utils::utils::is_admin;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema_file::enums::CategoryVisibility;
+use app_108jobs_db::enums::CategoryVisibility;
 use app_108jobs_db_views_local_user::LocalUserView;
 
 pub mod delete;

@@ -16,7 +16,7 @@ use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs_opt, validation::is_valid_body_field},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     actor_language::{CategoryLanguage, SiteLanguage},
     category::{Category, CategoryUpdateForm},

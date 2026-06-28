@@ -9,8 +9,7 @@ documentation.workspace = true
 repository.workspace = true
 
 [dependencies]
-app_108jobs_db_schema = { workspace = true }
-app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_db = { workspace = true }
 app_108jobs_db_views_wallet = { workspace = true }
 app_108jobs_core = { workspace = true }
 diesel = { workspace = true }
@@ -22,8 +21,7 @@ ts-rs = { workspace = true, optional = true }
 [features]
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db_schema/ts-rs",
-    "app_108jobs_db_schema_file/ts-rs",
+    "app_108jobs_db/ts-rs",
 ]
 
 [dev-dependencies]

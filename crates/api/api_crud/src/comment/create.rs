@@ -14,16 +14,14 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::PostKind,
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   newtypes::{PersonId, PostId},
+  schema::comment::{creator_id, deleted, dsl::comment, post_id, removed},
   source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
   traits::{Crud, Likeable},
   utils::DbPool,
-};
-use app_108jobs_db_schema_file::{
-  enums::PostKind,
-  schema::comment::{creator_id, deleted, dsl::comment, post_id, removed},
 };
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -144,7 +142,7 @@ async fn check_user_already_commented(
   person_id: PersonId,
   current_post_id: PostId,
 ) -> FastJobResult<()> {
-  use app_108jobs_db_schema::utils::get_conn;
+  use app_108jobs_db::utils::get_conn;
   use diesel::prelude::*;
   use diesel_async::RunQueryDsl;
 

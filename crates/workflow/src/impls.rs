@@ -1,5 +1,6 @@
 use app_108jobs_core::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{BillingStatus, BillingStatus::QuotePendingReview, WorkFlowStatus},
   newtypes::{BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId},
   source::{
     billing::{Billing, BillingInsertForm, BillingUpdateForm},
@@ -10,11 +11,6 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
   utils::{get_conn, DbPool},
-};
-use app_108jobs_db_schema_file::enums::{
-  BillingStatus,
-  BillingStatus::QuotePendingReview,
-  WorkFlowStatus,
 };
 use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
 use chrono::Utc;
@@ -1062,8 +1058,10 @@ mod idempotency_tests {
 #[cfg(test)]
 mod workflow_flow_tests {
   use super::*;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
+    enums::{BillingStatus, WorkFlowStatus},
     newtypes::{ChatRoomId, Coin, WalletId},
+    schema::{billing, local_user, post, wallet, wallet_hold as wallet_hold_t, wallet_transaction},
     source::{
       chat_room::{ChatRoom, ChatRoomInsertForm},
       coin::CoinModel,
@@ -1076,10 +1074,6 @@ mod workflow_flow_tests {
     test_data::TestData,
     traits::Crud,
     utils::get_conn,
-  };
-  use app_108jobs_db_schema_file::{
-    enums::{BillingStatus, WorkFlowStatus},
-    schema::{billing, local_user, post, wallet, wallet_hold as wallet_hold_t, wallet_transaction},
   };
   use diesel::{ExpressionMethods, QueryDsl};
   use diesel_async::RunQueryDsl;
@@ -1101,7 +1095,7 @@ mod workflow_flow_tests {
   struct Fixture {
     test_data: TestData,
     platform_wallet: Wallet,
-    coin_id: app_108jobs_db_schema::newtypes::CoinId,
+    coin_id: app_108jobs_db::newtypes::CoinId,
     employer_local_user_id: i32,
     /// Reserved for future tests that exercise freelancer-side permission checks.
     #[allow(dead_code)]
@@ -1113,7 +1107,7 @@ mod workflow_flow_tests {
   }
 
   async fn build_fixture(pool: &mut DbPool<'_>) -> Fixture {
-    app_108jobs_db_schema::test_data::init_test_settings_path();
+    app_108jobs_db::test_data::init_test_settings_path();
     let test_data = TestData::create(pool).await.expect("test_data");
     let platform_wallet = WalletModel::ensure_platform_wallet(pool)
       .await
@@ -1302,7 +1296,7 @@ mod workflow_flow_tests {
   #[tokio::test]
   #[serial]
   async fn approve_then_approve_work_releases_to_freelancer_once() {
-    let pool = app_108jobs_db_schema::test_data::pool_for_tests();
+    let pool = app_108jobs_db::test_data::pool_for_tests();
     let pool = &mut (&pool).into();
     let f = build_fixture(pool).await;
 
@@ -1375,7 +1369,7 @@ mod workflow_flow_tests {
   #[tokio::test]
   #[serial]
   async fn approve_twice_is_idempotent() {
-    let pool = app_108jobs_db_schema::test_data::pool_for_tests();
+    let pool = app_108jobs_db::test_data::pool_for_tests();
     let pool = &mut (&pool).into();
     let f = build_fixture(pool).await;
 
@@ -1431,7 +1425,7 @@ mod workflow_flow_tests {
   #[tokio::test]
   #[serial]
   async fn approve_then_cancel_refunds_employer() {
-    let pool = app_108jobs_db_schema::test_data::pool_for_tests();
+    let pool = app_108jobs_db::test_data::pool_for_tests();
     let pool = &mut (&pool).into();
     let f = build_fixture(pool).await;
     let workflow_id = f.workflow.id;
@@ -1492,7 +1486,7 @@ mod workflow_flow_tests {
   #[tokio::test]
   #[serial]
   async fn approve_work_with_no_active_hold_is_rejected() {
-    let pool = app_108jobs_db_schema::test_data::pool_for_tests();
+    let pool = app_108jobs_db::test_data::pool_for_tests();
     let pool = &mut (&pool).into();
     let f = build_fixture(pool).await;
 
@@ -1524,7 +1518,7 @@ mod workflow_flow_tests {
   #[tokio::test]
   #[serial]
   async fn concurrent_approve_one_succeeds_other_fails() {
-    let pool = app_108jobs_db_schema::test_data::pool_for_tests();
+    let pool = app_108jobs_db::test_data::pool_for_tests();
     let p = &mut (&pool).into();
     let f = build_fixture(p).await;
     let workflow_id = f.workflow.id;
@@ -1596,9 +1590,9 @@ mod workflow_flow_tests {
   /// involve no money math and only exist to advance the typestate.
   async fn advance_to_work_submitted(
     pool: &mut DbPool<'_>,
-    workflow_id: app_108jobs_db_schema::newtypes::WorkflowId,
+    workflow_id: app_108jobs_db::newtypes::WorkflowId,
   ) {
-    use app_108jobs_db_schema::source::workflow::WorkflowUpdateForm;
+    use app_108jobs_db::source::workflow::WorkflowUpdateForm;
     let _ = Workflow::update(
       pool,
       workflow_id,

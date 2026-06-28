@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::purge_user_account};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::CategoryActions,
   login_token::LoginToken,
   oauth_account::OAuthAccount,

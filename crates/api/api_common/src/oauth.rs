@@ -1,4 +1,4 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
   newtypes::OAuthProviderId,
   source::{
     oauth_account::OAuthAccount,

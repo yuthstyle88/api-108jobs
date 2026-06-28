@@ -1,6 +1,6 @@
 use crate::{send_email, user_language};
 use app_108jobs_core::{error::FastJobResult, settings::structs::Settings};
-use app_108jobs_db_schema::utils::DbPool;
+use app_108jobs_db::utils::DbPool;
 use app_108jobs_db_views_local_user::LocalUserView;
 
 /// Send a new applicant email notification to all admins

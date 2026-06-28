@@ -1,18 +1,11 @@
 use crate::VoteView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases::creator_category_actions,
   newtypes::{CommentId, PaginationCursor, PersonId, PostId},
+  schema::{category_actions, comment, comment_actions, person, post, post_actions},
   source::{comment::CommentActions, post::PostActions},
   utils::{get_conn, limit_fetch, paginate, DbPool},
-};
-use app_108jobs_db_schema_file::schema::{
-  category_actions,
-  comment,
-  comment_actions,
-  person,
-  post,
-  post_actions,
 };
 use diesel::{
   BoolExpressionMethods,
@@ -56,7 +49,7 @@ impl VoteView {
     page_back: Option<bool>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
-    use app_108jobs_db_schema::source::post::post_actions_keys as key;
+    use app_108jobs_db::source::post::post_actions_keys as key;
 
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
@@ -132,7 +125,7 @@ impl VoteView {
     page_back: Option<bool>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
-    use app_108jobs_db_schema::source::comment::comment_actions_keys as key;
+    use app_108jobs_db::source::comment::comment_actions_keys as key;
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 

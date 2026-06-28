@@ -3,7 +3,7 @@ mod impls;
 pub mod ride_session_view;
 pub mod validator;
 
-use app_108jobs_db_schema::source::{person::Person, rider::Rider};
+use app_108jobs_db::source::{person::Person, rider::Rider};
 #[cfg(feature = "full")]
 use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};

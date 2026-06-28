@@ -1,9 +1,9 @@
 use actix::prelude::*;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::WorkFlowStatus,
   newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId},
   source::chat_message::ChatMessageInsertForm,
 };
-use app_108jobs_db_schema_file::enums::WorkFlowStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

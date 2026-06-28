@@ -5,7 +5,7 @@ use app_108jobs_api_utils::{
   utils::check_category_deleted_removed,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     category::Category,
     local_user::LocalUser,

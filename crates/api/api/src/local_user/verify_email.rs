@@ -4,7 +4,7 @@ use actix_web::{
 };
 use app_108jobs_api_utils::{claims::Claims, context::FastJobContext};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   email_verification::EmailVerification,
   local_user::{LocalUser, LocalUserUpdateForm},
 };

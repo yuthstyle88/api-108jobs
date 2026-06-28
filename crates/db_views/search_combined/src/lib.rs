@@ -1,4 +1,5 @@
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{IntendedUse, JobType, ListingType, PostKind, TripStatus},
   newtypes::{CategoryId, Coin, LanguageId, PaginationCursor, PersonId},
   source::{
     category::{Category, CategoryActions},
@@ -13,7 +14,6 @@ use app_108jobs_db_schema::{
   SearchSortType,
   SearchType,
 };
-use app_108jobs_db_schema_file::enums::{IntendedUse, JobType, ListingType, PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_person::PersonView;
@@ -22,14 +22,14 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::utils::queries::{
+  app_108jobs_db::utils::queries::{
     category_post_tags_fragment,
     creator_banned,
     creator_is_admin,
     local_user_can_mod,
     post_tags_fragment,
   },
-  app_108jobs_db_schema::utils::queries::{creator_banned_from_category, creator_is_moderator},
+  app_108jobs_db::utils::queries::{creator_banned_from_category, creator_is_moderator},
   app_108jobs_db_views_local_user::LocalUserView,
   diesel::{Queryable, Selectable},
 };

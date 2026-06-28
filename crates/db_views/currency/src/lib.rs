@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   currency::{Currency, CurrencyInfo},
   currency_rate_history::CurrencyRateHistory,
   local_user::LocalUser,

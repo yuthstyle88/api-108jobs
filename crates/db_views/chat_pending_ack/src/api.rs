@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
+use app_108jobs_db::newtypes::{ChatRoomId, LocalUserId, PaginationCursor};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

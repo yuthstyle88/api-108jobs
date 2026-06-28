@@ -20,7 +20,8 @@ use app_108jobs_core::{
     validation::{is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_url},
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{PostKind, TripStatus},
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::{
     delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm},
@@ -30,7 +31,6 @@ use app_108jobs_db_schema::{
   traits::{Crud, Likeable, Readable},
   utils::diesel_url_create,
 };
-use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
@@ -212,12 +212,9 @@ pub async fn create_post(
       current_price_coin: Some(0),
     };
 
-    app_108jobs_db_schema::source::ride_session::RideSession::create(
-      &mut context.pool(),
-      &session_form,
-    )
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
+    app_108jobs_db::source::ride_session::RideSession::create(&mut context.pool(), &session_form)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)?;
   }
 
   // Tags are only supported for posts with a category

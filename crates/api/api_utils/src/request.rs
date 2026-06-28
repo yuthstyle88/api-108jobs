@@ -6,7 +6,7 @@ use app_108jobs_core::{
   REQWEST_TIMEOUT,
   VERSION,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
     post::{Post, PostUpdateForm},

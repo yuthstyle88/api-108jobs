@@ -9,12 +9,12 @@ use app_108jobs_api_utils::{
   },
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::TripStatus,
   newtypes::PostId,
   source::delivery_details::DeliveryDetails,
   utils::get_conn,
 };
-use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{AssignDeliveryRequest, DeliveryAssignmentEvent};
 use app_108jobs_db_views_site::api::SuccessResponse;
@@ -59,7 +59,7 @@ pub async fn assign_delivery_from_proposal(
     .run_transaction(|conn| {
       async move {
         // Convert connection to DbPool for use with Crud functions
-        let mut pool: app_108jobs_db_schema::utils::DbPool<'_> = conn.into();
+        let mut pool: app_108jobs_db::utils::DbPool<'_> = conn.into();
 
         // Verify the user is the post creator (employer)
         verify_post_creator(&mut pool, post_id, employer_person_id).await?;

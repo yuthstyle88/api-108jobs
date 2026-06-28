@@ -4,7 +4,8 @@ use app_108jobs_api_utils::{
   utils::{check_fetch_limit, get_active_rider_by_person},
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::TripStatus,
   newtypes::RideSessionId,
   source::{
     currency::Currency,
@@ -14,7 +15,6 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
 };
-use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::{
   api::{

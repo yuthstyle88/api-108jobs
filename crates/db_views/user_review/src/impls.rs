@@ -1,13 +1,13 @@
 use crate::UserReviewView;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases,
   newtypes::{DecodedCursor, PaginationCursor, PersonId, UserReviewId, WorkflowId},
+  schema::{person, user_review, workflow},
   source::user_review::UserReview,
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{person, user_review, workflow};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
 

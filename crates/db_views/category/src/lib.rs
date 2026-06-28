@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   instance::InstanceActions,
   tag::TagsView,
@@ -7,10 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::utils::queries::{
-    category_post_tags_fragment,
-    local_user_category_can_mod,
-  },
+  app_108jobs_db::utils::queries::{category_post_tags_fragment, local_user_category_can_mod},
   diesel::{Queryable, Selectable},
 };
 

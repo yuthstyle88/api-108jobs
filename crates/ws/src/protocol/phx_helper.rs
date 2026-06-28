@@ -3,7 +3,7 @@ use crate::{
   protocol::api::{ChatEvent, IncomingEvent},
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::newtypes::ChatRoomId;
+use app_108jobs_db::newtypes::ChatRoomId;
 use phoenix_channels_client::{Channel, ChannelStatus, Event, Payload, Socket, Topic};
 use serde_json::Value;
 use std::{collections::HashMap, str::FromStr, sync::Arc, time::Duration};

@@ -4,7 +4,8 @@ use app_108jobs_core::{
   settings::structs::Settings,
   VERSION,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  schema::local_site,
   source::{
     actor_language::SiteLanguage,
     coin::CoinModel,
@@ -23,7 +24,6 @@ use app_108jobs_db_schema::{
   traits::{ApubActor, Crud},
   utils::{get_conn, DbPool},
 };
-use app_108jobs_db_schema_file::schema::local_site;
 use app_108jobs_db_views_person::impls::PersonQuery;
 use app_108jobs_db_views_site::{api::SiteSnapshot, SiteView};
 use chrono::Utc;

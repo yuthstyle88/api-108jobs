@@ -1,4 +1,4 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
   newtypes::CustomEmojiId,
   source::{custom_emoji::CustomEmoji, custom_emoji_keyword::CustomEmojiKeyword},
 };

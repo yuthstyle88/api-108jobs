@@ -11,7 +11,7 @@ use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use actix_web_actors::ws;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::crypto;
-use app_108jobs_db_schema::newtypes::{ChatRoomId, LocalUserId, PostId};
+use app_108jobs_db::newtypes::{ChatRoomId, LocalUserId, PostId};
 use chrono::Utc;
 use serde_json::Value;
 use std::time::Duration;

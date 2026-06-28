@@ -1,8 +1,8 @@
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{CommentSortType, ListingType, PostSortType},
   newtypes::CategoryId,
   source::{local_site::LocalSite, local_user::LocalUser},
 };
-use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
 /// Returns default listing type, depending if the query is for frontpage or category.
 pub fn listing_type_with_default(

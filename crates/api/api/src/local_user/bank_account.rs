@@ -2,7 +2,7 @@ use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_common::bank_account::BankAccountOperationResponse;
 use app_108jobs_api_utils::{context::FastJobContext, utils::ensure_bank_account_unique_for_user};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     bank::{Bank, BanksResponse},
     user_bank_account::{BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm},

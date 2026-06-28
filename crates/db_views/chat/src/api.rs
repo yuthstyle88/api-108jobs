@@ -1,5 +1,5 @@
 use crate::{ChatMessageView, ChatRoomView};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId},
   source::last_read::LastRead,
 };

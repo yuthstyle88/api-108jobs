@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{read_auth_token, AUTH_COOKIE_NAME},
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::source::login_token::LoginToken;
+use app_108jobs_db::source::login_token::LoginToken;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 

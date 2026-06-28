@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::rider::{Rider, RiderUpdateForm},
   traits::Crud,
 };

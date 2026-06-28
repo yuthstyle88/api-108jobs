@@ -1,9 +1,9 @@
-use app_108jobs_db_schema::source::person::{Person, PersonActions};
+use app_108jobs_db::source::person::{Person, PersonActions};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::utils::{functions::coalesce, queries::creator_banned},
-  app_108jobs_db_schema_file::schema::local_user,
+  app_108jobs_db::schema::local_user,
+  app_108jobs_db::utils::{functions::coalesce, queries::creator_banned},
   diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 

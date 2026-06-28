@@ -1,5 +1,5 @@
 use crate::ReportCombinedView;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{CategoryId, PaginationCursor, PostId},
   ReportType,
 };

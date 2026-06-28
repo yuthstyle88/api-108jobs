@@ -1,13 +1,13 @@
 use actix_web::web::Data;
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::utils::{get_conn, now, DbPool};
-use app_108jobs_db_schema_file::{
+use app_108jobs_db::{
   enums::TopUpStatus,
   schema::{
     captcha_answer,
     top_up_requests::{cs_ext_expiry_time, dsl::top_up_requests, id, status},
   },
+  utils::{get_conn, now, DbPool},
 };
 use chrono::Utc;
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};

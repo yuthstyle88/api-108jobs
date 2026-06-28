@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_valid};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     actor_language::LocalUserLanguage,
     instance::InstanceActions,
@@ -25,7 +25,7 @@ pub async fn get_my_user(
   let local_user_id = local_user_view.local_user.id;
   let pool = &mut context.pool();
 
-  let (instance_blocks, person_blocks, keyword_blocks, discussion_languages, wallet) = app_108jobs_db_schema::try_join_with_pool!(pool => (
+  let (instance_blocks, person_blocks, keyword_blocks, discussion_languages, wallet) = app_108jobs_db::try_join_with_pool!(pool => (
     |pool| InstanceActions::read_blocks_for_person(pool, person_id),
     |pool| PersonActions::read_blocks_for_person(pool, person_id),
     |pool| LocalUserKeywordBlock::read(pool, local_user_id),

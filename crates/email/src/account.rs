@@ -4,7 +4,7 @@ use app_108jobs_core::{
   settings::structs::Settings,
   utils::{markdown::markdown_to_html, random::rand_number5},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     email_verification::{EmailVerification, EmailVerificationForm},
     local_site::LocalSite,

@@ -1,12 +1,12 @@
 use crate::RiderView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{DecodedCursor, LocalUserId, PaginationCursor, RiderId},
+  schema::{person, rider},
   source::rider::{rider_keys as key, Rider},
   traits::PaginationCursorBuilder,
   utils::{get_conn, paginate, Commented, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{person, rider};
 use diesel::{
   self,
   query_builder::AsQuery,
@@ -84,7 +84,7 @@ impl RiderView {
     limit: Option<i64>,
     verified: Option<bool>,
   ) -> FastJobResult<Vec<RiderView>> {
-    use app_108jobs_db_schema_file::schema::rider;
+    use app_108jobs_db::schema::rider;
 
     let conn = &mut get_conn(pool).await?;
 
@@ -130,8 +130,10 @@ impl RiderView {
 #[cfg(test)]
 mod tests {
   use crate::RiderView;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
+    enums::{RiderVerificationStatus, VehicleType},
     newtypes::{InstanceId, LocalUserId, PersonId},
+    schema::local_user,
     source::{
       instance::Instance,
       person::{Person, PersonInsertForm},
@@ -140,10 +142,6 @@ mod tests {
     test_data::pool_for_tests,
     traits::Crud,
     utils::{get_conn, DbPool},
-  };
-  use app_108jobs_db_schema_file::{
-    enums::{RiderVerificationStatus, VehicleType},
-    schema::local_user,
   };
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

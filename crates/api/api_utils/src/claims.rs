@@ -1,7 +1,7 @@
 use crate::context::FastJobContext;
 use actix_web::{http::header::USER_AGENT, HttpRequest};
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::LocalUserId,
   sensitive::SensitiveString,
   source::login_token::{LoginToken, LoginTokenCreateForm},

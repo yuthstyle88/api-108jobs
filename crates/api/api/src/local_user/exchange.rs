@@ -12,7 +12,7 @@ use app_108jobs_core::{
   },
   error::{FastJobErrorType, FastJobResult},
 };
-use app_108jobs_db_schema::{sensitive::SensitiveString, source::person::Person};
+use app_108jobs_db::{sensitive::SensitiveString, source::person::Person};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use hex;

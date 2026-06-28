@@ -39,7 +39,7 @@ impl Settings {
   /// or if the config file still contains a plaintext password.
   ///
   /// Note: The env var `app_108jobs_DATABASE_URL` is also consumed downstream
-  /// in `app_108jobs_db_schema/src/lib.rs::get_database_url_from_env()`.
+  /// in `app_108jobs_db/src/lib.rs::get_database_url_from_env()`.
   /// Warning: Only call this once.
   pub(crate) fn init() -> FastJobResult<Self> {
     let path =

@@ -1,6 +1,6 @@
 use crate::plugins::plugin_metadata;
 use app_108jobs_core::{error::FastJobResult, settings::structs::Settings, VERSION};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     actor_language::SiteLanguage,
     language::Language,

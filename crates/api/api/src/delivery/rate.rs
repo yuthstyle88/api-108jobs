@@ -1,7 +1,8 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::verify_post_creator};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{PostKind, TripStatus},
   newtypes::RiderId,
   source::{
     delivery_details::DeliveryDetails,
@@ -11,7 +12,6 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
 };
-use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
   DeliveryRiderRatingData,
@@ -90,10 +90,10 @@ pub async fn rate_rider(
 
 /// Update the rider's aggregated rating in the rider table
 async fn update_rider_aggregated_rating(
-  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
+  pool: &mut app_108jobs_db::utils::DbPool<'_>,
   rider_id: RiderId,
 ) -> FastJobResult<()> {
-  use app_108jobs_db_schema::source::rider::RiderUpdateForm;
+  use app_108jobs_db::source::rider::RiderUpdateForm;
 
   // Get the average rating
   let average_rating = DeliveryRiderRating::get_average_rating_for_rider(pool, rider_id).await?;

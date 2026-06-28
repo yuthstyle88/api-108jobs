@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_image::{
   api::{ListMedia, ListMediaResponse},
   LocalImageView,

@@ -1,11 +1,11 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
+  enums::CategoryVisibility,
   newtypes::{CategoryId, TagId},
   source::{
     category::{Category, CategoryActions},
     tag::{Tag, TagsView},
   },
 };
-pub use app_108jobs_db_schema_file::enums::CategoryVisibility;
 pub use app_108jobs_db_views_category::{
   api::{
     CategoryResponse,
@@ -22,7 +22,7 @@ pub mod actions {
   pub use app_108jobs_db_views_category::api::{CreateCategory, HideCategory};
 
   pub mod moderation {
-    pub use app_108jobs_db_schema_file::enums::CategoryFollowerState;
+    pub use app_108jobs_db::enums::CategoryFollowerState;
     pub use app_108jobs_db_views_category::api::{
       CategoryIdQuery,
       CreateCategoryTag,

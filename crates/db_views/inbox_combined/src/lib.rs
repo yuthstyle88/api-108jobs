@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::PaginationCursor,
   source::{
     category::{Category, CategoryActions},
@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::{
+  app_108jobs_db::{
     utils::queries::{
       creator_banned,
       creator_is_admin,

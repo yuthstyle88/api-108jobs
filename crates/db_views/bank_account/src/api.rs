@@ -1,5 +1,5 @@
 use crate::BankAccountView;
-use app_108jobs_db_schema::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
+use app_108jobs_db::newtypes::{BankAccountId, BankId, LocalUserId, PaginationCursor};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

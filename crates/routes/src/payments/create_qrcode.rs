@@ -5,7 +5,7 @@ use actix_web::{
 };
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::Coin,
   source::{
     currency::Currency,

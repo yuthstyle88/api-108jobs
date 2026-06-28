@@ -20,8 +20,7 @@ full = [
     "app_108jobs_core",
     "diesel",
     "diesel-async",
-    "app_108jobs_db_schema/full",
-    "app_108jobs_db_schema_file/full",
+    "app_108jobs_db/full",
     "app_108jobs_db_views_person/full",
     "app_108jobs_db_views_post/full",
     "extism",
@@ -30,17 +29,15 @@ full = [
 ]
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db_schema/ts-rs",
-    "app_108jobs_db_schema_file/ts-rs",
+    "app_108jobs_db/ts-rs",
     "app_108jobs_db_views_local_user/ts-rs",
     "app_108jobs_db_views_person/ts-rs",
     "app_108jobs_db_views_post/ts-rs",
 ]
 
 [dependencies]
-app_108jobs_db_schema = { workspace = true }
+app_108jobs_db = { workspace = true }
 app_108jobs_core = { workspace = true, optional = true }
-app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_db_views_local_user = { workspace = true }
 app_108jobs_db_views_person = { workspace = true }
 app_108jobs_db_views_post = { workspace = true }

@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{newtypes::PaginationCursor, traits::PaginationCursorBuilder};
+use app_108jobs_db::{newtypes::PaginationCursor, traits::PaginationCursorBuilder};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::{
   api::{ListRidersQuery, ListRidersResponse},

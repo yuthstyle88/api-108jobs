@@ -5,7 +5,7 @@ use app_108jobs_core::{
   error::FastJobResult,
   VERSION,
 };
-use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db::enums::RegistrationMode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;

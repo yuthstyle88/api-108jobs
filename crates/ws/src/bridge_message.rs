@@ -1,6 +1,6 @@
 use crate::protocol::{api::IncomingEvent, impls::AnyIncomingEvent};
 use actix::Message;
-use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_db::newtypes::LocalUserId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

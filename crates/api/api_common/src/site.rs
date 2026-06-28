@@ -1,4 +1,5 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
+  enums::RegistrationMode,
   newtypes::{LocalSiteId, SiteId},
   source::{
     local_site::LocalSite,
@@ -7,7 +8,6 @@ pub use app_108jobs_db_schema::{
     site::Site,
   },
 };
-pub use app_108jobs_db_schema_file::enums::RegistrationMode;
 pub use app_108jobs_db_views_site::{
   api::{GetSiteResponse, SiteResponse},
   SiteView,

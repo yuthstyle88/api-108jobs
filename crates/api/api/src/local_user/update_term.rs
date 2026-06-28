@@ -7,8 +7,7 @@ use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs, validation::password_length_check},
 };
-use app_108jobs_db_schema::source::local_user::LocalUser;
-use app_108jobs_db_schema_file::enums::RegistrationMode;
+use app_108jobs_db::{enums::RegistrationMode, source::local_user::LocalUser};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::OAuthUserUpdateRequest;
 use app_108jobs_db_views_site::api::LoginResponse;

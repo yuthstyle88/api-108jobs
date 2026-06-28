@@ -9,8 +9,10 @@ use crate::{
   SearchPostView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{IntendedUse, JobType, PostKind, TripStatus},
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
+  schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
   source::{
     combined::search::{search_combined_keys as key, SearchCombined},
     site::Site,
@@ -40,10 +42,6 @@ use app_108jobs_db_schema::{
   },
   SearchSortType::{self, *},
   SearchType,
-};
-use app_108jobs_db_schema_file::{
-  enums::{IntendedUse, JobType, PostKind, TripStatus},
-  schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
 };
 use app_108jobs_db_views_post::logistics::{
   build_logistics_from_maps,

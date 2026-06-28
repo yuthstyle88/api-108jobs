@@ -5,7 +5,7 @@ use app_108jobs_api_utils::{
   utils::check_private_instance,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::PaginationCursor,
   source::{category::Category, comment::Comment},
   traits::{ApubActor, Crud, PaginationCursorBuilder},

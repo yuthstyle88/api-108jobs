@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
 use app_108jobs_core::{error::FastJobResult, utils::validation::is_valid_body_field};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,

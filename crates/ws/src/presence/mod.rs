@@ -19,7 +19,7 @@ use app_108jobs_core::{
     user_events_topic,
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatRoomId, LocalUserId},
   source::chat_participant::ChatParticipant,
   utils::{ActualDbPool, DbPool},

@@ -1,5 +1,5 @@
 use crate::{CurrencyRateHistoryView, CurrencyView, PricingConfigView};
-use app_108jobs_db_schema::newtypes::{CurrencyId, PricingConfigId};
+use app_108jobs_db::newtypes::{CurrencyId, PricingConfigId};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

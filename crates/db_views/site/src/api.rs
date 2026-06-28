@@ -1,6 +1,16 @@
 use crate::SiteView;
 use app_108jobs_core::error::FastJobError;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{
+    CommentSortType,
+    ListingType,
+    PostKind,
+    PostListingMode,
+    PostSortType,
+    RegistrationMode,
+    TripStatus,
+    VoteShow,
+  },
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
   source::{
@@ -17,16 +27,6 @@ use app_108jobs_db_schema::{
     tagline::Tagline,
     wallet::Wallet,
   },
-};
-use app_108jobs_db_schema_file::enums::{
-  CommentSortType,
-  ListingType,
-  PostKind,
-  PostListingMode,
-  PostSortType,
-  RegistrationMode,
-  TripStatus,
-  VoteShow,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::PersonView;

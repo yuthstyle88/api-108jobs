@@ -11,7 +11,7 @@ use crate::{
 };
 use actix::{prelude::*, Context, Handler, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::ChatRoomId,
   source::{chat_message::ChatMessageInsertForm, chat_unread::ChatUnread},
   utils::DbPool,

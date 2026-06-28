@@ -8,7 +8,7 @@ use app_108jobs_api_utils::{
   utils::{check_local_user_deleted, check_local_user_valid},
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::login_token::LoginToken;
+use app_108jobs_db::source::login_token::LoginToken;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::LoginResponse;
 use serde::Deserialize;

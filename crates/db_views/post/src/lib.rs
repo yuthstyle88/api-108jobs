@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   images::ImageDetails,
   instance::InstanceActions,
@@ -10,15 +10,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(test)]
 pub mod db_perf;
-use app_108jobs_db_schema::newtypes::{Coin, LanguageId, PersonId, PostId};
+use app_108jobs_db::newtypes::{Coin, LanguageId, PersonId, PostId};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::utils::queries::{
-    creator_banned_from_category,
-    creator_banned_within_category,
-  },
-  app_108jobs_db_schema::utils::queries::{
+  app_108jobs_db::utils::queries::{creator_banned_from_category, creator_banned_within_category},
+  app_108jobs_db::utils::queries::{
     creator_is_moderator,
     local_user_can_mod_post,
     post_creator_is_admin,

@@ -21,7 +21,7 @@ workspace = true
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_db = { workspace = true, features = ["full"] }
 app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
 app_108jobs_db_views_site = { workspace = true, features = ["full"] }
 app_108jobs_db_views_bank_account = { workspace = true, features = ["full"] }

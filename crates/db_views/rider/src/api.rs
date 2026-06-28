@@ -3,16 +3,18 @@ use crate::{
   RiderView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobResult};
-use app_108jobs_db_schema::newtypes::{
-  CommentId,
-  PaginationCursor,
-  PersonId,
-  PostId,
-  PricingConfigId,
-  RideSessionId,
-  RiderId,
+use app_108jobs_db::{
+  enums::{PaymentMethod, TripStatus, VehicleType},
+  newtypes::{
+    CommentId,
+    PaginationCursor,
+    PersonId,
+    PostId,
+    PricingConfigId,
+    RideSessionId,
+    RiderId,
+  },
 };
-use app_108jobs_db_schema_file::enums::{PaymentMethod, TripStatus, VehicleType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

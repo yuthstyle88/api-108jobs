@@ -22,7 +22,8 @@ use app_108jobs_core::{
     validation::is_valid_actor_name,
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::RegistrationMode,
   newtypes::{LanguageId, OAuthProviderId},
   source::{
     captcha_answer::{CaptchaAnswer, CheckCaptchaAnswer},
@@ -37,7 +38,6 @@ use app_108jobs_db_schema::{
   traits::{ApubActor, Crud},
   utils::get_conn,
 };
-use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::{Register, RegisterRequest};
 use app_108jobs_db_views_site::{

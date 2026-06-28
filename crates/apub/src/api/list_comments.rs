@@ -1,7 +1,9 @@
-use super::comment_sort_type_with_default;
-use crate::api::listing_type_with_default;
 use actix_web::web::{Data, Json, Query};
-use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  listing_defaults::{comment_sort_type_with_default, listing_type_with_default},
+  utils::check_private_instance,
+};
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{category::Category, comment::Comment},

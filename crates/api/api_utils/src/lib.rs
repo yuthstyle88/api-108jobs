@@ -2,6 +2,7 @@ pub mod build_response;
 pub mod claims;
 pub mod context;
 pub mod geolocation;
+pub mod listing_defaults;
 pub mod plugins;
 pub mod request;
 pub mod site_snapshot;

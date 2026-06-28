@@ -824,6 +824,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_contract_tests"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "app_108jobs_db_schema",
+ "app_108jobs_db_views_bank_account",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_wallet",
+ "app_108jobs_workflow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "app_108jobs_db_schema"
 version = "1.0.0-alpha.5"
 dependencies = [

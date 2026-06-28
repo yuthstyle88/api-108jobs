@@ -1,0 +1,28 @@
+[package]
+name = "app_108jobs_contract_tests"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+name = "app_108jobs_contract_tests"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_db_views_bank_account = { workspace = true, features = ["full"] }
+app_108jobs_workflow = { workspace = true }

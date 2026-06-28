@@ -88,6 +88,7 @@ members = [
     "crates/email",
     "crates/workflow",
     "crates/db_views/rider",
+    "crates/contract_tests",
 ]
 
 [workspace.lints.clippy]

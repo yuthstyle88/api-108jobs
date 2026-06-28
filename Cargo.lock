@@ -1455,6 +1455,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_workflow_handlers"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_api_utils",
+ "app_108jobs_core",
+ "app_108jobs_db",
+ "app_108jobs_db_views_billing",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_workflow",
+ "chrono",
+ "serde_json",
+]
+
+[[package]]
 name = "app_108jobs_ws"
 version = "1.0.0-alpha.5"
 dependencies = [

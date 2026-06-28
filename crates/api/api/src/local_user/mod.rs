@@ -18,5 +18,3 @@ pub mod review;
 pub mod save_settings;
 pub mod update_term;
 pub mod user_block_instance;
-pub mod workflow;
-pub mod workflow_authz;

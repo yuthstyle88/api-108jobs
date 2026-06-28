@@ -1,4 +1,4 @@
-use super::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
+use crate::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};

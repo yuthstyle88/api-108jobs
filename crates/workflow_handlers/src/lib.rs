@@ -1,2 +1,2 @@
 pub mod workflow;
-pub mod workflow_authz;
+pub(crate) mod workflow_authz;

@@ -700,10 +700,7 @@ impl WorkflowService {
     seq_number: i16,
     room_id: ChatRoomId,
   ) -> FastJobResult<Workflow> {
-    if let Some(current) = Workflow::get_current_by_room_id(pool, room_id.clone())
-      .await
-      .unwrap_or(None)
-    {
+    if let Some(current) = Workflow::get_current_by_room_id(pool, room_id.clone()).await? {
       let update_form = WorkflowUpdateForm {
         active: Some(false),
         updated_at: Some(Some(Utc::now())),
@@ -825,6 +822,7 @@ impl WorkflowService {
     form: ValidCreateInvoiceRequest,
   ) -> FastJobResult<Billing> {
     let data = form.0.clone();
+    let workflow_id = data.workflow_id;
 
     let insert_billing = BillingInsertForm {
       freelancer_id,
@@ -844,19 +842,40 @@ impl WorkflowService {
       created_at: Some(Utc::now()),
     };
 
-    let billing = <Billing as Crud>::create(pool, &insert_billing).await?;
-    if let Some(current_wf) = Workflow::get_current_by_room_id(pool, data.room_id).await? {
-      Workflow::update(
-        pool,
-        current_wf.id,
-        &WorkflowUpdateForm {
-          status: Some(WorkFlowStatus::QuotationPendingReview),
-          updated_at: Some(Some(Utc::now())),
-          ..Default::default()
-        },
-      )
+    // Wrap all three writes in a single transaction so a concurrent
+    // `approve_quotation` call cannot race between "billing created" and
+    // "billing_id linked to workflow":
+    //   1. Create the billing row.
+    //   2. Advance the workflow status to QuotationPendingReview.
+    //   3. Link billing.id into workflow.billing_id.
+    let conn = &mut get_conn(pool).await?;
+    let billing = conn
+      .run_transaction(|tx| {
+        async move {
+          // Step 1: create billing.
+          let billing = <Billing as Crud>::create(&mut tx.into(), &insert_billing).await?;
+
+          // Step 2: advance workflow status.
+          let advance_form = WorkflowUpdateForm {
+            status: Some(WorkFlowStatus::QuotationPendingReview),
+            updated_at: Some(Some(Utc::now())),
+            ..Default::default()
+          };
+          Workflow::update(&mut tx.into(), workflow_id, &advance_form).await?;
+
+          // Step 3: link billing_id to the workflow.
+          let link_form = WorkflowUpdateForm {
+            billing_id: Some(Some(billing.id)),
+            updated_at: Some(Some(Utc::now())),
+            ..Default::default()
+          };
+          Workflow::update(&mut tx.into(), workflow_id, &link_form).await?;
+
+          Ok::<Billing, app_108jobs_core::error::FastJobError>(billing)
+        }
+        .scope_boxed()
+      })
       .await?;
-    }
 
     Ok(billing)
   }

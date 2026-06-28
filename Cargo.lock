@@ -573,7 +573,6 @@ dependencies = [
  "app_108jobs_db_views_vote",
  "app_108jobs_db_views_wallet",
  "app_108jobs_email",
- "app_108jobs_workflow",
  "base64 0.22.1",
  "bcrypt",
  "chrono",
@@ -681,6 +680,7 @@ dependencies = [
  "app_108jobs_identity",
  "app_108jobs_payments",
  "app_108jobs_routes",
+ "app_108jobs_workflow_handlers",
  "app_108jobs_ws",
  "clap",
  "mimalloc",
@@ -1467,6 +1467,7 @@ dependencies = [
  "app_108jobs_workflow",
  "chrono",
  "serde_json",
+ "tracing",
 ]
 
 [[package]]

@@ -20,3 +20,4 @@ app_108jobs_workflow = { workspace = true }
 actix-web = { workspace = true }
 chrono = { workspace = true }
 serde_json = { workspace = true }
+tracing = { workspace = true }

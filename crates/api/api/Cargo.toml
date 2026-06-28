@@ -59,7 +59,6 @@ app_108jobs_db = { workspace = true, features = ["full"] }
 app_108jobs_api_utils = { workspace = true }
 app_108jobs_api_common = { workspace = true }
 app_108jobs_email = { workspace = true }
-app_108jobs_workflow = { workspace = true }
 tracing = { workspace = true }
 bcrypt = { workspace = true }
 actix-web = { workspace = true }

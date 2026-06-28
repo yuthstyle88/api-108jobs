@@ -47,15 +47,6 @@ pub struct GetWalletResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Add funds to wallet (deposit).
-pub struct DepositWallet {
-  pub amount: Coin,
-  pub target_user_id: LocalUserId,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Response for wallet operations.
 pub struct WalletOperationResponse {

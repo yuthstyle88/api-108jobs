@@ -13,7 +13,7 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,
@@ -31,9 +31,12 @@ async fn list_comments_common(
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let category_id = if let Some(name) = &data.category_name {
-    Category::read_from_name(&mut context.pool(), name, true)
-      .await?
-      .map(|c| c.id)
+    Some(
+      Category::read_from_name(&mut context.pool(), name, true)
+        .await?
+        .ok_or(FastJobErrorType::NotFound)?
+        .id,
+    )
   } else {
     data.category_id
   };

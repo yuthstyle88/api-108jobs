@@ -1,6 +1,3 @@
-use crate::newtypes::DbUrl;
-use url::Url;
-
 pub mod actor_language;
 pub mod bank;
 pub mod billing;
@@ -62,15 +59,3 @@ pub mod wallet;
 pub mod wallet_hold;
 pub mod withdraw_request;
 pub mod workflow;
-
-/// Default value for columns like [category::Category.inbox_url] which are marked as serde(skip).
-///
-/// This is necessary so they can be successfully deserialized from API responses, even though the
-/// value is not sent by app_108jobs. Necessary for crates which rely on Rust API such as
-/// app_108jobs-stats-crawler.
-#[allow(clippy::expect_used)]
-fn placeholder_apub_url() -> DbUrl {
-  DbUrl(Box::new(
-    Url::parse("http://example.com").expect("parse placeholder url"),
-  ))
-}

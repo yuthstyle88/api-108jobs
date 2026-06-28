@@ -1,11 +1,8 @@
 use crate::{
-  newtypes::{CategoryId, DbUrl, PaginationCursor, PersonId},
+  newtypes::{CategoryId, PaginationCursor, PersonId},
   utils::{get_conn, uplete, DbPool},
 };
-use app_108jobs_core::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   associations::HasTable,
   dsl,
@@ -19,7 +16,6 @@ use diesel_async::{
   RunQueryDsl,
 };
 use std::future::Future;
-use url::Url;
 
 /// Returned by `diesel::delete`
 pub type Delete<T> = DeleteStatement<<T as HasTable>::Table, <T as IntoUpdateTarget>::WhereClause>;
@@ -301,14 +297,6 @@ pub trait Reportable {
   ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
-  fn resolve_apub(
-    pool: &mut DbPool<'_>,
-    object_id: Self::ObjectIdType,
-    report_creator_id: PersonId,
-    resolver_id: PersonId,
-  ) -> impl Future<Output = FastJobResult<usize>> + Send
-  where
-    Self: Sized;
   fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
     comment_id_: Self::ObjectIdType,
@@ -323,34 +311,6 @@ pub trait Reportable {
   ) -> impl Future<Output = FastJobResult<usize>> + Send
   where
     Self: Sized;
-}
-
-pub trait ApubActor {
-  fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
-  where
-    Self: Sized;
-  /// - actor_name is the name of the category or user to read.
-  /// - include_deleted, if true, will return communities or users that were deleted/removed
-  fn read_from_name(
-    pool: &mut DbPool<'_>,
-    actor_name: &str,
-    include_deleted: bool,
-  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
-  where
-    Self: Sized;
-  fn read_from_name_and_domain(
-    pool: &mut DbPool<'_>,
-    actor_name: &str,
-    protocol_domain: &str,
-  ) -> impl Future<Output = FastJobResult<Option<Self>>> + Send
-  where
-    Self: Sized;
-
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl>;
-  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url>;
 }
 
 pub trait InternalToCombinedView {

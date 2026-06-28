@@ -82,7 +82,7 @@ use rand::Rng;
 use regex::{escape, Regex, RegexSet};
 use std::{collections::HashSet, sync::LazyLock};
 use tracing::info;
-use url::{ParseError, Url};
+use url::Url;
 use urlencoding::encode;
 
 pub const AUTH_COOKIE_NAME: &str = "jwt";
@@ -528,27 +528,6 @@ pub async fn purge_user_account(
   Person::delete_account(pool, person_id, local_instance_id).await?;
 
   Ok(())
-}
-
-pub fn generate_followers_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
-  Ok(Url::parse(&format!("{ap_id}/followers"))?.into())
-}
-
-pub fn generate_inbox_url() -> FastJobResult<DbUrl> {
-  let url = format!("{}/inbox", SETTINGS.get_protocol_and_hostname());
-  Ok(Url::parse(&url)?.into())
-}
-
-pub fn generate_outbox_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
-  Ok(Url::parse(&format!("{ap_id}/outbox"))?.into())
-}
-
-pub fn generate_featured_url(ap_id: &DbUrl) -> Result<DbUrl, ParseError> {
-  Ok(Url::parse(&format!("{ap_id}/featured"))?.into())
-}
-
-pub fn generate_moderators_url(category_id: &DbUrl) -> FastJobResult<DbUrl> {
-  Ok(Url::parse(&format!("{category_id}/moderators"))?.into())
 }
 
 /// Ensure that ban/block expiry is in valid range. If its in past, throw error. If its more

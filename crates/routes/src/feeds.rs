@@ -13,7 +13,6 @@ use app_108jobs_core::{
 use app_108jobs_db::{
   enums::{ListingType, PostSortType},
   source::{category::Category, person::Person},
-  traits::ApubActor,
   PersonContentType,
 };
 use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};

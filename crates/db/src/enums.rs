@@ -155,19 +155,6 @@ impl CategoryVisibility {
     self == &Public || self == &LocalOnlyPublic
   }
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "full", derive(DbEnum))]
-#[cfg_attr(
-  feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::ActorTypeEnum"
-)]
-pub enum ActorType {
-  Site,
-  Category,
-  Person,
-  MultiCategory,
-}
-
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(

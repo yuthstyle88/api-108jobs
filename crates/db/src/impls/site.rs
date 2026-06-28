@@ -1,5 +1,5 @@
 use crate::{
-  newtypes::{DbUrl, InstanceId, SiteId},
+  newtypes::{InstanceId, SiteId},
   schema::{local_site, site},
   source::{
     actor_language::SiteLanguage,
@@ -9,37 +9,25 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
-use url::Url;
 
 impl Crud for Site {
   type InsertForm = SiteInsertForm;
   type UpdateForm = SiteUpdateForm;
   type IdType = SiteId;
 
-  /// Use SiteView::read_local, or Site::read_from_apub_id instead
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
-    let is_new_site = match &form.ap_id {
-      Some(id) => Site::read_from_apub_id(pool, id).await?.is_none(),
-      None => true,
-    };
     let conn = &mut get_conn(pool).await?;
 
-    // Can't do separate insert/update commands because InsertForm/UpdateForm aren't convertible
     let site = insert_into(site::table)
       .values(form)
-      .on_conflict(site::ap_id)
-      .do_update()
-      .set(form)
       .get_result::<Self>(conn)
       .await?;
 
-    // initialize languages if site is newly created
-    if is_new_site {
-      // initialize with all languages
-      SiteLanguage::update(pool, vec![], &site).await?;
-    }
+    // initialize languages for new site
+    SiteLanguage::update(pool, vec![], &site).await?;
+
     Ok(site)
   }
 
@@ -69,20 +57,6 @@ impl Site {
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-
-    site::table
-      .filter(site::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   pub async fn read_remote_sites(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
     let conn = &mut get_conn(pool).await?;
     site::table
@@ -91,15 +65,6 @@ impl Site {
       .get_results::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  /// Instance actor is at the root path, so we simply need to clear the path and other unnecessary
-  /// parts of the url.
-  pub fn instance_ap_id_from_url(mut url: Url) -> Url {
-    url.set_fragment(None);
-    url.set_path("");
-    url.set_query(None);
-    url
   }
 
   pub async fn read_local(pool: &mut DbPool<'_>) -> FastJobResult<Self> {

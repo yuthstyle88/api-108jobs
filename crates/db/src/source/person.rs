@@ -3,7 +3,6 @@ use crate::schema::{person, person_actions};
 use crate::{
   newtypes::{DbUrl, InstanceId, PersonId, WalletId},
   sensitive::SensitiveString,
-  source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
@@ -34,12 +33,8 @@ pub struct Person {
   pub avatar: Option<DbUrl>,
   pub published_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
-  /// The federated ap_id.
-  pub ap_id: DbUrl,
   /// An optional bio, in markdown.
   pub bio: Option<String>,
-  /// Whether the person is local to our site.
-  pub local: bool,
   #[serde(skip)]
   pub private_key: Option<SensitiveString>,
   #[serde(skip)]
@@ -50,9 +45,6 @@ pub struct Person {
   pub banner: Option<DbUrl>,
   /// Whether the person is deleted.
   pub deleted: bool,
-  #[cfg_attr(feature = "ts-rs", ts(skip))]
-  #[serde(skip, default = "placeholder_apub_url")]
-  pub inbox_url: DbUrl,
   /// A matrix id, usually given an @person:matrix.org
   pub matrix_user_id: Option<String>,
   /// Whether the person is a bot account.
@@ -87,11 +79,7 @@ pub struct PersonInsertForm {
   #[new(default)]
   pub updated_at: Option<DateTime<Utc>>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub bio: Option<String>,
-  #[new(default)]
-  pub local: Option<bool>,
   #[new(default)]
   pub private_key: Option<String>,
   #[new(default)]
@@ -100,8 +88,6 @@ pub struct PersonInsertForm {
   pub banner: Option<DbUrl>,
   #[new(default)]
   pub deleted: Option<bool>,
-  #[new(default)]
-  pub inbox_url: Option<DbUrl>,
   #[new(default)]
   pub matrix_user_id: Option<String>,
   #[new(default)]
@@ -130,15 +116,12 @@ pub struct PersonUpdateForm {
   pub display_name: Option<Option<String>>,
   pub avatar: Option<Option<DbUrl>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
-  pub ap_id: Option<DbUrl>,
   pub bio: Option<Option<String>>,
-  pub local: Option<bool>,
   pub shared_key: Option<String>,
   pub private_key: Option<Option<String>>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub banner: Option<Option<DbUrl>>,
   pub deleted: Option<bool>,
-  pub inbox_url: Option<DbUrl>,
   pub matrix_user_id: Option<Option<String>>,
   pub bot_account: Option<bool>,
   pub contacts: Option<Option<String>>,

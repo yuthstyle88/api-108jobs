@@ -1,9 +1,6 @@
+use crate::newtypes::{DbUrl, InstanceId, SiteId};
 #[cfg(feature = "full")]
 use crate::schema::site;
-use crate::{
-  newtypes::{DbUrl, InstanceId, SiteId},
-  sensitive::SensitiveString,
-};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -31,16 +28,8 @@ pub struct Site {
   pub banner: Option<DbUrl>,
   /// A shorter, one-line description of the site.
   pub description: Option<String>,
-  /// The federated ap_id.
-  pub ap_id: DbUrl,
   /// The time the site was last refreshed.
   pub last_refreshed_at: DateTime<Utc>,
-  /// The site inbox
-  pub inbox_url: DbUrl,
-  #[serde(skip)]
-  pub private_key: Option<SensitiveString>,
-  // TODO: mark as `serde(skip)` in next major release as its not needed for api
-  pub public_key: String,
   pub instance_id: InstanceId,
   /// If present, self_promotion content is visible by default. Should be displayed by
   /// frontends/clients when the site is first opened by a user.
@@ -64,15 +53,7 @@ pub struct SiteInsertForm {
   #[new(default)]
   pub description: Option<String>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
-  #[new(default)]
-  pub inbox_url: Option<DbUrl>,
-  #[new(default)]
-  pub private_key: Option<String>,
-  #[new(default)]
-  pub public_key: Option<String>,
   #[new(default)]
   pub content_warning: Option<String>,
 }
@@ -89,10 +70,6 @@ pub struct SiteUpdateForm {
   pub icon: Option<Option<DbUrl>>,
   pub banner: Option<Option<DbUrl>>,
   pub description: Option<Option<String>>,
-  pub ap_id: Option<DbUrl>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
-  pub inbox_url: Option<DbUrl>,
-  pub private_key: Option<Option<String>>,
-  pub public_key: Option<String>,
   pub content_warning: Option<Option<String>>,
 }

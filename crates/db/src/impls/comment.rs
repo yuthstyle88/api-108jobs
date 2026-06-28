@@ -1,6 +1,6 @@
 use crate::{
-  diesel::{NullableExpressionMethods, OptionalExtension},
-  newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId},
+  diesel::NullableExpressionMethods,
+  newtypes::{CategoryId, CommentId, InstanceId, PersonId},
   schema::{category, comment, comment_actions, post},
   source::comment::{
     Comment,
@@ -175,20 +175,6 @@ impl Comment {
     Ok(comment_ids)
   }
 
-  pub async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: Url,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let object_id: DbUrl = object_id.into();
-    comment::table
-      .filter(comment::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   pub fn parent_comment_id(&self) -> Option<CommentId> {
     let mut ltree_split: Vec<&str> = self.path.0.split('.').collect();
     ltree_split.remove(0); // The first is always 0
@@ -217,23 +203,9 @@ impl Comment {
     Ok(Url::parse(&format!("{domain}/comment/{}", self.id))?)
   }
 
-  pub async fn update_ap_id(
-    pool: &mut DbPool<'_>,
-    id: CommentId,
-    ap_id: DbUrl,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-
-    update(comment::table.find(id))
-      .set(comment::ap_id.eq(ap_id))
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
-  }
-
   /// The comment was created locally and sent back, indicating that the category accepted it
   pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    if self.local && self.pending {
+    if self.pending {
       let form = CommentUpdateForm {
         pending: Some(false),
         ..Default::default()
@@ -241,11 +213,6 @@ impl Comment {
       Comment::update(pool, self.id, &form).await?;
     }
     Ok(())
-  }
-
-  pub fn generate_comment_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
-    let domain = settings.get_protocol_and_hostname();
-    Ok(Url::parse(&format!("{domain}/comment/{name}"))?.into())
   }
 }
 

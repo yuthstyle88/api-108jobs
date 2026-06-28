@@ -25,11 +25,8 @@ use crate::{
     FETCH_LIMIT_MAX,
   },
 };
-use app_108jobs_core::{
-  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-};
-use chrono::{DateTime, Utc};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult};
+use chrono::Utc;
 use diesel::{
   debug_query,
   dsl::{count, exists, insert_into, not, select, update},
@@ -45,7 +42,6 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;
-use url::Url;
 
 impl Crud for Post {
   type InsertForm = PostInsertForm;
@@ -88,23 +84,6 @@ impl Post {
       .first(conn)
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  pub async fn insert_apub(
-    pool: &mut DbPool<'_>,
-    timestamp: DateTime<Utc>,
-    form: &PostInsertForm,
-  ) -> FastJobResult<Self> {
-    let conn = &mut get_conn(pool).await?;
-    insert_into(post::table)
-      .values(form)
-      .on_conflict(post::ap_id)
-      .filter_target(coalesce(post::updated_at, post::published_at).lt(timestamp))
-      .do_update()
-      .set(form)
-      .get_result::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::CouldntCreatePost)
   }
 
   pub async fn list_featured_for_category(
@@ -232,21 +211,6 @@ impl Post {
     person_id == post_creator_id
   }
 
-  pub async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: Url,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let object_id: DbUrl = object_id.into();
-    post::table
-      .filter(post::ap_id.eq(object_id))
-      .filter(post::scheduled_publish_time_at.is_null())
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   pub async fn user_scheduled_post_count(
     person_id: PersonId,
     pool: &mut DbPool<'_>,
@@ -302,12 +266,8 @@ impl Post {
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePost)
   }
-  pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
-    let domain = settings.get_protocol_and_hostname();
-    Ok(Url::parse(&format!("{domain}/post/{}", self.id))?)
-  }
   pub async fn set_not_pending(&self, pool: &mut DbPool<'_>) -> FastJobResult<()> {
-    if self.local && self.pending {
+    if self.pending {
       let form = PostUpdateForm {
         pending: Some(false),
         ..Default::default()
@@ -320,9 +280,7 @@ impl Post {
   pub async fn check_post_name_taken(pool: &mut DbPool<'_>, name: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
-      post::table
-        .filter(lower(post::name).eq(name.to_lowercase()))
-        .filter(post::local.eq(true)),
+      post::table.filter(lower(post::name).eq(name.to_lowercase())),
     )))
     .get_result::<bool>(conn)
     .await?

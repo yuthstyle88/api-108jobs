@@ -1,7 +1,7 @@
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
-  newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
-  schema::{instance, instance_actions, local_user, person, person_actions},
+  newtypes::{CategoryId, InstanceId, LocalUserId, PersonId},
+  schema::{instance_actions, local_user, person, person_actions},
   source::person::{
     Person,
     PersonActions,
@@ -11,7 +11,7 @@ use crate::{
     PersonNoteForm,
     PersonUpdateForm,
   },
-  traits::{ApubActor, Blockable, Crud, Followable},
+  traits::{Blockable, Crud, Followable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
 use app_108jobs_core::{
@@ -83,9 +83,6 @@ impl Person {
     let conn = &mut get_conn(pool).await?;
     insert_into(person::table)
       .values(form)
-      .on_conflict(person::ap_id)
-      .do_update()
-      .set(form)
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntUpdatePerson)
@@ -160,6 +157,29 @@ impl Person {
     .await?
     .then_some(())
     .ok_or(FastJobErrorType::UsernameAlreadyExists.into())
+  }
+
+  pub async fn read_from_name(
+    pool: &mut DbPool<'_>,
+    from_name: &str,
+    include_deleted: bool,
+  ) -> FastJobResult<Option<Self>> {
+    let conn = &mut get_conn(pool).await?;
+    let mut q = person::table
+      .into_boxed()
+      .filter(lower(person::name).eq(from_name.to_lowercase()));
+    if !include_deleted {
+      q = q.filter(person::deleted.eq(false))
+    }
+    q.first(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  pub fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
+    let domain = settings.get_protocol_and_hostname();
+    Ok(Url::parse(&format!("{domain}/u/{}", self.name))?)
   }
 
   pub async fn read_by_name(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<Self> {
@@ -239,67 +259,6 @@ impl PersonInsertForm {
     let mut form = Self::new(name.to_owned(), Some("pubkey".to_string()), instance_id);
     form.wallet_id = Some(wallet.id);
     Ok((form, wallet))
-  }
-}
-
-impl ApubActor for Person {
-  async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    person::table
-      .filter(person::deleted.eq(false))
-      .filter(person::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-  async fn read_from_name(
-    pool: &mut DbPool<'_>,
-    from_name: &str,
-    include_deleted: bool,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let mut q = person::table
-      .into_boxed()
-      .filter(person::local.eq(true))
-      .filter(lower(person::name).eq(from_name.to_lowercase()));
-    if !include_deleted {
-      q = q.filter(person::deleted.eq(false))
-    }
-    q.first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  async fn read_from_name_and_domain(
-    pool: &mut DbPool<'_>,
-    person_name: &str,
-    for_domain: &str,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-
-    person::table
-      .inner_join(instance::table)
-      .filter(lower(person::name).eq(person_name.to_lowercase()))
-      .filter(lower(instance::domain).eq(for_domain.to_lowercase()))
-      .select(person::all_columns)
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
-    let domain = settings.get_protocol_and_hostname();
-    Ok(Url::parse(&format!("{domain}/u/{name}"))?.into())
-  }
-
-  fn actor_url(&self, _settings: &Settings) -> FastJobResult<Url> {
-    todo!()
   }
 }
 
@@ -408,22 +367,6 @@ impl Blockable for PersonActions {
 }
 
 impl PersonActions {
-  pub async fn follower_inboxes(
-    pool: &mut DbPool<'_>,
-    for_person_id: PersonId,
-  ) -> FastJobResult<Vec<DbUrl>> {
-    let conn = &mut get_conn(pool).await?;
-    person_actions::table
-      .filter(person_actions::followed_at.is_not_null())
-      .inner_join(person::table.on(person_actions::person_id.eq(person::id)))
-      .filter(person_actions::target_id.eq(for_person_id))
-      .select(person::inbox_url)
-      .distinct()
-      .load(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   pub async fn note(pool: &mut DbPool<'_>, form: &PersonNoteForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
     insert_into(person_actions::table)
@@ -563,9 +506,6 @@ mod tests {
     assert_eq!(person_1.id, person_follower.target_id);
     assert_eq!(person_2.id, person_follower.person_id);
     assert!(person_follower.follow_pending.is_some_and(|x| !x));
-
-    let followers = PersonActions::follower_inboxes(pool, person_1.id).await?;
-    assert_eq!(vec![person_2.inbox_url], followers);
 
     let unfollow =
       PersonActions::unfollow(pool, follow_form.person_id, follow_form.target_id).await?;

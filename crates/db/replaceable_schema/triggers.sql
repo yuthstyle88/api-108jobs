@@ -176,7 +176,7 @@ FROM (
         select_old_and_new_rows AS old_and_new_rows
     WHERE
         r.is_counted (comment)
-        AND (comment).local) AS diff
+        ) AS diff
 WHERE
     diff.comments != 0;
 RETURN NULL;
@@ -230,7 +230,7 @@ FROM (
         select_old_and_new_rows AS old_and_new_rows
     WHERE
         r.is_counted (post)
-        AND (post).local) AS diff
+        ) AS diff
 WHERE
     diff.posts != 0;
 RETURN NULL;
@@ -248,7 +248,7 @@ BEGIN
         FROM select_old_and_new_rows AS old_and_new_rows
         WHERE
             r.is_counted (category)
-            AND (category).local) AS diff
+            ) AS diff
 WHERE
     diff.communities != 0;
 RETURN NULL;
@@ -265,10 +265,8 @@ BEGIN
         subscribers = a.subscribers + diff.subscribers, subscribers_local = a.subscribers_local + diff.subscribers_local
     FROM (
         SELECT
-            (category_actions).category_id, coalesce(sum(count_diff) FILTER (WHERE category.local), 0) AS subscribers, coalesce(sum(count_diff) FILTER (WHERE person.local), 0) AS subscribers_local
+            (category_actions).category_id, coalesce(sum(count_diff), 0) AS subscribers, coalesce(sum(count_diff), 0) AS subscribers_local
         FROM select_old_and_new_rows AS old_and_new_rows
-    LEFT JOIN category ON category.id = (category_actions).category_id
-    LEFT JOIN person ON person.id = (category_actions).person_id
     WHERE (category_actions).followed_at IS NOT NULL GROUP BY (category_actions).category_id) AS diff
 WHERE
     a.id = diff.category_id

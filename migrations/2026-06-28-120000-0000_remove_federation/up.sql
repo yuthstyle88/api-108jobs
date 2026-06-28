@@ -31,3 +31,6 @@ ALTER TABLE site DROP COLUMN IF EXISTS public_key;
 
 -- Drop federation-only enum type (was used only by sent_activity, now dropped)
 DROP TYPE IF EXISTS actor_type_enum;
+
+-- Add unique constraint on person name (replaces federation ap_id uniqueness)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_person_lower_name_unique ON person (lower(name));

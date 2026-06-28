@@ -125,8 +125,6 @@ impl TestData {
       banner: None,
       description: None,
       last_refreshed_at: None,
-      private_key: None,
-      public_key: None,
       content_warning: None,
     };
     let site = Site::create(pool, &form).await?;

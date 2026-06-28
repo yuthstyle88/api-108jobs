@@ -57,16 +57,6 @@ impl Site {
       .await
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
-  pub async fn read_remote_sites(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    site::table
-      .order_by(site::id)
-      .offset(1)
-      .get_results::<Self>(conn)
-      .await
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
   pub async fn read_local(pool: &mut DbPool<'_>) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 

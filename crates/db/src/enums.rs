@@ -146,10 +146,6 @@ pub enum CategoryVisibility {
 }
 
 impl CategoryVisibility {
-  pub fn can_federate(&self) -> bool {
-    use CategoryVisibility::*;
-    self != &LocalOnlyPublic && self != &LocalOnlyPrivate
-  }
   pub fn can_view_without_login(&self) -> bool {
     use CategoryVisibility::*;
     self == &Public || self == &LocalOnlyPublic

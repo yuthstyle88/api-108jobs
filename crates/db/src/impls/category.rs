@@ -2,7 +2,7 @@ use crate::{
   diesel::{JoinOnDsl, OptionalExtension},
   enums::{CategoryVisibility, ListingType},
   newtypes::{CategoryId, PersonId},
-  schema::{category, category_actions, comment, post},
+  schema::{category, category_actions, post},
   source::{
     actor_language::CategoryLanguage,
     category::{
@@ -27,9 +27,8 @@ use app_108jobs_core::{
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_CATEGORY,
 };
-use chrono::Utc;
 use diesel::{
-  dsl::{exists, insert_into, not},
+  dsl::{insert_into, not},
   expression::SelectableHelper,
   select,
   update,
@@ -304,31 +303,6 @@ impl CategoryActions {
     } else {
       Err(FastJobErrorType::NotHigherMod)?
     }
-  }
-
-  /// Check if we should accept activity in remote category. This requires either:
-  /// - Local follower of the category
-  /// - Local post or comment in the category
-  ///
-  /// Dont use this check for local communities.
-  pub async fn check_accept_activity_in_category(
-    pool: &mut DbPool<'_>,
-    remote_category_id: CategoryId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    let follow_action = category_actions::table
-      .filter(category_actions::followed_at.is_not_null())
-      .filter(category_actions::category_id.eq(remote_category_id));
-    // Federation removed: all posts and comments are local; no need to filter by ::local
-    let local_post = post::table.filter(post::category_id.eq(remote_category_id));
-    let local_comment = comment::table
-      .inner_join(post::table)
-      .filter(post::category_id.eq(remote_category_id));
-    select(exists(follow_action).or(exists(local_post).or(exists(local_comment))))
-      .get_result::<bool>(conn)
-      .await?
-      .then_some(())
-      .ok_or(FastJobErrorType::CategoryHasNoFollowers.into())
   }
 
   pub async fn fetch_largest_subscribed_category(

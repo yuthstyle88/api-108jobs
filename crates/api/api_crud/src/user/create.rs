@@ -686,7 +686,6 @@ async fn create_person(
 
   // Register the new person
   let person_form = PersonInsertForm {
-    private_key: Some("private_key".to_string()),
     wallet_id,
     ..PersonInsertForm::new(username.clone(), public_key, site_view.site.instance_id)
   };

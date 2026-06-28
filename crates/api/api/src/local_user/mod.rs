@@ -37,3 +37,4 @@ pub mod verify_email;
 pub mod wallet;
 pub mod withdraw;
 pub mod workflow;
+pub mod workflow_authz;

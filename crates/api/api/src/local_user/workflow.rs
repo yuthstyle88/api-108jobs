@@ -1,10 +1,13 @@
+use super::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_db_schema::{
   newtypes::ChatRoomId,
   source::{
     billing::{Billing, WorkStep},
+    chat_participant::ChatParticipant,
     job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm},
+    post::Post,
     workflow::{Workflow, WorkflowUpdateForm},
   },
   traits::Crud,
@@ -38,6 +41,29 @@ use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_workflow::{WorkFlowOperationResponse, WorkflowService};
 use chrono::Utc;
 use serde_json::json;
+
+/// Load the `Billing` row backing a workflow, or `NotFound` if none exists yet.
+async fn billing_for_workflow(
+  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
+  workflow_id: app_108jobs_db_schema::newtypes::WorkflowId,
+) -> FastJobResult<Billing> {
+  let wf = Workflow::read(pool, workflow_id).await?;
+  let billing_id = match wf.billing_id {
+    Some(id) => id,
+    None => return Err(FastJobErrorType::NotFound.into()),
+  };
+  Billing::read(pool, billing_id).await
+}
+
+/// True if `caller` is a participant of `room_id`.
+async fn is_room_participant(
+  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
+  room_id: ChatRoomId,
+  caller: app_108jobs_db_schema::newtypes::LocalUserId,
+) -> FastJobResult<bool> {
+  let parts = ChatParticipant::list_participants_for_rooms(pool, &[room_id]).await?;
+  Ok(parts.iter().any(|p| p.member_id == caller))
+}
 
 // Helper: update JobBudgetPlan.installments' status for a given workflow and seq
 async fn _update_job_plan_step_status(
@@ -96,6 +122,20 @@ pub async fn create_quotation(
   // Validate via TryFrom into a validated wrapper
   let validated: ValidCreateInvoiceRequest = data.into_inner().try_into()?;
   let workflow_id = validated.0.workflow_id;
+  // Authz: caller must be the freelancer — a participant of the workflow's chat
+  // room who is not the employer (post creator).
+  let wf = Workflow::read(&mut context.pool(), workflow_id).await?;
+  let post = Post::read(&mut context.pool(), wf.post_id).await?;
+  if local_user_view.person.id == post.creator_id
+    || !is_room_participant(
+      &mut context.pool(),
+      wf.room_id,
+      local_user_view.local_user.id,
+    )
+    .await?
+  {
+    return Err(FastJobErrorType::NotFound.into());
+  }
   // Create the invoice/billing record with detailed quotation fields
   let billing = WorkflowService::create_quotation(
     &mut context.pool(),
@@ -127,6 +167,14 @@ pub async fn approve_quotation(
   let validated: ValidApproveQuotationRequest = data.into_inner().try_into()?;
 
   let form = validated.0;
+  // Authz: caller must be the employer named on this billing.
+  let billing = Billing::read(&mut context.pool(), form.billing_id).await?;
+  require_role(
+    WorkflowRole::Employer,
+    employer_id,
+    billing.employer_id,
+    billing.freelancer_id,
+  )?;
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
     .approve_on(
@@ -148,10 +196,20 @@ pub async fn approve_quotation(
 pub async fn submit_start_work(
   data: Json<SubmitStartWorkRequest>,
   context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidSubmitStartWorkRequest = data.into_inner().try_into()?;
   let form = validated.0;
+
+  // Authz: only the freelancer may start work.
+  let billing = billing_for_workflow(&mut context.pool(), form.workflow_id).await?;
+  require_role(
+    WorkflowRole::Freelancer,
+    local_user_view.local_user.id,
+    billing.employer_id,
+    billing.freelancer_id,
+  )?;
 
   // Apply transition: OrderApproved -> InProgress
   let wf = WorkflowService::load_order_approve(&mut context.pool(), form.workflow_id)
@@ -169,10 +227,20 @@ pub async fn submit_start_work(
 pub async fn submit_work(
   data: Json<SubmitStartWorkRequest>,
   context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidSubmitStartWorkRequest = data.into_inner().try_into()?;
   let form = validated.0;
+
+  // Authz: only the freelancer may submit work.
+  let billing = billing_for_workflow(&mut context.pool(), form.workflow_id).await?;
+  require_role(
+    WorkflowRole::Freelancer,
+    local_user_view.local_user.id,
+    billing.employer_id,
+    billing.freelancer_id,
+  )?;
 
   // Apply transition: InProgress -> PendingEmployerReview
   let wf = WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
@@ -204,6 +272,7 @@ pub async fn submit_work(
 pub async fn approve_work(
   data: Json<ApproveWorkRequest>,
   context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidApproveWorkRequest = data.into_inner().try_into()?;
@@ -211,6 +280,14 @@ pub async fn approve_work(
   let workflow_id = form.workflow_id;
   ChatRoomId::try_from(form.room_id).map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let billing_id = form.billing_id;
+  // Authz: only the employer may approve work (this releases escrow to the freelancer).
+  let billing = Billing::read(&mut context.pool(), billing_id).await?;
+  require_role(
+    WorkflowRole::Employer,
+    local_user_view.local_user.id,
+    billing.employer_id,
+    billing.freelancer_id,
+  )?;
   let coin_id = context.get_coin_id().await?;
   let platform_wallet_id = context.get_platform_wallet_id().await?;
 
@@ -229,11 +306,21 @@ pub async fn approve_work(
 pub async fn request_revision(
   data: Json<RequestRevisionRequest>,
   context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidRequestRevisionRequest = data.into_inner().try_into()?;
   let form = validated.0;
   let workflow_id = form.workflow_id;
+
+  // Authz: only the employer may request a revision.
+  let billing = billing_for_workflow(&mut context.pool(), workflow_id).await?;
+  require_role(
+    WorkflowRole::Employer,
+    local_user_view.local_user.id,
+    billing.employer_id,
+    billing.freelancer_id,
+  )?;
 
   let wf = WorkflowService::load_work_submit(&mut context.pool(), workflow_id)
     .await?
@@ -252,9 +339,12 @@ pub async fn request_revision(
 pub async fn update_budget_plan_status(
   data: Json<UpdateBudgetPlanInstallmentsRequest>,
   context: Data<FastJobContext>,
-  _local_user_view: LocalUserView,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<UpdateBudgetPlanInstallmentsResponse>> {
   let post_id = data.post_id;
+  // Authz: only the employer (post creator) may edit the budget plan.
+  let post = Post::read(&mut context.pool(), post_id).await?;
+  require_post_creator(local_user_view.person.id, post.creator_id)?;
 
   // Validate via TryFrom into a validated wrapper
   let validated: ValidUpdateBudgetPlanInstallmentsRequest = data.into_inner().try_into()?;
@@ -289,11 +379,14 @@ pub async fn update_budget_plan_status(
 pub async fn start_workflow(
   data: Json<StartWorkflowRequest>,
   context: Data<FastJobContext>,
-  _local_user_view: LocalUserView,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidStartWorkflowRequest = data.into_inner().try_into()?;
   let form = validated.0;
+  // Authz: only the employer (post creator) may start a workflow.
+  let post = Post::read(&mut context.pool(), form.post_id).await?;
+  require_post_creator(local_user_view.person.id, post.creator_id)?;
   let room_id =
     ChatRoomId::try_from(form.room_id).map_err(|_| FastJobErrorType::InvalidRoomIdFormat)?;
   let wf =
@@ -310,10 +403,38 @@ pub async fn start_workflow(
 pub async fn cancel_job(
   data: Json<CancelJobRequest>,
   context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
 ) -> FastJobResult<Json<WorkFlowOperationResponse>> {
   // Validate input
   let validated: ValidCancelJobRequest = data.into_inner().try_into()?;
   let form = validated.0;
+
+  // Authz: either party (employer or freelancer) may cancel.
+  let wf = Workflow::read(&mut context.pool(), form.workflow_id).await?;
+  match wf.billing_id {
+    Some(billing_id) => {
+      let billing = Billing::read(&mut context.pool(), billing_id).await?;
+      require_any_party(
+        local_user_view.local_user.id,
+        billing.employer_id,
+        billing.freelancer_id,
+      )?;
+    }
+    None => {
+      // Pre-billing: employer is the post creator; freelancer is a room member.
+      let post = Post::read(&mut context.pool(), wf.post_id).await?;
+      let is_employer = local_user_view.person.id == post.creator_id;
+      let is_member = is_room_participant(
+        &mut context.pool(),
+        wf.room_id,
+        local_user_view.local_user.id,
+      )
+      .await?;
+      if !is_employer && !is_member {
+        return Err(FastJobErrorType::NotFound.into());
+      }
+    }
+  }
 
   // Perform cancellation (allowed for any non-finalized status)
   let _ =

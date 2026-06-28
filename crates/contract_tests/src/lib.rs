@@ -486,3 +486,250 @@ mod category {
     );
   }
 }
+
+#[cfg(test)]
+mod local_user {
+  use super::person_fixture;
+  use app_108jobs_db_views_local_user::LocalUserView;
+
+  fn local_user_fixture() -> serde_json::Value {
+    // LocalUser has #[serde(default)] on the struct, so ALL fields use their Rust Default
+    // when absent from JSON. An empty object {} is valid and yields a zero/false/default
+    // LocalUser, which is sufficient to test that LocalUserView serialises the right keys.
+    serde_json::json!({})
+  }
+
+  #[test]
+  fn local_user_my_user_info_keys() {
+    // Flutter LocalUserApi.getMyUserInfo reads: response["localUserView"]["person"],
+    // response["localUserView"]["localUser"], response["localUserView"]["banned"]
+    // MyUserInfo has rename_all = "camelCase"; field local_user_view → "localUserView"
+    // LocalUserView has rename_all = "camelCase"; fields local_user → "localUser", person stays
+    // "person"
+    let lv: LocalUserView = serde_json::from_value(serde_json::json!({
+      "localUser": local_user_fixture(),
+      "person": person_fixture(),
+      "banned": false
+    }))
+    .expect("LocalUserView fixture parse failed");
+
+    let j = serde_json::to_value(&lv).expect("serialise LocalUserView");
+    assert!(
+      j.get("localUser").is_some(),
+      "localUser key missing — Flutter LocalUserApi breaks"
+    );
+    assert!(j.get("person").is_some(), "person key missing");
+    assert!(j.get("banned").is_some(), "banned key missing");
+
+    // localUser fields that Flutter reads
+    let lu = &j["localUser"];
+    assert!(lu.get("id").is_some(), "localUser.id missing");
+    assert!(lu.get("personId").is_some(), "localUser.personId missing");
+    assert!(lu.get("admin").is_some(), "localUser.admin missing");
+  }
+}
+
+#[cfg(test)]
+mod bank_account {
+  use app_108jobs_db_views_bank_account::{
+    api::{BankAccountOperationResponse, ListBankAccountsResponse},
+    BankAccountView,
+  };
+
+  fn bank_fixture() -> serde_json::Value {
+    // Bank has rename_all = "camelCase". Required fields: id, name, countryId, createdAt.
+    serde_json::json!({
+      "id": 1,
+      "name": "Bangkok Bank",
+      "countryId": "TH",
+      "createdAt": "2026-01-01T00:00:00Z"
+    })
+  }
+
+  fn user_bank_account_fixture() -> serde_json::Value {
+    // BankAccount has rename_all = "camelCase".
+    // Required fields: id, localUserId, bankId, accountNumber, accountName, isDefault,
+    // isVerified, createdAt.
+    serde_json::json!({
+      "id": 1,
+      "localUserId": 1,
+      "bankId": 1,
+      "accountNumber": "1234567890",
+      "accountName": "Test User",
+      "isDefault": false,
+      "isVerified": false,
+      "createdAt": "2026-01-01T00:00:00Z"
+    })
+  }
+
+  fn bank_account_view_fixture() -> serde_json::Value {
+    // BankAccountView has rename_all = "camelCase".
+    // Fields: userBankAccount (from user_bank_account), bank.
+    serde_json::json!({
+      "userBankAccount": user_bank_account_fixture(),
+      "bank": bank_fixture()
+    })
+  }
+
+  #[test]
+  fn bank_account_operation_response_fields() {
+    // Flutter BankAccountApi.create/update reads: response["bankAccount"]
+    // BankAccountOperationResponse has rename_all = "camelCase";
+    // field bank_account → "bankAccount"
+    let bav: BankAccountView = serde_json::from_value(bank_account_view_fixture())
+      .expect("BankAccountView fixture parse failed");
+    let resp = BankAccountOperationResponse {
+      bank_account: bav,
+      success: true,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("bankAccount").is_some(),
+      "bankAccount key missing — Flutter BankAccountApi.create breaks"
+    );
+    assert!(j.get("success").is_some(), "success key missing");
+    assert!(j.get("bank_account").is_none(), "snake_case key leaked");
+  }
+
+  #[test]
+  fn bank_list_bank_accounts_response_fields() {
+    // Flutter BankAccountApi.listUserBankAccounts reads: response["bankAccounts"]
+    // ListBankAccountsResponse has rename_all = "camelCase";
+    // field bank_accounts → "bankAccounts"
+    let bav: BankAccountView = serde_json::from_value(bank_account_view_fixture())
+      .expect("BankAccountView fixture parse failed");
+    let resp = ListBankAccountsResponse {
+      bank_accounts: vec![bav],
+      next_page: None,
+      prev_page: None,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("bankAccounts").is_some(),
+      "bankAccounts key missing — Flutter BankAccountApi.list breaks"
+    );
+    let arr = j["bankAccounts"]
+      .as_array()
+      .expect("bankAccounts must be array");
+    assert!(!arr.is_empty());
+  }
+}
+
+#[cfg(test)]
+mod rider {
+  use super::person_fixture;
+  use app_108jobs_db_views_rider::{api::GetRiderResponse, RiderView};
+
+  fn rider_fixture() -> serde_json::Value {
+    // Rider has rename_all = "camelCase" (check crates/db_schema/src/source/rider.rs).
+    // Required non-Option non-serde(skip) fields vary; provide a representative set.
+    serde_json::json!({
+      "id": 1,
+      "userId": 1,
+      "personId": 1,
+      "vehicleType": "Motorcycle",
+      "isVerified": false,
+      "isActive": true,
+      "verificationStatus": "Pending",
+      "rating": 0,
+      "completedJobs": 0,
+      "totalJobs": 0,
+      "totalEarnings": 0,
+      "pendingEarnings": 0,
+      "isOnline": false,
+      "acceptingJobs": false,
+      "createdAt": "2026-01-01T00:00:00Z"
+    })
+  }
+
+  #[test]
+  fn rider_get_rider_response_wraps_rider_view() {
+    // Flutter RiderApi.getCurrentRider reads: response["riderView"] (camelCase)
+    // OR response["rider_view"] (snake_case) — Flutter tries both.
+    // GetRiderResponse does NOT have rename_all; field rider_view serialises as "rider_view".
+    // RiderView itself has rename_all = "camelCase"; its fields rider/person are camelCase keys.
+    let rv: RiderView = serde_json::from_value(serde_json::json!({
+      "rider": rider_fixture(),
+      "person": person_fixture()
+    }))
+    .expect("RiderView fixture parse failed");
+
+    let resp = GetRiderResponse { rider_view: rv };
+    let j = serde_json::to_value(&resp).expect("serialise");
+
+    // GetRiderResponse has NO rename_all, so rider_view stays snake_case.
+    // Flutter accepts both "rider_view" and "riderView" — current output is "rider_view".
+    assert!(
+      j.get("rider_view").is_some(),
+      "rider_view key missing — Flutter RiderApi.getCurrentRider breaks (snake_case path)"
+    );
+
+    let rv_j = &j["rider_view"];
+    assert!(rv_j.get("rider").is_some(), "rider nested object missing");
+    assert!(rv_j.get("person").is_some(), "person nested object missing");
+  }
+}
+
+#[cfg(test)]
+mod chat {
+  use app_108jobs_db_views_chat::{
+    api::{GetChatRoomResponse, ListUserChatRoomsResponse},
+    ChatRoomView,
+  };
+
+  fn chat_room_fixture() -> serde_json::Value {
+    // ChatRoom has rename_all = "camelCase".
+    // Required non-Option fields: id, serialId, roomName, createdAt.
+    // ChatRoomId wraps a String and must be a 16-char hex string or UUID.
+    serde_json::json!({
+      "id": "0123456789abcdef",
+      "serialId": 1,
+      "roomName": "Job #1",
+      "createdAt": "2026-01-01T00:00:00Z"
+    })
+  }
+
+  fn chat_room_view_fixture() -> serde_json::Value {
+    // ChatRoomView has rename_all = "camelCase".
+    // Required non-Option fields: room (ChatRoom), participants (Vec<ChatParticipantView>).
+    // post/last_message/workflow are Option — omitted.
+    serde_json::json!({
+      "room": chat_room_fixture(),
+      "participants": []
+    })
+  }
+
+  #[test]
+  fn chat_list_rooms_response_has_rooms() {
+    // Flutter ChatRoomsApi.getRooms reads: response["rooms"]
+    // ListUserChatRoomsResponse field rooms → "rooms"
+    let crv: ChatRoomView =
+      serde_json::from_value(chat_room_view_fixture()).expect("ChatRoomView fixture parse failed");
+    let resp = ListUserChatRoomsResponse {
+      rooms: vec![crv],
+      next_page: None,
+      prev_page: None,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("rooms").is_some(),
+      "rooms key missing — Flutter ChatRoomsApi.getRooms breaks"
+    );
+    let arr = j["rooms"].as_array().expect("rooms must be array");
+    assert!(!arr.is_empty());
+  }
+
+  #[test]
+  fn chat_get_room_response_has_room() {
+    // Flutter ChatRoomsApi.getRoomById reads: response["room"]
+    // GetChatRoomResponse / ChatRoomResponse field room → "room"
+    let crv: ChatRoomView =
+      serde_json::from_value(chat_room_view_fixture()).expect("ChatRoomView fixture parse failed");
+    let resp = GetChatRoomResponse { room: crv };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("room").is_some(),
+      "room key missing — Flutter ChatRoomsApi.getRoomById breaks"
+    );
+  }
+}

@@ -168,7 +168,7 @@ BEGIN
             c.creator_id,
             p.category_id
         FROM
-            comment c
+            proposal c
             INNER JOIN post p ON c.post_id = p.id
             INNER JOIN person pe ON c.creator_id = pe.id
         WHERE
@@ -200,8 +200,8 @@ BEGIN
             ca.person_id,
             p.category_id
         FROM
-            comment_actions ca
-            INNER JOIN comment c ON ca.comment_id = c.id
+            proposal_actions ca
+            INNER JOIN proposal c ON ca.comment_id = c.id
             INNER JOIN post p ON c.post_id = p.id
             INNER JOIN person pe ON ca.person_id = pe.id
         WHERE
@@ -222,7 +222,7 @@ CREATE OR REPLACE FUNCTION r.category_aggregates_interactions (i text)
 BEGIN
     RETURN query
     SELECT
-        COALESCE(sum(comments + upvotes + downvotes)::bigint, 0) AS count_,
+        COALESCE(sum(proposals + upvotes + downvotes)::bigint, 0) AS count_,
         category_id AS category_id_
     FROM
         post
@@ -247,7 +247,7 @@ BEGIN
         SELECT
             c.creator_id
         FROM
-            comment c
+            proposal c
             INNER JOIN person pe ON c.creator_id = pe.id
         WHERE
             c.published_at > ('now'::timestamp - i::interval)
@@ -274,7 +274,7 @@ BEGIN
         SELECT
             ca.person_id
         FROM
-            comment_actions ca
+            proposal_actions ca
             INNER JOIN person pe ON ca.person_id = pe.id
         WHERE
             ca.liked_at > ('now'::timestamp - i::interval)

@@ -35,13 +35,13 @@ pub enum PostSortType {
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(
   feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::CommentSortTypeEnum"
+  ExistingTypePath = "crate::schema::sql_types::ProposalSortTypeEnum"
 )]
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// The comment sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
-pub enum CommentSortType {
+/// The proposal sort types. See here for descriptions: https://join-app_108jobs.org/docs/en/users/03-votes-and-ranking.html
+pub enum ProposalSortType {
   #[default]
   Hot,
   Top,

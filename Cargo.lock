@@ -679,6 +679,7 @@ dependencies = [
  "app_108jobs_core",
  "app_108jobs_db",
  "app_108jobs_identity",
+ "app_108jobs_payments",
  "app_108jobs_routes",
  "app_108jobs_ws",
  "clap",

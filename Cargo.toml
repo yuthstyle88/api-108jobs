@@ -179,6 +179,8 @@ app_108jobs_db_views_chat_pending_ack = { version = "=1.0.0-alpha.5", path = "./
 app_108jobs_db_views_rider = { version = "=1.0.0-alpha.5", path = "./crates/db_views/rider" }
 app_108jobs_db_views_currency = { version = "=1.0.0-alpha.5", path = "./crates/db_views/currency" }
 app_108jobs_identity = { version = "=1.0.0-alpha.5", path = "./crates/identity" }
+hound = "3.5.1"
+totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel = { version = "2.2.10", features = [
     "chrono",
     "postgres",
@@ -276,6 +278,7 @@ async-trait = "0.1.88"
 
 [dependencies]
 app_108jobs_api = { workspace = true }
+app_108jobs_identity = { workspace = true }
 app_108jobs_api_crud = { workspace = true }
 app_108jobs_core = { workspace = true }
 app_108jobs_db = { workspace = true }

@@ -22,7 +22,7 @@ base64 = { workspace = true }
 bcrypt = { workspace = true }
 captcha = { workspace = true }
 chrono = { workspace = true }
-hound = "3.5.1"
+hound = { workspace = true }
 serde = { workspace = true }
-totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
+totp-rs = { workspace = true }
 tracing = { workspace = true }

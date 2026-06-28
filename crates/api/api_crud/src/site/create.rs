@@ -4,7 +4,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
-    generate_inbox_url,
     get_url_blocklist,
     is_admin,
     local_site_rate_limit_to_rate_limit_config,
@@ -25,7 +24,6 @@ use app_108jobs_core::{
   },
 };
 use app_108jobs_db::{
-  newtypes::DbUrl,
   source::{
     local_site::{LocalSite, LocalSiteUpdateForm},
     local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitUpdateForm},
@@ -40,7 +38,6 @@ use app_108jobs_db_views_site::{
   SiteView,
 };
 use chrono::Utc;
-use url::Url;
 
 pub async fn create_site(
   data: Json<CreateSiteRequest>,
@@ -54,9 +51,6 @@ pub async fn create_site(
 
   validate_create_payload(&local_site, &data)?;
 
-  let ap_id: DbUrl = Url::parse(&context.settings().get_protocol_and_hostname())?.into();
-  let inbox_url = Some(generate_inbox_url()?);
-
   let slur_regex = slur_regex(&context).await?;
   let url_blocklist = get_url_blocklist(&context).await?;
   let sidebar = process_markdown_opt(&data.sidebar, &slur_regex, &url_blocklist, &context).await?;
@@ -65,11 +59,7 @@ pub async fn create_site(
     name: Some(data.name.clone()),
     sidebar: diesel_string_update(sidebar.as_deref()),
     description: diesel_string_update(data.description.as_deref()),
-    ap_id: Some(ap_id),
     last_refreshed_at: Some(Utc::now()),
-    inbox_url,
-    private_key: Some(Some("private_key_hex".to_string())),
-    public_key: Some("public_key_hex".to_string()),
     content_warning: diesel_string_update(data.content_warning.as_deref()),
     ..Default::default()
   };

@@ -23,8 +23,6 @@ use diesel::{
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;
 use std::{fmt::Display, num::NonZeroU32, str::FromStr};
-use url::Url;
-
 #[derive(Debug)]
 struct CmdArgs {
   communities: NonZeroU32,
@@ -187,11 +185,7 @@ fn site() -> FastJobResult<Site> {
     icon: None,
     banner: None,
     description: None,
-    ap_id: Url::parse("http://example1.com")?.into(),
     last_refreshed_at: Default::default(),
-    inbox_url: Url::parse("http://example.com")?.into(),
-    private_key: None,
-    public_key: String::new(),
     instance_id: Default::default(),
     content_warning: None,
   })

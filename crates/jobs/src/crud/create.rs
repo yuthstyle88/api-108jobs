@@ -118,7 +118,6 @@ pub async fn create_post(
     language_id: Some(language_id),
     scheduled_publish_time_at,
     budget: data.budget,
-    ap_id: data.ap_id,
     job_type: data.job_type,
     intended_use: data.intended_use,
     deadline: data.deadline,

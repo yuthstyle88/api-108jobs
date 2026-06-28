@@ -2,10 +2,6 @@
 
 pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "actor_type_enum"))]
-  pub struct ActorTypeEnum;
-
-  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "comment_sort_type_enum"))]
   pub struct CommentSortTypeEnum;
 
@@ -212,9 +208,6 @@ diesel::table! {
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
-        local -> Bool,
         path -> Ltree,
         distinguished -> Bool,
         language_id -> Int4,
@@ -348,22 +341,11 @@ diesel::table! {
         updated_at -> Nullable<Timestamptz>,
         deleted -> Bool,
         self_promotion -> Bool,
-        #[max_length = 255]
-        ap_id -> Varchar,
-        local -> Bool,
         last_refreshed_at -> Timestamptz,
         icon -> Nullable<Text>,
         banner -> Nullable<Text>,
-        #[max_length = 255]
-        followers_url -> Nullable<Varchar>,
-        #[max_length = 255]
-        inbox_url -> Varchar,
         posting_restricted_to_mods -> Bool,
         instance_id -> Int4,
-        #[max_length = 255]
-        moderators_url -> Nullable<Varchar>,
-        #[max_length = 255]
-        featured_url -> Nullable<Varchar>,
         visibility -> CategoryVisibility,
         #[max_length = 150]
         description -> Nullable<Varchar>,
@@ -878,17 +860,12 @@ diesel::table! {
         avatar -> Nullable<Text>,
         published_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         bio -> Nullable<Text>,
-        local -> Bool,
         private_key -> Nullable<Text>,
         shared_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,
         banner -> Nullable<Text>,
         deleted -> Bool,
-        #[max_length = 255]
-        inbox_url -> Varchar,
         matrix_user_id -> Nullable<Text>,
         bot_account -> Bool,
         instance_id -> Int4,
@@ -995,9 +972,6 @@ diesel::table! {
         embed_title -> Nullable<Text>,
         embed_description -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
-        #[max_length = 255]
-        ap_id -> Varchar,
-        local -> Bool,
         embed_video_url -> Nullable<Text>,
         language_id -> Int4,
         featured_category -> Bool,
@@ -1162,13 +1136,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    received_activity (ap_id) {
-        ap_id -> Text,
-        published_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
     registration_application (id) {
         id -> Int4,
         local_user_id -> Int4,
@@ -1216,24 +1183,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::ActorTypeEnum;
-
-    sent_activity (id) {
-        id -> Int8,
-        ap_id -> Text,
-        data -> Json,
-        sensitive -> Bool,
-        published_at -> Timestamptz,
-        send_inboxes -> Array<Nullable<Text>>,
-        send_category_followers_of -> Nullable<Int4>,
-        send_all_instances -> Bool,
-        actor_type -> ActorTypeEnum,
-        actor_apub_id -> Nullable<Text>,
-    }
-}
-
-diesel::table! {
     site (id) {
         id -> Int4,
         #[max_length = 20]
@@ -1245,13 +1194,7 @@ diesel::table! {
         banner -> Nullable<Text>,
         #[max_length = 150]
         description -> Nullable<Varchar>,
-        #[max_length = 255]
-        ap_id -> Varchar,
         last_refreshed_at -> Timestamptz,
-        #[max_length = 255]
-        inbox_url -> Varchar,
-        private_key -> Nullable<Text>,
-        public_key -> Text,
         instance_id -> Int4,
         content_warning -> Nullable<Text>,
     }
@@ -1788,7 +1731,6 @@ diesel::allow_tables_to_appear_in_same_query!(
   report_combined,
   search_combined,
   secret,
-  sent_activity,
   site,
   site_language,
   tag,

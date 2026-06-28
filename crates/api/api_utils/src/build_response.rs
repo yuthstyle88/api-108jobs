@@ -27,7 +27,6 @@ use app_108jobs_db_views_post::{
   PostView,
 };
 use std::collections::{HashMap, HashSet};
-use url::Url;
 
 pub async fn build_comment_response(
   context: &FastJobContext,
@@ -198,7 +197,7 @@ async fn insert_post_or_comment_mention(
   post: &Post,
   comment_opt: Option<&Comment>,
   context: &FastJobContext,
-) -> FastJobResult<(Url, String)> {
+) -> FastJobResult<()> {
   if let Some(comment) = &comment_opt {
     let person_comment_mention_form = PersonCommentMentionInsertForm {
       recipient_id: mention_user_view.person.id,
@@ -211,10 +210,6 @@ async fn insert_post_or_comment_mention(
     PersonCommentMention::create(&mut context.pool(), &person_comment_mention_form)
       .await
       .ok();
-    Ok((
-      comment.local_url(context.settings())?,
-      comment.content.clone(),
-    ))
   } else {
     let person_post_mention_form = PersonPostMentionInsertForm {
       recipient_id: mention_user_view.person.id,
@@ -226,9 +221,6 @@ async fn insert_post_or_comment_mention(
     PersonPostMention::create(&mut context.pool(), &person_post_mention_form)
       .await
       .ok();
-    Ok((
-      post.local_url(context.settings())?,
-      post.body.clone().unwrap_or_default(),
-    ))
   }
+  Ok(())
 }

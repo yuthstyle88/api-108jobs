@@ -1,8 +1,8 @@
 use crate::{
-  diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
+  diesel::{JoinOnDsl, OptionalExtension},
   enums::{CategoryVisibility, ListingType},
-  newtypes::{CategoryId, DbUrl, PersonId},
-  schema::{category, category_actions, comment, instance, post},
+  newtypes::{CategoryId, PersonId},
+  schema::{category, category_actions, post},
   source::{
     actor_language::CategoryLanguage,
     category::{
@@ -14,10 +14,9 @@ use crate::{
     },
     post::Post,
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
   utils::{
-    format_actor_url,
-    functions::{coalesce, coalesce_2_nullable, lower, random_smallint},
+    functions::{coalesce_2_nullable, lower, random_smallint},
     get_conn,
     uplete,
     DbPool,
@@ -28,9 +27,8 @@ use app_108jobs_core::{
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_CATEGORY,
 };
-use chrono::{DateTime, Utc};
 use diesel::{
-  dsl::{exists, insert_into, not},
+  dsl::{insert_into, not},
   expression::SelectableHelper,
   select,
   update,
@@ -41,7 +39,6 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 use moka::future::Cache;
-use regex::Regex;
 use std::sync::{Arc, LazyLock};
 use url::Url;
 
@@ -80,15 +77,9 @@ impl Crud for Category {
       updated_at: form.updated_at,
       deleted: form.deleted,
       self_promotion: form.self_promotion,
-      ap_id: form.ap_id.clone(),
-      local: form.local,
       last_refreshed_at: form.last_refreshed_at,
       icon: form.icon.clone(),
       banner: form.banner.clone(),
-      followers_url: form.followers_url.clone(),
-      inbox_url: form.inbox_url.clone(),
-      moderators_url: form.moderators_url.clone(),
-      featured_url: form.featured_url.clone(),
       posting_restricted_to_mods: form.posting_restricted_to_mods,
       visibility: form.visibility,
       description: form.description.clone(),
@@ -104,40 +95,28 @@ impl Crud for Category {
   }
 }
 
-#[derive(Debug)]
-pub enum CollectionType {
-  Moderators,
-  Featured,
-}
-
 impl Category {
-  pub async fn insert_apub(
+  pub async fn read_from_name(
     pool: &mut DbPool<'_>,
-    timestamp: DateTime<Utc>,
-    form: &CategoryInsertForm,
-  ) -> FastJobResult<Self> {
-    let is_new_category = match &form.ap_id {
-      Some(id) => Category::read_from_apub_id(pool, id).await?.is_none(),
-      None => true,
-    };
+    category_name: &str,
+    include_deleted: bool,
+  ) -> FastJobResult<Option<Self>> {
     let conn = &mut get_conn(pool).await?;
-
-    // Can't do separate insert/update commands because InsertForm/UpdateForm aren't convertible
-    let category_ = insert_into(category::table)
-      .values(form)
-      .on_conflict(category::ap_id)
-      .filter_target(coalesce(category::updated_at, category::published_at).lt(timestamp))
-      .do_update()
-      .set(form)
-      .get_result::<Self>(conn)
-      .await?;
-
-    // Initialize languages for new category
-    if is_new_category {
-      CategoryLanguage::update(pool, vec![], category_.id).await?;
+    let mut q = category::table
+      .into_boxed()
+      .filter(lower(category::name).eq(category_name.to_lowercase()));
+    if !include_deleted {
+      q = q.filter(Self::hide_removed_and_deleted())
     }
+    q.first(conn)
+      .await
+      .optional()
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
 
-    Ok(category_)
+  pub fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
+    let domain = settings.get_protocol_and_hostname();
+    Ok(Url::parse(&format!("{domain}/c/{}", self.name))?)
   }
 
   pub async fn list_all_communities(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Category>> {
@@ -149,33 +128,6 @@ impl Category {
       .await?;
 
     Ok(communities)
-  }
-
-  /// Get the category which has a given moderators or featured url, also return the collection
-  /// type
-  pub async fn get_by_collection_url(
-    pool: &mut DbPool<'_>,
-    url: &DbUrl,
-  ) -> FastJobResult<(Category, CollectionType)> {
-    let conn = &mut get_conn(pool).await?;
-    let res = category::table
-      .filter(category::moderators_url.eq(url))
-      .first(conn)
-      .await;
-
-    if let Ok(c) = res {
-      Ok((c, CollectionType::Moderators))
-    } else {
-      let res = category::table
-        .filter(category::featured_url.eq(url))
-        .first(conn)
-        .await;
-      if let Ok(c) = res {
-        Ok((c, CollectionType::Featured))
-      } else {
-        Err(FastJobErrorType::NotFound.into())
-      }
-    }
   }
 
   pub async fn set_featured_posts(
@@ -229,9 +181,8 @@ impl Category {
         .select(category::id)
         .into_boxed();
 
-      if let Some(ListingType::Local) = type_ {
-        query = query.filter(category::local);
-      }
+      // Federation removed: all categories are local, so ListingType::Local has no distinct effect.
+      let _ = type_;
 
       if !self_promotion.unwrap_or(false) {
         query = query.filter(not(category::self_promotion));
@@ -265,20 +216,6 @@ impl Category {
   #[diesel::dsl::auto_type(no_type_alias)]
   pub fn hide_removed_and_deleted() -> _ {
     category::removed.eq(false).and(category::deleted.eq(false))
-  }
-
-  pub fn build_tag_ap_id(&self, tag_name: &str) -> FastJobResult<DbUrl> {
-    #[allow(clippy::expect_used)]
-    // convert a readable name to an id slug that is appended to the category URL to get a unique
-    // tag url (ap_id).
-    static VALID_ID_SLUG: LazyLock<Regex> =
-      LazyLock::new(|| Regex::new(r"[^a-z0-9_-]+").expect("compile regex"));
-    let tag_name_lower = tag_name.to_lowercase();
-    let id_slug = VALID_ID_SLUG.replace_all(&tag_name_lower, "-");
-    if id_slug.is_empty() {
-      Err(FastJobErrorType::InvalidUrl)?
-    }
-    Ok(Url::parse(&format!("{}/tag/{}", self.ap_id, &id_slug))?.into())
   }
 }
 
@@ -368,33 +305,6 @@ impl CategoryActions {
     }
   }
 
-  /// Check if we should accept activity in remote category. This requires either:
-  /// - Local follower of the category
-  /// - Local post or comment in the category
-  ///
-  /// Dont use this check for local communities.
-  pub async fn check_accept_activity_in_category(
-    pool: &mut DbPool<'_>,
-    remote_category_id: CategoryId,
-  ) -> FastJobResult<()> {
-    let conn = &mut get_conn(pool).await?;
-    let follow_action = category_actions::table
-      .filter(category_actions::followed_at.is_not_null())
-      .filter(category_actions::category_id.eq(remote_category_id));
-    let local_post = post::table
-      .filter(post::category_id.eq(remote_category_id))
-      .filter(post::local);
-    let local_comment = comment::table
-      .inner_join(post::table)
-      .filter(post::category_id.eq(remote_category_id))
-      .filter(comment::local);
-    select(exists(follow_action).or(exists(local_post).or(exists(local_comment))))
-      .get_result::<bool>(conn)
-      .await?
-      .then_some(())
-      .ok_or(FastJobErrorType::CategoryHasNoFollowers.into())
-  }
-
   pub async fn fetch_largest_subscribed_category(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
@@ -421,71 +331,5 @@ impl CategoryActions {
       })
       .await
       .map_err(|_e: Arc<FastJobError>| FastJobErrorType::NotFound.into())
-  }
-}
-
-impl ApubActor for Category {
-  async fn read_from_apub_id(
-    pool: &mut DbPool<'_>,
-    object_id: &DbUrl,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    category::table
-      .filter(category::ap_id.eq(object_id))
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  async fn read_from_name(
-    pool: &mut DbPool<'_>,
-    category_name: &str,
-    include_deleted: bool,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    let mut q = category::table
-      .into_boxed()
-      .filter(category::local.eq(true))
-      .filter(lower(category::name).eq(category_name.to_lowercase()));
-    if !include_deleted {
-      q = q.filter(Self::hide_removed_and_deleted())
-    }
-    q.first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  async fn read_from_name_and_domain(
-    pool: &mut DbPool<'_>,
-    category_name: &str,
-    for_domain: &str,
-  ) -> FastJobResult<Option<Self>> {
-    let conn = &mut get_conn(pool).await?;
-    category::table
-      .inner_join(instance::table)
-      .filter(lower(category::name).eq(category_name.to_lowercase()))
-      .filter(lower(instance::domain).eq(for_domain.to_lowercase()))
-      .select(category::all_columns)
-      .first(conn)
-      .await
-      .optional()
-      .with_fastjob_type(FastJobErrorType::NotFound)
-  }
-
-  fn actor_url(&self, settings: &Settings) -> FastJobResult<Url> {
-    let domain = self
-      .ap_id
-      .inner()
-      .domain()
-      .ok_or(FastJobErrorType::NotFound)?;
-
-    format_actor_url(&self.name, domain, 'c', settings)
-  }
-
-  fn generate_local_actor_url(name: &str, settings: &Settings) -> FastJobResult<DbUrl> {
-    let domain = settings.get_protocol_and_hostname();
-    Ok(Url::parse(&format!("{domain}/c/{name}"))?.into())
   }
 }

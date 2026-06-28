@@ -449,9 +449,8 @@ impl PostQuery<'_> {
     match o.listing_type.unwrap_or_default() {
       ListingType::Subscribed => query = query.filter(filter_is_subscribed()),
       ListingType::Local => {
-        query = query
-          .filter(category::local.eq(true))
-          .filter(filter_not_unlisted_or_is_subscribed());
+        // Federation removed: all categories are local, no ::local filter needed
+        query = query.filter(filter_not_unlisted_or_is_subscribed());
       }
       ListingType::All => query = query.filter(filter_not_unlisted_or_is_subscribed()),
       ListingType::ModeratorView => {

@@ -17,7 +17,6 @@
 //! ever depend on it.
 
 use crate::{
-  newtypes::DbUrl,
   source::{
     instance::Instance,
     local_site::{LocalSite, LocalSiteInsertForm},
@@ -28,7 +27,6 @@ use crate::{
 };
 use app_108jobs_core::error::FastJobResult;
 use std::sync::atomic::{AtomicU64, Ordering};
-use url::Url;
 
 /// Counter used to generate unique domains within a single test process. We
 /// also mix in `std::process::id()` so parallel cargo-test invocations across
@@ -118,9 +116,6 @@ impl TestData {
 
     let instance = Instance::read_or_create(pool, domain.clone()).await?;
 
-    // Build a minimal SiteInsertForm. `ap_id` is `UNIQUE` in the site table, so
-    // we derive a deterministic-per-run URL from the domain.
-    let ap_id = build_ap_id(&domain)?;
     let form = SiteInsertForm {
       name: format!("test site {seq}"),
       instance_id: instance.id,
@@ -129,11 +124,7 @@ impl TestData {
       icon: None,
       banner: None,
       description: None,
-      ap_id: Some(ap_id),
       last_refreshed_at: None,
-      inbox_url: None,
-      private_key: None,
-      public_key: None,
       content_warning: None,
     };
     let site = Site::create(pool, &form).await?;
@@ -161,12 +152,4 @@ impl TestData {
     Instance::delete(pool, self.instance.id).await?;
     Ok(())
   }
-}
-
-fn build_ap_id(domain: &str) -> FastJobResult<DbUrl> {
-  // Parse to Url and then wrap into our DbUrl newtype. The URL form
-  // `http://<domain>/` is what the existing federation tests use too.
-  let parsed = Url::parse(&format!("http://{domain}/"))
-    .map_err(|e| app_108jobs_core::error::FastJobErrorType::Unknown(format!("ap_id parse: {e}")))?;
-  Ok(parsed.into())
 }

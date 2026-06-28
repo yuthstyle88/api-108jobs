@@ -9,7 +9,6 @@ use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},
-  BoolExpressionMethods,
   ExpressionMethods,
   QueryDsl,
 };
@@ -52,30 +51,6 @@ impl Reportable for CommentReport {
       .execute(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
-  }
-
-  async fn resolve_apub(
-    pool: &mut DbPool<'_>,
-    object_id: Self::ObjectIdType,
-    report_creator_id: PersonId,
-    resolver_id: PersonId,
-  ) -> FastJobResult<usize> {
-    let conn = &mut get_conn(pool).await?;
-    update(
-      comment_report::table.filter(
-        comment_report::comment_id
-          .eq(object_id)
-          .and(comment_report::creator_id.eq(report_creator_id)),
-      ),
-    )
-    .set((
-      comment_report::resolved.eq(true),
-      comment_report::resolver_id.eq(resolver_id),
-      comment_report::updated_at.eq(Utc::now()),
-    ))
-    .execute(conn)
-    .await
-    .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 
   async fn resolve_all_for_object(

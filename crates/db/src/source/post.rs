@@ -50,10 +50,6 @@ pub struct Post {
   pub embed_description: Option<String>,
   /// A thumbnail picture url.
   pub thumbnail_url: Option<DbUrl>,
-  /// The federated activity id / ap_id.
-  pub ap_id: DbUrl,
-  /// Whether the post is local.
-  pub local: bool,
   /// A video url for the link.
   pub embed_video_url: Option<DbUrl>,
   pub language_id: LanguageId,
@@ -133,11 +129,7 @@ pub struct PostInsertForm {
   #[new(default)]
   pub thumbnail_url: Option<DbUrl>,
   #[new(default)]
-  pub local: Option<bool>,
-  #[new(default)]
   pub language_id: Option<LanguageId>,
-  #[new(default)]
-  pub ap_id: Option<DbUrl>,
   #[new(default)]
   pub featured_category: Option<bool>,
   #[new(default)]
@@ -181,8 +173,6 @@ pub struct PostUpdateForm {
   pub embed_description: Option<Option<String>>,
   pub embed_video_url: Option<Option<DbUrl>>,
   pub thumbnail_url: Option<Option<DbUrl>>,
-  pub ap_id: Option<DbUrl>,
-  pub local: Option<bool>,
   pub language_id: Option<LanguageId>,
   pub featured_category: Option<bool>,
   pub featured_local: Option<bool>,

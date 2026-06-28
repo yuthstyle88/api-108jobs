@@ -1,7 +1,6 @@
 use crate::{
   enums::{CategoryFollowerState, CategoryVisibility},
   newtypes::{CategoryId, DbUrl, InstanceId, PersonId},
-  source::placeholder_apub_url,
 };
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
@@ -43,30 +42,15 @@ pub struct Category {
   pub deleted: bool,
   /// Whether its an NSFW category.
   pub self_promotion: bool,
-  pub ap_id: DbUrl,
-  /// Whether the category is local.
-  pub local: bool,
   #[serde(skip)]
   pub last_refreshed_at: DateTime<Utc>,
   /// A URL for an icon.
   pub icon: Option<DbUrl>,
   /// A URL for a banner.
   pub banner: Option<DbUrl>,
-  #[cfg_attr(feature = "ts-rs", ts(skip))]
-  #[serde(skip)]
-  pub followers_url: Option<DbUrl>,
-  #[cfg_attr(feature = "ts-rs", ts(skip))]
-  #[serde(skip, default = "placeholder_apub_url")]
-  pub inbox_url: DbUrl,
   /// Whether posting is restricted to mods only.
   pub posting_restricted_to_mods: bool,
   pub instance_id: InstanceId,
-  /// Url where moderators collection is served over Activitypub
-  #[serde(skip)]
-  pub moderators_url: Option<DbUrl>,
-  /// Url where featured posts collection is served over Activitypub
-  #[serde(skip)]
-  pub featured_url: Option<DbUrl>,
   pub visibility: CategoryVisibility,
   /// A shorter, one-line description of the site.
   pub description: Option<String>,
@@ -120,23 +104,11 @@ pub struct CategoryInsertForm {
   #[new(default)]
   pub self_promotion: Option<bool>,
   #[new(default)]
-  pub ap_id: Option<DbUrl>,
-  #[new(default)]
-  pub local: Option<bool>,
-  #[new(default)]
   pub last_refreshed_at: Option<DateTime<Utc>>,
   #[new(default)]
   pub icon: Option<DbUrl>,
   #[new(default)]
   pub banner: Option<DbUrl>,
-  #[new(default)]
-  pub followers_url: Option<DbUrl>,
-  #[new(default)]
-  pub inbox_url: Option<DbUrl>,
-  #[new(default)]
-  pub moderators_url: Option<DbUrl>,
-  #[new(default)]
-  pub featured_url: Option<DbUrl>,
   #[new(default)]
   pub posting_restricted_to_mods: Option<bool>,
   #[new(default)]
@@ -163,15 +135,9 @@ pub struct CategoryUpdateForm {
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub deleted: Option<bool>,
   pub self_promotion: Option<bool>,
-  pub ap_id: Option<DbUrl>,
-  pub local: Option<bool>,
   pub last_refreshed_at: Option<DateTime<Utc>>,
   pub icon: Option<Option<DbUrl>>,
   pub banner: Option<Option<DbUrl>>,
-  pub followers_url: Option<DbUrl>,
-  pub inbox_url: Option<DbUrl>,
-  pub moderators_url: Option<Option<DbUrl>>,
-  pub featured_url: Option<Option<DbUrl>>,
   pub posting_restricted_to_mods: Option<bool>,
   pub visibility: Option<CategoryVisibility>,
   pub description: Option<Option<String>>,
@@ -230,15 +196,9 @@ pub struct CategoryChangeset {
   pub(crate) updated_at: Option<Option<DateTime<Utc>>>,
   pub(crate) deleted: Option<bool>,
   pub(crate) self_promotion: Option<bool>,
-  pub(crate) ap_id: Option<DbUrl>,
-  pub(crate) local: Option<bool>,
   pub(crate) last_refreshed_at: Option<DateTime<Utc>>,
   pub(crate) icon: Option<Option<DbUrl>>,
   pub(crate) banner: Option<Option<DbUrl>>,
-  pub(crate) followers_url: Option<DbUrl>,
-  pub(crate) inbox_url: Option<DbUrl>,
-  pub(crate) moderators_url: Option<Option<DbUrl>>,
-  pub(crate) featured_url: Option<Option<DbUrl>>,
   pub(crate) posting_restricted_to_mods: Option<bool>,
   pub(crate) visibility: Option<CategoryVisibility>,
   pub(crate) description: Option<Option<String>>,

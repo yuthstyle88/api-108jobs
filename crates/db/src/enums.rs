@@ -146,28 +146,11 @@ pub enum CategoryVisibility {
 }
 
 impl CategoryVisibility {
-  pub fn can_federate(&self) -> bool {
-    use CategoryVisibility::*;
-    self != &LocalOnlyPublic && self != &LocalOnlyPrivate
-  }
   pub fn can_view_without_login(&self) -> bool {
     use CategoryVisibility::*;
     self == &Public || self == &LocalOnlyPublic
   }
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "full", derive(DbEnum))]
-#[cfg_attr(
-  feature = "full",
-  ExistingTypePath = "crate::schema::sql_types::ActorTypeEnum"
-)]
-pub enum ActorType {
-  Site,
-  Category,
-  Person,
-  MultiCategory,
-}
-
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "full", derive(DbEnum))]
 #[cfg_attr(

@@ -8,7 +8,7 @@ use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   newtypes::PaginationCursor,
   source::{category::Category, comment::Comment},
-  traits::{ApubActor, Crud, PaginationCursorBuilder},
+  traits::{Crud, PaginationCursorBuilder},
 };
 use app_108jobs_db_views_comment::{
   api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},

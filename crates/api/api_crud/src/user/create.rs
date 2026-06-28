@@ -9,7 +9,6 @@ use app_108jobs_api_utils::{
     check_email_verified,
     check_local_user_valid,
     check_registration_application,
-    generate_inbox_url,
     honeypot_check,
     prepare_user_languages,
     slur_regex,
@@ -35,7 +34,7 @@ use app_108jobs_db::{
     registration_application::{RegistrationApplication, RegistrationApplicationInsertForm},
     wallet::WalletModel,
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
   utils::get_conn,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -675,12 +674,10 @@ pub async fn authenticate_with_oauth(
 async fn create_person(
   username: String,
   site_view: &SiteView,
-  context: &FastJobContext,
+  _context: &FastJobContext,
   conn: &mut AsyncPgConnection,
 ) -> Result<Person, FastJobError> {
   is_valid_actor_name(&username, site_view.local_site.actor_name_max_length)?;
-  let ap_id = Person::generate_local_actor_url(&username, context.settings())?;
-
   let public_key = Some("public_key".to_string());
   // Create a new wallet for this user
   let wallet = WalletModel::create_for_user(conn).await?;
@@ -689,9 +686,6 @@ async fn create_person(
 
   // Register the new person
   let person_form = PersonInsertForm {
-    ap_id: Some(ap_id.clone()),
-    inbox_url: Some(generate_inbox_url()?),
-    private_key: Some("private_key".to_string()),
     wallet_id,
     ..PersonInsertForm::new(username.clone(), public_key, site_view.site.instance_id)
   };

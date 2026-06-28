@@ -23,7 +23,7 @@ use app_108jobs_db::{
     local_user::{LocalUser, LocalUserUpdateForm},
     person::{Person, PersonUpdateForm},
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
 use app_108jobs_db_views_local_user::LocalUserView;

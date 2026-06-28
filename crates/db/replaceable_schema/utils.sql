@@ -251,7 +251,6 @@ BEGIN
             INNER JOIN person pe ON c.creator_id = pe.id
         WHERE
             c.published_at > ('now'::timestamp - i::interval)
-            AND pe.local = TRUE
             AND pe.bot_account = FALSE
         UNION
         SELECT
@@ -261,7 +260,6 @@ BEGIN
             INNER JOIN person pe ON p.creator_id = pe.id
         WHERE
             p.published_at > ('now'::timestamp - i::interval)
-            AND pe.local = TRUE
             AND pe.bot_account = FALSE
         UNION
         SELECT
@@ -271,7 +269,6 @@ BEGIN
             INNER JOIN person pe ON pa.person_id = pe.id
         WHERE
             pa.liked_at > ('now'::timestamp - i::interval)
-            AND pe.local = TRUE
             AND pe.bot_account = FALSE
         UNION
         SELECT
@@ -281,7 +278,6 @@ BEGIN
             INNER JOIN person pe ON ca.person_id = pe.id
         WHERE
             ca.liked_at > ('now'::timestamp - i::interval)
-            AND pe.local = TRUE
             AND pe.bot_account = FALSE) a;
     RETURN count_;
 END;

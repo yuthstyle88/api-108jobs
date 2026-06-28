@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::check_category_deleted_removed,
 };
 use app_108jobs_db_schema::{
@@ -41,7 +40,7 @@ pub async fn delete_post(
   }
 
   // Update the post
-  let post = Post::update(
+  Post::update(
     &mut context.pool(),
     data.post_id,
     &PostUpdateForm {
@@ -50,11 +49,6 @@ pub async fn delete_post(
     },
   )
   .await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::DeletePost(post, local_user_view.person.clone(), data.0),
-    &context,
-  )?;
 
   build_post_response(&context, local_user_view, data.post_id).await
 }

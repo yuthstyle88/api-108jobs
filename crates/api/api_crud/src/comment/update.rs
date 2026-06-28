@@ -3,7 +3,6 @@ use app_108jobs_api_utils::{
   build_response::{build_comment_response, send_local_notifs},
   context::FastJobContext,
   plugins::plugin_hook_after,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_category_deleted_removed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
 use app_108jobs_db_schema::{
@@ -87,11 +86,6 @@ pub async fn update_comment(
     &context,
   )
   .await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::UpdateComment(updated_comment.clone()),
-    &context,
-  )?;
 
   Ok(Json(
     build_comment_response(

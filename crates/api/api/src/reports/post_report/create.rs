@@ -1,9 +1,7 @@
 use crate::check_report_reason;
-use actix_web::web::Data;
-use either::Either;
+use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_post_deleted_or_removed, slur_regex},
 };
 use app_108jobs_db_schema::{
@@ -62,15 +60,6 @@ pub async fn create_post_report(
     )
     .await?;
   }
-
-  ActivityChannel::submit_activity(
-    SendActivityData::CreateReport {
-      actor: local_user_view.person,
-      receiver: Either::Right(post_view.category),
-      reason: data.reason.clone(),
-    },
-    &context,
-  )?;
 
   Ok(Json(PostReportResponse { post_report_view }))
 }

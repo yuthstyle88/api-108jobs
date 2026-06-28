@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  build_response::build_comment_response,
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-};
+use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
 use app_108jobs_db_schema::{
   source::{comment::CommentActions, person::PersonActions},
   traits::Likeable,
@@ -13,7 +9,7 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_comment(
@@ -47,16 +43,6 @@ pub async fn like_comment(
     // Ignore errors, since a previous_like of zero throws an error
     .ok();
   }
-
-  ActivityChannel::submit_activity(
-    SendActivityData::LikePostOrComment {
-      actor: local_user_view.person.clone(),
-      category: orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
-      previous_score,
-      new_score: data.score,
-    },
-    &context,
-  )?;
 
   Ok(Json(
     build_comment_response(

@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::purge_user_account,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::purge_user_account};
 use app_108jobs_db_schema::source::{
   category::CategoryActions,
   login_token::LoginToken,
@@ -53,11 +49,6 @@ pub async fn delete_account(
   }
 
   LoginToken::invalidate_all(&mut context.pool(), local_user_view.local_user.id).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::DeleteUser(local_user_view.person, data.delete_content),
-    &context,
-  )?;
 
   Ok(Json(SuccessResponse::default()))
 }

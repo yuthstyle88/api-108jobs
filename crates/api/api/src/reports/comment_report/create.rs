@@ -2,7 +2,6 @@ use crate::check_report_reason;
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_comment_deleted_or_removed, slur_regex},
 };
 use app_108jobs_db_schema::{
@@ -15,8 +14,7 @@ use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, CreateCommentReportRequest},
   CommentReportView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use either::Either;
+use app_108jobs_utils::error::FastJobResult;
 
 /// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(
@@ -54,15 +52,6 @@ pub async fn create_comment_report(
 
   let comment_report_view =
     CommentReportView::read(&mut context.pool(), report.id, person_id).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::CreateReport {
-      actor: local_user_view.person,
-      receiver: Either::Right(comment_view.category.ok_or(FastJobErrorType::NotFound)?),
-      reason: data.reason.clone(),
-    },
-    &context,
-  )?;
 
   Ok(Json(CommentReportResponse {
     comment_report_view,

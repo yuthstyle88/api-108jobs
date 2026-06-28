@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::check_category_deleted_removed,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::check_category_deleted_removed};
 use app_108jobs_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
@@ -49,7 +45,7 @@ pub async fn delete_comment(
 
   // Do the delete
   let deleted = data.deleted;
-  let updated_comment = Comment::update(
+  Comment::update(
     &mut context.pool(),
     comment_id,
     &CommentUpdateForm {
@@ -58,15 +54,6 @@ pub async fn delete_comment(
     },
   )
   .await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::DeleteComment(
-      updated_comment,
-      local_user_view.person.clone(),
-      orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
-    ),
-    &context,
-  )?;
 
   Ok(Json(DeleteComment {
     comment_id,

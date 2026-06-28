@@ -1,15 +1,10 @@
 use crate::check_report_reason;
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::slur_regex,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::slur_regex};
 use app_108jobs_db_schema::{
   source::{
     category::Category,
     category_report::{CategoryReport, CategoryReportForm},
-    site::Site,
   },
   traits::{Crud, Reportable},
 };
@@ -19,7 +14,6 @@ use app_108jobs_db_views_reports::{
   CategoryReportView,
 };
 use app_108jobs_utils::error::FastJobResult;
-use either::Either;
 
 pub async fn create_category_report(
   data: Json<CreateCategoryReportRequest>,
@@ -33,7 +27,6 @@ pub async fn create_category_report(
   let person_id = local_user_view.person.id;
   let category_id = data.category_id;
   let category = Category::read(&mut context.pool(), category_id).await?;
-  let site = Site::read_from_instance_id(&mut context.pool(), category.instance_id).await?;
 
   let report_form = CategoryReportForm {
     creator_id: person_id,
@@ -51,15 +44,6 @@ pub async fn create_category_report(
 
   let category_report_view =
     CategoryReportView::read(&mut context.pool(), report.id, person_id).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::CreateReport {
-      actor: local_user_view.person,
-      receiver: Either::Left(site),
-      reason: data.reason.clone(),
-    },
-    &context,
-  )?;
 
   Ok(Json(CategoryReportResponse {
     category_report_view,

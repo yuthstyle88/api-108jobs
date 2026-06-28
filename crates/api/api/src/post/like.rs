@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::check_bot_account,
 };
 use app_108jobs_db_schema::{
@@ -17,7 +16,7 @@ use app_108jobs_db_views_post::{
   api::{CreatePostLikeRequest, PostResponse},
   PostView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_post(
@@ -52,19 +51,6 @@ pub async fn like_post(
   // Mark Post Read
   let read_form = PostReadForm::new(post_id, my_person_id);
   PostActions::mark_as_read(&mut context.pool(), &read_form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::LikePostOrComment {
-      actor: local_user_view.person.clone(),
-      category: orig_post
-        .category
-        .clone()
-        .ok_or(FastJobErrorType::NotFound)?,
-      previous_score,
-      new_score: data.score,
-    },
-    &context,
-  )?;
 
   build_post_response(context.deref(), local_user_view, post_id).await
 }

@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_category_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_category_deleted_removed, is_admin},
 };
 use app_108jobs_db_schema::{
@@ -26,7 +25,7 @@ pub async fn delete_category(
   // Do the delete
   let category_id = data.category_id;
   let deleted = data.deleted;
-  let category = Category::update(
+  Category::update(
     &mut context.pool(),
     category_id,
     &CategoryUpdateForm {
@@ -35,11 +34,6 @@ pub async fn delete_category(
     },
   )
   .await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::DeleteCategory(local_user_view.person.clone(), category, data.deleted),
-    &context,
-  )?;
 
   build_category_response(&context, local_user_view, category_id).await
 }

@@ -2,7 +2,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_post_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_category_deleted_removed, is_admin},
 };
 use app_108jobs_db_schema::{
@@ -48,7 +47,7 @@ pub async fn feature_post(
       ..Default::default()
     }
   };
-  let post = Post::update(&mut context.pool(), post_id, &new_post).await?;
+  Post::update(&mut context.pool(), post_id, &new_post).await?;
 
   // Mod tables
   let form = ModFeaturePostForm {
@@ -59,11 +58,6 @@ pub async fn feature_post(
   };
 
   ModFeaturePost::create(&mut context.pool(), &form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::FeaturePost(post, local_user_view.person.clone(), data.featured),
-    &context,
-  )?;
 
   build_post_response(&context, local_user_view, post_id).await
 }

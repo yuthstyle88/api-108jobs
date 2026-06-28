@@ -4,7 +4,6 @@ use app_108jobs_api_utils::{
   build_response::{build_post_response, send_local_notifs},
   context::FastJobContext,
   request::generate_post_link_metadata,
-  send_activity::SendActivityData,
   tags::update_post_tags,
   utils::{check_self_promotion_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
@@ -198,7 +197,6 @@ pub async fn update_post(
       generate_post_link_metadata(
         updated_post.clone(),
         custom_thumbnail.flatten().map(Into::into),
-        |post| Some(SendActivityData::CreatePost(post)),
         context.clone(),
       )
       .await?;
@@ -208,7 +206,6 @@ pub async fn update_post(
       generate_post_link_metadata(
         updated_post.clone(),
         custom_thumbnail.flatten().map(Into::into),
-        |post| Some(SendActivityData::UpdatePost(post)),
         context.clone(),
       )
       .await?

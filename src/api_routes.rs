@@ -214,7 +214,7 @@ use app_108jobs_payments::{
     update_bank_account,
   },
   list_top_up_requests::list_top_up_requests,
-  wallet::{deposit_wallet, get_wallet},
+  wallet::get_wallet,
   withdraw::{list_withdraw_requests, retract_withdraw, submit_withdraw},
 };
 use app_108jobs_routes::{

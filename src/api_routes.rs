@@ -65,14 +65,6 @@ use app_108jobs_api::{
   local_user::{
     add_admin::add_admin,
     ban_person::ban_from_site,
-    bank_account::{
-      create_bank_account,
-      delete_bank_account,
-      list_banks,
-      list_user_bank_accounts,
-      set_default_bank_account,
-      update_bank_account,
-    },
     donation_dialog_shown::donation_dialog_shown,
     exchange::exchange_key,
     export_data::export_data,
@@ -82,7 +74,6 @@ use app_108jobs_api::{
     list_media::list_media,
     list_read::list_person_read,
     list_saved::list_person_saved,
-    list_top_up_requests::list_top_up_requests,
     note_person::user_note_person,
     notifications::{
       list_inbox::list_inbox,
@@ -97,8 +88,6 @@ use app_108jobs_api::{
     review::{list_user_reviews, submit_user_review},
     save_settings::save_user_settings,
     update_term::update_term,
-    wallet::get_wallet,
-    withdraw::{list_withdraw_requests, retract_withdraw, submit_withdraw},
     workflow::{
       approve_quotation,
       approve_work,
@@ -214,6 +203,19 @@ use app_108jobs_identity::{
   update_totp::update_totp,
   validate_auth::validate_auth,
   verify_email::verify_email,
+};
+use app_108jobs_payments::{
+  bank_account::{
+    create_bank_account,
+    delete_bank_account,
+    list_banks,
+    list_user_bank_accounts,
+    set_default_bank_account,
+    update_bank_account,
+  },
+  list_top_up_requests::list_top_up_requests,
+  wallet::get_wallet,
+  withdraw::{list_withdraw_requests, retract_withdraw, submit_withdraw},
 };
 use app_108jobs_routes::{
   files::{delete::delete_file, download::get_file, upload::upload_file},

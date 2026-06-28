@@ -118,6 +118,11 @@ pub async fn update_bank_account(
 
   let before_bank_account = BankAccount::read(&mut context.pool(), data.bank_account_id).await?;
 
+  // Ownership check
+  if before_bank_account.local_user_id != local_user_id {
+    return Err(FastJobErrorType::NotFound.into());
+  }
+
   let bank_id = data
     .bank_id
     .as_ref()
@@ -135,16 +140,24 @@ pub async fn update_bank_account(
     &local_user_id,
     &bank_id,
     &account_number,
-    None,
+    Some(data.bank_account_id),
   )
   .await?;
+
+  // Only reset is_verified when the account number actually changed
+  let account_number_changed = account_number != before_bank_account.account_number;
+  let is_verified = if account_number_changed {
+    Some(false)
+  } else {
+    Some(before_bank_account.is_verified)
+  };
 
   let update_form = UserBankAccountUpdateForm {
     bank_id: Some(bank_id),
     account_number: Some(account_number),
     account_name: data.account_name,
-    is_default: Some(false),
-    is_verified: Some(false),
+    is_default: Some(before_bank_account.is_default),
+    is_verified,
     updated_at: Some(Some(chrono::Utc::now())),
     verification_image_path: None,
   };

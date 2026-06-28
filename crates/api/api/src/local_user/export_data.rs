@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::{self, error::FastJobResult};
 use app_108jobs_db_schema::source::local_user::LocalUser;
 use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -11,7 +12,6 @@ use app_108jobs_db_views_site::{
   api::{ExportDataResponse, PostOrCommentOrPrivateMessage},
   impls::user_backup_list_to_user_settings_backup,
 };
-use app_108jobs_utils::{self, error::FastJobResult};
 
 pub async fn export_data(
   context: Data<FastJobContext>,

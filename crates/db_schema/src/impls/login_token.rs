@@ -4,8 +4,8 @@ use crate::{
   source::login_token::{LoginToken, LoginTokenCreateForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::login_token::{dsl::login_token, user_id};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{delete, dsl::exists, insert_into, select};
 use diesel_async::RunQueryDsl;
 

@@ -2,8 +2,8 @@ use crate::{
   source::local_site::{LocalSite, LocalSiteInsertForm, LocalSiteUpdateForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::local_site;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 
@@ -47,7 +47,7 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

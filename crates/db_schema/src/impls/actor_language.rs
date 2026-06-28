@@ -15,6 +15,7 @@ use crate::{
   },
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{
   category_language,
   local_site,
@@ -22,7 +23,6 @@ use app_108jobs_db_schema_file::schema::{
   site,
   site_language,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{count, exists},

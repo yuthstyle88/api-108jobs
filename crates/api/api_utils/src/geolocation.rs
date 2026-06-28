@@ -1,4 +1,4 @@
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::{net::IpAddr, time::Duration};

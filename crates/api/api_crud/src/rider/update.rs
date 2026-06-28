@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::rider::{Rider, RiderUpdateForm},
   traits::Crud,
@@ -12,7 +13,6 @@ use app_108jobs_email::rider::{
   send_rider_application_approved_email,
   send_rider_application_denied_email,
 };
-use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 
 pub async fn admin_verify_rider(

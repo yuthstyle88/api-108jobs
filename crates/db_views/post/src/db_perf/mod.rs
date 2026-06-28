@@ -1,6 +1,7 @@
 mod series;
 
 use crate::{db_perf::series::ValuesFromSeries, impls::PostQuery, PostView};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     category::{Category, CategoryInsertForm},
@@ -12,7 +13,6 @@ use app_108jobs_db_schema::{
   utils::{build_db_pool, get_conn, now},
 };
 use app_108jobs_db_schema_file::{enums::PostSortType, schema::post};
-use app_108jobs_utils::error::FastJobResult;
 use diesel::{
   dsl::{self, sql},
   sql_types,

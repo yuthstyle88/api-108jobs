@@ -5,6 +5,20 @@ use crate::{
 };
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  rate_limit::{ActionType, BucketConfig},
+  redis::RedisClient,
+  settings::{structs::PictrsImageMode, SETTINGS},
+  utils::{
+    markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
+    slurs::remove_slurs,
+    validation::{build_and_check_regex, clean_urls_in_text},
+  },
+  CacheLock,
+  CACHE_DURATION_FEDERATION,
+  MAX_COMMENT_DEPTH_LIMIT,
+};
 use app_108jobs_db_schema::{
   newtypes::{
     BankAccountId,
@@ -59,20 +73,6 @@ use app_108jobs_db_views_wallet::{
   },
   TopUpRequestView,
   WithdrawRequestView,
-};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  rate_limit::{ActionType, BucketConfig},
-  redis::RedisClient,
-  settings::{structs::PictrsImageMode, SETTINGS},
-  utils::{
-    markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
-    slurs::remove_slurs,
-    validation::{build_and_check_regex, clean_urls_in_text},
-  },
-  CacheLock,
-  CACHE_DURATION_FEDERATION,
-  MAX_COMMENT_DEPTH_LIMIT,
 };
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;
@@ -289,7 +289,7 @@ pub async fn get_url_blocklist(context: &FastJobContext) -> FastJobResult<RegexS
 
         // The urls are already validated on saving, so just escape them.
         // If this regex creation changes it must be synced with
-        // app_108jobs_utils::utils::markdown::create_url_blocklist_test_regex_set.
+        // app_108jobs_core::utils::markdown::create_url_blocklist_test_regex_set.
         let regexes = urls.iter().map(|url| format!(r"\b{}\b", escape(&url.url)));
 
         let set = RegexSet::new(regexes)?;
@@ -1045,7 +1045,7 @@ pub async fn get_active_rider_by_person(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use app_108jobs_utils::utils::validation::password_length_check;
+  use app_108jobs_core::utils::validation::password_length_check;
   use pretty_assertions::assert_eq;
 
   #[test]

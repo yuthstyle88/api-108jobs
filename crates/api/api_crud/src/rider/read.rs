@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::{
   api::{GetRider, GetRiderResponse},
   RiderView,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_rider(
   data: Path<GetRider>,

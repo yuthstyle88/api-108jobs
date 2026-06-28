@@ -4,7 +4,7 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

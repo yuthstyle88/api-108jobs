@@ -1,4 +1,5 @@
 use crate::{PostPreview, PostView};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
@@ -57,7 +58,6 @@ use app_108jobs_db_schema_file::{
     ride_session,
   },
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   self,
   debug_query,
@@ -657,6 +657,7 @@ mod tests {
     impls::{PostQuery, PostSortType},
     PostView,
   };
+  use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
   use app_108jobs_db_schema::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
@@ -687,7 +688,6 @@ mod tests {
     utils::{build_db_pool, uplete, ActualDbPool, DbPool},
   };
   use app_108jobs_db_views_local_user::LocalUserView;
-  use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
   use chrono::Utc;
   use pretty_assertions::assert_eq;
   use serial_test::serial;

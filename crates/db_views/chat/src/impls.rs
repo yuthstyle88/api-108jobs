@@ -4,6 +4,7 @@ use crate::{
   ChatParticipantView,
   ChatRoomView,
 };
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_message::ChatMessage, chat_room::ChatRoom, workflow::Workflow},
@@ -19,7 +20,6 @@ use app_108jobs_db_schema_file::schema::{
   person,
 };
 use app_108jobs_db_views_post::PostPreview;
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use futures_util::{StreamExt, TryStreamExt};

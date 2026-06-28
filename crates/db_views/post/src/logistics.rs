@@ -1,4 +1,5 @@
 use crate::{api::PostItem, PostView};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::{PersonId, PostId, RiderId},
   source::{delivery_details as dd_src, ride_session as ride_src},
@@ -9,7 +10,6 @@ use app_108jobs_db_schema_file::{
   schema::{delivery_details, ride_session},
 };
 use app_108jobs_db_views_rider::ride_session_view as rider_view;
-use app_108jobs_utils::error::FastJobResult;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use std::collections::HashMap;

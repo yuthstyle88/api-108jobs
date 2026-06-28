@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserUpdateForm},
@@ -13,7 +14,6 @@ use app_108jobs_db_views_registration_applications::{
   api::{ApproveRegistrationApplication, RegistrationApplicationResponse},
   RegistrationApplicationView,
 };
-use app_108jobs_utils::error::FastJobResult;
 use diesel_async::scoped_futures::ScopedFutureExt;
 
 pub async fn approve_registration_application(

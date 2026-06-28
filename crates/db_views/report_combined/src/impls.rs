@@ -6,6 +6,7 @@ use crate::{
   ReportCombinedView,
   ReportCombinedViewInternal,
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
@@ -29,7 +30,6 @@ use app_108jobs_db_schema_file::schema::{
   post_report,
   report_combined,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Days, Utc};
 use diesel::{
   BoolExpressionMethods,

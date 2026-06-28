@@ -2,6 +2,10 @@ use crate::{
   api::{CreateCategory, CreateCategoryRequest},
   CategoryView,
 };
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  utils::validation::get_required_trimmed,
+};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, PaginationCursor, PersonId},
@@ -32,10 +36,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::{
   enums::ListingType,
   schema::{category, category_actions},
-};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  utils::validation::get_required_trimmed,
 };
 use diesel::{debug_query, pg::Pg, ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;

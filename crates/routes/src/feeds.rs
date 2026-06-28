@@ -4,6 +4,12 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_private_instance, local_user_view_from_jwt},
 };
+use app_108jobs_core::{
+  cache_header::cache_1hour,
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+  utils::markdown::markdown_to_html,
+};
 use app_108jobs_db_schema::{
   source::{category::Category, person::Person},
   traits::ApubActor,
@@ -14,12 +20,6 @@ use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombin
 use app_108jobs_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
 use app_108jobs_db_views_person_content_combined::impls::PersonContentCombinedQuery;
 use app_108jobs_db_views_post::{impls::PostQuery, PostView};
-use app_108jobs_utils::{
-  cache_header::cache_1hour,
-  error::{FastJobError, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-  utils::markdown::markdown_to_html,
-};
 use chrono::{DateTime, Utc};
 use rss::{
   extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap},

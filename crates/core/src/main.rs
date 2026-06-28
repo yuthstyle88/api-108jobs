@@ -11,7 +11,7 @@ fn main() {
 
 #[cfg(feature = "full")]
 fn config_to_string() -> String {
-  use app_108jobs_utils::settings::structs::Settings;
+  use app_108jobs_core::settings::structs::Settings;
   use doku::json::{AutoComments, CommentsStyle, Formatting, ObjectsStyle};
   let fmt = Formatting {
     auto_comments: AutoComments::none(),

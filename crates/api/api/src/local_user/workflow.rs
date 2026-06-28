@@ -1,6 +1,7 @@
 use super::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::ChatRoomId,
   source::{
@@ -37,7 +38,6 @@ use app_108jobs_db_views_billing::{
   ValidUpdateBudgetPlanInstallmentsRequest,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_workflow::{WorkFlowOperationResponse, WorkflowService};
 use chrono::Utc;
 use serde_json::json;

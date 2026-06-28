@@ -12,6 +12,18 @@ use app_108jobs_api_utils::{
     slur_regex,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::{
+    slurs::check_slurs,
+    validation::{
+      build_and_check_regex,
+      is_valid_body_field,
+      site_name_length_check,
+      site_or_category_description_length_check,
+    },
+  },
+};
 use app_108jobs_db_schema::{
   newtypes::DbUrl,
   source::{
@@ -26,18 +38,6 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::{
   api::{CreateSiteRequest, SiteResponse},
   SiteView,
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::check_slurs,
-    validation::{
-      build_and_check_regex,
-      is_valid_body_field,
-      site_name_length_check,
-      site_or_category_description_length_check,
-    },
-  },
 };
 use chrono::Utc;
 use url::Url;
@@ -181,10 +181,10 @@ fn validate_create_payload(
 #[cfg(test)]
 mod tests {
   use crate::site::create::validate_create_payload;
+  use app_108jobs_core::error::FastJobErrorType;
   use app_108jobs_db_schema::source::local_site::LocalSite;
   use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
   use app_108jobs_db_views_site::api::CreateSiteRequest;
-  use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_create_payload() {

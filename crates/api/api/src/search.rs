@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_conflicting_like_filters, check_fetch_limit, check_private_instance},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::logistics::LogisticsViewer;
@@ -12,7 +13,6 @@ use app_108jobs_db_views_search_combined::{
   SearchCombinedView,
   SearchResponse,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn search(
   data: Query<Search>,

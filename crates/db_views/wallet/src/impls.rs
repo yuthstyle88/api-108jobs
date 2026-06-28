@@ -4,6 +4,10 @@ use crate::{
   WalletView,
   WithdrawRequestView,
 };
+use app_108jobs_core::{
+  apply_date_filters,
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+};
 use app_108jobs_db_schema::{
   newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WalletId, WithdrawRequestId},
   source::{
@@ -20,10 +24,6 @@ use app_108jobs_db_schema_file::schema::{
   user_bank_accounts,
   wallet,
   withdraw_requests,
-};
-use app_108jobs_utils::{
-  apply_date_filters,
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
 };
 use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;

@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::list_withdraw_requests_inner};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::WithdrawRequestId,
   source::{
@@ -16,7 +17,6 @@ use app_108jobs_db_views_wallet::{
   SubmitWithdrawRequest,
   ValidSubmitWithdrawRequest,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn submit_withdraw(
   data: Json<SubmitWithdrawRequest>,

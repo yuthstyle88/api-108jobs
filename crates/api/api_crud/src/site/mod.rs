@@ -1,5 +1,5 @@
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::enums::{ListingType, RegistrationMode};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub mod create;
 pub mod read;

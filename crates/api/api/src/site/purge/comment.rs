@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     comment::Comment,
@@ -11,7 +12,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_comment::{api::PurgeComment, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_comment(
   data: Json<PurgeComment>,

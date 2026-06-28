@@ -5,6 +5,7 @@ use crate::{
   PersonCommentMentionView,
   PersonPostMentionView,
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   aliases::{self},
   newtypes::{InstanceId, PaginationCursor, PersonId},
@@ -43,7 +44,6 @@ use app_108jobs_db_schema_file::schema::{
   person_post_mention,
   post,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::not,
   BoolExpressionMethods,
@@ -405,6 +405,7 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
+  use app_108jobs_core::error::FastJobResult;
   use app_108jobs_db_schema::{
     assert_length,
     source::{
@@ -421,7 +422,6 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     InboxDataType,
   };
-  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

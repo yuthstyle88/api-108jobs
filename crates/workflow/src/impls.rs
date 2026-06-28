@@ -1,3 +1,4 @@
+use app_108jobs_core::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{BillingId, ChatRoomId, Coin, CoinId, LocalUserId, PostId, WalletId, WorkflowId},
   source::{
@@ -16,7 +17,6 @@ use app_108jobs_db_schema_file::enums::{
   WorkFlowStatus,
 };
 use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
-use app_108jobs_utils::error::{FastJobErrorExt2, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 
@@ -201,7 +201,7 @@ async fn set_status_from(
             .with_fastjob_type(FastJobErrorType::DatabaseError)?;
         }
 
-        Ok::<_, app_108jobs_utils::error::FastJobError>(())
+        Ok::<_, app_108jobs_core::error::FastJobError>(())
       }
       .scope_boxed()
     })
@@ -271,7 +271,7 @@ async fn cancel_any_on(
           .await
           .with_fastjob_type(FastJobErrorType::DatabaseError)?;
 
-        Ok::<_, app_108jobs_utils::error::FastJobError>(())
+        Ok::<_, app_108jobs_core::error::FastJobError>(())
       }
       .scope_boxed()
     })
@@ -498,7 +498,7 @@ impl QuotationPendingReviewTS {
               true,
             )
             .await?;
-            return Ok::<_, app_108jobs_utils::error::FastJobError>(());
+            return Ok::<_, app_108jobs_core::error::FastJobError>(());
           }
 
           // 2) Insert the ledger row first. If we race with another approver, the partial unique
@@ -634,7 +634,7 @@ impl WorkSubmittedTS {
             // If no active hold exists, also no past Captured row should be
             // here either. But if the journal already shows release was done,
             // we treat the call as idempotent OK.
-            return Err::<_, app_108jobs_utils::error::FastJobError>(
+            return Err::<_, app_108jobs_core::error::FastJobError>(
               FastJobErrorType::WalletInvariantViolation(format!(
                 "approve_work: no active hold for billing {}",
                 billing_id.0
@@ -778,7 +778,7 @@ impl WorkflowService {
           let Some(hold) = hold else {
             // No active hold — either already refunded by an earlier retry, or
             // hold was never created. Either way: idempotent no-op.
-            return Ok::<_, app_108jobs_utils::error::FastJobError>(());
+            return Ok::<_, app_108jobs_core::error::FastJobError>(());
           };
 
           // Reverse the escrow transfer: platform -> employer wallet.

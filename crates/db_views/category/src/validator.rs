@@ -1,7 +1,7 @@
 //! Validation logic for category requests
 use crate::api::{CreateCategory, CreateCategoryRequest};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::newtypes::{CategoryId, TagId};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that category name is not empty
 pub fn validate_category_name(name: &str) -> FastJobResult<()> {

@@ -1,6 +1,7 @@
 use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
 use app_108jobs_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::{
     category::{Category, CategoryUpdateForm},
@@ -13,7 +14,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_category::api::CategoryIdQuery;
 use app_108jobs_db_views_local_image::api::UploadImageResponse;
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use reqwest::Body;
 use std::time::Duration;
 use UploadType::*;

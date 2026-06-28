@@ -3,6 +3,7 @@ use actix_web::{
   HttpRequest,
 };
 use app_108jobs_api_utils::{claims::Claims, context::FastJobContext};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::source::{
   email_verification::EmailVerification,
   local_user::{LocalUser, LocalUserUpdateForm},
@@ -10,7 +11,6 @@ use app_108jobs_db_schema::source::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{VerifyEmail, VerifyEmailSuccessResponse};
 use app_108jobs_email::account::send_email_verified_email;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn verify_email(
   data: Json<VerifyEmail>,

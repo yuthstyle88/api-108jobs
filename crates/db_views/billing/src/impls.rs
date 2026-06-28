@@ -1,4 +1,5 @@
 use crate::BillingView;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::{BillingId, LocalUserId},
   source::billing::Billing,
@@ -6,7 +7,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::billing;
-use app_108jobs_utils::error::FastJobResult;
 /// Read-only view/query methods for Billing
 impl BillingView {
   pub async fn read(pool: &mut DbPool<'_>, billing_id: BillingId) -> FastJobResult<Billing> {

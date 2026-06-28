@@ -19,6 +19,7 @@ use crate::{
   ModlogCombinedView,
   ModlogCombinedViewInternal,
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   aliases,
   impls::local_user::LocalUserOptionHelper,
@@ -66,7 +67,6 @@ use app_108jobs_db_schema_file::{
     post,
   },
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
@@ -609,6 +609,7 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
 mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
+  use app_108jobs_core::error::FastJobResult;
   use app_108jobs_db_schema::{
     newtypes::PersonId,
     source::{
@@ -663,7 +664,6 @@ mod tests {
     ModlogActionType,
   };
   use app_108jobs_db_schema_file::enums::CategoryVisibility;
-  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

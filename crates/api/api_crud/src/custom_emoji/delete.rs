@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{source::custom_emoji::CustomEmoji, traits::Crud};
 use app_108jobs_db_views_custom_emoji::api::DeleteCustomEmojiRequest;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_custom_emoji(
   data: Json<DeleteCustomEmojiRequest>,

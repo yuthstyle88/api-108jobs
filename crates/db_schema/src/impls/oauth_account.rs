@@ -3,8 +3,8 @@ use crate::{
   source::oauth_account::{OAuthAccount, OAuthAccountInsertForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{oauth_account, oauth_account::dsl::local_user_id};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

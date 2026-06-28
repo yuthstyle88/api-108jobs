@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::purge_user_account};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::source::{
   category::CategoryActions,
   login_token::LoginToken,
@@ -8,7 +9,6 @@ use app_108jobs_db_schema::source::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{DeleteAccountRequest, SuccessResponse};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use bcrypt::verify;
 
 pub async fn delete_account(

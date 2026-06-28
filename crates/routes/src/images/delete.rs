@@ -5,6 +5,7 @@ use app_108jobs_api_utils::{
   request::{delete_image_alias, purge_image_from_pictrs},
   utils::is_admin,
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     category::{Category, CategoryUpdateForm},
@@ -18,7 +19,6 @@ use app_108jobs_db_views_category::api::CategoryIdQuery;
 use app_108jobs_db_views_local_image::api::DeleteImageParams;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_site_icon(
   context: Data<FastJobContext>,

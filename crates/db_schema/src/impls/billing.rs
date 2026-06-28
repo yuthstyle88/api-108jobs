@@ -5,11 +5,11 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+#[cfg(feature = "full")]
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::enums::BillingStatus;
 #[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::billing;
-#[cfg(feature = "full")]
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::OptionalExtension;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;

@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{is_admin, list_top_up_requests_inner, list_withdraw_requests_inner},
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 #[cfg(test)]
 use app_108jobs_db_schema::traits::Crud;
 use app_108jobs_db_schema::{
@@ -27,7 +28,6 @@ use app_108jobs_db_views_wallet::api::{
   ListWithdrawRequestResponse,
   RejectWithdrawalRequest,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel_async::scoped_futures::ScopedFutureExt;
 
 /// Deterministic idempotency key for the admin top-up flow. Stable across
@@ -132,7 +132,7 @@ pub(crate) async fn admin_top_up_wallet_inner(
               app_108jobs_db_schema::newtypes::Coin,
               app_108jobs_db_schema::newtypes::Coin,
             ),
-            app_108jobs_utils::error::FastJobError,
+            app_108jobs_core::error::FastJobError,
           >(
             FastJobErrorType::InvalidField(
               "This top-up request has already been processed".to_string(),
@@ -271,7 +271,7 @@ pub(crate) async fn admin_withdraw_wallet_inner(
         match locked.status {
           WithdrawStatus::Pending => {}
           WithdrawStatus::Completed => {
-            return Err::<(Coin, Coin), app_108jobs_utils::error::FastJobError>(
+            return Err::<(Coin, Coin), app_108jobs_core::error::FastJobError>(
               FastJobErrorType::InvalidField(
                 "This withdraw request has already been processed".to_string(),
               )
@@ -392,7 +392,7 @@ pub(crate) async fn admin_reject_withdraw_request_inner(
               Some(reason.to_string()),
             )
             .await?;
-            Ok::<(), app_108jobs_utils::error::FastJobError>(())
+            Ok::<(), app_108jobs_core::error::FastJobError>(())
           }
           WithdrawStatus::Rejected => {
             // Idempotent re-call: already Rejected, leave it alone.

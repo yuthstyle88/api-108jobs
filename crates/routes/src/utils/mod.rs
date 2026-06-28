@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use app_108jobs_utils::settings::structs::Settings;
+use app_108jobs_core::settings::structs::Settings;
 use std::{
   env,
   path::{Path, PathBuf},

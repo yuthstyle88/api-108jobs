@@ -2,7 +2,7 @@ pub mod queries;
 pub mod uplete;
 
 use crate::{newtypes::DbUrl, sensitive::SensitiveString};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::{structs::Settings, SETTINGS},
   utils::validation::clean_url,

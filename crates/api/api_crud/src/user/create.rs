@@ -15,6 +15,13 @@ use app_108jobs_api_utils::{
     slur_regex,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  utils::{
+    slurs::{check_slurs, check_slurs_opt},
+    validation::is_valid_actor_name,
+  },
+};
 use app_108jobs_db_schema::{
   newtypes::{LanguageId, OAuthProviderId},
   source::{
@@ -45,13 +52,6 @@ use app_108jobs_db_views_site::{
 use app_108jobs_email::{
   account::send_verification_email_if_required,
   admin::send_new_applicant_email_to_admins,
-};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::{check_slurs, check_slurs_opt},
-    validation::is_valid_actor_name,
-  },
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use regex::Regex;

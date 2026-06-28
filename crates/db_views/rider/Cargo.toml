@@ -11,7 +11,7 @@ rust-version.workspace = true
 
 [features]
 full = [
-    "app_108jobs_utils",
+    "app_108jobs_core",
     "diesel",
     "diesel-async",
     "i-love-jesus",
@@ -27,7 +27,7 @@ ts-rs = [
 
 [dependencies]
 app_108jobs_db_schema = { workspace = true }
-app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_core = { workspace = true, optional = true }
 app_108jobs_db_schema_file = { workspace = true }
 ts-rs = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }

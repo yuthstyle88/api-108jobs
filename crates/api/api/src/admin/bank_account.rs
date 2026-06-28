@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::user_bank_account::{BankAccount, UserBankAccountUpdateForm},
   traits::{Crud, PaginationCursorBuilder},
@@ -10,7 +11,6 @@ use app_108jobs_db_views_bank_account::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 
 pub async fn admin_list_bank_accounts(

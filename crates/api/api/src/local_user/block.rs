@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::person::{PersonActions, PersonBlockForm},
   traits::Blockable,
@@ -9,7 +10,6 @@ use app_108jobs_db_views_person::{
   api::{BlockPerson, BlockPersonResponse},
   PersonView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn user_block_person(
   data: Json<BlockPerson>,

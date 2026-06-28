@@ -8,6 +8,7 @@ use crate::{
   SearchCombinedViewInternal,
   SearchPostView,
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
   source::{
@@ -49,7 +50,6 @@ use app_108jobs_db_views_post::logistics::{
   fetch_logistics_maps_by_ids,
   LogisticsViewer,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
   BoolExpressionMethods,

@@ -1,10 +1,10 @@
 use anyhow::anyhow;
-use app_108jobs_db_views_site::api::PluginMetadata;
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
   VERSION,
 };
+use app_108jobs_db_views_site::api::PluginMetadata;
 use extism::{Manifest, PluginBuilder, Pool, PoolPlugin};
 use extism_convert::Json;
 use once_cell::sync::Lazy;

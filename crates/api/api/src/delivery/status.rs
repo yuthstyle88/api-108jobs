@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{newtypes::PostId, source::delivery_details::DeliveryDetails};
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
@@ -8,7 +9,6 @@ use app_108jobs_db_views_rider::api::{
   TripStatusResponse,
   UpdateTripStatusRequest,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// PUT /api/v4/deliveries/{postId}/status
 ///

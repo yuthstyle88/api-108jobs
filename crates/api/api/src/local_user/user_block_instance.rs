@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::instance::{InstanceActions, InstanceBlockForm},
   traits::Blockable,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{SuccessResponse, UserBlockInstanceParams};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn user_block_instance(
   data: Json<UserBlockInstanceParams>,

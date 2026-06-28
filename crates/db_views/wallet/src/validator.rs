@@ -1,7 +1,7 @@
 //! Validation logic for wallet-related requests
 use crate::api::{SubmitWithdrawRequest, UpdateWallet, UpdateWalletRequest};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::newtypes::{BankAccountId, Coin, CurrencyId, WalletId};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that a wallet ID is positive
 pub fn validate_wallet_id(wallet_id: WalletId) -> FastJobResult<()> {

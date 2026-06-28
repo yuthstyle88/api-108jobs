@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{is_admin, purge_post_images},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     local_user::LocalUser,
@@ -14,7 +15,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::PurgePost;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_post(
   data: Json<PurgePost>,

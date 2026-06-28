@@ -3,8 +3,8 @@ use crate::{
   persistence::get_last_read,
 };
 use actix::{Context, Handler, ResponseFuture};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_views_chat::api::LastReadResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 impl Handler<GetLastRead> for PhoenixManager {
   type Result = ResponseFuture<FastJobResult<LastReadResponse>>;

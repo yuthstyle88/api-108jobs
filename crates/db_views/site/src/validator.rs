@@ -1,7 +1,7 @@
 //! Validation logic for site requests
 use crate::api::{AuthenticateWithOauth, AuthenticateWithOauthRequest};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::newtypes::OAuthProviderId;
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that OAuth code is not empty
 pub fn validate_oauth_code(code: &str) -> FastJobResult<()> {

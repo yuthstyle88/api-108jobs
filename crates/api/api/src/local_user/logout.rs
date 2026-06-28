@@ -3,10 +3,10 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{read_auth_token, AUTH_COOKIE_NAME},
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::source::login_token::LoginToken;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn logout(
   req: HttpRequest,

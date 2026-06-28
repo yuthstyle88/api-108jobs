@@ -13,6 +13,13 @@ use app_108jobs_api_utils::{
     slur_regex,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  utils::{
+    slurs::check_slurs,
+    validation::{is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_url},
+  },
+};
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::{
@@ -27,13 +34,6 @@ use app_108jobs_db_schema_file::enums::{PostKind, TripStatus};
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{CreatePost, CreatePostRequest, PostResponse};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::check_slurs,
-    validation::{is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_url},
-  },
-};
 
 pub async fn create_post(
   data: Json<CreatePostRequest>,

@@ -9,7 +9,7 @@ use std::{
 use url::Url;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_utils::error::{FastJobErrorType, FastJobResult},
+  app_108jobs_core::error::{FastJobErrorType, FastJobResult},
   diesel::{
     backend::Backend,
     deserialize::FromSql,

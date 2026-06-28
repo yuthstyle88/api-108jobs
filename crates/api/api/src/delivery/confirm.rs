@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::{context::FastJobContext, utils::verify_post_creator};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{newtypes::PostId, source::delivery_details::DeliveryDetails};
 use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::TripStatusEvent;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// POST /api/v4/deliveries/{postId}/confirm
 ///

@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::{
   api::{AdminListUsers, AdminListUsersResponse},
@@ -7,7 +8,6 @@ use app_108jobs_db_views_local_user::{
   LocalUserView,
 };
 use app_108jobs_db_views_person::PersonView;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn admin_list_users(
   query: Query<AdminListUsers>,

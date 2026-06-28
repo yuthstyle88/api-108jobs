@@ -3,13 +3,13 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{get_url_blocklist, is_admin, process_markdown, slur_regex},
 };
+use app_108jobs_core::error::FastJobError;
 use app_108jobs_db_schema::{
   source::tagline::{Tagline, TaglineInsertForm},
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{CreateTaglineRequest, TaglineResponse};
-use app_108jobs_utils::error::FastJobError;
 
 pub async fn create_tagline(
   data: Json<CreateTaglineRequest>,

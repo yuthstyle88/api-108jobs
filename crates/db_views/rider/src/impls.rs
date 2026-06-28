@@ -1,4 +1,5 @@
 use crate::RiderView;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{DecodedCursor, LocalUserId, PaginationCursor, RiderId},
   source::rider::{rider_keys as key, Rider},
@@ -6,7 +7,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, paginate, Commented, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{person, rider};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   self,
   query_builder::AsQuery,

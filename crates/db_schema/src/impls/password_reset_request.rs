@@ -3,8 +3,8 @@ use crate::{
   source::password_reset_request::{PasswordResetRequest, PasswordResetRequestForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::password_reset_request;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{insert_into, now, IntervalDsl},
@@ -56,7 +56,7 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

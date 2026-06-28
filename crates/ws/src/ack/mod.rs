@@ -4,9 +4,9 @@
 //! a `FastJobResult<()>` for the broker/actor to await or spawn.
 
 use crate::protocol::impls::AnyIncomingEvent;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::utils::DbPool; // use DbPool to match db_views function signature
 use app_108jobs_db_views_chat_pending_ack::{AckConfirmRequest, AckConfirmResponse};
-use app_108jobs_utils::error::FastJobResult;
 use uuid::Uuid;
 
 /// Handle AckConfirm/SyncPending/Unknown events from the client.

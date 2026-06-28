@@ -5,6 +5,10 @@ use app_108jobs_api_utils::{
   plugins::plugin_hook_after,
   utils::{check_category_deleted_removed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::validation::is_valid_body_field,
+};
 use app_108jobs_db_schema::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},
@@ -15,10 +19,6 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::validation::is_valid_body_field,
-};
 use chrono::Utc;
 
 pub async fn update_comment(

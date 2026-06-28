@@ -2,7 +2,7 @@ use crate::{
   newtypes::{CategoryId, DbUrl, PaginationCursor, PersonId},
   utils::{get_conn, uplete, DbPool},
 };
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };

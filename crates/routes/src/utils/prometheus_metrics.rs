@@ -1,7 +1,7 @@
 use actix_web::{web, App, HttpServer};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   settings::structs::PrometheusConfig,
 };

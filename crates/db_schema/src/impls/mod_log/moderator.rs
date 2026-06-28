@@ -39,6 +39,7 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{
   mod_add,
   mod_add_category,
@@ -52,7 +53,6 @@ use app_108jobs_db_schema_file::schema::{
   mod_remove_post,
   mod_transfer_category,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 

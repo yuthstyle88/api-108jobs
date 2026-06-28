@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::verify_post_creator};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::RiderId,
   source::{
@@ -17,7 +18,6 @@ use app_108jobs_db_views_rider::api::{
   RateRiderRequest,
   RateRiderResponse,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// POST /api/v4/rider/rate
 ///

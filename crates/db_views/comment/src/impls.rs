@@ -3,6 +3,7 @@ use crate::{
   CommentSlimView,
   CommentView,
 };
+use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, CommentId, InstanceId, PaginationCursor, PersonId, PostId},
@@ -41,7 +42,6 @@ use app_108jobs_db_schema_file::{
   },
   schema::{category, category_actions, comment, person, post},
 };
-use app_108jobs_utils::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,

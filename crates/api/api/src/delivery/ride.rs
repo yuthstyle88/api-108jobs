@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_fetch_limit, get_active_rider_by_person},
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::RideSessionId,
   source::{
@@ -38,7 +39,6 @@ use app_108jobs_db_views_rider::{
   },
   ride_session_view::{project_ride_session, RideViewer},
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
 
 /// POST /api/v4/rides/create

@@ -11,7 +11,7 @@ rust-version.workspace = true
 
 [features]
 full = [
-    "app_108jobs_utils",
+    "app_108jobs_core",
     "diesel",
     "diesel-async",
     "app_108jobs_db_schema/full",
@@ -24,7 +24,7 @@ ts-rs = ["dep:ts-rs", "app_108jobs_db_schema/ts-rs"]
 app_108jobs_db_schema = { workspace = true }
 app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_db_views_post = { workspace = true }
-app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_core = { workspace = true, optional = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
 serde = { workspace = true }

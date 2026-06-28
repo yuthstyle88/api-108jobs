@@ -1,4 +1,5 @@
 use crate::VoteView;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   aliases::creator_category_actions,
   newtypes::{CommentId, PaginationCursor, PersonId, PostId},
@@ -13,7 +14,6 @@ use app_108jobs_db_schema_file::schema::{
   post,
   post_actions,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,

@@ -1,5 +1,9 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  VERSION,
+};
 use app_108jobs_db_schema::{
   source::{
     actor_language::SiteLanguage,
@@ -15,10 +19,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::impls::PersonQuery;
 use app_108jobs_db_views_site::api::GetSiteResponse;
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  VERSION,
-};
 
 pub async fn leave_admin(
   context: Data<FastJobContext>,

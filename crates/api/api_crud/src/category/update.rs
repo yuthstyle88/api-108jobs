@@ -12,6 +12,10 @@ use app_108jobs_api_utils::{
     slur_regex,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::{slurs::check_slurs_opt, validation::is_valid_body_field},
+};
 use app_108jobs_db_schema::{
   source::{
     actor_language::{CategoryLanguage, SiteLanguage},
@@ -22,10 +26,6 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_category::api::{CategoryResponse, EditCategoryRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::{slurs::check_slurs_opt, validation::is_valid_body_field},
-};
 use chrono::Utc;
 
 pub async fn update_category(

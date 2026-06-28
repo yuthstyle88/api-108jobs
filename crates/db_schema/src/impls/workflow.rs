@@ -6,10 +6,10 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 #[cfg(feature = "full")]
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+#[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::workflow;
 use app_108jobs_db_schema_file::schema::workflow::dsl as wf;
-#[cfg(feature = "full")]
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
 use diesel::{ExpressionMethods, OptionalExtension};

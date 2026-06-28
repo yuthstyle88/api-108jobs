@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{build_response::build_post_response, context::FastJobContext};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     mod_log::moderator::{ModLockPost, ModLockPostForm},
@@ -9,7 +10,6 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::api::{LockPost, PostResponse};
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn lock_post(
   data: Json<LockPost>,

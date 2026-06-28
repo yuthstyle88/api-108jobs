@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     currency::{Currency, CurrencyInsertForm, CurrencyUpdateForm},
@@ -26,7 +27,6 @@ use app_108jobs_db_views_currency::{
   PricingConfigView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 
 // ============================================================================
@@ -72,7 +72,7 @@ pub async fn admin_create_currency(
 
   // Check if currency code already exists
   if let Some(_) = Currency::get_by_code(&mut context.pool(), &data.code).await? {
-    return Err(app_108jobs_utils::error::FastJobErrorType::CurrencyCodeAlreadyExists.into());
+    return Err(app_108jobs_core::error::FastJobErrorType::CurrencyCodeAlreadyExists.into());
   }
 
   let form = CurrencyInsertForm {

@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::newtypes::ChatRoomId;
 use app_108jobs_db_views_chat::{api::ChatRoomResponse, ChatRoomView};
-use app_108jobs_utils::error::FastJobResult;
 
 /// GET /api/v4/chat/rooms/{id}
 /// Returns the chat room along with its participants, last message (if any), and current workflow

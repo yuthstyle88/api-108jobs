@@ -2,6 +2,10 @@ use crate::{
   api::{Register, RegisterRequest},
   RegistrationApplicationView,
 };
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  utils::{random::rand_number5, validation::is_valid_email},
+};
 use app_108jobs_db_schema::{
   aliases,
   newtypes::{PaginationCursor, PersonId, RegistrationApplicationId},
@@ -11,10 +15,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, get_required_sensitive, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{local_user, person, registration_application};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  utils::{random::rand_number5, validation::is_valid_email},
-};
 use diesel::{
   dsl::count,
   ExpressionMethods,

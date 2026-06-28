@@ -4,6 +4,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_comment_deleted_or_removed, slur_regex},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::comment_report::{CommentReport, CommentReportForm},
   traits::Reportable,
@@ -14,7 +15,6 @@ use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, CreateCommentReportRequest},
   CommentReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 /// Creates a comment report and notifies the moderators of the category
 pub async fn create_comment_report(

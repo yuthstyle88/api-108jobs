@@ -3,8 +3,8 @@ use crate::{
   source::chat_unread::{ChatUnread, ChatUnreadUpsertForm},
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::chat_unread;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, now, update},

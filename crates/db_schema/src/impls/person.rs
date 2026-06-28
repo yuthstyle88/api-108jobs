@@ -13,16 +13,16 @@ use crate::{
   traits::{ApubActor, Blockable, Crud, Followable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
+use app_108jobs_core::{
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+};
 use app_108jobs_db_schema_file::schema::{
   instance,
   instance_actions,
   local_user,
   person,
   person_actions,
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
 };
 use chrono::Utc;
 use diesel::{
@@ -546,7 +546,7 @@ mod tests {
     traits::Followable,
     utils::{build_db_pool_for_tests, uplete},
   };
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

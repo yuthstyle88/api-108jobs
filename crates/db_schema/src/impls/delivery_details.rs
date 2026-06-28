@@ -19,11 +19,11 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::{
   enums::{PostKind, RiderVerificationStatus, TripStatus},
   schema::{delivery_details, local_user as local_user_tbl, post as post_tbl, rider as rider_tbl},
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, update},
@@ -402,7 +402,7 @@ impl DeliveryDetails {
           .await
           .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
 
-          Ok::<_, app_108jobs_utils::error::FastJobError>(updated_delivery)
+          Ok::<_, app_108jobs_core::error::FastJobError>(updated_delivery)
         }
         .scope_boxed()
       })
@@ -557,7 +557,7 @@ impl DeliveryDetails {
           .await
           .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
 
-          Ok::<_, app_108jobs_utils::error::FastJobError>(updated_delivery)
+          Ok::<_, app_108jobs_core::error::FastJobError>(updated_delivery)
         }
         .scope_boxed()
       })
@@ -636,7 +636,7 @@ impl DeliveryDetails {
           .await
           .with_fastjob_type(FastJobErrorType::CouldntUpdateDeliveryDetails)?;
 
-          Ok::<_, app_108jobs_utils::error::FastJobError>(updated)
+          Ok::<_, app_108jobs_core::error::FastJobError>(updated)
         }
         .scope_boxed()
       })

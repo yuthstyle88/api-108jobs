@@ -1,0 +1,28 @@
+[package]
+name = "app_108jobs_identity"
+version = "1.0.0-alpha.5"
+edition = "2021"
+publish = false
+
+[lib]
+name = "app_108jobs_identity"
+
+[lints]
+workspace = true
+
+[dependencies]
+app_108jobs_api_utils = { workspace = true, features = ["full"] }
+app_108jobs_core = { workspace = true }
+app_108jobs_db = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_email = { workspace = true }
+actix-web = { workspace = true }
+base64 = { workspace = true }
+bcrypt = { workspace = true }
+captcha = { workspace = true }
+chrono = { workspace = true }
+hound = { workspace = true }
+serde = { workspace = true }
+totp-rs = { workspace = true }
+tracing = { workspace = true }

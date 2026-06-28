@@ -1,0 +1,23 @@
+[package]
+name = "app_108jobs_workflow_handlers"
+version = "1.0.0-alpha.5"
+edition = "2021"
+publish = false
+
+[lib]
+name = "app_108jobs_workflow_handlers"
+
+[lints]
+workspace = true
+
+[dependencies]
+app_108jobs_api_utils = { workspace = true }
+app_108jobs_core = { workspace = true }
+app_108jobs_db = { workspace = true, features = ["full"] }
+app_108jobs_db_views_billing = { workspace = true }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_workflow = { workspace = true }
+actix-web = { workspace = true }
+chrono = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }

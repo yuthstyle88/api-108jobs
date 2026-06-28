@@ -1,4 +1,4 @@
-use super::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
+use crate::workflow_authz::{require_any_party, require_post_creator, require_role, WorkflowRole};
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
@@ -6,7 +6,7 @@ use app_108jobs_db::{
   enums::{BillingStatus, WorkFlowStatus},
   newtypes::ChatRoomId,
   source::{
-    billing::{Billing, WorkStep},
+    billing::Billing,
     chat_participant::ChatParticipant,
     job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm},
     post::Post,
@@ -65,53 +65,6 @@ async fn is_room_participant(
   Ok(parts.iter().any(|p| p.member_id == caller))
 }
 
-// Helper: update JobBudgetPlan.installments' status for a given workflow and seq
-async fn _update_job_plan_step_status(
-  pool: &mut app_108jobs_db::utils::DbPool<'_>,
-  workflow_id: app_108jobs_db::newtypes::WorkflowId,
-  seq_number: i16,
-  new_status: WorkFlowStatus,
-) -> FastJobResult<()> {
-  // Load workflow to get post_id (and authoritatve seq if needed)
-  let wf_row = Workflow::read(pool, workflow_id).await?;
-  let post_id = wf_row.post_id;
-  let target_seq = seq_number as i32;
-
-  // Load JobBudgetPlan by post_id
-  let plan = match JobBudgetPlan::get_by_post_id(pool, post_id).await? {
-    Some(p) => p,
-    None => return Err(FastJobErrorType::NotFound.into()),
-  };
-
-  // Parse installments -> Vec<WorkStep>
-  let mut steps: Vec<WorkStep> = serde_json::from_value(plan.installments.clone())
-    .map_err(|_| FastJobErrorType::InvalidInstallmentsJson)?;
-
-  // Update the matching step's status
-  let mut found = false;
-  for s in &mut steps {
-    if s.seq == target_seq {
-      s.status = new_status;
-      found = true;
-      break;
-    }
-  }
-  if !found {
-    // If not found, we won't fail hard; just return OK to avoid blocking WF progression
-    return Ok(());
-  }
-
-  let phases_json =
-    serde_json::to_value(&steps).map_err(|_| FastJobErrorType::InvalidInstallmentsSerialization)?;
-  let update = JobBudgetPlanUpdateForm {
-    installments: Some(phases_json),
-    updated_at: Some(Some(Utc::now())),
-    ..Default::default()
-  };
-  let _ = JobBudgetPlan::update(pool, plan.id, &update).await?;
-  Ok(())
-}
-
 // Escrow-based billing workflow handlers
 
 pub async fn create_quotation(
@@ -136,14 +89,15 @@ pub async fn create_quotation(
   {
     return Err(FastJobErrorType::NotFound.into());
   }
-  // Create the invoice/billing record with detailed quotation fields
+  // Create the invoice/billing record, advance workflow status, and link
+  // billing_id to the workflow — all in one atomic transaction inside the
+  // service call.
   let billing = WorkflowService::create_quotation(
     &mut context.pool(),
     local_user_view.local_user.id,
     validated,
   )
   .await?;
-  let _ = Workflow::update_billing(&mut context.pool(), workflow_id, billing.id).await?;
   Ok(Json(CreateInvoiceResponse {
     billing_id: billing.id,
     issuer_id: local_user_view.local_user.id,
@@ -175,6 +129,13 @@ pub async fn approve_quotation(
     billing.employer_id,
     billing.freelancer_id,
   )?;
+  // Cross-validate: the billing_id supplied by the caller must be the one
+  // linked to this workflow. Without this check a caller could submit an
+  // unrelated billing_id they own and race another employer's workflow.
+  let wf_row = Workflow::read(&mut context.pool(), form.workflow_id).await?;
+  if wf_row.billing_id != Some(form.billing_id) {
+    return Err(FastJobErrorType::NotFound.into());
+  }
   let wf = WorkflowService::load_quotation_pending(&mut context.pool(), form.workflow_id)
     .await?
     .approve_on(
@@ -242,6 +203,11 @@ pub async fn submit_work(
     billing.freelancer_id,
   )?;
 
+  // deliverable_url is required when submitting work — reject None up front.
+  let deliverable_url = form
+    .deliverable_url
+    .ok_or_else(|| FastJobErrorType::InvalidField("deliverable_url is required".to_string()))?;
+
   // Apply transition: InProgress -> PendingEmployerReview
   let wf = WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
     .await?
@@ -255,7 +221,7 @@ pub async fn submit_work(
     &WorkflowUpdateForm {
       deliverable_accepted: Some(false),
       deliverable_submitted_at: Some(Some(Utc::now())),
-      deliverable_url: Some(form.deliverable_url),
+      deliverable_url: Some(Some(deliverable_url)),
       updated_at: Some(Some(Utc::now())),
       ..Default::default()
     },
@@ -288,6 +254,13 @@ pub async fn approve_work(
     billing.employer_id,
     billing.freelancer_id,
   )?;
+  // Cross-validate: the billing_id supplied by the caller must be the one
+  // linked to this workflow. Prevents a caller from releasing escrow using
+  // a billing_id they own that belongs to a different workflow.
+  let wf_row = Workflow::read(&mut context.pool(), workflow_id).await?;
+  if wf_row.billing_id != Some(billing_id) {
+    return Err(FastJobErrorType::NotFound.into());
+  }
   let coin_id = context.get_coin_id().await?;
   let platform_wallet_id = context.get_platform_wallet_id().await?;
 
@@ -439,8 +412,10 @@ pub async fn cancel_job(
   // Perform cancellation (allowed for any non-finalized status)
   let _ =
     WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
-  // Refund any reserved/outstanding funds back to payer (idempotent inside service)
-  let _ = WorkflowService::refund_on_cancel(&mut context.pool(), form.workflow_id).await;
+  // Refund any reserved/outstanding funds back to payer (idempotent inside service).
+  // Propagate errors: a failed refund must surface to the caller rather than being
+  // silently swallowed, so the employer is not left with locked funds.
+  WorkflowService::refund_on_cancel(&mut context.pool(), form.workflow_id).await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: form.workflow_id.into(),
@@ -469,7 +444,9 @@ pub async fn get_billing_by_room(
       if b.freelancer_id == pid || b.employer_id == pid {
         Ok(Json(b))
       } else {
-        Err(FastJobErrorType::NotAllowed.into())
+        // Return NotFound (not NotAllowed) to avoid revealing billing existence
+        // to non-parties — matches the policy in workflow_authz.rs line 9.
+        Err(FastJobErrorType::NotFound.into())
       }
     }
     None => Err(FastJobErrorType::NotFound.into()),

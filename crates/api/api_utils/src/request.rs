@@ -185,12 +185,6 @@ async fn collect_bytes_until_limit(
 }
 
 /// Generates and saves a post thumbnail and metadata.
-///
-/// Takes a callback to generate a send activity task, so that post can be federated with metadata.
-///
-/// TODO: `federated_thumbnail` param can be removed once we federate full metadata and can
-///       write it to db directly, without calling this function.
-///       https://github.com/app_108jobsNet/app_108jobs/issues/4598
 pub async fn generate_post_link_metadata(
   post: Post,
   custom_thumbnail: Option<Url>,

@@ -1,15 +1,16 @@
+pub mod create;
+pub mod delete;
+pub mod read;
+pub mod remove;
+pub mod update;
+
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::source::post::Post;
 use app_108jobs_db_views_local_user::LocalUserView;
 use chrono::{DateTime, TimeZone, Utc};
 
-pub mod create;
-pub mod delete;
-pub mod read;
-pub mod remove;
-pub mod update;
-async fn convert_published_time(
+pub async fn convert_published_time(
   scheduled_publish_time: Option<i64>,
   local_user_view: &LocalUserView,
   context: &FastJobContext,

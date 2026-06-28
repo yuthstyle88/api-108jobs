@@ -10,7 +10,6 @@ pub mod chat;
 pub mod comment;
 pub mod delivery;
 pub mod local_user;
-pub mod post;
 pub mod reports;
 pub mod search;
 pub mod site;

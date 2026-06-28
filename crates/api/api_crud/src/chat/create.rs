@@ -29,7 +29,7 @@ pub async fn create_chat_room(
     partner_person_id,
     room_id,
     post_id,
-    current_comment_id,
+    current_proposal_id,
     room_name,
   } = req;
 
@@ -53,7 +53,7 @@ pub async fn create_chat_room(
       created_at: Utc::now(),
       updated_at: None,
       post_id: post_id.clone(),
-      current_comment_id: current_comment_id.clone(),
+      current_proposal_id: current_proposal_id.clone(),
     };
     let _ = ChatRoom::create(&mut pool, &form).await?;
   } else {
@@ -62,11 +62,11 @@ pub async fn create_chat_room(
       room_name: room_name.clone().into(),
       updated_at: Some(Utc::now()),
       post_id: post_id.clone().map(Some),
-      current_comment_id: current_comment_id.clone().map(Some),
+      current_proposal_id: current_proposal_id.clone().map(Some),
       ..Default::default()
     };
     // Only call update if at least one optional is provided
-    if upd.room_name.is_some() || upd.post_id.is_some() || upd.current_comment_id.is_some() {
+    if upd.room_name.is_some() || upd.post_id.is_some() || upd.current_proposal_id.is_some() {
       let _ = ChatRoom::update(&mut pool, room_id.clone(), &upd).await?;
     }
   }

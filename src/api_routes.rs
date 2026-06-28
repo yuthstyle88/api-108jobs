@@ -373,16 +373,16 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/{sessionId}/status", put().to(update_ride_status))
             .route("/{sessionId}/cancel", post().to(cancel_ride_session)),
         )
-        // Comment
+        // Proposal
         .service(
-          // Handle POST to /comment separately to add the comment() rate limiter
-          resource("/comment")
+          // Handle POST to /proposal separately to add the comment() rate limiter
+          resource("/proposal")
             .guard(guard::Post())
             // .wrap(rate_limit.comment())
             .route(post().to(create_comment)),
         )
         .service(
-          scope("/comment")
+          scope("/proposal")
             .route("", get().to(get_comment))
             .route("", put().to(update_comment))
             .route("/delete", post().to(delete_comment))
@@ -463,7 +463,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .service(
               scope("/mention")
                 .route(
-                  "/comment/mark-as-read",
+                  "/proposal/mark-as-read",
                   post().to(mark_comment_mention_as_read),
                 )
                 .route("/post/mark-as-read", post().to(mark_post_mention_as_read)),
@@ -562,7 +562,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
               scope("/purge")
                 .route("/person", post().to(purge_person))
                 .route("/post", post().to(purge_post))
-                .route("/comment", post().to(purge_comment)),
+                .route("/proposal", post().to(purge_comment)),
             )
             .service(
               scope("/tagline")

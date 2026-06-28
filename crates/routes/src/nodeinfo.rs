@@ -63,7 +63,7 @@ async fn node_info(context: web::Data<FastJobContext>) -> Result<HttpResponse, E
         active_month: Some(site_view.local_site.users_active_month),
       }),
       local_posts: Some(site_view.local_site.posts),
-      local_comments: Some(site_view.local_site.comments),
+      local_comments: Some(site_view.local_site.proposals),
     }),
     open_registrations,
     services: Some(NodeInfoServices {

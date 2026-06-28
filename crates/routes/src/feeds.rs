@@ -388,25 +388,25 @@ fn create_reply_and_mention_items(
   let reply_items: Vec<Item> = inbox
     .iter()
     .map(|r| match r {
-      InboxCombinedView::CommentReply(v) => {
+      InboxCombinedView::ProposalReply(v) => {
         let domain = context.settings().get_protocol_and_hostname();
-        let reply_url = format!("{domain}/comment/{}", v.comment.id);
+        let reply_url = format!("{domain}/comment/{}", v.proposal.id);
         build_item(
           &v.creator,
-          &v.comment.published_at,
+          &v.proposal.published_at,
           &reply_url,
-          &v.comment.content,
+          &v.proposal.content,
           context.settings(),
         )
       }
-      InboxCombinedView::CommentMention(v) => {
+      InboxCombinedView::ProposalMention(v) => {
         let domain = context.settings().get_protocol_and_hostname();
-        let mention_url = format!("{domain}/comment/{}", v.comment.id);
+        let mention_url = format!("{domain}/comment/{}", v.proposal.id);
         build_item(
           &v.creator,
-          &v.comment.published_at,
+          &v.proposal.published_at,
           &mention_url,
-          &v.comment.content,
+          &v.proposal.content,
           context.settings(),
         )
       }
@@ -472,12 +472,12 @@ fn create_modlog_items(
         &v.admin_block_instance.reason,
         settings,
       ),
-      ModlogCombinedView::AdminPurgeComment(v) => build_modlog_item(
+      ModlogCombinedView::AdminPurgeProposal(v) => build_modlog_item(
         &v.admin,
-        &v.admin_purge_comment.published_at,
+        &v.admin_purge_proposal.published_at,
         &modlog_url,
         "Admin purged comment",
-        &v.admin_purge_comment.reason,
+        &v.admin_purge_proposal.reason,
         settings,
       ),
       ModlogCombinedView::AdminPurgeCategory(v) => build_modlog_item(
@@ -597,16 +597,16 @@ fn create_modlog_items(
         &v.mod_lock_post.reason,
         settings,
       ),
-      ModlogCombinedView::ModRemoveComment(v) => build_modlog_item(
+      ModlogCombinedView::ModRemoveProposal(v) => build_modlog_item(
         &v.moderator,
-        &v.mod_remove_comment.published_at,
+        &v.mod_remove_proposal.published_at,
         &modlog_url,
         &format!(
           "{} comment {}",
-          removed_restored_str(v.mod_remove_comment.removed),
-          &v.comment.content
+          removed_restored_str(v.mod_remove_proposal.removed),
+          &v.proposal.content
         ),
-        &v.mod_remove_comment.reason,
+        &v.mod_remove_proposal.reason,
         settings,
       ),
       ModlogCombinedView::ModRemoveCategory(v) => build_modlog_item(
@@ -765,7 +765,7 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
       category_display,
       p.post.score,
       post_url,
-      p.post.comments
+      p.post.proposals
     );
 
     // If its a url post, add it to the description

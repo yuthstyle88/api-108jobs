@@ -1,9 +1,9 @@
 use crate::{
   CategoryView,
-  CommentView,
   LocalUserView,
   PersonView,
   PostView,
+  ProposalView,
   SearchCombinedView,
   SearchCombinedViewInternal,
   SearchPostView,
@@ -435,7 +435,7 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     if let (Some(proposal), Some(creator), Some(post)) =
       (v.proposal, v.item_creator.clone(), v.post.clone())
     {
-      Some(SearchCombinedView::Proposal(CommentView {
+      Some(SearchCombinedView::Proposal(ProposalView {
         proposal,
         post,
         category: v.category,

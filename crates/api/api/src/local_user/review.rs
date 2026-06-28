@@ -25,7 +25,7 @@ pub async fn submit_user_review(
   let reviewee_id = validated.0.reviewee_id;
   let workflow_id = validated.0.workflow_id;
   let rating = validated.0.rating;
-  let comment = validated.0.comment;
+  let comment = validated.0.proposal;
 
   // Ensure the workflow exists
   if !Workflow::exists(&mut context.pool(), workflow_id).await? {

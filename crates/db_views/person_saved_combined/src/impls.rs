@@ -1,9 +1,9 @@
 use crate::{
-  CommentView,
   LocalUserView,
   PersonSavedCombinedView,
   PersonSavedCombinedViewInternal,
   PostView,
+  ProposalView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
@@ -216,7 +216,7 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
     let v = self;
 
     if let Some(proposal) = v.proposal {
-      Some(PersonSavedCombinedView::Proposal(CommentView {
+      Some(PersonSavedCombinedView::Proposal(ProposalView {
         proposal,
         post: v.post,
         category: Some(v.category),

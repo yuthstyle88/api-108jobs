@@ -2,15 +2,15 @@ use crate::context::FastJobContext;
 use actix_web::web::Json;
 use app_108jobs_core::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use app_108jobs_db::{
-  newtypes::{CategoryId, CommentId, InstanceId, PostId},
+  newtypes::{CategoryId, InstanceId, PostId, ProposalId},
   source::{
     actor_language::CategoryLanguage,
     category::Category,
-    comment::Comment,
     person::Person,
-    person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
     person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+    person_proposal_mention::{PersonProposalMention, PersonProposalMentionInsertForm},
     post::Post,
+    proposal::Proposal,
   },
   traits::Crud,
 };
@@ -19,30 +19,30 @@ use app_108jobs_db_views_category::{
   CategoryNodeView,
   CategoryView,
 };
-use app_108jobs_db_views_comment::{api::CommentResponse, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
   api::PostResponse,
   logistics::{self, LogisticsViewer},
   PostView,
 };
+use app_108jobs_db_views_proposal::{api::ProposalResponse, ProposalView};
 use std::collections::{HashMap, HashSet};
 
-pub async fn build_comment_response(
+pub async fn build_proposal_response(
   context: &FastJobContext,
-  comment_id: CommentId,
+  proposal_id: ProposalId,
   local_user_view: Option<LocalUserView>,
   local_instance_id: InstanceId,
-) -> FastJobResult<CommentResponse> {
+) -> FastJobResult<ProposalResponse> {
   let local_user = local_user_view.map(|l| l.local_user);
-  let comment_view = CommentView::read(
+  let proposal_view = ProposalView::read(
     &mut context.pool(),
-    comment_id,
+    proposal_id,
     local_user.as_ref(),
     local_instance_id,
   )
   .await?;
-  Ok(CommentResponse { comment_view })
+  Ok(ProposalResponse { proposal_view })
 }
 
 pub async fn build_category_response(
@@ -153,26 +153,26 @@ pub fn build_category_tree(
   }))
 }
 
-/// Scans the post/comment content for mentions, then sends notifications via db and multilang
+/// Scans the post/proposal content for mentions, then sends notifications via db and multilang
 /// to mentioned users and parent creator.
 pub async fn send_local_notifs(
   post: &Post,
-  comment_opt: Option<&Comment>,
+  proposal_opt: Option<&Proposal>,
   person: &Person,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
-  send_local_mentions(post, comment_opt, person, context).await?;
+  send_local_mentions(post, proposal_opt, person, context).await?;
 
   Ok(())
 }
 async fn send_local_mentions(
   post: &Post,
-  comment_opt: Option<&Comment>,
+  proposal_opt: Option<&Proposal>,
   person: &Person,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
-  let content = if let Some(comment) = comment_opt {
-    &comment.content
+  let content = if let Some(proposal) = proposal_opt {
+    &proposal.content
   } else {
     &post.body.clone().unwrap_or_default()
   };
@@ -186,28 +186,28 @@ async fn send_local_mentions(
       continue;
     };
 
-    let _ = insert_post_or_comment_mention(&user_view, post, comment_opt, context).await?;
+    let _ = insert_post_or_proposal_mention(&user_view, post, proposal_opt, context).await?;
   }
   Ok(())
 }
 
-/// Make the correct reply form depending on whether its a post or comment mention
-async fn insert_post_or_comment_mention(
+/// Make the correct reply form depending on whether its a post or proposal mention
+async fn insert_post_or_proposal_mention(
   mention_user_view: &LocalUserView,
   post: &Post,
-  comment_opt: Option<&Comment>,
+  proposal_opt: Option<&Proposal>,
   context: &FastJobContext,
 ) -> FastJobResult<()> {
-  if let Some(comment) = &comment_opt {
-    let person_comment_mention_form = PersonCommentMentionInsertForm {
+  if let Some(proposal) = &proposal_opt {
+    let person_proposal_mention_form = PersonProposalMentionInsertForm {
       recipient_id: mention_user_view.person.id,
-      comment_id: comment.id,
+      comment_id: proposal.id,
       read: None,
     };
 
-    // Allow this to fail softly, since comment edits might re-update or replace it
+    // Allow this to fail softly, since proposal edits might re-update or replace it
     // Let the uniqueness handle this fail
-    PersonCommentMention::create(&mut context.pool(), &person_comment_mention_form)
+    PersonProposalMention::create(&mut context.pool(), &person_proposal_mention_form)
       .await
       .ok();
   } else {

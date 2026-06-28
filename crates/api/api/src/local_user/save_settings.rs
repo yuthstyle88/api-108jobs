@@ -127,7 +127,7 @@ pub async fn save_user_settings(
   let default_post_sort_type = data.default_post_sort_type;
   let default_post_time_range_seconds =
     diesel_opt_number_update(data.default_post_time_range_seconds);
-  let default_comment_sort_type = data.default_comment_sort_type;
+  let default_proposal_sort_type = data.default_proposal_sort_type;
   let portfolio_pics_json =
     serde_json::to_value(&data.portfolio_pics).unwrap_or_else(|_| json!([]));
   let work_samples_json = serde_json::to_value(&data.work_samples).unwrap_or_else(|_| json!([]));
@@ -182,7 +182,7 @@ pub async fn save_user_settings(
     show_bot_accounts: data.show_bot_accounts,
     default_post_sort_type,
     default_post_time_range_seconds,
-    default_comment_sort_type,
+    default_proposal_sort_type,
     default_listing_type,
     theme: data.theme.clone(),
     interface_language: data.interface_language.clone(),
@@ -191,7 +191,7 @@ pub async fn save_user_settings(
     post_listing_mode: data.post_listing_mode,
     enable_keyboard_navigation: data.enable_keyboard_navigation,
     enable_animated_images: data.enable_animated_images,
-    collapse_bot_comments: data.collapse_bot_comments,
+    collapse_bot_proposals: data.collapse_bot_proposals,
     auto_mark_fetched_posts_as_read: data.auto_mark_fetched_posts_as_read,
     hide_media: data.hide_media,
     // Update the vote display modes

@@ -1,5 +1,5 @@
 use app_108jobs_db::{
-  enums::{CommentSortType, ListingType, PostSortType},
+  enums::{ListingType, PostSortType, ProposalSortType},
   newtypes::CategoryId,
   source::{local_site::LocalSite, local_user::LocalUser},
 };
@@ -38,16 +38,16 @@ pub fn post_sort_type_with_default(
   )
 }
 
-/// Returns a default instance-level comment sort type, if none is given by the user.
+/// Returns a default instance-level proposal sort type, if none is given by the user.
 /// Order is type, local user default, then site default.
-pub fn comment_sort_type_with_default(
-  type_: Option<CommentSortType>,
+pub fn proposal_sort_type_with_default(
+  type_: Option<ProposalSortType>,
   local_user: Option<&LocalUser>,
   local_site: &LocalSite,
-) -> CommentSortType {
+) -> ProposalSortType {
   type_.unwrap_or(
     local_user
-      .map(|u| u.default_comment_sort_type)
-      .unwrap_or(local_site.default_comment_sort_type),
+      .map(|u| u.default_proposal_sort_type)
+      .unwrap_or(local_site.default_proposal_sort_type),
   )
 }

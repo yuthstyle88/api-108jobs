@@ -1,7 +1,6 @@
 pub mod account;
 pub mod bank_account;
 pub mod category;
-pub mod comment;
 pub mod custom_emoji;
 pub mod error;
 pub mod inbox;
@@ -12,6 +11,7 @@ pub mod oauth;
 pub mod person;
 pub mod plugin;
 pub mod post;
+pub mod proposal;
 pub mod report;
 pub mod search;
 pub mod site;

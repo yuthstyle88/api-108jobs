@@ -14,7 +14,7 @@ use app_108jobs_db::{
   PersonContentType,
 };
 use app_108jobs_db_views_post::PostView;
-use app_108jobs_db_views_proposal::CommentView;
+use app_108jobs_db_views_proposal::ProposalView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -107,7 +107,7 @@ pub(crate) struct PersonContentCombinedViewInternal {
 #[serde(tag = "type_")]
 pub enum PersonContentCombinedView {
   Post(PostView),
-  Proposal(CommentView),
+  Proposal(ProposalView),
 }
 
 #[skip_serializing_none]

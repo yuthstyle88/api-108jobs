@@ -17,7 +17,7 @@ use app_108jobs_db::{
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_person::PersonView;
 use app_108jobs_db_views_post::{logistics::PostLogisticsView, PostView};
-use app_108jobs_db_views_proposal::CommentView;
+use app_108jobs_db_views_proposal::ProposalView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -130,7 +130,7 @@ pub struct SearchPostView {
 #[serde(tag = "type_")]
 pub enum SearchCombinedView {
   Post(SearchPostView),
-  Proposal(CommentView),
+  Proposal(ProposalView),
   Category(CategoryView),
   Person(PersonView),
 }

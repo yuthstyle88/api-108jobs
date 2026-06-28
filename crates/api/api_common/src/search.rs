@@ -1,5 +1,5 @@
 pub use app_108jobs_db::{
-  enums::{CommentSortType, ListingType, PostSortType},
+  enums::{ListingType, PostSortType, ProposalSortType},
   newtypes::{PaginationCursor, SearchCombinedId},
   source::combined::search::SearchCombined,
   CategorySortType,

@@ -37,7 +37,7 @@ pub mod validator;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A proposal view.
 #[serde(rename_all = "camelCase")]
-pub struct CommentView {
+pub struct ProposalView {
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = comment_select_remove_deletes()
@@ -104,7 +104,7 @@ pub struct CommentView {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// A slimmer proposal view, without the post, or category.
 #[serde(rename_all = "camelCase")]
-pub struct CommentSlimView {
+pub struct ProposalSlimView {
   pub proposal: Proposal,
   pub creator: Person,
   pub proposal_actions: Option<ProposalActions>,

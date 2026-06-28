@@ -1,4 +1,4 @@
-use crate::{CommentSlimView, CommentView};
+use crate::{ProposalSlimView, ProposalView};
 use app_108jobs_db::{
   enums::{ListingType, ProposalSortType},
   newtypes::{CategoryId, LanguageId, PaginationCursor, PostId, ProposalId},
@@ -13,8 +13,8 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// A proposal response.
-pub struct CommentResponse {
-  pub comment_view: CommentView,
+pub struct ProposalResponse {
+  pub proposal_view: ProposalView,
 }
 
 #[skip_serializing_none]
@@ -133,7 +133,7 @@ pub struct GetComments {
 #[serde(rename_all = "camelCase")]
 /// The proposal list response.
 pub struct GetCommentsResponse {
-  pub proposals: Vec<CommentView>,
+  pub proposals: Vec<ProposalView>,
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
 }
@@ -144,7 +144,7 @@ pub struct GetCommentsResponse {
 #[serde(rename_all = "camelCase")]
 /// A slimmer proposal list response, without the post or category.
 pub struct GetCommentsSlimResponse {
-  pub proposals: Vec<CommentSlimView>,
+  pub proposals: Vec<ProposalSlimView>,
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
 }

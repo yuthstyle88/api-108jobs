@@ -1,7 +1,7 @@
 use crate::{
   api::{CreateComment, CreateCommentRequest},
-  CommentSlimView,
-  CommentView,
+  ProposalSlimView,
+  ProposalView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
@@ -52,7 +52,7 @@ use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
 
-impl PaginationCursorBuilder for CommentView {
+impl PaginationCursorBuilder for ProposalView {
   type CursorData = Proposal;
   fn to_cursor(&self) -> PaginationCursor {
     PaginationCursor::new_single('C', self.proposal.id.0)
@@ -67,7 +67,7 @@ impl PaginationCursorBuilder for CommentView {
   }
 }
 
-impl CommentView {
+impl ProposalView {
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
     let category_join = category::table.on(category::id.nullable().eq(post::category_id));
@@ -132,8 +132,8 @@ impl CommentView {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub fn map_to_slim(self) -> CommentSlimView {
-    CommentSlimView {
+  pub fn map_to_slim(self) -> ProposalSlimView {
+    ProposalSlimView {
       proposal: self.proposal,
       creator: self.creator,
       proposal_actions: self.proposal_actions,
@@ -160,7 +160,7 @@ impl TryFrom<CreateCommentRequest> for CreateComment {
   }
 }
 #[derive(Default)]
-pub struct CommentQuery<'a> {
+pub struct ProposalQuery<'a> {
   pub listing_type: Option<ListingType>,
   pub sort: Option<ProposalSortType>,
   pub time_range_seconds: Option<i32>,
@@ -174,14 +174,14 @@ pub struct CommentQuery<'a> {
   pub limit: Option<i64>,
 }
 
-impl CommentQuery<'_> {
-  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommentView>> {
+impl ProposalQuery<'_> {
+  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<ProposalView>> {
     let conn = &mut get_conn(pool).await?;
     let o = self;
 
     // Public query - no user-based filtering, only basic joins
-    let mut query = CommentView::joins(None, site.instance_id)
-      .select(CommentView::as_select())
+    let mut query = ProposalView::joins(None, site.instance_id)
+      .select(ProposalView::as_select())
       .into_boxed();
 
     // Filter out deleted and removed comments
@@ -225,7 +225,7 @@ impl CommentQuery<'_> {
       Top => pq.then_order_by(key::score),
     };
 
-    let res = pq.load::<CommentView>(conn).await?;
+    let res = pq.load::<ProposalView>(conn).await?;
 
     Ok(res)
   }

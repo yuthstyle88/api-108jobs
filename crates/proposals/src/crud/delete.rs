@@ -2,14 +2,14 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_category_deleted_removed};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
-  source::comment::{Comment, CommentUpdateForm},
+  source::proposal::{Proposal, ProposalUpdateForm},
   traits::Crud,
 };
-use app_108jobs_db_views_comment::{
-  api::{DeleteComment, DeleteCommentRequest},
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{DeleteComment, DeleteCommentRequest},
+  ProposalView,
+};
 
 pub async fn delete_comment(
   data: Json<DeleteCommentRequest>,
@@ -18,7 +18,7 @@ pub async fn delete_comment(
 ) -> FastJobResult<Json<DeleteComment>> {
   let comment_id = data.comment_id;
   let local_instance_id = local_user_view.person.instance_id;
-  let orig_comment = CommentView::read(
+  let orig_comment = ProposalView::read(
     &mut context.pool(),
     comment_id,
     Some(&local_user_view.local_user),
@@ -27,7 +27,7 @@ pub async fn delete_comment(
   .await?;
 
   // Dont delete it if its already been deleted.
-  if orig_comment.comment.deleted == data.deleted {
+  if orig_comment.proposal.deleted == data.deleted {
     Err(FastJobErrorType::CouldntUpdateComment)?
   }
 
@@ -45,10 +45,10 @@ pub async fn delete_comment(
 
   // Do the delete
   let deleted = data.deleted;
-  Comment::update(
+  Proposal::update(
     &mut context.pool(),
     comment_id,
-    &CommentUpdateForm {
+    &ProposalUpdateForm {
       deleted: Some(deleted),
       ..Default::default()
     },

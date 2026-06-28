@@ -22,7 +22,6 @@ ts-rs = { workspace = true, optional = true }
 ts-rs = [
     "dep:ts-rs",
     "app_108jobs_db/ts-rs",
-    "app_108jobs_db/ts-rs",
 ]
 
 [dev-dependencies]

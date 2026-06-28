@@ -37,6 +37,7 @@ full = [
     "tuplex",
     "moka",
     "diesel-derive-enum",
+    "dep:diesel_migrations",
 ]
 ts-rs = [
     "dep:ts-rs",
@@ -61,7 +62,7 @@ diesel-async = { workspace = true, features = [
     "deadpool",
     "postgres",
 ], optional = true }
-diesel_migrations = { workspace = true }
+diesel_migrations = { workspace = true, optional = true }
 regex = { workspace = true, optional = true }
 diesel_ltree = { workspace = true, optional = true }
 tracing = { workspace = true }

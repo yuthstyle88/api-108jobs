@@ -23,12 +23,10 @@ full = [
     "diesel-async",
     "i-love-jesus",
     "app_108jobs_db/full",
-    "app_108jobs_db/full",
     "app_108jobs_db_views_person/full",
 ]
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db/ts-rs",
     "app_108jobs_db/ts-rs",
     "app_108jobs_db_views_person/ts-rs",
 ]

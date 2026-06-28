@@ -22,7 +22,6 @@ full = [
   "diesel-async",
   "actix-web",
   "app_108jobs_db/full",
-  "app_108jobs_db/full",
   "i-love-jesus",
 ]
 ts-rs = ["dep:ts-rs", "app_108jobs_db/ts-rs"]

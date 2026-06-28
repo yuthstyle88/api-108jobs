@@ -23,12 +23,10 @@ full = [
   "diesel_ltree",
   "i-love-jesus",
   "app_108jobs_db/full",
-  "app_108jobs_db/full",
   "app_108jobs_db_views_vote/full",
 ]
 ts-rs = [
   "dep:ts-rs",
-  "app_108jobs_db/ts-rs",
   "app_108jobs_db/ts-rs",
   "app_108jobs_db_views_vote/ts-rs",
 ]

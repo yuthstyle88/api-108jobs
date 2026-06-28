@@ -1,4 +1,4 @@
-#[cfg(test)]
+#[cfg(all(test, feature = "full"))]
 #[path = "diff_check.rs"]
 mod diff_check;
 use anyhow::{anyhow, Context};

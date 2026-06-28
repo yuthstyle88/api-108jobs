@@ -16,12 +16,10 @@ full = [
     "diesel-async",
     "i-love-jesus",
     "app_108jobs_db/full",
-    "app_108jobs_db/full",
 ]
 
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db/ts-rs",
     "app_108jobs_db/ts-rs",
 ]
 

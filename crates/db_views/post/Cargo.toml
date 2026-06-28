@@ -22,7 +22,6 @@ full = [
     "diesel-async",
     "i-love-jesus",
     "app_108jobs_db/full",
-    "app_108jobs_db/full",
     "app_108jobs_db_views_category/full",
     "app_108jobs_db_views_vote/full",
     "app_108jobs_db_views_rider/full",
@@ -30,7 +29,6 @@ full = [
 ]
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db/ts-rs",
     "app_108jobs_db/ts-rs",
     "app_108jobs_db_views_category/ts-rs",
     "app_108jobs_db_views_vote/ts-rs",

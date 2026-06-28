@@ -21,7 +21,6 @@ full = [
   "diesel",
   "diesel-async",
   "app_108jobs_db/full",
-  "app_108jobs_db/full",
 ]
 
 [dependencies]

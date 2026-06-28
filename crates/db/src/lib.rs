@@ -11,6 +11,7 @@ pub mod enums;
 pub mod schema;
 
 // Migration runner (from db_schema_setup):
+#[cfg(feature = "full")]
 pub mod migrations;
 
 #[cfg(feature = "full")]

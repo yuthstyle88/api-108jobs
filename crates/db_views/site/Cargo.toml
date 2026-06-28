@@ -21,7 +21,6 @@ full = [
     "diesel",
     "diesel-async",
     "app_108jobs_db/full",
-    "app_108jobs_db/full",
     "app_108jobs_db_views_person/full",
     "app_108jobs_db_views_post/full",
     "extism",
@@ -30,7 +29,6 @@ full = [
 ]
 ts-rs = [
     "dep:ts-rs",
-    "app_108jobs_db/ts-rs",
     "app_108jobs_db/ts-rs",
     "app_108jobs_db_views_local_user/ts-rs",
     "app_108jobs_db_views_person/ts-rs",

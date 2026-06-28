@@ -22,7 +22,6 @@ full = [
   "diesel-async",
   "i-love-jesus",
   "app_108jobs_db/full",
-  "app_108jobs_db/full",
   "app_108jobs_db_views_comment/full",
   "app_108jobs_db_views_post/full",
 ]

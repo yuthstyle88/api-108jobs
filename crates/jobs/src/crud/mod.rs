@@ -10,7 +10,7 @@ use app_108jobs_db::source::post::Post;
 use app_108jobs_db_views_local_user::LocalUserView;
 use chrono::{DateTime, TimeZone, Utc};
 
-pub async fn convert_published_time(
+pub(crate) async fn convert_published_time(
   scheduled_publish_time: Option<i64>,
   local_user_view: &LocalUserView,
   context: &FastJobContext,

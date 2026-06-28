@@ -1,8 +1,14 @@
 [package]
 name = "app_108jobs_workflow_handlers"
-version = "1.0.0-alpha.5"
-edition = "2021"
 publish = false
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 
 [lib]
 name = "app_108jobs_workflow_handlers"

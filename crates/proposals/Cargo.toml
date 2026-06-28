@@ -18,6 +18,10 @@ doctest = false
 [lints]
 workspace = true
 
+[features]
+default = []
+full = []
+
 [dependencies]
 app_108jobs_db_views_comment = { workspace = true, features = ["full"] }
 app_108jobs_db_views_post = { workspace = true, features = ["full"] }

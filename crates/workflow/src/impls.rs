@@ -15,6 +15,7 @@ use app_108jobs_db::{
 use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
+use tracing;
 
 /// Deterministic idempotency key for the "approve quotation -> reserve escrow"
 /// step. Stable across retries so a duplicate request collides on the
@@ -209,7 +210,9 @@ async fn set_status_from(
 async fn cancel_any_on(
   pool: &mut DbPool<'_>,
   workflow_id: WorkflowId,
-  current_status: WorkFlowStatus,
+  // The caller-supplied status is kept as a parameter so call sites compile,
+  // but C7 mandates using the DB-read value for the audit trail.
+  _current_status: WorkFlowStatus,
 ) -> FastJobResult<()> {
   let conn = &mut get_conn(pool).await?;
   conn
@@ -226,10 +229,13 @@ async fn cancel_any_on(
           return Err(FastJobErrorType::WorkflowAlreadyFinalized.into());
         }
 
+        // C7: Use the DB-read status (cur.status) for the audit trail, NOT
+        // the caller-supplied `current_status`. This prevents a caller from
+        // injecting an arbitrary status into the audit record.
         let form = WorkflowUpdateForm {
           status: Some(WorkFlowStatus::Cancelled),
           updated_at: Some(Some(Utc::now())),
-          status_before_cancel: Some(Some(current_status)),
+          status_before_cancel: Some(Some(cur.status)),
           ..Default::default()
         };
         let _ = Workflow::update(&mut conn.into(), workflow_id, &form)
@@ -478,6 +484,17 @@ impl QuotationPendingReviewTS {
     conn
       .run_transaction(|tx| {
         async move {
+          // C5: Re-read the workflow inside the transaction to validate that
+          // the caller-supplied billing_id is still the one linked to this
+          // workflow. This closes a TOCTOU window between the pre-read in the
+          // handler and the actual escrow movement here.
+          let cur_wf = Workflow::read(&mut tx.into(), workflow_id)
+            .await
+            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          if cur_wf.billing_id != Some(billing_id) {
+            return Err(FastJobErrorType::NotFound.into());
+          }
+
           // 1) Pre-flight existence check on the ledger. If already Active, treat as a successful
           //    idempotent re-call (no second debit).
           if WalletHold::find_active_for_billing(tx, billing_id)
@@ -558,13 +575,24 @@ impl OrderApprovedTS {
 }
 
 impl InProgressTS {
-  pub async fn submit_work_on(self, pool: &mut DbPool<'_>) -> FastJobResult<WorkSubmittedTS> {
+  pub async fn submit_work_on(
+    self,
+    pool: &mut DbPool<'_>,
+    deliverable_url: String,
+  ) -> FastJobResult<WorkSubmittedTS> {
+    // Write the status transition AND the deliverable fields in one atomic
+    // transaction so a crash between the two writes cannot leave the workflow
+    // in an inconsistent state (status advanced but deliverable_url missing).
     set_status_from(
       pool,
       self.data.workflow_id,
       WorkFlowStatus::InProgress,
       WorkFlowStatus::PendingEmployerReview,
-      |_c, _f| {},
+      move |_c, f| {
+        f.deliverable_url = Some(Some(deliverable_url));
+        f.deliverable_submitted_at = Some(Some(Utc::now()));
+        f.deliverable_accepted = Some(false);
+      },
     )
     .await?;
 
@@ -622,6 +650,16 @@ impl WorkSubmittedTS {
     conn
       .run_transaction(|tx| {
         async move {
+          // C5: Re-read the workflow inside the transaction to validate that
+          // the caller-supplied billing_id is still the one linked to this
+          // workflow, closing a TOCTOU window.
+          let cur_wf = Workflow::read(&mut tx.into(), workflow_id)
+            .await
+            .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+          if cur_wf.billing_id != Some(billing_id) {
+            return Err(FastJobErrorType::NotFound.into());
+          }
+
           // 1) Locate the active hold for this billing. We DO require one to exist — releasing
           //    money without a prior hold would mean someone called approve_work without a previous
           //    approve.
@@ -719,6 +757,57 @@ impl WorkflowService {
   ) -> FastJobResult<()> {
     cancel_any_on(pool, workflow_id, current_status).await
   }
+
+  /// Cancel a workflow and atomically refund any escrow hold in one logical
+  /// operation. If the refund step fails after cancellation has committed,
+  /// this function attempts to restore the workflow status to `current_status`
+  /// (best-effort compensation) before returning the refund error. Callers
+  /// should prefer this over calling `cancel` + `refund_on_cancel` separately.
+  pub async fn cancel_and_refund(
+    pool: &mut DbPool<'_>,
+    workflow_id: WorkflowId,
+    current_status: WorkFlowStatus,
+  ) -> FastJobResult<()> {
+    // Step 1: cancel (writes workflow status + billing status in one txn).
+    cancel_any_on(pool, workflow_id, current_status).await?;
+
+    // Step 2: refund escrow hold. If this fails, attempt to restore workflow
+    // status to its pre-cancel value (best-effort compensation) so the system
+    // is not left with a Cancelled workflow but unreleased escrow funds.
+    match Self::refund_on_cancel(pool, workflow_id).await {
+      Ok(()) => Ok(()),
+      Err(refund_err) => {
+        // Best-effort: try to restore the workflow status to its pre-cancel
+        // value. If this also fails, log the restoration failure but return
+        // the original refund error so the caller sees the root cause.
+        let restore_form = WorkflowUpdateForm {
+          status: Some(current_status),
+          updated_at: Some(Some(Utc::now())),
+          status_before_cancel: Some(None),
+          ..Default::default()
+        };
+        if let Err(restore_err) = Workflow::update(pool, workflow_id, &restore_form).await {
+          tracing::error!(
+            workflow_id = %workflow_id.0,
+            refund_err = %refund_err,
+            restore_err = %restore_err,
+            "cancel_and_refund: refund failed AND status restoration failed — \
+             workflow is Cancelled but escrow hold is NOT released. \
+             Manual intervention required."
+          );
+        } else {
+          tracing::warn!(
+            workflow_id = %workflow_id.0,
+            refund_err = %refund_err,
+            "cancel_and_refund: refund failed; workflow status restored to {:?}. \
+             Retry the cancel operation.",
+            current_status
+          );
+        }
+        Err(refund_err)
+      }
+    }
+  }
   /// Refund the employer when a workflow is cancelled. Looks up the active
   /// hold ledger entry for the billing rather than the (always-zero, in this
   /// architecture) `wallet.balance_outstanding` on the employer's wallet.
@@ -809,6 +898,23 @@ impl WorkflowService {
           WalletModel::refund_from_platform_on_conn(tx, &tx_form).await?;
 
           let _ = WalletHold::transition_from_active(tx, hold.id, HoldStatus::Released).await?;
+
+          // C6: Update billing status to Canceled so the audit trail reflects
+          // that the escrow was fully released on cancellation, not left in
+          // the ambiguous OrderApproved state.
+          Billing::update(
+            &mut tx.into(),
+            billing_id,
+            &BillingUpdateForm {
+              status: Some(BillingStatus::Canceled),
+              work_description: None,
+              deliverable_url: None,
+              updated_at: Some(Utc::now()),
+              paid_at: None,
+            },
+          )
+          .await?;
+
           Ok(())
         }
         .scope_boxed()
@@ -824,6 +930,18 @@ impl WorkflowService {
     let data = form.0.clone();
     let workflow_id = data.workflow_id;
 
+    // Idempotency guard: if billing_id is already set, this quotation was
+    // already created — return the existing billing without re-inserting.
+    let wf = Workflow::read(pool, workflow_id)
+      .await
+      .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+    if let Some(existing_billing_id) = wf.billing_id {
+      let billing = Billing::read(pool, existing_billing_id)
+        .await
+        .with_fastjob_type(FastJobErrorType::DatabaseError)?;
+      return Ok(billing);
+    }
+
     let insert_billing = BillingInsertForm {
       freelancer_id,
       employer_id: data.employer_id,
@@ -836,7 +954,10 @@ impl WorkflowService {
       } else {
         data.proposal.clone()
       },
-      status: Some(data.status),
+      // Always force QuotePendingReview regardless of what the caller sent.
+      // A quotation must start in the pending state; callers cannot inject
+      // a different status (e.g. OrderApproved) at creation time.
+      status: Some(BillingStatus::QuotePendingReview),
       work_description: None,
       deliverable_url: None,
       created_at: Some(Utc::now()),

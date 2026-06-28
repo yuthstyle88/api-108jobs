@@ -295,6 +295,8 @@ app_108jobs_db = { workspace = true }
 app_108jobs_api_utils = { workspace = true }
 app_108jobs_routes = { workspace = true }
 app_108jobs_ws = { workspace = true }
+app_108jobs_jobs = { workspace = true }
+app_108jobs_proposals = { workspace = true }
 actix-web = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }

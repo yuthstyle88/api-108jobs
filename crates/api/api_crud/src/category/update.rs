@@ -3,7 +3,6 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   build_response::build_category_response,
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{
     check_category_deleted_removed,
     check_self_promotion_allowed,
@@ -86,12 +85,7 @@ pub async fn update_category(
   };
 
   let category_id = data.category_id;
-  let category = Category::update(&mut context.pool(), category_id, &category_form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::UpdateCategory(local_user_view.person.clone(), category),
-    &context,
-  )?;
+  Category::update(&mut context.pool(), category_id, &category_form).await?;
 
   build_category_response(&context, local_user_view, category_id).await
 }

@@ -1,7 +1,0 @@
-{
-  "actor": "http://enterprise.app_108jobs.ml/u/app_108jobs_beta",
-  "to": ["http://enterprise.app_108jobs.ml/u/app_108jobs_beta"],
-  "object": "http://enterprise.app_108jobs.ml/private_message/1",
-  "type": "Delete",
-  "id": "http://enterprise.app_108jobs.ml/activities/delete/041d9858-5eef-4ad9-84ae-7455b4d87ed9"
-}

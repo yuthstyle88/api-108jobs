@@ -85,16 +85,6 @@ pub struct CmdArgs {
   /// activity sending.
   #[arg(long, default_value_t = false, env = "app_108jobs_DISABLE_HTTP_SERVER")]
   disable_http_server: bool,
-  /// Disable sending outgoing ActivityPub messages.
-  ///
-  /// Only pass this for horizontally scaled setups.
-  /// See https://join-app_108jobs.org/docs/administration/horizontal_scaling.html for details.
-  #[arg(
-    long,
-    default_value_t = false,
-    env = "app_108jobs_DISABLE_ACTIVITY_SENDING"
-  )]
-  disable_activity_sending: bool,
   #[command(subcommand)]
   subcommand: Option<CmdSubcommand>,
 }

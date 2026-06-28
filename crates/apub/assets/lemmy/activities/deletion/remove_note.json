@@ -1,9 +1,0 @@
-{
-  "actor": "http://enterprise.app_108jobs.ml/u/app_108jobs_beta",
-  "to": ["https://www.w3.org/ns/activitystreams#Public"],
-  "object": "http://ds9.app_108jobs.ml/comment/1",
-  "cc": ["http://enterprise.app_108jobs.ml/c/main"],
-  "type": "Delete",
-  "summary": "bad comment",
-  "id": "http://enterprise.app_108jobs.ml/activities/delete/42ca1a79-f99e-4518-a2ca-ba2df221eb5e"
-}

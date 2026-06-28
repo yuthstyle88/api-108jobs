@@ -1,9 +1,0 @@
-{
-  "actor": "http://enterprise.app_108jobs.ml/u/app_108jobs_beta",
-  "to": ["https://www.w3.org/ns/activitystreams#Public"],
-  "object": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
-  "cc": ["http://enterprise.app_108jobs.ml/c/main"],
-  "type": "Remove",
-  "target": "http://enterprise.app_108jobs.ml/c/main/moderators",
-  "id": "http://enterprise.app_108jobs.ml/activities/remove/aab114f8-cfbd-4935-a5b7-e1a64603650d"
-}

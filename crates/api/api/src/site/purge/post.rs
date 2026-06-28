@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{is_admin, purge_post_images},
 };
 use app_108jobs_db_schema::{
@@ -49,16 +48,6 @@ pub async fn purge_post(
     };
     AdminPurgePost::create(&mut context.pool(), &form).await?;
   }
-
-  ActivityChannel::submit_activity(
-    SendActivityData::RemovePost {
-      post,
-      moderator: local_user_view.person.clone(),
-      reason: data.reason.clone(),
-      removed: true,
-    },
-    &context,
-  )?;
 
   Ok(Json(SuccessResponse::default()))
 }

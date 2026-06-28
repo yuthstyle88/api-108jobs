@@ -1,8 +1,4 @@
-use crate::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::proxy_image_link,
-};
+use crate::{context::FastJobContext, utils::proxy_image_link};
 use actix_web::web::Data;
 use app_108jobs_db_schema::{
   source::{
@@ -189,16 +185,9 @@ async fn collect_bytes_until_limit(
 }
 
 /// Generates and saves a post thumbnail and metadata.
-///
-/// Takes a callback to generate a send activity task, so that post can be federated with metadata.
-///
-/// TODO: `federated_thumbnail` param can be removed once we federate full metadata and can
-///       write it to db directly, without calling this function.
-///       https://github.com/app_108jobsNet/app_108jobs/issues/4598
 pub async fn generate_post_link_metadata(
   post: Post,
   custom_thumbnail: Option<Url>,
-  send_activity: impl FnOnce(Post) -> Option<SendActivityData> + Send + 'static,
   context: Data<FastJobContext>,
 ) -> FastJobResult<()> {
   let metadata = match &post.url {
@@ -259,10 +248,7 @@ pub async fn generate_post_link_metadata(
     url_content_type: Some(metadata.content_type),
     ..Default::default()
   };
-  let updated_post = Post::update(&mut context.pool(), post.id, &form).await?;
-  if let Some(send_activity) = send_activity(updated_post) {
-    ActivityChannel::submit_activity(send_activity, &context)?;
-  }
+  Post::update(&mut context.pool(), post.id, &form).await?;
   Ok(())
 }
 

@@ -1,12 +1,11 @@
 use super::comment_sort_type_with_default;
-use crate::{api::listing_type_with_default, fetcher::resolve_ap_identifier};
+use crate::api::listing_type_with_default;
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
-use app_108jobs_apub_objects::objects::category::ApubCategory;
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{category::Category, comment::Comment},
-  traits::{Crud, PaginationCursorBuilder},
+  traits::{ApubActor, Crud, PaginationCursorBuilder},
 };
 use app_108jobs_db_views_comment::{
   api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},
@@ -14,7 +13,7 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,
@@ -32,7 +31,12 @@ async fn list_comments_common(
   check_private_instance(&local_user_view, &site_view.local_site)?;
 
   let category_id = if let Some(name) = &data.category_name {
-    Some(resolve_ap_identifier::<ApubCategory, Category>(name, &context, true).await?).map(|c| c.id)
+    Some(
+      Category::read_from_name(&mut context.pool(), name, true)
+        .await?
+        .ok_or(FastJobErrorType::NotFound)?
+        .id,
+    )
   } else {
     data.category_id
   };

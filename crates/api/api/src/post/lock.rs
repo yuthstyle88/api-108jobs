@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  build_response::build_post_response,
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-};
+use app_108jobs_api_utils::{build_response::build_post_response, context::FastJobContext};
 use app_108jobs_db_schema::{
   source::{
     mod_log::moderator::{ModLockPost, ModLockPostForm},
@@ -23,7 +19,7 @@ pub async fn lock_post(
   // Update the post
   let post_id = data.post_id;
   let locked = data.locked;
-  let post = Post::update(
+  Post::update(
     &mut context.pool(),
     post_id,
     &PostUpdateForm {
@@ -41,16 +37,6 @@ pub async fn lock_post(
     reason: data.reason.clone(),
   };
   ModLockPost::create(&mut context.pool(), &form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::LockPost(
-      post,
-      local_user_view.person.clone(),
-      data.locked,
-      data.reason.clone(),
-    ),
-    &context,
-  )?;
 
   build_post_response(&context, local_user_view, post_id).await
 }

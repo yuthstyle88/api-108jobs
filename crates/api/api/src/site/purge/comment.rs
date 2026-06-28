@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::is_admin,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_db_schema::{
   source::{
     comment::Comment,
@@ -15,7 +11,7 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_comment::{api::PurgeComment, CommentView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_comment(
   data: Json<PurgeComment>,
@@ -58,16 +54,6 @@ pub async fn purge_comment(
     post_id,
   };
   AdminPurgeComment::create(&mut context.pool(), &form).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::RemoveComment {
-      comment: comment_view.comment,
-      moderator: local_user_view.person.clone(),
-      category: comment_view.category.ok_or(FastJobErrorType::NotFound)?,
-      reason: data.reason.clone(),
-    },
-    &context,
-  )?;
 
   Ok(Json(SuccessResponse::default()))
 }

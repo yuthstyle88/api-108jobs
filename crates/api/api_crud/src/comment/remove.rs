@@ -1,9 +1,5 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  build_response::build_comment_response,
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-};
+use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
 use app_108jobs_db_schema::{
   source::{
     comment::{Comment, CommentUpdateForm},
@@ -78,16 +74,6 @@ pub async fn remove_comment(
   ModRemoveComment::create(&mut context.pool(), &form).await?;
 
   let updated_comment_id = updated_comment.id;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::RemoveComment {
-      comment: updated_comment,
-      moderator: local_user_view.person.clone(),
-      category: orig_comment.category.ok_or(FastJobErrorType::NotFound)?,
-      reason: data.reason.clone(),
-    },
-    &context,
-  )?;
 
   Ok(Json(
     build_comment_response(

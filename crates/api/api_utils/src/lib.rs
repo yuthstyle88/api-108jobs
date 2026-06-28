@@ -4,7 +4,6 @@ pub mod context;
 pub mod geolocation;
 pub mod plugins;
 pub mod request;
-pub mod send_activity;
 pub mod site_snapshot;
 pub mod tags;
 pub mod utils;

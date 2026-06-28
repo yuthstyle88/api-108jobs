@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{is_admin, purge_user_account},
 };
 use app_108jobs_db_schema::{
@@ -9,7 +8,6 @@ use app_108jobs_db_schema::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,
     mod_log::admin::{AdminPurgePerson, AdminPurgePersonForm},
-    person::Person,
   },
   traits::{Bannable, Crud},
 };
@@ -35,20 +33,6 @@ pub async fn purge_person(
     vec![data.person_id],
   )
   .await?;
-
-  let person = Person::read(&mut context.pool(), data.person_id).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::BanFromSite {
-      moderator: local_user_view.person.clone(),
-      banned_user: person,
-      reason: data.reason.clone(),
-      remove_or_restore_data: Some(true),
-      ban: true,
-      expires_at: None,
-    },
-    &context,
-  )?;
 
   // Clear profile data.
   purge_user_account(data.person_id, local_instance_id, &context).await?;

@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
 use app_108jobs_db_schema::{
@@ -70,18 +69,6 @@ pub async fn ban_from_site(
     false,
   )
   .await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::BanFromSite {
-      moderator: local_user_view.person,
-      banned_user: person_view.person.clone(),
-      reason: data.reason.clone(),
-      remove_or_restore_data: data.remove_or_restore_data,
-      ban: data.ban,
-      expires_at: data.expires_at,
-    },
-    &context,
-  )?;
 
   Ok(Json(BanPersonResponse {
     person_view,

@@ -1,20 +1,12 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{
-  context::FastJobContext,
-  send_activity::{ActivityChannel, SendActivityData},
-  utils::is_admin,
-};
-use app_108jobs_db_schema::{
-  source::{category_report::CategoryReport, site::Site},
-  traits::Reportable,
-};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_db_schema::{source::category_report::CategoryReport, traits::Reportable};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_reports::{
   api::{CategoryReportResponse, ResolveCategoryReport},
   CategoryReportView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
-use either::Either;
+use app_108jobs_utils::error::FastJobResult;
 
 pub async fn resolve_category_report(
   data: Json<ResolveCategoryReport>,
@@ -33,20 +25,6 @@ pub async fn resolve_category_report(
 
   let category_report_view =
     CategoryReportView::read(&mut context.pool(), report_id, person_id).await?;
-  let category = category_report_view
-    .category
-    .as_ref()
-    .ok_or(FastJobErrorType::NotFound)?;
-  let site = Site::read_from_instance_id(&mut context.pool(), category.instance_id).await?;
-
-  ActivityChannel::submit_activity(
-    SendActivityData::SendResolveReport {
-      actor: local_user_view.person,
-      report_creator: category_report_view.creator.clone(),
-      receiver: Either::Left(site),
-    },
-    &context,
-  )?;
 
   Ok(Json(CategoryReportResponse {
     category_report_view,

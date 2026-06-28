@@ -162,3 +162,327 @@ mod bank {
     assert!(j.get("country_id").is_none(), "snake_case key leaked");
   }
 }
+
+/// Shared person fixture JSON used by post and comment tests.
+/// Fields included: all required (non-Option, non-#[serde(skip)]) fields of Person.
+/// Person has rename_all = "camelCase" so all keys here are camelCase.
+#[cfg(test)]
+fn person_fixture() -> serde_json::Value {
+  serde_json::json!({
+    "id": 1,
+    "name": "testuser",
+    "publishedAt": "2026-01-01T00:00:00Z",
+    "apId": "https://example.com/u/testuser",
+    "local": true,
+    "deleted": false,
+    "botAccount": false,
+    "instanceId": 1,
+    "postCount": 0,
+    "commentCount": 0,
+    "walletId": 1,
+    "available": true,
+    "isSecureMessage": false
+  })
+}
+
+/// Shared post fixture JSON used by post and comment tests.
+/// Fields included: all required (non-Option, non-#[serde(skip)]) fields of Post.
+/// Post has rename_all = "camelCase".
+#[cfg(test)]
+fn post_fixture() -> serde_json::Value {
+  serde_json::json!({
+    "id": 1,
+    "name": "Test Job",
+    "creatorId": 1,
+    "removed": false,
+    "locked": false,
+    "publishedAt": "2026-01-01T00:00:00Z",
+    "deleted": false,
+    "selfPromotion": false,
+    "apId": "https://example.com/post/1",
+    "local": true,
+    "languageId": 0,
+    "featuredCategory": false,
+    "featuredLocal": false,
+    "comments": 0,
+    "score": 0,
+    "upvotes": 0,
+    "downvotes": 0,
+    "newestCommentTimeAt": "2026-01-01T00:00:00Z",
+    "reportCount": 0,
+    "unresolvedReportCount": 0,
+    "intendedUse": "Business",
+    "jobType": "Freelance",
+    "budget": 0,
+    "isEnglishRequired": false,
+    "postKind": "Normal",
+    "pending": false
+  })
+}
+
+#[cfg(test)]
+mod post {
+  use super::{person_fixture, post_fixture};
+  use app_108jobs_db_views_post::{api::GetPostResponse, PostView};
+
+  #[test]
+  fn post_get_post_response_wraps_post_view() {
+    // Flutter JobsApi.getJobDetail reads: response["postView"]
+    // GetPostResponse has rename_all = "camelCase"; field post_view → "postView"
+    let post_view: PostView = serde_json::from_value(serde_json::json!({
+      "post": post_fixture(),
+      "creator": person_fixture(),
+      "creatorIsAdmin": false,
+      "tags": [],
+      "canMod": false,
+      "creatorBanned": false,
+      "creatorIsModerator": false,
+      "creatorBannedFromCategory": false
+    }))
+    .expect("PostView fixture parse failed");
+
+    let resp = GetPostResponse {
+      post_view,
+      category_view: None,
+      cross_posts: vec![],
+      logistics: None,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("postView").is_some(),
+      "postView key missing — Flutter JobsApi.getJobDetail breaks"
+    );
+    assert!(j.get("post_view").is_none(), "snake_case key leaked");
+  }
+
+  #[test]
+  fn post_view_has_nested_post_and_creator() {
+    // Flutter PostView reads: post.id, post.name, post.creatorId, creator.id, creator.name
+    // PostView has rename_all = "camelCase"; nested Post and Person each have their own rename_all
+    let pv: PostView = serde_json::from_value(serde_json::json!({
+      "post": post_fixture(),
+      "creator": person_fixture(),
+      "creatorIsAdmin": false,
+      "tags": [],
+      "canMod": false,
+      "creatorBanned": false,
+      "creatorIsModerator": false,
+      "creatorBannedFromCategory": false
+    }))
+    .expect("PostView fixture parse failed");
+
+    let j = serde_json::to_value(&pv).expect("serialise");
+    let post = j.get("post").expect("post key missing");
+    let creator = j.get("creator").expect("creator key missing");
+
+    // post keys (camelCase from Post.rename_all)
+    assert!(post.get("id").is_some(), "post.id missing");
+    assert!(post.get("name").is_some(), "post.name missing");
+    assert!(
+      post.get("creatorId").is_some(),
+      "post.creatorId missing — Flutter breaks"
+    );
+    assert!(
+      post.get("budget").is_some(),
+      "post.budget missing — 108Jobs field"
+    );
+    assert!(
+      post.get("postKind").is_some(),
+      "post.postKind missing — 108Jobs field"
+    );
+
+    // creator keys (camelCase from Person.rename_all)
+    assert!(creator.get("id").is_some(), "creator.id missing");
+    assert!(creator.get("name").is_some(), "creator.name missing");
+    assert!(
+      creator.get("walletId").is_some(),
+      "creator.walletId missing — 108Jobs field"
+    );
+    assert!(
+      creator.get("available").is_some(),
+      "creator.available missing — 108Jobs field"
+    );
+  }
+}
+
+#[cfg(test)]
+mod comment {
+  use super::{person_fixture, post_fixture};
+  use app_108jobs_db_views_comment::{
+    api::{CommentResponse, GetCommentsResponse},
+    CommentView,
+  };
+
+  fn comment_fixture() -> serde_json::Value {
+    // Comment has rename_all = "camelCase".
+    // Required non-Option non-serde(skip) fields:
+    // id, creatorId, postId, content, removed, publishedAt, deleted, apId, local,
+    // path, distinguished, languageId, score, upvotes, downvotes, childCount,
+    // reportCount, unresolvedReportCount, pending.
+    // hot_rank and controversy_rank have #[serde(skip)] — excluded.
+    serde_json::json!({
+      "id": 1,
+      "creatorId": 1,
+      "postId": 1,
+      "content": "I can do this job for 5000 coins",
+      "removed": false,
+      "publishedAt": "2026-01-01T00:00:00Z",
+      "deleted": false,
+      "apId": "https://example.com/comment/1",
+      "local": true,
+      "path": "0.1",
+      "distinguished": false,
+      "languageId": 0,
+      "score": 0,
+      "upvotes": 0,
+      "downvotes": 0,
+      "childCount": 0,
+      "reportCount": 0,
+      "unresolvedReportCount": 0,
+      "pending": false
+    })
+  }
+
+  fn comment_view_fixture() -> serde_json::Value {
+    // CommentView has rename_all = "camelCase".
+    // Required non-Option fields: comment, creator, post, creatorIsAdmin, postTags, canMod,
+    // creatorBanned, creatorIsModerator, creatorBannedFromCategory.
+    serde_json::json!({
+      "comment": comment_fixture(),
+      "creator": person_fixture(),
+      "post": post_fixture(),
+      "creatorIsAdmin": false,
+      "postTags": [],
+      "canMod": false,
+      "creatorBanned": false,
+      "creatorIsModerator": false,
+      "creatorBannedFromCategory": false
+    })
+  }
+
+  #[test]
+  fn comment_response_wraps_comment_view() {
+    // Flutter ProposalApi.create reads: response["comment_view"] OR response["commentView"]
+    // CommentResponse has rename_all = "camelCase"; field comment_view → "commentView"
+    // Flutter accepts both keys (it tries camelCase first, falls back to snake_case).
+    // We test that "commentView" (camelCase) is the actual serialised key.
+    let cv: CommentView =
+      serde_json::from_value(comment_view_fixture()).expect("CommentView fixture parse failed");
+    let resp = CommentResponse { comment_view: cv };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("commentView").is_some(),
+      "commentView key missing — Flutter ProposalApi.create breaks"
+    );
+  }
+
+  #[test]
+  fn comment_get_comments_response_has_comments_array() {
+    // Flutter ProposalApi.listProposals reads: response["comments"]
+    // GetCommentsResponse has rename_all = "camelCase"; field comments stays "comments"
+    let cv: CommentView =
+      serde_json::from_value(comment_view_fixture()).expect("CommentView fixture parse failed");
+    let resp = GetCommentsResponse {
+      comments: vec![cv],
+      next_page: None,
+      prev_page: None,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+    assert!(
+      j.get("comments").is_some(),
+      "comments key missing — Flutter ProposalApi.listProposals breaks"
+    );
+    let arr = j["comments"].as_array().expect("comments must be array");
+    assert_eq!(arr.len(), 1);
+    // Each item must have comment, creator, post keys
+    assert!(
+      arr[0].get("comment").is_some(),
+      "comment nested object missing"
+    );
+    assert!(
+      arr[0].get("creator").is_some(),
+      "creator nested object missing"
+    );
+  }
+}
+
+#[cfg(test)]
+mod category {
+  use app_108jobs_db_views_category::{api::ListCategoriesResponse, CategoryView};
+
+  fn category_fixture() -> serde_json::Value {
+    // Category has rename_all = "camelCase".
+    // Required non-Option non-serde(skip) fields:
+    // id, name, title, removed, publishedAt, deleted, selfPromotion, apId, local,
+    // postingRestrictedToMods, instanceId, visibility, subscribers, posts, comments,
+    // usersActiveDay, usersActiveWeek, usersActiveMonth, usersActiveHalfYear,
+    // subscribersLocal, reportCount, unresolvedReportCount, localRemoved, active, isNew.
+    // path is cfg(feature="full") non-Option Ltree — included as dot-separated string.
+    // last_refreshed_at, followers_url, inbox_url, moderators_url, featured_url,
+    // hot_rank, random_number, interactions_month have #[serde(skip)] — excluded.
+    serde_json::json!({
+      "id": 1,
+      "name": "freelance",
+      "title": "Freelance",
+      "removed": false,
+      "publishedAt": "2026-01-01T00:00:00Z",
+      "deleted": false,
+      "selfPromotion": false,
+      "apId": "https://example.com/c/freelance",
+      "local": true,
+      "postingRestrictedToMods": false,
+      "instanceId": 1,
+      "visibility": "Public",
+      "subscribers": 0,
+      "posts": 0,
+      "comments": 0,
+      "usersActiveDay": 0,
+      "usersActiveWeek": 0,
+      "usersActiveMonth": 0,
+      "usersActiveHalfYear": 0,
+      "subscribersLocal": 0,
+      "reportCount": 0,
+      "unresolvedReportCount": 0,
+      "localRemoved": false,
+      "active": true,
+      "isNew": false,
+      "path": "0.1"
+    })
+  }
+
+  #[test]
+  fn category_list_response_double_nested() {
+    // Flutter CategoryApi.list reads: response["categories"][i]["category"]
+    // This is the Lemmy double-nesting: ListCategoriesResponse.categories is Vec<CategoryView>
+    // and CategoryView has a `category: Category` field.
+    // ListCategoriesResponse has rename_all = "camelCase"; "categories" stays "categories".
+    // CategoryView.category → "category" key inside each array element.
+    let cv: CategoryView = serde_json::from_value(serde_json::json!({
+      "category": category_fixture(),
+      "canMod": false,
+      "postTags": []
+    }))
+    .expect("CategoryView fixture parse failed");
+
+    let resp = ListCategoriesResponse {
+      categories: vec![cv],
+      next_page: None,
+      prev_page: None,
+    };
+    let j = serde_json::to_value(&resp).expect("serialise");
+
+    let cats = j
+      .get("categories")
+      .expect("categories key missing — Flutter CategoryApi breaks");
+    let arr = cats.as_array().expect("categories must be array");
+    assert!(!arr.is_empty());
+    assert!(
+      arr[0].get("category").is_some(),
+      "category double-nesting missing — Flutter CategoryApi.list breaks"
+    );
+    assert!(
+      arr[0]["category"].get("name").is_some(),
+      "category.name missing"
+    );
+  }
+}

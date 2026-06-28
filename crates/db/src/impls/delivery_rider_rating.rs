@@ -1,5 +1,6 @@
 use crate::{
   newtypes::{DeliveryRiderRatingId, PersonId, PostId, RiderId},
+  schema::delivery_rider_rating,
   source::delivery_rider_rating::{
     DeliveryRiderRating,
     DeliveryRiderRatingInsertForm,
@@ -9,7 +10,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::delivery_rider_rating;
 use chrono::Utc;
 use diesel::{dsl::insert_into, ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::RunQueryDsl;

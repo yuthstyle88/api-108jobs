@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{PaginationCursor, TaglineId},
+  schema::tagline,
   source::tagline::{tagline_keys as key, Tagline, TaglineInsertForm, TaglineUpdateForm},
   traits::Crud,
   utils::{functions::random, get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::tagline;
 use diesel::{insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

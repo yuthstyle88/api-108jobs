@@ -21,7 +21,7 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorType, FastJobResult},
   redis::RedisClient,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_message::ChatMessageInsertForm, chat_room::ChatRoom, last_read::LastRead},
   utils::{ActualDbPool, DbPool},

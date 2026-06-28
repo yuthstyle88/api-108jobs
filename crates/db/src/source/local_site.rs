@@ -1,13 +1,9 @@
-use crate::newtypes::{CoinId, LocalSiteId, SiteId};
-use crate::enums::{
-  CommentSortType,
-  ListingType,
-  PostListingMode,
-  PostSortType,
-  RegistrationMode,
-};
 #[cfg(feature = "full")]
 use crate::schema::local_site;
+use crate::{
+  enums::{CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode},
+  newtypes::{CoinId, LocalSiteId, SiteId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

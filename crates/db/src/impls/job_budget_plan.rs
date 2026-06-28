@@ -1,5 +1,9 @@
 use crate::newtypes::PostId;
 #[cfg(feature = "full")]
+use crate::schema::job_budget_plan;
+#[cfg(feature = "full")]
+use crate::schema::job_budget_plan::dsl as jbp;
+#[cfg(feature = "full")]
 use crate::{
   newtypes::JobBudgetPlanId,
   source::job_budget_plan::{JobBudgetPlan, JobBudgetPlanInsertForm, JobBudgetPlanUpdateForm},
@@ -8,10 +12,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::job_budget_plan;
-#[cfg(feature = "full")]
-use crate::schema::job_budget_plan::dsl as jbp;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
 use diesel::{ExpressionMethods, OptionalExtension};

@@ -8,12 +8,12 @@ use app_108jobs_core::{
   utils::validation::password_length_check,
   CacheLock,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   impls::local_user::UserBackupLists,
+  schema::{instance, local_site, local_site_rate_limit, site},
   sensitive::SensitiveString,
   utils::{get_conn, get_required_sensitive, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{instance, local_site, local_site_rate_limit, site};
 use app_108jobs_db_views_local_user::LocalUserView;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;

@@ -1,3 +1,5 @@
+#[cfg(feature = "full")]
+use crate::schema::top_up_requests;
 use crate::{
   newtypes::TopUpRequestId,
   source::top_up_request::{TopUpRequest, TopUpRequestInsertForm, TopUpRequestUpdateForm},
@@ -9,8 +11,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::top_up_requests;
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
@@ -129,7 +129,9 @@ impl TopUpRequest {
 mod tests {
   use super::*;
   use crate::{
+    enums::TopUpStatus,
     newtypes::{Coin, LocalUserId},
+    schema::local_user,
     source::{
       currency::Currency,
       instance::Instance,
@@ -138,7 +140,6 @@ mod tests {
     test_data::pool_for_tests,
     utils::get_conn,
   };
-  use crate::{enums::TopUpStatus, schema::local_user};
   use chrono::{Duration, Utc};
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

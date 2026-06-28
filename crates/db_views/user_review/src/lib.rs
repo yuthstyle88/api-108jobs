@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{person::Person, user_review::UserReview, workflow::Workflow};
+use app_108jobs_db::source::{person::Person, user_review::UserReview, workflow::Workflow};
 use diesel::{Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 

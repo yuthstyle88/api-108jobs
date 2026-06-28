@@ -5,7 +5,7 @@ use app_108jobs_core::{
   redis::RedisClient,
   settings::{structs::Settings, SETTINGS},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::secret::Secret,
   utils::{ActualDbPool, DbPool},
 };
@@ -105,7 +105,7 @@ impl FastJobContext {
 
   /// Get the coin_id from site configuration.
   /// Returns error if coin_id is not set.
-  pub async fn get_coin_id(&self) -> FastJobResult<app_108jobs_db_schema::newtypes::CoinId> {
+  pub async fn get_coin_id(&self) -> FastJobResult<app_108jobs_db::newtypes::CoinId> {
     let site_view = self.site_config().get().await?.site_view;
     site_view
       .local_site
@@ -115,9 +115,7 @@ impl FastJobContext {
 
   /// Get the platform wallet ID from the first admin.
   /// Returns error if no admin is configured.
-  pub async fn get_platform_wallet_id(
-    &self,
-  ) -> FastJobResult<app_108jobs_db_schema::newtypes::WalletId> {
+  pub async fn get_platform_wallet_id(&self) -> FastJobResult<app_108jobs_db::newtypes::WalletId> {
     match self.site_config().get().await?.admins.first() {
       Some(a) => Ok(a.person.wallet_id),
       None => Err(app_108jobs_core::error::FastJobErrorType::NoPlatformAdminConfigured.into()),

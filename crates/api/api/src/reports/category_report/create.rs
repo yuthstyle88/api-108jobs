@@ -2,7 +2,7 @@ use crate::check_report_reason;
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::slur_regex};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     category::Category,
     category_report::{CategoryReport, CategoryReportForm},

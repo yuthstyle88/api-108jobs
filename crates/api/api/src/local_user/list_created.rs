@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_fetch_limit};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::traits::PaginationCursorBuilder;
+use app_108jobs_db::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
   logistics::{load_logistics_for_post_views, LogisticsViewer},

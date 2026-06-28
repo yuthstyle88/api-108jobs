@@ -1,6 +1,6 @@
-use crate::newtypes::{BankAccountId, Coin, CurrencyId, LocalUserId, WalletId, WithdrawRequestId};
 #[cfg(feature = "full")]
 use crate::enums::WithdrawStatus;
+use crate::newtypes::{BankAccountId, Coin, CurrencyId, LocalUserId, WalletId, WithdrawRequestId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};

@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   local_user::LocalUser,
   person::Person,
   registration_application::RegistrationApplication,
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
+  app_108jobs_db::{utils::queries::person1_select, Person1AliasAllColumnsTuple},
   diesel::{helper_types::Nullable, NullableExpressionMethods, Queryable, Selectable},
 };
 

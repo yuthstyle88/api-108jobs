@@ -1,5 +1,6 @@
 use crate::{
   diesel::OptionalExtension,
+  schema::local_site_rate_limit,
   source::local_site_rate_limit::{
     LocalSiteRateLimit,
     LocalSiteRateLimitInsertForm,
@@ -8,7 +9,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::local_site_rate_limit;
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 

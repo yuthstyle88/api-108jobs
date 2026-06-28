@@ -1,5 +1,7 @@
 use crate::{
+  enums::PostNotifications,
   newtypes::{CategoryId, DbUrl, InstanceId, PaginationCursor, PersonId, PostId},
+  schema::{category, person, post, post_actions},
   source::post::{
     Post,
     PostActions,
@@ -26,10 +28,6 @@ use crate::{
 use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
-};
-use crate::{
-  enums::PostNotifications,
-  schema::{category, person, post, post_actions},
 };
 use chrono::{DateTime, Utc};
 use diesel::{

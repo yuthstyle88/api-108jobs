@@ -1,10 +1,10 @@
 use crate::{
   newtypes::LocalUserId,
+  schema::password_reset_request,
   source::password_reset_request::{PasswordResetRequest, PasswordResetRequestForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::password_reset_request;
 use diesel::{
   delete,
   dsl::{insert_into, now, IntervalDsl},

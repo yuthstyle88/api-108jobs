@@ -1,4 +1,4 @@
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   category_report::CategoryReport,
   combined::report::ReportCombined,
@@ -12,7 +12,7 @@ use app_108jobs_db_views_reports::{CategoryReportView, CommentReportView, PostRe
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
-  app_108jobs_db_schema::{
+  app_108jobs_db::{
     utils::queries::{local_user_is_admin, person1_select},
     Person1AliasAllColumnsTuple,
   },

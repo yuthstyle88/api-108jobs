@@ -6,9 +6,20 @@ use crate::{
   PersonPostMentionView,
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases::{self},
   newtypes::{InstanceId, PaginationCursor, PersonId},
+  schema::{
+    comment,
+    comment_reply,
+    inbox_combined,
+    instance_actions,
+    person,
+    person_actions,
+    person_comment_mention,
+    person_post_mention,
+    post,
+  },
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
@@ -32,17 +43,6 @@ use app_108jobs_db_schema::{
     DbPool,
   },
   InboxDataType,
-};
-use app_108jobs_db_schema_file::schema::{
-  comment,
-  comment_reply,
-  inbox_combined,
-  instance_actions,
-  person,
-  person_actions,
-  person_comment_mention,
-  person_post_mention,
-  post,
 };
 use diesel::{
   dsl::not,
@@ -406,7 +406,7 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
 mod tests {
   use crate::{impls::InboxCombinedQuery, InboxCombinedView, InboxCombinedViewInternal};
   use app_108jobs_core::error::FastJobResult;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     assert_length,
     source::{
       category::{Category, CategoryInsertForm},

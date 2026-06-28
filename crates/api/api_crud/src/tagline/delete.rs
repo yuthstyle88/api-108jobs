@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_core::error::FastJobError;
-use app_108jobs_db_schema::{source::tagline::Tagline, traits::Crud};
+use app_108jobs_db::{source::tagline::Tagline, traits::Crud};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{DeleteTaglineRequest, SuccessResponse};
 

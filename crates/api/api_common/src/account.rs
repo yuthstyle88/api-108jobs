@@ -19,7 +19,7 @@ pub use app_108jobs_db_views_site::api::{
 };
 
 pub mod auth {
-  pub use app_108jobs_db_schema::source::login_token::LoginToken;
+  pub use app_108jobs_db::source::login_token::LoginToken;
   pub use app_108jobs_db_views_registration_applications::api::Register;
   pub use app_108jobs_db_views_site::api::{
     CaptchaResponse,

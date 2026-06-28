@@ -4,7 +4,7 @@ use app_108jobs_core::{
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::DbUrl,
   source::{comment::Comment, person::Person, post::Post},
 };

@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::flush_room_and_update_last_message};
 use app_108jobs_core::{error::FastJobResult, redis::RedisClient};
-use app_108jobs_db_schema::{newtypes::ChatRoomId, traits::PaginationCursorBuilder, utils::DbPool};
+use app_108jobs_db::{newtypes::ChatRoomId, traits::PaginationCursorBuilder, utils::DbPool};
 use app_108jobs_db_views_chat::{
   api::{ListUserChatRooms, ListUserChatRoomsResponse},
   ChatRoomView,

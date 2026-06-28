@@ -1,3 +1,6 @@
+use crate::enums::BillingStatus;
+#[cfg(feature = "full")]
+use crate::schema::billing;
 #[cfg(feature = "full")]
 use crate::{
   newtypes::BillingId,
@@ -7,9 +10,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::enums::BillingStatus;
-#[cfg(feature = "full")]
-use crate::schema::billing;
 use diesel::OptionalExtension;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;

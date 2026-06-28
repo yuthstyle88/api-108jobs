@@ -1,4 +1,9 @@
-use crate::newtypes::{BillingId, ChatRoomId, PostId, WorkflowId};
+#[cfg(feature = "full")]
+use crate::schema::workflow;
+use crate::{
+  newtypes::{BillingId, ChatRoomId, PostId, WorkflowId},
+  schema::workflow::dsl as wf,
+};
 #[cfg(feature = "full")]
 use crate::{
   source::workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
@@ -7,9 +12,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::workflow;
-use crate::schema::workflow::dsl as wf;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
 use diesel::{ExpressionMethods, OptionalExtension};

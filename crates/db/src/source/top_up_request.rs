@@ -1,6 +1,6 @@
-use crate::newtypes::{Coin, CurrencyId, LocalUserId, TopUpRequestId};
 #[cfg(feature = "full")]
 use crate::enums::TopUpStatus;
+use crate::newtypes::{Coin, CurrencyId, LocalUserId, TopUpRequestId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use serde::{Deserialize, Serialize};

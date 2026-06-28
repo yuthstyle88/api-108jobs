@@ -1,6 +1,7 @@
 use crate::{
   diesel::OptionalExtension,
   newtypes::{CommentId, PersonCommentMentionId, PersonId},
+  schema::person_comment_mention,
   source::person_comment_mention::{
     PersonCommentMention,
     PersonCommentMentionInsertForm,
@@ -10,7 +11,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::person_comment_mention;
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

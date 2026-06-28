@@ -1,6 +1,7 @@
 use crate::{
   diesel::{NullableExpressionMethods, OptionalExtension},
   newtypes::{CategoryId, CommentId, DbUrl, InstanceId, PersonId},
+  schema::{category, comment, comment_actions, post},
   source::comment::{
     Comment,
     CommentActions,
@@ -16,7 +17,6 @@ use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
-use crate::schema::{category, comment, comment_actions, post};
 use chrono::Utc;
 use diesel::{
   dsl::insert_into,

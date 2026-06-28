@@ -1,3 +1,5 @@
+#[cfg(feature = "full")]
+use crate::schema::banks;
 use crate::source::bank::BanksResponse;
 #[cfg(feature = "full")]
 use crate::{
@@ -8,8 +10,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::banks;
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;

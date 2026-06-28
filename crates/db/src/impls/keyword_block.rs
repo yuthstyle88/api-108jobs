@@ -1,10 +1,10 @@
 use crate::{
   newtypes::LocalUserId,
+  schema::local_user_keyword_block,
   source::keyword_block::{LocalUserKeywordBlock, LocalUserKeywordBlockForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::local_user_keyword_block;
 use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 

@@ -1,5 +1,9 @@
 use crate::{
   newtypes::CustomEmojiId,
+  schema::{
+    custom_emoji::dsl::custom_emoji,
+    custom_emoji_keyword::dsl::{custom_emoji_id, custom_emoji_keyword},
+  },
   source::{
     custom_emoji::{CustomEmoji, CustomEmojiInsertForm, CustomEmojiUpdateForm},
     custom_emoji_keyword::{CustomEmojiKeyword, CustomEmojiKeywordInsertForm},
@@ -8,10 +12,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{
-  custom_emoji::dsl::custom_emoji,
-  custom_emoji_keyword::dsl::{custom_emoji_id, custom_emoji_keyword},
-};
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

@@ -42,9 +42,7 @@ impl CurrencyRateHistory {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = crate::schema::currency_rate_history::table
-      .filter(
-        crate::schema::currency_rate_history::currency_id.eq(currency_id),
-      )
+      .filter(crate::schema::currency_rate_history::currency_id.eq(currency_id))
       .order(crate::schema::currency_rate_history::changed_at.desc())
       .into_boxed();
 

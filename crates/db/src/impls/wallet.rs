@@ -7,6 +7,7 @@ use crate::{
 };
 use crate::{
   newtypes::{Coin, CoinId, LocalUserId},
+  schema::{local_user, person, wallet, wallet_transaction},
   source::{
     coin::CoinModel,
     wallet::{
@@ -19,7 +20,6 @@ use crate::{
   },
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{local_user, person, wallet, wallet_transaction};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};

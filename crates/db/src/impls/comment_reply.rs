@@ -1,12 +1,12 @@
 use crate::{
   diesel::OptionalExtension,
   newtypes::{CommentId, CommentReplyId, PersonId},
+  schema::comment_reply,
   source::comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::comment_reply;
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

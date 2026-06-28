@@ -1,6 +1,7 @@
 use crate::{
   diesel::{BoolExpressionMethods, NullableExpressionMethods, OptionalExtension},
   newtypes::{CategoryId, DbUrl, InstanceId, LocalUserId, PersonId},
+  schema::{instance, instance_actions, local_user, person, person_actions},
   source::person::{
     Person,
     PersonActions,
@@ -16,13 +17,6 @@ use crate::{
 use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
-};
-use crate::schema::{
-  instance,
-  instance_actions,
-  local_user,
-  person,
-  person_actions,
 };
 use chrono::Utc;
 use diesel::{

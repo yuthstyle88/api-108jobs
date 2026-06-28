@@ -12,6 +12,19 @@ use crate::{
     ModRemovePostId,
     ModTransferCategoryId,
   },
+  schema::{
+    mod_add,
+    mod_add_category,
+    mod_ban,
+    mod_ban_from_category,
+    mod_change_category_visibility,
+    mod_feature_post,
+    mod_lock_post,
+    mod_remove_category,
+    mod_remove_comment,
+    mod_remove_post,
+    mod_transfer_category,
+  },
   source::mod_log::moderator::{
     ModAdd,
     ModAddCategory,
@@ -40,19 +53,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{
-  mod_add,
-  mod_add_category,
-  mod_ban,
-  mod_ban_from_category,
-  mod_change_category_visibility,
-  mod_feature_post,
-  mod_lock_post,
-  mod_remove_category,
-  mod_remove_comment,
-  mod_remove_post,
-  mod_transfer_category,
-};
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 

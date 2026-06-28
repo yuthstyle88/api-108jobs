@@ -1,11 +1,11 @@
 use crate::{
   diesel::{ExpressionMethods, QueryDsl},
   newtypes::LocalUserId,
+  schema::login_token::{dsl::login_token, user_id},
   source::login_token::{LoginToken, LoginTokenCreateForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::login_token::{dsl::login_token, user_id};
 use diesel::{delete, dsl::exists, insert_into, select};
 use diesel_async::RunQueryDsl;
 

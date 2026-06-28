@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{check_private_instance, update_read_comments},
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     comment::Comment,
     post::{Post, PostActions, PostReadForm},

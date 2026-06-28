@@ -1,7 +1,8 @@
 use crate::PersonView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
+  schema::{local_user, person},
   source::person::{person_keys as key, Person},
   traits::{Crud, PaginationCursorBuilder},
   utils::{
@@ -16,7 +17,6 @@ use app_108jobs_db_schema::{
     DbPool,
   },
 };
-use app_108jobs_db_schema_file::schema::{local_user, person};
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -127,7 +127,7 @@ impl PersonQuery {
 mod tests {
   use super::*;
   use app_108jobs_core::error::FastJobResult;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     assert_length,
     source::{
       instance::Instance,

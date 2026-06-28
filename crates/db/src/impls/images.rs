@@ -1,10 +1,10 @@
 use crate::{
   newtypes::{DbUrl, PersonId},
+  schema::{image_details, local_image, remote_image},
   source::images::{ImageDetails, ImageDetailsInsertForm, LocalImage, LocalImageForm, RemoteImage},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{image_details, local_image, remote_image};
 use diesel::{
   dsl::exists,
   insert_into,

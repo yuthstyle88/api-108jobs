@@ -1,9 +1,9 @@
 use crate::{
+  schema::captcha_answer::dsl::{answer, captcha_answer},
   source::captcha_answer::{CaptchaAnswer, CaptchaAnswerForm, CheckCaptchaAnswer},
   utils::{functions::lower, get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::captcha_answer::dsl::{answer, captcha_answer};
 use diesel::{delete, dsl::exists, insert_into, select, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

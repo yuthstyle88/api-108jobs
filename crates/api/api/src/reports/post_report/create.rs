@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_post_deleted_or_removed, slur_regex},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::post_report::{PostReport, PostReportForm},
   traits::Reportable,
 };

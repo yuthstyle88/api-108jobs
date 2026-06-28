@@ -24,7 +24,8 @@ use app_108jobs_core::{
     },
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::RegistrationMode,
   source::{
     actor_language::SiteLanguage,
     local_site::{LocalSite, LocalSiteUpdateForm},
@@ -36,7 +37,6 @@ use app_108jobs_db_schema::{
   traits::Crud,
   utils::{diesel_opt_number_update, diesel_string_update},
 };
-use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::{
   api::{EditSiteRequest, SiteResponse},
@@ -225,8 +225,10 @@ fn validate_update_payload(
 mod tests {
   use crate::site::update::validate_update_payload;
   use app_108jobs_core::error::FastJobErrorType;
-  use app_108jobs_db_schema::source::local_site::LocalSite;
-  use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use app_108jobs_db::{
+    enums::{ListingType, PostSortType, RegistrationMode},
+    source::local_site::LocalSite,
+  };
   use app_108jobs_db_views_site::api::EditSiteRequest;
 
   #[test]

@@ -9,7 +9,7 @@ use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::is_valid_body_field,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   impls::actor_language::validate_post_language,
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,

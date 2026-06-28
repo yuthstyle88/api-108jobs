@@ -20,7 +20,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use app_108jobs_api_utils::{context::FastJobContext, utils::local_user_view_from_jwt};
 use app_108jobs_core::error::{FastJobError, FastJobErrorType};
-use app_108jobs_db_schema::newtypes::{LocalUserId, PostId};
+use app_108jobs_db::newtypes::{LocalUserId, PostId};
 use app_108jobs_db_views_chat::api::{HistoryQuery, JoinRoomQuery, LastReadQuery, PeerReadQuery};
 use app_108jobs_db_views_local_user::LocalUserView;
 

@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{ChatMessageId, ChatRoomId},
+  schema::chat_message,
   source::chat_message::{ChatMessage, ChatMessageInsertForm, ChatMessageUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::chat_message;
 use diesel::{
   dsl::{insert_into, update},
   ExpressionMethods,
@@ -169,6 +169,7 @@ mod tests {
   use super::*;
   use crate::{
     newtypes::LocalUserId,
+    schema::local_user,
     source::{
       chat_room::{ChatRoom, ChatRoomInsertForm},
       instance::Instance,
@@ -176,7 +177,6 @@ mod tests {
     },
     test_data::pool_for_tests,
   };
-  use crate::schema::local_user;
   use chrono::{Duration, Utc};
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

@@ -1,12 +1,12 @@
 use crate::{
   diesel::SelectableHelper,
   newtypes::{PostId, TagId},
+  schema::post_tag,
   source::post_tag::{PostTag, PostTagForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::post_tag;
 use diesel::{delete, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

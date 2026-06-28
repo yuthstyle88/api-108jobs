@@ -6,8 +6,9 @@ use crate::{
   PostView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
+  schema::{comment, delivery_details, person, person_liked_combined, post},
   source::combined::person_liked::{person_liked_combined_keys as key, PersonLikedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
@@ -33,13 +34,6 @@ use app_108jobs_db_schema::{
   },
   LikeType,
   PersonContentType,
-};
-use app_108jobs_db_schema_file::schema::{
-  comment,
-  delivery_details,
-  person,
-  person_liked_combined,
-  post,
 };
 use diesel::{
   BoolExpressionMethods,

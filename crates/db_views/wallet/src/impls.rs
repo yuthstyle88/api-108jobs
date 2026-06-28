@@ -8,8 +8,9 @@ use app_108jobs_core::{
   apply_date_filters,
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{LocalUserId, PaginationCursor, TopUpRequestId, WalletId, WithdrawRequestId},
+  schema::{local_user, top_up_requests, user_bank_accounts, wallet, withdraw_requests},
   source::{
     top_up_request::{top_up_requests_keys as t_key, TopUpRequest},
     wallet::{Wallet, WalletModel},
@@ -17,13 +18,6 @@ use app_108jobs_db_schema::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
-};
-use app_108jobs_db_schema_file::schema::{
-  local_user,
-  top_up_requests,
-  user_bank_accounts,
-  wallet,
-  withdraw_requests,
 };
 use diesel::{result::Error, ExpressionMethods, JoinOnDsl, QueryDsl};
 use diesel_async::RunQueryDsl;
@@ -100,7 +94,7 @@ impl TopUpRequestView {
     cursor_data: Option<TopUpRequest>,
     params: ListTopUpRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
-    use app_108jobs_db_schema_file::schema::top_up_requests;
+    use app_108jobs_db::schema::top_up_requests;
     use diesel::prelude::*;
 
     let conn = &mut get_conn(pool).await?;
@@ -199,7 +193,7 @@ impl WithdrawRequestView {
     cursor_data: Option<WithdrawRequest>,
     params: ListWithdrawRequestQuery,
   ) -> FastJobResult<Vec<Self>> {
-    use app_108jobs_db_schema_file::schema::withdraw_requests;
+    use app_108jobs_db::schema::withdraw_requests;
     use diesel::prelude::*;
 
     let conn = &mut get_conn(pool).await?;

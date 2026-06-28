@@ -20,7 +20,8 @@ use app_108jobs_core::{
     },
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::PostKind,
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::{
     delivery_details::DeliveryDetails,
@@ -29,7 +30,6 @@ use app_108jobs_db_schema::{
   traits::Crud,
   utils::{diesel_string_update, diesel_url_update},
 };
-use app_108jobs_db_schema_file::enums::PostKind;
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{

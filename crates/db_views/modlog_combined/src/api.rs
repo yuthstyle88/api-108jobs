@@ -1,9 +1,9 @@
 use crate::ModlogCombinedView;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::ListingType,
   newtypes::{CategoryId, CommentId, PaginationCursor, PersonId, PostId},
   ModlogActionType,
 };
-use app_108jobs_db_schema_file::enums::ListingType;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

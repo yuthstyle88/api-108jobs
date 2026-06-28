@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{PersonId, PostId, PostReportId},
+  schema::post_report,
   source::post_report::{PostReport, PostReportForm},
   traits::Reportable,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::post_report;
 use chrono::Utc;
 use diesel::{
   dsl::{insert_into, update},

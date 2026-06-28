@@ -1,7 +1,9 @@
-use crate::newtypes::{LocalUserId, PostId, PricingConfigId, RideSessionId, RiderId};
-use crate::enums::{PaymentMethod, TripStatus};
 #[cfg(feature = "full")]
 use crate::schema::ride_session;
+use crate::{
+  enums::{PaymentMethod, TripStatus},
+  newtypes::{LocalUserId, PostId, PricingConfigId, RideSessionId, RiderId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

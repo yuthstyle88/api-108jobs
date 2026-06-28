@@ -6,6 +6,7 @@
 
 use crate::{
   newtypes::{BillingId, Coin, WalletHoldId, WalletId},
+  schema::wallet_hold,
   source::wallet_hold::{
     hold_status,
     HoldStatus,
@@ -15,7 +16,6 @@ use crate::{
   },
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
-use crate::schema::wallet_hold;
 use chrono::Utc;
 use diesel::{
   result::{DatabaseErrorKind, Error as DieselError},
@@ -138,6 +138,7 @@ impl WalletHold {
 mod tests {
   use super::*;
   use crate::{
+    schema::{billing, local_user, post},
     source::{
       instance::Instance,
       person::{Person, PersonInsertForm},
@@ -145,7 +146,6 @@ mod tests {
     test_data::pool_for_tests,
     utils::get_conn,
   };
-  use crate::schema::{billing, local_user, post};
   use diesel::sql_query;
   use diesel_async::RunQueryDsl;
   use serial_test::serial;

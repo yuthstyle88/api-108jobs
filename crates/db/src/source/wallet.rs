@@ -1,5 +1,5 @@
-use crate::newtypes::{Coin, LocalUserId, WalletId};
 pub use crate::enums::TxKind;
+use crate::newtypes::{Coin, LocalUserId, WalletId};
 #[cfg(feature = "full")]
 use crate::schema::wallet;
 #[cfg(feature = "full")]

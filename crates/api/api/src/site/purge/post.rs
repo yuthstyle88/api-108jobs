@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{is_admin, purge_post_images},
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     local_user::LocalUser,
     mod_log::admin::{AdminPurgePost, AdminPurgePostForm},

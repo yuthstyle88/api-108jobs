@@ -1,5 +1,6 @@
 use crate::{
   newtypes::{ChatRoomId, LocalUserId},
+  schema::{chat_participant, chat_room},
   source::{
     chat_participant::{ChatParticipant, ChatParticipantInsertForm, ChatParticipantUpdateForm},
     chat_room::ChatRoom,
@@ -8,7 +9,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{chat_participant, chat_room};
 use diesel::{
   dsl::{insert_into, update},
   prelude::*,

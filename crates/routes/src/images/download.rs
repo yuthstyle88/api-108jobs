@@ -9,7 +9,7 @@ use actix_web::{
 };
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::images::RemoteImage;
+use app_108jobs_db::source::images::RemoteImage;
 use app_108jobs_db_views_local_image::api::{ImageGetParams, ImageProxyParams};
 use moka::future::Cache;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};

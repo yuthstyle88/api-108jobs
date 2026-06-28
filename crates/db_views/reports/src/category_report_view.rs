@@ -1,11 +1,11 @@
 use crate::CategoryReportView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases,
   newtypes::{CategoryReportId, PersonId},
+  schema::{category, category_actions, category_report, person},
   utils::{get_conn, DbPool},
 };
-use app_108jobs_db_schema_file::schema::{category, category_actions, category_report, person};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,

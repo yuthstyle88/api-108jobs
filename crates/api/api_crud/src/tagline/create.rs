@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{get_url_blocklist, is_admin, process_markdown, slur_regex},
 };
 use app_108jobs_core::error::FastJobError;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::tagline::{Tagline, TaglineInsertForm},
   traits::Crud,
 };

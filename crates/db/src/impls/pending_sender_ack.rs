@@ -1,4 +1,5 @@
 use crate::{
+  schema::pending_sender_ack,
   source::pending_sender_ack::{
     PendingSenderAck,
     PendingSenderAckInsertForm,
@@ -8,7 +9,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::pending_sender_ack;
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 

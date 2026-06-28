@@ -1,3 +1,5 @@
+#[cfg(feature = "full")]
+use crate::schema::withdraw_requests;
 use crate::{
   newtypes::WithdrawRequestId,
   source::withdraw_request::{
@@ -13,8 +15,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::withdraw_requests;
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
@@ -185,7 +185,9 @@ impl WithdrawRequest {
 mod tests {
   use super::*;
   use crate::{
+    enums::WithdrawStatus,
     newtypes::{BankAccountId, Coin, LocalUserId},
+    schema::{banks, local_user},
     source::{
       bank::BankInsertForm,
       currency::Currency,
@@ -196,10 +198,6 @@ mod tests {
     test_data::pool_for_tests,
     traits::Crud,
     utils::get_conn,
-  };
-  use crate::{
-    enums::WithdrawStatus,
-    schema::{banks, local_user},
   };
   use chrono::Utc;
   use diesel::ExpressionMethods;

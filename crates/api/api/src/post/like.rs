@@ -5,7 +5,7 @@ use app_108jobs_api_utils::{
   utils::check_bot_account,
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     person::PersonActions,
     post::{PostActions, PostReadForm},

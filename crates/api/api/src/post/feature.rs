@@ -5,7 +5,7 @@ use app_108jobs_api_utils::{
   utils::{check_category_deleted_removed, is_admin},
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     category::Category,
     mod_log::moderator::{ModFeaturePost, ModFeaturePostForm},

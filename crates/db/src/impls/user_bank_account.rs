@@ -1,5 +1,7 @@
 use crate::newtypes::{BankId, LocalUserId};
 #[cfg(feature = "full")]
+use crate::schema::user_bank_accounts;
+#[cfg(feature = "full")]
 use crate::{
   newtypes::BankAccountId,
   source::user_bank_account::{BankAccount, UserBankAccountInsertForm, UserBankAccountUpdateForm},
@@ -8,8 +10,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::user_bank_accounts;
 use chrono::Utc;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;
@@ -149,6 +149,7 @@ impl BankAccount {
 mod tests {
   use super::*;
   use crate::{
+    schema::{banks, local_user},
     source::{
       bank::BankInsertForm,
       instance::Instance,
@@ -156,7 +157,6 @@ mod tests {
     },
     test_data::pool_for_tests,
   };
-  use crate::schema::{banks, local_user};
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;
   use serial_test::serial;

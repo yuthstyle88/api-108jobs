@@ -11,7 +11,7 @@
 
 #[cfg(test)]
 mod wallet {
-  use app_108jobs_db_schema::newtypes::{Coin, WalletId};
+  use app_108jobs_db::newtypes::{Coin, WalletId};
   use app_108jobs_db_views_wallet::api::{GetWalletResponse, WalletOperationResponse};
 
   fn to_val<T: serde::Serialize>(v: &T) -> serde_json::Value {
@@ -68,7 +68,7 @@ mod wallet {
 
 #[cfg(test)]
 mod auth {
-  use app_108jobs_db_schema::sensitive::SensitiveString;
+  use app_108jobs_db::sensitive::SensitiveString;
   use app_108jobs_db_views_site::api::LoginResponse;
 
   #[test]
@@ -138,7 +138,7 @@ mod workflow {
 
 #[cfg(test)]
 mod bank {
-  use app_108jobs_db_schema::newtypes::BankId;
+  use app_108jobs_db::newtypes::BankId;
   use app_108jobs_db_views_bank_account::api::BankResponse;
 
   #[test]

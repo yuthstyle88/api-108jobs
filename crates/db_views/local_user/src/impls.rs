@@ -1,9 +1,10 @@
 use crate::LocalUserView;
 use actix_web::{dev::Payload, FromRequest, HttpMessage, HttpRequest};
 use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases::creator_home_instance_actions,
   newtypes::{LocalUserId, OAuthProviderId, PaginationCursor, PersonId},
+  schema::{instance_actions, local_user, oauth_account, person},
   source::{
     instance::Instance,
     local_user::{LocalUser, LocalUserInsertForm},
@@ -20,7 +21,6 @@ use app_108jobs_db_schema::{
     DbPool,
   },
 };
-use app_108jobs_db_schema_file::schema::{instance_actions, local_user, oauth_account, person};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
@@ -239,7 +239,7 @@ impl PaginationCursorBuilder for LocalUserView {
 mod tests {
   use super::*;
   use app_108jobs_core::error::FastJobResult;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     assert_length,
     source::{
       instance::{Instance, InstanceActions, InstanceBanForm},

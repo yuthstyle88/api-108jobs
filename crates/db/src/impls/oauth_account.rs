@@ -1,10 +1,10 @@
 use crate::{
   newtypes::LocalUserId,
+  schema::{oauth_account, oauth_account::dsl::local_user_id},
   source::oauth_account::{OAuthAccount, OAuthAccountInsertForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{oauth_account, oauth_account::dsl::local_user_id};
 use diesel::{insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

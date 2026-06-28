@@ -5,8 +5,10 @@ use actix_web::{
 };
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm};
-use app_108jobs_db_schema_file::enums::TopUpStatus;
+use app_108jobs_db::{
+  enums::TopUpStatus,
+  source::top_up_request::{TopUpRequest, TopUpRequestUpdateForm},
+};
 use app_108jobs_db_views_local_user::LocalUserView;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};

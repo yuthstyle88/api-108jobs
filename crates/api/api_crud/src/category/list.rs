@@ -5,13 +5,13 @@ use app_108jobs_api_utils::{
   utils::check_private_instance,
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::ListingType,
   newtypes::PaginationCursor,
   source::category::Category,
   traits::PaginationCursorBuilder,
   CategorySortType,
 };
-use app_108jobs_db_schema_file::enums::ListingType;
 use app_108jobs_db_views_category::{
   api::{ListCategories, ListCategoriesResponse, ListCategoriesTreeResponse},
   impls::CategoryQuery,

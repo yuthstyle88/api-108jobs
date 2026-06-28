@@ -1,13 +1,11 @@
 use crate::{api::PostItem, PostView};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::PostKind,
   newtypes::{PersonId, PostId, RiderId},
+  schema::{delivery_details, ride_session},
   source::{delivery_details as dd_src, ride_session as ride_src},
   utils::{get_conn, DbPool},
-};
-use app_108jobs_db_schema_file::{
-  enums::PostKind,
-  schema::{delivery_details, ride_session},
 };
 use app_108jobs_db_views_rider::ride_session_view as rider_view;
 use diesel::prelude::*;

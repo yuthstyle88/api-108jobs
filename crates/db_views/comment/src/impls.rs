@@ -4,9 +4,16 @@ use crate::{
   CommentView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{
+    CategoryFollowerState,
+    CategoryVisibility,
+    CommentSortType::{self, *},
+    ListingType,
+  },
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, CommentId, InstanceId, PaginationCursor, PersonId, PostId},
+  schema::{category, category_actions, comment, person, post},
   source::{
     comment::{comment_keys as key, Comment},
     local_user::LocalUser,
@@ -32,15 +39,6 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval,
     DbPool,
   },
-};
-use app_108jobs_db_schema_file::{
-  enums::{
-    CategoryFollowerState,
-    CategoryVisibility,
-    CommentSortType::{self, *},
-    ListingType,
-  },
-  schema::{category, category_actions, comment, person, post},
 };
 use diesel::{
   BoolExpressionMethods,

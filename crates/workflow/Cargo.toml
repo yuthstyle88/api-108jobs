@@ -10,13 +10,12 @@ publish = false
 [features]
 ts-rs = [
   "dep:ts-rs",
-  "app_108jobs_db_schema/ts-rs",
-  "app_108jobs_db_schema_file/ts-rs",
+  "app_108jobs_db/ts-rs",
+  "app_108jobs_db/ts-rs",
 ]
 [dependencies]
 app_108jobs_core = { workspace = true }
-app_108jobs_db_schema = { workspace = true }
-app_108jobs_db_schema_file = { workspace = true }
+app_108jobs_db = { workspace = true }
 app_108jobs_db_views_wallet = { workspace = true }
 app_108jobs_db_views_billing = { workspace = true }
 diesel = { workspace = true }
@@ -35,5 +34,4 @@ tracing = "0.1.41"
 # the test target — feature unification means production builds are unchanged.
 tokio = { workspace = true }
 serial_test = { workspace = true }
-app_108jobs_db_schema = { workspace = true, features = ["full", "test-utils"] }
-app_108jobs_db_schema_file = { workspace = true, features = ["full"] }
+app_108jobs_db = { workspace = true, features = ["full", "test-utils"] }

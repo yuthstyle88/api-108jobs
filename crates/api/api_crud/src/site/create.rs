@@ -24,7 +24,7 @@ use app_108jobs_core::{
     },
   },
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::DbUrl,
   source::{
     local_site::{LocalSite, LocalSiteUpdateForm},
@@ -182,8 +182,10 @@ fn validate_create_payload(
 mod tests {
   use crate::site::create::validate_create_payload;
   use app_108jobs_core::error::FastJobErrorType;
-  use app_108jobs_db_schema::source::local_site::LocalSite;
-  use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
+  use app_108jobs_db::{
+    enums::{ListingType, PostSortType, RegistrationMode},
+    source::local_site::LocalSite,
+  };
   use app_108jobs_db_views_site::api::CreateSiteRequest;
 
   #[test]

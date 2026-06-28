@@ -1,4 +1,5 @@
 use crate::{
+  enums::{PostKind, RiderVerificationStatus, TripStatus},
   newtypes::{
     CoinId,
     CommentId,
@@ -9,6 +10,7 @@ use crate::{
     RiderId,
     WalletId,
   },
+  schema::{delivery_details, local_user as local_user_tbl, post as post_tbl, rider as rider_tbl},
   source::{
     delivery_details::{DeliveryDetails, DeliveryDetailsInsertForm, DeliveryDetailsUpdateForm},
     local_user::LocalUser,
@@ -20,10 +22,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::{
-  enums::{PostKind, RiderVerificationStatus, TripStatus},
-  schema::{delivery_details, local_user as local_user_tbl, post as post_tbl, rider as rider_tbl},
-};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, update},
@@ -758,6 +756,7 @@ impl DeliveryDetails {
 mod tests {
   use super::*;
   use crate::{
+    schema::post,
     source::{
       instance::Instance,
       person::{Person, PersonInsertForm},
@@ -765,7 +764,6 @@ mod tests {
     },
     test_data::pool_for_tests,
   };
-  use crate::schema::post;
   use diesel_async::RunQueryDsl;
   use serial_test::serial;
 
@@ -1168,8 +1166,12 @@ mod tests {
   #[tokio::test]
   #[serial]
   async fn cancel_assigned_delivery_refunds_employer_wallet() {
-    use crate::{newtypes::Coin, source::rider::RiderInsertForm};
-    use crate::{enums::VehicleType, schema::delivery_details as dd};
+    use crate::{
+      enums::VehicleType,
+      newtypes::Coin,
+      schema::delivery_details as dd,
+      source::rider::RiderInsertForm,
+    };
 
     let pool = pool_for_tests();
     let pool = &mut (&pool).into();

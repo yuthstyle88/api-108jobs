@@ -19,12 +19,7 @@ pub mod newtypes;
 pub mod sensitive;
 #[cfg(feature = "full")]
 pub mod aliases {
-  use crate::schema::{
-    category_actions,
-    instance_actions,
-    local_user,
-    person,
-  };
+  use crate::schema::{category_actions, instance_actions, local_user, person};
   diesel::alias!(
     category_actions as creator_category_actions: CreatorcategoryActions,
     instance_actions as creator_home_instance_actions: CreatorHomeInstanceActions,

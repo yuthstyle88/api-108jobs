@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{CategoryId, TagId},
+  schema::tag,
   source::tag::{Tag, TagInsertForm, TagUpdateForm, TagsView},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::tag;
 use diesel::{
   deserialize::FromSql,
   insert_into,

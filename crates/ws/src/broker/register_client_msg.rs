@@ -4,7 +4,7 @@ use crate::{
   protocol::api::RegisterClientMsg,
 };
 use actix::{Context, Handler};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::chat_participant::{ChatParticipant, ChatParticipantInsertForm},
   utils::DbPool,
 };

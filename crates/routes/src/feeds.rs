@@ -10,12 +10,12 @@ use app_108jobs_core::{
   settings::structs::Settings,
   utils::markdown::markdown_to_html,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{ListingType, PostSortType},
   source::{category::Category, person::Person},
   traits::ApubActor,
   PersonContentType,
 };
-use app_108jobs_db_schema_file::enums::{ListingType, PostSortType};
 use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
 use app_108jobs_db_views_modlog_combined::{impls::ModlogCombinedQuery, ModlogCombinedView};
 use app_108jobs_db_views_person_content_combined::impls::PersonContentCombinedQuery;

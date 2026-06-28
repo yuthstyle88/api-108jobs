@@ -1,6 +1,7 @@
 use crate::{
   diesel::JoinOnDsl,
   newtypes::{CategoryId, InstanceId, LanguageId, LocalUserId, SiteId},
+  schema::{category_language, local_site, local_user_language, site, site_language},
   source::{
     actor_language::{
       CategoryLanguage,
@@ -16,13 +17,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{
-  category_language,
-  local_site,
-  local_user_language,
-  site,
-  site_language,
-};
 use diesel::{
   delete,
   dsl::{count, exists},
@@ -242,11 +236,7 @@ impl CategoryLanguage {
     pool: &mut DbPool<'_>,
     for_category_id: CategoryId,
   ) -> FastJobResult<Vec<LanguageId>> {
-    use crate::schema::category_language::dsl::{
-      category_id,
-      category_language,
-      language_id,
-    };
+    use crate::schema::category_language::dsl::{category_id, category_language, language_id};
     let conn = &mut get_conn(pool).await?;
     let langs = category_language
       .filter(category_id.eq(for_category_id))
@@ -317,10 +307,7 @@ pub async fn validate_post_language(
   category_id: CategoryId,
   local_user_id: LocalUserId,
 ) -> FastJobResult<LanguageId> {
-  use crate::schema::{
-    category_language::dsl as cl,
-    local_user_language::dsl as ul,
-  };
+  use crate::schema::{category_language::dsl as cl, local_user_language::dsl as ul};
   let conn = &mut get_conn(pool).await?;
   let language_id = match language_id {
     None | Some(LanguageId(0)) => {

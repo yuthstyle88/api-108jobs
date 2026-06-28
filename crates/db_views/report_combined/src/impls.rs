@@ -7,28 +7,28 @@ use crate::{
   ReportCombinedViewInternal,
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases::{self, creator_category_actions},
   newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
+  schema::{
+    category,
+    category_actions,
+    category_report,
+    comment,
+    comment_actions,
+    comment_report,
+    local_user,
+    person,
+    person_actions,
+    post,
+    post_actions,
+    post_report,
+    report_combined,
+  },
   source::combined::report::{report_combined_keys as key, ReportCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{get_conn, limit_fetch, paginate, DbPool},
   ReportType,
-};
-use app_108jobs_db_schema_file::schema::{
-  category,
-  category_actions,
-  category_report,
-  comment,
-  comment_actions,
-  comment_report,
-  local_user,
-  person,
-  person_actions,
-  post,
-  post_actions,
-  post_report,
-  report_combined,
 };
 use chrono::{DateTime, Days, Utc};
 use diesel::{

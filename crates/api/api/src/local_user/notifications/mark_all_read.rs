@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   comment_reply::CommentReply,
   person_comment_mention::PersonCommentMention,
   person_post_mention::PersonPostMention,

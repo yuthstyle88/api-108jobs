@@ -1,9 +1,9 @@
+#[cfg(feature = "full")]
+use crate::schema::site;
 use crate::{
   newtypes::{DbUrl, InstanceId, SiteId},
   sensitive::SensitiveString,
 };
-#[cfg(feature = "full")]
-use crate::schema::site;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

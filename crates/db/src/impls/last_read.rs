@@ -1,4 +1,9 @@
-use crate::newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId};
+#[cfg(feature = "full")]
+use crate::schema::last_reads;
+use crate::{
+  newtypes::{ChatMessageRefId, ChatRoomId, LocalUserId},
+  schema::last_reads::dsl as lr,
+};
 #[cfg(feature = "full")]
 use crate::{
   source::last_read::{LastRead, LastReadInsertForm},
@@ -6,9 +11,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::last_reads;
-use crate::schema::last_reads::dsl as lr;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]

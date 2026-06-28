@@ -3,7 +3,7 @@ pub mod get_last_read;
 pub mod get_unread_snapshot;
 
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_participant::ChatParticipant, last_read::LastRead},
   traits::PaginationCursorBuilder,

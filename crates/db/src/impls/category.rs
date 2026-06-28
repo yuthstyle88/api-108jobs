@@ -1,6 +1,8 @@
 use crate::{
   diesel::{DecoratableTarget, JoinOnDsl, OptionalExtension},
+  enums::{CategoryVisibility, ListingType},
   newtypes::{CategoryId, DbUrl, PersonId},
+  schema::{category, category_actions, comment, instance, post},
   source::{
     actor_language::CategoryLanguage,
     category::{
@@ -25,10 +27,6 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_CATEGORY,
-};
-use crate::{
-  enums::{CategoryVisibility, ListingType},
-  schema::{category, category_actions, comment, instance, post},
 };
 use chrono::{DateTime, Utc};
 use diesel::{

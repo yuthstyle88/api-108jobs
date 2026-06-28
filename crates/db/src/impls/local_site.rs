@@ -1,9 +1,9 @@
 use crate::{
+  schema::local_site,
   source::local_site::{LocalSite, LocalSiteInsertForm, LocalSiteUpdateForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::local_site;
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 

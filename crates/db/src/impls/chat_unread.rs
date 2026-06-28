@@ -1,10 +1,10 @@
 use crate::{
   newtypes::{ChatRoomId, LocalUserId},
+  schema::chat_unread,
   source::chat_unread::{ChatUnread, ChatUnreadUpsertForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::chat_unread;
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, now, update},

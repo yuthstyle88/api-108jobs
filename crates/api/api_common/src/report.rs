@@ -1,4 +1,4 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
   newtypes::{CategoryReportId, CommentReportId, PostReportId},
   source::{
     category_report::CategoryReport,

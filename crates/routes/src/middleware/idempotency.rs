@@ -6,7 +6,7 @@ use actix_web::{
   HttpMessage,
   HttpResponse,
 };
-use app_108jobs_db_schema::newtypes::LocalUserId;
+use app_108jobs_db::newtypes::LocalUserId;
 use app_108jobs_db_views_local_user::LocalUserView;
 use futures_util::future::LocalBoxFuture;
 use std::{

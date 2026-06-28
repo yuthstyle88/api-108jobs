@@ -1,11 +1,11 @@
 use crate::{
   newtypes::ChatRoomId,
+  schema::chat_room,
   source::chat_room::{ChatRoom, ChatRoomInsertForm, ChatRoomUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::chat_room;
 use diesel::{dsl::insert_into, QueryDsl};
 use diesel_async::RunQueryDsl;
 

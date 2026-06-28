@@ -1,4 +1,9 @@
-use crate::newtypes::{PersonId, UserReviewId, WorkflowId};
+#[cfg(feature = "full")]
+use crate::schema::user_review;
+use crate::{
+  newtypes::{PersonId, UserReviewId, WorkflowId},
+  schema::user_review::dsl as ur,
+};
 #[cfg(feature = "full")]
 use crate::{
   source::user_review::{UserReview, UserReviewInsertForm, UserReviewUpdateForm},
@@ -7,9 +12,6 @@ use crate::{
 };
 #[cfg(feature = "full")]
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-#[cfg(feature = "full")]
-use crate::schema::user_review;
-use crate::schema::user_review::dsl as ur;
 use chrono::Utc;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;

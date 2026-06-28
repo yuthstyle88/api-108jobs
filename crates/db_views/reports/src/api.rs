@@ -1,5 +1,5 @@
 use crate::{CategoryReportView, CommentReportView, PostReportView};
-use app_108jobs_db_schema::newtypes::{
+use app_108jobs_db::newtypes::{
   CategoryId,
   CategoryReportId,
   CommentId,

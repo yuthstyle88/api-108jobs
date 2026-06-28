@@ -1,7 +1,7 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_private_instance};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::{actor_language::CategoryLanguage, category::Category};
+use app_108jobs_db::source::{actor_language::CategoryLanguage, category::Category};
 use app_108jobs_db_views_category::{
   api::{CategoryResponse, GetRandomCategory},
   CategoryView,

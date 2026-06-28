@@ -4,7 +4,7 @@ use app_108jobs_api_utils::{
   utils::{is_admin, purge_user_account},
 };
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
     local_user::LocalUser,

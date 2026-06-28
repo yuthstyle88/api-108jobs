@@ -547,8 +547,7 @@ dependencies = [
  "app_108jobs_api_crud",
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_bank_account",
  "app_108jobs_db_views_billing",
  "app_108jobs_db_views_category",
@@ -605,8 +604,7 @@ name = "app_108jobs_api_common"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_bank_account",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_comment",
@@ -640,8 +638,7 @@ dependencies = [
  "anyhow",
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_chat",
  "app_108jobs_db_views_comment",
@@ -683,8 +680,7 @@ dependencies = [
  "app_108jobs_api_crud",
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_setup",
+ "app_108jobs_db",
  "app_108jobs_routes",
  "app_108jobs_ws",
  "clap",
@@ -707,8 +703,7 @@ dependencies = [
  "actix-web-httpauth",
  "anyhow",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_comment",
  "app_108jobs_db_views_local_image",
@@ -753,7 +748,7 @@ dependencies = [
 name = "app_108jobs_contract_tests"
 version = "1.0.0-alpha.5"
 dependencies = [
- "app_108jobs_db_schema",
+ "app_108jobs_db",
  "app_108jobs_db_views_bank_account",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_chat",
@@ -861,80 +856,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "app_108jobs_db_schema"
-version = "1.0.0-alpha.5"
-dependencies = [
- "app_108jobs_core",
- "app_108jobs_db_schema_file",
- "app_108jobs_db_schema_setup",
- "bcrypt",
- "chrono",
- "deadpool",
- "derive-new",
- "diesel",
- "diesel-async",
- "diesel-derive-newtype",
- "diesel_ltree",
- "futures-util",
- "i-love-jesus",
- "moka",
- "pretty_assertions",
- "regex",
- "rustls 0.23.27",
- "serde",
- "serde_json",
- "serde_with",
- "serial_test",
- "strum",
- "tokio",
- "tokio-postgres",
- "tokio-postgres-rustls",
- "tracing",
- "ts-rs",
- "tuplex",
- "url",
- "uuid",
- "validator",
-]
-
-[[package]]
-name = "app_108jobs_db_schema_file"
-version = "1.0.0-alpha.5"
-dependencies = [
- "diesel",
- "diesel-derive-enum",
- "diesel_ltree",
- "serde",
- "strum",
- "ts-rs",
-]
-
-[[package]]
-name = "app_108jobs_db_schema_setup"
-version = "1.0.0-alpha.5"
-dependencies = [
- "anyhow",
- "app_108jobs_core",
- "app_108jobs_db_schema_file",
- "chrono",
- "diesel",
- "diesel_ltree",
- "diesel_migrations",
- "diff",
- "itertools 0.14.0",
- "pathfinding",
- "serial_test",
- "tracing",
- "unified-diff",
-]
-
-[[package]]
 name = "app_108jobs_db_views_bank_account"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -948,8 +874,7 @@ name = "app_108jobs_db_views_billing"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_wallet",
  "chrono",
  "diesel",
@@ -964,8 +889,7 @@ name = "app_108jobs_db_views_category"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_person",
  "diesel",
  "diesel-async",
@@ -985,8 +909,7 @@ name = "app_108jobs_db_views_category_person_ban"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "serde",
@@ -997,8 +920,7 @@ name = "app_108jobs_db_views_chat"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_post",
  "chrono",
  "diesel",
@@ -1014,8 +936,7 @@ name = "app_108jobs_db_views_chat_pending_ack"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "chrono",
  "diesel",
  "diesel-async",
@@ -1030,8 +951,7 @@ name = "app_108jobs_db_views_comment"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_vote",
  "diesel",
@@ -1051,8 +971,7 @@ name = "app_108jobs_db_views_currency"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "chrono",
  "diesel",
  "diesel-async",
@@ -1069,8 +988,7 @@ name = "app_108jobs_db_views_custom_emoji"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "serde",
@@ -1084,8 +1002,7 @@ name = "app_108jobs_db_views_inbox_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1102,8 +1019,7 @@ name = "app_108jobs_db_views_local_image"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1119,8 +1035,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "actix-web",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1137,8 +1052,7 @@ name = "app_108jobs_db_views_modlog_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1155,8 +1069,7 @@ name = "app_108jobs_db_views_person"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1173,8 +1086,7 @@ name = "app_108jobs_db_views_person_content_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_comment",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_post",
@@ -1195,8 +1107,7 @@ name = "app_108jobs_db_views_person_liked_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_comment",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_post",
@@ -1216,8 +1127,7 @@ name = "app_108jobs_db_views_person_saved_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_comment",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_post",
@@ -1237,8 +1147,7 @@ name = "app_108jobs_db_views_post"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_rider",
@@ -1265,8 +1174,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1284,8 +1192,7 @@ name = "app_108jobs_db_views_report_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_reports",
  "chrono",
@@ -1305,8 +1212,7 @@ name = "app_108jobs_db_views_reports"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "serde",
@@ -1319,8 +1225,7 @@ name = "app_108jobs_db_views_rider"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "chrono",
  "diesel",
  "diesel-async",
@@ -1338,8 +1243,7 @@ name = "app_108jobs_db_views_search_combined"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_comment",
  "app_108jobs_db_views_local_user",
@@ -1364,8 +1268,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "anyhow",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_person",
  "app_108jobs_db_views_post",
@@ -1389,8 +1292,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "actix-web",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1407,8 +1309,7 @@ name = "app_108jobs_db_views_vote"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "diesel",
  "diesel-async",
  "i-love-jesus",
@@ -1425,8 +1326,7 @@ name = "app_108jobs_db_views_wallet"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "chrono",
  "diesel",
  "diesel-async",
@@ -1443,8 +1343,7 @@ name = "app_108jobs_email"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_local_user",
  "html2text",
  "lettre",
@@ -1465,8 +1364,7 @@ dependencies = [
  "anyhow",
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_inbox_combined",
  "app_108jobs_db_views_local_image",
@@ -1505,8 +1403,7 @@ name = "app_108jobs_workflow"
 version = "1.0.0-alpha.5"
 dependencies = [
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_billing",
  "app_108jobs_db_views_wallet",
  "chrono",
@@ -1532,8 +1429,7 @@ dependencies = [
  "anyhow",
  "app_108jobs_api_utils",
  "app_108jobs_core",
- "app_108jobs_db_schema",
- "app_108jobs_db_schema_file",
+ "app_108jobs_db",
  "app_108jobs_db_views_chat",
  "app_108jobs_db_views_chat_pending_ack",
  "app_108jobs_db_views_local_user",

@@ -1,11 +1,12 @@
 use crate::{
+  enums::TripStatus,
   newtypes::{LocalUserId, PostId, RideSessionId, RiderId},
+  schema::ride_session,
   source::ride_session::{RideSession, RideSessionInsertForm, RideSessionUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::{enums::TripStatus, schema::ride_session};
 use diesel::{
   dsl::{insert_into, update},
   ExpressionMethods,
@@ -204,6 +205,8 @@ impl RideSession {
 mod tests {
   use super::*;
   use crate::{
+    enums::{PaymentMethod, PostKind, VehicleType},
+    schema::{local_user, post},
     source::{
       instance::Instance,
       person::{Person, PersonInsertForm},
@@ -211,10 +214,6 @@ mod tests {
       rider::{Rider, RiderInsertForm},
     },
     test_data::pool_for_tests,
-  };
-  use crate::{
-    enums::{PaymentMethod, PostKind, VehicleType},
-    schema::{local_user, post},
   };
   use chrono::Utc;
   use diesel::ExpressionMethods;

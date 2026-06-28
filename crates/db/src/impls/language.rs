@@ -2,11 +2,11 @@ use super::actor_language::UNDETERMINED_ID;
 use crate::{
   diesel::ExpressionMethods,
   newtypes::LanguageId,
+  schema::language,
   source::language::Language,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::language;
 use diesel::QueryDsl;
 use diesel_async::RunQueryDsl;
 

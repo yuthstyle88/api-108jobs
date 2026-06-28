@@ -1,10 +1,10 @@
 use crate::{
   newtypes::{PostId, RiderId},
+  schema::trip_location_history,
   source::trip_location_history::{TripLocationHistory, TripLocationHistoryInsertForm},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::trip_location_history;
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 

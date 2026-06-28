@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{InstanceId, PersonId},
+  schema::{instance, instance_actions},
   source::instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm, InstanceForm},
   traits::{Bannable, Blockable},
   utils::{functions::lower, get_conn, uplete, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::{instance, instance_actions};
 use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},

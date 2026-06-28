@@ -4,7 +4,7 @@ use crate::{
 };
 use actix::{Context, Handler, ResponseFuture};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::chat_message::{ChatMessage, ChatMessageInsertForm},
   utils::DbPool,
 };

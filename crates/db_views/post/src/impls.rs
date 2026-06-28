@@ -1,8 +1,28 @@
 use crate::{PostPreview, PostView};
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{
+    CategoryFollowerState,
+    CategoryVisibility,
+    IntendedUse,
+    JobType,
+    ListingType,
+    PostKind,
+    PostSortType::{self, *},
+    TripStatus,
+  },
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
+  schema::{
+    category,
+    category_actions,
+    delivery_details,
+    local_user_language,
+    person,
+    post,
+    post_actions,
+    ride_session,
+  },
   source::{
     category::CategoryActions,
     local_user::LocalUser,
@@ -34,28 +54,6 @@ use app_108jobs_db_schema::{
     seconds_to_pg_interval,
     Commented,
     DbPool,
-  },
-};
-use app_108jobs_db_schema_file::{
-  enums::{
-    CategoryFollowerState,
-    CategoryVisibility,
-    IntendedUse,
-    JobType,
-    ListingType,
-    PostKind,
-    PostSortType::{self, *},
-    TripStatus,
-  },
-  schema::{
-    category,
-    category_actions,
-    delivery_details,
-    local_user_language,
-    person,
-    post,
-    post_actions,
-    ride_session,
   },
 };
 use diesel::{
@@ -658,7 +656,7 @@ mod tests {
     PostView,
   };
   use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
     impls::actor_language::UNDETERMINED_ID,
     newtypes::LanguageId,
     source::{

@@ -538,10 +538,7 @@ pub fn build_db_pool() -> FastJobResult<ActualDbPool> {
     }))
     .build()?;
 
-  crate::migrations::run(
-    crate::migrations::Options::default().run(),
-    &db_url,
-  )?;
+  crate::migrations::run(crate::migrations::Options::default().run(), &db_url)?;
 
   Ok(pool)
 }

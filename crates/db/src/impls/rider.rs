@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{LocalUserId, PersonId, RiderId},
+  schema::rider,
   source::rider::{Rider, RiderInsertForm, RiderUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::rider;
 use diesel::{
   dsl::{exists, insert_into, select, update},
   ExpressionMethods,
@@ -105,15 +105,13 @@ impl Rider {
 mod tests {
   use super::*;
   use crate::{
+    enums::{RiderVerificationStatus, VehicleType},
+    schema::local_user,
     source::{
       instance::Instance,
       person::{Person, PersonInsertForm},
     },
     test_data::pool_for_tests,
-  };
-  use crate::{
-    enums::{RiderVerificationStatus, VehicleType},
-    schema::local_user,
   };
   use diesel::ExpressionMethods;
   use diesel_async::RunQueryDsl;

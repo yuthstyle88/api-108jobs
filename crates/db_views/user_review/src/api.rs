@@ -1,5 +1,5 @@
 use crate::UserReviewView;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{PaginationCursor, PersonId, WorkflowId},
   source::user_review::UserReview,
 };

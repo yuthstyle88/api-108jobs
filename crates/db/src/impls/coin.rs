@@ -1,11 +1,11 @@
 use crate::{
   newtypes::{Coin, CoinId},
+  schema::coin,
   source::coin::{CoinModel, CoinModelInsertForm, CoinModelUpdateForm},
   traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::coin;
 use diesel::{
   dsl::{insert_into, now},
   ExpressionMethods,

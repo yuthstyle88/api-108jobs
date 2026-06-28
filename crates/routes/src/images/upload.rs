@@ -2,7 +2,7 @@ use super::utils::{adapt_request, delete_old_image, make_send};
 use actix_web::{self, web::*, HttpRequest};
 use app_108jobs_api_utils::{context::FastJobContext, request::PictrsResponse, utils::is_admin};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   source::{
     category::{Category, CategoryUpdateForm},
     images::{LocalImage, LocalImageForm},

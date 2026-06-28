@@ -1,8 +1,8 @@
 use crate::{
+  enums::{CategoryFollowerState, CategoryVisibility},
   newtypes::{CategoryId, DbUrl, InstanceId, PersonId},
   source::placeholder_apub_url,
 };
-use crate::enums::{CategoryFollowerState, CategoryVisibility};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use diesel_ltree::Ltree;

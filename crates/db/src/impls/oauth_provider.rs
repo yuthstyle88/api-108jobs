@@ -1,5 +1,6 @@
 use crate::{
   newtypes::OAuthProviderId,
+  schema::oauth_provider,
   source::oauth_provider::{
     OAuthProvider,
     OAuthProviderInsertForm,
@@ -10,7 +11,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::oauth_provider;
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

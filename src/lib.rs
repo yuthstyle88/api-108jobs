@@ -23,7 +23,7 @@ use app_108jobs_core::{
   settings::{structs::Settings, SETTINGS},
   VERSION,
 };
-use app_108jobs_db_schema::{source::secret::Secret, utils::build_db_pool};
+use app_108jobs_db::{source::secret::Secret, utils::build_db_pool};
 use app_108jobs_routes::{
   feeds,
   middleware::{
@@ -121,8 +121,8 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
   }) = args.subcommand
   {
     let mut options = match subcommand {
-      MigrationSubcommand::Run => app_108jobs_db_schema_setup::Options::default().run(),
-      MigrationSubcommand::Revert => app_108jobs_db_schema_setup::Options::default().revert(),
+      MigrationSubcommand::Run => app_108jobs_db::migrations::Options::default().run(),
+      MigrationSubcommand::Revert => app_108jobs_db::migrations::Options::default().revert(),
     }
     .print_output();
 
@@ -130,7 +130,7 @@ pub async fn start_fastjob_server(args: CmdArgs) -> FastJobResult<()> {
       options = options.limit(number);
     }
 
-    app_108jobs_db_schema_setup::run(options, &SETTINGS.get_database_url())?;
+    app_108jobs_db::migrations::run(options, &SETTINGS.get_database_url())?;
 
     return Ok(());
   }

@@ -1,5 +1,6 @@
 use crate::{
   newtypes::{LocalUserId, RegistrationApplicationId},
+  schema::registration_application,
   source::registration_application::{
     RegistrationApplication,
     RegistrationApplicationInsertForm,
@@ -9,7 +10,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::registration_application;
 use diesel::{insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

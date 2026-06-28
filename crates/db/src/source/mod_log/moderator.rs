@@ -1,22 +1,3 @@
-use crate::newtypes::{
-  CategoryId,
-  CommentId,
-  InstanceId,
-  ModAddCategoryId,
-  ModAddId,
-  ModBanFromCategoryId,
-  ModBanId,
-  ModChangeCategoryVisibilityId,
-  ModFeaturePostId,
-  ModLockPostId,
-  ModRemoveCategoryId,
-  ModRemoveCommentId,
-  ModRemovePostId,
-  ModTransferCategoryId,
-  PersonId,
-  PostId,
-};
-use crate::enums::CategoryVisibility;
 #[cfg(feature = "full")]
 use crate::schema::{
   mod_add,
@@ -30,6 +11,27 @@ use crate::schema::{
   mod_remove_comment,
   mod_remove_post,
   mod_transfer_category,
+};
+use crate::{
+  enums::CategoryVisibility,
+  newtypes::{
+    CategoryId,
+    CommentId,
+    InstanceId,
+    ModAddCategoryId,
+    ModAddId,
+    ModBanFromCategoryId,
+    ModBanId,
+    ModChangeCategoryVisibilityId,
+    ModFeaturePostId,
+    ModLockPostId,
+    ModRemoveCategoryId,
+    ModRemoveCommentId,
+    ModRemovePostId,
+    ModTransferCategoryId,
+    PersonId,
+    PostId,
+  },
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

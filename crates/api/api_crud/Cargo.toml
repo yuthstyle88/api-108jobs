@@ -28,9 +28,8 @@ app_108jobs_db_views_site = { workspace = true, features = ["full"] }
 app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
 app_108jobs_db_views_chat = { workspace = true, features = ["full"] }
 app_108jobs_core = { workspace = true, features = ["full"] }
-app_108jobs_db_schema = { workspace = true, features = ["full"] }
+app_108jobs_db = { workspace = true, features = ["full"] }
 app_108jobs_api_utils = { workspace = true }
-app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_email = { workspace = true }
 bcrypt = { workspace = true }
 actix-web = { workspace = true }

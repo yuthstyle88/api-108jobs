@@ -1,4 +1,4 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
   newtypes::{LocalUserId, PersonId},
   source::{
     local_user::LocalUser,
@@ -13,7 +13,7 @@ pub use app_108jobs_db_views_person::{
 };
 
 pub mod actions {
-  pub use app_108jobs_db_schema::newtypes::PersonContentCombinedId;
+  pub use app_108jobs_db::newtypes::PersonContentCombinedId;
   pub use app_108jobs_db_views_person::api::{BlockPerson, BlockPersonResponse, NotePerson};
   pub use app_108jobs_db_views_person_content_combined::{
     ListPersonContent,
@@ -22,7 +22,7 @@ pub mod actions {
   };
 
   pub mod moderation {
-    pub use app_108jobs_db_schema::{
+    pub use app_108jobs_db::{
       newtypes::RegistrationApplicationId,
       source::registration_application::RegistrationApplication,
     };

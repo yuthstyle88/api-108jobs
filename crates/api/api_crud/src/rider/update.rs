@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::RiderVerificationStatus,
   source::rider::{Rider, RiderUpdateForm},
   traits::Crud,
 };
-use app_108jobs_db_schema_file::enums::RiderVerificationStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::AdminVerifyRiderRequest;
 use app_108jobs_db_views_site::api::SuccessResponse;

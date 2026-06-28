@@ -21,8 +21,8 @@ workspace = true
 full = ["ts-rs"]
 ts-rs = [
   "app_108jobs_core/ts-rs",
-  "app_108jobs_db_schema/ts-rs",
-  "app_108jobs_db_schema_file/ts-rs",
+  "app_108jobs_db/ts-rs",
+  "app_108jobs_db/ts-rs",
   "app_108jobs_db_views_comment/ts-rs",
   "app_108jobs_db_views_category/ts-rs",
   "app_108jobs_db_views_custom_emoji/ts-rs",
@@ -45,8 +45,7 @@ ts-rs = [
 
 [dependencies]
 app_108jobs_core.workspace = true
-app_108jobs_db_schema.workspace = true
-app_108jobs_db_schema_file.workspace = true
+app_108jobs_db.workspace = true
 app_108jobs_db_views_comment.workspace = true
 app_108jobs_db_views_category.workspace = true
 app_108jobs_db_views_custom_emoji.workspace = true

@@ -1,5 +1,7 @@
-use crate::newtypes::{LocalUserId, PersonId, RiderId};
-use crate::enums::{RiderVerificationStatus, VehicleType};
+use crate::{
+  enums::{RiderVerificationStatus, VehicleType},
+  newtypes::{LocalUserId, PersonId, RiderId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

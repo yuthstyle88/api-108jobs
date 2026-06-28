@@ -1,6 +1,6 @@
-use crate::{newtypes::LocalUserId, sensitive::SensitiveString};
 #[cfg(feature = "full")]
 use crate::schema::password_reset_request;
+use crate::{newtypes::LocalUserId, sensitive::SensitiveString};
 use chrono::{DateTime, Utc};
 
 #[derive(PartialEq, Eq, Debug)]

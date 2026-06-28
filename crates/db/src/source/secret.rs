@@ -1,6 +1,6 @@
-use crate::sensitive::SensitiveString;
 #[cfg(feature = "full")]
 use crate::schema::secret;
+use crate::sensitive::SensitiveString;
 
 #[derive(Clone, Default)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]

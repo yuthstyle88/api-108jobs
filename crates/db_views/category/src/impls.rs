@@ -6,9 +6,11 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   utils::validation::get_required_trimmed,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::ListingType,
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, PaginationCursor, PersonId},
+  schema::{category, category_actions},
   source::{
     category::{category_keys as key, Category},
     local_user::LocalUser,
@@ -32,10 +34,6 @@ use app_108jobs_db_schema::{
     LowerKey,
   },
   CategorySortType,
-};
-use app_108jobs_db_schema_file::{
-  enums::ListingType,
-  schema::{category, category_actions},
 };
 use diesel::{debug_query, pg::Pg, ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
@@ -106,7 +104,7 @@ pub struct CategoryQuery<'a> {
 
 impl CategoryQuery<'_> {
   pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CategoryView>> {
-    use app_108jobs_db_schema::CategorySortType::*;
+    use app_108jobs_db::CategorySortType::*;
     let conn = &mut get_conn(pool).await?;
     let o = self;
     let limit = limit_fetch(o.limit)?;

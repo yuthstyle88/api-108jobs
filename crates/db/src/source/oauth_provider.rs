@@ -1,9 +1,9 @@
+#[cfg(feature = "full")]
+use crate::schema::oauth_provider;
 use crate::{
   newtypes::{DbUrl, OAuthProviderId},
   sensitive::SensitiveString,
 };
-#[cfg(feature = "full")]
-use crate::schema::oauth_provider;
 use chrono::{DateTime, Utc};
 use serde::{
   ser::{SerializeStruct, Serializer},

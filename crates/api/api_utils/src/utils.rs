@@ -19,7 +19,8 @@ use app_108jobs_core::{
   CACHE_DURATION_FEDERATION,
   MAX_COMMENT_DEPTH_LIMIT,
 };
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::RegistrationMode,
   newtypes::{
     BankAccountId,
     BankId,
@@ -59,7 +60,6 @@ use app_108jobs_db_schema::{
   traits::{Crud, Likeable, PaginationCursorBuilder, ReadComments},
   utils::DbPool,
 };
-use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_image::LocalImageView;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::PersonView;
@@ -1034,8 +1034,8 @@ pub fn verify_comment_author(comment: &Comment, expected_person_id: PersonId) ->
 pub async fn get_active_rider_by_person(
   pool: &mut DbPool<'_>,
   person_id: PersonId,
-) -> FastJobResult<app_108jobs_db_schema::source::rider::Rider> {
-  use app_108jobs_db_schema::source::rider::Rider;
+) -> FastJobResult<app_108jobs_db::source::rider::Rider> {
+  use app_108jobs_db::source::rider::Rider;
 
   Rider::get_by_person_id(pool, person_id)
     .await?

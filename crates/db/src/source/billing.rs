@@ -1,7 +1,9 @@
-use crate::newtypes::{BillingId, ChatRoomId, Coin, CommentId, DbUrl, LocalUserId, PostId};
-use crate::enums::{BillingStatus, WorkFlowStatus};
 #[cfg(feature = "full")]
 use crate::schema::billing;
+use crate::{
+  enums::{BillingStatus, WorkFlowStatus},
+  newtypes::{BillingId, ChatRoomId, Coin, CommentId, DbUrl, LocalUserId, PostId},
+};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

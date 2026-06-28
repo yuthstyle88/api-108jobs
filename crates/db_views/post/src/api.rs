@@ -1,18 +1,18 @@
 use crate::{logistics::PostLogisticsView, PostView};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{
+    IntendedUse,
+    JobType,
+    ListingType,
+    PaymentMethod,
+    PostKind,
+    PostNotifications,
+    PostSortType,
+    TripStatus,
+  },
   newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
   source::delivery_details::DeliveryDetailsPayload,
   PostFeatureType,
-};
-use app_108jobs_db_schema_file::enums::{
-  IntendedUse,
-  JobType,
-  ListingType,
-  PaymentMethod,
-  PostKind,
-  PostNotifications,
-  PostSortType,
-  TripStatus,
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_vote::VoteView;

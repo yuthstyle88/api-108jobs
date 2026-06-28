@@ -2,7 +2,8 @@ use super::workflow_authz::{require_any_party, require_post_creator, require_rol
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
+  enums::{BillingStatus, WorkFlowStatus},
   newtypes::ChatRoomId,
   source::{
     billing::{Billing, WorkStep},
@@ -13,7 +14,6 @@ use app_108jobs_db_schema::{
   },
   traits::Crud,
 };
-use app_108jobs_db_schema_file::enums::{BillingStatus, WorkFlowStatus};
 use app_108jobs_db_views_billing::{
   api::{
     ApproveQuotationRequest,
@@ -44,8 +44,8 @@ use serde_json::json;
 
 /// Load the `Billing` row backing a workflow, or `NotFound` if none exists yet.
 async fn billing_for_workflow(
-  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
-  workflow_id: app_108jobs_db_schema::newtypes::WorkflowId,
+  pool: &mut app_108jobs_db::utils::DbPool<'_>,
+  workflow_id: app_108jobs_db::newtypes::WorkflowId,
 ) -> FastJobResult<Billing> {
   let wf = Workflow::read(pool, workflow_id).await?;
   let billing_id = match wf.billing_id {
@@ -57,9 +57,9 @@ async fn billing_for_workflow(
 
 /// True if `caller` is a participant of `room_id`.
 async fn is_room_participant(
-  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
+  pool: &mut app_108jobs_db::utils::DbPool<'_>,
   room_id: ChatRoomId,
-  caller: app_108jobs_db_schema::newtypes::LocalUserId,
+  caller: app_108jobs_db::newtypes::LocalUserId,
 ) -> FastJobResult<bool> {
   let parts = ChatParticipant::list_participants_for_rooms(pool, &[room_id]).await?;
   Ok(parts.iter().any(|p| p.member_id == caller))
@@ -67,8 +67,8 @@ async fn is_room_participant(
 
 // Helper: update JobBudgetPlan.installments' status for a given workflow and seq
 async fn _update_job_plan_step_status(
-  pool: &mut app_108jobs_db_schema::utils::DbPool<'_>,
-  workflow_id: app_108jobs_db_schema::newtypes::WorkflowId,
+  pool: &mut app_108jobs_db::utils::DbPool<'_>,
+  workflow_id: app_108jobs_db::newtypes::WorkflowId,
   seq_number: i16,
   new_status: WorkFlowStatus,
 ) -> FastJobResult<()> {

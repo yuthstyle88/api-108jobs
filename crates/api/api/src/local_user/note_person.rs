@@ -7,7 +7,7 @@ use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   utils::{slurs::check_slurs, validation::is_valid_body_field},
 };
-use app_108jobs_db_schema::source::person::{PersonActions, PersonNoteForm};
+use app_108jobs_db::source::person::{PersonActions, PersonNoteForm};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::api::NotePerson;
 use app_108jobs_db_views_site::api::SuccessResponse;

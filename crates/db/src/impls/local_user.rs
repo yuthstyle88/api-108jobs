@@ -1,5 +1,7 @@
 use crate::{
+  enums::CategoryVisibility,
   newtypes::{CategoryId, DbUrl, LanguageId, LocalUserId, PersonId},
+  schema::{category, category_actions, local_user, person, registration_application},
   source::{
     actor_language::LocalUserLanguage,
     local_user::{LocalUser, LocalUserInsertForm, LocalUserUpdateForm},
@@ -13,10 +15,6 @@ use crate::{
   },
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::{
-  enums::CategoryVisibility,
-  schema::{category, category_actions, local_user, person, registration_application},
-};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},

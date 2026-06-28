@@ -5,19 +5,13 @@ use crate::{
   ChatRoomView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::{ChatMessageId, ChatRoomId, LocalUserId, PaginationCursor},
+  schema::{chat_message, chat_participant, chat_room, local_user, person},
   source::{chat_message::ChatMessage, chat_room::ChatRoom, workflow::Workflow},
   traits::{Crud, PaginationCursorBuilder},
   try_join_with_pool,
   utils::{get_conn, limit_fetch, DbPool},
-};
-use app_108jobs_db_schema_file::schema::{
-  chat_message,
-  chat_participant,
-  chat_room,
-  local_user,
-  person,
 };
 use app_108jobs_db_views_post::PostPreview;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper};

@@ -6,7 +6,7 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
-use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db::sensitive::SensitiveString;
 use app_108jobs_db_views_local_user::LocalUserView;
 use lettre::{
   message::{Mailbox, MultiPart},

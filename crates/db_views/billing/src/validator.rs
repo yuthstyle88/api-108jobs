@@ -18,7 +18,7 @@ use crate::api::{
   UpdateBudgetPlanInstallmentsRequest,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{newtypes::Coin, source::billing::WorkStep};
+use app_108jobs_db::{newtypes::Coin, source::billing::WorkStep};
 
 /// Validates that an amount is positive
 pub fn validate_amount_positive(amount: Coin) -> FastJobResult<()> {

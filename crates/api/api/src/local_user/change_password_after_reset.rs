@@ -4,7 +4,7 @@ use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   utils::validation::password_length_check,
 };
-use app_108jobs_db_schema::source::{
+use app_108jobs_db::source::{
   local_user::LocalUser,
   login_token::LoginToken,
   password_reset_request::PasswordResetRequest,

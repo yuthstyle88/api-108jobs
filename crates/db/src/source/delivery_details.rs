@@ -1,4 +1,5 @@
 use crate::{
+  enums::{TripStatus, VehicleType},
   newtypes::{
     Coin,
     CommentId,
@@ -11,16 +12,11 @@ use crate::{
   },
   utils,
 };
-use crate::enums::{TripStatus, VehicleType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
-use {
-  crate::schema::delivery_details,
-  diesel::prelude::*,
-  diesel_async::RunQueryDsl,
-};
+use {crate::schema::delivery_details, diesel::prelude::*, diesel_async::RunQueryDsl};
 
 /// Viewer context for determining access level to delivery details
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

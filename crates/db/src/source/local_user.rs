@@ -1,16 +1,10 @@
+#[cfg(feature = "full")]
+use crate::schema::local_user;
 use crate::{
+  enums::{CommentSortType, ListingType, PostListingMode, PostSortType, VoteShow},
   newtypes::{LocalUserId, PersonId},
   sensitive::SensitiveString,
 };
-use crate::enums::{
-  CommentSortType,
-  ListingType,
-  PostListingMode,
-  PostSortType,
-  VoteShow,
-};
-#[cfg(feature = "full")]
-use crate::schema::local_user;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

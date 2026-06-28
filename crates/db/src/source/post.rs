@@ -1,5 +1,7 @@
-use crate::newtypes::{CategoryId, Coin, DbUrl, LanguageId, PersonId, PostId};
-use crate::enums::{IntendedUse, JobType, PostKind, PostNotifications};
+use crate::{
+  enums::{IntendedUse, JobType, PostKind, PostNotifications},
+  newtypes::{CategoryId, Coin, DbUrl, LanguageId, PersonId, PostId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

@@ -1,5 +1,5 @@
 use crate::PersonView;
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   newtypes::PersonId,
   source::{person::Person, site::Site},
 };

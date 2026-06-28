@@ -8,12 +8,8 @@ use crate::{
     person1,
     person2,
   },
-  newtypes::{InstanceId, PersonId},
-  Person1AliasAllColumnsTuple,
-  Person2AliasAllColumnsTuple,
-};
-use crate::{
   enums::{CategoryFollowerState, CategoryVisibility},
+  newtypes::{InstanceId, PersonId},
   schema::{
     category,
     category_actions,
@@ -29,6 +25,8 @@ use crate::{
     post_tag,
     tag,
   },
+  Person1AliasAllColumnsTuple,
+  Person2AliasAllColumnsTuple,
 };
 use diesel::{
   dsl::{case_when, exists, not},
@@ -265,17 +263,14 @@ pub fn person2_select() -> Person2AliasAllColumnsTuple {
   person2.fields(person::all_columns)
 }
 
-type IsSubscribedType = Eq<
-  crate::schema::category_actions::follow_state,
-  Option<CategoryFollowerState>,
->;
+type IsSubscribedType =
+  Eq<crate::schema::category_actions::follow_state, Option<CategoryFollowerState>>;
 
 pub fn filter_is_subscribed() -> IsSubscribedType {
   category_actions::follow_state.eq(Some(CategoryFollowerState::Accepted))
 }
 
-type IsNotUnlistedType =
-  NotEq<crate::schema::category::visibility, CategoryVisibility>;
+type IsNotUnlistedType = NotEq<crate::schema::category::visibility, CategoryVisibility>;
 
 #[diesel::dsl::auto_type]
 pub fn filter_not_unlisted_or_is_subscribed() -> _ {

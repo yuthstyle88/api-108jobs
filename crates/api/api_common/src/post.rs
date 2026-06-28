@@ -1,9 +1,9 @@
-pub use app_108jobs_db_schema::{
+pub use app_108jobs_db::{
+  enums::PostListingMode,
   newtypes::PostId,
   source::post::{Post, PostActions},
   PostFeatureType,
 };
-pub use app_108jobs_db_schema_file::enums::PostListingMode;
 pub use app_108jobs_db_views_post::{
   api::{
     GetPost,

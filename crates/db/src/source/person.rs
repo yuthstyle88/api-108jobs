@@ -1,10 +1,10 @@
+#[cfg(feature = "full")]
+use crate::schema::{person, person_actions};
 use crate::{
   newtypes::{DbUrl, InstanceId, PersonId, WalletId},
   sensitive::SensitiveString,
   source::placeholder_apub_url,
 };
-#[cfg(feature = "full")]
-use crate::schema::{person, person_actions};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "full")]
 use i_love_jesus::CursorKeysModule;

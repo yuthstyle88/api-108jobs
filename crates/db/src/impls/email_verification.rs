@@ -1,10 +1,10 @@
 use crate::{
   newtypes::LocalUserId,
+  schema::email_verification,
   source::email_verification::{EmailVerification, EmailVerificationForm},
   utils::{get_conn, now, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::email_verification;
 use diesel::{dsl::IntervalDsl, insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

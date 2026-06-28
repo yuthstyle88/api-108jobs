@@ -2,7 +2,7 @@ use crate::check_totp_2fa_valid;
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_schema::source::local_user::{LocalUser, LocalUserUpdateForm};
+use app_108jobs_db::source::local_user::{LocalUser, LocalUserUpdateForm};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{UpdateTotpRequest, UpdateTotpResponse};
 

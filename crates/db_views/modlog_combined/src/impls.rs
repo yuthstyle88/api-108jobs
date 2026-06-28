@@ -20,26 +20,11 @@ use crate::{
   ModlogCombinedViewInternal,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
-use app_108jobs_db_schema::{
+use app_108jobs_db::{
   aliases,
+  enums::ListingType,
   impls::local_user::LocalUserOptionHelper,
   newtypes::{CategoryId, CommentId, PaginationCursor, PersonId, PostId},
-  source::{
-    combined::modlog::{modlog_combined_keys as key, ModlogCombined},
-    local_user::LocalUser,
-  },
-  traits::{InternalToCombinedView, PaginationCursorBuilder},
-  utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
-    queries::{filter_is_subscribed, filter_not_unlisted_or_is_subscribed},
-    DbPool,
-  },
-  ModlogActionType,
-};
-use app_108jobs_db_schema_file::{
-  enums::ListingType,
   schema::{
     admin_allow_instance,
     admin_block_instance,
@@ -66,6 +51,19 @@ use app_108jobs_db_schema_file::{
     person,
     post,
   },
+  source::{
+    combined::modlog::{modlog_combined_keys as key, ModlogCombined},
+    local_user::LocalUser,
+  },
+  traits::{InternalToCombinedView, PaginationCursorBuilder},
+  utils::{
+    get_conn,
+    limit_fetch,
+    paginate,
+    queries::{filter_is_subscribed, filter_not_unlisted_or_is_subscribed},
+    DbPool,
+  },
+  ModlogActionType,
 };
 use diesel::{
   BoolExpressionMethods,
@@ -350,7 +348,7 @@ impl ModlogCombinedQuery<'_> {
     }
 
     if let Some(type_) = self.type_ {
-      use app_108jobs_db_schema::ModlogActionType::*;
+      use app_108jobs_db::ModlogActionType::*;
       query = match type_ {
         All => query,
         ModRemovePost => query.filter(modlog_combined::mod_remove_post_id.is_not_null()),
@@ -610,7 +608,8 @@ mod tests {
 
   use crate::{impls::ModlogCombinedQuery, ModlogCombinedView};
   use app_108jobs_core::error::FastJobResult;
-  use app_108jobs_db_schema::{
+  use app_108jobs_db::{
+    enums::CategoryVisibility,
     newtypes::PersonId,
     source::{
       category::{Category, CategoryInsertForm},
@@ -663,7 +662,6 @@ mod tests {
     utils::{build_db_pool_for_tests, DbPool},
     ModlogActionType,
   };
-  use app_108jobs_db_schema_file::enums::CategoryVisibility;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

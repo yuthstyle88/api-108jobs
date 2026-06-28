@@ -1,5 +1,6 @@
 use crate::{
   newtypes::PostId,
+  schema::trip_location_current,
   source::trip_location_current::{
     TripLocationCurrent,
     TripLocationCurrentInsertForm,
@@ -9,7 +10,6 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
-use crate::schema::trip_location_current;
 use diesel::{
   dsl::{insert_into, update},
   QueryDsl,

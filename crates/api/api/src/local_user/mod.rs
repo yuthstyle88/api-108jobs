@@ -22,6 +22,7 @@ pub mod login;
 pub mod logout;
 pub mod note_person;
 pub mod notifications;
+pub mod person_content;
 pub mod profile;
 pub mod refresh;
 pub mod report_count;

@@ -1,4 +1,5 @@
 use crate::plugins::plugin_metadata;
+use app_108jobs_core::{error::FastJobResult, settings::structs::Settings, VERSION};
 use app_108jobs_db_schema::{
   source::{
     actor_language::SiteLanguage,
@@ -11,7 +12,6 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_views_person::impls::PersonQuery;
 use app_108jobs_db_views_site::{api::SiteSnapshot, SiteView};
-use app_108jobs_utils::{error::FastJobResult, settings::structs::Settings, VERSION};
 use futures::{future::BoxFuture, FutureExt};
 use std::sync::{Arc, RwLock};
 

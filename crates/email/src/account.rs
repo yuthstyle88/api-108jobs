@@ -1,4 +1,9 @@
 use crate::{send_email, user_email, user_language};
+use app_108jobs_core::{
+  error::FastJobResult,
+  settings::structs::Settings,
+  utils::{markdown::markdown_to_html, random::rand_number5},
+};
 use app_108jobs_db_schema::{
   source::{
     email_verification::{EmailVerification, EmailVerificationForm},
@@ -8,11 +13,6 @@ use app_108jobs_db_schema::{
   utils::DbPool,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{
-  error::FastJobResult,
-  settings::structs::Settings,
-  utils::{markdown::markdown_to_html, random::rand_number5},
-};
 
 pub async fn send_password_reset_email(
   user: &LocalUserView,

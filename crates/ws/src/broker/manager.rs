@@ -17,6 +17,10 @@ use crate::{
 use actix::{Actor, Arbiter, AsyncContext, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, BrokerSubscribe, SystemBroker};
 use app_108jobs_api_utils::utils::flush_room_and_update_last_message;
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  redis::RedisClient,
+};
 use app_108jobs_db_schema::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_message::ChatMessageInsertForm, chat_room::ChatRoom, last_read::LastRead},
@@ -27,10 +31,6 @@ use app_108jobs_db_views_chat::api::{
   LastReadResponse,
   PeerReadResponse,
   UnreadSnapshotItem,
-};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorType, FastJobResult},
-  redis::RedisClient,
 };
 use chrono::{DateTime, Utc};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};

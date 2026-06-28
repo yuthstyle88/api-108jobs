@@ -1,6 +1,6 @@
 //! Validation logic for rider requests
 use crate::api::{CreateRider, CreateRiderRequest};
-use app_108jobs_utils::error::{FastJobError, FastJobResult};
+use app_108jobs_core::error::{FastJobError, FastJobResult};
 use chrono::{DateTime, Utc};
 
 /// Validates that license expiry date is in the future
@@ -8,7 +8,7 @@ pub fn validate_license_expiry(expiry_date: Option<DateTime<Utc>>) -> FastJobRes
   if let Some(date) = expiry_date {
     if date <= Utc::now() {
       return Err(
-        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+        app_108jobs_core::error::FastJobErrorType::InvalidField(
           "license expiry date must be in the future".to_string(),
         )
         .into(),
@@ -23,7 +23,7 @@ pub fn validate_plate_number(plate_number: Option<&String>) -> FastJobResult<()>
   if let Some(plate) = plate_number {
     if plate.trim().is_empty() {
       return Err(
-        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+        app_108jobs_core::error::FastJobErrorType::InvalidField(
           "plate number cannot be empty".to_string(),
         )
         .into(),
@@ -38,7 +38,7 @@ pub fn validate_license_number(license_number: Option<&String>) -> FastJobResult
   if let Some(license) = license_number {
     if license.trim().is_empty() {
       return Err(
-        app_108jobs_utils::error::FastJobErrorType::InvalidField(
+        app_108jobs_core::error::FastJobErrorType::InvalidField(
           "license number cannot be empty".to_string(),
         )
         .into(),

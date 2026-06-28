@@ -6,7 +6,7 @@ use app_108jobs_db_views_reports::{
   api::{PostReportResponse, ResolvePostReport},
   PostReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_core::error::FastJobResult;
 
 /// Resolves or unresolves a post report and notifies the moderators of the category
 pub async fn resolve_post_report(

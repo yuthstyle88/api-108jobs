@@ -12,11 +12,11 @@ use crate::{
   traits::{Crud, Likeable, Saveable},
   utils::{functions::hot_rank, get_conn, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT},
 };
-use app_108jobs_db_schema_file::schema::{category, comment, comment_actions, post};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
+use app_108jobs_db_schema_file::schema::{category, comment, comment_actions, post};
 use chrono::Utc;
 use diesel::{
   dsl::insert_into,

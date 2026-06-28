@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{PostId, RiderId},
   source::{
@@ -14,7 +15,6 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;

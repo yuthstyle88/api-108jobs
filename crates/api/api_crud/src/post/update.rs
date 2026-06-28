@@ -7,6 +7,19 @@ use app_108jobs_api_utils::{
   tags::update_post_tags,
   utils::{check_self_promotion_allowed, get_url_blocklist, process_markdown_opt, slur_regex},
 };
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::{
+    slurs::check_slurs,
+    validation::{
+      is_url_blocked,
+      is_valid_alt_text_field,
+      is_valid_body_field,
+      is_valid_post_title,
+      is_valid_url,
+    },
+  },
+};
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   source::{
@@ -22,19 +35,6 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
   api::{EditPost, EditPostRequest, PostResponse},
   PostView,
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::{
-    slurs::check_slurs,
-    validation::{
-      is_url_blocked,
-      is_valid_alt_text_field,
-      is_valid_body_field,
-      is_valid_post_title,
-      is_valid_url,
-    },
-  },
 };
 use chrono::Utc;
 use std::ops::Deref;

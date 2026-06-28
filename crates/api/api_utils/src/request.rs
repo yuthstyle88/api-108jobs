@@ -1,5 +1,11 @@
 use crate::{context::FastJobContext, utils::proxy_image_link};
 use actix_web::web::Data;
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::{PictrsImageMode, Settings},
+  REQWEST_TIMEOUT,
+  VERSION,
+};
 use app_108jobs_db_schema::{
   source::{
     images::{ImageDetailsInsertForm, LocalImage, LocalImageForm},
@@ -9,12 +15,6 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_post::api::{LinkMetadata, OpenGraphData};
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::{PictrsImageMode, Settings},
-  REQWEST_TIMEOUT,
-  VERSION,
-};
 use chrono::{DateTime, Utc};
 use encoding_rs::{Encoding, UTF_8};
 use futures::StreamExt;
@@ -561,7 +561,7 @@ async fn is_image_content_type(client: &ClientWithMiddleware, url: &Url) -> Fast
 #[cfg(test)]
 mod tests {
   use crate::request::extract_opengraph_data;
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use url::Url;
 

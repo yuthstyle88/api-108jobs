@@ -5,8 +5,8 @@ use crate::{
   source::language::Language,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::language;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::QueryDsl;
 use diesel_async::RunQueryDsl;
 
@@ -46,7 +46,7 @@ impl Language {
 mod tests {
 
   use crate::{source::language::Language, utils::build_db_pool_for_tests};
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

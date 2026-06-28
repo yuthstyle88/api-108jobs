@@ -1,5 +1,5 @@
 use app_108jobs_api_server::{start_fastjob_server, CmdArgs};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobErrorType, FastJobResult},
   settings::SETTINGS,
 };

@@ -4,6 +4,7 @@ use app_108jobs_api_utils::{
   listing_defaults::{listing_type_with_default, post_sort_type_with_default},
   utils::{check_fetch_limit, check_private_instance},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
@@ -12,7 +13,6 @@ use app_108jobs_db_views_post::{
   logistics::{load_logistics_for_post_views, LogisticsViewer},
   PostView,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_posts(
   data: Query<GetPosts>,

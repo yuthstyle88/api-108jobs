@@ -7,11 +7,11 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{
   custom_emoji::dsl::custom_emoji,
   custom_emoji_keyword::dsl::{custom_emoji_id, custom_emoji_keyword},
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 

@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::{
     comment::{Comment, CommentUpdateForm},
@@ -14,7 +15,6 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn remove_comment(
   data: Json<RemoveComment>,

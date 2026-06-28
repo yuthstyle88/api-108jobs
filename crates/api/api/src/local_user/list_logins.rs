@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::source::login_token::LoginToken;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::ListLoginsResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_logins(
   context: Data<FastJobContext>,

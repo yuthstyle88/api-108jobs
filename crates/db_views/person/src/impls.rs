@@ -1,4 +1,5 @@
 use crate::PersonView;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
   source::person::{person_keys as key, Person},
@@ -16,7 +17,6 @@ use app_108jobs_db_schema::{
   },
 };
 use app_108jobs_db_schema_file::schema::{local_user, person};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;
@@ -126,6 +126,7 @@ impl PersonQuery {
 #[expect(clippy::indexing_slicing)]
 mod tests {
   use super::*;
+  use app_108jobs_core::error::FastJobResult;
   use app_108jobs_db_schema::{
     assert_length,
     source::{
@@ -136,7 +137,6 @@ mod tests {
     traits::Crud,
     utils::build_db_pool_for_tests,
   };
-  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

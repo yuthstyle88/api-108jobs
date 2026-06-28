@@ -2,8 +2,8 @@ use crate::{
   source::secret::Secret,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::secret::dsl::secret;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel_async::RunQueryDsl;
 
 impl Secret {

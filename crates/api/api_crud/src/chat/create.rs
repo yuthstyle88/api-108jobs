@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::{error::FastJobResult, utils::keys::contacts_key};
 use app_108jobs_db_schema::{
   newtypes::ChatRoomId,
   source::{
@@ -13,7 +14,6 @@ use app_108jobs_db_views_chat::{
   ChatRoomView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{error::FastJobResult, utils::keys::contacts_key};
 use chrono::Utc;
 
 /// POST /api/v4/chat/rooms

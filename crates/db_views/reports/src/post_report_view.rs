@@ -1,4 +1,5 @@
 use crate::PostReportView;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   aliases::{self, creator_category_actions},
   newtypes::{PersonId, PostReportId},
@@ -14,7 +15,6 @@ use app_108jobs_db_schema_file::schema::{
   post_actions,
   post_report,
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,

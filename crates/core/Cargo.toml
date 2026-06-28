@@ -1,5 +1,5 @@
 [package]
-name = "app_108jobs_utils"
+name = "app_108jobs_core"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -10,7 +10,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "app_108jobs_utils"
+name = "app_108jobs_core"
 path = "src/lib.rs"
 doctest = false
 

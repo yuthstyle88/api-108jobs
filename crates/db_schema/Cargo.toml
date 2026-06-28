@@ -19,11 +19,11 @@ workspace = true
 
 [features]
 full = [
-    "app_108jobs_utils/full",
+    "app_108jobs_core/full",
     "diesel",
     "diesel-derive-newtype",
     "bcrypt",
-    "app_108jobs_utils",
+    "app_108jobs_core",
     "regex",
     "serde_json",
     "diesel_ltree",
@@ -55,7 +55,7 @@ serde_with = { workspace = true }
 strum = { workspace = true }
 url = { workspace = true }
 serde_json = { workspace = true, optional = true }
-app_108jobs_utils = { workspace = true, optional = true }
+app_108jobs_core = { workspace = true, optional = true }
 app_108jobs_db_schema_file = { workspace = true }
 app_108jobs_db_schema_setup = { workspace = true, optional = true }
 bcrypt = { workspace = true, optional = true }

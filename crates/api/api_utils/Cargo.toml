@@ -46,7 +46,7 @@ serde_json = { workspace = true }
 once_cell = { version = "1.21.3" }
 tokio = { workspace = true }
 tracing = { workspace = true }
-app_108jobs_utils = { workspace = true }
+app_108jobs_core = { workspace = true }
 extism = { workspace = true }
 extism-convert = { workspace = true }
 reqwest-middleware = { workspace = true }

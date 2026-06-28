@@ -1,5 +1,6 @@
 use crate::context::FastJobContext;
 use actix_web::web::Json;
+use app_108jobs_core::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, CommentId, InstanceId, PostId},
   source::{
@@ -25,7 +26,6 @@ use app_108jobs_db_views_post::{
   logistics::{self, LogisticsViewer},
   PostView,
 };
-use app_108jobs_utils::{error::FastJobResult, utils::mention::scrape_text_for_mentions};
 use std::collections::{HashMap, HashSet};
 use url::Url;
 

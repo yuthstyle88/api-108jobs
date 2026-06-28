@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_fetch_limit};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::source::post::PostActions;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::{
@@ -7,7 +8,6 @@ use app_108jobs_db_views_post::{
   PostView,
 };
 use app_108jobs_db_views_site::api::{ListPersonHidden, ListPersonHiddenResponse};
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn list_person_hidden(
   data: Query<ListPersonHidden>,

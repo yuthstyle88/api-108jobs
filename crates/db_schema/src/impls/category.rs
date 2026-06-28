@@ -21,14 +21,14 @@ use crate::{
     DbPool,
   },
 };
-use app_108jobs_db_schema_file::{
-  enums::{CategoryVisibility, ListingType},
-  schema::{category, category_actions, comment, instance, post},
-};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
   CACHE_DURATION_LARGEST_CATEGORY,
+};
+use app_108jobs_db_schema_file::{
+  enums::{CategoryVisibility, ListingType},
+  schema::{category, category_actions, comment, instance, post},
 };
 use chrono::{DateTime, Utc};
 use diesel::{

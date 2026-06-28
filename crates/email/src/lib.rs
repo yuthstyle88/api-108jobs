@@ -2,12 +2,12 @@
 #![allow(dead_code)]
 #![allow(mismatched_lifetime_syntaxes)]
 
-use app_108jobs_db_schema::sensitive::SensitiveString;
-use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
 };
+use app_108jobs_db_schema::sensitive::SensitiveString;
+use app_108jobs_db_views_local_user::LocalUserView;
 use lettre::{
   message::{Mailbox, MultiPart},
   transport::smtp::extension::ClientId,

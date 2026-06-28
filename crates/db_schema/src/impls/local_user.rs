@@ -12,11 +12,11 @@ use crate::{
     DbPool,
   },
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::{
   enums::CategoryVisibility,
   schema::{category, category_actions, local_user, person, registration_application},
 };
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use bcrypt::{hash, DEFAULT_COST};
 use diesel::{
   dsl::{insert_into, not, IntervalDsl},
@@ -382,7 +382,7 @@ mod tests {
     },
     utils::build_db_pool_for_tests,
   };
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use serial_test::serial;
 
   #[tokio::test]

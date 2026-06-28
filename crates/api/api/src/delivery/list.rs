@@ -1,11 +1,11 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::PostId,
   source::delivery_details::{DeliveryDetails, DeliveryDetailsPrivate},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
 
 /// GET /deliveries/active
 ///

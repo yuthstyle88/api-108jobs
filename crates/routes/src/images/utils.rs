@@ -7,8 +7,8 @@ use actix_web::{
   HttpRequest,
 };
 use app_108jobs_api_utils::{context::FastJobContext, request::delete_image_alias};
+use app_108jobs_core::{error::FastJobResult, REQWEST_TIMEOUT};
 use app_108jobs_db_schema::newtypes::DbUrl;
-use app_108jobs_utils::{error::FastJobResult, REQWEST_TIMEOUT};
 use diesel::NotFound;
 use futures::stream::{Stream, StreamExt};
 use http::HeaderValue;

@@ -1,12 +1,12 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_category_deleted_removed};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{source::comment_report::CommentReport, traits::Reportable};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_reports::{
   api::{CommentReportResponse, ResolveCommentReport},
   CommentReportView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// Resolves or unresolves a comment report and notifies the moderators of the category
 pub async fn resolve_comment_report(

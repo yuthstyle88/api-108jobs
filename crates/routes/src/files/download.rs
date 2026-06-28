@@ -5,7 +5,7 @@ use actix_web::{
   HttpResponse,
 };
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_file(
   path: Path<(i32, String)>,

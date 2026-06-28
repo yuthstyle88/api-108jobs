@@ -1,10 +1,10 @@
 //! Validation logic for post requests
 use crate::api::{CreatePost, CreatePostRequest, EditPost, EditPostRequest};
-use app_108jobs_db_schema_file::enums::PostKind;
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobError, FastJobErrorType, FastJobResult},
   settings::SETTINGS,
 };
+use app_108jobs_db_schema_file::enums::PostKind;
 use chrono::Utc;
 use slug::slugify;
 use url::Url;

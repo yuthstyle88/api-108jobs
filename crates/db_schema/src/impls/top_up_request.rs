@@ -8,9 +8,9 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 #[cfg(feature = "full")]
-use app_108jobs_db_schema_file::schema::top_up_requests;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 #[cfg(feature = "full")]
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use app_108jobs_db_schema_file::schema::top_up_requests;
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]
 use diesel::QueryDsl;

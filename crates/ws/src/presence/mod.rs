@@ -8,12 +8,7 @@ use crate::{
 };
 use actix::{Actor, Addr, Context, Handler, Message, ResponseFuture};
 use actix_broker::{BrokerIssue, SystemBroker};
-use app_108jobs_db_schema::{
-  newtypes::{ChatRoomId, LocalUserId},
-  source::chat_participant::ChatParticipant,
-  utils::{ActualDbPool, DbPool},
-};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::FastJobResult,
   redis::{AsyncCommands, RedisClient},
   utils::keys::{
@@ -23,6 +18,11 @@ use app_108jobs_utils::{
     rooms_key,
     user_events_topic,
   },
+};
+use app_108jobs_db_schema::{
+  newtypes::{ChatRoomId, LocalUserId},
+  source::chat_participant::ChatParticipant,
+  utils::{ActualDbPool, DbPool},
 };
 use chrono::{DateTime, Utc};
 use serde_json::json;

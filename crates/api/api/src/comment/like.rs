@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{comment::CommentActions, person::PersonActions},
   traits::Likeable,
@@ -9,7 +10,6 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_comment(

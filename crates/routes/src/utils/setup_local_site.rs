@@ -1,4 +1,9 @@
 use app_108jobs_api_utils::{plugins::plugin_metadata, utils::generate_inbox_url};
+use app_108jobs_core::{
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+  VERSION,
+};
 use app_108jobs_db_schema::{
   source::{
     actor_language::SiteLanguage,
@@ -21,11 +26,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_schema_file::schema::local_site;
 use app_108jobs_db_views_person::impls::PersonQuery;
 use app_108jobs_db_views_site::{api::SiteSnapshot, SiteView};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
-  VERSION,
-};
 use chrono::Utc;
 use diesel::{
   dsl::{exists, not, select},

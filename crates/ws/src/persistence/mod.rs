@@ -2,6 +2,7 @@ pub mod fetch_history_direct;
 pub mod get_last_read;
 pub mod get_unread_snapshot;
 
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{ChatRoomId, LocalUserId, PaginationCursor},
   source::{chat_participant::ChatParticipant, last_read::LastRead},
@@ -12,7 +13,6 @@ use app_108jobs_db_views_chat::{
   api::{ChatMessagesResponse, LastReadResponse},
   ChatMessageView,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 /// List chat messages using cursor pagination
 pub async fn list_chat_messages(

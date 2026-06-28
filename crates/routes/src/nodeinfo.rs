@@ -1,11 +1,11 @@
 use actix_web::{web, Error, HttpResponse, Result};
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema_file::enums::RegistrationMode;
-use app_108jobs_utils::{
+use app_108jobs_core::{
   cache_header::{cache_1hour, cache_3days},
   error::FastJobResult,
   VERSION,
 };
+use app_108jobs_db_schema_file::enums::RegistrationMode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;

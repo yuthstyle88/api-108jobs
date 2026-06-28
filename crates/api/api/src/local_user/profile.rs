@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::person::{Person, PersonUpdateForm, SaveUserProfileForm},
   traits::Crud,
@@ -7,7 +8,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::api::VisitProfileResponse;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

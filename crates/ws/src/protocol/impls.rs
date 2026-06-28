@@ -15,7 +15,7 @@ use crate::{
     SyncPendingPayload,
   },
 };
-use app_108jobs_utils::error::FastJobError;
+use app_108jobs_core::error::FastJobError;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 

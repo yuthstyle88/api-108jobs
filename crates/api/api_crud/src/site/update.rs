@@ -11,6 +11,19 @@ use app_108jobs_api_utils::{
     slur_regex,
   },
 };
+use app_108jobs_core::{
+  error::FastJobResult,
+  utils::{
+    slurs::check_slurs_opt,
+    validation::{
+      build_and_check_regex,
+      check_urls_are_valid,
+      is_valid_body_field,
+      site_name_length_check,
+      site_or_category_description_length_check,
+    },
+  },
+};
 use app_108jobs_db_schema::{
   source::{
     actor_language::SiteLanguage,
@@ -28,19 +41,6 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::{
   api::{EditSiteRequest, SiteResponse},
   SiteView,
-};
-use app_108jobs_utils::{
-  error::FastJobResult,
-  utils::{
-    slurs::check_slurs_opt,
-    validation::{
-      build_and_check_regex,
-      check_urls_are_valid,
-      is_valid_body_field,
-      site_name_length_check,
-      site_or_category_description_length_check,
-    },
-  },
 };
 use chrono::Utc;
 
@@ -143,7 +143,7 @@ pub async fn update_site(
 
   if let Some(url_blocklist) = data.blocked_urls.clone() {
     // If this validation changes it must be synced with
-    // app_108jobs_utils::utils::markdown::create_url_blocklist_test_regex_set.
+    // app_108jobs_core::utils::markdown::create_url_blocklist_test_regex_set.
     let parsed_urls = check_urls_are_valid(&url_blocklist)?;
     LocalSiteUrlBlocklist::replace(&mut context.pool(), parsed_urls).await?;
   }
@@ -224,10 +224,10 @@ fn validate_update_payload(
 #[cfg(test)]
 mod tests {
   use crate::site::update::validate_update_payload;
+  use app_108jobs_core::error::FastJobErrorType;
   use app_108jobs_db_schema::source::local_site::LocalSite;
   use app_108jobs_db_schema_file::enums::{ListingType, PostSortType, RegistrationMode};
   use app_108jobs_db_views_site::api::EditSiteRequest;
-  use app_108jobs_utils::error::FastJobErrorType;
 
   #[test]
   fn test_validate_invalid_update_payload() {

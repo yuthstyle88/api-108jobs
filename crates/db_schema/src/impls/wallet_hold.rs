@@ -14,8 +14,8 @@ use crate::{
     WalletHoldUpdateForm,
   },
 };
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::wallet_hold;
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   result::{DatabaseErrorKind, Error as DieselError},

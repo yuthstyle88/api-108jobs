@@ -26,7 +26,7 @@ use crate::{
   traits::Crud,
   utils::DbPool,
 };
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_core::error::FastJobResult;
 use std::sync::atomic::{AtomicU64, Ordering};
 use url::Url;
 
@@ -69,7 +69,7 @@ pub async fn reset_category_sequence(pool: &mut DbPool<'_>) -> FastJobResult<()>
   )
   .execute(&mut *conn)
   .await
-  .map_err(app_108jobs_utils::error::FastJobError::from)?;
+  .map_err(app_108jobs_core::error::FastJobError::from)?;
   Ok(())
 }
 
@@ -166,8 +166,7 @@ impl TestData {
 fn build_ap_id(domain: &str) -> FastJobResult<DbUrl> {
   // Parse to Url and then wrap into our DbUrl newtype. The URL form
   // `http://<domain>/` is what the existing federation tests use too.
-  let parsed = Url::parse(&format!("http://{domain}/")).map_err(|e| {
-    app_108jobs_utils::error::FastJobErrorType::Unknown(format!("ap_id parse: {e}"))
-  })?;
+  let parsed = Url::parse(&format!("http://{domain}/"))
+    .map_err(|e| app_108jobs_core::error::FastJobErrorType::Unknown(format!("ap_id parse: {e}")))?;
   Ok(parsed.into())
 }

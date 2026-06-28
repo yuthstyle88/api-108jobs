@@ -4,13 +4,13 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_category_deleted_removed, is_admin},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::category::{Category, CategoryUpdateForm},
   traits::Crud,
 };
 use app_108jobs_db_views_category::api::{CategoryResponse, DeleteCategory};
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn delete_category(
   data: Json<DeleteCategory>,

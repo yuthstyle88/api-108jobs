@@ -1,6 +1,6 @@
 #![cfg(test)]
 #![expect(clippy::expect_used)]
-use app_108jobs_utils::settings::SETTINGS;
+use app_108jobs_core::settings::SETTINGS;
 use itertools::Itertools;
 use pathfinding::matrix::Matrix;
 use std::{

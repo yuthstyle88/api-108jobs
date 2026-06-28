@@ -1,4 +1,5 @@
 use crate::LocalImageView;
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{PaginationCursor, PersonId},
   source::images::{local_image_keys as key, LocalImage},
@@ -6,7 +7,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{local_image, person, post};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

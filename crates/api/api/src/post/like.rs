@@ -4,6 +4,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::check_bot_account,
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     person::PersonActions,
@@ -16,7 +17,6 @@ use app_108jobs_db_views_post::{
   api::{CreatePostLikeRequest, PostResponse},
   PostView,
 };
-use app_108jobs_utils::error::FastJobResult;
 use std::ops::Deref;
 
 pub async fn like_post(

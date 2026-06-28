@@ -1,6 +1,6 @@
 //! Validation logic for user review requests
 use crate::api::{SubmitUserReviewForm, SubmitUserReviewRequest};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that a rating is between 1 and 5 (inclusive)
 pub fn validate_rating(rating: i16) -> FastJobResult<()> {

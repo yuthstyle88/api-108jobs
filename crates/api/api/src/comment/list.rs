@@ -4,6 +4,7 @@ use app_108jobs_api_utils::{
   listing_defaults::{comment_sort_type_with_default, listing_type_with_default},
   utils::check_private_instance,
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::PaginationCursor,
   source::{category::Category, comment::Comment},
@@ -15,7 +16,6 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 struct CommentsCommonOutput {
   comments: Vec<CommentView>,

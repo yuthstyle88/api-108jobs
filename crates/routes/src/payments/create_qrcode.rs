@@ -4,6 +4,7 @@ use actix_web::{
   HttpResponse,
 };
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::Coin,
   source::{
@@ -13,7 +14,6 @@ use app_108jobs_db_schema::{
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::error;

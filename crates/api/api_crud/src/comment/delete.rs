@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_category_deleted_removed};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::comment::{Comment, CommentUpdateForm},
   traits::Crud,
@@ -9,7 +10,6 @@ use app_108jobs_db_views_comment::{
   CommentView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn delete_comment(
   data: Json<DeleteCommentRequest>,

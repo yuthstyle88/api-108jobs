@@ -7,6 +7,7 @@ use crate::{
   ListChatPendingAckQuery,
   ListChatPendingAckResponse,
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::{ChatRoomId, LocalUserId},
   source::pending_sender_ack::{PendingSenderAck, PendingSenderAckInsertForm},
@@ -14,7 +15,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::pending_sender_ack;
-use app_108jobs_utils::error::FastJobResult;
 use chrono::{DateTime, Utc};
 use diesel::{ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;

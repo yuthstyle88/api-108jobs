@@ -10,6 +10,10 @@ use app_108jobs_api_utils::{
     update_read_comments,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobError, FastJobErrorType, FastJobResult},
+  utils::validation::is_valid_body_field,
+};
 use app_108jobs_db_schema::{
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   newtypes::{PersonId, PostId},
@@ -24,10 +28,6 @@ use app_108jobs_db_schema_file::{
 use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
-use app_108jobs_utils::{
-  error::{FastJobError, FastJobErrorType, FastJobResult},
-  utils::validation::is_valid_body_field,
-};
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,

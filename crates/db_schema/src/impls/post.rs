@@ -23,13 +23,13 @@ use crate::{
     FETCH_LIMIT_MAX,
   },
 };
+use app_108jobs_core::{
+  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
+  settings::structs::Settings,
+};
 use app_108jobs_db_schema_file::{
   enums::PostNotifications,
   schema::{category, person, post, post_actions},
-};
-use app_108jobs_utils::{
-  error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult},
-  settings::structs::Settings,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -602,7 +602,7 @@ mod tests {
     traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
   };
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
 

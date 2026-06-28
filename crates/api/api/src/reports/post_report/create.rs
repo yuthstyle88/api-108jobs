@@ -15,7 +15,7 @@ use app_108jobs_db_views_reports::{
   PostReportView,
 };
 use app_108jobs_multilang::admin::send_new_report_email_to_admins;
-use app_108jobs_utils::error::FastJobResult;
+use app_108jobs_core::error::FastJobResult;
 
 /// Creates a post report and notifies the moderators of the category
 pub async fn create_post_report(

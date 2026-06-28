@@ -1,7 +1,7 @@
 //! Validation logic for comment requests
 use crate::api::{CreateComment, CreateCommentRequest};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::newtypes::{CommentId, LanguageId, PostId};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that comment content is not empty
 pub fn validate_comment_content(content: &str) -> FastJobResult<()> {

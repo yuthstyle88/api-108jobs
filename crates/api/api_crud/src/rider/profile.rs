@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::rider::{Rider, RiderUpdateForm},
   traits::Crud,
@@ -10,7 +11,6 @@ use app_108jobs_db_views_rider::{
   validator::validate_license_expiry,
 };
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use chrono::Utc;
 
 /// Resolve the active rider profile owned by the authenticated user, or 404.

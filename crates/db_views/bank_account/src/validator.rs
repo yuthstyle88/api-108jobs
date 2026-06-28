@@ -8,11 +8,11 @@ use crate::api::{
   UpdateBankAccount,
   UpdateBankAccountRequest,
 };
-use app_108jobs_db_schema::newtypes::{BankAccountId, BankId};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   error::{FastJobError, FastJobErrorType, FastJobResult},
   utils::validation::validate_bank_account,
 };
+use app_108jobs_db_schema::newtypes::{BankAccountId, BankId};
 
 /// Validates bank account number by country
 pub fn validate_account_number(country_id: &str, account_number: &str) -> FastJobResult<()> {

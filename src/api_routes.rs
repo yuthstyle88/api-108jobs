@@ -212,6 +212,7 @@ use app_108jobs_api_crud::{
     my_user::get_my_user,
   },
 };
+use app_108jobs_core::rate_limit::RateLimit;
 use app_108jobs_routes::{
   files::{delete::delete_file, download::get_file, upload::upload_file},
   images::{
@@ -239,7 +240,6 @@ use app_108jobs_routes::{
   },
   payments::{create_qrcode::create_qrcode, inquire::inquire_qrcode},
 };
-use app_108jobs_utils::rate_limit::RateLimit;
 use app_108jobs_ws::server::handler::{
   get_history,
   get_last_read,

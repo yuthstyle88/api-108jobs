@@ -1,4 +1,5 @@
 use crate::SiteView;
+use app_108jobs_core::error::FastJobError;
 use app_108jobs_db_schema::{
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,
@@ -30,7 +31,6 @@ use app_108jobs_db_schema_file::enums::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::PersonView;
 use app_108jobs_db_views_post::api::PostItem;
-use app_108jobs_utils::error::FastJobError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

@@ -5,10 +5,10 @@ use crate::{
   utils::{get_conn, DbPool},
 };
 #[cfg(feature = "full")]
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+#[cfg(feature = "full")]
 use app_108jobs_db_schema_file::schema::last_reads;
 use app_108jobs_db_schema_file::schema::last_reads::dsl as lr;
-#[cfg(feature = "full")]
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 #[cfg(feature = "full")]

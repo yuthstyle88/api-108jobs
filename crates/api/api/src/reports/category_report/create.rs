@@ -1,6 +1,7 @@
 use crate::check_report_reason;
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::slur_regex};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     category::Category,
@@ -13,7 +14,6 @@ use app_108jobs_db_views_reports::{
   api::{CategoryReportResponse, CreateCategoryReportRequest},
   CategoryReportView,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn create_category_report(
   data: Json<CreateCategoryReportRequest>,

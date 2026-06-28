@@ -13,9 +13,9 @@ use app_108jobs_api_utils::{
     check_registration_application,
   },
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::{Login, LoginRequest, LoginResponse};
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use bcrypt::verify;
 
 pub async fn login(

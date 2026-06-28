@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_expire_time, is_admin, remove_or_restore_user_data},
 };
+use app_108jobs_core::{error::FastJobResult, utils::validation::is_valid_body_field};
 use app_108jobs_db_schema::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
@@ -15,7 +16,6 @@ use app_108jobs_db_views_person::{
   api::{BanPersonRequest, BanPersonResponse},
   PersonView,
 };
-use app_108jobs_utils::{error::FastJobResult, utils::validation::is_valid_body_field};
 
 pub async fn ban_from_site(
   data: Json<BanPersonRequest>,

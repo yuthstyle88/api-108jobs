@@ -18,8 +18,8 @@ use crate::{
     },
   },
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::{local_user, person, wallet, wallet_transaction};
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl};
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
@@ -567,7 +567,7 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, form).await?;
           // return updated wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_core::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -590,7 +590,7 @@ impl WalletModel {
           let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Release, amount).await?;
           let _ = Self::insert_wallet_tx(conn, form).await?;
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_core::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -613,7 +613,7 @@ impl WalletModel {
           let _ = Self::apply_op_on(conn, form.wallet_id, BalanceOp::Capture, amount).await?;
           let _ = Self::insert_wallet_tx(conn, form).await?;
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_core::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -682,7 +682,7 @@ impl WalletModel {
           // journal both sides
           let _ = Self::insert_wallet_tx(conn, form_out).await?;
           let _ = Self::insert_wallet_tx(conn, form_in).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(())
+          Ok::<_, app_108jobs_core::error::FastJobError>(())
         }
         .scope_boxed()
       })
@@ -717,7 +717,7 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_core::error::FastJobError>(w)
         }
         .scope_boxed()
       })
@@ -751,7 +751,7 @@ impl WalletModel {
           let _ = Self::insert_wallet_tx(conn, &mirror).await?;
           // return updated user wallet
           let w = Self::load_for_update(conn, form.wallet_id).await?;
-          Ok::<_, app_108jobs_utils::error::FastJobError>(w)
+          Ok::<_, app_108jobs_core::error::FastJobError>(w)
         }
         .scope_boxed()
       })

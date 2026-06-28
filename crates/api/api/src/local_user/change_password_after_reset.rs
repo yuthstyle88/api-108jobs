@@ -1,15 +1,15 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::validation::password_length_check,
+};
 use app_108jobs_db_schema::source::{
   local_user::LocalUser,
   login_token::LoginToken,
   password_reset_request::PasswordResetRequest,
 };
 use app_108jobs_db_views_site::api::{PasswordChangeAfterReset, SuccessResponse};
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::validation::password_length_check,
-};
 
 pub async fn change_password_after_reset(
   data: Json<PasswordChangeAfterReset>,

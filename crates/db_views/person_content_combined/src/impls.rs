@@ -5,6 +5,7 @@ use crate::{
   PersonContentCombinedViewInternal,
   PostView,
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   self,
   newtypes::{InstanceId, PaginationCursor, PersonId},
@@ -39,7 +40,6 @@ use app_108jobs_db_schema_file::schema::{
   person_content_combined,
   post,
 };
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   BoolExpressionMethods,
   ExpressionMethods,
@@ -284,6 +284,7 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
 mod tests {
 
   use crate::{impls::PersonContentCombinedQuery, PersonContentCombinedView};
+  use app_108jobs_core::error::FastJobResult;
   use app_108jobs_db_schema::{
     source::{
       category::{Category, CategoryInsertForm},
@@ -295,7 +296,6 @@ mod tests {
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
   };
-  use app_108jobs_utils::error::FastJobResult;
   use pretty_assertions::assert_eq;
   use serial_test::serial;
   struct Data {

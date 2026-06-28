@@ -1,4 +1,8 @@
 use crate::{api::ListBankAccountQuery, BankAccountView};
+use app_108jobs_core::{
+  apply_date_filters,
+  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
+};
 use app_108jobs_db_schema::{
   newtypes::{BankAccountId, LocalUserId, PaginationCursor},
   source::{
@@ -9,10 +13,6 @@ use app_108jobs_db_schema::{
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use app_108jobs_db_schema_file::schema::{banks, user_bank_accounts};
-use app_108jobs_utils::{
-  apply_date_filters,
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-};
 use diesel::{prelude::*, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

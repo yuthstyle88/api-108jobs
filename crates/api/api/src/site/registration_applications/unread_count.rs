@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::RegistrationApplicationView;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn get_unread_registration_application_count(
   context: Data<FastJobContext>,

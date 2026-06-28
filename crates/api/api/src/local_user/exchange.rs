@@ -3,10 +3,7 @@ use actix_web::{
   HttpRequest,
 };
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_db_schema::{sensitive::SensitiveString, source::person::Person};
-use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
-use app_108jobs_utils::{
+use app_108jobs_core::{
   crypto::{
     derive_aes256_from_ecdh,
     export_private_pkcs8_der,
@@ -15,6 +12,9 @@ use app_108jobs_utils::{
   },
   error::{FastJobErrorType, FastJobResult},
 };
+use app_108jobs_db_schema::{sensitive::SensitiveString, source::person::Person};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::{ExchangeKey, ExchangeKeyResponse};
 use hex;
 use p256::{PublicKey, SecretKey};
 use rand::rngs::OsRng;

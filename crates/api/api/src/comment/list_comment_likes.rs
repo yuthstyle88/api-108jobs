@@ -1,9 +1,9 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_views_comment::api::{ListCommentLikes, ListCommentLikesResponse};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_vote::VoteView;
-use app_108jobs_utils::error::FastJobResult;
 
 /// Lists likes for a comment
 pub async fn list_comment_likes(

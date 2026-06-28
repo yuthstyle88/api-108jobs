@@ -3,16 +3,16 @@ use actix_web::{
   HttpRequest,
 };
 use app_108jobs_api_utils::{claims::Claims, context::FastJobContext, utils::slur_regex};
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::{slurs::check_slurs, validation::password_length_check},
+};
 use app_108jobs_db_schema::source::local_user::LocalUser;
 use app_108jobs_db_schema_file::enums::RegistrationMode;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::OAuthUserUpdateRequest;
 use app_108jobs_db_views_site::api::LoginResponse;
 use app_108jobs_email::admin::send_new_applicant_email_to_admins;
-use app_108jobs_utils::{
-  error::{FastJobErrorType, FastJobResult},
-  utils::{slurs::check_slurs, validation::password_length_check},
-};
 
 pub async fn update_term(
   data: Json<OAuthUserUpdateRequest>,

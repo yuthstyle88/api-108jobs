@@ -1,5 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_valid};
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_report_combined::{
@@ -7,7 +8,6 @@ use app_108jobs_db_views_report_combined::{
   impls::ReportCombinedQuery,
   ReportCombinedView,
 };
-use app_108jobs_utils::error::FastJobResult;
 
 /// Lists reports for a category if an id is supplied
 /// or returns all reports for communities a user moderates

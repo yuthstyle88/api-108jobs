@@ -1,7 +1,7 @@
 use crate::payments::http_client::scb_client;
 use actix_web::web::Data;
 use app_108jobs_api_utils::context::FastJobContext;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;

@@ -7,8 +7,8 @@ use crate::{
   traits::Crud,
   utils::{get_conn, DbPool},
 };
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema_file::schema::pending_sender_ack;
-use app_108jobs_utils::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::dsl::insert_into;
 use diesel_async::RunQueryDsl;
 

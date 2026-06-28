@@ -1,14 +1,14 @@
 use crate::{inbox_link, send_email, user_language};
+use app_108jobs_core::{
+  error::FastJobResult,
+  settings::structs::Settings,
+  utils::markdown::markdown_to_html,
+};
 use app_108jobs_db_schema::{
   newtypes::DbUrl,
   source::{comment::Comment, person::Person, post::Post},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
-use app_108jobs_utils::{
-  error::FastJobResult,
-  settings::structs::Settings,
-  utils::markdown::markdown_to_html,
-};
 use tracing::warn;
 
 pub async fn send_mention_email(

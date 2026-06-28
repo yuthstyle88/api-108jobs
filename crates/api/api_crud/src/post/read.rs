@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{check_private_instance, update_read_comments},
 };
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   source::{
     comment::Comment,
@@ -18,7 +19,6 @@ use app_108jobs_db_views_post::{
   PostView,
 };
 use app_108jobs_db_views_search_combined::impls::SearchCombinedQuery;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 
 pub async fn get_post(
   data: Query<GetPost>,

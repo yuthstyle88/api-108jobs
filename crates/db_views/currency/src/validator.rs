@@ -9,8 +9,8 @@ use crate::api::{
   UpdatePricingConfig,
   UpdatePricingConfigRequest,
 };
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::newtypes::{CurrencyId, PricingConfigId};
-use app_108jobs_utils::error::{FastJobError, FastJobErrorType, FastJobResult};
 
 /// Validates that currency code is not empty and is uppercase
 pub fn validate_currency_code(code: &str) -> FastJobResult<()> {

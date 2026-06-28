@@ -8,6 +8,7 @@ use app_108jobs_api_utils::{
     verify_post_creator,
   },
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   newtypes::PostId,
   source::delivery_details::DeliveryDetails,
@@ -17,7 +18,6 @@ use app_108jobs_db_schema_file::enums::TripStatus;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{AssignDeliveryRequest, DeliveryAssignmentEvent};
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
 
@@ -93,7 +93,7 @@ pub async fn assign_delivery_from_proposal(
         // This is done within the same transaction to ensure atomicity
         comment.set_not_pending(&mut pool).await?;
 
-        Ok::<_, app_108jobs_utils::error::FastJobError>((delivery, rider_id))
+        Ok::<_, app_108jobs_core::error::FastJobError>((delivery, rider_id))
       }
       .scope_boxed()
     })

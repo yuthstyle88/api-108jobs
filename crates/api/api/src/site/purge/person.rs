@@ -3,6 +3,7 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{is_admin, purge_user_account},
 };
+use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_schema::{
   source::{
     instance::{InstanceActions, InstanceBanForm},
@@ -14,7 +15,6 @@ use app_108jobs_db_schema::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person::api::PurgePerson;
 use app_108jobs_db_views_site::api::SuccessResponse;
-use app_108jobs_utils::error::FastJobResult;
 
 pub async fn purge_person(
   data: Json<PurgePerson>,

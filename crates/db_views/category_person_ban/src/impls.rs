@@ -1,10 +1,10 @@
 use crate::CategoryPersonBanView;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db_schema::{
   newtypes::{CategoryId, PersonId},
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_schema_file::schema::category_actions;
-use app_108jobs_utils::error::{FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, not},
   select,

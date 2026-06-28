@@ -238,7 +238,7 @@ impl Count {
 mod tests {
   use super::AllNull;
   use crate::utils::{build_db_pool_for_tests, get_conn, DbConn};
-  use app_108jobs_utils::error::FastJobResult;
+  use app_108jobs_core::error::FastJobResult;
   use diesel::{
     debug_query,
     insert_into,

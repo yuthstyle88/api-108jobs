@@ -1,0 +1,1933 @@
+// @generated automatically by Diesel CLI.
+
+pub mod sql_types {
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "actor_type_enum"))]
+  pub struct ActorTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "comment_sort_type_enum"))]
+  pub struct CommentSortTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "category_follower_state"))]
+  pub struct CategoryFollowerState;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "category_visibility"))]
+  pub struct CategoryVisibility;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "listing_type_enum"))]
+  pub struct ListingTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "ltree"))]
+  pub struct Ltree;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_listing_mode_enum"))]
+  pub struct PostListingModeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_notifications_mode_enum"))]
+  pub struct PostNotificationsModeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_sort_type_enum"))]
+  pub struct PostSortTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "registration_mode_enum"))]
+  pub struct RegistrationModeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "vote_show_enum"))]
+  pub struct VoteShowEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "intended_use_enum"))]
+  pub struct IntendedUseEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "job_type_enum"))]
+  pub struct JobTypeEnum;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "post_kind"))]
+  pub struct PostKind;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "trip_status"))]
+  pub struct TripStatus;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "payment_method"))]
+  pub struct PaymentMethod;
+
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "billing_status"))]
+  pub struct BillingStatus;
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "workflow_status"))]
+  pub struct WorkFlowStatus;
+
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "tx_kind"))]
+  pub struct TxKind;
+
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "top_up_status"))]
+  pub struct TopUpStatus;
+
+  #[derive(
+    diesel::query_builder::QueryId,
+    diesel::sql_types::SqlType,
+    Debug,
+    serde::Serialize,
+    serde::Deserialize,
+  )]
+  #[diesel(postgres_type(name = "withdraw_status"))]
+  pub struct WithdrawStatus;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "language_level"))]
+  pub struct LanguageLevel;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "citext"))]
+  pub struct Citext;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "vehicle_type"))]
+  pub struct VehicleType;
+
+  #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+  #[diesel(postgres_type(name = "rider_verification_status"))]
+  pub struct RiderVerificationStatus;
+}
+
+diesel::table! {
+    admin_allow_instance (id) {
+        id -> Int4,
+        instance_id -> Int4,
+        admin_person_id -> Int4,
+        allowed -> Bool,
+        reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    admin_block_instance (id) {
+        id -> Int4,
+        instance_id -> Int4,
+        admin_person_id -> Int4,
+        blocked -> Bool,
+        reason -> Nullable<Text>,
+        expires_at -> Nullable<Timestamptz>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    admin_purge_comment (id) {
+        id -> Int4,
+        admin_person_id -> Int4,
+        post_id -> Int4,
+        reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    admin_purge_category (id) {
+        id -> Int4,
+        admin_person_id -> Int4,
+        reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    admin_purge_person (id) {
+        id -> Int4,
+        admin_person_id -> Int4,
+        reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    admin_purge_post (id) {
+        id -> Int4,
+        admin_person_id -> Int4,
+        category_id -> Int4,
+        reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    captcha_answer (uuid) {
+        uuid -> Uuid,
+        answer -> Text,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use diesel_ltree::sql_types::Ltree;
+    comment (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        content -> Text,
+        removed -> Bool,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        deleted -> Bool,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        local -> Bool,
+        path -> Ltree,
+        distinguished -> Bool,
+        language_id -> Int4,
+        score -> Int8,
+        upvotes -> Int8,
+        downvotes -> Int8,
+        child_count -> Int4,
+        hot_rank -> Float8,
+        controversy_rank -> Float8,
+        report_count -> Int2,
+        unresolved_report_count -> Int2,
+        pending -> Bool,
+    }
+}
+
+diesel::table! {
+    comment_actions (person_id, comment_id) {
+        person_id -> Int4,
+        comment_id -> Int4,
+        like_score -> Nullable<Int2>,
+        liked_at -> Nullable<Timestamptz>,
+        saved_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    comment_reply (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        comment_id -> Int4,
+        read -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    comment_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        comment_id -> Int4,
+        original_comment_text -> Text,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Nullable<Int4>,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        violates_instance_rules -> Bool,
+    }
+}
+
+diesel::table! {
+    chat_room (id) {
+        id -> Varchar,
+        serial_id -> Int8,
+        room_name -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        post_id -> Nullable<Int4>,
+        current_comment_id -> Nullable<Int4>,
+        last_message_id -> Nullable<Varchar>,
+        last_message_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    chat_participant (room_id, member_id) {
+        room_id -> Varchar,
+        member_id -> Int4,
+        joined_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    chat_unread (local_user_id, room_id) {
+        local_user_id -> Int4,
+        room_id -> Varchar,
+        unread_count -> Int4,
+        last_message_id -> Nullable<Varchar>,
+        last_message_at -> Nullable<Timestamptz>,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    chat_message (id) {
+        id -> Int8,
+        msg_ref_id -> Varchar,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        content -> Text,
+        status -> Int2,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        sender_ack_confirmed_at ->  Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+     pending_sender_ack (id){
+        id -> Int8,
+        room_id -> Varchar,
+        sender_id -> Int4,
+        client_id -> Uuid,
+        created_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    last_reads (local_user_id, room_id) {
+        local_user_id -> Int4,
+        room_id -> Varchar,
+        last_read_msg_id -> Varchar,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::CategoryVisibility;
+    use diesel_ltree::sql_types::Ltree;
+
+    category (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        title -> Varchar,
+        sidebar -> Nullable<Text>,
+        removed -> Bool,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        deleted -> Bool,
+        self_promotion -> Bool,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        local -> Bool,
+        last_refreshed_at -> Timestamptz,
+        icon -> Nullable<Text>,
+        banner -> Nullable<Text>,
+        #[max_length = 255]
+        followers_url -> Nullable<Varchar>,
+        #[max_length = 255]
+        inbox_url -> Varchar,
+        posting_restricted_to_mods -> Bool,
+        instance_id -> Int4,
+        #[max_length = 255]
+        moderators_url -> Nullable<Varchar>,
+        #[max_length = 255]
+        featured_url -> Nullable<Varchar>,
+        visibility -> CategoryVisibility,
+        #[max_length = 150]
+        description -> Nullable<Varchar>,
+        random_number -> Int2,
+        subscribers -> Int8,
+        posts -> Int8,
+        comments -> Int8,
+        users_active_day -> Int8,
+        users_active_week -> Int8,
+        users_active_month -> Int8,
+        users_active_half_year -> Int8,
+        hot_rank -> Float8,
+        subscribers_local -> Int8,
+        report_count -> Int2,
+        unresolved_report_count -> Int2,
+        interactions_month -> Int8,
+        local_removed -> Bool,
+        path -> Ltree,
+        active -> Bool,
+        is_new -> Bool,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::CategoryFollowerState;
+
+    category_actions (person_id, category_id) {
+        category_id -> Int4,
+        person_id -> Int4,
+        followed_at -> Nullable<Timestamptz>,
+        follow_state -> Nullable<CategoryFollowerState>,
+        follow_approver_id -> Nullable<Int4>,
+        blocked_at -> Nullable<Timestamptz>,
+        became_moderator_at -> Nullable<Timestamptz>,
+        received_ban_at -> Nullable<Timestamptz>,
+        ban_expires_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    category_language (category_id, language_id) {
+        category_id -> Int4,
+        language_id -> Int4,
+    }
+}
+
+diesel::table! {
+    category_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        category_id -> Int4,
+        original_category_name -> Text,
+        original_category_title -> Text,
+        original_category_description -> Nullable<Text>,
+        original_category_sidebar -> Nullable<Text>,
+        original_category_icon -> Nullable<Text>,
+        original_category_banner -> Nullable<Text>,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Nullable<Int4>,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    custom_emoji (id) {
+        id -> Int4,
+        #[max_length = 128]
+        shortcode -> Varchar,
+        image_url -> Text,
+        alt_text -> Text,
+        category -> Text,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    custom_emoji_keyword (custom_emoji_id, keyword) {
+        custom_emoji_id -> Int4,
+        #[max_length = 128]
+        keyword -> Varchar,
+    }
+}
+
+diesel::table! {
+    email_verification (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        email -> Text,
+        verification_code -> Text,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    image_details (link) {
+        link -> Text,
+        width -> Int4,
+        height -> Int4,
+        content_type -> Text,
+        #[max_length = 50]
+        blurhash -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    inbox_combined (id) {
+        id -> Int4,
+        published_at -> Timestamptz,
+        comment_reply_id -> Nullable<Int4>,
+        person_comment_mention_id -> Nullable<Int4>,
+        person_post_mention_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    instance (id) {
+        id -> Int4,
+        #[max_length = 255]
+        domain -> Varchar,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        #[max_length = 255]
+        software -> Nullable<Varchar>,
+        #[max_length = 255]
+        version -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    instance_actions (person_id, instance_id) {
+        person_id -> Int4,
+        instance_id -> Int4,
+        blocked_at -> Nullable<Timestamptz>,
+        received_ban_at -> Nullable<Timestamptz>,
+        ban_expires_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    language (id) {
+        id -> Int4,
+        #[max_length = 3]
+        code -> Varchar,
+        name -> Text,
+    }
+}
+
+diesel::table! {
+    local_image (pictrs_alias) {
+        pictrs_alias -> Text,
+        published_at -> Timestamptz,
+        person_id -> Nullable<Int4>,
+        thumbnail_for_post_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ListingTypeEnum;
+    use super::sql_types::RegistrationModeEnum;
+    use super::sql_types::PostListingModeEnum;
+    use super::sql_types::PostSortTypeEnum;
+    use super::sql_types::CommentSortTypeEnum;
+
+    local_site (id) {
+        id -> Int4,
+        site_id -> Int4,
+        site_setup -> Bool,
+        category_creation_admin_only -> Bool,
+        require_email_verification -> Bool,
+        application_question -> Nullable<Text>,
+        private_instance -> Bool,
+        default_theme -> Text,
+        default_post_listing_type -> ListingTypeEnum,
+        legal_information -> Nullable<Text>,
+        application_email_admins -> Bool,
+        slur_filter_regex -> Nullable<Text>,
+        actor_name_max_length -> Int4,
+        captcha_enabled -> Bool,
+        #[max_length = 255]
+        captcha_difficulty -> Varchar,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        registration_mode -> RegistrationModeEnum,
+        reports_email_admins -> Bool,
+        default_post_listing_mode -> PostListingModeEnum,
+        default_post_sort_type -> PostSortTypeEnum,
+        default_comment_sort_type -> CommentSortTypeEnum,
+        oauth_registration -> Bool,
+        default_post_time_range_seconds -> Nullable<Int4>,
+        disallow_self_promotion_content -> Bool,
+        users -> Int8,
+        posts -> Int8,
+        comments -> Int8,
+        communities -> Int8,
+        users_active_day -> Int8,
+        users_active_week -> Int8,
+        users_active_month -> Int8,
+        users_active_half_year -> Int8,
+        disable_email_notifications -> Bool,
+        verify_with_otp -> Bool,
+        coin_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    local_site_rate_limit (local_site_id) {
+        local_site_id -> Int4,
+        message_max_requests -> Int4,
+        message_interval_seconds -> Int4,
+        post_max_requests -> Int4,
+        post_interval_seconds -> Int4,
+        register_max_requests -> Int4,
+        register_interval_seconds -> Int4,
+        image_max_requests -> Int4,
+        image_interval_seconds -> Int4,
+        comment_max_requests -> Int4,
+        comment_interval_seconds -> Int4,
+        search_max_requests -> Int4,
+        search_interval_seconds -> Int4,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        import_user_settings_max_requests -> Int4,
+        import_user_settings_interval_seconds -> Int4,
+    }
+}
+
+diesel::table! {
+    local_site_url_blocklist (id) {
+        id -> Int4,
+        url -> Text,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::PostSortTypeEnum;
+    use super::sql_types::ListingTypeEnum;
+    use super::sql_types::PostListingModeEnum;
+    use super::sql_types::CommentSortTypeEnum;
+    use super::sql_types::VoteShowEnum;
+
+    local_user (id) {
+        id -> Int4,
+        person_id -> Int4,
+        password_encrypted -> Nullable<Text>,
+        email -> Nullable<Text>,
+        self_promotion -> Bool,
+        theme -> Text,
+        default_post_sort_type -> PostSortTypeEnum,
+        default_listing_type -> ListingTypeEnum,
+        #[max_length = 20]
+        interface_language -> Varchar,
+        show_avatars -> Bool,
+        send_notifications_to_email -> Bool,
+        show_bot_accounts -> Bool,
+        show_read_posts -> Bool,
+        accepted_terms -> Bool,
+        email_verified -> Bool,
+        accepted_application -> Bool,
+        totp_2fa_secret -> Nullable<Text>,
+        open_links_in_new_tab -> Bool,
+        blur_self_promotion -> Bool,
+        infinite_scroll_enabled -> Bool,
+        admin -> Bool,
+        post_listing_mode -> PostListingModeEnum,
+        totp_2fa_enabled -> Bool,
+        enable_keyboard_navigation -> Bool,
+        enable_animated_images -> Bool,
+        collapse_bot_comments -> Bool,
+        default_comment_sort_type -> CommentSortTypeEnum,
+        auto_mark_fetched_posts_as_read -> Bool,
+        last_donation_notification_at -> Timestamptz,
+        hide_media -> Bool,
+        default_post_time_range_seconds -> Nullable<Int4>,
+        show_score -> Bool,
+        show_upvotes -> Bool,
+        show_downvotes -> VoteShowEnum,
+        show_upvote_percentage -> Bool,
+        show_person_votes -> Bool,
+        secure_chat_enabled -> Bool,
+    }
+}
+
+diesel::table! {
+    local_user_keyword_block (local_user_id, keyword) {
+        local_user_id -> Int4,
+        #[max_length = 50]
+        keyword -> Varchar,
+    }
+}
+
+diesel::table! {
+    local_user_language (local_user_id, language_id) {
+        local_user_id -> Int4,
+        language_id -> Int4,
+    }
+}
+
+diesel::table! {
+    login_token (token) {
+        token -> Text,
+        user_id -> Int4,
+        published_at -> Timestamptz,
+        ip -> Nullable<Text>,
+        user_agent -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    mod_add (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        other_person_id -> Int4,
+        removed -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    mod_add_category (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        other_person_id -> Int4,
+        category_id -> Int4,
+        removed -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    mod_ban (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        other_person_id -> Int4,
+        reason -> Nullable<Text>,
+        banned -> Bool,
+        expires_at -> Nullable<Timestamptz>,
+        published_at -> Timestamptz,
+        instance_id -> Int4,
+    }
+}
+
+diesel::table! {
+    mod_ban_from_category (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        other_person_id -> Int4,
+        category_id -> Int4,
+        reason -> Nullable<Text>,
+        banned -> Bool,
+        expires_at -> Nullable<Timestamptz>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::CategoryVisibility;
+
+    mod_change_category_visibility (id) {
+        id -> Int4,
+        category_id -> Int4,
+        mod_person_id -> Int4,
+        published_at -> Timestamptz,
+        visibility -> CategoryVisibility,
+    }
+}
+
+diesel::table! {
+    mod_feature_post (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        post_id -> Int4,
+        featured -> Bool,
+        published_at -> Timestamptz,
+        is_featured_category -> Bool,
+    }
+}
+
+diesel::table! {
+    mod_lock_post (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        post_id -> Int4,
+        locked -> Bool,
+        published_at -> Timestamptz,
+        reason -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    mod_remove_comment (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        comment_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    mod_remove_category (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        category_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    mod_remove_post (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        post_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    mod_transfer_category (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        other_person_id -> Int4,
+        category_id -> Int4,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    modlog_combined (id) {
+        id -> Int4,
+        published_at -> Timestamptz,
+        admin_allow_instance_id -> Nullable<Int4>,
+        admin_block_instance_id -> Nullable<Int4>,
+        admin_purge_comment_id -> Nullable<Int4>,
+        admin_purge_category_id -> Nullable<Int4>,
+        admin_purge_person_id -> Nullable<Int4>,
+        admin_purge_post_id -> Nullable<Int4>,
+        mod_add_id -> Nullable<Int4>,
+        mod_add_category_id -> Nullable<Int4>,
+        mod_ban_id -> Nullable<Int4>,
+        mod_ban_from_category_id -> Nullable<Int4>,
+        mod_feature_post_id -> Nullable<Int4>,
+        mod_lock_post_id -> Nullable<Int4>,
+        mod_remove_comment_id -> Nullable<Int4>,
+        mod_remove_category_id -> Nullable<Int4>,
+        mod_remove_post_id -> Nullable<Int4>,
+        mod_transfer_category_id -> Nullable<Int4>,
+        mod_change_category_visibility_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    oauth_account (oauth_provider_id, local_user_id) {
+        local_user_id -> Int4,
+        oauth_provider_id -> Int4,
+        provider_account_id -> Text,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    oauth_provider (id) {
+        id -> Int4,
+        display_name -> Text,
+        issuer -> Text,
+        authorization_endpoint -> Text,
+        token_endpoint -> Text,
+        userinfo_endpoint -> Text,
+        id_claim -> Text,
+        client_id -> Text,
+        client_secret -> Text,
+        scopes -> Text,
+        auto_verify_email -> Bool,
+        account_linking_enabled -> Bool,
+        enabled -> Bool,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        use_pkce -> Bool,
+    }
+}
+
+diesel::table! {
+    password_reset_request (id) {
+        id -> Int4,
+        token -> Text,
+        published_at -> Timestamptz,
+        local_user_id -> Int4,
+    }
+}
+
+diesel::table! {
+    person (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        display_name -> Nullable<Varchar>,
+        avatar -> Nullable<Text>,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        bio -> Nullable<Text>,
+        local -> Bool,
+        private_key -> Nullable<Text>,
+        shared_key -> Nullable<Text>,
+        last_refreshed_at -> Timestamptz,
+        banner -> Nullable<Text>,
+        deleted -> Bool,
+        #[max_length = 255]
+        inbox_url -> Varchar,
+        matrix_user_id -> Nullable<Text>,
+        bot_account -> Bool,
+        instance_id -> Int4,
+        post_count -> Int8,
+        post_score -> Int8,
+        comment_count -> Int8,
+        comment_score -> Int8,
+        wallet_id -> Int4,
+        contacts -> Nullable<Text>,
+        skills -> Nullable<Text>,
+        portfolio_pics -> Nullable<Jsonb>,
+        work_samples -> Nullable<Jsonb>,
+        available -> Bool,
+        is_secure_message -> Bool,
+    }
+}
+
+diesel::table! {
+    person_actions (person_id, target_id) {
+        target_id -> Int4,
+        person_id -> Int4,
+        followed_at -> Nullable<Timestamptz>,
+        follow_pending -> Nullable<Bool>,
+        blocked_at -> Nullable<Timestamptz>,
+        noted_at -> Nullable<Timestamptz>,
+        note -> Nullable<Text>,
+        voted_at -> Nullable<Timestamptz>,
+        upvotes -> Nullable<Int4>,
+        downvotes -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    person_comment_mention (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        comment_id -> Int4,
+        read -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    person_content_combined (id) {
+        id -> Int4,
+        published_at -> Timestamptz,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    person_liked_combined (id) {
+        id -> Int4,
+        liked_at -> Timestamptz,
+        like_score -> Int2,
+        person_id -> Int4,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    person_post_mention (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        post_id -> Int4,
+        read -> Bool,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    person_saved_combined (id) {
+        id -> Int4,
+        saved_at -> Timestamptz,
+        person_id -> Int4,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::JobTypeEnum;
+    use super::sql_types::IntendedUseEnum;
+    use super::sql_types::PostKind;
+
+    post (id) {
+        id -> Int4,
+        #[max_length = 200]
+        name -> Varchar,
+        #[max_length = 2000]
+        url -> Nullable<Varchar>,
+        body -> Nullable<Text>,
+        creator_id -> Int4,
+        category_id -> Nullable<Int4>,
+        removed -> Bool,
+        locked -> Bool,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        deleted -> Bool,
+        self_promotion -> Bool,
+        embed_title -> Nullable<Text>,
+        embed_description -> Nullable<Text>,
+        thumbnail_url -> Nullable<Text>,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        local -> Bool,
+        embed_video_url -> Nullable<Text>,
+        language_id -> Int4,
+        featured_category -> Bool,
+        featured_local -> Bool,
+        url_content_type -> Nullable<Text>,
+        alt_text -> Nullable<Text>,
+        scheduled_publish_time_at -> Nullable<Timestamptz>,
+        comments -> Int8,
+        score -> Int8,
+        upvotes -> Int8,
+        downvotes -> Int8,
+        newest_comment_time_necro_at -> Timestamptz,
+        newest_comment_time_at -> Timestamptz,
+        hot_rank -> Float8,
+        hot_rank_active -> Float8,
+        controversy_rank -> Float8,
+        scaled_rank -> Float8,
+        report_count -> Int2,
+        unresolved_report_count -> Int2,
+        intended_use -> IntendedUseEnum,
+        job_type -> JobTypeEnum,
+        budget -> Int4,
+        deadline -> Nullable<Timestamptz>,
+        is_english_required -> Bool,
+        post_kind -> PostKind,
+        pending  -> Bool,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TripStatus;
+    use super::sql_types::VehicleType;
+
+    delivery_details (id) {
+        id -> Int4,
+        post_id -> Int4,
+        pickup_address -> Text,
+        pickup_lat -> Nullable<Float8>,
+        pickup_lng -> Nullable<Float8>,
+        dropoff_address -> Text,
+        dropoff_lat -> Nullable<Float8>,
+        dropoff_lng -> Nullable<Float8>,
+        package_description -> Nullable<Text>,
+        package_weight_kg -> Nullable<Float8>,
+        package_size -> Nullable<Varchar>,
+        fragile -> Bool,
+        requires_signature -> Bool,
+        vehicle_required -> Nullable<VehicleType>,
+        latest_pickup_at -> Nullable<Timestamptz>,
+        latest_dropoff_at -> Nullable<Timestamptz>,
+        sender_name -> Nullable<Varchar>,
+        sender_phone -> Nullable<Varchar>,
+        receiver_name -> Nullable<Varchar>,
+        receiver_phone -> Nullable<Varchar>,
+        cash_on_delivery -> Bool,
+        cod_amount -> Nullable<Float8>,
+        status -> TripStatus,
+        cancellation_reason -> Nullable<Text>,
+        assigned_rider_id -> Nullable<Int4>,
+        assigned_at -> Nullable<Timestamptz>,
+        assigned_by_person_id -> Nullable<Int4>,
+        linked_comment_id -> Nullable<Int4>,
+        delivery_fee -> Int4,
+        employer_confirmed_at -> Nullable<Timestamptz>,
+        employer_wallet_transaction_id -> Nullable<Int4>,
+        rider_wallet_transaction_id -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    trip_location_current (post_id) {
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    trip_location_history (id) {
+        id -> Int8,
+        post_id -> Int4,
+        rider_id -> Int4,
+        lat -> Float8,
+        lng -> Float8,
+        heading -> Nullable<Float8>,
+        speed_kmh -> Nullable<Float8>,
+        accuracy_m -> Nullable<Float8>,
+        recorded_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    delivery_rider_rating (id) {
+        id -> Int4,
+        post_id -> Int4,
+        employer_id -> Int4,
+        rider_id -> Int4,
+        rating -> Int2,
+        comment -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::PostNotificationsModeEnum;
+
+    post_actions (person_id, post_id) {
+        post_id -> Int4,
+        person_id -> Int4,
+        read_at -> Nullable<Timestamptz>,
+        read_comments_at -> Nullable<Timestamptz>,
+        read_comments_amount -> Nullable<Int8>,
+        saved_at -> Nullable<Timestamptz>,
+        liked_at -> Nullable<Timestamptz>,
+        like_score -> Nullable<Int2>,
+        hidden_at -> Nullable<Timestamptz>,
+        notifications -> Nullable<PostNotificationsModeEnum>,
+    }
+}
+
+diesel::table! {
+    post_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        #[max_length = 200]
+        original_post_name -> Varchar,
+        original_post_url -> Nullable<Text>,
+        original_post_body -> Nullable<Text>,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Nullable<Int4>,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        violates_instance_rules -> Bool,
+    }
+}
+
+diesel::table! {
+    post_tag (post_id, tag_id) {
+        post_id -> Int4,
+        tag_id -> Int4,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    previously_run_sql (id) {
+        id -> Bool,
+        content -> Text,
+    }
+}
+
+diesel::table! {
+    received_activity (ap_id) {
+        ap_id -> Text,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    registration_application (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        answer -> Text,
+        admin_id -> Nullable<Int4>,
+        deny_reason -> Nullable<Text>,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    remote_image (link) {
+        link -> Text,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    report_combined (id) {
+        id -> Int4,
+        published_at -> Timestamptz,
+        post_report_id -> Nullable<Int4>,
+        comment_report_id -> Nullable<Int4>,
+        category_report_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    search_combined (id) {
+        id -> Int4,
+        published_at -> Timestamptz,
+        score -> Int8,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        category_id -> Nullable<Int4>,
+        person_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    secret (id) {
+        id -> Int4,
+        jwt_secret -> Varchar,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ActorTypeEnum;
+
+    sent_activity (id) {
+        id -> Int8,
+        ap_id -> Text,
+        data -> Json,
+        sensitive -> Bool,
+        published_at -> Timestamptz,
+        send_inboxes -> Array<Nullable<Text>>,
+        send_category_followers_of -> Nullable<Int4>,
+        send_all_instances -> Bool,
+        actor_type -> ActorTypeEnum,
+        actor_apub_id -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    site (id) {
+        id -> Int4,
+        #[max_length = 20]
+        name -> Varchar,
+        sidebar -> Nullable<Text>,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        icon -> Nullable<Text>,
+        banner -> Nullable<Text>,
+        #[max_length = 150]
+        description -> Nullable<Varchar>,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        last_refreshed_at -> Timestamptz,
+        #[max_length = 255]
+        inbox_url -> Varchar,
+        private_key -> Nullable<Text>,
+        public_key -> Text,
+        instance_id -> Int4,
+        content_warning -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    site_language (site_id, language_id) {
+        site_id -> Int4,
+        language_id -> Int4,
+    }
+}
+
+diesel::table! {
+    tag (id) {
+        id -> Int4,
+        display_name -> Text,
+        category_id -> Int4,
+        published_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        deleted -> Bool,
+    }
+}
+
+diesel::table! {
+tagline (id) {
+    id -> Int4,
+    content -> Text,
+    published_at -> Timestamptz,
+    updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    wallet (id) {
+        id -> Int4,
+        balance_total -> Int4,
+        balance_available -> Int4,
+        balance_outstanding -> Int4,
+        is_platform -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        version -> Int8,
+    }
+}
+
+diesel::table! {
+    wallet_hold (id) {
+        id -> Int8,
+        wallet_id -> Int4,
+        billing_id -> Int4,
+        amount -> Int4,
+        status -> Text,
+        idempotency_key -> Nullable<Text>,
+        created_at -> Timestamptz,
+        released_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TxKind;
+    wallet_transaction (id) {
+        id -> Int4,
+        wallet_id -> Int4,
+        reference_type -> Text,
+        reference_id -> Int4,
+        kind -> TxKind,
+        amount -> Int4,
+        description -> Text,
+        counter_user_id -> Nullable<Int4>,
+        idempotency_key -> Text,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::BillingStatus;
+
+    billing (id) {
+        id -> Int4,
+        freelancer_id -> Int4,
+        employer_id -> Int4,
+        post_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        amount -> Int4,
+        description -> Text,
+        status -> BillingStatus,
+        work_description -> Nullable<Text>,
+        deliverable_url -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        paid_at -> Nullable<Timestamptz>,
+        room_id -> Varchar,
+    }
+}
+
+diesel::table! {
+    banks (id) {
+        id -> Int4,
+        name -> Varchar,
+        #[max_length = 2]
+        country_id -> Varchar,
+        bank_code -> Nullable<Varchar>,
+        swift_code -> Nullable<Varchar>,
+        is_active -> Nullable<Bool>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    user_bank_accounts (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        bank_id -> Int4,
+        account_number -> Varchar,
+        account_name -> Varchar,
+        is_default -> Bool,
+        is_verified -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        verification_image_path -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    identity_cards (id) {
+        id -> Int4,
+        address_id -> Nullable<Int4>,
+        id_number -> Varchar,
+        issued_date -> Date,
+        expiry_date -> Date,
+        full_name -> Varchar,
+        date_of_birth -> Date,
+        nationality -> Varchar,
+        is_verified -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    skills (id) {
+        id -> Int4,
+        person_id -> Int4,
+        skill_name -> Text,
+        level_id -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    certificates (id) {
+        id -> Int4,
+        person_id -> Int4,
+        name -> Text,
+        achieved_date -> Date,
+        expires_date -> Nullable<Date>,
+        #[max_length = 255]
+        url -> Nullable<VarChar>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Coin table schema
+diesel::table! {
+    coin (id) {
+        id -> Int4,
+        code -> Text,
+        name -> Text,
+        supply_total -> Int4,
+        supply_minted_total -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Workflow table schema
+// Rust
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::WorkFlowStatus;
+
+    workflow (id) {
+        id -> Int4,
+        post_id -> Int4,
+        seq_number -> Int2,
+        status -> WorkFlowStatus,
+        revision_required -> Bool,
+        revision_count -> Int2,
+        revision_reason -> Nullable<Text>,
+        deliverable_version -> Int2,
+        deliverable_submitted_at -> Nullable<Timestamptz>,
+        deliverable_accepted -> Bool,
+        accepted_at -> Nullable<Timestamptz>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        room_id -> Varchar,
+        deliverable_url -> Nullable<Text>,
+        active -> Bool,
+        status_before_cancel -> Nullable<WorkFlowStatus>,
+        billing_id -> Nullable<Int4>,
+    }
+}
+
+// Job budget plan table schema
+diesel::table! {
+    use diesel::sql_types::*;
+
+    job_budget_plan (id) {
+        id -> Int4,
+        post_id -> Int4,
+        total_amount -> Int4,
+        installments -> Jsonb,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// User review table schema
+diesel::table! {
+    user_review (id) {
+        id -> Int4,
+        reviewer_id -> Int4,
+        reviewee_id -> Int4,
+        workflow_id -> Int4,
+        rating -> Int2,
+        comment -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::TopUpStatus;
+
+    top_up_requests (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        amount -> Float8,
+        currency_id -> Int4,
+        amount_coin -> Int4,
+        conversion_rate_used -> Int4,
+        qr_id -> Text,
+        cs_ext_expiry_time -> Timestamptz,
+        status -> TopUpStatus,
+        transferred -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        paid_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::WithdrawStatus;
+
+     withdraw_requests (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        wallet_id -> Int4,
+        user_bank_account_id -> Int4,
+        amount -> Int4,
+        currency_id -> Int4,
+        amount_currency -> Float8,
+        conversion_rate_used -> Int4,
+        status -> WithdrawStatus,
+        reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::VehicleType;
+    use crate::schema::sql_types::RiderVerificationStatus;
+
+    rider (id) {
+        id -> Int4,
+
+        // References
+        user_id -> Int4,
+        person_id -> Int4,
+
+        // Vehicle
+        vehicle_type -> VehicleType,
+        vehicle_plate_number -> Nullable<Varchar>,
+        license_number -> Nullable<Varchar>,
+        license_expiry_date -> Nullable<Timestamptz>,
+
+        // Verification
+        is_verified -> Bool,
+        is_active -> Bool,
+        verification_status -> RiderVerificationStatus,
+
+        // Performance
+        rating -> Float8,
+        completed_jobs -> Int4,
+        total_jobs -> Int4,
+        total_earnings -> Float8,
+        pending_earnings -> Float8,
+
+        // Availability
+        is_online -> Bool,
+        accepting_jobs -> Bool,
+
+        // Timestamps
+        joined_at -> Nullable<Timestamptz>,
+        last_active_at -> Nullable<Timestamptz>,
+        verified_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::joinable!(user_bank_accounts -> banks (bank_id));
+diesel::joinable!(admin_allow_instance -> instance (instance_id));
+diesel::joinable!(admin_allow_instance -> person (admin_person_id));
+diesel::joinable!(admin_block_instance -> instance (instance_id));
+diesel::joinable!(admin_block_instance -> person (admin_person_id));
+diesel::joinable!(admin_purge_comment -> person (admin_person_id));
+diesel::joinable!(admin_purge_comment -> post (post_id));
+diesel::joinable!(admin_purge_category -> person (admin_person_id));
+diesel::joinable!(admin_purge_person -> person (admin_person_id));
+diesel::joinable!(admin_purge_post -> category (category_id));
+diesel::joinable!(admin_purge_post -> person (admin_person_id));
+diesel::joinable!(billing -> comment (comment_id));
+diesel::joinable!(billing -> local_user (freelancer_id));
+diesel::joinable!(billing -> post (post_id));
+diesel::joinable!(comment -> language (language_id));
+diesel::joinable!(comment -> person (creator_id));
+diesel::joinable!(comment -> post (post_id));
+diesel::joinable!(comment_actions -> comment (comment_id));
+diesel::joinable!(comment_actions -> person (person_id));
+diesel::joinable!(comment_reply -> comment (comment_id));
+diesel::joinable!(comment_reply -> person (recipient_id));
+diesel::joinable!(comment_report -> comment (comment_id));
+diesel::joinable!(category -> instance (instance_id));
+diesel::joinable!(chat_participant -> chat_room (room_id));
+diesel::joinable!(chat_participant -> local_user (member_id));
+diesel::joinable!(chat_message -> chat_room (room_id));
+diesel::joinable!(chat_message -> local_user (sender_id));
+diesel::joinable!(workflow -> post (post_id));
+diesel::joinable!(workflow -> chat_room (room_id));
+diesel::joinable!(job_budget_plan -> post (post_id));
+diesel::joinable!(category_actions -> category (category_id));
+diesel::joinable!(category_language -> category (category_id));
+diesel::joinable!(category_language -> language (language_id));
+diesel::joinable!(category_report -> category (category_id));
+diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
+diesel::joinable!(email_verification -> local_user (local_user_id));
+diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
+diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
+diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
+diesel::joinable!(instance_actions -> instance (instance_id));
+diesel::joinable!(instance_actions -> person (person_id));
+diesel::joinable!(local_image -> person (person_id));
+diesel::joinable!(local_image -> post (thumbnail_for_post_id));
+diesel::joinable!(local_site -> site (site_id));
+diesel::joinable!(local_site -> coin (coin_id));
+diesel::joinable!(local_site_rate_limit -> local_site (local_site_id));
+diesel::joinable!(local_user -> person (person_id));
+diesel::joinable!(person -> wallet (wallet_id));
+diesel::joinable!(local_user_keyword_block -> local_user (local_user_id));
+diesel::joinable!(local_user_language -> language (language_id));
+diesel::joinable!(local_user_language -> local_user (local_user_id));
+diesel::joinable!(login_token -> local_user (user_id));
+diesel::joinable!(mod_add_category -> category (category_id));
+diesel::joinable!(mod_ban -> instance (instance_id));
+diesel::joinable!(mod_ban_from_category -> category (category_id));
+diesel::joinable!(mod_change_category_visibility -> category (category_id));
+diesel::joinable!(mod_change_category_visibility -> person (mod_person_id));
+diesel::joinable!(mod_feature_post -> person (mod_person_id));
+diesel::joinable!(mod_feature_post -> post (post_id));
+diesel::joinable!(mod_lock_post -> person (mod_person_id));
+diesel::joinable!(mod_lock_post -> post (post_id));
+diesel::joinable!(mod_remove_comment -> comment (comment_id));
+diesel::joinable!(mod_remove_comment -> person (mod_person_id));
+diesel::joinable!(mod_remove_category -> category (category_id));
+diesel::joinable!(mod_remove_category -> person (mod_person_id));
+diesel::joinable!(mod_remove_post -> person (mod_person_id));
+diesel::joinable!(mod_remove_post -> post (post_id));
+diesel::joinable!(mod_transfer_category -> category (category_id));
+diesel::joinable!(modlog_combined -> admin_allow_instance (admin_allow_instance_id));
+diesel::joinable!(modlog_combined -> admin_block_instance (admin_block_instance_id));
+diesel::joinable!(modlog_combined -> admin_purge_comment (admin_purge_comment_id));
+diesel::joinable!(modlog_combined -> admin_purge_category (admin_purge_category_id));
+diesel::joinable!(modlog_combined -> admin_purge_person (admin_purge_person_id));
+diesel::joinable!(modlog_combined -> admin_purge_post (admin_purge_post_id));
+diesel::joinable!(modlog_combined -> mod_add (mod_add_id));
+diesel::joinable!(modlog_combined -> mod_add_category (mod_add_category_id));
+diesel::joinable!(modlog_combined -> mod_ban (mod_ban_id));
+diesel::joinable!(modlog_combined -> mod_ban_from_category (mod_ban_from_category_id));
+diesel::joinable!(modlog_combined -> mod_change_category_visibility (mod_change_category_visibility_id));
+diesel::joinable!(modlog_combined -> mod_feature_post (mod_feature_post_id));
+diesel::joinable!(modlog_combined -> mod_lock_post (mod_lock_post_id));
+diesel::joinable!(modlog_combined -> mod_remove_comment (mod_remove_comment_id));
+diesel::joinable!(modlog_combined -> mod_remove_category (mod_remove_category_id));
+diesel::joinable!(modlog_combined -> mod_remove_post (mod_remove_post_id));
+diesel::joinable!(modlog_combined -> mod_transfer_category (mod_transfer_category_id));
+diesel::joinable!(oauth_account -> local_user (local_user_id));
+diesel::joinable!(oauth_account -> oauth_provider (oauth_provider_id));
+diesel::joinable!(password_reset_request -> local_user (local_user_id));
+diesel::joinable!(person -> instance (instance_id));
+diesel::joinable!(person_comment_mention -> comment (comment_id));
+diesel::joinable!(wallet_transaction -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> wallet (wallet_id));
+diesel::joinable!(wallet_hold -> billing (billing_id));
+diesel::joinable!(person_comment_mention -> person (recipient_id));
+diesel::joinable!(person_content_combined -> comment (comment_id));
+diesel::joinable!(person_content_combined -> post (post_id));
+diesel::joinable!(person_liked_combined -> comment (comment_id));
+diesel::joinable!(person_liked_combined -> person (person_id));
+diesel::joinable!(person_liked_combined -> post (post_id));
+diesel::joinable!(person_post_mention -> person (recipient_id));
+diesel::joinable!(person_post_mention -> post (post_id));
+diesel::joinable!(person_saved_combined -> comment (comment_id));
+diesel::joinable!(person_saved_combined -> person (person_id));
+diesel::joinable!(person_saved_combined -> post (post_id));
+diesel::joinable!(post -> category (category_id));
+diesel::joinable!(post -> language (language_id));
+diesel::joinable!(post -> person (creator_id));
+diesel::joinable!(post_actions -> person (person_id));
+diesel::joinable!(post_actions -> post (post_id));
+diesel::joinable!(post_report -> post (post_id));
+diesel::joinable!(post_tag -> post (post_id));
+diesel::joinable!(post_tag -> tag (tag_id));
+diesel::joinable!(registration_application -> local_user (local_user_id));
+diesel::joinable!(registration_application -> person (admin_id));
+diesel::joinable!(report_combined -> comment_report (comment_report_id));
+diesel::joinable!(report_combined -> category_report (category_report_id));
+diesel::joinable!(report_combined -> post_report (post_report_id));
+diesel::joinable!(search_combined -> comment (comment_id));
+diesel::joinable!(search_combined -> category (category_id));
+diesel::joinable!(search_combined -> person (person_id));
+diesel::joinable!(search_combined -> post (post_id));
+diesel::joinable!(site -> instance (instance_id));
+diesel::joinable!(site_language -> language (language_id));
+diesel::joinable!(site_language -> site (site_id));
+diesel::joinable!(tag -> category (category_id));
+diesel::joinable!(skills -> person (person_id));
+diesel::joinable!(certificates -> person (person_id));
+diesel::joinable!(user_review -> workflow (workflow_id));
+diesel::joinable!(last_reads -> local_user (local_user_id));
+diesel::joinable!(last_reads -> chat_room (room_id));
+diesel::joinable!(top_up_requests -> local_user (local_user_id));
+diesel::joinable!(top_up_requests -> currency (currency_id));
+diesel::joinable!(withdraw_requests -> local_user (local_user_id));
+diesel::joinable!(withdraw_requests -> user_bank_accounts (user_bank_account_id));
+diesel::joinable!(withdraw_requests -> currency (currency_id));
+diesel::joinable!(rider -> person (person_id));
+diesel::joinable!(delivery_details -> post (post_id));
+diesel::joinable!(trip_location_current -> post (post_id));
+diesel::joinable!(trip_location_current -> rider (rider_id));
+diesel::joinable!(trip_location_history -> post (post_id));
+diesel::joinable!(trip_location_history -> rider (rider_id));
+diesel::joinable!(delivery_rider_rating -> post (post_id));
+diesel::joinable!(delivery_rider_rating -> rider (rider_id));
+diesel::joinable!(currency_rate_history -> currency (currency_id));
+diesel::joinable!(pricing_config -> currency (currency_id));
+diesel::joinable!(ride_session -> post (post_id));
+diesel::joinable!(ride_session -> rider (rider_id));
+diesel::joinable!(ride_session -> pricing_config (pricing_config_id));
+diesel::joinable!(ride_meter_snapshot -> ride_session (ride_session_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+  admin_allow_instance,
+  admin_block_instance,
+  admin_purge_comment,
+  admin_purge_category,
+  admin_purge_person,
+  admin_purge_post,
+  billing,
+  workflow,
+  captcha_answer,
+  comment,
+  comment_actions,
+  comment_reply,
+  comment_report,
+  category,
+  category_actions,
+  category_language,
+  category_report,
+  chat_room,
+  chat_participant,
+  chat_message,
+  custom_emoji,
+  custom_emoji_keyword,
+  email_verification,
+  image_details,
+  inbox_combined,
+  instance,
+  instance_actions,
+  language,
+  local_image,
+  local_site,
+  local_site_rate_limit,
+  local_site_url_blocklist,
+  local_user,
+  local_user_keyword_block,
+  local_user_language,
+  login_token,
+  mod_add,
+  mod_add_category,
+  mod_ban,
+  mod_ban_from_category,
+  mod_change_category_visibility,
+  mod_feature_post,
+  mod_lock_post,
+  mod_remove_comment,
+  mod_remove_category,
+  mod_remove_post,
+  mod_transfer_category,
+  modlog_combined,
+  oauth_account,
+  oauth_provider,
+  password_reset_request,
+  person,
+  person_actions,
+  person_comment_mention,
+  person_content_combined,
+  person_liked_combined,
+  person_post_mention,
+  person_saved_combined,
+  post,
+  post_actions,
+  post_report,
+  post_tag,
+  previously_run_sql,
+  registration_application,
+  remote_image,
+  report_combined,
+  search_combined,
+  secret,
+  sent_activity,
+  site,
+  site_language,
+  tag,
+  tagline,
+  wallet,
+  wallet_hold,
+  wallet_transaction,
+  banks,
+  user_bank_accounts,
+  coin,
+  job_budget_plan,
+  user_review,
+  identity_cards,
+  top_up_requests,
+  withdraw_requests,
+  rider,
+  delivery_details,
+  trip_location_current,
+  trip_location_history,
+  delivery_rider_rating,
+  currency,
+  currency_rate_history,
+  pricing_config,
+  ride_session,
+  ride_meter_snapshot
+);
+
+// Currency table schema
+diesel::table! {
+    use diesel::sql_types::*;
+
+    currency (id) {
+        id -> Int4,
+        code -> Varchar,
+        name -> Varchar,
+        symbol -> Varchar,
+        numeric_code -> Int4,
+        coin_to_currency_rate -> Int4,
+        decimal_places -> Int4,
+        thousands_separator -> Varchar,
+        decimal_separator -> Varchar,
+        symbol_position -> Varchar,
+        is_active -> Bool,
+        is_default -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+        rate_last_updated_at -> Nullable<Timestamptz>,
+        rate_last_updated_by -> Nullable<Int4>,
+    }
+}
+
+// Currency rate history table schema
+diesel::table! {
+    currency_rate_history (id) {
+        id -> Int4,
+        currency_id -> Int4,
+        old_rate -> Int4,
+        new_rate -> Int4,
+        changed_by -> Nullable<Int4>,
+        changed_at -> Timestamptz,
+        reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+    }
+}
+
+// Pricing configuration table schema
+diesel::table! {
+    use diesel::sql_types::*;
+
+    pricing_config (id) {
+        id -> Int4,
+        currency_id -> Int4,
+        name -> Varchar,
+        base_fare_coin -> Int4,
+        time_charge_per_minute_coin -> Int4,
+        minimum_charge_minutes -> Int4,
+        distance_charge_per_km_coin -> Int4,
+        accepts_cash -> Bool,
+        accepts_coin -> Bool,
+        is_active -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Ride session table schema
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::schema::sql_types::TripStatus;
+    use crate::schema::sql_types::PaymentMethod;
+
+    ride_session (id) {
+        id -> Int4,
+        post_id -> Int4,
+        rider_id -> Nullable<Int4>,
+        employer_id -> Int4,
+        pricing_config_id -> Nullable<Int4>,
+        pickup_address -> Text,
+        pickup_lat -> Nullable<Float8>,
+        pickup_lng -> Nullable<Float8>,
+        dropoff_address -> Text,
+        dropoff_lat -> Nullable<Float8>,
+        dropoff_lng -> Nullable<Float8>,
+        pickup_note -> Nullable<Text>,
+        passenger_name -> Nullable<Text>,
+        passenger_phone -> Nullable<Text>,
+        payment_method -> PaymentMethod,
+        payment_status -> Varchar,
+        status -> TripStatus,
+        requested_at -> Timestamptz,
+        rider_assigned_at -> Nullable<Timestamptz>,
+        rider_confirmed_at -> Nullable<Timestamptz>,
+        arrived_at_pickup_at -> Nullable<Timestamptz>,
+        ride_started_at -> Nullable<Timestamptz>,
+        ride_completed_at -> Nullable<Timestamptz>,
+        current_price_coin -> Int4,
+        total_distance_km -> Nullable<Float8>,
+        total_duration_minutes -> Nullable<Int4>,
+        final_price_coin -> Nullable<Int4>,
+        base_fare_applied_coin -> Nullable<Int4>,
+        time_charge_applied_coin -> Nullable<Int4>,
+        distance_charge_applied_coin -> Nullable<Int4>,
+        cancellation_reason -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+// Ride meter snapshot table schema
+diesel::table! {
+    ride_meter_snapshot (id) {
+        id -> Int4,
+        ride_session_id -> Int4,
+        elapsed_minutes -> Int4,
+        distance_km -> Float8,
+        current_price_coin -> Int4,
+        base_fare_coin -> Int4,
+        time_charge_coin -> Int4,
+        distance_charge_coin -> Int4,
+        created_at -> Timestamptz,
+    }
+}

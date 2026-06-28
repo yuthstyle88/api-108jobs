@@ -1,0 +1,80 @@
+use crate::{
+  newtypes::OAuthProviderId,
+  source::oauth_provider::{
+    OAuthProvider,
+    OAuthProviderInsertForm,
+    OAuthProviderUpdateForm,
+    PublicOAuthProvider,
+  },
+  traits::Crud,
+  utils::{get_conn, DbPool},
+};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
+use crate::schema::oauth_provider;
+use diesel::{dsl::insert_into, ExpressionMethods, QueryDsl};
+use diesel_async::RunQueryDsl;
+
+impl Crud for OAuthProvider {
+  type InsertForm = OAuthProviderInsertForm;
+  type UpdateForm = OAuthProviderUpdateForm;
+  type IdType = OAuthProviderId;
+
+  async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    insert_into(oauth_provider::table)
+      .values(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntCreateOauthProvider)
+  }
+
+  async fn update(
+    pool: &mut DbPool<'_>,
+    oauth_provider_id: OAuthProviderId,
+    form: &Self::UpdateForm,
+  ) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    diesel::update(oauth_provider::table.find(oauth_provider_id))
+      .set(form)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateOauthProvider)
+  }
+}
+
+impl OAuthProvider {
+  pub async fn get_all(pool: &mut DbPool<'_>) -> FastJobResult<Vec<Self>> {
+    let conn = &mut get_conn(pool).await?;
+    oauth_provider::table
+      .order(oauth_provider::id)
+      .select(oauth_provider::all_columns)
+      .load::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+  pub async fn get_by_name(pool: &mut DbPool<'_>, name: &str) -> FastJobResult<Self> {
+    let conn = &mut get_conn(pool).await?;
+    oauth_provider::table
+      .filter(oauth_provider::display_name.eq(name))
+      .select(oauth_provider::all_columns)
+      .get_result::<Self>(conn)
+      .await
+      .with_fastjob_type(FastJobErrorType::NotFound)
+  }
+
+  pub fn convert_providers_to_public(
+    oauth_providers: Vec<OAuthProvider>,
+  ) -> Vec<PublicOAuthProvider> {
+    oauth_providers
+      .into_iter()
+      .filter(|x| x.enabled)
+      .map(PublicOAuthProvider)
+      .collect()
+  }
+
+  pub async fn get_all_public(pool: &mut DbPool<'_>) -> FastJobResult<Vec<PublicOAuthProvider>> {
+    OAuthProvider::get_all(pool)
+      .await
+      .map(Self::convert_providers_to_public)
+  }
+}

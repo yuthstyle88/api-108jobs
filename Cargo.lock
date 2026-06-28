@@ -819,6 +819,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_db"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "anyhow",
+ "app_108jobs_core",
+ "bcrypt",
+ "chrono",
+ "deadpool",
+ "derive-new",
+ "diesel",
+ "diesel-async",
+ "diesel-derive-enum",
+ "diesel-derive-newtype",
+ "diesel_ltree",
+ "diesel_migrations",
+ "diff",
+ "futures-util",
+ "i-love-jesus",
+ "itertools 0.14.0",
+ "moka",
+ "pathfinding",
+ "pretty_assertions",
+ "regex",
+ "rustls 0.23.27",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serial_test",
+ "strum",
+ "tokio",
+ "tokio-postgres",
+ "tokio-postgres-rustls",
+ "tracing",
+ "ts-rs",
+ "tuplex",
+ "unified-diff",
+ "url",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "app_108jobs_db_schema"
 version = "1.0.0-alpha.5"
 dependencies = [

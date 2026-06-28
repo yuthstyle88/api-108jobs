@@ -89,6 +89,7 @@ members = [
     "crates/payments",
     "crates/workflow_handlers",
     "crates/jobs",
+    "crates/proposals",
 ]
 
 [workspace.lints.clippy]
@@ -185,6 +186,7 @@ app_108jobs_identity = { version = "=1.0.0-alpha.5", path = "./crates/identity" 
 app_108jobs_payments = { version = "=1.0.0-alpha.5", path = "./crates/payments" }
 app_108jobs_workflow_handlers = { version = "=1.0.0-alpha.5", path = "./crates/workflow_handlers" }
 app_108jobs_jobs = { version = "=1.0.0-alpha.5", path = "./crates/jobs" }
+app_108jobs_proposals = { version = "=1.0.0-alpha.5", path = "./crates/proposals" }
 hound = "3.5.1"
 totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel = { version = "2.2.10", features = [

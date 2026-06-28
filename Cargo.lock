@@ -1374,6 +1374,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_jobs"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_api_utils",
+ "app_108jobs_core",
+ "app_108jobs_db",
+ "app_108jobs_db_views_category",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_search_combined",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_vote",
+ "chrono",
+ "tracing",
+ "url",
+]
+
+[[package]]
 name = "app_108jobs_payments"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -1387,6 +1406,23 @@ dependencies = [
  "app_108jobs_db_views_site",
  "app_108jobs_db_views_wallet",
  "chrono",
+]
+
+[[package]]
+name = "app_108jobs_proposals"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_api_utils",
+ "app_108jobs_core",
+ "app_108jobs_db",
+ "app_108jobs_db_views_comment",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_vote",
+ "chrono",
+ "diesel",
+ "diesel-async",
 ]
 
 [[package]]

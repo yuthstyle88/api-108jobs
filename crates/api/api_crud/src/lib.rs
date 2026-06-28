@@ -1,6 +1,5 @@
 pub mod category;
 pub mod chat;
-pub mod comment;
 pub mod custom_emoji;
 pub mod oauth_provider;
 pub mod rider;

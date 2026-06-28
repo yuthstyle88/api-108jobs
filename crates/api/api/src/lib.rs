@@ -7,7 +7,6 @@ use regex::Regex;
 pub mod admin;
 pub mod category;
 pub mod chat;
-pub mod comment;
 pub mod delivery;
 pub mod local_user;
 pub mod reports;

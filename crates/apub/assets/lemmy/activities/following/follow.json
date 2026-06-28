@@ -1,7 +1,0 @@
-{
-  "actor": "http://ds9.app_108jobs.ml/u/app_108jobs_alpha",
-  "to": ["http://enterprise.app_108jobs.ml/c/main"],
-  "object": "http://enterprise.app_108jobs.ml/c/main",
-  "type": "Follow",
-  "id": "http://ds9.app_108jobs.ml/activities/follow/6abcd50b-b8ca-4952-86b0-a6dd8cc12866"
-}

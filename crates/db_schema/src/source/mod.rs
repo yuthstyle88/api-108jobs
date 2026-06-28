@@ -1,8 +1,6 @@
 use crate::newtypes::DbUrl;
 use url::Url;
 
-#[cfg(feature = "full")]
-pub mod activity;
 pub mod actor_language;
 pub mod bank;
 pub mod billing;

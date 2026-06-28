@@ -11,7 +11,7 @@ use app_108jobs_db_schema_file::{
 use app_108jobs_utils::error::FastJobResult;
 use chrono::Utc;
 use clokwerk::{AsyncScheduler, TimeUnits as CTimeUnits};
-use diesel::{dsl::IntervalDsl, sql_query, BoolExpressionMethods, ExpressionMethods, QueryDsl};
+use diesel::{dsl::IntervalDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl};
 use diesel_async::RunQueryDsl;
 use std::time::Duration;
 use tracing::{info, warn};
@@ -51,39 +51,6 @@ async fn _delete_expired_captcha_answers(pool: &mut DbPool<'_>) -> FastJobResult
   .await?;
   info!("Done.");
 
-  Ok(())
-}
-
-/// Re-calculate the site and community active counts every 12 hours
-async fn _active_counts(pool: &mut DbPool<'_>) -> FastJobResult<()> {
-  info!("Updating active site and community aggregates ...");
-
-  let mut conn = get_conn(pool).await?;
-
-  let intervals = vec![
-    ("1 day", "day"),
-    ("1 week", "week"),
-    ("1 month", "month"),
-    ("6 months", "half_year"),
-  ];
-
-  for (full_form, abbr) in &intervals {
-    let update_site_stmt = format!(
-      "update local_site set users_active_{} = (select r.site_aggregates_activity('{}')) where site_id = 1",
-      abbr, full_form
-    );
-    sql_query(update_site_stmt).execute(&mut conn).await?;
-
-    let update_community_stmt = format!("update community ca set users_active_{} = mv.count_ from r.community_aggregates_activity('{}') mv where ca.id = mv.community_id_", abbr, full_form);
-    sql_query(update_community_stmt).execute(&mut conn).await?;
-  }
-
-  let update_interactions_stmt = "update community ca set interactions_month = mv.count_ from r.community_aggregates_interactions('1 month') mv where ca.id = mv.community_id_";
-  sql_query(update_interactions_stmt)
-    .execute(&mut conn)
-    .await?;
-
-  info!("Done.");
   Ok(())
 }
 

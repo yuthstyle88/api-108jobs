@@ -1,6 +1,4 @@
-use app_108jobs_core::{
-  error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
-};
+use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_views_local_user::LocalUserView;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
 use captcha::Captcha;

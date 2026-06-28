@@ -32,7 +32,7 @@ pub async fn get_mod_log(
     other_person_id: data.other_person_id,
     local_user: local_user_view.as_ref().map(|u| &u.local_user),
     post_id: data.post_id,
-    comment_id: data.comment_id,
+    comment_id: data.proposal_id,
     hide_modlog_names: None,
     cursor_data,
     page_back: data.page_back,

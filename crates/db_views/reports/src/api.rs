@@ -33,7 +33,7 @@ pub struct CategoryReportResponse {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Report a proposal.
 pub struct CreateProposalReport {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,
 }
@@ -44,7 +44,7 @@ pub struct CreateProposalReport {
 /// Report a proposal.
 #[serde(rename_all = "camelCase")]
 pub struct CreateProposalReportRequest {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,
 }

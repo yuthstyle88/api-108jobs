@@ -42,7 +42,7 @@ pub async fn assign_delivery_from_proposal(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   let post_id = path.into_inner();
-  let comment_id = form.comment_id;
+  let comment_id = form.proposal_id;
   let rider_person_id = form.person_id;
   let sender_name = form.sender_name.clone();
   let sender_phone = form.sender_phone.clone();

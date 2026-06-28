@@ -155,3 +155,14 @@ ALTER TABLE person_saved_combined ADD CONSTRAINT person_saved_combined_check CHE
 ALTER TABLE person_liked_combined ADD CONSTRAINT person_liked_combined_check CHECK (
   (num_nonnulls(post_id, proposal_id) = 1)
 );
+
+-- 17. Rename enum values that contain 'comment'
+DO $$ BEGIN
+  ALTER TYPE post_sort_type_enum RENAME VALUE 'MostComments' TO 'MostProposals';
+EXCEPTION WHEN invalid_parameter_value THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TYPE post_sort_type_enum RENAME VALUE 'NewComments' TO 'NewProposals';
+EXCEPTION WHEN invalid_parameter_value THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TYPE post_notifications_mode_enum RENAME VALUE 'AllComments' TO 'AllProposals';
+EXCEPTION WHEN invalid_parameter_value THEN NULL; END $$;

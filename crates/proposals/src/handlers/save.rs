@@ -16,7 +16,7 @@ pub async fn save_comment(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ProposalResponse>> {
-  let proposal_saved_form = ProposalSavedForm::new(local_user_view.person.id, data.comment_id);
+  let proposal_saved_form = ProposalSavedForm::new(local_user_view.person.id, data.proposal_id);
 
   if data.save {
     ProposalActions::save(&mut context.pool(), &proposal_saved_form).await?;
@@ -24,7 +24,7 @@ pub async fn save_comment(
     ProposalActions::unsave(&mut context.pool(), &proposal_saved_form).await?;
   }
 
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
   let proposal_view = ProposalView::read(
     &mut context.pool(),

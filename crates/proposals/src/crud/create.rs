@@ -80,7 +80,7 @@ pub async fn create_comment(
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
-    return Err(FastJobErrorType::CannotCommentOnOwnPost)?;
+    return Err(FastJobErrorType::CannotProposeOnOwnPost)?;
   }
 
   // Check if user has already commented on this post
@@ -159,7 +159,7 @@ async fn check_user_already_commented(
     .map_err(|_| FastJobError::from(FastJobErrorType::DatabaseError))?;
 
   if existing_comment.is_some() {
-    return Err(FastJobErrorType::AlreadyCommented)?;
+    return Err(FastJobErrorType::AlreadyProposed)?;
   }
 
   Ok(())

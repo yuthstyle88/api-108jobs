@@ -21,7 +21,7 @@ pub async fn list_comment_likes(
 
   let comment_likes = VoteView::list_for_proposal(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     cursor_data,
     data.page_back,
     data.limit,

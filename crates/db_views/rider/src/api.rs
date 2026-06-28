@@ -156,7 +156,7 @@ pub struct TripStatusEvent {
 #[serde(rename_all = "camelCase")]
 pub struct AssignDeliveryRequest {
   /// The ID of the proposal (proposal) that led to this assignment
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   /// The ID of the rider's person (author of the proposal) to assign
   pub person_id: PersonId,
   /// Sender's name (person who is sending the package)

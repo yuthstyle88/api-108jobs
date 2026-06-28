@@ -47,7 +47,7 @@ pub struct CreateCommentRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Like a proposal.
 pub struct CreateCommentLike {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   /// Must be -1, 0, or 1 .
   pub score: i16,
 }
@@ -58,7 +58,7 @@ pub struct CreateCommentLike {
 #[serde(rename_all = "camelCase")]
 /// Like a proposal.
 pub struct CreateCommentLikeRequest {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   /// Must be -1, 0, or 1 .
   pub score: i16,
 }
@@ -69,7 +69,7 @@ pub struct CreateCommentLikeRequest {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Delete your own proposal.
 pub struct DeleteComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub deleted: bool,
 }
 
@@ -80,7 +80,7 @@ pub struct DeleteComment {
 #[serde(rename_all = "camelCase")]
 /// Delete your own proposal.
 pub struct DeleteCommentRequest {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub deleted: bool,
 }
 
@@ -91,7 +91,7 @@ pub struct DeleteCommentRequest {
 #[serde(rename_all = "camelCase")]
 /// Distinguish a proposal (IE speak as moderator).
 pub struct DistinguishComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub distinguished: bool,
 }
 
@@ -156,7 +156,7 @@ pub struct GetCommentsSlimResponse {
 #[serde(rename_all = "camelCase")]
 /// List proposal likes. Admins-only.
 pub struct ListCommentLikes {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -181,7 +181,7 @@ pub struct ListCommentLikesResponse {
 #[serde(rename_all = "camelCase")]
 /// Purges a proposal from the database. This will delete all content attached to that proposal.
 pub struct PurgeComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub reason: Option<String>,
 }
 
@@ -192,7 +192,7 @@ pub struct PurgeComment {
 #[serde(rename_all = "camelCase")]
 /// Remove a proposal (only doable by mods).
 pub struct RemoveComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub removed: bool,
   pub reason: Option<String>,
 }
@@ -203,7 +203,7 @@ pub struct RemoveComment {
 #[serde(rename_all = "camelCase")]
 /// Save / bookmark a proposal.
 pub struct SaveComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub save: bool,
 }
 
@@ -213,7 +213,7 @@ pub struct SaveComment {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 /// Edit a proposal.
 pub struct EditComment {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,
   pub budget: i32,
@@ -228,7 +228,7 @@ pub struct EditComment {
 #[serde(rename_all = "camelCase")]
 /// Edit a proposal.
 pub struct EditCommentRequest {
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,
   pub budget: i32,

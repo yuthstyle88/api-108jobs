@@ -28,7 +28,7 @@ pub struct GetModlog {
   /// Filter by post. Will include comments of that post.
   pub post_id: Option<PostId>,
   /// Filter by proposal.
-  pub comment_id: Option<ProposalId>,
+  pub proposal_id: Option<ProposalId>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

@@ -32,7 +32,7 @@ pub async fn rate_rider(
   let post_id = form.post_id;
   let rider_id = form.rider_id;
   let rating = form.rating;
-  let comment = form.proposal.clone();
+  let comment = form.proposal.clone(); // `proposal` is the API field name; stored in DB as `comment`
   let employer_person_id = local_user_view.person.id;
 
   // Validate rating is between 1 and 5
@@ -81,7 +81,7 @@ pub async fn rate_rider(
       employer_id: employer_person_id,
       rider_id,
       rating: rating_record.rating,
-      proposal: rating_record.proposal,
+      proposal: rating_record.comment,
       created_at: rating_record.created_at,
       updated_at: rating_record.updated_at,
     },
@@ -135,7 +135,7 @@ pub async fn get_rider_ratings(
       employer_id: r.employer_id,
       rider_id: r.rider_id,
       rating: r.rating,
-      proposal: r.proposal,
+      proposal: r.comment,
       created_at: r.created_at,
       updated_at: r.updated_at,
     })

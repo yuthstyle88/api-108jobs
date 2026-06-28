@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateInvoiceForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<ProposalId>,
+  pub proposal_id: Option<ProposalId>,
   pub seq_number: i16,
   pub amount: Coin,
   pub proposal: String,
@@ -39,7 +39,7 @@ pub struct CreateInvoiceForm {
 pub struct CreateInvoiceRequest {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<ProposalId>,
+  pub proposal_id: Option<ProposalId>,
   pub seq_number: i16,
   pub amount: Coin,
   pub proposal: String,

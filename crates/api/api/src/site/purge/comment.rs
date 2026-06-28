@@ -21,7 +21,7 @@ pub async fn purge_comment(
   // Only let admin purge an item
   is_admin(&local_user_view)?;
 
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
 
   // Read the comment to get the post_id and category

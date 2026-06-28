@@ -28,7 +28,7 @@ pub async fn create_comment_report(
 
   let person_id = local_user_view.person.id;
   let local_instance_id = local_user_view.person.instance_id;
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let comment_view = ProposalView::read(
     &mut context.pool(),
     comment_id,

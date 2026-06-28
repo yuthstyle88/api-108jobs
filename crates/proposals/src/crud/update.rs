@@ -26,7 +26,7 @@ pub async fn update_comment(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ProposalResponse>> {
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
   let orig_comment = ProposalView::read(
     &mut context.pool(),
@@ -45,7 +45,7 @@ pub async fn update_comment(
 
   // Verify that only the creator can edit
   if local_user_view.person.id != orig_comment.creator.id {
-    Err(FastJobErrorType::NoCommentEditAllowed)?
+    Err(FastJobErrorType::NoProposalEditAllowed)?
   }
 
   let language_id = validate_post_language(
@@ -67,7 +67,7 @@ pub async fn update_comment(
     is_valid_body_field(content, false)?;
   }
 
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let form = ProposalUpdateForm {
     content,
     language_id: Some(language_id),
@@ -76,7 +76,7 @@ pub async fn update_comment(
   };
   let updated_proposal = Proposal::update(&mut context.pool(), comment_id, &form).await?;
 
-  plugin_hook_after("after_update_local_comment", &updated_proposal)?;
+  plugin_hook_after("after_update_local_proposal", &updated_proposal)?;
 
   // Do the mentions / recipients
   send_local_notifs(

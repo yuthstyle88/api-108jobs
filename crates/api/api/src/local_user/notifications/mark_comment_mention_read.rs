@@ -19,7 +19,7 @@ pub async fn mark_comment_mention_as_read(
     PersonProposalMention::read(&mut context.pool(), person_proposal_mention_id).await?;
 
   if local_user_view.person.id != read_person_proposal_mention.recipient_id {
-    Err(FastJobErrorType::CouldntUpdateComment)?
+    Err(FastJobErrorType::CouldntUpdateProposal)?
   }
 
   let person_proposal_mention_id = read_person_proposal_mention.id;

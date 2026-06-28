@@ -37,7 +37,7 @@ pub async fn get_post(
   // I'd prefer fetching the post_view by a comment join, but it adds a lot of boilerplate
   let post_id = if let Some(id) = data.id {
     id
-  } else if let Some(comment_id) = data.comment_id {
+  } else if let Some(comment_id) = data.proposal_id {
     Proposal::read(&mut context.pool(), comment_id)
       .await?
       .post_id

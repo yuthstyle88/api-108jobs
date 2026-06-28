@@ -18,7 +18,7 @@ pub async fn like_comment(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ProposalResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let my_person_id = local_user_view.person.id;
 
   let orig_comment = ProposalView::read(

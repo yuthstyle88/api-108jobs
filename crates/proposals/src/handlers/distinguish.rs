@@ -20,7 +20,7 @@ pub async fn distinguish_comment(
 
   let orig_comment = ProposalView::read(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )
@@ -28,7 +28,7 @@ pub async fn distinguish_comment(
 
   // Verify that only the creator can distinguish
   if local_user_view.person.id != orig_comment.creator.id {
-    Err(FastJobErrorType::NoCommentEditAllowed)?
+    Err(FastJobErrorType::NoProposalEditAllowed)?
   }
 
   check_category_deleted_removed(
@@ -44,11 +44,11 @@ pub async fn distinguish_comment(
     ..Default::default()
   };
 
-  Proposal::update(&mut context.pool(), data.comment_id, &form).await?;
+  Proposal::update(&mut context.pool(), data.proposal_id, &form).await?;
 
   let proposal_view = ProposalView::read(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )

@@ -390,7 +390,7 @@ fn create_reply_and_mention_items(
     .map(|r| match r {
       InboxCombinedView::ProposalReply(v) => {
         let domain = context.settings().get_protocol_and_hostname();
-        let reply_url = format!("{domain}/comment/{}", v.proposal.id);
+        let reply_url = format!("{domain}/proposal/{}", v.proposal.id);
         build_item(
           &v.creator,
           &v.proposal.published_at,
@@ -401,7 +401,7 @@ fn create_reply_and_mention_items(
       }
       InboxCombinedView::ProposalMention(v) => {
         let domain = context.settings().get_protocol_and_hostname();
-        let mention_url = format!("{domain}/comment/{}", v.proposal.id);
+        let mention_url = format!("{domain}/proposal/{}", v.proposal.id);
         build_item(
           &v.creator,
           &v.proposal.published_at,

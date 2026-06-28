@@ -16,7 +16,7 @@ pub async fn delete_comment(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<DeleteComment>> {
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
   let orig_comment = ProposalView::read(
     &mut context.pool(),
@@ -28,7 +28,7 @@ pub async fn delete_comment(
 
   // Dont delete it if its already been deleted.
   if orig_comment.proposal.deleted == data.deleted {
-    Err(FastJobErrorType::CouldntUpdateComment)?
+    Err(FastJobErrorType::CouldntUpdateProposal)?
   }
 
   check_category_deleted_removed(
@@ -40,7 +40,7 @@ pub async fn delete_comment(
 
   // Verify that only the creator can delete
   if local_user_view.person.id != orig_comment.creator.id {
-    Err(FastJobErrorType::NoCommentEditAllowed)?
+    Err(FastJobErrorType::NoProposalEditAllowed)?
   }
 
   // Do the delete
@@ -56,7 +56,7 @@ pub async fn delete_comment(
   .await?;
 
   Ok(Json(DeleteComment {
-    comment_id,
+    proposal_id: comment_id,
     deleted: true,
   }))
 }

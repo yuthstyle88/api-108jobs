@@ -41,7 +41,7 @@ impl Crud for Proposal {
       .values(form)
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntCreateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntCreateProposal)
   }
 
   async fn update(
@@ -55,7 +55,7 @@ impl Crud for Proposal {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 }
 
@@ -74,7 +74,7 @@ impl Proposal {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 
   pub async fn update_removed_for_creator(
@@ -90,7 +90,7 @@ impl Proposal {
       ))
       .get_results::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 
   /// Diesel can't update from join unfortunately, so you'll need to loop over these
@@ -195,7 +195,7 @@ impl Proposal {
       .set(proposal::hot_rank.eq(hot_rank(proposal::score, proposal::published_at)))
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 
   pub fn local_url(&self, settings: &Settings) -> FastJobResult<Url> {
@@ -223,7 +223,7 @@ impl Likeable for ProposalActions {
   async fn like(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
-    validate_like(form.like_score).with_fastjob_type(FastJobErrorType::CouldntLikeComment)?;
+    validate_like(form.like_score).with_fastjob_type(FastJobErrorType::CouldntLikeProposal)?;
 
     insert_into(proposal_actions::table)
       .values(form)
@@ -233,7 +233,7 @@ impl Likeable for ProposalActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
+      .with_fastjob_type(FastJobErrorType::CouldntLikeProposal)
   }
   async fn remove_like(
     pool: &mut DbPool<'_>,
@@ -246,7 +246,7 @@ impl Likeable for ProposalActions {
       .set_null(proposal_actions::liked_at)
       .get_result(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntLikeComment)
+      .with_fastjob_type(FastJobErrorType::CouldntLikeProposal)
   }
 
   async fn remove_all_likes(
@@ -260,7 +260,7 @@ impl Likeable for ProposalActions {
       .set_null(proposal_actions::liked_at)
       .get_result(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 
   async fn remove_likes_in_category(
@@ -280,7 +280,7 @@ impl Likeable for ProposalActions {
     .set_null(proposal_actions::liked_at)
     .get_result(conn)
     .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)
   }
 }
 
@@ -296,7 +296,7 @@ impl Saveable for ProposalActions {
       .returning(Self::as_select())
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
+      .with_fastjob_type(FastJobErrorType::CouldntSaveProposal)
   }
   async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
@@ -304,7 +304,7 @@ impl Saveable for ProposalActions {
       .set_null(proposal_actions::saved_at)
       .get_result(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntSaveComment)
+      .with_fastjob_type(FastJobErrorType::CouldntSaveProposal)
   }
 }
 

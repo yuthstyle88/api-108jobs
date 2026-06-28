@@ -511,7 +511,7 @@ pub async fn purge_user_account(
   // Proposals
   Proposal::permadelete_for_creator(pool, person_id)
     .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)?;
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)?;
 
   // Posts
   Post::permadelete_for_creator(pool, person_id)
@@ -818,7 +818,7 @@ pub fn check_proposal_depth(proposal: &Proposal) -> FastJobResult<()> {
   let length = path.split('.').count();
   // Need to increment by one because the path always starts with 0
   if length > MAX_COMMENT_DEPTH_LIMIT + 1 {
-    Err(FastJobErrorType::MaxCommentDepthReached)?
+    Err(FastJobErrorType::MaxProposalDepthReached)?
   } else {
     Ok(())
   }
@@ -991,7 +991,7 @@ pub async fn verify_proposal_on_post(
   let proposal = Proposal::read(pool, proposal_id).await?;
 
   if proposal.post_id != post_id {
-    return Err(FastJobErrorType::CommentNotOnDeliveryPost.into());
+    return Err(FastJobErrorType::ProposalNotOnDeliveryPost.into());
   }
 
   Ok(proposal)
@@ -1005,7 +1005,7 @@ pub fn verify_proposal_author(
   expected_person_id: PersonId,
 ) -> FastJobResult<()> {
   if proposal.creator_id != expected_person_id.into() {
-    return Err(FastJobErrorType::CommentAuthorMismatch.into());
+    return Err(FastJobErrorType::ProposalAuthorMismatch.into());
   }
 
   Ok(())

@@ -21,7 +21,7 @@ pub async fn remove_comment(
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<ProposalResponse>> {
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
   let orig_comment = ProposalView::read(
     &mut context.pool(),
@@ -46,7 +46,7 @@ pub async fn remove_comment(
   // Don't allow removing or restoring proposal which was deleted by user, as it would reveal
   // the proposal text in mod log.
   if orig_comment.proposal.deleted {
-    return Err(FastJobErrorType::CouldntUpdateComment.into());
+    return Err(FastJobErrorType::CouldntUpdateProposal.into());
   }
 
   // Do the remove
@@ -71,7 +71,7 @@ pub async fn remove_comment(
   // Mod tables
   let form = ModRemoveProposalForm {
     mod_person_id: local_user_view.person.id,
-    comment_id: data.comment_id,
+    comment_id: data.proposal_id,
     removed: Some(removed),
     reason: data.reason.clone(),
   };

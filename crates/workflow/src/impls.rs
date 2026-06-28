@@ -946,7 +946,7 @@ impl WorkflowService {
       freelancer_id,
       employer_id: data.employer_id,
       post_id: data.post_id,
-      proposal_id: data.comment_id,
+      proposal_id: data.proposal_id,
       room_id: data.room_id.clone(),
       amount: data.amount,
       description: if !data.project_details.is_empty() {

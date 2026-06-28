@@ -80,8 +80,6 @@ pub async fn setup_local_site(
           };
 
           // Add an entry for the site table
-          let site_key_pair = "site_key_pair".to_string();
-
           let name = settings
             .setup
             .clone()
@@ -89,8 +87,6 @@ pub async fn setup_local_site(
             .unwrap_or_else(|| "New Site".to_string());
           let site_form = SiteInsertForm {
             last_refreshed_at: Some(Utc::now()),
-            private_key: Some(site_key_pair.clone()),
-            public_key: Some(site_key_pair),
             ..SiteInsertForm::new(name, instance.id)
           };
           let site = Site::create(&mut conn.into(), &site_form).await?;

@@ -126,9 +126,8 @@ impl CategoryQuery<'_> {
       query = match listing_type {
         ListingType::All => query.filter(filter_not_unlisted_or_is_subscribed()),
         ListingType::Subscribed => query.filter(filter_is_subscribed()),
-        ListingType::Local => query
-          .filter(category::local.eq(true))
-          .filter(filter_not_unlisted_or_is_subscribed()),
+        // Federation removed: all categories are local, no ::local filter needed
+        ListingType::Local => query.filter(filter_not_unlisted_or_is_subscribed()),
         ListingType::ModeratorView => {
           query.filter(category_actions::became_moderator_at.is_not_null())
         }

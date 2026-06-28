@@ -60,8 +60,6 @@ pub async fn create_site(
     sidebar: diesel_string_update(sidebar.as_deref()),
     description: diesel_string_update(data.description.as_deref()),
     last_refreshed_at: Some(Utc::now()),
-    private_key: Some(Some("private_key_hex".to_string())),
-    public_key: Some("public_key_hex".to_string()),
     content_warning: diesel_string_update(data.content_warning.as_deref()),
     ..Default::default()
   };

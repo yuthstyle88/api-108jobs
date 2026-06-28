@@ -213,8 +213,6 @@ pub fn comment_select_remove_deletes() -> _ {
     comment::published_at,
     comment::updated_at,
     comment::deleted,
-    comment::ap_id,
-    comment::local,
     comment::path,
     comment::distinguished,
     comment::language_id,

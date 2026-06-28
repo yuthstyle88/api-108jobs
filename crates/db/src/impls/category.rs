@@ -182,9 +182,8 @@ impl Category {
         .select(category::id)
         .into_boxed();
 
-      if let Some(ListingType::Local) = type_ {
-        query = query.filter(category::local);
-      }
+      // Federation removed: all categories are local, so ListingType::Local has no distinct effect.
+      let _ = type_;
 
       if !self_promotion.unwrap_or(false) {
         query = query.filter(not(category::self_promotion));
@@ -320,13 +319,11 @@ impl CategoryActions {
     let follow_action = category_actions::table
       .filter(category_actions::followed_at.is_not_null())
       .filter(category_actions::category_id.eq(remote_category_id));
-    let local_post = post::table
-      .filter(post::category_id.eq(remote_category_id))
-      .filter(post::local);
+    // Federation removed: all posts and comments are local; no need to filter by ::local
+    let local_post = post::table.filter(post::category_id.eq(remote_category_id));
     let local_comment = comment::table
       .inner_join(post::table)
-      .filter(post::category_id.eq(remote_category_id))
-      .filter(comment::local);
+      .filter(post::category_id.eq(remote_category_id));
     select(exists(follow_action).or(exists(local_post).or(exists(local_comment))))
       .get_result::<bool>(conn)
       .await?

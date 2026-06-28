@@ -149,9 +149,7 @@ impl Person {
   pub async fn check_username_taken(pool: &mut DbPool<'_>, username: &str) -> FastJobResult<()> {
     let conn = &mut get_conn(pool).await?;
     select(not(exists(
-      person::table
-        .filter(lower(person::name).eq(username.to_lowercase()))
-        .filter(person::local.eq(true)),
+      person::table.filter(lower(person::name).eq(username.to_lowercase())),
     )))
     .get_result::<bool>(conn)
     .await?

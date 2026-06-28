@@ -4,14 +4,8 @@ use app_108jobs_db_schema::{
 };
 use app_108jobs_db_schema_file::enums::{CommentSortType, ListingType, PostSortType};
 
-pub mod list_comments;
-pub mod list_person_content;
-pub mod list_posts;
-pub mod read_category;
-pub mod search;
-
 /// Returns default listing type, depending if the query is for frontpage or category.
-fn listing_type_with_default(
+pub fn listing_type_with_default(
   type_: Option<ListingType>,
   local_user: Option<&LocalUser>,
   local_site: &LocalSite,
@@ -32,7 +26,7 @@ fn listing_type_with_default(
 
 /// Returns a default instance-level post sort type, if none is given by the user.
 /// Order is type, local user default, then site default.
-fn post_sort_type_with_default(
+pub fn post_sort_type_with_default(
   type_: Option<PostSortType>,
   local_user: Option<&LocalUser>,
   local_site: &LocalSite,
@@ -44,13 +38,9 @@ fn post_sort_type_with_default(
   )
 }
 
-// Returns a default post_time_range.
-// Order is the given, then local user default, then site default.
-// If zero is given, then the output is None.
-
 /// Returns a default instance-level comment sort type, if none is given by the user.
 /// Order is type, local user default, then site default.
-fn comment_sort_type_with_default(
+pub fn comment_sort_type_with_default(
   type_: Option<CommentSortType>,
   local_user: Option<&LocalUser>,
   local_site: &LocalSite,

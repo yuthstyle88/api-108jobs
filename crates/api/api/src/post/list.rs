@@ -1,7 +1,7 @@
-use crate::api::{listing_type_with_default, post_sort_type_with_default};
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{
   context::FastJobContext,
+  listing_defaults::{listing_type_with_default, post_sort_type_with_default},
   utils::{check_fetch_limit, check_private_instance},
 };
 use app_108jobs_db_schema::traits::PaginationCursorBuilder;

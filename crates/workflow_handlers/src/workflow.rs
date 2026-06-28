@@ -10,7 +10,7 @@ use app_108jobs_db::{
     chat_participant::ChatParticipant,
     job_budget_plan::{JobBudgetPlan, JobBudgetPlanUpdateForm},
     post::Post,
-    workflow::{Workflow, WorkflowUpdateForm},
+    workflow::Workflow,
   },
   traits::Crud,
 };
@@ -208,25 +208,13 @@ pub async fn submit_work(
     .deliverable_url
     .ok_or_else(|| FastJobErrorType::InvalidField("deliverable_url is required".to_string()))?;
 
-  // Apply transition: InProgress -> PendingEmployerReview
+  // Apply transition: InProgress -> PendingEmployerReview.
+  // The deliverable fields (url, submitted_at, accepted=false) are written
+  // inside the same transaction as the status change — atomically.
   let wf = WorkflowService::load_in_progress(&mut context.pool(), form.workflow_id)
     .await?
-    .submit_work_on(&mut context.pool())
+    .submit_work_on(&mut context.pool(), deliverable_url)
     .await?;
-
-  // Save submitted work content
-  let _ = Workflow::update(
-    &mut context.pool(),
-    form.workflow_id,
-    &WorkflowUpdateForm {
-      deliverable_accepted: Some(false),
-      deliverable_submitted_at: Some(Some(Utc::now())),
-      deliverable_url: Some(Some(deliverable_url)),
-      updated_at: Some(Some(Utc::now())),
-      ..Default::default()
-    },
-  )
-  .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: wf.data.workflow_id.into(),
@@ -409,13 +397,11 @@ pub async fn cancel_job(
     }
   }
 
-  // Perform cancellation (allowed for any non-finalized status)
-  let _ =
-    WorkflowService::cancel(&mut context.pool(), form.workflow_id, form.current_status).await?;
-  // Refund any reserved/outstanding funds back to payer (idempotent inside service).
-  // Propagate errors: a failed refund must surface to the caller rather than being
-  // silently swallowed, so the employer is not left with locked funds.
-  WorkflowService::refund_on_cancel(&mut context.pool(), form.workflow_id).await?;
+  // Cancel and refund atomically: if the refund fails after cancellation
+  // commits, the service best-effort restores the workflow status and returns
+  // the refund error so the caller can retry. See WorkflowService::cancel_and_refund.
+  WorkflowService::cancel_and_refund(&mut context.pool(), form.workflow_id, form.current_status)
+    .await?;
 
   Ok(Json(WorkFlowOperationResponse {
     workflow_id: form.workflow_id.into(),

@@ -1,5 +1,5 @@
 [package]
-name = "app_108jobs_workflow_handlers"
+name = "app_108jobs_jobs"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -11,19 +11,28 @@ repository.workspace = true
 rust-version.workspace = true
 
 [lib]
-name = "app_108jobs_workflow_handlers"
+name = "app_108jobs_jobs"
+path = "src/lib.rs"
+doctest = false
 
 [lints]
 workspace = true
 
+[features]
+default = []
+full = []
+
 [dependencies]
-app_108jobs_api_utils = { workspace = true }
 app_108jobs_core = { workspace = true }
 app_108jobs_db = { workspace = true, features = ["full"] }
-app_108jobs_db_views_billing = { workspace = true }
+app_108jobs_api_utils = { workspace = true }
 app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
-app_108jobs_workflow = { workspace = true }
+app_108jobs_db_views_post = { workspace = true, features = ["full"] }
+app_108jobs_db_views_vote = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_db_views_category = { workspace = true, features = ["full"] }
+app_108jobs_db_views_search_combined = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 chrono = { workspace = true }
-serde_json = { workspace = true }
+url = { workspace = true }
 tracing = { workspace = true }

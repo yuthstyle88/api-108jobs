@@ -26,13 +26,6 @@ use app_108jobs_api::{
     tag::{create_category_tag, delete_category_tag, update_category_tag},
   },
   chat::list::list_chat_rooms,
-  comment::{
-    distinguish::distinguish_comment,
-    like::like_comment,
-    list::list_comments,
-    list_comment_likes::list_comment_likes,
-    save::save_comment,
-  },
   delivery::{
     assign::assign_delivery_from_proposal,
     confirm::confirm_delivery_completion,
@@ -89,19 +82,6 @@ use app_108jobs_api::{
     save_settings::save_user_settings,
     update_term::update_term,
   },
-  post::{
-    feature::feature_post,
-    get_link_metadata::get_link_metadata,
-    hide::hide_post,
-    like::like_post,
-    list::list_posts,
-    list_post_likes::list_post_likes,
-    lock::lock_post,
-    mark_many_read::mark_posts_as_read,
-    mark_read::mark_post_as_read,
-    save::save_post,
-    update_notifications::update_post_notifications,
-  },
   reports::{
     category_report::{create::create_category_report, resolve::resolve_category_report},
     comment_report::{create::create_comment_report, resolve::resolve_comment_report},
@@ -127,13 +107,6 @@ use app_108jobs_api::{
 use app_108jobs_api_crud::{
   category::{list::list_categories, update::update_category},
   chat::{create::create_chat_room, read::get_chat_room},
-  comment::{
-    create::create_comment,
-    delete::delete_comment,
-    read::get_comment,
-    remove::remove_comment,
-    update::update_comment,
-  },
   custom_emoji::{
     create::create_custom_emoji,
     delete::delete_custom_emoji,
@@ -144,13 +117,6 @@ use app_108jobs_api_crud::{
     create::create_oauth_provider,
     delete::delete_oauth_provider,
     update::update_oauth_provider,
-  },
-  post::{
-    create::create_post,
-    delete::delete_post,
-    read::get_post,
-    remove::remove_post,
-    update::update_post,
   },
   rider::{
     create::create_rider,
@@ -192,6 +158,28 @@ use app_108jobs_identity::{
   validate_auth::validate_auth,
   verify_email::verify_email,
 };
+use app_108jobs_jobs::{
+  crud::{
+    create::create_post,
+    delete::delete_post,
+    read::get_post,
+    remove::remove_post,
+    update::update_post,
+  },
+  handlers::{
+    feature::feature_post,
+    get_link_metadata::get_link_metadata,
+    hide::hide_post,
+    like::like_post,
+    list::list_posts,
+    list_post_likes::list_post_likes,
+    lock::lock_post,
+    mark_many_read::mark_posts_as_read,
+    mark_read::mark_post_as_read,
+    save::save_post,
+    update_notifications::update_post_notifications,
+  },
+};
 use app_108jobs_payments::{
   bank_account::{
     create_bank_account,
@@ -204,6 +192,22 @@ use app_108jobs_payments::{
   list_top_up_requests::list_top_up_requests,
   wallet::get_wallet,
   withdraw::{list_withdraw_requests, retract_withdraw, submit_withdraw},
+};
+use app_108jobs_proposals::{
+  crud::{
+    create::create_comment,
+    delete::delete_comment,
+    read::get_comment,
+    remove::remove_comment,
+    update::update_comment,
+  },
+  handlers::{
+    distinguish::distinguish_comment,
+    like::like_comment,
+    list::list_comments,
+    list_comment_likes::list_comment_likes,
+    save::save_comment,
+  },
 };
 use app_108jobs_routes::{
   files::{delete::delete_file, download::get_file, upload::upload_file},

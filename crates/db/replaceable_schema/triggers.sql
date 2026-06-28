@@ -350,10 +350,6 @@ BEGIN
     IF NOT (NEW.path ~ ('*.' || id)::lquery) THEN
         NEW.path = NEW.path || id;
 END IF;
-    -- Set local ap_id
-    IF NEW.local THEN
-        NEW.ap_id = coalesce(NEW.ap_id, r.local_url ('/comment/' || id));
-END IF;
 RETURN NEW;
 END
 $$;
@@ -366,10 +362,6 @@ CREATE FUNCTION r.post_change_values ()
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    -- Set local ap_id
-    IF NEW.local THEN
-        NEW.ap_id = coalesce(NEW.ap_id, r.local_url ('/post/' || NEW.id::text));
-END IF;
     -- Set aggregates
     NEW.newest_comment_time_at = NEW.published_at;
     NEW.newest_comment_time_necro_at = NEW.published_at;

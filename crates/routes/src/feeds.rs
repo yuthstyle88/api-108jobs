@@ -390,31 +390,34 @@ fn create_reply_and_mention_items(
     .iter()
     .map(|r| match r {
       InboxCombinedView::CommentReply(v) => {
-        let reply_url = v.comment.local_url(context.settings())?;
+        let domain = context.settings().get_protocol_and_hostname();
+        let reply_url = format!("{domain}/comment/{}", v.comment.id);
         build_item(
           &v.creator,
           &v.comment.published_at,
-          reply_url.as_str(),
+          &reply_url,
           &v.comment.content,
           context.settings(),
         )
       }
       InboxCombinedView::CommentMention(v) => {
-        let mention_url = v.comment.local_url(context.settings())?;
+        let domain = context.settings().get_protocol_and_hostname();
+        let mention_url = format!("{domain}/comment/{}", v.comment.id);
         build_item(
           &v.creator,
           &v.comment.published_at,
-          mention_url.as_str(),
+          &mention_url,
           &v.comment.content,
           context.settings(),
         )
       }
       InboxCombinedView::PostMention(v) => {
-        let mention_url = v.post.local_url(context.settings())?;
+        let domain = context.settings().get_protocol_and_hostname();
+        let mention_url = format!("{domain}/post/{}", v.post.id);
         build_item(
           &v.creator,
           &v.post.published_at,
-          mention_url.as_str(),
+          &mention_url,
           &v.post.body.clone().unwrap_or_default(),
           context.settings(),
         )
@@ -739,7 +742,8 @@ fn create_post_items(posts: Vec<PostView>, settings: &Settings) -> FastJobResult
   let mut items: Vec<Item> = Vec::new();
 
   for p in posts {
-    let post_url = p.post.local_url(settings)?;
+    let domain = settings.get_protocol_and_hostname();
+    let post_url = format!("{domain}/post/{}", p.post.id);
     // Handle posts without categories (e.g., delivery posts)
     let category_display = if let Some(ref category) = p.category {
       let category_url = category.actor_url(settings)?;

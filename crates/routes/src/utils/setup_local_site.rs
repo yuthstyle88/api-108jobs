@@ -1,4 +1,4 @@
-use app_108jobs_api_utils::{plugins::plugin_metadata, utils::generate_inbox_url};
+use app_108jobs_api_utils::plugins::plugin_metadata;
 use app_108jobs_core::{
   error::{FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::Settings,
@@ -21,7 +21,7 @@ use app_108jobs_db::{
     tagline::Tagline,
     wallet::WalletModel,
   },
-  traits::{ApubActor, Crud},
+  traits::Crud,
   utils::{get_conn, DbPool},
 };
 use app_108jobs_db_views_person::impls::PersonQuery;
@@ -33,7 +33,6 @@ use diesel::{
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use tracing::info;
-use url::Url;
 
 pub async fn setup_local_site(
   pool: &mut DbPool<'_>,
@@ -61,14 +60,11 @@ pub async fn setup_local_site(
           let platform_coin = CoinModel::ensure_platform_coin(&mut conn.into()).await?;
 
           if let Some(setup) = &settings.setup {
-            let person_ap_id = Person::generate_local_actor_url(&setup.admin_username, settings)?;
             let public_key = Some("public_key".to_string());
             let private_key = Some("private_key".to_string());
             let wallet_id = Some(platform_wallet.id);
             // Register the user if there's a site setup
             let person_form = PersonInsertForm {
-              ap_id: Some(person_ap_id.clone()),
-              inbox_url: Some(generate_inbox_url()?),
               private_key,
               wallet_id,
               ..PersonInsertForm::new(setup.admin_username.clone(), public_key, instance.id)
@@ -85,7 +81,6 @@ pub async fn setup_local_site(
 
           // Add an entry for the site table
           let site_key_pair = "site_key_pair".to_string();
-          let site_ap_id = Url::parse(&settings.get_protocol_and_hostname())?;
 
           let name = settings
             .setup
@@ -93,9 +88,7 @@ pub async fn setup_local_site(
             .map(|s| s.site_name)
             .unwrap_or_else(|| "New Site".to_string());
           let site_form = SiteInsertForm {
-            ap_id: Some(site_ap_id.clone().into()),
             last_refreshed_at: Some(Utc::now()),
-            inbox_url: Some(generate_inbox_url()?),
             private_key: Some(site_key_pair.clone()),
             public_key: Some(site_key_pair),
             ..SiteInsertForm::new(name, instance.id)

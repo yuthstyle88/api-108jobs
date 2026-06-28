@@ -1,6 +1,6 @@
 use app_108jobs_db::{
   enums::{BillingStatus, WorkFlowStatus},
-  newtypes::{BillingId, ChatRoomId, Coin, CommentId, LocalUserId, PostId, WalletId, WorkflowId},
+  newtypes::{BillingId, ChatRoomId, Coin, LocalUserId, PostId, ProposalId, WalletId, WorkflowId},
   source::{billing::WorkStep, job_budget_plan::JobBudgetPlan},
 };
 use chrono::NaiveDate;
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateInvoiceForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<CommentId>,
+  pub comment_id: Option<ProposalId>,
   pub seq_number: i16,
   pub amount: Coin,
   pub proposal: String,
@@ -39,7 +39,7 @@ pub struct CreateInvoiceForm {
 pub struct CreateInvoiceRequest {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<CommentId>,
+  pub comment_id: Option<ProposalId>,
   pub seq_number: i16,
   pub amount: Coin,
   pub proposal: String,

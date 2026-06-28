@@ -53,9 +53,9 @@ pub struct Person {
   pub post_count: i64,
   #[serde(skip)]
   pub post_score: i64,
-  pub comment_count: i64,
+  pub proposal_count: i64,
   #[serde(skip)]
-  pub comment_score: i64,
+  pub proposal_score: i64,
   pub wallet_id: WalletId,
   pub contacts: Option<String>,
   pub skills: Option<String>,

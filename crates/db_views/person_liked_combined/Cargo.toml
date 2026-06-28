@@ -22,19 +22,19 @@ full = [
   "diesel-async",
   "i-love-jesus",
   "app_108jobs_db/full",
-  "app_108jobs_db_views_comment/full",
+  "app_108jobs_db_views_proposal/full",
   "app_108jobs_db_views_post/full",
 ]
 ts-rs = [
   "dep:ts-rs",
   "app_108jobs_db/ts-rs",
-  "app_108jobs_db_views_comment/ts-rs",
+  "app_108jobs_db_views_proposal/ts-rs",
   "app_108jobs_db_views_post/ts-rs",
 ]
 
 [dependencies]
 app_108jobs_db_views_post = { workspace = true }
-app_108jobs_db_views_comment = { workspace = true }
+app_108jobs_db_views_proposal = { workspace = true }
 app_108jobs_db_views_local_user = { workspace = true }
 app_108jobs_db = { workspace = true }
 app_108jobs_core = { workspace = true, optional = true }

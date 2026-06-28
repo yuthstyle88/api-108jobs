@@ -60,7 +60,7 @@ members = [
     "crates/db_views/vote",
     "crates/db_views/reports",
     "crates/db_views/local_image",
-    "crates/db_views/comment",
+    "crates/db_views/proposal",
     "crates/db_views/category",
     "crates/db_views/category_person_ban",
     "crates/db_views/custom_emoji",
@@ -153,7 +153,7 @@ app_108jobs_api_utils = { version = "=1.0.0-alpha.5", path = "./crates/api/api_u
 app_108jobs_api_common = { version = "=1.0.0-alpha.5", path = "./crates/api/api_common" }
 app_108jobs_routes = { version = "=1.0.0-alpha.5", path = "./crates/routes" }
 app_108jobs_email = { version = "=1.0.0-alpha.5", path = "./crates/email" }
-app_108jobs_db_views_comment = { version = "=1.0.0-alpha.5", path = "./crates/db_views/comment" }
+app_108jobs_db_views_proposal = { version = "=1.0.0-alpha.5", path = "./crates/db_views/proposal" }
 app_108jobs_db_views_category_person_ban = { version = "=1.0.0-alpha.5", path = "./crates/db_views/category_person_ban" }
 app_108jobs_db_views_category = { version = "=1.0.0-alpha.5", path = "./crates/db_views/category" }
 app_108jobs_db_views_custom_emoji = { version = "=1.0.0-alpha.5", path = "./crates/db_views/custom_emoji" }

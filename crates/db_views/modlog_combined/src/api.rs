@@ -1,7 +1,7 @@
 use crate::ModlogCombinedView;
 use app_108jobs_db::{
   enums::ListingType,
-  newtypes::{CategoryId, CommentId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, PaginationCursor, PersonId, PostId, ProposalId},
   ModlogActionType,
 };
 use serde::{Deserialize, Serialize};
@@ -27,8 +27,8 @@ pub struct GetModlog {
   pub other_person_id: Option<PersonId>,
   /// Filter by post. Will include comments of that post.
   pub post_id: Option<PostId>,
-  /// Filter by comment.
-  pub comment_id: Option<CommentId>,
+  /// Filter by proposal.
+  pub comment_id: Option<ProposalId>,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,

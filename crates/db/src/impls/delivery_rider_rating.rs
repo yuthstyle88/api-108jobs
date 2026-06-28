@@ -53,7 +53,7 @@ impl DeliveryRiderRating {
     employer_id: PersonId,
     rider_id: RiderId,
     rating: i16,
-    comment: Option<String>,
+    proposal: Option<String>,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
@@ -72,7 +72,7 @@ impl DeliveryRiderRating {
         // Update existing rating
         let form = DeliveryRiderRatingUpdateForm {
           rating: Some(rating),
-          comment: Some(comment),
+          proposal: Some(proposal),
           updated_at: Some(Some(Utc::now())),
         };
         Self::update(pool, existing_rating.id, &form).await
@@ -84,7 +84,7 @@ impl DeliveryRiderRating {
           employer_id,
           rider_id,
           rating,
-          comment,
+          proposal,
           created_at: Some(Utc::now()),
           updated_at: None,
         };

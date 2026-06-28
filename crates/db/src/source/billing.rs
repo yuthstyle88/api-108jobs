@@ -2,7 +2,7 @@
 use crate::schema::billing;
 use crate::{
   enums::{BillingStatus, WorkFlowStatus},
-  newtypes::{BillingId, ChatRoomId, Coin, CommentId, DbUrl, LocalUserId, PostId},
+  newtypes::{BillingId, ChatRoomId, Coin, DbUrl, LocalUserId, PostId, ProposalId},
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
@@ -25,8 +25,8 @@ pub struct Billing {
   pub employer_id: LocalUserId,
   /// The job post this billing is for
   pub post_id: PostId,
-  /// The comment/proposal this billing relates to
-  pub comment_id: Option<CommentId>,
+  /// The proposal/proposal this billing relates to
+  pub proposal_id: Option<ProposalId>,
   /// Amount to be paid
   pub amount: Coin,
   /// Description of work to be done
@@ -55,7 +55,7 @@ pub struct BillingInsertForm {
   pub employer_id: LocalUserId,
   pub post_id: PostId,
   #[new(default)]
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
   pub amount: Coin,
   pub description: String,
   #[new(default)]
@@ -88,7 +88,7 @@ pub struct BillingFromQuotation {
   pub freelancer_id: LocalUserId,
   pub employer_id: LocalUserId,
   pub post_id: PostId,
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
   pub amount: Coin,
   pub description: String,
   pub delivery_day: NaiveDate,
@@ -101,7 +101,7 @@ impl From<BillingFromQuotation> for BillingInsertForm {
       freelancer_id: v.freelancer_id,
       employer_id: v.employer_id,
       post_id: v.post_id,
-      comment_id: v.comment_id,
+      proposal_id: v.proposal_id,
       amount: v.amount,
       description: v.description,
       status: Some(BillingStatus::QuotePendingReview),

@@ -1,7 +1,7 @@
 use crate::{CommentSlimView, CommentView};
 use app_108jobs_db::{
-  enums::{CommentSortType, ListingType},
-  newtypes::{CategoryId, CommentId, LanguageId, PaginationCursor, PostId},
+  enums::{ListingType, ProposalSortType},
+  newtypes::{CategoryId, LanguageId, PaginationCursor, PostId, ProposalId},
 };
 use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A comment response.
+/// A proposal response.
 pub struct CommentResponse {
   pub comment_view: CommentView,
 }
@@ -22,11 +22,11 @@ pub struct CommentResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Create a comment.
+/// Create a proposal.
 pub struct CreateComment {
   pub content: String,
   pub post_id: PostId,
-  pub parent_id: Option<CommentId>,
+  pub parent_id: Option<ProposalId>,
   pub language_id: Option<LanguageId>,
 }
 
@@ -34,20 +34,20 @@ pub struct CreateComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Create a comment.
+/// Create a proposal.
 pub struct CreateCommentRequest {
   pub content: String,
   pub post_id: PostId,
-  pub parent_id: Option<CommentId>,
+  pub parent_id: Option<ProposalId>,
   pub language_id: LanguageId,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Like a comment.
+/// Like a proposal.
 pub struct CreateCommentLike {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   /// Must be -1, 0, or 1 .
   pub score: i16,
 }
@@ -56,9 +56,9 @@ pub struct CreateCommentLike {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Like a comment.
+/// Like a proposal.
 pub struct CreateCommentLikeRequest {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   /// Must be -1, 0, or 1 .
   pub score: i16,
 }
@@ -67,9 +67,9 @@ pub struct CreateCommentLikeRequest {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Delete your own comment.
+/// Delete your own proposal.
 pub struct DeleteComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub deleted: bool,
 }
 
@@ -78,9 +78,9 @@ pub struct DeleteComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Delete your own comment.
+/// Delete your own proposal.
 pub struct DeleteCommentRequest {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub deleted: bool,
 }
 
@@ -89,9 +89,9 @@ pub struct DeleteCommentRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Distinguish a comment (IE speak as moderator).
+/// Distinguish a proposal (IE speak as moderator).
 pub struct DistinguishComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub distinguished: bool,
 }
 
@@ -100,9 +100,9 @@ pub struct DistinguishComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Fetch an individual comment.
+/// Fetch an individual proposal.
 pub struct GetComment {
-  pub id: CommentId,
+  pub id: ProposalId,
 }
 
 #[skip_serializing_none]
@@ -113,7 +113,7 @@ pub struct GetComment {
 /// Get a list of comments.
 pub struct GetComments {
   pub type_: Option<ListingType>,
-  pub sort: Option<CommentSortType>,
+  pub sort: Option<ProposalSortType>,
   /// Filter to within a given time range, in seconds.
   /// IE 60 would give results for the past minute.
   pub time_range_seconds: Option<i32>,
@@ -124,16 +124,16 @@ pub struct GetComments {
   pub category_id: Option<CategoryId>,
   pub category_name: Option<String>,
   pub post_id: Option<PostId>,
-  pub parent_id: Option<CommentId>,
+  pub parent_id: Option<ProposalId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// The comment list response.
+/// The proposal list response.
 pub struct GetCommentsResponse {
-  pub comments: Vec<CommentView>,
+  pub proposals: Vec<CommentView>,
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
 }
@@ -142,9 +142,9 @@ pub struct GetCommentsResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// A slimmer comment list response, without the post or category.
+/// A slimmer proposal list response, without the post or category.
 pub struct GetCommentsSlimResponse {
-  pub comments: Vec<CommentSlimView>,
+  pub proposals: Vec<CommentSlimView>,
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
 }
@@ -154,9 +154,9 @@ pub struct GetCommentsSlimResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// List comment likes. Admins-only.
+/// List proposal likes. Admins-only.
 pub struct ListCommentLikes {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub page_cursor: Option<PaginationCursor>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
@@ -166,7 +166,7 @@ pub struct ListCommentLikes {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// The comment likes response
+/// The proposal likes response
 pub struct ListCommentLikesResponse {
   pub comment_likes: Vec<VoteView>,
   /// the pagination cursor to use to fetch the next page
@@ -179,9 +179,9 @@ pub struct ListCommentLikesResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Purges a comment from the database. This will delete all content attached to that comment.
+/// Purges a proposal from the database. This will delete all content attached to that proposal.
 pub struct PurgeComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub reason: Option<String>,
 }
 
@@ -190,9 +190,9 @@ pub struct PurgeComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Remove a comment (only doable by mods).
+/// Remove a proposal (only doable by mods).
 pub struct RemoveComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub removed: bool,
   pub reason: Option<String>,
 }
@@ -201,9 +201,9 @@ pub struct RemoveComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Save / bookmark a comment.
+/// Save / bookmark a proposal.
 pub struct SaveComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub save: bool,
 }
 
@@ -211,9 +211,9 @@ pub struct SaveComment {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Edit a comment.
+/// Edit a proposal.
 pub struct EditComment {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,
   pub budget: i32,
@@ -226,9 +226,9 @@ pub struct EditComment {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Edit a comment.
+/// Edit a proposal.
 pub struct EditCommentRequest {
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub content: Option<String>,
   pub language_id: Option<LanguageId>,
   pub budget: i32,

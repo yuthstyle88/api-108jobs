@@ -1,6 +1,6 @@
-use crate::newtypes::{CommentId, CommentReportId, PersonId};
+use crate::newtypes::{PersonId, ProposalId, ProposalReportId};
 #[cfg(feature = "full")]
-use crate::schema::comment_report;
+use crate::schema::proposal_report;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -11,17 +11,17 @@ use serde_with::skip_serializing_none;
   feature = "full",
   derive(Queryable, Selectable, Associations, Identifiable)
 )]
-#[cfg_attr(feature = "full", diesel(belongs_to(crate::source::comment::Comment)))]
-#[cfg_attr(feature = "full", diesel(table_name = comment_report))]
+#[cfg_attr(feature = "full", diesel(belongs_to(crate::source::proposal::Proposal, foreign_key = comment_id)))]
+#[cfg_attr(feature = "full", diesel(table_name = proposal_report))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A comment report.
+/// A proposal report.
 #[serde(rename_all = "camelCase")]
-pub struct CommentReport {
-  pub id: CommentReportId,
+pub struct ProposalReport {
+  pub id: ProposalReportId,
   pub creator_id: PersonId,
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub original_comment_text: String,
   pub reason: String,
   pub resolved: bool,
@@ -33,10 +33,10 @@ pub struct CommentReport {
 
 #[derive(Clone)]
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = comment_report))]
-pub struct CommentReportForm {
+#[cfg_attr(feature = "full", diesel(table_name = proposal_report))]
+pub struct ProposalReportForm {
   pub creator_id: PersonId,
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub original_comment_text: String,
   pub reason: String,
   pub violates_instance_rules: bool,

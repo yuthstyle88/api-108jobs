@@ -58,7 +58,7 @@ pub struct Category {
   pub random_number: i16,
   pub subscribers: i64,
   pub posts: i64,
-  pub comments: i64,
+  pub proposals: i64,
   /// The number of users with any activity in the last day.
   pub users_active_day: i64,
   /// The number of users with any activity in the last week.

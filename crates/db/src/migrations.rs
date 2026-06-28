@@ -48,7 +48,7 @@ fn migrations() -> diesel_migrations::EmbeddedMigrations {
 
 /// This SQL code sets up the `r` schema, which contains things that can be safely dropped and
 /// replaced instead of being changed using migrations. It may not create or modify things outside
-/// of the `r` schema (indicated by `r.` before the name), unless a comment says otherwise.
+/// of the `r` schema (indicated by `r.` before the name), unless a proposal says otherwise.
 fn replaceable_schema() -> String {
   [
     "CREATE SCHEMA r;",

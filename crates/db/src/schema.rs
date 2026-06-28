@@ -1078,7 +1078,7 @@ diesel::table! {
         employer_id -> Int4,
         rider_id -> Int4,
         rating -> Int2,
-        comment -> Nullable<Text>,
+        proposal -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1424,7 +1424,7 @@ diesel::table! {
         reviewee_id -> Int4,
         workflow_id -> Int4,
         rating -> Int2,
-        comment -> Nullable<Text>,
+        proposal -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }

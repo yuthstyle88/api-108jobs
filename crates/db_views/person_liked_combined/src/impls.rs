@@ -8,7 +8,7 @@ use crate::{
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
-  schema::{comment, delivery_details, person, person_liked_combined, post},
+  schema::{delivery_details, person, person_liked_combined, post, proposal},
   source::combined::person_liked::{person_liked_combined_keys as key, PersonLikedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
@@ -24,11 +24,11 @@ use app_108jobs_db::{
       creator_local_user_admin_join,
       image_details_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
       my_post_actions_join,
+      my_proposal_actions_join,
     },
     DbPool,
   },
@@ -61,7 +61,7 @@ impl PaginationCursorBuilder for PersonLikedCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      PersonLikedCombinedView::Comment(v) => ('C', v.comment.id.0),
+      PersonLikedCombinedView::Proposal(v) => ('C', v.proposal.id.0),
       PersonLikedCombinedView::Post(v) => ('P', v.post.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -83,7 +83,7 @@ impl PaginationCursorBuilder for PersonLikedCombinedView {
       .into_boxed();
 
     query = match prefix {
-      'C' => query.filter(person_liked_combined::comment_id.eq(id)),
+      'C' => query.filter(person_liked_combined::proposal_id.eq(id)),
       'P' => query.filter(person_liked_combined::post_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -99,16 +99,16 @@ impl PersonLikedCombinedViewInternal {
     let item_creator = person::id;
 
     let comment_join =
-      comment::table.on(person_liked_combined::comment_id.eq(comment::id.nullable()));
+      proposal::table.on(person_liked_combined::proposal_id.eq(proposal::id.nullable()));
 
     let post_join = post::table.on(
       person_liked_combined::post_id
         .eq(post::id.nullable())
-        .or(comment::post_id.eq(post::id)),
+        .or(proposal::post_id.eq(post::id)),
     );
 
     let item_creator_join = person::table.on(
-      comment::creator_id
+      proposal::creator_id
         .eq(item_creator)
         // Need to filter out the post rows where the post_id given is null
         // Otherwise you'll get duped post rows
@@ -122,8 +122,8 @@ impl PersonLikedCombinedViewInternal {
     let my_category_actions_join: my_category_actions_join =
       my_category_actions_join(Some(my_person_id));
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(Some(my_person_id));
-    let my_comment_actions_join: my_comment_actions_join =
-      my_comment_actions_join(Some(my_person_id));
+    let my_proposal_actions_join: my_proposal_actions_join =
+      my_proposal_actions_join(Some(my_person_id));
     let my_local_user_admin_join: my_local_user_admin_join =
       my_local_user_admin_join(Some(my_person_id));
     let my_instance_actions_person_join: my_instance_actions_person_join =
@@ -147,7 +147,7 @@ impl PersonLikedCombinedViewInternal {
       .left_join(creator_local_instance_actions_join)
       .left_join(my_post_actions_join)
       .left_join(my_person_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
       .left_join(image_details_join())
       .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
@@ -177,8 +177,8 @@ impl PersonLikedCombinedQuery {
     if let Some(type_) = self.type_ {
       query = match type_ {
         PersonContentType::All => query,
-        PersonContentType::Comments => {
-          query.filter(person_liked_combined::comment_id.is_not_null())
+        PersonContentType::Proposals => {
+          query.filter(person_liked_combined::proposal_id.is_not_null())
         }
         PersonContentType::Posts => query.filter(person_liked_combined::post_id.is_not_null()),
       }
@@ -225,14 +225,14 @@ impl InternalToCombinedView for PersonLikedCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let Some(comment) = v.comment {
-      Some(PersonLikedCombinedView::Comment(CommentView {
-        comment,
+    if let Some(proposal) = v.proposal {
+      Some(PersonLikedCombinedView::Proposal(CommentView {
+        proposal,
         post: v.post,
         category: Some(v.category),
         creator: v.item_creator,
         category_actions: v.category_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
         creator_is_admin: v.item_creator_is_admin,

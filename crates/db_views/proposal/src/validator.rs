@@ -1,13 +1,13 @@
-//! Validation logic for comment requests
+//! Validation logic for proposal requests
 use crate::api::{CreateComment, CreateCommentRequest};
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
-use app_108jobs_db::newtypes::{CommentId, LanguageId, PostId};
+use app_108jobs_db::newtypes::{LanguageId, PostId, ProposalId};
 
-/// Validates that comment content is not empty
+/// Validates that proposal content is not empty
 pub fn validate_comment_content(content: &str) -> FastJobResult<()> {
   if content.trim().is_empty() {
     return Err(
-      FastJobErrorType::InvalidField("comment content cannot be empty".to_string()).into(),
+      FastJobErrorType::InvalidField("proposal content cannot be empty".to_string()).into(),
     );
   }
   Ok(())
@@ -29,8 +29,8 @@ pub fn validate_language_id(language_id: LanguageId) -> FastJobResult<()> {
   Ok(())
 }
 
-/// Validates that parent comment ID (if provided) is positive
-pub fn validate_parent_comment_id(parent_id: Option<CommentId>) -> FastJobResult<()> {
+/// Validates that parent proposal ID (if provided) is positive
+pub fn validate_parent_comment_id(parent_id: Option<ProposalId>) -> FastJobResult<()> {
   if let Some(id) = parent_id {
     if id.0 <= 0 {
       return Err(FastJobErrorType::InvalidArgument.into());

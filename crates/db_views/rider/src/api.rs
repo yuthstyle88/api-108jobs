@@ -6,11 +6,11 @@ use app_108jobs_core::error::{FastJobError, FastJobResult};
 use app_108jobs_db::{
   enums::{PaymentMethod, TripStatus, VehicleType},
   newtypes::{
-    CommentId,
     PaginationCursor,
     PersonId,
     PostId,
     PricingConfigId,
+    ProposalId,
     RideSessionId,
     RiderId,
   },
@@ -151,13 +151,13 @@ pub struct TripStatusEvent {
   pub reason: Option<String>,
 }
 
-/// Request body for assigning a delivery to a rider from a comment/proposal
+/// Request body for assigning a delivery to a rider from a proposal/proposal
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AssignDeliveryRequest {
-  /// The ID of the comment (proposal) that led to this assignment
-  pub comment_id: CommentId,
-  /// The ID of the rider's person (author of the comment) to assign
+  /// The ID of the proposal (proposal) that led to this assignment
+  pub comment_id: ProposalId,
+  /// The ID of the rider's person (author of the proposal) to assign
   pub person_id: PersonId,
   /// Sender's name (person who is sending the package)
   pub sender_name: String,
@@ -184,8 +184,8 @@ pub struct AssignDeliveryResponse {
   pub assigned_by_person_id: Option<i32>,
   /// The new delivery status
   pub status: TripStatus,
-  /// The linked comment (proposal) ID
-  pub linked_comment_id: CommentId,
+  /// The linked proposal (proposal) ID
+  pub linked_proposal_id: ProposalId,
 }
 
 /// Event published to Redis when a delivery is assigned
@@ -219,7 +219,7 @@ pub struct MyDeliveryInfo {
   pub pickup_address: String,
   pub dropoff_address: String,
   pub assigned_at: Option<DateTime<Utc>>,
-  pub linked_comment_id: Option<CommentId>,
+  pub linked_proposal_id: Option<ProposalId>,
 }
 
 /// Request body for rating a rider after delivery completion
@@ -232,8 +232,8 @@ pub struct RateRiderRequest {
   pub rider_id: RiderId,
   /// Rating from 1 to 5
   pub rating: i16,
-  /// Optional comment about the rider
-  pub comment: Option<String>,
+  /// Optional proposal about the rider
+  pub proposal: Option<String>,
 }
 
 /// Response after rating a rider
@@ -255,7 +255,7 @@ pub struct DeliveryRiderRatingData {
   pub employer_id: PersonId,
   pub rider_id: RiderId,
   pub rating: i16,
-  pub comment: Option<String>,
+  pub proposal: Option<String>,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }

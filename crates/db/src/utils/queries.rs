@@ -13,8 +13,6 @@ use crate::{
   schema::{
     category,
     category_actions,
-    comment,
-    comment_actions,
     image_details,
     instance_actions,
     local_user,
@@ -23,6 +21,8 @@ use crate::{
     post,
     post_actions,
     post_tag,
+    proposal,
+    proposal_actions,
     tag,
   },
   Person1AliasAllColumnsTuple,
@@ -67,12 +67,12 @@ pub fn local_user_is_admin() -> _ {
   local_user::admin.nullable().is_not_distinct_from(true)
 }
 
-/// Checks to see if the comment creator is an admin.
+/// Checks to see if the proposal creator is an admin.
 #[diesel::dsl::auto_type]
 pub fn comment_creator_is_admin() -> _ {
   exists(
     creator_local_user.filter(
-      comment::creator_id
+      proposal::creator_id
         .eq(creator_local_user.field(local_user::person_id))
         .and(creator_local_user.field(local_user::admin).eq(true)),
     ),
@@ -178,7 +178,7 @@ pub fn local_user_can_mod_post() -> _ {
   local_user_is_admin().or(not(post_creator_is_admin()).and(am_higher_mod()))
 }
 
-/// Checks to see if you can mod a comment.
+/// Checks to see if you can mod a proposal.
 #[diesel::dsl::auto_type]
 pub fn local_user_can_mod_comment() -> _ {
   local_user_is_admin().or(not(comment_creator_is_admin()).and(am_higher_mod()))
@@ -194,37 +194,37 @@ pub fn local_user_category_can_mod() -> _ {
   am_admin.or(am_moderator).is_not_distinct_from(true)
 }
 
-/// Selects the comment columns, but gives an empty string for content when
+/// Selects the proposal columns, but gives an empty string for content when
 /// deleted or removed, and you're not a mod/admin.
 #[diesel::dsl::auto_type]
 pub fn comment_select_remove_deletes() -> _ {
-  let deleted_or_removed = comment::deleted.or(comment::removed);
+  let deleted_or_removed = proposal::deleted.or(proposal::removed);
 
   // You can only view the content if it hasn't been removed, or you can mod.
   let can_view_content = not(deleted_or_removed).or(local_user_can_mod_comment());
-  let content = case_when(can_view_content, comment::content).otherwise("");
+  let content = case_when(can_view_content, proposal::content).otherwise("");
 
   (
-    comment::id,
-    comment::creator_id,
-    comment::post_id,
+    proposal::id,
+    proposal::creator_id,
+    proposal::post_id,
     content,
-    comment::removed,
-    comment::published_at,
-    comment::updated_at,
-    comment::deleted,
-    comment::path,
-    comment::distinguished,
-    comment::language_id,
-    comment::score,
-    comment::upvotes,
-    comment::downvotes,
-    comment::child_count,
-    comment::hot_rank,
-    comment::controversy_rank,
-    comment::report_count,
-    comment::unresolved_report_count,
-    comment::pending,
+    proposal::removed,
+    proposal::published_at,
+    proposal::updated_at,
+    proposal::deleted,
+    proposal::path,
+    proposal::distinguished,
+    proposal::language_id,
+    proposal::score,
+    proposal::upvotes,
+    proposal::downvotes,
+    proposal::child_count,
+    proposal::hot_rank,
+    proposal::controversy_rank,
+    proposal::report_count,
+    proposal::unresolved_report_count,
+    proposal::pending,
   )
 }
 
@@ -371,11 +371,11 @@ pub fn my_post_actions_join(my_person_id: Option<PersonId>) -> _ {
 }
 
 #[diesel::dsl::auto_type]
-pub fn my_comment_actions_join(my_person_id: Option<PersonId>) -> _ {
-  comment_actions::table.on(
-    comment_actions::comment_id
-      .eq(comment::id)
-      .and(comment_actions::person_id.nullable().eq(my_person_id)),
+pub fn my_proposal_actions_join(my_person_id: Option<PersonId>) -> _ {
+  proposal_actions::table.on(
+    proposal_actions::comment_id
+      .eq(proposal::id)
+      .and(proposal_actions::person_id.nullable().eq(my_person_id)),
   )
 }
 

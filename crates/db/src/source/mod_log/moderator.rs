@@ -8,15 +8,14 @@ use crate::schema::{
   mod_feature_post,
   mod_lock_post,
   mod_remove_category,
-  mod_remove_comment,
   mod_remove_post,
+  mod_remove_proposal,
   mod_transfer_category,
 };
 use crate::{
   enums::CategoryVisibility,
   newtypes::{
     CategoryId,
-    CommentId,
     InstanceId,
     ModAddCategoryId,
     ModAddId,
@@ -26,11 +25,12 @@ use crate::{
     ModFeaturePostId,
     ModLockPostId,
     ModRemoveCategoryId,
-    ModRemoveCommentId,
     ModRemovePostId,
+    ModRemoveProposalId,
     ModTransferCategoryId,
     PersonId,
     PostId,
+    ProposalId,
   },
 };
 use chrono::{DateTime, Utc};
@@ -116,25 +116,25 @@ pub struct ModFeaturePostForm {
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = mod_remove_comment))]
+#[cfg_attr(feature = "full", diesel(table_name = mod_remove_proposal))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When a moderator removes a comment.
-pub struct ModRemoveComment {
-  pub id: ModRemoveCommentId,
+/// When a moderator removes a proposal.
+pub struct ModRemoveProposal {
+  pub id: ModRemoveProposalId,
   pub mod_person_id: PersonId,
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub reason: Option<String>,
   pub removed: bool,
   pub published_at: DateTime<Utc>,
 }
 
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = mod_remove_comment))]
-pub struct ModRemoveCommentForm {
+#[cfg_attr(feature = "full", diesel(table_name = mod_remove_proposal))]
+pub struct ModRemoveProposalForm {
   pub mod_person_id: PersonId,
-  pub comment_id: CommentId,
+  pub comment_id: ProposalId,
   pub reason: Option<String>,
   pub removed: Option<bool>,
 }

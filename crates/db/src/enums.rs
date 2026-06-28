@@ -23,8 +23,8 @@ pub enum PostSortType {
   New,
   Old,
   Top,
-  MostComments,
-  NewComments,
+  MostProposals,
+  NewProposals,
   Controversial,
   Scaled,
 }
@@ -61,7 +61,7 @@ pub enum ProposalSortType {
 #[cfg_attr(feature = "full", DbValueStyle = "verbatim")]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
-/// A listing type for post and comment list fetches.
+/// A listing type for post and proposal list fetches.
 pub enum ListingType {
   /// Content from your own site, as well as all connected / federated sites.
   All,
@@ -200,7 +200,7 @@ pub enum VoteShow {
 pub enum PostNotifications {
   #[default]
   RepliesAndMentions,
-  AllComments,
+  AllProposals,
   Mute,
 }
 

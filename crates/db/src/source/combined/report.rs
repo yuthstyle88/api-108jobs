@@ -1,4 +1,4 @@
-use crate::newtypes::{CategoryReportId, CommentReportId, PostReportId, ReportCombinedId};
+use crate::newtypes::{CategoryReportId, PostReportId, ProposalReportId, ReportCombinedId};
 #[cfg(feature = "full")]
 use crate::schema::report_combined;
 use chrono::{DateTime, Utc};
@@ -21,6 +21,6 @@ pub struct ReportCombined {
   pub id: ReportCombinedId,
   pub published_at: DateTime<Utc>,
   pub post_report_id: Option<PostReportId>,
-  pub comment_report_id: Option<CommentReportId>,
+  pub proposal_report_id: Option<ProposalReportId>,
   pub category_report_id: Option<CategoryReportId>,
 }

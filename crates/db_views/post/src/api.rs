@@ -10,7 +10,7 @@ use app_108jobs_db::{
     PostSortType,
     TripStatus,
   },
-  newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
+  newtypes::{CategoryId, Coin, DbUrl, LanguageId, PaginationCursor, PostId, ProposalId, TagId},
   source::delivery_details::DeliveryDetailsPayload,
   PostFeatureType,
 };
@@ -237,7 +237,7 @@ pub struct UpdatePostNotificationsRequest {
 #[serde(rename_all = "camelCase")]
 pub struct GetPost {
   pub id: Option<PostId>,
-  pub comment_id: Option<CommentId>,
+  pub comment_id: Option<ProposalId>,
 }
 
 #[skip_serializing_none]

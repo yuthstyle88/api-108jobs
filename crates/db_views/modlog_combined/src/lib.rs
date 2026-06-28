@@ -1,15 +1,14 @@
 use app_108jobs_db::source::{
   category::Category,
-  comment::Comment,
   instance::Instance,
   mod_log::{
     admin::{
       AdminAllowInstance,
       AdminBlockInstance,
       AdminPurgeCategory,
-      AdminPurgeComment,
       AdminPurgePerson,
       AdminPurgePost,
+      AdminPurgeProposal,
     },
     moderator::{
       ModAdd,
@@ -20,13 +19,14 @@ use app_108jobs_db::source::{
       ModFeaturePost,
       ModLockPost,
       ModRemoveCategory,
-      ModRemoveComment,
       ModRemovePost,
+      ModRemoveProposal,
       ModTransferCategory,
     },
   },
   person::Person,
   post::Post,
+  proposal::Proposal,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -135,13 +135,13 @@ pub struct ModLockPostView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When a moderator removes a comment.
+/// When a moderator removes a proposal.
 #[serde(rename_all = "camelCase")]
-pub struct ModRemoveCommentView {
-  pub mod_remove_comment: ModRemoveComment,
+pub struct ModRemoveProposalView {
+  pub mod_remove_proposal: ModRemoveProposal,
   pub moderator: Option<Person>,
   pub other_person: Person,
-  pub comment: Comment,
+  pub proposal: Proposal,
   pub post: Post,
   /// Category is optional for posts without categories (e.g., delivery posts)
   pub category: Option<Category>,
@@ -213,9 +213,9 @@ pub struct ModTransferCategoryView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When an admin purges a comment.
-pub struct AdminPurgeCommentView {
-  pub admin_purge_comment: AdminPurgeComment,
+/// When an admin purges a proposal.
+pub struct AdminPurgeProposalView {
+  pub admin_purge_proposal: AdminPurgeProposal,
   pub admin: Option<Person>,
   pub post: Post,
 }
@@ -295,7 +295,7 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub admin_block_instance: Option<AdminBlockInstance>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub admin_purge_comment: Option<AdminPurgeComment>,
+  pub admin_purge_proposal: Option<AdminPurgeProposal>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub admin_purge_category: Option<AdminPurgeCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -317,7 +317,7 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_lock_post: Option<ModLockPost>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub mod_remove_comment: Option<ModRemoveComment>,
+  pub mod_remove_proposal: Option<ModRemoveProposal>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub mod_remove_category: Option<ModRemoveCategory>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -343,7 +343,7 @@ pub(crate) struct ModlogCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment: Option<Comment>,
+  pub proposal: Option<Proposal>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -354,7 +354,7 @@ pub(crate) struct ModlogCombinedViewInternal {
 pub enum ModlogCombinedView {
   AdminAllowInstance(AdminAllowInstanceView),
   AdminBlockInstance(AdminBlockInstanceView),
-  AdminPurgeComment(AdminPurgeCommentView),
+  AdminPurgeProposal(AdminPurgeProposalView),
   AdminPurgeCategory(AdminPurgeCategoryView),
   AdminPurgePerson(AdminPurgePersonView),
   AdminPurgePost(AdminPurgePostView),
@@ -365,7 +365,7 @@ pub enum ModlogCombinedView {
   ModFeaturePost(ModFeaturePostView),
   ModChangeCategoryVisibility(ModChangeCategoryVisibilityView),
   ModLockPost(ModLockPostView),
-  ModRemoveComment(ModRemoveCommentView),
+  ModRemoveProposal(ModRemoveProposalView),
   ModRemoveCategory(ModRemoveCategoryView),
   ModRemovePost(ModRemovePostView),
   ModTransferCategory(ModTransferCategoryView),

@@ -2,11 +2,11 @@ use crate::{
   enums::{TripStatus, VehicleType},
   newtypes::{
     Coin,
-    CommentId,
     DeliveryDetailsId,
     PersonId,
     PersonId as PersonIdNew,
     PostId,
+    ProposalId,
     RiderId,
     RiderId as RiderIdNew,
   },
@@ -71,7 +71,7 @@ pub struct DeliveryDetails {
   pub assigned_rider_id: Option<RiderId>,
   pub assigned_at: Option<DateTime<Utc>>,
   pub assigned_by_person_id: Option<PersonId>,
-  pub linked_comment_id: Option<CommentId>,
+  pub linked_proposal_id: Option<ProposalId>,
   /// The agreed delivery fee amount (in smallest currency unit, e.g., cents)
   /// This is held in escrow when the rider is assigned
   pub delivery_fee: Coin,
@@ -223,7 +223,7 @@ pub struct DeliveryDetailsUpdateForm {
   pub assigned_rider_id: Option<Option<RiderId>>,
   pub assigned_at: Option<Option<DateTime<Utc>>>,
   pub assigned_by_person_id: Option<Option<PersonId>>,
-  pub linked_comment_id: Option<Option<CommentId>>,
+  pub linked_proposal_id: Option<Option<ProposalId>>,
 
   // Metadata
   pub updated_at: Option<DateTime<Utc>>,
@@ -301,7 +301,7 @@ impl DeliveryDetailsPayload {
       assigned_rider_id: None,
       assigned_at: None,
       assigned_by_person_id: None,
-      linked_comment_id: None,
+      linked_proposal_id: None,
       // Payment tracking fields are not editable via post update:
       delivery_fee: None,
       employer_confirmed_at: None,
@@ -399,7 +399,7 @@ pub struct DeliveryDetailsPrivate {
   pub assigned_rider_id: Option<RiderId>,
   pub assigned_at: Option<DateTime<Utc>>,
   pub assigned_by_person_id: Option<PersonId>,
-  pub linked_comment_id: Option<CommentId>,
+  pub linked_proposal_id: Option<ProposalId>,
 
   // Payment tracking (full details for authorized parties)
   pub delivery_fee: Coin,
@@ -511,7 +511,7 @@ impl DeliveryDetails {
       assigned_rider_id: self.assigned_rider_id,
       assigned_at: self.assigned_at,
       assigned_by_person_id: self.assigned_by_person_id,
-      linked_comment_id: self.linked_comment_id,
+      linked_proposal_id: self.linked_proposal_id,
       delivery_fee: self.delivery_fee,
       employer_confirmed_at: self.employer_confirmed_at,
       employer_wallet_transaction_id: self.employer_wallet_transaction_id,

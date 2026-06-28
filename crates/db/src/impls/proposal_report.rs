@@ -1,7 +1,7 @@
 use crate::{
-  newtypes::{CommentId, CommentReportId, PersonId},
-  schema::comment_report,
-  source::comment_report::{CommentReport, CommentReportForm},
+  newtypes::{PersonId, ProposalId, ProposalReportId},
+  schema::proposal_report,
+  source::proposal_report::{ProposalReport, ProposalReportForm},
   traits::Reportable,
   utils::{get_conn, DbPool},
 };
@@ -14,24 +14,24 @@ use diesel::{
 };
 use diesel_async::RunQueryDsl;
 
-impl Reportable for CommentReport {
-  type Form = CommentReportForm;
-  type IdType = CommentReportId;
-  type ObjectIdType = CommentId;
-  /// creates a comment report and returns it
+impl Reportable for ProposalReport {
+  type Form = ProposalReportForm;
+  type IdType = ProposalReportId;
+  type ObjectIdType = ProposalId;
+  /// creates a proposal report and returns it
   ///
   /// * `conn` - the postgres connection
-  /// * `comment_report_form` - the filled CommentReportForm to insert
+  /// * `comment_report_form` - the filled ProposalReportForm to insert
   async fn report(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(comment_report::table)
+    insert_into(proposal_report::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntCreateReport)
   }
 
-  /// resolve a comment report
+  /// resolve a proposal report
   ///
   /// * `conn` - the postgres connection
   /// * `report_id` - the id of the report to resolve
@@ -42,11 +42,11 @@ impl Reportable for CommentReport {
     by_resolver_id: PersonId,
   ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
-    update(comment_report::table.find(report_id_))
+    update(proposal_report::table.find(report_id_))
       .set((
-        comment_report::resolved.eq(true),
-        comment_report::resolver_id.eq(by_resolver_id),
-        comment_report::updated_at.eq(Utc::now()),
+        proposal_report::resolved.eq(true),
+        proposal_report::resolver_id.eq(by_resolver_id),
+        proposal_report::updated_at.eq(Utc::now()),
       ))
       .execute(conn)
       .await
@@ -55,22 +55,22 @@ impl Reportable for CommentReport {
 
   async fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
-    comment_id_: CommentId,
+    proposal_id_: ProposalId,
     by_resolver_id: PersonId,
   ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
-    update(comment_report::table.filter(comment_report::comment_id.eq(comment_id_)))
+    update(proposal_report::table.filter(proposal_report::comment_id.eq(proposal_id_)))
       .set((
-        comment_report::resolved.eq(true),
-        comment_report::resolver_id.eq(by_resolver_id),
-        comment_report::updated_at.eq(Utc::now()),
+        proposal_report::resolved.eq(true),
+        proposal_report::resolver_id.eq(by_resolver_id),
+        proposal_report::updated_at.eq(Utc::now()),
       ))
       .execute(conn)
       .await
       .with_fastjob_type(FastJobErrorType::CouldntResolveReport)
   }
 
-  /// unresolve a comment report
+  /// unresolve a proposal report
   ///
   /// * `conn` - the postgres connection
   /// * `report_id` - the id of the report to unresolve
@@ -81,11 +81,11 @@ impl Reportable for CommentReport {
     by_resolver_id: PersonId,
   ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
-    update(comment_report::table.find(report_id_))
+    update(proposal_report::table.find(report_id_))
       .set((
-        comment_report::resolved.eq(false),
-        comment_report::resolver_id.eq(by_resolver_id),
-        comment_report::updated_at.eq(Utc::now()),
+        proposal_report::resolved.eq(false),
+        proposal_report::resolver_id.eq(by_resolver_id),
+        proposal_report::updated_at.eq(Utc::now()),
       ))
       .execute(conn)
       .await

@@ -2,11 +2,11 @@ use crate::SiteView;
 use app_108jobs_core::error::FastJobError;
 use app_108jobs_db::{
   enums::{
-    CommentSortType,
     ListingType,
     PostKind,
     PostListingMode,
     PostSortType,
+    ProposalSortType,
     RegistrationMode,
     TripStatus,
     VoteShow,
@@ -15,7 +15,6 @@ use app_108jobs_db::{
   sensitive::SensitiveString,
   source::{
     category::Category,
-    comment::Comment,
     instance::Instance,
     language::Language,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
@@ -24,6 +23,7 @@ use app_108jobs_db::{
     oauth_provider::{OAuthProvider, PublicOAuthProvider},
     person::{Person, PortfolioPic, WorkSample},
     post::Post,
+    proposal::Proposal,
     tagline::Tagline,
     wallet::Wallet,
   },
@@ -191,7 +191,7 @@ pub struct CreateSite {
   pub default_post_listing_mode: Option<PostListingMode>,
   pub default_post_sort_type: Option<PostSortType>,
   pub default_post_time_range_seconds: Option<i32>,
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   pub legal_information: Option<String>,
   pub application_email_admins: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
@@ -205,8 +205,8 @@ pub struct CreateSite {
   pub rate_limit_register_interval_seconds: Option<i32>,
   pub rate_limit_image_max_requests: Option<i32>,
   pub rate_limit_image_interval_seconds: Option<i32>,
-  pub rate_limit_comment_max_requests: Option<i32>,
-  pub rate_limit_comment_interval_seconds: Option<i32>,
+  pub rate_limit_proposal_max_requests: Option<i32>,
+  pub rate_limit_proposal_interval_seconds: Option<i32>,
   pub rate_limit_search_max_requests: Option<i32>,
   pub rate_limit_search_interval_seconds: Option<i32>,
   pub rate_limit_import_user_settings_max_requests: Option<i32>,
@@ -239,7 +239,7 @@ pub struct CreateSiteRequest {
   pub default_post_listing_mode: Option<PostListingMode>,
   pub default_post_sort_type: Option<PostSortType>,
   pub default_post_time_range_seconds: Option<i32>,
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   pub legal_information: Option<String>,
   pub application_email_admins: Option<bool>,
   pub discussion_languages: Option<Vec<LanguageId>>,
@@ -253,8 +253,8 @@ pub struct CreateSiteRequest {
   pub rate_limit_register_interval_seconds: Option<i32>,
   pub rate_limit_image_max_requests: Option<i32>,
   pub rate_limit_image_interval_seconds: Option<i32>,
-  pub rate_limit_comment_max_requests: Option<i32>,
-  pub rate_limit_comment_interval_seconds: Option<i32>,
+  pub rate_limit_proposal_max_requests: Option<i32>,
+  pub rate_limit_proposal_interval_seconds: Option<i32>,
   pub rate_limit_search_max_requests: Option<i32>,
   pub rate_limit_search_interval_seconds: Option<i32>,
   pub rate_limit_import_user_settings_max_requests: Option<i32>,
@@ -345,8 +345,8 @@ pub struct EditSite {
   pub default_post_sort_type: Option<PostSortType>,
   /// A default time range limit to apply to post sorts, in seconds. 0 means none.
   pub default_post_time_range_seconds: Option<i32>,
-  /// The default comment sort, usually "hot"
-  pub default_comment_sort_type: Option<CommentSortType>,
+  /// The default proposal sort, usually "hot"
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   /// An optional page of legal information
   pub legal_information: Option<String>,
   /// Whether to multilang admins when receiving a new application.
@@ -370,8 +370,8 @@ pub struct EditSite {
   pub rate_limit_image_max_requests: Option<i32>,
   pub rate_limit_image_interval_seconds: Option<i32>,
   /// The number of comments allowed in a given time frame.
-  pub rate_limit_comment_max_requests: Option<i32>,
-  pub rate_limit_comment_interval_seconds: Option<i32>,
+  pub rate_limit_proposal_max_requests: Option<i32>,
+  pub rate_limit_proposal_interval_seconds: Option<i32>,
   /// The number of searches allowed in a given time frame.
   pub rate_limit_search_max_requests: Option<i32>,
   pub rate_limit_search_interval_seconds: Option<i32>,
@@ -429,8 +429,8 @@ pub struct EditSiteRequest {
   pub default_post_sort_type: Option<PostSortType>,
   /// A default time range limit to apply to post sorts, in seconds. 0 means none.
   pub default_post_time_range_seconds: Option<i32>,
-  /// The default comment sort, usually "hot"
-  pub default_comment_sort_type: Option<CommentSortType>,
+  /// The default proposal sort, usually "hot"
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   /// An optional page of legal information
   pub legal_information: Option<String>,
   /// Whether to multilang admins when receiving a new application.
@@ -454,8 +454,8 @@ pub struct EditSiteRequest {
   pub rate_limit_image_max_requests: Option<i32>,
   pub rate_limit_image_interval_seconds: Option<i32>,
   /// The number of comments allowed in a given time frame.
-  pub rate_limit_comment_max_requests: Option<i32>,
-  pub rate_limit_comment_interval_seconds: Option<i32>,
+  pub rate_limit_proposal_max_requests: Option<i32>,
+  pub rate_limit_proposal_interval_seconds: Option<i32>,
   /// The number of searches allowed in a given time frame.
   pub rate_limit_search_max_requests: Option<i32>,
   pub rate_limit_search_interval_seconds: Option<i32>,
@@ -750,8 +750,8 @@ pub struct SaveUserSettings {
   pub default_post_sort_type: Option<PostSortType>,
   /// A default time range limit to apply to post sorts, in seconds. 0 means none.
   pub default_post_time_range_seconds: Option<i32>,
-  /// The default comment sort, usually "hot"
-  pub default_comment_sort_type: Option<CommentSortType>,
+  /// The default proposal sort, usually "hot"
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   /// The language of the app_108jobs interface
   pub interface_language: Option<String>,
   /// Your display name, which can contain strange characters, and does not need to be unique.
@@ -786,7 +786,7 @@ pub struct SaveUserSettings {
   /// should be paused
   pub enable_animated_images: Option<bool>,
   /// Whether to auto-collapse bot comments.
-  pub collapse_bot_comments: Option<bool>,
+  pub collapse_bot_proposals: Option<bool>,
   /// Some vote display mode settings
   pub show_scores: Option<bool>,
   pub show_upvotes: Option<bool>,
@@ -1049,7 +1049,7 @@ pub struct ResolveObject {
 #[cfg_attr(feature = "ts-rs", ts(export))]
 pub enum PostOrCommentOrPrivateMessage {
   Post(Post),
-  Comment(Comment),
+  Proposal(Proposal),
 }
 
 /// Backup of user data. This struct should never be changed so that the data can be used as a
@@ -1077,7 +1077,7 @@ pub struct UserSettingsBackup {
   #[serde(default)]
   pub saved_posts: Vec<Url>,
   #[serde(default)]
-  pub saved_comments: Vec<Url>,
+  pub saved_proposals: Vec<Url>,
   #[serde(default)]
   pub blocked_users: Vec<Url>,
 }

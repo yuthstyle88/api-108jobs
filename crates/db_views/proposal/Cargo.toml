@@ -1,5 +1,5 @@
 [package]
-name = "app_108jobs_db_views_comment"
+name = "app_108jobs_db_views_proposal"
 version.workspace = true
 edition.workspace = true
 description.workspace = true

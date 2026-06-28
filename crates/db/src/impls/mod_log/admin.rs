@@ -3,17 +3,17 @@ use crate::{
     AdminAllowInstanceId,
     AdminBlockInstanceId,
     AdminPurgeCategoryId,
-    AdminPurgeCommentId,
     AdminPurgePersonId,
     AdminPurgePostId,
+    AdminPurgeProposalId,
   },
   schema::{
     admin_allow_instance,
     admin_block_instance,
     admin_purge_category,
-    admin_purge_comment,
     admin_purge_person,
     admin_purge_post,
+    admin_purge_proposal,
   },
   source::mod_log::admin::{
     AdminAllowInstance,
@@ -22,12 +22,12 @@ use crate::{
     AdminBlockInstanceForm,
     AdminPurgeCategory,
     AdminPurgeCategoryForm,
-    AdminPurgeComment,
-    AdminPurgeCommentForm,
     AdminPurgePerson,
     AdminPurgePersonForm,
     AdminPurgePost,
     AdminPurgePostForm,
+    AdminPurgeProposal,
+    AdminPurgeProposalForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},
@@ -120,14 +120,14 @@ impl Crud for AdminPurgePost {
   }
 }
 
-impl Crud for AdminPurgeComment {
-  type InsertForm = AdminPurgeCommentForm;
-  type UpdateForm = AdminPurgeCommentForm;
-  type IdType = AdminPurgeCommentId;
+impl Crud for AdminPurgeProposal {
+  type InsertForm = AdminPurgeProposalForm;
+  type UpdateForm = AdminPurgeProposalForm;
+  type IdType = AdminPurgeProposalId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(admin_purge_comment::table)
+    insert_into(admin_purge_proposal::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -140,7 +140,7 @@ impl Crud for AdminPurgeComment {
     form: &Self::InsertForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(admin_purge_comment::table.find(from_id))
+    diesel::update(admin_purge_proposal::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await

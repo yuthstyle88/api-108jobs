@@ -60,7 +60,7 @@ pub fn user_backup_list_to_user_settings_backup(
     settings: Some(local_user_view.local_user),
     blocked_users: vec_into(lists.blocked_users),
     saved_posts: vec_into(lists.saved_posts),
-    saved_comments: vec_into(lists.saved_comments),
+    saved_proposals: vec_into(lists.saved_proposals),
   }
 }
 

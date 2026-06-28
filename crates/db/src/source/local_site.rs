@@ -1,7 +1,7 @@
 #[cfg(feature = "full")]
 use crate::schema::local_site;
 use crate::{
-  enums::{CommentSortType, ListingType, PostListingMode, PostSortType, RegistrationMode},
+  enums::{ListingType, PostListingMode, PostSortType, ProposalSortType, RegistrationMode},
   newtypes::{CoinId, LocalSiteId, SiteId},
 };
 use chrono::{DateTime, Utc};
@@ -55,8 +55,8 @@ pub struct LocalSite {
   pub default_post_listing_mode: PostListingMode,
   /// Default value for [LocalUser.post_sort_type]
   pub default_post_sort_type: PostSortType,
-  /// Default value for [LocalUser.comment_sort_type]
-  pub default_comment_sort_type: CommentSortType,
+  /// Default value for [LocalUser.proposal_sort_type]
+  pub default_proposal_sort_type: ProposalSortType,
   /// Whether or not external auth methods can auto-register users.
   pub oauth_registration: bool,
   /// A default time range limit to apply to post sorts, in seconds.
@@ -65,7 +65,7 @@ pub struct LocalSite {
   pub disallow_self_promotion_content: bool,
   pub users: i64,
   pub posts: i64,
-  pub comments: i64,
+  pub proposals: i64,
   pub communities: i64,
   /// The number of users with any activity in the last day.
   pub users_active_day: i64,
@@ -122,7 +122,7 @@ pub struct LocalSiteInsertForm {
   #[new(default)]
   pub default_post_sort_type: Option<PostSortType>,
   #[new(default)]
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   #[new(value = "Some(true)")]
   pub oauth_registration: Option<bool>,
   #[new(default)]
@@ -159,7 +159,7 @@ pub struct LocalSiteUpdateForm {
   pub updated_at: Option<Option<DateTime<Utc>>>,
   pub default_post_listing_mode: Option<PostListingMode>,
   pub default_post_sort_type: Option<PostSortType>,
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   pub oauth_registration: Option<bool>,
   pub default_post_time_range_seconds: Option<Option<i32>>,
   pub disallow_self_promotion_content: Option<bool>,

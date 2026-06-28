@@ -1,4 +1,4 @@
-use crate::newtypes::{ChatRoomId, CommentId, PostId, SerialId};
+use crate::newtypes::{ChatRoomId, PostId, ProposalId, SerialId};
 #[cfg(feature = "full")]
 use crate::schema::chat_room;
 use chrono::{DateTime, Utc};
@@ -19,7 +19,7 @@ pub struct ChatRoom {
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
   pub post_id: Option<PostId>,
-  pub current_comment_id: Option<CommentId>,
+  pub current_proposal_id: Option<ProposalId>,
   pub last_message_id: Option<String>,
   pub last_message_at: Option<DateTime<Utc>>,
 }
@@ -36,7 +36,7 @@ pub struct ChatRoomInsertForm {
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
   pub post_id: Option<PostId>,
-  pub current_comment_id: Option<CommentId>,
+  pub current_proposal_id: Option<ProposalId>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -46,7 +46,7 @@ pub struct ChatRoomUpdateForm {
   pub room_name: Option<String>,
   pub updated_at: Option<DateTime<Utc>>,
   pub post_id: Option<Option<PostId>>,
-  pub current_comment_id: Option<Option<CommentId>>,
+  pub current_proposal_id: Option<Option<ProposalId>>,
   pub last_message_id: Option<Option<String>>,
   pub last_message_at: Option<Option<DateTime<Utc>>>,
 }

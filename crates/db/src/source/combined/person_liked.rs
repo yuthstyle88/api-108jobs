@@ -1,4 +1,4 @@
-use crate::newtypes::{CommentId, PersonId, PersonLikedCombinedId, PostId};
+use crate::newtypes::{PersonId, PersonLikedCombinedId, PostId, ProposalId};
 #[cfg(feature = "full")]
 use crate::schema::person_liked_combined;
 use chrono::{DateTime, Utc};
@@ -23,5 +23,5 @@ pub struct PersonLikedCombined {
   pub like_score: i16,
   pub person_id: PersonId,
   pub post_id: Option<PostId>,
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
 }

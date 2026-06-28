@@ -3,14 +3,14 @@ use app_108jobs_db::{
   source::{
     category::{Category, CategoryActions},
     combined::inbox::InboxCombined,
-    comment::{Comment, CommentActions},
-    comment_reply::CommentReply,
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
-    person_comment_mention::PersonCommentMention,
     person_post_mention::PersonPostMention,
+    person_proposal_mention::PersonProposalMention,
     post::{Post, PostActions},
+    proposal::{Proposal, ProposalActions},
+    proposal_reply::ProposalReply,
     tag::TagsView,
   },
   InboxDataType,
@@ -45,13 +45,13 @@ pub struct InboxCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub inbox_combined: InboxCombined,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_reply: Option<CommentReply>,
+  pub proposal_reply: Option<ProposalReply>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub person_comment_mention: Option<PersonCommentMention>,
+  pub person_proposal_mention: Option<PersonProposalMention>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_post_mention: Option<PersonPostMention>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment: Option<Comment>,
+  pub proposal: Option<Proposal>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -76,7 +76,7 @@ pub struct InboxCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = creator_is_admin()
@@ -121,8 +121,8 @@ pub struct InboxCombinedViewInternal {
 // Use serde's internal tagging, to work easier with javascript libraries
 #[serde(tag = "type_")]
 pub enum InboxCombinedView {
-  CommentReply(CommentReplyView),
-  CommentMention(PersonCommentMentionView),
+  ProposalReply(ProposalReplyView),
+  ProposalMention(PersonProposalMentionView),
   PostMention(PersonPostMentionView),
 }
 #[skip_serializing_none]
@@ -131,16 +131,16 @@ pub enum InboxCombinedView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A person comment mention view.
-pub struct PersonCommentMentionView {
-  pub person_comment_mention: PersonCommentMention,
+/// A person proposal mention view.
+pub struct PersonProposalMentionView {
+  pub person_proposal_mention: PersonProposalMention,
   pub recipient: Person,
-  pub comment: Comment,
+  pub proposal: Proposal,
   pub creator: Person,
   pub post: Post,
   pub category: Category,
   pub category_actions: Option<CategoryActions>,
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   pub person_actions: Option<PersonActions>,
   pub instance_actions: Option<InstanceActions>,
   pub creator_is_admin: bool,
@@ -182,16 +182,16 @@ pub struct PersonPostMentionView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A comment reply view.
-pub struct CommentReplyView {
-  pub comment_reply: CommentReply,
+/// A proposal reply view.
+pub struct ProposalReplyView {
+  pub proposal_reply: ProposalReply,
   pub recipient: Person,
-  pub comment: Comment,
+  pub proposal: Proposal,
   pub creator: Person,
   pub post: Post,
   pub category: Category,
   pub category_actions: Option<CategoryActions>,
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub instance_actions: Option<InstanceActions>,
@@ -207,7 +207,7 @@ pub struct CommentReplyView {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Get your inbox (replies, comment mentions, post mentions, and messages)
+/// Get your inbox (replies, proposal mentions, post mentions, and messages)
 pub struct ListInbox {
   pub type_: Option<InboxDataType>,
   pub unread_only: Option<bool>,
@@ -219,7 +219,7 @@ pub struct ListInbox {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Get your inbox (replies, comment mentions, post mentions, and messages)
+/// Get your inbox (replies, proposal mentions, post mentions, and messages)
 #[serde(rename_all = "camelCase")]
 pub struct ListInboxResponse {
   pub inbox: Vec<InboxCombinedView>,

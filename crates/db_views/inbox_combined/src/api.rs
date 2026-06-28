@@ -1,4 +1,4 @@
-use app_108jobs_db::newtypes::{CommentReplyId, PersonCommentMentionId, PersonPostMentionId};
+use app_108jobs_db::newtypes::{PersonPostMentionId, PersonProposalMentionId, ProposalReplyId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -23,9 +23,9 @@ pub struct GetUnreadRegistrationApplicationCountResponse {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
-/// Mark a comment reply as read.
-pub struct MarkCommentReplyAsRead {
-  pub comment_reply_id: CommentReplyId,
+/// Mark a proposal reply as read.
+pub struct MarkProposalReplyAsRead {
+  pub proposal_reply_id: ProposalReplyId,
   pub read: bool,
 }
 
@@ -34,8 +34,8 @@ pub struct MarkCommentReplyAsRead {
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 #[serde(rename_all = "camelCase")]
 /// Mark a person mention as read.
-pub struct MarkPersonCommentMentionAsRead {
-  pub person_comment_mention_id: PersonCommentMentionId,
+pub struct MarkPersonProposalMentionAsRead {
+  pub person_proposal_mention_id: PersonProposalMentionId,
   pub read: bool,
 }
 

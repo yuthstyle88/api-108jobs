@@ -1,4 +1,4 @@
-use crate::newtypes::{CommentId, PersonContentCombinedId, PostId};
+use crate::newtypes::{PersonContentCombinedId, PostId, ProposalId};
 #[cfg(feature = "full")]
 use crate::schema::person_content_combined;
 use chrono::{DateTime, Utc};
@@ -21,5 +21,5 @@ pub struct PersonContentCombined {
   pub id: PersonContentCombinedId,
   pub published_at: DateTime<Utc>,
   pub post_id: Option<PostId>,
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
 }

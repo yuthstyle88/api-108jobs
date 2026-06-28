@@ -62,15 +62,15 @@ pub struct Post {
   pub alt_text: Option<String>,
   /// Time at which the post will be published. None means publish immediately.
   pub scheduled_publish_time_at: Option<DateTime<Utc>>,
-  pub comments: i64,
+  pub proposals: i64,
   pub score: i64,
   pub upvotes: i64,
   pub downvotes: i64,
   #[serde(skip)]
-  /// A newest comment time, limited to 2 days, to prevent necrobumping
-  pub newest_comment_time_necro_at: DateTime<Utc>,
-  /// The time of the newest comment in the post.
-  pub newest_comment_time_at: DateTime<Utc>,
+  /// A newest proposal time, limited to 2 days, to prevent necrobumping
+  pub newest_proposal_time_necro_at: DateTime<Utc>,
+  /// The time of the newest proposal in the post.
+  pub newest_proposal_time_at: DateTime<Utc>,
   #[serde(skip)]
   pub hot_rank: f64,
   #[serde(skip)]
@@ -208,10 +208,10 @@ pub struct PostActions {
   /// When the post was read.
   pub read_at: Option<DateTime<Utc>>,
   /// When was the last time you read the comments.
-  pub read_comments_at: Option<DateTime<Utc>>,
+  pub read_proposals_at: Option<DateTime<Utc>>,
   /// The number of comments you read last. Subtract this from total comments to get an unread
   /// count.
-  pub read_comments_amount: Option<i64>,
+  pub read_proposals_amount: Option<i64>,
   /// When the post was saved.
   pub saved_at: Option<DateTime<Utc>>,
   /// When the post was liked.
@@ -260,12 +260,12 @@ pub struct PostReadForm {
 #[derive(derive_new::new)]
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
 #[cfg_attr(feature = "full", diesel(table_name = post_actions))]
-pub struct PostReadCommentsForm {
+pub struct PostReadProposalsForm {
   pub post_id: PostId,
   pub person_id: PersonId,
-  pub read_comments_amount: i64,
+  pub read_proposals_amount: i64,
   #[new(value = "Utc::now()")]
-  pub read_comments_at: DateTime<Utc>,
+  pub read_proposals_at: DateTime<Utc>,
 }
 
 #[derive(derive_new::new)]

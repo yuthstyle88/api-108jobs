@@ -19,7 +19,7 @@ pub struct DeliveryRiderRating {
   pub employer_id: PersonId,
   pub rider_id: RiderId,
   pub rating: i16,
-  pub comment: Option<String>,
+  pub proposal: Option<String>,
   pub created_at: DateTime<Utc>,
   pub updated_at: Option<DateTime<Utc>>,
 }
@@ -33,7 +33,7 @@ pub struct DeliveryRiderRatingInsertForm {
   pub rider_id: RiderId,
   pub rating: i16,
   #[new(default)]
-  pub comment: Option<String>,
+  pub proposal: Option<String>,
   #[new(default)]
   pub created_at: Option<DateTime<Utc>>,
   #[new(default)]
@@ -45,6 +45,6 @@ pub struct DeliveryRiderRatingInsertForm {
 #[cfg_attr(feature = "full", diesel(table_name = delivery_rider_rating))]
 pub struct DeliveryRiderRatingUpdateForm {
   pub rating: Option<i16>,
-  pub comment: Option<Option<String>>,
+  pub proposal: Option<Option<String>>,
   pub updated_at: Option<Option<DateTime<Utc>>>,
 }

@@ -236,7 +236,7 @@ mod tests {
       created_at: chrono::Utc::now(),
       updated_at: None,
       post_id: None,
-      current_comment_id: None,
+      current_proposal_id: None,
     };
     let _ = ChatRoom::create(pool, &chat_form).await.expect("chat room");
 

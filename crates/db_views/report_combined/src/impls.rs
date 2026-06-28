@@ -1,8 +1,8 @@
 use crate::{
   CategoryReportView,
-  CommentReportView,
   LocalUserView,
   PostReportView,
+  ProposalReportView,
   ReportCombinedView,
   ReportCombinedViewInternal,
 };
@@ -14,15 +14,15 @@ use app_108jobs_db::{
     category,
     category_actions,
     category_report,
-    comment,
-    comment_actions,
-    comment_report,
     local_user,
     person,
     person_actions,
     post,
     post_actions,
     post_report,
+    proposal,
+    proposal_actions,
+    proposal_report,
     report_combined,
   },
   source::combined::report::{report_combined_keys as key, ReportCombined},
@@ -49,11 +49,11 @@ impl ReportCombinedViewInternal {
     let report_creator = person::id;
     let item_creator = aliases::person1.field(person::id);
 
-    let comment_join = comment::table.on(comment_report::comment_id.eq(comment::id));
+    let comment_join = proposal::table.on(proposal_report::comment_id.eq(proposal::id));
     let post_join = post::table.on(
       post_report::post_id
         .eq(post::id)
-        .or(comment::post_id.eq(post::id)),
+        .or(proposal::post_id.eq(post::id)),
     );
 
     let category_actions_join = category_actions::table.on(
@@ -66,14 +66,14 @@ impl ReportCombinedViewInternal {
     let report_creator_join = person::table.on(
       post_report::creator_id
         .eq(report_creator)
-        .or(comment_report::creator_id.eq(report_creator))
+        .or(proposal_report::creator_id.eq(report_creator))
         .or(category_report::creator_id.eq(report_creator)),
     );
 
     let item_creator_join = aliases::person1.on(
       post::creator_id
         .eq(item_creator)
-        .or(comment::creator_id.eq(item_creator)),
+        .or(proposal::creator_id.eq(item_creator)),
     );
 
     let category_join = category::table.on(
@@ -112,15 +112,15 @@ impl ReportCombinedViewInternal {
         .and(person_actions::person_id.eq(my_person_id)),
     );
 
-    let comment_actions_join = comment_actions::table.on(
-      comment_actions::comment_id
-        .eq(comment::id)
-        .and(comment_actions::person_id.eq(my_person_id)),
+    let proposal_actions_join = proposal_actions::table.on(
+      proposal_actions::comment_id
+        .eq(proposal::id)
+        .and(proposal_actions::person_id.eq(my_person_id)),
     );
 
     report_combined::table
       .left_join(post_report::table)
-      .left_join(comment_report::table)
+      .left_join(proposal_report::table)
       .left_join(category_report::table)
       .inner_join(report_creator_join)
       .left_join(comment_join)
@@ -132,7 +132,7 @@ impl ReportCombinedViewInternal {
       .left_join(category_actions_join)
       .left_join(post_actions_join)
       .left_join(person_actions_join)
-      .left_join(comment_actions_join)
+      .left_join(proposal_actions_join)
   }
 
   /// returns the current unresolved report count for the communities you mod
@@ -177,7 +177,7 @@ impl PaginationCursorBuilder for ReportCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      ReportCombinedView::Comment(v) => ('C', v.comment_report.id.0),
+      ReportCombinedView::Proposal(v) => ('C', v.proposal_report.id.0),
       ReportCombinedView::Post(v) => ('P', v.post_report.id.0),
       ReportCombinedView::Category(v) => ('Y', v.category_report.id.0),
     };
@@ -200,7 +200,7 @@ impl PaginationCursorBuilder for ReportCombinedView {
       .into_boxed();
 
     query = match prefix {
-      'C' => query.filter(report_combined::comment_report_id.eq(id)),
+      'C' => query.filter(report_combined::proposal_report_id.eq(id)),
       'P' => query.filter(report_combined::post_report_id.eq(id)),
       'Y' => query.filter(report_combined::category_report_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
@@ -269,7 +269,7 @@ impl ReportCombinedQuery {
       query = match type_ {
         ReportType::All => query,
         ReportType::Posts => query.filter(report_combined::post_report_id.is_not_null()),
-        ReportType::Comments => query.filter(report_combined::comment_report_id.is_not_null()),
+        ReportType::Proposals => query.filter(report_combined::proposal_report_id.is_not_null()),
         ReportType::Communities => query.filter(report_combined::category_report_id.is_not_null()),
       }
     }
@@ -330,19 +330,19 @@ fn filter_admin_reports(interval: DateTime<Utc>) -> _ {
     .or(category_actions::became_moderator_at.is_not_null())
 }
 
-/// Filter reports which are only for admins (either post/comment report with
+/// Filter reports which are only for admins (either post/proposal report with
 /// `violates_instance_rules=true`, or report on a category/person/private message.
 #[diesel::dsl::auto_type]
 fn filter_violates_instance_rules() -> _ {
   post_report::violates_instance_rules
-    .or(comment_report::violates_instance_rules)
+    .or(proposal_report::violates_instance_rules)
     .or(report_combined::category_report_id.is_not_null())
 }
 
 #[diesel::dsl::auto_type]
 fn report_is_not_resolved() -> _ {
   post_report::resolved
-    .or(comment_report::resolved)
+    .or(proposal_report::resolved)
     .or(category_report::resolved)
     .is_distinct_from(true)
 }
@@ -372,27 +372,27 @@ impl InternalToCombinedView for ReportCombinedViewInternal {
         creator_is_admin: v.item_creator_is_admin,
       }))
     } else if let (
-      Some(comment_report),
-      Some(comment),
+      Some(proposal_report),
+      Some(proposal),
       Some(post),
       Some(category),
       Some(comment_creator),
     ) = (
-      v.comment_report,
-      v.comment,
+      v.proposal_report,
+      v.proposal,
       v.post,
       v.category.clone(),
       v.item_creator.clone(),
     ) {
-      Some(ReportCombinedView::Comment(CommentReportView {
-        comment_report,
-        comment,
+      Some(ReportCombinedView::Proposal(ProposalReportView {
+        proposal_report,
+        proposal,
         post,
         category: Some(category),
         creator: v.report_creator,
         comment_creator,
         category_actions: v.category_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         person_actions: v.person_actions,
         creator_is_admin: v.item_creator_is_admin,
       }))

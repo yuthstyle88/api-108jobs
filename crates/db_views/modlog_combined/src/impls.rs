@@ -2,9 +2,9 @@ use crate::{
   AdminAllowInstanceView,
   AdminBlockInstanceView,
   AdminPurgeCategoryView,
-  AdminPurgeCommentView,
   AdminPurgePersonView,
   AdminPurgePostView,
+  AdminPurgeProposalView,
   ModAddCategoryView,
   ModAddView,
   ModBanFromCategoryView,
@@ -13,8 +13,8 @@ use crate::{
   ModFeaturePostView,
   ModLockPostView,
   ModRemoveCategoryView,
-  ModRemoveCommentView,
   ModRemovePostView,
+  ModRemoveProposalView,
   ModTransferCategoryView,
   ModlogCombinedView,
   ModlogCombinedViewInternal,
@@ -24,17 +24,16 @@ use app_108jobs_db::{
   aliases,
   enums::ListingType,
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CategoryId, CommentId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, PaginationCursor, PersonId, PostId, ProposalId},
   schema::{
     admin_allow_instance,
     admin_block_instance,
     admin_purge_category,
-    admin_purge_comment,
     admin_purge_person,
     admin_purge_post,
+    admin_purge_proposal,
     category,
     category_actions,
-    comment,
     instance,
     mod_add,
     mod_add_category,
@@ -44,12 +43,13 @@ use app_108jobs_db::{
     mod_feature_post,
     mod_lock_post,
     mod_remove_category,
-    mod_remove_comment,
     mod_remove_post,
+    mod_remove_proposal,
     mod_transfer_category,
     modlog_combined,
     person,
     post,
+    proposal,
   },
   source::{
     combined::modlog::{modlog_combined_keys as key, ModlogCombined},
@@ -89,7 +89,7 @@ impl ModlogCombinedViewInternal {
       admin_allow_instance::admin_person_id
         .eq(person::id)
         .or(admin_block_instance::admin_person_id.eq(person::id))
-        .or(admin_purge_comment::admin_person_id.eq(person::id))
+        .or(admin_purge_proposal::admin_person_id.eq(person::id))
         .or(admin_purge_category::admin_person_id.eq(person::id))
         .or(admin_purge_person::admin_person_id.eq(person::id))
         .or(admin_purge_post::admin_person_id.eq(person::id))
@@ -100,7 +100,7 @@ impl ModlogCombinedViewInternal {
         .or(mod_feature_post::mod_person_id.eq(person::id))
         .or(mod_change_category_visibility::mod_person_id.eq(person::id))
         .or(mod_lock_post::mod_person_id.eq(person::id))
-        .or(mod_remove_comment::mod_person_id.eq(person::id))
+        .or(mod_remove_proposal::mod_person_id.eq(person::id))
         .or(mod_remove_category::mod_person_id.eq(person::id))
         .or(mod_remove_post::mod_person_id.eq(person::id))
         .or(mod_transfer_category::mod_person_id.eq(person::id)),
@@ -124,9 +124,9 @@ impl ModlogCombinedViewInternal {
             .and(post::creator_id.eq(other_person)),
         )
         .or(
-          mod_remove_comment::id
+          mod_remove_proposal::id
             .is_not_null()
-            .and(comment::creator_id.eq(other_person)),
+            .and(proposal::creator_id.eq(other_person)),
         )
         .or(
           mod_remove_post::id
@@ -136,17 +136,17 @@ impl ModlogCombinedViewInternal {
         .or(mod_transfer_category::other_person_id.eq(other_person)),
     );
 
-    let comment_join = comment::table.on(mod_remove_comment::comment_id.eq(comment::id));
+    let comment_join = proposal::table.on(mod_remove_proposal::comment_id.eq(proposal::id));
 
     let post_join = post::table.on(
-      admin_purge_comment::post_id
+      admin_purge_proposal::post_id
         .eq(post::id)
         .or(mod_feature_post::post_id.eq(post::id))
         .or(mod_lock_post::post_id.eq(post::id))
         .or(
-          mod_remove_comment::id
+          mod_remove_proposal::id
             .is_not_null()
-            .and(comment::post_id.eq(post::id)),
+            .and(proposal::post_id.eq(post::id)),
         )
         .or(mod_remove_post::post_id.eq(post::id)),
     );
@@ -172,7 +172,7 @@ impl ModlogCombinedViewInternal {
           ),
         )
         .or(
-          mod_remove_comment::id.is_not_null().and(
+          mod_remove_proposal::id.is_not_null().and(
             post::category_id
               .is_null()
               .or(category::id.nullable().eq(post::category_id)),
@@ -204,7 +204,7 @@ impl ModlogCombinedViewInternal {
     modlog_combined::table
       .left_join(admin_allow_instance::table)
       .left_join(admin_block_instance::table)
-      .left_join(admin_purge_comment::table)
+      .left_join(admin_purge_proposal::table)
       .left_join(admin_purge_category::table)
       .left_join(admin_purge_person::table)
       .left_join(admin_purge_post::table)
@@ -215,7 +215,7 @@ impl ModlogCombinedViewInternal {
       .left_join(mod_feature_post::table)
       .left_join(mod_change_category_visibility::table)
       .left_join(mod_lock_post::table)
-      .left_join(mod_remove_comment::table)
+      .left_join(mod_remove_proposal::table)
       .left_join(mod_remove_category::table)
       .left_join(mod_remove_post::table)
       .left_join(mod_transfer_category::table)
@@ -236,7 +236,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
     let (prefix, id) = match &self {
       AdminAllowInstance(v) => ('A', v.admin_allow_instance.id.0),
       AdminBlockInstance(v) => ('B', v.admin_block_instance.id.0),
-      AdminPurgeComment(v) => ('C', v.admin_purge_comment.id.0),
+      AdminPurgeProposal(v) => ('C', v.admin_purge_proposal.id.0),
       AdminPurgeCategory(v) => ('D', v.admin_purge_category.id.0),
       AdminPurgePerson(v) => ('E', v.admin_purge_person.id.0),
       AdminPurgePost(v) => ('F', v.admin_purge_post.id.0),
@@ -247,7 +247,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
       ModFeaturePost(v) => ('K', v.mod_feature_post.id.0),
       ModChangeCategoryVisibility(v) => ('L', v.mod_change_category_visibility.id.0),
       ModLockPost(v) => ('M', v.mod_lock_post.id.0),
-      ModRemoveComment(v) => ('N', v.mod_remove_comment.id.0),
+      ModRemoveProposal(v) => ('N', v.mod_remove_proposal.id.0),
       ModRemoveCategory(v) => ('O', v.mod_remove_category.id.0),
       ModRemovePost(v) => ('P', v.mod_remove_post.id.0),
       ModTransferCategory(v) => ('Q', v.mod_transfer_category.id.0),
@@ -273,7 +273,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
     query = match prefix {
       'A' => query.filter(modlog_combined::admin_allow_instance_id.eq(id)),
       'B' => query.filter(modlog_combined::admin_block_instance_id.eq(id)),
-      'C' => query.filter(modlog_combined::admin_purge_comment_id.eq(id)),
+      'C' => query.filter(modlog_combined::admin_purge_proposal_id.eq(id)),
       'D' => query.filter(modlog_combined::admin_purge_category_id.eq(id)),
       'E' => query.filter(modlog_combined::admin_purge_person_id.eq(id)),
       'F' => query.filter(modlog_combined::admin_purge_post_id.eq(id)),
@@ -284,7 +284,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
       'K' => query.filter(modlog_combined::mod_feature_post_id.eq(id)),
       'L' => query.filter(modlog_combined::mod_change_category_visibility_id.eq(id)),
       'M' => query.filter(modlog_combined::mod_lock_post_id.eq(id)),
-      'N' => query.filter(modlog_combined::mod_remove_comment_id.eq(id)),
+      'N' => query.filter(modlog_combined::mod_remove_proposal_id.eq(id)),
       'O' => query.filter(modlog_combined::mod_remove_category_id.eq(id)),
       'P' => query.filter(modlog_combined::mod_remove_post_id.eq(id)),
       'Q' => query.filter(modlog_combined::mod_transfer_category_id.eq(id)),
@@ -302,7 +302,7 @@ impl PaginationCursorBuilder for ModlogCombinedView {
 pub struct ModlogCombinedQuery<'a> {
   pub type_: Option<ModlogActionType>,
   pub listing_type: Option<ListingType>,
-  pub comment_id: Option<CommentId>,
+  pub comment_id: Option<ProposalId>,
   pub post_id: Option<PostId>,
   pub category_id: Option<CategoryId>,
   pub hide_modlog_names: Option<bool>,
@@ -344,7 +344,7 @@ impl ModlogCombinedQuery<'_> {
     }
 
     if let Some(comment_id) = self.comment_id {
-      query = query.filter(comment::id.eq(comment_id))
+      query = query.filter(proposal::id.eq(comment_id))
     }
 
     if let Some(type_) = self.type_ {
@@ -354,7 +354,7 @@ impl ModlogCombinedQuery<'_> {
         ModRemovePost => query.filter(modlog_combined::mod_remove_post_id.is_not_null()),
         ModLockPost => query.filter(modlog_combined::mod_lock_post_id.is_not_null()),
         ModFeaturePost => query.filter(modlog_combined::mod_feature_post_id.is_not_null()),
-        ModRemoveComment => query.filter(modlog_combined::mod_remove_comment_id.is_not_null()),
+        ModRemoveProposal => query.filter(modlog_combined::mod_remove_proposal_id.is_not_null()),
         ModRemovecategory => query.filter(modlog_combined::mod_remove_category_id.is_not_null()),
         ModBanFromcategory => query.filter(modlog_combined::mod_ban_from_category_id.is_not_null()),
         ModAddcategory => query.filter(modlog_combined::mod_add_category_id.is_not_null()),
@@ -369,7 +369,7 @@ impl ModlogCombinedQuery<'_> {
         AdminPurgePerson => query.filter(modlog_combined::admin_purge_person_id.is_not_null()),
         AdminPurgecategory => query.filter(modlog_combined::admin_purge_category_id.is_not_null()),
         AdminPurgePost => query.filter(modlog_combined::admin_purge_post_id.is_not_null()),
-        AdminPurgeComment => query.filter(modlog_combined::admin_purge_comment_id.is_not_null()),
+        AdminPurgeProposal => query.filter(modlog_combined::admin_purge_proposal_id.is_not_null()),
         AdminBlockInstance => query.filter(modlog_combined::admin_block_instance_id.is_not_null()),
         AdminAllowInstance => query.filter(modlog_combined::admin_allow_instance_id.is_not_null()),
       }
@@ -455,11 +455,12 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
           admin: v.moderator,
         },
       ))
-    } else if let (Some(admin_purge_comment), Some(post)) = (v.admin_purge_comment, v.post.clone())
+    } else if let (Some(admin_purge_proposal), Some(post)) =
+      (v.admin_purge_proposal, v.post.clone())
     {
-      Some(ModlogCombinedView::AdminPurgeComment(
-        AdminPurgeCommentView {
-          admin_purge_comment,
+      Some(ModlogCombinedView::AdminPurgeProposal(
+        AdminPurgeProposalView {
+          admin_purge_proposal,
           post,
           admin: v.moderator,
         },
@@ -548,20 +549,22 @@ impl InternalToCombinedView for ModlogCombinedViewInternal {
         category: v.category.clone(),
         post,
       }))
-    } else if let (Some(mod_remove_comment), Some(other_person), Some(post), Some(comment)) = (
-      v.mod_remove_comment,
+    } else if let (Some(mod_remove_proposal), Some(other_person), Some(post), Some(proposal)) = (
+      v.mod_remove_proposal,
       v.other_person.clone(),
       v.post.clone(),
-      v.comment,
+      v.proposal,
     ) {
-      Some(ModlogCombinedView::ModRemoveComment(ModRemoveCommentView {
-        mod_remove_comment,
-        moderator: v.moderator,
-        other_person,
-        category: v.category.clone(),
-        post,
-        comment,
-      }))
+      Some(ModlogCombinedView::ModRemoveProposal(
+        ModRemoveProposalView {
+          mod_remove_proposal,
+          moderator: v.moderator,
+          other_person,
+          category: v.category.clone(),
+          post,
+          proposal,
+        },
+      ))
     } else if let (Some(mod_remove_category), Some(category)) =
       (v.mod_remove_category, v.category.clone())
     {
@@ -612,7 +615,6 @@ mod tests {
     newtypes::PersonId,
     source::{
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentInsertForm},
       instance::Instance,
       mod_log::{
         admin::{
@@ -622,12 +624,12 @@ mod tests {
           AdminBlockInstanceForm,
           AdminPurgeCategory,
           AdminPurgeCategoryForm,
-          AdminPurgeComment,
-          AdminPurgeCommentForm,
           AdminPurgePerson,
           AdminPurgePersonForm,
           AdminPurgePost,
           AdminPurgePostForm,
+          AdminPurgeProposal,
+          AdminPurgeProposalForm,
         },
         moderator::{
           ModAdd,
@@ -646,16 +648,17 @@ mod tests {
           ModLockPostForm,
           ModRemoveCategory,
           ModRemoveCategoryForm,
-          ModRemoveComment,
-          ModRemoveCommentForm,
           ModRemovePost,
           ModRemovePostForm,
+          ModRemoveProposal,
+          ModRemoveProposalForm,
           ModTransferCategory,
           ModTransferCategoryForm,
         },
       },
       person::{Person, PersonInsertForm},
       post::{Post, PostInsertForm},
+      proposal::{Proposal, ProposalInsertForm},
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
@@ -673,8 +676,8 @@ mod tests {
     category_2: Category,
     post: Post,
     post_2: Post,
-    comment: Comment,
-    comment_2: Comment,
+    proposal: Proposal,
+    comment_2: Proposal,
   }
 
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
@@ -718,14 +721,14 @@ mod tests {
     };
     let post_2 = Post::create(pool, &new_post_2).await?;
 
-    // Timmy creates a comment
-    let comment_form = CommentInsertForm::new(timmy.id, post.id, "A test comment rv".into());
-    let comment = Comment::create(pool, &comment_form).await?;
+    // Timmy creates a proposal
+    let comment_form = ProposalInsertForm::new(timmy.id, post.id, "A test proposal rv".into());
+    let proposal = Proposal::create(pool, &comment_form).await?;
 
-    // jessica creates a comment
+    // jessica creates a proposal
     let comment_form_2 =
-      CommentInsertForm::new(jessica.id, post_2.id, "A test comment rv 2".into());
-    let comment_2 = Comment::create(pool, &comment_form_2).await?;
+      ProposalInsertForm::new(jessica.id, post_2.id, "A test proposal rv 2".into());
+    let comment_2 = Proposal::create(pool, &comment_form_2).await?;
 
     Ok(Data {
       instance,
@@ -736,7 +739,7 @@ mod tests {
       category_2,
       post,
       post_2,
-      comment,
+      proposal,
       comment_2,
     })
   }
@@ -770,12 +773,12 @@ mod tests {
     };
     AdminBlockInstance::create(pool, &form).await?;
 
-    let form = AdminPurgeCommentForm {
+    let form = AdminPurgeProposalForm {
       admin_person_id: data.timmy.id,
       post_id: data.post.id,
       reason: None,
     };
-    AdminPurgeComment::create(pool, &form).await?;
+    AdminPurgeProposal::create(pool, &form).await?;
 
     let form = AdminPurgeCategoryForm {
       admin_person_id: data.timmy.id,
@@ -871,8 +874,8 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::AdminPurgeComment(v) = &modlog[5] {
-      assert_eq!(data.post.id, v.admin_purge_comment.post_id);
+    if let ModlogCombinedView::AdminPurgeProposal(v) = &modlog[5] {
+      assert_eq!(data.post.id, v.admin_purge_proposal.post_id);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(
         data.timmy.id,
@@ -1028,13 +1031,13 @@ mod tests {
     };
     ModLockPost::create(pool, &form).await?;
 
-    let form = ModRemoveCommentForm {
+    let form = ModRemoveProposalForm {
       mod_person_id: data.timmy.id,
-      comment_id: data.comment.id,
+      comment_id: data.proposal.id,
       removed: Some(true),
       reason: None,
     };
-    ModRemoveComment::create(pool, &form).await?;
+    ModRemoveProposal::create(pool, &form).await?;
 
     let form = ModRemoveCategoryForm {
       mod_person_id: data.timmy.id,
@@ -1075,21 +1078,21 @@ mod tests {
     };
     ModRemovePost::create(pool, &form).await?;
 
-    let form = ModRemoveCommentForm {
+    let form = ModRemoveProposalForm {
       mod_person_id: data.jessica.id,
       comment_id: data.comment_2.id,
       removed: Some(true),
       reason: None,
     };
-    ModRemoveComment::create(pool, &form).await?;
+    ModRemoveProposal::create(pool, &form).await?;
 
     // The all view
     let modlog = ModlogCombinedQuery::default().list(pool).await?;
     assert_eq!(13, modlog.len());
 
-    if let ModlogCombinedView::ModRemoveComment(v) = &modlog[0] {
-      assert_eq!(data.comment_2.id, v.mod_remove_comment.comment_id);
-      assert_eq!(data.comment_2.id, v.comment.id);
+    if let ModlogCombinedView::ModRemoveProposal(v) = &modlog[0] {
+      assert_eq!(data.comment_2.id, v.mod_remove_proposal.comment_id);
+      assert_eq!(data.comment_2.id, v.proposal.id);
       assert_eq!(data.post_2.id, v.post.id);
       assert_eq!(data.category_2.id, v.category.as_ref().unwrap().id);
       assert_eq!(
@@ -1164,9 +1167,9 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let ModlogCombinedView::ModRemoveComment(v) = &modlog[6] {
-      assert_eq!(data.comment.id, v.mod_remove_comment.comment_id);
-      assert_eq!(data.comment.id, v.comment.id);
+    if let ModlogCombinedView::ModRemoveProposal(v) = &modlog[6] {
+      assert_eq!(data.proposal.id, v.mod_remove_proposal.comment_id);
+      assert_eq!(data.proposal.id, v.proposal.id);
       assert_eq!(data.post.id, v.post.id);
       assert_eq!(data.category.id, v.category.as_ref().unwrap().id);
       assert_eq!(
@@ -1331,9 +1334,9 @@ mod tests {
     .await?;
     assert_eq!(2, modlog_post_2_filter.len());
 
-    // Filter by comment
+    // Filter by proposal
     let modlog_comment_filter = ModlogCombinedQuery {
-      comment_id: Some(data.comment.id),
+      comment_id: Some(data.proposal.id),
       ..Default::default()
     }
     .list(pool)
@@ -1350,7 +1353,7 @@ mod tests {
 
     // Filter by type
     let modlog_type_filter = ModlogCombinedQuery {
-      type_: Some(ModlogActionType::ModRemoveComment),
+      type_: Some(ModlogActionType::ModRemoveProposal),
       ..Default::default()
     }
     .list(pool)
@@ -1360,11 +1363,11 @@ mod tests {
     // Assert that the types are correct
     assert!(matches!(
       modlog_type_filter[0],
-      ModlogCombinedView::ModRemoveComment(_)
+      ModlogCombinedView::ModRemoveProposal(_)
     ));
     assert!(matches!(
       modlog_type_filter[1],
-      ModlogCombinedView::ModRemoveComment(_)
+      ModlogCombinedView::ModRemoveProposal(_)
     ));
 
     cleanup(data, pool).await?;

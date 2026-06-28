@@ -6,7 +6,7 @@ use app_108jobs_core::{
 };
 use app_108jobs_db::{
   newtypes::DbUrl,
-  source::{comment::Comment, person::Person, post::Post},
+  source::{person::Person, post::Post, proposal::Proposal},
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use tracing::warn;
@@ -30,25 +30,25 @@ pub async fn send_mention_email(
   .await
 }
 
-pub async fn send_comment_reply_email(
+pub async fn send_proposal_reply_email(
   parent_user_view: &LocalUserView,
-  comment: &Comment,
+  proposal: &Proposal,
   person: &Person,
-  parent_comment: &Comment,
+  parent_proposal: &Proposal,
   post: &Post,
   settings: &Settings,
 ) -> FastJobResult<()> {
   let inbox_link = inbox_link(settings);
   let lang = user_language(parent_user_view);
-  let content = markdown_to_html(&comment.content);
+  let content = markdown_to_html(&proposal.content);
   send_email_to_user(
     parent_user_view,
     &lang.notification_comment_reply_subject(&person.name),
     &lang.notification_comment_reply_body(
-      comment.local_url(settings)?,
+      proposal.local_url(settings)?,
       &content,
       &inbox_link,
-      &parent_comment.content,
+      &parent_proposal.content,
       &post.name,
       &person.name,
     ),
@@ -60,19 +60,19 @@ pub async fn send_comment_reply_email(
 
 pub async fn send_post_reply_email(
   parent_user_view: &LocalUserView,
-  comment: &Comment,
+  proposal: &Proposal,
   person: &Person,
   post: &Post,
   settings: &Settings,
 ) -> FastJobResult<()> {
   let inbox_link = inbox_link(settings);
   let lang = user_language(parent_user_view);
-  let content = markdown_to_html(&comment.content);
+  let content = markdown_to_html(&proposal.content);
   send_email_to_user(
     parent_user_view,
     &lang.notification_post_reply_subject(&person.name),
     &lang.notification_post_reply_body(
-      comment.local_url(settings)?,
+      proposal.local_url(settings)?,
       &content,
       &inbox_link,
       &post.name,

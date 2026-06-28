@@ -29,8 +29,8 @@ pub struct LocalSiteRateLimit {
   pub register_interval_seconds: i32,
   pub image_max_requests: i32,
   pub image_interval_seconds: i32,
-  pub comment_max_requests: i32,
-  pub comment_interval_seconds: i32,
+  pub proposal_max_requests: i32,
+  pub proposal_interval_seconds: i32,
   pub search_max_requests: i32,
   pub search_interval_seconds: i32,
   pub published_at: DateTime<Utc>,
@@ -61,9 +61,9 @@ pub struct LocalSiteRateLimitInsertForm {
   #[new(default)]
   pub image_interval_seconds: Option<i32>,
   #[new(default)]
-  pub comment_max_requests: Option<i32>,
+  pub proposal_max_requests: Option<i32>,
   #[new(default)]
-  pub comment_interval_seconds: Option<i32>,
+  pub proposal_interval_seconds: Option<i32>,
   #[new(default)]
   pub search_max_requests: Option<i32>,
   #[new(default)]
@@ -86,8 +86,8 @@ pub struct LocalSiteRateLimitUpdateForm {
   pub register_interval_seconds: Option<i32>,
   pub image_max_requests: Option<i32>,
   pub image_interval_seconds: Option<i32>,
-  pub comment_max_requests: Option<i32>,
-  pub comment_interval_seconds: Option<i32>,
+  pub proposal_max_requests: Option<i32>,
+  pub proposal_interval_seconds: Option<i32>,
   pub search_max_requests: Option<i32>,
   pub search_interval_seconds: Option<i32>,
   pub import_user_settings_max_requests: Option<i32>,

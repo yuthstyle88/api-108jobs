@@ -25,7 +25,6 @@ use app_108jobs_api::{
     random::get_random_category,
     tag::{create_category_tag, delete_category_tag, update_category_tag},
   },
-  chat::list::list_chat_rooms,
   local_user::{
     add_admin::add_admin,
     ban_person::ban_from_site,
@@ -77,7 +76,6 @@ use app_108jobs_api::{
 };
 use app_108jobs_api_crud::{
   category::{list::list_categories, update::update_category},
-  chat::{create::create_chat_room, read::get_chat_room},
   custom_emoji::{
     create::create_custom_emoji,
     delete::delete_custom_emoji,
@@ -105,6 +103,10 @@ use app_108jobs_api_crud::{
     delete::delete_account,
     my_user::get_my_user,
   },
+};
+use app_108jobs_chat::{
+  crud::{create::create_chat_room, read::get_chat_room},
+  handlers::list::list_chat_rooms,
 };
 use app_108jobs_core::rate_limit::RateLimit;
 use app_108jobs_identity::{

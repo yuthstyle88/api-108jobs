@@ -1,0 +1,62 @@
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::{self, error::FastJobResult};
+use app_108jobs_db::source::local_user::LocalUser;
+use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person_content_combined::{
+  impls::PersonContentCombinedQuery,
+  PersonContentCombinedView,
+};
+use app_108jobs_db_views_site::{
+  api::{ExportDataResponse, PostOrCommentOrPrivateMessage},
+  impls::user_backup_list_to_user_settings_backup,
+};
+
+pub async fn export_data(
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<ExportDataResponse>> {
+  use PostOrCommentOrPrivateMessage::*;
+
+  let local_instance_id = local_user_view.person.instance_id;
+  let my_person_id = local_user_view.person.id;
+
+  let pool = &mut context.pool();
+
+  let content = PersonContentCombinedQuery {
+    no_limit: Some(true),
+    ..PersonContentCombinedQuery::new(my_person_id)
+  }
+  .list(pool, Some(&local_user_view), local_instance_id)
+  .await?
+  .into_iter()
+  .map(|u| match u {
+    PersonContentCombinedView::Post(pv) => Post(pv.post),
+    PersonContentCombinedView::Proposal(cv) => Proposal(cv.proposal),
+  })
+  .collect();
+
+  let inbox = InboxCombinedQuery {
+    no_limit: Some(true),
+    ..InboxCombinedQuery::default()
+  }
+  .list(pool, my_person_id, local_instance_id)
+  .await?
+  .into_iter()
+  .map(|u| match u {
+    InboxCombinedView::ProposalReply(cr) => Proposal(cr.proposal),
+    InboxCombinedView::ProposalMention(cm) => Proposal(cm.proposal),
+    InboxCombinedView::PostMention(pm) => Post(pm.post),
+  })
+  .collect();
+
+  let lists = LocalUser::export_backup(pool, local_user_view.person.id).await?;
+  let settings = user_backup_list_to_user_settings_backup(local_user_view, lists);
+
+  Ok(Json(ExportDataResponse {
+    inbox,
+    content,
+    settings,
+  }))
+}

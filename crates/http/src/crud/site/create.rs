@@ -1,0 +1,372 @@
+use super::not_zero;
+use crate::crud::site::{application_question_check, site_default_post_listing_type_check};
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{
+    get_url_blocklist,
+    is_admin,
+    local_site_rate_limit_to_rate_limit_config,
+    process_markdown_opt,
+    slur_regex,
+  },
+};
+use app_108jobs_core::{
+  error::{FastJobErrorType, FastJobResult},
+  utils::{
+    slurs::check_slurs,
+    validation::{
+      build_and_check_regex,
+      is_valid_body_field,
+      site_name_length_check,
+      site_or_category_description_length_check,
+    },
+  },
+};
+use app_108jobs_db::{
+  source::{
+    local_site::{LocalSite, LocalSiteUpdateForm},
+    local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitUpdateForm},
+    site::{Site, SiteUpdateForm},
+  },
+  traits::Crud,
+  utils::diesel_string_update,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::{
+  api::{CreateSiteRequest, SiteResponse},
+  SiteView,
+};
+use chrono::Utc;
+
+pub async fn create_site(
+  data: Json<CreateSiteRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SiteResponse>> {
+  let local_site = context.site_config().get().await?.site_view.local_site;
+
+  // Make sure user is an admin; other types of users should not create site data...
+  is_admin(&local_user_view)?;
+
+  validate_create_payload(&local_site, &data)?;
+
+  let slur_regex = slur_regex(&context).await?;
+  let url_blocklist = get_url_blocklist(&context).await?;
+  let sidebar = process_markdown_opt(&data.sidebar, &slur_regex, &url_blocklist, &context).await?;
+
+  let site_form = SiteUpdateForm {
+    name: Some(data.name.clone()),
+    sidebar: diesel_string_update(sidebar.as_deref()),
+    description: diesel_string_update(data.description.as_deref()),
+    last_refreshed_at: Some(Utc::now()),
+    content_warning: diesel_string_update(data.content_warning.as_deref()),
+    ..Default::default()
+  };
+
+  let site_id = local_site.site_id;
+
+  Site::update(&mut context.pool(), site_id, &site_form).await?;
+
+  let local_site_form = LocalSiteUpdateForm {
+    // Set the site setup to true
+    site_setup: Some(true),
+    registration_mode: data.registration_mode,
+    category_creation_admin_only: data.category_creation_admin_only,
+    require_email_verification: data.require_email_verification,
+    application_question: diesel_string_update(data.application_question.as_deref()),
+    private_instance: data.private_instance,
+    default_theme: data.default_theme.clone(),
+    default_post_listing_type: data.default_post_listing_type,
+    default_post_sort_type: data.default_post_sort_type,
+    default_proposal_sort_type: data.default_proposal_sort_type,
+    legal_information: diesel_string_update(data.legal_information.as_deref()),
+    application_email_admins: data.application_email_admins,
+    updated_at: Some(Some(Utc::now())),
+    slur_filter_regex: diesel_string_update(data.slur_filter_regex.as_deref()),
+    actor_name_max_length: data.actor_name_max_length,
+    captcha_enabled: data.captcha_enabled,
+    captcha_difficulty: data.captcha_difficulty.clone(),
+    default_post_listing_mode: data.default_post_listing_mode,
+    disallow_self_promotion_content: data.disallow_self_promotion_content,
+    disable_email_notifications: data.disable_email_notifications,
+    ..Default::default()
+  };
+
+  LocalSite::update(&mut context.pool(), &local_site_form).await?;
+
+  let local_site_rate_limit_form = LocalSiteRateLimitUpdateForm {
+    message_max_requests: data.rate_limit_message_max_requests,
+    message_interval_seconds: not_zero(data.rate_limit_message_interval_seconds),
+    post_max_requests: data.rate_limit_post_max_requests,
+    post_interval_seconds: not_zero(data.rate_limit_post_interval_seconds),
+    register_max_requests: data.rate_limit_register_max_requests,
+    register_interval_seconds: not_zero(data.rate_limit_register_interval_seconds),
+    image_max_requests: data.rate_limit_image_max_requests,
+    image_interval_seconds: not_zero(data.rate_limit_image_interval_seconds),
+    proposal_max_requests: data.rate_limit_proposal_max_requests,
+    proposal_interval_seconds: not_zero(data.rate_limit_proposal_interval_seconds),
+    search_max_requests: data.rate_limit_search_max_requests,
+    search_interval_seconds: not_zero(data.rate_limit_search_interval_seconds),
+    import_user_settings_max_requests: data.rate_limit_import_user_settings_max_requests,
+    import_user_settings_interval_seconds: not_zero(
+      data.rate_limit_import_user_settings_interval_seconds,
+    ),
+    updated_at: Some(Some(Utc::now())),
+  };
+
+  LocalSiteRateLimit::update(&mut context.pool(), &local_site_rate_limit_form).await?;
+
+  let site_view = SiteView::read_local(&mut context.pool()).await?;
+
+  let rate_limit_config =
+    local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
+  context.rate_limit_cell().set_config(rate_limit_config);
+
+  Ok(Json(SiteResponse { site_view }))
+}
+
+fn validate_create_payload(
+  local_site: &LocalSite,
+  create_site: &CreateSiteRequest,
+) -> FastJobResult<()> {
+  // Make sure the site hasn't already been set up...
+  if local_site.site_setup {
+    Err(FastJobErrorType::SiteAlreadyExists)?
+  };
+
+  // Check that the slur regex compiles, and returns the regex if valid...
+  // Prioritize using new slur regex from the request; if not provided, use the existing regex.
+  let slur_regex = build_and_check_regex(
+    create_site
+      .slur_filter_regex
+      .as_deref()
+      .or(local_site.slur_filter_regex.as_deref()),
+  )?;
+
+  site_name_length_check(&create_site.name)?;
+  check_slurs(&create_site.name, &slur_regex)?;
+
+  if let Some(desc) = &create_site.description {
+    site_or_category_description_length_check(desc)?;
+    check_slurs(desc, &slur_regex)?;
+  }
+
+  site_default_post_listing_type_check(&create_site.default_post_listing_type)?;
+
+  // Ensure that the sidebar has fewer than the max num characters...
+  if let Some(body) = &create_site.sidebar {
+    is_valid_body_field(body, false)?;
+  }
+
+  application_question_check(
+    &local_site.application_question,
+    &create_site.application_question,
+    create_site
+      .registration_mode
+      .unwrap_or(local_site.registration_mode),
+  )
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::crud::site::create::validate_create_payload;
+  use app_108jobs_core::error::FastJobErrorType;
+  use app_108jobs_db::{
+    enums::{ListingType, PostSortType, RegistrationMode},
+    source::local_site::LocalSite,
+  };
+  use app_108jobs_db_views_site::api::CreateSiteRequest;
+
+  #[test]
+  fn test_validate_invalid_create_payload() {
+    let invalid_payloads = [
+      (
+        "CreateSite attempted on set up LocalSite",
+        FastJobErrorType::SiteAlreadyExists,
+        &LocalSite {
+          site_setup: true,
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite name matches LocalSite slur filter",
+        FastJobErrorType::Slurs,
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          slur_filter_regex: Some(String::from("(foo|bar)")),
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("foo site_name"),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite name matches new slur filter",
+        FastJobErrorType::Slurs,
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          slur_filter_regex: Some(String::from("(foo|bar)")),
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("zeta site_name"),
+          slur_filter_regex: Some(String::from("(zeta|alpha)")),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite listing type is Subscribed, which is invalid",
+        FastJobErrorType::InvalidDefaultPostListingType,
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          default_post_listing_type: Some(ListingType::Subscribed),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite requires application, but neither it nor LocalSite has an application question",
+        FastJobErrorType::ApplicationQuestionRequired,
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          registration_mode: Some(RegistrationMode::RequireApplication),
+          ..Default::default()
+        },
+      ),
+    ];
+
+    invalid_payloads.iter().enumerate().for_each(
+      |(
+         idx,
+         &(reason, ref expected_err, local_site, create_site),
+       )| {
+        match validate_create_payload(
+          local_site,
+          create_site,
+        ) {
+          Ok(_) => {
+            panic!(
+              "Got Ok, but validation should have failed with error: {} for reason: {}. invalid_payloads.nth({})",
+              expected_err, reason, idx
+            )
+          }
+          Err(error) => {
+            assert!(
+              error.error_type.eq(&expected_err.clone()),
+              "Got Err {:?}, but should have failed with message: {} for reason: {}. invalid_payloads.nth({})",
+              error.error_type,
+              expected_err,
+              reason,
+              idx
+            )
+          }
+        }
+      },
+    );
+  }
+
+  #[test]
+  fn test_validate_valid_create_payload() {
+    let valid_payloads = [
+      (
+        "No changes between LocalSite and CreateSite",
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite allows clearing and changing values",
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          sidebar: Some(String::new()),
+          description: Some(String::new()),
+          application_question: Some(String::new()),
+          private_instance: Some(false),
+          default_post_listing_type: Some(ListingType::All),
+          default_post_sort_type: Some(PostSortType::Active),
+          slur_filter_regex: Some(String::new()),
+          registration_mode: Some(RegistrationMode::Open),
+          ..Default::default()
+        },
+      ),
+      (
+        "CreateSite clears existing slur filter regex",
+        &LocalSite {
+          site_setup: false,
+          private_instance: true,
+          slur_filter_regex: Some(String::from("(foo|bar)")),
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("foo site_name"),
+          slur_filter_regex: Some(String::new()),
+          ..Default::default()
+        },
+      ),
+      (
+        "LocalSite has application question and CreateSite now requires applications,",
+        &LocalSite {
+          site_setup: false,
+          application_question: Some(String::from("question")),
+          private_instance: true,
+          registration_mode: RegistrationMode::Open,
+          ..Default::default()
+        },
+        &CreateSiteRequest {
+          name: String::from("site_name"),
+          registration_mode: Some(RegistrationMode::RequireApplication),
+          ..Default::default()
+        },
+      ),
+    ];
+
+    valid_payloads
+      .iter()
+      .enumerate()
+      .for_each(|(idx, &(reason, local_site, edit_site))| {
+        assert!(
+          validate_create_payload(local_site, edit_site).is_ok(),
+          "Got Err, but should have got Ok for reason: {}. valid_payloads.nth({})",
+          reason,
+          idx
+        );
+      })
+  }
+}

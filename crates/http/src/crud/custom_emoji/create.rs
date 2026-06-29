@@ -1,0 +1,41 @@
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::{
+  source::{
+    custom_emoji::{CustomEmoji, CustomEmojiInsertForm},
+    custom_emoji_keyword::{CustomEmojiKeyword, CustomEmojiKeywordInsertForm},
+  },
+  traits::Crud,
+};
+use app_108jobs_db_views_custom_emoji::{
+  api::{CreateCustomEmojiRequest, CustomEmojiResponse},
+  CustomEmojiView,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+
+pub async fn create_custom_emoji(
+  data: Json<CreateCustomEmojiRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<CustomEmojiResponse>> {
+  // Make sure user is an admin
+  is_admin(&local_user_view)?;
+
+  let emoji_form = CustomEmojiInsertForm::new(
+    data.shortcode.to_lowercase().trim().to_string(),
+    data.clone().image_url.into(),
+    data.alt_text.to_string(),
+    data.category.to_string(),
+  );
+  let emoji = CustomEmoji::create(&mut context.pool(), &emoji_form).await?;
+  let mut keywords = vec![];
+  for keyword in &data.keywords {
+    let keyword_form =
+      CustomEmojiKeywordInsertForm::new(emoji.id, keyword.to_lowercase().trim().to_string());
+    keywords.push(keyword_form);
+  }
+  CustomEmojiKeyword::create(&mut context.pool(), keywords).await?;
+  let view = CustomEmojiView::get(&mut context.pool(), emoji.id).await?;
+  Ok(Json(CustomEmojiResponse { custom_emoji: view }))
+}

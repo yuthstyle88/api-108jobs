@@ -94,6 +94,7 @@ members = [
     "crates/chat",
     "crates/notifications",
     "crates/admin",
+    "crates/http",
 ]
 
 [workspace.lints.clippy]
@@ -195,6 +196,7 @@ app_108jobs_logistics = { version = "=1.0.0-alpha.5", path = "./crates/logistics
 app_108jobs_chat = { version = "=1.0.0-alpha.5", path = "./crates/chat" }
 app_108jobs_notifications = { version = "=1.0.0-alpha.5", path = "./crates/notifications" }
 app_108jobs_admin = { version = "=1.0.0-alpha.5", path = "./crates/admin" }
+app_108jobs_http = { version = "=1.0.0-alpha.5", path = "./crates/http" }
 hound = "3.5.1"
 totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel = { version = "2.2.10", features = [
@@ -309,6 +311,7 @@ app_108jobs_logistics = { workspace = true }
 app_108jobs_chat = { workspace = true }
 app_108jobs_notifications = { workspace = true }
 app_108jobs_admin = { workspace = true }
+app_108jobs_http = { workspace = true }
 actix-web = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }

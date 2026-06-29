@@ -7,8 +7,7 @@ use crate::{
 use chrono::{DateTime, Utc};
 use serde::{
   ser::{SerializeStruct, Serializer},
-  Deserialize,
-  Serialize,
+  Deserialize, Serialize,
 };
 use serde_with::skip_serializing_none;
 

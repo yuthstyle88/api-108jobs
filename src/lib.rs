@@ -5,14 +5,10 @@ use actix_web::{
   dev::{ServerHandle, ServiceResponse},
   middleware::{self, Condition, ErrorHandlerResponse, ErrorHandlers},
   web::{scope, Data, JsonConfig, PayloadConfig},
-  App,
-  HttpResponse,
-  HttpServer,
+  App, HttpResponse, HttpServer,
 };
 use app_108jobs_api_utils::{
-  context::FastJobContext,
-  request::client_builder,
-  site_snapshot::CachedSiteConfigProvider,
+  context::FastJobContext, request::client_builder, site_snapshot::CachedSiteConfigProvider,
   utils::local_site_rate_limit_to_rate_limit_config,
 };
 use app_108jobs_core::{

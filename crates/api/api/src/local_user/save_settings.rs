@@ -8,9 +8,7 @@ use app_108jobs_core::{
   utils::{
     slurs::check_slurs_opt,
     validation::{
-      check_blocking_keywords_are_valid,
-      is_valid_bio_field,
-      is_valid_display_name,
+      check_blocking_keywords_are_valid, is_valid_bio_field, is_valid_display_name,
       is_valid_matrix_id,
     },
   },

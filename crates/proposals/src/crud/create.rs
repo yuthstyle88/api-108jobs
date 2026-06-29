@@ -3,10 +3,7 @@ use app_108jobs_api_utils::{
   build_response::{build_proposal_response, send_local_notifs},
   context::FastJobContext,
   utils::{
-    check_post_deleted_or_removed,
-    get_url_blocklist,
-    process_markdown,
-    slur_regex,
+    check_post_deleted_or_removed, get_url_blocklist, process_markdown, slur_regex,
     update_read_proposals,
   },
 };

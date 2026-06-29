@@ -4,12 +4,8 @@ use app_108jobs_api_utils::{
   build_response::build_category_response,
   context::FastJobContext,
   utils::{
-    check_category_deleted_removed,
-    check_self_promotion_allowed,
-    get_url_blocklist,
-    is_admin,
-    process_markdown_opt,
-    slur_regex,
+    check_category_deleted_removed, check_self_promotion_allowed, get_url_blocklist, is_admin,
+    process_markdown_opt, slur_regex,
   },
 };
 use app_108jobs_core::{

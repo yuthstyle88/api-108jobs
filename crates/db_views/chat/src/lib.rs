@@ -1,10 +1,7 @@
 use app_108jobs_db::{
   newtypes::{ChatRoomId, DbUrl, LocalUserId, PersonId},
   source::{
-    chat_message::ChatMessage,
-    chat_room::ChatRoom,
-    local_user::LocalUser,
-    workflow::Workflow,
+    chat_message::ChatMessage, chat_room::ChatRoom, local_user::LocalUser, workflow::Workflow,
   },
 };
 use app_108jobs_db_views_post::PostPreview;

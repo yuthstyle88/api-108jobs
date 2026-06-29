@@ -1,13 +1,7 @@
 use crate::{logistics::PostLogisticsView, PostView};
 use app_108jobs_db::{
   enums::{
-    IntendedUse,
-    JobType,
-    ListingType,
-    PaymentMethod,
-    PostKind,
-    PostNotifications,
-    PostSortType,
+    IntendedUse, JobType, ListingType, PaymentMethod, PostKind, PostNotifications, PostSortType,
     TripStatus,
   },
   newtypes::{CategoryId, Coin, DbUrl, LanguageId, PaginationCursor, PostId, ProposalId, TagId},

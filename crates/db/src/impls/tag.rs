@@ -12,8 +12,7 @@ use diesel::{
   pg::{Pg, PgValue},
   serialize::ToSql,
   sql_types::{Json, Nullable},
-  ExpressionMethods,
-  QueryDsl,
+  ExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

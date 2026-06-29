@@ -3,11 +3,7 @@ use crate::{
   newtypes::{CategoryId, InstanceId, PersonId, ProposalId},
   schema::{category, post, proposal, proposal_actions},
   source::proposal::{
-    Proposal,
-    ProposalActions,
-    ProposalInsertForm,
-    ProposalLikeForm,
-    ProposalSavedForm,
+    Proposal, ProposalActions, ProposalInsertForm, ProposalLikeForm, ProposalSavedForm,
     ProposalUpdateForm,
   },
   traits::{Crud, Likeable, Saveable},
@@ -19,12 +15,7 @@ use app_108jobs_core::{
 };
 use chrono::Utc;
 use diesel::{
-  dsl::insert_into,
-  expression::SelectableHelper,
-  update,
-  ExpressionMethods,
-  JoinOnDsl,
-  QueryDsl,
+  dsl::insert_into, expression::SelectableHelper, update, ExpressionMethods, JoinOnDsl, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use url::Url;

@@ -3,9 +3,7 @@ use crate::{
   newtypes::{PersonId, PersonProposalMentionId, ProposalId},
   schema::person_proposal_mention,
   source::person_proposal_mention::{
-    PersonProposalMention,
-    PersonProposalMentionInsertForm,
-    PersonProposalMentionUpdateForm,
+    PersonProposalMention, PersonProposalMentionInsertForm, PersonProposalMentionUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

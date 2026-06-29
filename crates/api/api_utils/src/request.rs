@@ -3,8 +3,7 @@ use actix_web::web::Data;
 use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult},
   settings::structs::{PictrsImageMode, Settings},
-  REQWEST_TIMEOUT,
-  VERSION,
+  REQWEST_TIMEOUT, VERSION,
 };
 use app_108jobs_db::{
   source::{
@@ -22,9 +21,7 @@ use mime::{Mime, TEXT_HTML};
 use reqwest::{
   header::{CONTENT_TYPE, LOCATION, RANGE},
   redirect::Policy,
-  Client,
-  ClientBuilder,
-  Response,
+  Client, ClientBuilder, Response,
 };
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};

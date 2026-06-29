@@ -1,14 +1,11 @@
 use crate::{
   api::{CreateComment, CreateCommentRequest},
-  ProposalSlimView,
-  ProposalView,
+  ProposalSlimView, ProposalView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   enums::{
-    CategoryFollowerState,
-    CategoryVisibility,
-    ListingType,
+    CategoryFollowerState, CategoryVisibility, ListingType,
     ProposalSortType::{self, *},
   },
   impls::local_user::LocalUserOptionHelper,
@@ -21,31 +18,18 @@ use app_108jobs_db::{
   },
   traits::{Crud, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    now,
-    paginate,
+    get_conn, limit_fetch, now, paginate,
     queries::{
-      creator_category_actions_join,
-      creator_category_instance_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      my_category_actions_join,
-      my_instance_actions_category_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_proposal_actions_join,
+      creator_category_actions_join, creator_category_instance_actions_join,
+      creator_home_instance_actions_join, creator_local_instance_actions_join,
+      my_category_actions_join, my_instance_actions_category_join, my_local_user_admin_join,
+      my_person_actions_join, my_proposal_actions_join,
     },
-    seconds_to_pg_interval,
-    DbPool,
+    seconds_to_pg_interval, DbPool,
   },
 };
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

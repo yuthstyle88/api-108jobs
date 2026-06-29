@@ -2,8 +2,7 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::source::{
-  person_post_mention::PersonPostMention,
-  person_proposal_mention::PersonProposalMention,
+  person_post_mention::PersonPostMention, person_proposal_mention::PersonProposalMention,
   proposal_reply::ProposalReply,
 };
 use app_108jobs_db_views_local_user::LocalUserView;

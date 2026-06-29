@@ -12,9 +12,7 @@ use app_108jobs_db::{
   traits::Crud,
 };
 use app_108jobs_db_views_category::api::{
-  CreateCategoryTagRequest,
-  DeleteCategoryTagRequest,
-  UpdateCategoryTagRequest,
+  CreateCategoryTagRequest, DeleteCategoryTagRequest, UpdateCategoryTagRequest,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use chrono::Utc;

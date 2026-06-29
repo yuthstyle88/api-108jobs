@@ -8,9 +8,7 @@ use crate::{
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{insert_into, now},
-  ExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
+  ExpressionMethods, OptionalExtension, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

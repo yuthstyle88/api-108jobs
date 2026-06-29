@@ -5,12 +5,8 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   tags::update_post_tags,
   utils::{
-    check_category_deleted_removed,
-    check_self_promotion_allowed,
-    get_url_blocklist,
-    honeypot_check,
-    process_markdown_opt,
-    slur_regex,
+    check_category_deleted_removed, check_self_promotion_allowed, get_url_blocklist,
+    honeypot_check, process_markdown_opt, slur_regex,
   },
 };
 use app_108jobs_core::{

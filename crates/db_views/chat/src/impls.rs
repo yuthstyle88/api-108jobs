@@ -1,8 +1,6 @@
 use crate::{
   api::{GetChatRoomRequest, ListUserChatRooms},
-  ChatMessageView,
-  ChatParticipantView,
-  ChatRoomView,
+  ChatMessageView, ChatParticipantView, ChatRoomView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{

@@ -1,11 +1,6 @@
 use crate::{CategoryReportView, PostReportView, ProposalReportView};
 use app_108jobs_db::newtypes::{
-  CategoryId,
-  CategoryReportId,
-  PostId,
-  PostReportId,
-  ProposalId,
-  ProposalReportId,
+  CategoryId, CategoryReportId, PostId, PostReportId, ProposalId, ProposalReportId,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

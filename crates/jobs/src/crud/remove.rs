@@ -1,7 +1,6 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
-  build_response::build_post_response,
-  context::FastJobContext,
+  build_response::build_post_response, context::FastJobContext,
   utils::check_category_deleted_removed,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};

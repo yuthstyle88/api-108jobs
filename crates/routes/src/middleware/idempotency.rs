@@ -2,9 +2,7 @@ use actix_web::{
   body::EitherBody,
   dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
   http::Method,
-  Error,
-  HttpMessage,
-  HttpResponse,
+  Error, HttpMessage, HttpResponse,
 };
 use app_108jobs_db::newtypes::LocalUserId;
 use app_108jobs_db_views_local_user::LocalUserView;

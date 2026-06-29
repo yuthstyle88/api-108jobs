@@ -1,10 +1,6 @@
 use crate::{
   broker::manager::{
-    FetchHistoryDirect,
-    GetLastRead,
-    GetPresenceSnapshot,
-    GetUnreadSnapshot,
-    PhoenixManager,
+    FetchHistoryDirect, GetLastRead, GetPresenceSnapshot, GetUnreadSnapshot, PhoenixManager,
   },
   presence::{IsUserOnline, PresenceManager},
   server::session::{PhoenixSession, TripLocationSession},
@@ -13,9 +9,7 @@ use actix::Addr;
 use actix_web::{
   web,
   web::{Data, Query},
-  Error,
-  HttpRequest,
-  HttpResponse,
+  Error, HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
 use app_108jobs_api_utils::{context::FastJobContext, utils::local_user_view_from_jwt};

@@ -5,8 +5,7 @@ use app_108jobs_db::source::local_user::LocalUser;
 use app_108jobs_db_views_inbox_combined::{impls::InboxCombinedQuery, InboxCombinedView};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person_content_combined::{
-  impls::PersonContentCombinedQuery,
-  PersonContentCombinedView,
+  impls::PersonContentCombinedQuery, PersonContentCombinedView,
 };
 use app_108jobs_db_views_site::{
   api::{ExportDataResponse, PostOrCommentOrPrivateMessage},

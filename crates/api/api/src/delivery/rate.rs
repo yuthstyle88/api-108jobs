@@ -5,18 +5,14 @@ use app_108jobs_db::{
   enums::{PostKind, TripStatus},
   newtypes::RiderId,
   source::{
-    delivery_details::DeliveryDetails,
-    delivery_rider_rating::DeliveryRiderRating,
-    post::Post,
+    delivery_details::DeliveryDetails, delivery_rider_rating::DeliveryRiderRating, post::Post,
     rider::Rider,
   },
   traits::Crud,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{
-  DeliveryRiderRatingData,
-  RateRiderRequest,
-  RateRiderResponse,
+  DeliveryRiderRatingData, RateRiderRequest, RateRiderResponse,
 };
 
 /// POST /api/v4/rider/rate

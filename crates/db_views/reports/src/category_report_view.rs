@@ -7,11 +7,7 @@ use app_108jobs_db::{
   utils::{get_conn, DbPool},
 };
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

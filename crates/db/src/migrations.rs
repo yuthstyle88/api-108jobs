@@ -8,13 +8,7 @@ use diesel::{
   dsl::exists,
   migration::{Migration, MigrationVersion},
   pg::Pg,
-  select,
-  update,
-  BoolExpressionMethods,
-  Connection,
-  ExpressionMethods,
-  PgConnection,
-  QueryDsl,
+  select, update, BoolExpressionMethods, Connection, ExpressionMethods, PgConnection, QueryDsl,
   RunQueryDsl,
 };
 use diesel_migrations::MigrationHarness;

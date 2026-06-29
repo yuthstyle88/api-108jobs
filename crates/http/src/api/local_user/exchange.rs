@@ -5,9 +5,7 @@ use actix_web::{
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::{
   crypto::{
-    derive_aes256_from_ecdh,
-    export_private_pkcs8_der,
-    normalize_pubkey_to_uncompressed_hex,
+    derive_aes256_from_ecdh, export_private_pkcs8_der, normalize_pubkey_to_uncompressed_hex,
     public_key_to_hex,
   },
   error::{FastJobErrorType, FastJobResult},

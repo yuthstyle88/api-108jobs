@@ -6,12 +6,8 @@ use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{
-    check_email_verified,
-    check_local_user_valid,
-    check_registration_application,
-    honeypot_check,
-    prepare_user_languages,
-    slur_regex,
+    check_email_verified, check_local_user_valid, check_registration_application, honeypot_check,
+    prepare_user_languages, slur_regex,
   },
 };
 use app_108jobs_core::{
@@ -41,16 +37,12 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_registration_applications::api::{Register, RegisterRequest};
 use app_108jobs_db_views_site::{
   api::{
-    AuthenticateWithOauth,
-    AuthenticateWithOauthRequest,
-    LoginResponse,
-    RegisterWithOauthRequest,
+    AuthenticateWithOauth, AuthenticateWithOauthRequest, LoginResponse, RegisterWithOauthRequest,
   },
   SiteView,
 };
 use app_108jobs_email::{
-  account::send_verification_email_if_required,
-  admin::send_new_applicant_email_to_admins,
+  account::send_verification_email_if_required, admin::send_new_applicant_email_to_admins,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection};
 use regex::Regex;

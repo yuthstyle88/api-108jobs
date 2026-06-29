@@ -6,20 +6,14 @@ use crate::{
   source::{
     actor_language::CategoryLanguage,
     category::{
-      Category,
-      CategoryActions,
-      CategoryChangeset,
-      CategoryInsertForm,
-      CategoryUpdateForm,
+      Category, CategoryActions, CategoryChangeset, CategoryInsertForm, CategoryUpdateForm,
     },
     post::Post,
   },
   traits::Crud,
   utils::{
     functions::{coalesce_2_nullable, lower, random_smallint},
-    get_conn,
-    uplete,
-    DbPool,
+    get_conn, uplete, DbPool,
   },
 };
 use app_108jobs_core::{
@@ -30,12 +24,7 @@ use app_108jobs_core::{
 use diesel::{
   dsl::{insert_into, not},
   expression::SelectableHelper,
-  select,
-  update,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  NullableExpressionMethods,
-  QueryDsl,
+  select, update, BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use moka::future::Cache;

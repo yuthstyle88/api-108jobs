@@ -9,10 +9,7 @@ use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},
-  ExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
-  SelectableHelper,
+  ExpressionMethods, OptionalExtension, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 

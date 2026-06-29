@@ -1,8 +1,6 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{
-  build_response::build_proposal_response,
-  context::FastJobContext,
-  utils::check_private_instance,
+  build_response::build_proposal_response, context::FastJobContext, utils::check_private_instance,
 };
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db_views_local_user::LocalUserView;

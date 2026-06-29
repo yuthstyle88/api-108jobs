@@ -13,14 +13,8 @@ pub mod impls;
 
 // Re-export API DTOs for convenient use: `chat_pending_ack::ListChatPendingAckQuery`, etc.
 pub use api::{
-  AckConfirmRequest,
-  AckConfirmResponse,
-  AckReminderQuery,
-  AckReminderResponse,
-  ChatPendingAckItem,
-  LastReadChatPendingAckQuery,
-  ListChatPendingAckQuery,
-  ListChatPendingAckResponse,
+  AckConfirmRequest, AckConfirmResponse, AckReminderQuery, AckReminderResponse, ChatPendingAckItem,
+  LastReadChatPendingAckQuery, ListChatPendingAckQuery, ListChatPendingAckResponse,
 };
 // Re-export DB functions when available
 #[cfg(feature = "full")]

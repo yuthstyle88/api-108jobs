@@ -1,14 +1,7 @@
 use crate::{
   enums::{PostKind, RiderVerificationStatus, TripStatus},
   newtypes::{
-    CoinId,
-    DeliveryDetailsId,
-    LocalUserId,
-    PersonId,
-    PostId,
-    ProposalId,
-    RiderId,
-    WalletId,
+    CoinId, DeliveryDetailsId, LocalUserId, PersonId, PostId, ProposalId, RiderId, WalletId,
   },
   schema::{delivery_details, local_user as local_user_tbl, post as post_tbl, rider as rider_tbl},
   source::{
@@ -25,8 +18,7 @@ use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use chrono::{DateTime, Utc};
 use diesel::{
   dsl::{insert_into, update},
-  ExpressionMethods,
-  QueryDsl,
+  ExpressionMethods, QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 
@@ -1167,9 +1159,7 @@ mod tests {
   #[serial]
   async fn cancel_assigned_delivery_refunds_employer_wallet() {
     use crate::{
-      enums::VehicleType,
-      newtypes::Coin,
-      schema::delivery_details as dd,
+      enums::VehicleType, newtypes::Coin, schema::delivery_details as dd,
       source::rider::RiderInsertForm,
     };
 

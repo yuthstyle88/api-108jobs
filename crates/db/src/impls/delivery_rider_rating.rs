@@ -2,9 +2,7 @@ use crate::{
   newtypes::{DeliveryRiderRatingId, PersonId, PostId, RiderId},
   schema::delivery_rider_rating,
   source::delivery_rider_rating::{
-    DeliveryRiderRating,
-    DeliveryRiderRatingInsertForm,
-    DeliveryRiderRatingUpdateForm,
+    DeliveryRiderRating, DeliveryRiderRatingInsertForm, DeliveryRiderRatingUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

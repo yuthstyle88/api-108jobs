@@ -11,9 +11,7 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use lettre::{
   message::{Mailbox, MultiPart},
   transport::smtp::extension::ClientId,
-  Address,
-  AsyncTransport,
-  Message,
+  Address, AsyncTransport, Message,
 };
 use rosetta_i18n::{Language, LanguageId};
 use std::{str::FromStr, sync::OnceLock};

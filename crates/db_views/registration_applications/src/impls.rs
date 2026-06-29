@@ -16,12 +16,7 @@ use app_108jobs_db::{
   utils::{get_conn, get_required_sensitive, limit_fetch, paginate, DbPool},
 };
 use diesel::{
-  dsl::count,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
-  SelectableHelper,
+  dsl::count, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

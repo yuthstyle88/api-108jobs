@@ -1,17 +1,8 @@
 use crate::{
   bridge_message::{GlobalOffline, GlobalOnline},
   protocol::api::{
-    AckConfirmPayload,
-    ActiveRoomPayload,
-    ChatEvent,
-    ConvertError,
-    GenericIncomingEvent,
-    HeartbeatPayload,
-    IncomingEvent,
-    JoinPayload,
-    MessageModel,
-    MessageStatus,
-    ReadPayload,
+    AckConfirmPayload, ActiveRoomPayload, ChatEvent, ConvertError, GenericIncomingEvent,
+    HeartbeatPayload, IncomingEvent, JoinPayload, MessageModel, MessageStatus, ReadPayload,
     SyncPendingPayload,
   },
 };

@@ -1,8 +1,5 @@
 use crate::{
-  LocalUserView,
-  PersonContentCombinedView,
-  PersonContentCombinedViewInternal,
-  PostView,
+  LocalUserView, PersonContentCombinedView, PersonContentCombinedViewInternal, PostView,
   ProposalView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
@@ -13,33 +10,19 @@ use app_108jobs_db::{
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
-    get_conn,
-    limit_fetch,
-    paginate,
+    get_conn, limit_fetch, paginate,
     queries::{
-      category_join,
-      creator_category_actions_join,
-      creator_home_instance_actions_join,
-      creator_local_instance_actions_join,
-      creator_local_user_admin_join,
-      image_details_join,
-      my_category_actions_join,
-      my_instance_actions_person_join,
-      my_local_user_admin_join,
-      my_person_actions_join,
-      my_post_actions_join,
-      my_proposal_actions_join,
+      category_join, creator_category_actions_join, creator_home_instance_actions_join,
+      creator_local_instance_actions_join, creator_local_user_admin_join, image_details_join,
+      my_category_actions_join, my_instance_actions_person_join, my_local_user_admin_join,
+      my_person_actions_join, my_post_actions_join, my_proposal_actions_join,
     },
     DbPool,
   },
   PersonContentType,
 };
 use diesel::{
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

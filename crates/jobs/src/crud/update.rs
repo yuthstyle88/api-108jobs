@@ -12,10 +12,7 @@ use app_108jobs_core::{
   utils::{
     slurs::check_slurs,
     validation::{
-      is_url_blocked,
-      is_valid_alt_text_field,
-      is_valid_body_field,
-      is_valid_post_title,
+      is_url_blocked, is_valid_alt_text_field, is_valid_body_field, is_valid_post_title,
       is_valid_url,
     },
   },

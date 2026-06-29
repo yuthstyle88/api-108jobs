@@ -1,7 +1,5 @@
 use app_108jobs_db::source::{
-  local_user::LocalUser,
-  person::Person,
-  registration_application::RegistrationApplication,
+  local_user::LocalUser, person::Person, registration_application::RegistrationApplication,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;

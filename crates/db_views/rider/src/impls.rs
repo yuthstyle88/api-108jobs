@@ -8,12 +8,7 @@ use app_108jobs_db::{
   utils::{get_conn, paginate, Commented, DbPool},
 };
 use diesel::{
-  self,
-  query_builder::AsQuery,
-  ExpressionMethods,
-  JoinOnDsl,
-  QueryDsl,
-  SelectableHelper,
+  self, query_builder::AsQuery, ExpressionMethods, JoinOnDsl, QueryDsl, SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

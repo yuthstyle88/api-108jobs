@@ -16,9 +16,7 @@ use app_108jobs_db::{
 };
 use diesel::{
   dsl::{self, sql},
-  sql_types,
-  ExpressionMethods,
-  IntoSql,
+  sql_types, ExpressionMethods, IntoSql,
 };
 use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
 use serial_test::serial;

@@ -4,9 +4,7 @@ use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_person_liked_combined::{
-  impls::PersonLikedCombinedQuery,
-  ListPersonLiked,
-  ListPersonLikedResponse,
+  impls::PersonLikedCombinedQuery, ListPersonLiked, ListPersonLikedResponse,
   PersonLikedCombinedView,
 };
 

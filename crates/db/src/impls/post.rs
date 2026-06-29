@@ -3,26 +3,13 @@ use crate::{
   newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
   schema::{category, person, post, post_actions},
   source::post::{
-    Post,
-    PostActions,
-    PostHideForm,
-    PostInsertForm,
-    PostLikeForm,
-    PostReadForm,
-    PostReadProposalsForm,
-    PostSavedForm,
-    PostUpdateForm,
+    Post, PostActions, PostHideForm, PostInsertForm, PostLikeForm, PostReadForm,
+    PostReadProposalsForm, PostSavedForm, PostUpdateForm,
   },
   traits::{Crud, Hideable, Likeable, ReadProposals, Readable, Saveable},
   utils::{
     functions::{coalesce, hot_rank, lower, scaled_rank},
-    get_conn,
-    now,
-    uplete,
-    validate_like,
-    DbPool,
-    DELETED_REPLACEMENT_TEXT,
-    FETCH_LIMIT_MAX,
+    get_conn, now, uplete, validate_like, DbPool, DELETED_REPLACEMENT_TEXT, FETCH_LIMIT_MAX,
   },
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorExt2, FastJobErrorType, FastJobResult};
@@ -32,11 +19,7 @@ use diesel::{
   dsl::{count, exists, insert_into, not, select, update},
   expression::SelectableHelper,
   pg::Pg,
-  BoolExpressionMethods,
-  ExpressionMethods,
-  JoinOnDsl,
-  NullableExpressionMethods,
-  QueryDsl,
+  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use tracing::log::debug;

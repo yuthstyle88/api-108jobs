@@ -8,20 +8,14 @@ use crate::{
   newtypes::{BillingId, Coin, WalletHoldId, WalletId},
   schema::wallet_hold,
   source::wallet_hold::{
-    hold_status,
-    HoldStatus,
-    WalletHold,
-    WalletHoldInsertForm,
-    WalletHoldUpdateForm,
+    hold_status, HoldStatus, WalletHold, WalletHoldInsertForm, WalletHoldUpdateForm,
   },
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use chrono::Utc;
 use diesel::{
   result::{DatabaseErrorKind, Error as DieselError},
-  ExpressionMethods,
-  OptionalExtension,
-  QueryDsl,
+  ExpressionMethods, OptionalExtension, QueryDsl,
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 

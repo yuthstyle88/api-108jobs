@@ -1,13 +1,7 @@
 use crate::{
   enums::{TripStatus, VehicleType},
   newtypes::{
-    Coin,
-    DeliveryDetailsId,
-    PersonId,
-    PersonId as PersonIdNew,
-    PostId,
-    ProposalId,
-    RiderId,
+    Coin, DeliveryDetailsId, PersonId, PersonId as PersonIdNew, PostId, ProposalId, RiderId,
     RiderId as RiderIdNew,
   },
   utils,

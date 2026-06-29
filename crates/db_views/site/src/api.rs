@@ -2,14 +2,8 @@ use crate::SiteView;
 use app_108jobs_core::error::FastJobError;
 use app_108jobs_db::{
   enums::{
-    ListingType,
-    PostKind,
-    PostListingMode,
-    PostSortType,
-    ProposalSortType,
-    RegistrationMode,
-    TripStatus,
-    VoteShow,
+    ListingType, PostKind, PostListingMode, PostSortType, ProposalSortType, RegistrationMode,
+    TripStatus, VoteShow,
   },
   newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
   sensitive::SensitiveString,

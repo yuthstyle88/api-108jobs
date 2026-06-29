@@ -1,1 +1,0 @@
-DROP table IF EXISTS chat_unread;

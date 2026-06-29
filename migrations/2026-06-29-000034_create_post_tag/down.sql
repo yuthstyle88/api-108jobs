@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.post_tag CASCADE;

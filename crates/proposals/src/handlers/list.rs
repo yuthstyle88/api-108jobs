@@ -18,7 +18,7 @@ use app_108jobs_db_views_proposal::{
 };
 
 struct CommentsCommonOutput {
-  comments: Vec<ProposalView>,
+  proposals: Vec<ProposalView>,
   next_page: Option<PaginationCursor>,
   prev_page: Option<PaginationCursor>,
 }
@@ -98,7 +98,7 @@ async fn list_comments_common(
   let prev_page = comments.first().map(PaginationCursorBuilder::to_cursor);
 
   Ok(CommentsCommonOutput {
-    comments,
+    proposals: comments,
     next_page,
     prev_page,
   })

@@ -1,0 +1,53 @@
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{is_admin, purge_post_images},
+};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::{
+  source::{
+    local_user::LocalUser,
+    mod_log::admin::{AdminPurgePost, AdminPurgePostForm},
+    post::Post,
+  },
+  traits::Crud,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_post::api::PurgePost;
+use app_108jobs_db_views_site::api::SuccessResponse;
+
+pub async fn purge_post(
+  data: Json<PurgePost>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  // Only let admin purge an item
+  is_admin(&local_user_view)?;
+
+  // Read the post to get the category_id
+  let post = Post::read(&mut context.pool(), data.post_id).await?;
+
+  // Also check that you're a higher admin
+  LocalUser::is_higher_admin_check(
+    &mut context.pool(),
+    local_user_view.person.id,
+    vec![post.creator_id],
+  )
+  .await?;
+
+  purge_post_images(post.url.clone(), post.thumbnail_url.clone(), &context).await;
+
+  Post::delete(&mut context.pool(), data.post_id).await?;
+
+  // Mod tables - only create admin purge record if post has a category
+  if let Some(category_id) = post.category_id {
+    let form = AdminPurgePostForm {
+      admin_person_id: local_user_view.person.id,
+      reason: data.reason.clone(),
+      category_id,
+    };
+    AdminPurgePost::create(&mut context.pool(), &form).await?;
+  }
+
+  Ok(Json(SuccessResponse::default()))
+}

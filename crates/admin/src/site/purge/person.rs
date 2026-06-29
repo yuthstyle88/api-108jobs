@@ -1,0 +1,55 @@
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::{
+  context::FastJobContext,
+  utils::{is_admin, purge_user_account},
+};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::{
+  source::{
+    instance::{InstanceActions, InstanceBanForm},
+    local_user::LocalUser,
+    mod_log::admin::{AdminPurgePerson, AdminPurgePersonForm},
+  },
+  traits::{Bannable, Crud},
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_person::api::PurgePerson;
+use app_108jobs_db_views_site::api::SuccessResponse;
+
+pub async fn purge_person(
+  data: Json<PurgePerson>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  let local_instance_id = local_user_view.person.instance_id;
+
+  // Only let admin purge an item
+  is_admin(&local_user_view)?;
+
+  // Also check that you're a higher admin
+  LocalUser::is_higher_admin_check(
+    &mut context.pool(),
+    local_user_view.person.id,
+    vec![data.person_id],
+  )
+  .await?;
+
+  // Clear profile data.
+  purge_user_account(data.person_id, local_instance_id, &context).await?;
+
+  // Keep person record, but mark as banned to prevent login or refetching from home instance.
+  InstanceActions::ban(
+    &mut context.pool(),
+    &InstanceBanForm::new(data.person_id, local_instance_id, None),
+  )
+  .await?;
+
+  // Mod tables
+  let form = AdminPurgePersonForm {
+    admin_person_id: local_user_view.person.id,
+    reason: data.reason.clone(),
+  };
+  AdminPurgePerson::create(&mut context.pool(), &form).await?;
+
+  Ok(Json(SuccessResponse::default()))
+}

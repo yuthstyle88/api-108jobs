@@ -1,0 +1,44 @@
+use actix_web::web::{Data, Json, Query};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::{
+  api::{AdminListUsers, AdminListUsersResponse},
+  impls::LocalUserQuery,
+  LocalUserView,
+};
+use app_108jobs_db_views_person::PersonView;
+
+pub async fn admin_list_users(
+  query: Query<AdminListUsers>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<AdminListUsersResponse>> {
+  let data = query.into_inner();
+  // Make sure user is an admin
+  is_admin(&local_user_view)?;
+
+  let cursor_data = if let Some(cursor) = &data.page_cursor {
+    Some(PersonView::from_cursor(cursor, &mut context.pool()).await?)
+  } else {
+    None
+  };
+
+  let users = LocalUserQuery {
+    banned_only: data.banned_only,
+    cursor_data,
+    page_back: data.page_back,
+    limit: data.limit,
+  }
+  .list(&mut context.pool())
+  .await?;
+
+  let next_page = users.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = users.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(Json(AdminListUsersResponse {
+    users,
+    next_page,
+    prev_page,
+  }))
+}

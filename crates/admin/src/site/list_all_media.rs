@@ -1,0 +1,37 @@
+use actix_web::web::{Data, Json, Query};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_image::{
+  api::{ListMedia, ListMediaResponse},
+  LocalImageView,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+
+pub async fn list_all_media(
+  data: Query<ListMedia>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<ListMediaResponse>> {
+  // Only let admins view all media
+  is_admin(&local_user_view)?;
+
+  let cursor_data = if let Some(cursor) = &data.page_cursor {
+    Some(LocalImageView::from_cursor(cursor, &mut context.pool()).await?)
+  } else {
+    None
+  };
+
+  let images =
+    LocalImageView::get_all_paged(&mut context.pool(), cursor_data, data.page_back, data.limit)
+      .await?;
+
+  let next_page = images.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = images.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(Json(ListMediaResponse {
+    images,
+    next_page,
+    prev_page,
+  }))
+}

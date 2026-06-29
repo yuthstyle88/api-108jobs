@@ -538,6 +538,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_108jobs_admin"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_api_utils",
+ "app_108jobs_core",
+ "app_108jobs_db",
+ "app_108jobs_db_views_bank_account",
+ "app_108jobs_db_views_currency",
+ "app_108jobs_db_views_inbox_combined",
+ "app_108jobs_db_views_local_image",
+ "app_108jobs_db_views_local_user",
+ "app_108jobs_db_views_modlog_combined",
+ "app_108jobs_db_views_person",
+ "app_108jobs_db_views_post",
+ "app_108jobs_db_views_proposal",
+ "app_108jobs_db_views_registration_applications",
+ "app_108jobs_db_views_site",
+ "app_108jobs_db_views_wallet",
+ "chrono",
+ "diesel",
+ "diesel-async",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "app_108jobs_api"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -672,6 +703,7 @@ version = "1.0.0-alpha.5"
 dependencies = [
  "actix",
  "actix-web",
+ "app_108jobs_admin",
  "app_108jobs_api",
  "app_108jobs_api_crud",
  "app_108jobs_api_utils",

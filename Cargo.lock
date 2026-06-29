@@ -675,6 +675,7 @@ dependencies = [
  "app_108jobs_api",
  "app_108jobs_api_crud",
  "app_108jobs_api_utils",
+ "app_108jobs_chat",
  "app_108jobs_core",
  "app_108jobs_db",
  "app_108jobs_identity",
@@ -744,6 +745,20 @@ dependencies = [
  "uuid",
  "webmention",
  "webpage",
+]
+
+[[package]]
+name = "app_108jobs_chat"
+version = "1.0.0-alpha.5"
+dependencies = [
+ "actix-web",
+ "app_108jobs_api_utils",
+ "app_108jobs_core",
+ "app_108jobs_db",
+ "app_108jobs_db_views_chat",
+ "app_108jobs_db_views_local_user",
+ "chrono",
+ "tracing",
 ]
 
 [[package]]

@@ -1,0 +1,66 @@
+[package]
+name = "app_108jobs_http"
+publish = false
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "app_108jobs_http"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+default = []
+full = []
+
+[dependencies]
+app_108jobs_core = { workspace = true }
+app_108jobs_db = { workspace = true, features = ["full", "test-utils"] }
+app_108jobs_api_utils = { workspace = true }
+app_108jobs_email = { workspace = true }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person = { workspace = true, features = ["full"] }
+app_108jobs_db_views_post = { workspace = true, features = ["full"] }
+app_108jobs_db_views_proposal = { workspace = true, features = ["full"] }
+app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
+app_108jobs_db_views_category = { workspace = true, features = ["full"] }
+app_108jobs_db_views_custom_emoji = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_image = { workspace = true, features = ["full"] }
+app_108jobs_db_views_inbox_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person_content_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person_liked_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person_saved_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_registration_applications = { workspace = true, features = ["full"] }
+app_108jobs_db_views_report_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_reports = { workspace = true, features = ["full"] }
+app_108jobs_db_views_search_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_user_review = { workspace = true, features = ["full"] }
+actix-web = { workspace = true }
+tracing = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+chrono = { workspace = true }
+url = { workspace = true }
+bcrypt = { workspace = true }
+moka = { workspace = true }
+p256 = { workspace = true }
+rand = { workspace = true }
+regex = { workspace = true }
+hex = { workspace = true }
+anyhow = { workspace = true }
+futures-util = { workspace = true }
+uuid = { workspace = true }
+accept-language = "3.1.0"

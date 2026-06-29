@@ -1,0 +1,86 @@
+use actix_web::web::{Data, Json, Query};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db::{
+  source::{user_review::UserReview, workflow::Workflow},
+  traits::PaginationCursorBuilder,
+};
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_user_review::{
+  api::SubmitUserReviewRequest,
+  ListUserReviewsQuery,
+  ListUserReviewsResponse,
+  SubmitUserReviewResponse,
+  UserReviewView,
+  ValidSubmitUserReviewRequest,
+};
+
+pub async fn submit_user_review(
+  data: Json<SubmitUserReviewRequest>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SubmitUserReviewResponse>> {
+  let validated: ValidSubmitUserReviewRequest = data.into_inner().try_into()?;
+  let reviewer_person_id = local_user_view.person.id;
+  let reviewee_id = validated.0.reviewee_id;
+  let workflow_id = validated.0.workflow_id;
+  let rating = validated.0.rating;
+  let comment = validated.0.proposal;
+
+  // Ensure the workflow exists
+  if !Workflow::exists(&mut context.pool(), workflow_id).await? {
+    Err(FastJobErrorType::WorkflowDoesNotExist)?;
+  }
+
+  // Upsert review based on (reviewer, reviewee, workflow)
+  let review = UserReview::upsert_by_triplet(
+    &mut context.pool(),
+    reviewer_person_id,
+    reviewee_id,
+    workflow_id,
+    rating,
+    comment,
+  )
+  .await?;
+
+  Ok(Json(SubmitUserReviewResponse { review }))
+}
+
+pub async fn list_user_reviews(
+  data: Query<ListUserReviewsQuery>,
+  context: Data<FastJobContext>,
+) -> FastJobResult<Json<ListUserReviewsResponse>> {
+  let cursor_data = if let Some(cursor) = &data.page_cursor {
+    Some(UserReviewView::from_cursor(cursor, &mut context.pool()).await?)
+  } else {
+    None
+  };
+
+  // Sanitize limit: default 20, clamp to 1..=100
+  let mut lim = data.limit.unwrap_or(20);
+  if lim <= 0 {
+    lim = 20;
+  }
+  if lim > 100 {
+    lim = 100;
+  }
+  let lim = Some(lim);
+
+  let results = UserReviewView::list_for_user(
+    &mut context.pool(),
+    data.profile_id,
+    lim,
+    cursor_data,
+    data.page_back,
+  )
+  .await?;
+
+  let next_page = results.last().map(PaginationCursorBuilder::to_cursor);
+  let prev_page = results.first().map(PaginationCursorBuilder::to_cursor);
+
+  Ok(Json(ListUserReviewsResponse {
+    reviews: results,
+    next_page,
+    prev_page,
+  }))
+}

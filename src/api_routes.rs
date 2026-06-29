@@ -35,72 +35,74 @@ use app_108jobs_admin::{
     admin_withdraw_wallet,
   },
 };
-use app_108jobs_api::{
-  category::{
-    random::get_random_category,
-    tag::{create_category_tag, delete_category_tag, update_category_tag},
-  },
-  local_user::{
-    add_admin::add_admin,
-    ban_person::ban_from_site,
-    donation_dialog_shown::donation_dialog_shown,
-    exchange::exchange_key,
-    export_data::export_data,
-    list_created::list_person_created,
-    list_hidden::list_person_hidden,
-    list_liked::list_person_liked,
-    list_media::list_media,
-    list_read::list_person_read,
-    list_saved::list_person_saved,
-    note_person::user_note_person,
-    profile::visit_profile,
-    report_count::report_count,
-    review::{list_user_reviews, submit_user_review},
-    save_settings::save_user_settings,
-    update_term::update_term,
-  },
-  reports::{
-    category_report::{create::create_category_report, resolve::resolve_category_report},
-    comment_report::{create::create_comment_report, resolve::resolve_comment_report},
-    report_combined::list::list_reports,
-  },
-  search::search,
-};
-use app_108jobs_api_crud::{
-  category::{list::list_categories, update::update_category},
-  custom_emoji::{
-    create::create_custom_emoji,
-    delete::delete_custom_emoji,
-    list::list_custom_emojis,
-    update::update_custom_emoji,
-  },
-  oauth_provider::{
-    create::create_oauth_provider,
-    delete::delete_oauth_provider,
-    update::update_oauth_provider,
-  },
-  site::{
-    create::create_site,
-    read::{get_site, health},
-    update::update_site,
-  },
-  tagline::{
-    create::create_tagline,
-    delete::delete_tagline,
-    list::list_taglines,
-    update::update_tagline,
-  },
-  user::{
-    create::{authenticate_with_oauth, register},
-    delete::delete_account,
-    my_user::get_my_user,
-  },
-};
 use app_108jobs_chat::{
   crud::{create::create_chat_room, read::get_chat_room},
   handlers::list::list_chat_rooms,
 };
 use app_108jobs_core::rate_limit::RateLimit;
+use app_108jobs_http::{
+  api::{
+    category::{
+      random::get_random_category,
+      tag::{create_category_tag, delete_category_tag, update_category_tag},
+    },
+    local_user::{
+      add_admin::add_admin,
+      ban_person::ban_from_site,
+      donation_dialog_shown::donation_dialog_shown,
+      exchange::exchange_key,
+      export_data::export_data,
+      list_created::list_person_created,
+      list_hidden::list_person_hidden,
+      list_liked::list_person_liked,
+      list_media::list_media,
+      list_read::list_person_read,
+      list_saved::list_person_saved,
+      note_person::user_note_person,
+      profile::visit_profile,
+      report_count::report_count,
+      review::{list_user_reviews, submit_user_review},
+      save_settings::save_user_settings,
+      update_term::update_term,
+    },
+    reports::{
+      category_report::{create::create_category_report, resolve::resolve_category_report},
+      comment_report::{create::create_comment_report, resolve::resolve_comment_report},
+      report_combined::list::list_reports,
+    },
+    search::search,
+  },
+  crud::{
+    category::{list::list_categories, update::update_category},
+    custom_emoji::{
+      create::create_custom_emoji,
+      delete::delete_custom_emoji,
+      list::list_custom_emojis,
+      update::update_custom_emoji,
+    },
+    oauth_provider::{
+      create::create_oauth_provider,
+      delete::delete_oauth_provider,
+      update::update_oauth_provider,
+    },
+    site::{
+      create::create_site,
+      read::{get_site, health},
+      update::update_site,
+    },
+    tagline::{
+      create::create_tagline,
+      delete::delete_tagline,
+      list::list_taglines,
+      update::update_tagline,
+    },
+    user::{
+      create::{authenticate_with_oauth, register},
+      delete::delete_account,
+      my_user::get_my_user,
+    },
+  },
+};
 use app_108jobs_identity::{
   change_password::change_password,
   change_password_after_reset::change_password_after_reset,

@@ -558,6 +558,30 @@ pub fn build_db_pool_for_tests() -> ActualDbPool {
       format!("{manifest_dir}/../../config/config.hjson"),
     );
   }
+  // Settings validation requires these env vars when email/setup sections are
+  // present in config. Tests never actually send email or bootstrap a site,
+  // so dummy values satisfy the validators without changing test behavior.
+  if std::env::var("app_108jobs_SMTP_CONNECTION_URL").is_err() {
+    std::env::set_var(
+      "app_108jobs_SMTP_CONNECTION_URL",
+      "smtps://test:test@localhost:465",
+    );
+  }
+  if std::env::var("app_108jobs_ADMIN_PASSWORD").is_err() {
+    std::env::set_var("app_108jobs_ADMIN_PASSWORD", "test-admin-password");
+  }
+  if std::env::var("app_108jobs_SCB_API_KEY").is_err() {
+    std::env::set_var("app_108jobs_SCB_API_KEY", "test-scb-key");
+  }
+  if std::env::var("app_108jobs_SCB_API_SECRET").is_err() {
+    std::env::set_var("app_108jobs_SCB_API_SECRET", "test-scb-secret");
+  }
+  if std::env::var("app_108jobs_SCB_MERCHANT_ID").is_err() {
+    std::env::set_var("app_108jobs_SCB_MERCHANT_ID", "test-scb-merchant");
+  }
+  if std::env::var("app_108jobs_SCB_TERMINAL_ID").is_err() {
+    std::env::set_var("app_108jobs_SCB_TERMINAL_ID", "test-scb-terminal");
+  }
   build_db_pool().expect("db pool missing")
 }
 

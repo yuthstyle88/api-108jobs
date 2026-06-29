@@ -699,6 +699,9 @@ pub struct MyUserInfo {
   pub keyword_blocks: Vec<String>,
   pub discussion_languages: Vec<LanguageId>,
   pub wallet: Wallet,
+  /// True when this user has a verified rider profile.
+  /// Lets clients skip the separate GET /riders/profile call on every profile page open.
+  pub is_rider: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

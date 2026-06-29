@@ -617,7 +617,7 @@ mod tests {
 
     let post_aggs_before_delete = Post::read(pool, inserted_post.id).await?;
 
-    assert_eq!(2, post_aggs_before_delete.comments);
+    assert_eq!(2, post_aggs_before_delete.proposals);
     assert_eq!(1, post_aggs_before_delete.score);
     assert_eq!(1, post_aggs_before_delete.upvotes);
     assert_eq!(0, post_aggs_before_delete.downvotes);
@@ -629,7 +629,7 @@ mod tests {
 
     let post_aggs_after_dislike = Post::read(pool, inserted_post.id).await?;
 
-    assert_eq!(2, post_aggs_after_dislike.comments);
+    assert_eq!(2, post_aggs_after_dislike.proposals);
     assert_eq!(0, post_aggs_after_dislike.score);
     assert_eq!(1, post_aggs_after_dislike.upvotes);
     assert_eq!(1, post_aggs_after_dislike.downvotes);
@@ -638,7 +638,7 @@ mod tests {
     Proposal::delete(pool, inserted_comment.id).await?;
     Proposal::delete(pool, inserted_child_comment.id).await?;
     let after_comment_delete = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, after_comment_delete.comments);
+    assert_eq!(0, after_comment_delete.proposals);
     assert_eq!(0, after_comment_delete.score);
     assert_eq!(1, after_comment_delete.upvotes);
     assert_eq!(1, after_comment_delete.downvotes);
@@ -646,7 +646,7 @@ mod tests {
     // Remove the first post like
     PostActions::remove_like(pool, inserted_person.id, inserted_post.id).await?;
     let after_like_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, after_like_remove.comments);
+    assert_eq!(0, after_like_remove.proposals);
     assert_eq!(-1, after_like_remove.score);
     assert_eq!(0, after_like_remove.upvotes);
     assert_eq!(1, after_like_remove.downvotes);
@@ -707,7 +707,7 @@ mod tests {
     let inserted_comment = Proposal::create(pool, &comment_form).await?;
 
     let post_aggregates_before = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(1, post_aggregates_before.comments);
+    assert_eq!(1, post_aggregates_before.proposals);
 
     Proposal::update(
       pool,
@@ -720,7 +720,7 @@ mod tests {
     .await?;
 
     let post_aggregates_after_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_remove.comments);
+    assert_eq!(0, post_aggregates_after_remove.proposals);
 
     Proposal::update(
       pool,
@@ -743,7 +743,7 @@ mod tests {
     .await?;
 
     let post_aggregates_after_delete = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_delete.comments);
+    assert_eq!(0, post_aggregates_after_delete.proposals);
 
     Proposal::update(
       pool,
@@ -756,7 +756,7 @@ mod tests {
     .await?;
 
     let post_aggregates_after_delete_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_delete_remove.comments);
+    assert_eq!(0, post_aggregates_after_delete_remove.proposals);
 
     Proposal::delete(pool, inserted_comment.id).await?;
     Post::delete(pool, inserted_post.id).await?;

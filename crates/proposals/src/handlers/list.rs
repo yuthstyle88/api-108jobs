@@ -112,7 +112,7 @@ pub async fn list_comments(
   let common = list_comments_common(data, context, local_user_view).await?;
 
   Ok(Json(GetCommentsResponse {
-    proposals: common.comments,
+    proposals: common.proposals,
     next_page: common.next_page,
     prev_page: common.prev_page,
   }))
@@ -126,7 +126,7 @@ pub async fn list_comments_slim(
   let common = list_comments_common(data, context, local_user_view).await?;
 
   let comments = common
-    .comments
+    .proposals
     .into_iter()
     .map(ProposalView::map_to_slim)
     .collect();

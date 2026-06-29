@@ -7,6 +7,7 @@ use app_108jobs_db::{
     instance::InstanceActions,
     keyword_block::LocalUserKeywordBlock,
     person::PersonActions,
+    rider::Rider,
   },
   traits::Blockable,
 };
@@ -20,18 +21,20 @@ pub async fn get_my_user(
 ) -> FastJobResult<Json<MyUserInfo>> {
   check_local_user_valid(&local_user_view)?;
 
-  // Build the local user with parallel queries and add it to site response
   let person_id = local_user_view.person.id;
   let local_user_id = local_user_view.local_user.id;
   let pool = &mut context.pool();
 
-  let (instance_blocks, person_blocks, keyword_blocks, discussion_languages, wallet) = app_108jobs_db::try_join_with_pool!(pool => (
-    |pool| InstanceActions::read_blocks_for_person(pool, person_id),
-    |pool| PersonActions::read_blocks_for_person(pool, person_id),
-    |pool| LocalUserKeywordBlock::read(pool, local_user_id),
-    |pool| LocalUserLanguage::read(pool, local_user_id),
-    |pool| WalletView::read_by_user(pool, local_user_id)
-  ))?;
+  let (instance_blocks, person_blocks, keyword_blocks, discussion_languages, wallet, is_rider) =
+    app_108jobs_db::try_join_with_pool!(pool => (
+      |pool| InstanceActions::read_blocks_for_person(pool, person_id),
+      |pool| PersonActions::read_blocks_for_person(pool, person_id),
+      |pool| LocalUserKeywordBlock::read(pool, local_user_id),
+      |pool| LocalUserLanguage::read(pool, local_user_id),
+      |pool| WalletView::read_by_user(pool, local_user_id),
+      |pool| Rider::is_verified_for_user(pool, local_user_id)
+    ))?;
+
   Ok(Json(MyUserInfo {
     local_user_view: local_user_view.clone(),
     category_blocks: Vec::new(),
@@ -40,5 +43,6 @@ pub async fn get_my_user(
     keyword_blocks,
     discussion_languages,
     wallet,
+    is_rider,
   }))
 }

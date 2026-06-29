@@ -87,6 +87,24 @@ impl Rider {
     .await
     .with_fastjob_type(FastJobErrorType::NotFound)
   }
+
+  /// Returns true if this user has a verified (approved) rider profile.
+  /// Used by the account endpoint to avoid a separate /riders/profile call on every app launch.
+  pub async fn is_verified_for_user(
+    pool: &mut DbPool<'_>,
+    local_user_id: LocalUserId,
+  ) -> FastJobResult<bool> {
+    let conn = &mut get_conn(pool).await?;
+
+    select(exists(
+      rider::table
+        .filter(rider::user_id.eq(local_user_id))
+        .filter(rider::is_verified.eq(true)),
+    ))
+    .get_result::<bool>(conn)
+    .await
+    .map_err(|_| FastJobErrorType::DatabaseError.into())
+  }
 }
 
 // ============================================================================

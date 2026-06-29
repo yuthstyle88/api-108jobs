@@ -38,14 +38,6 @@ use app_108jobs_api::{
     list_read::list_person_read,
     list_saved::list_person_saved,
     note_person::user_note_person,
-    notifications::{
-      list_inbox::list_inbox,
-      mark_all_read::mark_all_notifications_read,
-      mark_comment_mention_read::mark_comment_mention_as_read,
-      mark_post_mention_read::mark_post_mention_as_read,
-      mark_reply_read::mark_reply_as_read,
-      unread_count::unread_count,
-    },
     profile::visit_profile,
     report_count::report_count,
     review::{list_user_reviews, submit_user_review},
@@ -183,6 +175,14 @@ use app_108jobs_logistics::{
     },
     status::update_delivery_status,
   },
+};
+use app_108jobs_notifications::{
+  list_inbox::list_inbox,
+  mark_all_read::mark_all_notifications_read,
+  mark_comment_mention_read::mark_comment_mention_as_read,
+  mark_post_mention_read::mark_post_mention_as_read,
+  mark_reply_read::mark_reply_as_read,
+  unread_count::unread_count,
 };
 use app_108jobs_payments::{
   bank_account::{

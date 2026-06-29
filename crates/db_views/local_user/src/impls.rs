@@ -261,11 +261,7 @@ mod tests {
 
     let (alice_base, _) =
       PersonInsertForm::test_form_with_wallet(pool, instance.id, "alice").await?;
-    let alice_form = PersonInsertForm {
-      local: Some(true),
-      ..alice_base
-    };
-    let alice = Person::create(pool, &alice_form).await?;
+    let alice = Person::create(pool, &alice_base).await?;
     let alice_local_user_form = LocalUserInsertForm::test_form(alice.id);
     LocalUser::create(pool, &alice_local_user_form, vec![]).await?;
 

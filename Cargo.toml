@@ -90,6 +90,7 @@ members = [
     "crates/workflow_handlers",
     "crates/jobs",
     "crates/proposals",
+    "crates/logistics",
 ]
 
 [workspace.lints.clippy]
@@ -187,6 +188,7 @@ app_108jobs_payments = { version = "=1.0.0-alpha.5", path = "./crates/payments" 
 app_108jobs_workflow_handlers = { version = "=1.0.0-alpha.5", path = "./crates/workflow_handlers" }
 app_108jobs_jobs = { version = "=1.0.0-alpha.5", path = "./crates/jobs" }
 app_108jobs_proposals = { version = "=1.0.0-alpha.5", path = "./crates/proposals" }
+app_108jobs_logistics = { version = "=1.0.0-alpha.5", path = "./crates/logistics" }
 hound = "3.5.1"
 totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel = { version = "2.2.10", features = [
@@ -297,6 +299,7 @@ app_108jobs_routes = { workspace = true }
 app_108jobs_ws = { workspace = true }
 app_108jobs_jobs = { workspace = true }
 app_108jobs_proposals = { workspace = true }
+app_108jobs_logistics = { workspace = true }
 actix-web = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }

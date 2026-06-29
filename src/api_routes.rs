@@ -26,35 +26,6 @@ use app_108jobs_api::{
     tag::{create_category_tag, delete_category_tag, update_category_tag},
   },
   chat::list::list_chat_rooms,
-  delivery::{
-    assign::assign_delivery_from_proposal,
-    confirm::confirm_delivery_completion,
-    list::{
-      get_active_deliveries,
-      get_cancelled_deliveries,
-      get_completed_deliveries,
-      get_delivery,
-      get_employer_delivery,
-      list_employer_deliveries,
-    },
-    location::{
-      get_location as get_trip_location,
-      post_location as post_trip_location,
-      post_locations_bulk as post_trip_locations_bulk,
-    },
-    rate::{get_rider_ratings, rate_rider},
-    ride::{
-      cancel_ride_session,
-      confirm_ride_assignment,
-      create_ride_session,
-      get_ride_pricing_config,
-      list_available_rides,
-      list_my_ride_sessions,
-      update_ride_meter,
-      update_ride_status,
-    },
-    status::update_delivery_status,
-  },
   local_user::{
     add_admin::add_admin,
     ban_person::ban_from_site,
@@ -118,13 +89,6 @@ use app_108jobs_api_crud::{
     delete::delete_oauth_provider,
     update::update_oauth_provider,
   },
-  rider::{
-    create::create_rider,
-    list::list_riders,
-    profile::{heartbeat, set_accepting, set_online, update_rider},
-    read::get_rider,
-    update::admin_verify_rider,
-  },
   site::{
     create::create_site,
     read::{get_site, health},
@@ -178,6 +142,44 @@ use app_108jobs_jobs::{
     mark_read::mark_post_as_read,
     save::save_post,
     update_notifications::update_post_notifications,
+  },
+};
+use app_108jobs_logistics::{
+  crud::{
+    create::create_rider,
+    list::list_riders,
+    profile::{heartbeat, set_accepting, set_online, update_rider},
+    read::get_rider,
+    update::admin_verify_rider,
+  },
+  handlers::{
+    assign::assign_delivery_from_proposal,
+    confirm::confirm_delivery_completion,
+    list::{
+      get_active_deliveries,
+      get_cancelled_deliveries,
+      get_completed_deliveries,
+      get_delivery,
+      get_employer_delivery,
+      list_employer_deliveries,
+    },
+    location::{
+      get_location as get_trip_location,
+      post_location as post_trip_location,
+      post_locations_bulk as post_trip_locations_bulk,
+    },
+    rate::{get_rider_ratings, rate_rider},
+    ride::{
+      cancel_ride_session,
+      confirm_ride_assignment,
+      create_ride_session,
+      get_ride_pricing_config,
+      list_available_rides,
+      list_my_ride_sessions,
+      update_ride_meter,
+      update_ride_status,
+    },
+    status::update_delivery_status,
   },
 };
 use app_108jobs_payments::{

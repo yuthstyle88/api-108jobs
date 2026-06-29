@@ -203,7 +203,7 @@ impl CategoryLanguage {
   }
 
   /// When site languages are updated, delete all languages of local communities which are not
-  /// also part of site languages. This is because post/comment language is only checked against
+  /// also part of site languages. This is because post/proposal language is only checked against
   /// category language, and it shouldnt be possible to post content in languages which are not
   /// allowed by local site.
   async fn limit_languages(

@@ -47,15 +47,15 @@ impl Crud for Billing {
 
 #[cfg(feature = "full")]
 impl Billing {
-  pub async fn get_by_comment_and_status(
+  pub async fn get_by_proposal_and_status(
     pool: &mut DbPool<'_>,
-    comment_id: crate::newtypes::CommentId,
+    proposal_id: crate::newtypes::ProposalId,
     status: BillingStatus,
   ) -> FastJobResult<Option<Self>> {
     use diesel::ExpressionMethods;
     let conn = &mut get_conn(pool).await?;
     billing::table
-      .filter(billing::comment_id.eq(comment_id))
+      .filter(billing::proposal_id.eq(proposal_id))
       .filter(billing::status.eq(status))
       .first::<Self>(conn)
       .await

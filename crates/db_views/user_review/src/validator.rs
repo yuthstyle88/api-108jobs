@@ -34,7 +34,7 @@ impl TryFrom<ValidSubmitUserReviewRequest> for SubmitUserReviewForm {
       reviewee_id: value.0.reviewee_id,
       workflow_id: value.0.workflow_id,
       rating: value.0.rating,
-      comment: value.0.comment,
+      proposal: value.0.proposal,
     })
   }
 }

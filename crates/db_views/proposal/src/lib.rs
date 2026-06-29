@@ -1,9 +1,9 @@
 use app_108jobs_db::source::{
   category::{Category, CategoryActions},
-  comment::{Comment, CommentActions},
   instance::InstanceActions,
   person::{Person, PersonActions},
   post::Post,
+  proposal::{Proposal, ProposalActions},
   tag::TagsView,
 };
 use serde::{Deserialize, Serialize};
@@ -35,15 +35,15 @@ pub mod validator;
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A comment view.
+/// A proposal view.
 #[serde(rename_all = "camelCase")]
-pub struct CommentView {
+pub struct ProposalView {
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = comment_select_remove_deletes()
     )
   )]
-  pub comment: Comment,
+  pub proposal: Proposal,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -53,7 +53,7 @@ pub struct CommentView {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_actions: Option<CategoryActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -102,12 +102,12 @@ pub struct CommentView {
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A slimmer comment view, without the post, or category.
+/// A slimmer proposal view, without the post, or category.
 #[serde(rename_all = "camelCase")]
-pub struct CommentSlimView {
-  pub comment: Comment,
+pub struct ProposalSlimView {
+  pub proposal: Proposal,
   pub creator: Person,
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   pub person_actions: Option<PersonActions>,
   pub instance_actions: Option<InstanceActions>,
   pub creator_is_admin: bool,

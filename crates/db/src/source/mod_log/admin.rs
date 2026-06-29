@@ -2,9 +2,9 @@ use crate::newtypes::{
   AdminAllowInstanceId,
   AdminBlockInstanceId,
   AdminPurgeCategoryId,
-  AdminPurgeCommentId,
   AdminPurgePersonId,
   AdminPurgePostId,
+  AdminPurgeProposalId,
   CategoryId,
   InstanceId,
   PersonId,
@@ -15,9 +15,9 @@ use crate::schema::{
   admin_allow_instance,
   admin_block_instance,
   admin_purge_category,
-  admin_purge_comment,
   admin_purge_person,
   admin_purge_post,
+  admin_purge_proposal,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -96,14 +96,14 @@ pub struct AdminPurgePostForm {
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(Queryable, Selectable, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = admin_purge_comment))]
+#[cfg_attr(feature = "full", diesel(table_name = admin_purge_proposal))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// When an admin purges a comment.
+/// When an admin purges a proposal.
 #[serde(rename_all = "camelCase")]
-pub struct AdminPurgeComment {
-  pub id: AdminPurgeCommentId,
+pub struct AdminPurgeProposal {
+  pub id: AdminPurgeProposalId,
   pub admin_person_id: PersonId,
   pub post_id: PostId,
   pub reason: Option<String>,
@@ -111,8 +111,8 @@ pub struct AdminPurgeComment {
 }
 
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = admin_purge_comment))]
-pub struct AdminPurgeCommentForm {
+#[cfg_attr(feature = "full", diesel(table_name = admin_purge_proposal))]
+pub struct AdminPurgeProposalForm {
   pub admin_person_id: PersonId,
   pub post_id: PostId,
   pub reason: Option<String>,

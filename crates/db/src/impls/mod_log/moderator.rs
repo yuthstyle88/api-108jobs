@@ -8,8 +8,8 @@ use crate::{
     ModFeaturePostId,
     ModLockPostId,
     ModRemoveCategoryId,
-    ModRemoveCommentId,
     ModRemovePostId,
+    ModRemoveProposalId,
     ModTransferCategoryId,
   },
   schema::{
@@ -21,8 +21,8 @@ use crate::{
     mod_feature_post,
     mod_lock_post,
     mod_remove_category,
-    mod_remove_comment,
     mod_remove_post,
+    mod_remove_proposal,
     mod_transfer_category,
   },
   source::mod_log::moderator::{
@@ -42,10 +42,10 @@ use crate::{
     ModLockPostForm,
     ModRemoveCategory,
     ModRemoveCategoryForm,
-    ModRemoveComment,
-    ModRemoveCommentForm,
     ModRemovePost,
     ModRemovePostForm,
+    ModRemoveProposal,
+    ModRemoveProposalForm,
     ModTransferCategory,
     ModTransferCategoryForm,
   },
@@ -154,14 +154,14 @@ impl Crud for ModFeaturePost {
   }
 }
 
-impl Crud for ModRemoveComment {
-  type InsertForm = ModRemoveCommentForm;
-  type UpdateForm = ModRemoveCommentForm;
-  type IdType = ModRemoveCommentId;
+impl Crud for ModRemoveProposal {
+  type InsertForm = ModRemoveProposalForm;
+  type UpdateForm = ModRemoveProposalForm;
+  type IdType = ModRemoveProposalId;
 
   async fn create(pool: &mut DbPool<'_>, form: &Self::InsertForm) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_remove_comment::table)
+    insert_into(mod_remove_proposal::table)
       .values(form)
       .get_result::<Self>(conn)
       .await
@@ -174,7 +174,7 @@ impl Crud for ModRemoveComment {
     form: &Self::UpdateForm,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
-    diesel::update(mod_remove_comment::table.find(from_id))
+    diesel::update(mod_remove_proposal::table.find(from_id))
       .set(form)
       .get_result::<Self>(conn)
       .await
@@ -182,13 +182,13 @@ impl Crud for ModRemoveComment {
   }
 }
 
-impl ModRemoveComment {
+impl ModRemoveProposal {
   pub async fn create_multiple(
     pool: &mut DbPool<'_>,
-    forms: &Vec<ModRemoveCommentForm>,
+    forms: &Vec<ModRemoveProposalForm>,
   ) -> FastJobResult<usize> {
     let conn = &mut get_conn(pool).await?;
-    insert_into(mod_remove_comment::table)
+    insert_into(mod_remove_proposal::table)
       .values(forms)
       .execute(conn)
       .await

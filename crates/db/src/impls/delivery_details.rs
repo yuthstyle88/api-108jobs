@@ -2,11 +2,11 @@ use crate::{
   enums::{PostKind, RiderVerificationStatus, TripStatus},
   newtypes::{
     CoinId,
-    CommentId,
     DeliveryDetailsId,
     LocalUserId,
     PersonId,
     PostId,
+    ProposalId,
     RiderId,
     WalletId,
   },
@@ -237,15 +237,15 @@ impl DeliveryDetails {
     Ok(results)
   }
 
-  /// Assign a rider to a delivery from a comment/proposal.
+  /// Assign a rider to a delivery from a proposal/proposal.
   /// This links a rider to a delivery post, tracking who made the assignment
-  /// and which comment (proposal) led to the assignment.
+  /// and which proposal (proposal) led to the assignment.
   pub async fn assign_from_comment(
     pool: &mut DbPool<'_>,
     post_id: PostId,
     rider_id: RiderId,
     assigned_by_person_id: PersonId,
-    comment_id: CommentId,
+    proposal_id: ProposalId,
     sender_name: String,
     sender_phone: String,
     receiver_name: String,
@@ -289,7 +289,7 @@ impl DeliveryDetails {
       delivery_details::dsl::assigned_rider_id.eq(rider_id.0),
       delivery_details::dsl::assigned_at.eq(Utc::now()),
       delivery_details::dsl::assigned_by_person_id.eq(assigned_by_person_id.0),
-      delivery_details::dsl::linked_comment_id.eq(comment_id.0),
+      delivery_details::dsl::linked_proposal_id.eq(proposal_id.0),
       delivery_details::dsl::sender_name.eq(sender_name),
       delivery_details::dsl::sender_phone.eq(sender_phone),
       delivery_details::dsl::receiver_name.eq(receiver_name),
@@ -315,7 +315,7 @@ impl DeliveryDetails {
     rider_id: RiderId,
     employer_local_user_id: LocalUserId,
     employer_person_id: PersonId,
-    comment_id: CommentId,
+    proposal_id: ProposalId,
     sender_name: String,
     sender_phone: String,
     receiver_name: String,
@@ -387,7 +387,7 @@ impl DeliveryDetails {
             delivery_details::dsl::assigned_rider_id.eq(rider_id.0),
             delivery_details::dsl::assigned_at.eq(Utc::now()),
             delivery_details::dsl::assigned_by_person_id.eq(employer_person_id.0),
-            delivery_details::dsl::linked_comment_id.eq(comment_id.0),
+            delivery_details::dsl::linked_proposal_id.eq(proposal_id.0),
             delivery_details::dsl::sender_name.eq(sender_name),
             delivery_details::dsl::sender_phone.eq(sender_phone),
             delivery_details::dsl::receiver_name.eq(receiver_name),
@@ -443,7 +443,7 @@ impl DeliveryDetails {
       delivery_details::dsl::assigned_rider_id.eq(Option::<i32>::None),
       delivery_details::dsl::assigned_at.eq(Option::<DateTime<Utc>>::None),
       delivery_details::dsl::assigned_by_person_id.eq(Option::<i32>::None),
-      delivery_details::dsl::linked_comment_id.eq(Option::<i32>::None),
+      delivery_details::dsl::linked_proposal_id.eq(Option::<i32>::None),
       delivery_details::dsl::status.eq(TripStatus::Pending),
       delivery_details::dsl::updated_at.eq(Utc::now()),
     ))

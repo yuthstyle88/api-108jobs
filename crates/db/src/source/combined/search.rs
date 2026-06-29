@@ -1,4 +1,4 @@
-use crate::newtypes::{CategoryId, CommentId, PersonId, PostId, SearchCombinedId};
+use crate::newtypes::{CategoryId, PersonId, PostId, ProposalId, SearchCombinedId};
 #[cfg(feature = "full")]
 use crate::schema::search_combined;
 use chrono::{DateTime, Utc};
@@ -22,7 +22,7 @@ pub struct SearchCombined {
   pub published_at: DateTime<Utc>,
   pub score: i64,
   pub post_id: Option<PostId>,
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
   pub category_id: Option<CategoryId>,
   pub person_id: Option<PersonId>,
 }

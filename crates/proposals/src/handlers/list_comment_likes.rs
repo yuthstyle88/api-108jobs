@@ -1,8 +1,8 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
 use app_108jobs_core::error::FastJobResult;
-use app_108jobs_db_views_comment::api::{ListCommentLikes, ListCommentLikesResponse};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::api::{ListCommentLikes, ListCommentLikesResponse};
 use app_108jobs_db_views_vote::VoteView;
 
 /// Lists likes for a comment
@@ -14,14 +14,14 @@ pub async fn list_comment_likes(
   is_admin(&local_user_view)?;
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {
-    Some(VoteView::from_comment_actions_cursor(cursor, &mut context.pool()).await?)
+    Some(VoteView::from_proposal_actions_cursor(cursor, &mut context.pool()).await?)
   } else {
     None
   };
 
-  let comment_likes = VoteView::list_for_comment(
+  let comment_likes = VoteView::list_for_proposal(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     cursor_data,
     data.page_back,
     data.limit,
@@ -30,10 +30,10 @@ pub async fn list_comment_likes(
 
   let next_page = comment_likes
     .last()
-    .map(VoteView::to_comment_actions_cursor);
+    .map(VoteView::to_proposal_actions_cursor);
   let prev_page = comment_likes
     .first()
-    .map(VoteView::to_comment_actions_cursor);
+    .map(VoteView::to_proposal_actions_cursor);
 
   Ok(Json(ListCommentLikesResponse {
     comment_likes,

@@ -1,29 +1,29 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  listing_defaults::{comment_sort_type_with_default, listing_type_with_default},
+  listing_defaults::{listing_type_with_default, proposal_sort_type_with_default},
   utils::check_private_instance,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   newtypes::PaginationCursor,
-  source::{category::Category, comment::Comment},
+  source::{category::Category, proposal::Proposal},
   traits::{Crud, PaginationCursorBuilder},
 };
-use app_108jobs_db_views_comment::{
-  api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},
-  impls::CommentQuery,
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{GetComments, GetCommentsResponse, GetCommentsSlimResponse},
+  impls::ProposalQuery,
+  ProposalView,
+};
 
 struct CommentsCommonOutput {
-  comments: Vec<CommentView>,
+  proposals: Vec<ProposalView>,
   next_page: Option<PaginationCursor>,
   prev_page: Option<PaginationCursor>,
 }
 
-/// A common fetcher for both the CommentView, and CommentSlimView.
+/// A common fetcher for both the ProposalView, and ProposalSlimView.
 async fn list_comments_common(
   data: Query<GetComments>,
   context: Data<FastJobContext>,
@@ -43,7 +43,7 @@ async fn list_comments_common(
     data.category_id
   };
   let local_user_ref = local_user_view.as_ref().map(|u| &u.local_user);
-  let sort = Some(comment_sort_type_with_default(
+  let sort = Some(proposal_sort_type_with_default(
     data.sort,
     local_user_ref,
     &site_view.local_site,
@@ -62,7 +62,7 @@ async fn list_comments_common(
 
   // If a parent_id is given, fetch the comment to get the path
   let parent_path_ = if let Some(parent_id) = parent_id {
-    Some(Comment::read(&mut context.pool(), parent_id).await?.path)
+    Some(Proposal::read(&mut context.pool(), parent_id).await?.path)
   } else {
     None
   };
@@ -72,13 +72,13 @@ async fn list_comments_common(
   let local_user = local_user_view.as_ref().map(|l| &l.local_user);
 
   let cursor_data = if let Some(cursor) = &data.page_cursor {
-    Some(CommentView::from_cursor(cursor, &mut context.pool()).await?)
+    Some(ProposalView::from_cursor(cursor, &mut context.pool()).await?)
   } else {
     None
   };
   let page_back = data.page_back;
 
-  let comments = CommentQuery {
+  let comments = ProposalQuery {
     listing_type,
     sort,
     time_range_seconds,
@@ -98,7 +98,7 @@ async fn list_comments_common(
   let prev_page = comments.first().map(PaginationCursorBuilder::to_cursor);
 
   Ok(CommentsCommonOutput {
-    comments,
+    proposals: comments,
     next_page,
     prev_page,
   })
@@ -112,7 +112,7 @@ pub async fn list_comments(
   let common = list_comments_common(data, context, local_user_view).await?;
 
   Ok(Json(GetCommentsResponse {
-    comments: common.comments,
+    proposals: common.proposals,
     next_page: common.next_page,
     prev_page: common.prev_page,
   }))
@@ -126,13 +126,13 @@ pub async fn list_comments_slim(
   let common = list_comments_common(data, context, local_user_view).await?;
 
   let comments = common
-    .comments
+    .proposals
     .into_iter()
-    .map(CommentView::map_to_slim)
+    .map(ProposalView::map_to_slim)
     .collect();
 
   Ok(Json(GetCommentsSlimResponse {
-    comments,
+    proposals: comments,
     next_page: common.next_page,
     prev_page: common.prev_page,
   }))

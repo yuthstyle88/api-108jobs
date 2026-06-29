@@ -2,31 +2,31 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::{
-  source::comment::{CommentActions, CommentSavedForm},
+  source::proposal::{ProposalActions, ProposalSavedForm},
   traits::Saveable,
 };
-use app_108jobs_db_views_comment::{
-  api::{CommentResponse, SaveComment},
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{ProposalResponse, SaveComment},
+  ProposalView,
+};
 
 pub async fn save_comment(
   data: Json<SaveComment>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
-  let comment_saved_form = CommentSavedForm::new(local_user_view.person.id, data.comment_id);
+) -> FastJobResult<Json<ProposalResponse>> {
+  let proposal_saved_form = ProposalSavedForm::new(local_user_view.person.id, data.proposal_id);
 
   if data.save {
-    CommentActions::save(&mut context.pool(), &comment_saved_form).await?;
+    ProposalActions::save(&mut context.pool(), &proposal_saved_form).await?;
   } else {
-    CommentActions::unsave(&mut context.pool(), &comment_saved_form).await?;
+    ProposalActions::unsave(&mut context.pool(), &proposal_saved_form).await?;
   }
 
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
-  let comment_view = CommentView::read(
+  let proposal_view = ProposalView::read(
     &mut context.pool(),
     comment_id,
     Some(&local_user_view.local_user),
@@ -34,5 +34,5 @@ pub async fn save_comment(
   )
   .await?;
 
-  Ok(Json(CommentResponse { comment_view }))
+  Ok(Json(ProposalResponse { proposal_view }))
 }

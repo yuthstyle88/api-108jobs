@@ -3,9 +3,9 @@ use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
     get_active_rider_by_person,
-    verify_comment_author,
-    verify_comment_on_post,
     verify_post_creator,
+    verify_proposal_author,
+    verify_proposal_on_post,
   },
 };
 use app_108jobs_core::error::FastJobResult;
@@ -42,7 +42,7 @@ pub async fn assign_delivery_from_proposal(
   local_user_view: LocalUserView,
 ) -> FastJobResult<Json<SuccessResponse>> {
   let post_id = path.into_inner();
-  let comment_id = form.comment_id;
+  let comment_id = form.proposal_id;
   let rider_person_id = form.person_id;
   let sender_name = form.sender_name.clone();
   let sender_phone = form.sender_phone.clone();
@@ -65,10 +65,10 @@ pub async fn assign_delivery_from_proposal(
         verify_post_creator(&mut pool, post_id, employer_person_id).await?;
 
         // Get the comment and verify it's on this post
-        let comment = verify_comment_on_post(&mut pool, comment_id, post_id).await?;
+        let comment = verify_proposal_on_post(&mut pool, comment_id, post_id).await?;
 
         // Verify the comment author matches the provided person_id
-        verify_comment_author(&comment, rider_person_id)?;
+        verify_proposal_author(&comment, rider_person_id)?;
 
         // Get the rider from the person_id
         let rider = get_active_rider_by_person(&mut pool, rider_person_id).await?;

@@ -73,14 +73,14 @@ impl UserReview {
     reviewee_id: PersonId,
     workflow_id: WorkflowId,
     rating: i16,
-    comment: Option<String>,
+    proposal: Option<String>,
   ) -> FastJobResult<Self> {
     if let Some(existing) =
       Self::get_by_triplet(pool, reviewer_id, reviewee_id, workflow_id).await?
     {
       let form = UserReviewUpdateForm {
         rating: Some(rating),
-        comment: Some(comment),
+        proposal: Some(proposal),
         updated_at: Some(Some(Utc::now())),
       };
       return Self::update(pool, existing.id, &form).await;
@@ -90,7 +90,7 @@ impl UserReview {
       reviewee_id,
       workflow_id,
       rating,
-      comment,
+      proposal,
       created_at: Some(Utc::now()),
       updated_at: Some(None),
     };

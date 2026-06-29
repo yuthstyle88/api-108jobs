@@ -33,7 +33,7 @@ pub async fn export_data(
   .into_iter()
   .map(|u| match u {
     PersonContentCombinedView::Post(pv) => Post(pv.post),
-    PersonContentCombinedView::Comment(cv) => Comment(cv.comment),
+    PersonContentCombinedView::Proposal(cv) => Proposal(cv.proposal),
   })
   .collect();
 
@@ -45,8 +45,8 @@ pub async fn export_data(
   .await?
   .into_iter()
   .map(|u| match u {
-    InboxCombinedView::CommentReply(cr) => Comment(cr.comment),
-    InboxCombinedView::CommentMention(cm) => Comment(cm.comment),
+    InboxCombinedView::ProposalReply(cr) => Proposal(cr.proposal),
+    InboxCombinedView::ProposalMention(cm) => Proposal(cm.proposal),
     InboxCombinedView::PostMention(pm) => Post(pm.post),
   })
   .collect();

@@ -160,7 +160,7 @@ impl CategoryQuery<'_> {
 
     pq = match sort {
       Hot => pq.then_order_by(key::hot_rank),
-      Comments => pq.then_order_by(key::comments),
+      Proposals => pq.then_order_by(key::proposals),
       Posts => pq.then_order_by(key::posts),
       New => pq.then_order_by(key::published_at),
       Old => pq.then_order_by(key::published_at),

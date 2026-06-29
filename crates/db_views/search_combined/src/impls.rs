@@ -1,9 +1,9 @@
 use crate::{
   CategoryView,
-  CommentView,
   LocalUserView,
   PersonView,
   PostView,
+  ProposalView,
   SearchCombinedView,
   SearchCombinedViewInternal,
   SearchPostView,
@@ -12,7 +12,7 @@ use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   enums::{IntendedUse, JobType, PostKind, TripStatus},
   newtypes::{CategoryId, Coin, InstanceId, LanguageId, PaginationCursor, PersonId, PostId},
-  schema::{category, comment, delivery_details, person, post, ride_session, search_combined},
+  schema::{category, delivery_details, person, post, proposal, ride_session, search_combined},
   source::{
     combined::search::{search_combined_keys as key, SearchCombined},
     site::Site,
@@ -31,11 +31,11 @@ use app_108jobs_db::{
       creator_local_user_admin_join,
       image_details_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
       my_post_actions_join,
+      my_proposal_actions_join,
     },
     seconds_to_pg_interval,
     DbPool,
@@ -70,9 +70,9 @@ impl SearchCombinedViewInternal {
       search_combined::person_id
         .eq(item_creator.nullable())
         .or(
-          search_combined::comment_id
+          search_combined::proposal_id
             .is_not_null()
-            .and(comment::creator_id.eq(item_creator)),
+            .and(proposal::creator_id.eq(item_creator)),
         )
         .or(
           search_combined::post_id
@@ -82,17 +82,17 @@ impl SearchCombinedViewInternal {
         .and(not(person::deleted)),
     );
 
-    let comment_join = comment::table.on(
-      search_combined::comment_id
-        .eq(comment::id.nullable())
-        .and(not(comment::removed))
-        .and(not(comment::deleted)),
+    let comment_join = proposal::table.on(
+      search_combined::proposal_id
+        .eq(proposal::id.nullable())
+        .and(not(proposal::removed))
+        .and(not(proposal::deleted)),
     );
 
     let post_join = post::table.on(
       search_combined::post_id
         .eq(post::id.nullable())
-        .or(comment::post_id.eq(post::id))
+        .or(proposal::post_id.eq(post::id))
         .and(not(post::removed))
         .and(not(post::deleted)),
     );
@@ -108,7 +108,7 @@ impl SearchCombinedViewInternal {
 
     let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
-    let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
+    let my_proposal_actions_join: my_proposal_actions_join = my_proposal_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
     let my_instance_actions_person_join: my_instance_actions_person_join =
       my_instance_actions_person_join(my_person_id);
@@ -130,7 +130,7 @@ impl SearchCombinedViewInternal {
       .left_join(creator_local_instance_actions_join)
       .left_join(my_post_actions_join)
       .left_join(my_person_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
       .left_join(image_details_join())
   }
 }
@@ -152,7 +152,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
       SearchCombinedView::Post(v) => ('P', v.post_view.post.id.0),
-      SearchCombinedView::Comment(v) => ('C', v.comment.id.0),
+      SearchCombinedView::Proposal(v) => ('C', v.proposal.id.0),
       SearchCombinedView::Category(v) => ('O', v.category.id.0),
       SearchCombinedView::Person(v) => ('E', v.person.id.0),
     };
@@ -180,7 +180,7 @@ impl PaginationCursorBuilder for SearchCombinedView {
 
     query = match prefix {
       'P' => query.filter(search_combined::post_id.eq(id)),
-      'C' => query.filter(search_combined::comment_id.eq(id)),
+      'C' => query.filter(search_combined::proposal_id.eq(id)),
       'O' => query.filter(search_combined::category_id.eq(id)),
       'E' => query.filter(search_combined::person_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
@@ -233,7 +233,7 @@ impl SearchCombinedQuery {
 
     // Some helpers
     let is_post = search_combined::post_id.is_not_null();
-    let is_comment = search_combined::comment_id.is_not_null();
+    let is_comment = search_combined::proposal_id.is_not_null();
     let is_category = search_combined::category_id.is_not_null();
     let is_person = search_combined::person_id.is_not_null();
 
@@ -292,7 +292,7 @@ impl SearchCombinedQuery {
     query = match self.type_.unwrap_or_default() {
       SearchType::All => query,
       SearchType::Posts => query.filter(is_post),
-      SearchType::Comments => query.filter(is_comment),
+      SearchType::Proposals => query.filter(is_comment),
       SearchType::Categories => query.filter(is_category),
       SearchType::Users => query.filter(is_person),
     };
@@ -432,18 +432,18 @@ impl InternalToCombinedView for SearchCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment), Some(creator), Some(post)) =
-      (v.comment, v.item_creator.clone(), v.post.clone())
+    if let (Some(proposal), Some(creator), Some(post)) =
+      (v.proposal, v.item_creator.clone(), v.post.clone())
     {
-      Some(SearchCombinedView::Comment(CommentView {
-        comment,
+      Some(SearchCombinedView::Proposal(ProposalView {
+        proposal,
         post,
         category: v.category,
         creator,
         category_actions: v.category_actions,
         instance_actions: v.instance_actions,
         person_actions: v.person_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         creator_is_admin: v.item_creator_is_admin,
         post_tags: v.post_tags,
         can_mod: v.can_mod,

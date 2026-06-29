@@ -2,8 +2,8 @@
 
 pub mod sql_types {
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-  #[diesel(postgres_type(name = "comment_sort_type_enum"))]
-  pub struct CommentSortTypeEnum;
+  #[diesel(postgres_type(name = "proposal_sort_type_enum"))]
+  pub struct ProposalSortTypeEnum;
 
   #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
   #[diesel(postgres_type(name = "category_follower_state"))]
@@ -151,7 +151,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    admin_purge_comment (id) {
+    admin_purge_proposal (id) {
         id -> Int4,
         admin_person_id -> Int4,
         post_id -> Int4,
@@ -199,7 +199,7 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use diesel_ltree::sql_types::Ltree;
-    comment (id) {
+    proposal (id) {
         id -> Int4,
         creator_id -> Int4,
         post_id -> Int4,
@@ -224,7 +224,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    comment_actions (person_id, comment_id) {
+    proposal_actions (person_id, comment_id) {
         person_id -> Int4,
         comment_id -> Int4,
         like_score -> Nullable<Int2>,
@@ -234,7 +234,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    comment_reply (id) {
+    proposal_reply (id) {
         id -> Int4,
         recipient_id -> Int4,
         comment_id -> Int4,
@@ -244,7 +244,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    comment_report (id) {
+    proposal_report (id) {
         id -> Int4,
         creator_id -> Int4,
         comment_id -> Int4,
@@ -266,7 +266,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
         post_id -> Nullable<Int4>,
-        current_comment_id -> Nullable<Int4>,
+        current_proposal_id -> Nullable<Int4>,
         last_message_id -> Nullable<Varchar>,
         last_message_at -> Nullable<Timestamptz>,
     }
@@ -352,7 +352,7 @@ diesel::table! {
         random_number -> Int2,
         subscribers -> Int8,
         posts -> Int8,
-        comments -> Int8,
+        proposals -> Int8,
         users_active_day -> Int8,
         users_active_week -> Int8,
         users_active_month -> Int8,
@@ -458,8 +458,8 @@ diesel::table! {
     inbox_combined (id) {
         id -> Int4,
         published_at -> Timestamptz,
-        comment_reply_id -> Nullable<Int4>,
-        person_comment_mention_id -> Nullable<Int4>,
+        proposal_reply_id -> Nullable<Int4>,
+        person_proposal_mention_id -> Nullable<Int4>,
         person_post_mention_id -> Nullable<Int4>,
     }
 }
@@ -512,7 +512,7 @@ diesel::table! {
     use super::sql_types::RegistrationModeEnum;
     use super::sql_types::PostListingModeEnum;
     use super::sql_types::PostSortTypeEnum;
-    use super::sql_types::CommentSortTypeEnum;
+    use super::sql_types::ProposalSortTypeEnum;
 
     local_site (id) {
         id -> Int4,
@@ -537,13 +537,13 @@ diesel::table! {
         reports_email_admins -> Bool,
         default_post_listing_mode -> PostListingModeEnum,
         default_post_sort_type -> PostSortTypeEnum,
-        default_comment_sort_type -> CommentSortTypeEnum,
+        default_proposal_sort_type -> ProposalSortTypeEnum,
         oauth_registration -> Bool,
         default_post_time_range_seconds -> Nullable<Int4>,
         disallow_self_promotion_content -> Bool,
         users -> Int8,
         posts -> Int8,
-        comments -> Int8,
+        proposals -> Int8,
         communities -> Int8,
         users_active_day -> Int8,
         users_active_week -> Int8,
@@ -566,8 +566,8 @@ diesel::table! {
         register_interval_seconds -> Int4,
         image_max_requests -> Int4,
         image_interval_seconds -> Int4,
-        comment_max_requests -> Int4,
-        comment_interval_seconds -> Int4,
+        proposal_max_requests -> Int4,
+        proposal_interval_seconds -> Int4,
         search_max_requests -> Int4,
         search_interval_seconds -> Int4,
         published_at -> Timestamptz,
@@ -591,7 +591,7 @@ diesel::table! {
     use super::sql_types::PostSortTypeEnum;
     use super::sql_types::ListingTypeEnum;
     use super::sql_types::PostListingModeEnum;
-    use super::sql_types::CommentSortTypeEnum;
+    use super::sql_types::ProposalSortTypeEnum;
     use super::sql_types::VoteShowEnum;
 
     local_user (id) {
@@ -621,8 +621,8 @@ diesel::table! {
         totp_2fa_enabled -> Bool,
         enable_keyboard_navigation -> Bool,
         enable_animated_images -> Bool,
-        collapse_bot_comments -> Bool,
-        default_comment_sort_type -> CommentSortTypeEnum,
+        collapse_bot_proposals -> Bool,
+        default_proposal_sort_type -> ProposalSortTypeEnum,
         auto_mark_fetched_posts_as_read -> Bool,
         last_donation_notification_at -> Timestamptz,
         hide_media -> Bool,
@@ -744,7 +744,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    mod_remove_comment (id) {
+    mod_remove_proposal (id) {
         id -> Int4,
         mod_person_id -> Int4,
         comment_id -> Int4,
@@ -792,7 +792,7 @@ diesel::table! {
         published_at -> Timestamptz,
         admin_allow_instance_id -> Nullable<Int4>,
         admin_block_instance_id -> Nullable<Int4>,
-        admin_purge_comment_id -> Nullable<Int4>,
+        admin_purge_proposal_id -> Nullable<Int4>,
         admin_purge_category_id -> Nullable<Int4>,
         admin_purge_person_id -> Nullable<Int4>,
         admin_purge_post_id -> Nullable<Int4>,
@@ -802,7 +802,7 @@ diesel::table! {
         mod_ban_from_category_id -> Nullable<Int4>,
         mod_feature_post_id -> Nullable<Int4>,
         mod_lock_post_id -> Nullable<Int4>,
-        mod_remove_comment_id -> Nullable<Int4>,
+        mod_remove_proposal_id -> Nullable<Int4>,
         mod_remove_category_id -> Nullable<Int4>,
         mod_remove_post_id -> Nullable<Int4>,
         mod_transfer_category_id -> Nullable<Int4>,
@@ -871,8 +871,8 @@ diesel::table! {
         instance_id -> Int4,
         post_count -> Int8,
         post_score -> Int8,
-        comment_count -> Int8,
-        comment_score -> Int8,
+        proposal_count -> Int8,
+        proposal_score -> Int8,
         wallet_id -> Int4,
         contacts -> Nullable<Text>,
         skills -> Nullable<Text>,
@@ -899,7 +899,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    person_comment_mention (id) {
+    person_proposal_mention (id) {
         id -> Int4,
         recipient_id -> Int4,
         comment_id -> Int4,
@@ -913,7 +913,7 @@ diesel::table! {
         id -> Int4,
         published_at -> Timestamptz,
         post_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
+        proposal_id -> Nullable<Int4>,
     }
 }
 
@@ -924,7 +924,7 @@ diesel::table! {
         like_score -> Int2,
         person_id -> Int4,
         post_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
+        proposal_id -> Nullable<Int4>,
     }
 }
 
@@ -944,7 +944,7 @@ diesel::table! {
         saved_at -> Timestamptz,
         person_id -> Int4,
         post_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
+        proposal_id -> Nullable<Int4>,
     }
 }
 
@@ -979,12 +979,12 @@ diesel::table! {
         url_content_type -> Nullable<Text>,
         alt_text -> Nullable<Text>,
         scheduled_publish_time_at -> Nullable<Timestamptz>,
-        comments -> Int8,
+        proposals -> Int8,
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        newest_comment_time_necro_at -> Timestamptz,
-        newest_comment_time_at -> Timestamptz,
+        newest_proposal_time_necro_at -> Timestamptz,
+        newest_proposal_time_at -> Timestamptz,
         hot_rank -> Float8,
         hot_rank_active -> Float8,
         controversy_rank -> Float8,
@@ -1034,7 +1034,7 @@ diesel::table! {
         assigned_rider_id -> Nullable<Int4>,
         assigned_at -> Nullable<Timestamptz>,
         assigned_by_person_id -> Nullable<Int4>,
-        linked_comment_id -> Nullable<Int4>,
+        linked_proposal_id -> Nullable<Int4>,
         delivery_fee -> Int4,
         employer_confirmed_at -> Nullable<Timestamptz>,
         employer_wallet_transaction_id -> Nullable<Int4>,
@@ -1092,8 +1092,8 @@ diesel::table! {
         post_id -> Int4,
         person_id -> Int4,
         read_at -> Nullable<Timestamptz>,
-        read_comments_at -> Nullable<Timestamptz>,
-        read_comments_amount -> Nullable<Int8>,
+        read_proposals_at -> Nullable<Timestamptz>,
+        read_proposals_amount -> Nullable<Int8>,
         saved_at -> Nullable<Timestamptz>,
         liked_at -> Nullable<Timestamptz>,
         like_score -> Nullable<Int2>,
@@ -1158,7 +1158,7 @@ diesel::table! {
         id -> Int4,
         published_at -> Timestamptz,
         post_report_id -> Nullable<Int4>,
-        comment_report_id -> Nullable<Int4>,
+        proposal_report_id -> Nullable<Int4>,
         category_report_id -> Nullable<Int4>,
     }
 }
@@ -1169,7 +1169,7 @@ diesel::table! {
         published_at -> Timestamptz,
         score -> Int8,
         post_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
+        proposal_id -> Nullable<Int4>,
         category_id -> Nullable<Int4>,
         person_id -> Nullable<Int4>,
     }
@@ -1278,7 +1278,7 @@ diesel::table! {
         freelancer_id -> Int4,
         employer_id -> Int4,
         post_id -> Int4,
-        comment_id -> Nullable<Int4>,
+        proposal_id -> Nullable<Int4>,
         amount -> Int4,
         description -> Text,
         status -> BillingStatus,
@@ -1424,7 +1424,7 @@ diesel::table! {
         reviewee_id -> Int4,
         workflow_id -> Int4,
         rating -> Int2,
-        comment -> Nullable<Text>,
+        proposal -> Nullable<Text>,
         created_at -> Timestamptz,
         updated_at -> Nullable<Timestamptz>,
     }
@@ -1517,23 +1517,23 @@ diesel::joinable!(admin_allow_instance -> instance (instance_id));
 diesel::joinable!(admin_allow_instance -> person (admin_person_id));
 diesel::joinable!(admin_block_instance -> instance (instance_id));
 diesel::joinable!(admin_block_instance -> person (admin_person_id));
-diesel::joinable!(admin_purge_comment -> person (admin_person_id));
-diesel::joinable!(admin_purge_comment -> post (post_id));
+diesel::joinable!(admin_purge_proposal -> person (admin_person_id));
+diesel::joinable!(admin_purge_proposal -> post (post_id));
 diesel::joinable!(admin_purge_category -> person (admin_person_id));
 diesel::joinable!(admin_purge_person -> person (admin_person_id));
 diesel::joinable!(admin_purge_post -> category (category_id));
 diesel::joinable!(admin_purge_post -> person (admin_person_id));
-diesel::joinable!(billing -> comment (comment_id));
+diesel::joinable!(billing -> proposal (proposal_id));
 diesel::joinable!(billing -> local_user (freelancer_id));
 diesel::joinable!(billing -> post (post_id));
-diesel::joinable!(comment -> language (language_id));
-diesel::joinable!(comment -> person (creator_id));
-diesel::joinable!(comment -> post (post_id));
-diesel::joinable!(comment_actions -> comment (comment_id));
-diesel::joinable!(comment_actions -> person (person_id));
-diesel::joinable!(comment_reply -> comment (comment_id));
-diesel::joinable!(comment_reply -> person (recipient_id));
-diesel::joinable!(comment_report -> comment (comment_id));
+diesel::joinable!(proposal -> language (language_id));
+diesel::joinable!(proposal -> person (creator_id));
+diesel::joinable!(proposal -> post (post_id));
+diesel::joinable!(proposal_actions -> proposal (comment_id));
+diesel::joinable!(proposal_actions -> person (person_id));
+diesel::joinable!(proposal_reply -> proposal (comment_id));
+diesel::joinable!(proposal_reply -> person (recipient_id));
+diesel::joinable!(proposal_report -> proposal (comment_id));
 diesel::joinable!(category -> instance (instance_id));
 diesel::joinable!(chat_participant -> chat_room (room_id));
 diesel::joinable!(chat_participant -> local_user (member_id));
@@ -1548,8 +1548,8 @@ diesel::joinable!(category_language -> language (language_id));
 diesel::joinable!(category_report -> category (category_id));
 diesel::joinable!(custom_emoji_keyword -> custom_emoji (custom_emoji_id));
 diesel::joinable!(email_verification -> local_user (local_user_id));
-diesel::joinable!(inbox_combined -> comment_reply (comment_reply_id));
-diesel::joinable!(inbox_combined -> person_comment_mention (person_comment_mention_id));
+diesel::joinable!(inbox_combined -> proposal_reply (proposal_reply_id));
+diesel::joinable!(inbox_combined -> person_proposal_mention (person_proposal_mention_id));
 diesel::joinable!(inbox_combined -> person_post_mention (person_post_mention_id));
 diesel::joinable!(instance_actions -> instance (instance_id));
 diesel::joinable!(instance_actions -> person (person_id));
@@ -1573,8 +1573,8 @@ diesel::joinable!(mod_feature_post -> person (mod_person_id));
 diesel::joinable!(mod_feature_post -> post (post_id));
 diesel::joinable!(mod_lock_post -> person (mod_person_id));
 diesel::joinable!(mod_lock_post -> post (post_id));
-diesel::joinable!(mod_remove_comment -> comment (comment_id));
-diesel::joinable!(mod_remove_comment -> person (mod_person_id));
+diesel::joinable!(mod_remove_proposal -> proposal (comment_id));
+diesel::joinable!(mod_remove_proposal -> person (mod_person_id));
 diesel::joinable!(mod_remove_category -> category (category_id));
 diesel::joinable!(mod_remove_category -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> person (mod_person_id));
@@ -1582,7 +1582,7 @@ diesel::joinable!(mod_remove_post -> post (post_id));
 diesel::joinable!(mod_transfer_category -> category (category_id));
 diesel::joinable!(modlog_combined -> admin_allow_instance (admin_allow_instance_id));
 diesel::joinable!(modlog_combined -> admin_block_instance (admin_block_instance_id));
-diesel::joinable!(modlog_combined -> admin_purge_comment (admin_purge_comment_id));
+diesel::joinable!(modlog_combined -> admin_purge_proposal (admin_purge_proposal_id));
 diesel::joinable!(modlog_combined -> admin_purge_category (admin_purge_category_id));
 diesel::joinable!(modlog_combined -> admin_purge_person (admin_purge_person_id));
 diesel::joinable!(modlog_combined -> admin_purge_post (admin_purge_post_id));
@@ -1593,7 +1593,7 @@ diesel::joinable!(modlog_combined -> mod_ban_from_category (mod_ban_from_categor
 diesel::joinable!(modlog_combined -> mod_change_category_visibility (mod_change_category_visibility_id));
 diesel::joinable!(modlog_combined -> mod_feature_post (mod_feature_post_id));
 diesel::joinable!(modlog_combined -> mod_lock_post (mod_lock_post_id));
-diesel::joinable!(modlog_combined -> mod_remove_comment (mod_remove_comment_id));
+diesel::joinable!(modlog_combined -> mod_remove_proposal (mod_remove_proposal_id));
 diesel::joinable!(modlog_combined -> mod_remove_category (mod_remove_category_id));
 diesel::joinable!(modlog_combined -> mod_remove_post (mod_remove_post_id));
 diesel::joinable!(modlog_combined -> mod_transfer_category (mod_transfer_category_id));
@@ -1601,19 +1601,19 @@ diesel::joinable!(oauth_account -> local_user (local_user_id));
 diesel::joinable!(oauth_account -> oauth_provider (oauth_provider_id));
 diesel::joinable!(password_reset_request -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
-diesel::joinable!(person_comment_mention -> comment (comment_id));
+diesel::joinable!(person_proposal_mention -> proposal (comment_id));
 diesel::joinable!(wallet_transaction -> wallet (wallet_id));
 diesel::joinable!(wallet_hold -> wallet (wallet_id));
 diesel::joinable!(wallet_hold -> billing (billing_id));
-diesel::joinable!(person_comment_mention -> person (recipient_id));
-diesel::joinable!(person_content_combined -> comment (comment_id));
+diesel::joinable!(person_proposal_mention -> person (recipient_id));
+diesel::joinable!(person_content_combined -> proposal (proposal_id));
 diesel::joinable!(person_content_combined -> post (post_id));
-diesel::joinable!(person_liked_combined -> comment (comment_id));
+diesel::joinable!(person_liked_combined -> proposal (proposal_id));
 diesel::joinable!(person_liked_combined -> person (person_id));
 diesel::joinable!(person_liked_combined -> post (post_id));
 diesel::joinable!(person_post_mention -> person (recipient_id));
 diesel::joinable!(person_post_mention -> post (post_id));
-diesel::joinable!(person_saved_combined -> comment (comment_id));
+diesel::joinable!(person_saved_combined -> proposal (proposal_id));
 diesel::joinable!(person_saved_combined -> person (person_id));
 diesel::joinable!(person_saved_combined -> post (post_id));
 diesel::joinable!(post -> category (category_id));
@@ -1626,10 +1626,10 @@ diesel::joinable!(post_tag -> post (post_id));
 diesel::joinable!(post_tag -> tag (tag_id));
 diesel::joinable!(registration_application -> local_user (local_user_id));
 diesel::joinable!(registration_application -> person (admin_id));
-diesel::joinable!(report_combined -> comment_report (comment_report_id));
+diesel::joinable!(report_combined -> proposal_report (proposal_report_id));
 diesel::joinable!(report_combined -> category_report (category_report_id));
 diesel::joinable!(report_combined -> post_report (post_report_id));
-diesel::joinable!(search_combined -> comment (comment_id));
+diesel::joinable!(search_combined -> proposal (proposal_id));
 diesel::joinable!(search_combined -> category (category_id));
 diesel::joinable!(search_combined -> person (person_id));
 diesel::joinable!(search_combined -> post (post_id));
@@ -1665,17 +1665,17 @@ diesel::joinable!(ride_meter_snapshot -> ride_session (ride_session_id));
 diesel::allow_tables_to_appear_in_same_query!(
   admin_allow_instance,
   admin_block_instance,
-  admin_purge_comment,
+  admin_purge_proposal,
   admin_purge_category,
   admin_purge_person,
   admin_purge_post,
   billing,
   workflow,
   captcha_answer,
-  comment,
-  comment_actions,
-  comment_reply,
-  comment_report,
+  proposal,
+  proposal_actions,
+  proposal_reply,
+  proposal_report,
   category,
   category_actions,
   category_language,
@@ -1706,7 +1706,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   mod_change_category_visibility,
   mod_feature_post,
   mod_lock_post,
-  mod_remove_comment,
+  mod_remove_proposal,
   mod_remove_category,
   mod_remove_post,
   mod_transfer_category,
@@ -1716,7 +1716,7 @@ diesel::allow_tables_to_appear_in_same_query!(
   password_reset_request,
   person,
   person_actions,
-  person_comment_mention,
+  person_proposal_mention,
   person_content_combined,
   person_liked_combined,
   person_post_mention,

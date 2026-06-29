@@ -224,33 +224,33 @@ where
   }
 }
 
-/// Includes an SQL comment before `T`, which can be used to label auto_explain output
+/// Includes an SQL proposal before `T`, which can be used to label auto_explain output
 #[derive(QueryId)]
 pub struct Commented<T> {
-  comment: String,
+  proposal: String,
   inner: T,
 }
 
 impl<T> Commented<T> {
   pub fn new(inner: T) -> Self {
     Commented {
-      comment: String::new(),
+      proposal: String::new(),
       inner,
     }
   }
 
-  /// Adds `text` to the comment if `condition` is true
+  /// Adds `text` to the proposal if `condition` is true
   pub fn text_if(mut self, text: &str, condition: bool) -> Self {
     if condition {
-      if !self.comment.is_empty() {
-        self.comment.push_str(", ");
+      if !self.proposal.is_empty() {
+        self.proposal.push_str(", ");
       }
-      self.comment.push_str(text);
+      self.proposal.push_str(text);
     }
     self
   }
 
-  /// Adds `text` to the comment
+  /// Adds `text` to the proposal
   pub fn text(self, text: &str) -> Self {
     self.text_if(text, true)
   }
@@ -265,7 +265,7 @@ impl<T: QueryFragment<Pg>> QueryFragment<Pg> for Commented<T> {
     &'b self,
     mut out: diesel::query_builder::AstPass<'_, 'b, Pg>,
   ) -> Result<(), DieselError> {
-    for line in self.comment.lines() {
+    for line in self.proposal.lines() {
       out.push_sql("\n-- ");
       out.push_sql(line);
     }
@@ -279,7 +279,7 @@ impl<T: LimitDsl> LimitDsl for Commented<T> {
 
   fn limit(self, limit: i64) -> Self::Output {
     Commented {
-      comment: self.comment,
+      proposal: self.proposal,
       inner: self.inner.limit(limit),
     }
   }

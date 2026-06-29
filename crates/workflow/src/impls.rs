@@ -189,7 +189,7 @@ async fn set_status_from(
             room_name: None,
             updated_at: Some(Utc::now()),
             post_id: None,
-            current_comment_id: None,
+            current_proposal_id: None,
             last_message_id: None,
             last_message_at: None,
           };
@@ -265,7 +265,7 @@ async fn cancel_any_on(
           room_name: None,
           updated_at: Some(Utc::now()),
           post_id: None,
-          current_comment_id: None,
+          current_proposal_id: None,
           last_message_id: None,
           last_message_at: None,
         };
@@ -946,7 +946,7 @@ impl WorkflowService {
       freelancer_id,
       employer_id: data.employer_id,
       post_id: data.post_id,
-      comment_id: data.comment_id,
+      proposal_id: data.proposal_id,
       room_id: data.room_id.clone(),
       amount: data.amount,
       description: if !data.project_details.is_empty() {
@@ -1344,7 +1344,7 @@ mod workflow_flow_tests {
       created_at: chrono::Utc::now(),
       updated_at: None,
       post_id: Some(post_id),
-      current_comment_id: None,
+      current_proposal_id: None,
     };
     let _ = ChatRoom::create(pool, &chat_form).await.expect("chat room");
 

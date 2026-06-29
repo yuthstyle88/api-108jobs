@@ -2,25 +2,25 @@ use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{context::FastJobContext, utils::check_category_deleted_removed};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
-  source::comment::{Comment, CommentUpdateForm},
+  source::proposal::{Proposal, ProposalUpdateForm},
   traits::Crud,
 };
-use app_108jobs_db_views_comment::{
-  api::{CommentResponse, DistinguishComment},
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{DistinguishComment, ProposalResponse},
+  ProposalView,
+};
 
 pub async fn distinguish_comment(
   data: Json<DistinguishComment>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<ProposalResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
 
-  let orig_comment = CommentView::read(
+  let orig_comment = ProposalView::read(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )
@@ -28,7 +28,7 @@ pub async fn distinguish_comment(
 
   // Verify that only the creator can distinguish
   if local_user_view.person.id != orig_comment.creator.id {
-    Err(FastJobErrorType::NoCommentEditAllowed)?
+    Err(FastJobErrorType::NoProposalEditAllowed)?
   }
 
   check_category_deleted_removed(
@@ -38,21 +38,21 @@ pub async fn distinguish_comment(
       .ok_or(FastJobErrorType::NotFound)?,
   )?;
 
-  // Update the Comment
-  let form = CommentUpdateForm {
+  // Update the Proposal
+  let form = ProposalUpdateForm {
     distinguished: Some(data.distinguished),
     ..Default::default()
   };
 
-  Comment::update(&mut context.pool(), data.comment_id, &form).await?;
+  Proposal::update(&mut context.pool(), data.proposal_id, &form).await?;
 
-  let comment_view = CommentView::read(
+  let proposal_view = ProposalView::read(
     &mut context.pool(),
-    data.comment_id,
+    data.proposal_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
 
-  Ok(Json(CommentResponse { comment_view }))
+  Ok(Json(ProposalResponse { proposal_view }))
 }

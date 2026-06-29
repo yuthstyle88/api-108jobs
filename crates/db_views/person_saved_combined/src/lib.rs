@@ -3,18 +3,18 @@ use app_108jobs_db::{
   source::{
     category::{Category, CategoryActions},
     combined::person_saved::PersonSavedCombined,
-    comment::{Comment, CommentActions},
     delivery_details::DeliveryDetails,
     images::ImageDetails,
     instance::InstanceActions,
     person::{Person, PersonActions},
     post::{Post, PostActions},
+    proposal::{Proposal, ProposalActions},
     tag::TagsView,
   },
   PersonContentType,
 };
-use app_108jobs_db_views_comment::CommentView;
 use app_108jobs_db_views_post::PostView;
+use app_108jobs_db_views_proposal::ProposalView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
@@ -40,7 +40,7 @@ pub(crate) struct PersonSavedCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_saved_combined: PersonSavedCombined,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment: Option<Comment>,
+  pub proposal: Option<Proposal>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -56,7 +56,7 @@ pub(crate) struct PersonSavedCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub image_details: Option<ImageDetails>,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -106,7 +106,7 @@ pub(crate) struct PersonSavedCombinedViewInternal {
 #[serde(tag = "type_")]
 pub enum PersonSavedCombinedView {
   Post(PostView),
-  Comment(CommentView),
+  Proposal(ProposalView),
 }
 
 #[skip_serializing_none]

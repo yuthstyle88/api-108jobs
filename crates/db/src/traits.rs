@@ -213,16 +213,16 @@ pub trait Readable {
     Self: Sized;
 }
 
-pub trait ReadComments {
+pub trait ReadProposals {
   type Form;
   type IdType;
-  fn update_read_comments(
+  fn update_read_proposals(
     pool: &mut DbPool<'_>,
     form: &Self::Form,
   ) -> impl Future<Output = FastJobResult<Self>> + Send
   where
     Self: Sized;
-  fn remove_read_comments(
+  fn remove_read_proposals(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     item_id: Self::IdType,
@@ -299,7 +299,7 @@ pub trait Reportable {
     Self: Sized;
   fn resolve_all_for_object(
     pool: &mut DbPool<'_>,
-    comment_id_: Self::ObjectIdType,
+    proposal_id_: Self::ObjectIdType,
     by_resolver_id: PersonId,
   ) -> impl Future<Output = FastJobResult<usize>> + Send
   where

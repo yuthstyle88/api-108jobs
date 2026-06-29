@@ -178,7 +178,7 @@ fn person_fixture() -> serde_json::Value {
     "botAccount": false,
     "instanceId": 1,
     "postCount": 0,
-    "commentCount": 0,
+    "proposalCount": 0,
     "walletId": 1,
     "available": true,
     "isSecureMessage": false
@@ -204,11 +204,11 @@ fn post_fixture() -> serde_json::Value {
     "languageId": 0,
     "featuredCategory": false,
     "featuredLocal": false,
-    "comments": 0,
+    "proposals": 0,
     "score": 0,
     "upvotes": 0,
     "downvotes": 0,
-    "newestCommentTimeAt": "2026-01-01T00:00:00Z",
+    "newestProposalTimeAt": "2026-01-01T00:00:00Z",
     "reportCount": 0,
     "unresolvedReportCount": 0,
     "intendedUse": "Business",
@@ -306,15 +306,15 @@ mod post {
 }
 
 #[cfg(test)]
-mod comment {
+mod proposal {
   use super::{person_fixture, post_fixture};
-  use app_108jobs_db_views_comment::{
-    api::{CommentResponse, GetCommentsResponse},
-    CommentView,
+  use app_108jobs_db_views_proposal::{
+    api::{GetCommentsResponse, ProposalResponse},
+    ProposalView,
   };
 
-  fn comment_fixture() -> serde_json::Value {
-    // Comment has rename_all = "camelCase".
+  fn proposal_fixture() -> serde_json::Value {
+    // Proposal has rename_all = "camelCase".
     // Required non-Option non-serde(skip) fields:
     // id, creatorId, postId, content, removed, publishedAt, deleted, apId, local,
     // path, distinguished, languageId, score, upvotes, downvotes, childCount,
@@ -328,7 +328,7 @@ mod comment {
       "removed": false,
       "publishedAt": "2026-01-01T00:00:00Z",
       "deleted": false,
-      "apId": "https://example.com/comment/1",
+      "apId": "https://example.com/proposal/1",
       "local": true,
       "path": "0.1",
       "distinguished": false,
@@ -343,12 +343,12 @@ mod comment {
     })
   }
 
-  fn comment_view_fixture() -> serde_json::Value {
-    // CommentView has rename_all = "camelCase".
-    // Required non-Option fields: comment, creator, post, creatorIsAdmin, postTags, canMod,
+  fn proposal_view_fixture() -> serde_json::Value {
+    // ProposalView has rename_all = "camelCase".
+    // Required non-Option fields: proposal, creator, post, creatorIsAdmin, postTags, canMod,
     // creatorBanned, creatorIsModerator, creatorBannedFromCategory.
     serde_json::json!({
-      "comment": comment_fixture(),
+      "proposal": proposal_fixture(),
       "creator": person_fixture(),
       "post": post_fixture(),
       "creatorIsAdmin": false,
@@ -361,43 +361,43 @@ mod comment {
   }
 
   #[test]
-  fn comment_response_wraps_comment_view() {
-    // Flutter ProposalApi.create reads: response["comment_view"] OR response["commentView"]
-    // CommentResponse has rename_all = "camelCase"; field comment_view → "commentView"
+  fn proposal_response_wraps_proposal_view() {
+    // Flutter ProposalApi.create reads: response["proposal_view"] OR response["proposalView"]
+    // ProposalResponse has rename_all = "camelCase"; field proposal_view → "proposalView"
     // Flutter accepts both keys (it tries camelCase first, falls back to snake_case).
-    // We test that "commentView" (camelCase) is the actual serialised key.
-    let cv: CommentView =
-      serde_json::from_value(comment_view_fixture()).expect("CommentView fixture parse failed");
-    let resp = CommentResponse { comment_view: cv };
+    // We test that "proposalView" (camelCase) is the actual serialised key.
+    let pv: ProposalView =
+      serde_json::from_value(proposal_view_fixture()).expect("ProposalView fixture parse failed");
+    let resp = ProposalResponse { proposal_view: pv };
     let j = serde_json::to_value(&resp).expect("serialise");
     assert!(
-      j.get("commentView").is_some(),
-      "commentView key missing — Flutter ProposalApi.create breaks"
+      j.get("proposalView").is_some(),
+      "proposalView key missing — Flutter ProposalApi.create breaks"
     );
   }
 
   #[test]
-  fn comment_get_comments_response_has_comments_array() {
-    // Flutter ProposalApi.listProposals reads: response["comments"]
-    // GetCommentsResponse has rename_all = "camelCase"; field comments stays "comments"
-    let cv: CommentView =
-      serde_json::from_value(comment_view_fixture()).expect("CommentView fixture parse failed");
+  fn proposal_get_proposals_response_has_proposals_array() {
+    // Flutter ProposalApi.listProposals reads: response["proposals"]
+    // GetCommentsResponse has rename_all = "camelCase"; field proposals stays "proposals"
+    let pv: ProposalView =
+      serde_json::from_value(proposal_view_fixture()).expect("ProposalView fixture parse failed");
     let resp = GetCommentsResponse {
-      comments: vec![cv],
+      proposals: vec![pv],
       next_page: None,
       prev_page: None,
     };
     let j = serde_json::to_value(&resp).expect("serialise");
     assert!(
-      j.get("comments").is_some(),
-      "comments key missing — Flutter ProposalApi.listProposals breaks"
+      j.get("proposals").is_some(),
+      "proposals key missing — Flutter ProposalApi.listProposals breaks"
     );
-    let arr = j["comments"].as_array().expect("comments must be array");
+    let arr = j["proposals"].as_array().expect("proposals must be array");
     assert_eq!(arr.len(), 1);
-    // Each item must have comment, creator, post keys
+    // Each item must have proposal, creator, post keys
     assert!(
-      arr[0].get("comment").is_some(),
-      "comment nested object missing"
+      arr[0].get("proposal").is_some(),
+      "proposal nested object missing"
     );
     assert!(
       arr[0].get("creator").is_some(),
@@ -435,7 +435,7 @@ mod category {
       "visibility": "Public",
       "subscribers": 0,
       "posts": 0,
-      "comments": 0,
+      "proposals": 0,
       "usersActiveDay": 0,
       "usersActiveWeek": 0,
       "usersActiveMonth": 0,

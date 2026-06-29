@@ -1,7 +1,7 @@
 #[cfg(feature = "full")]
 use crate::schema::local_user;
 use crate::{
-  enums::{CommentSortType, ListingType, PostListingMode, PostSortType, VoteShow},
+  enums::{ListingType, PostListingMode, PostSortType, ProposalSortType, VoteShow},
   newtypes::{LocalUserId, PersonId},
   sensitive::SensitiveString,
 };
@@ -62,8 +62,8 @@ pub struct LocalUser {
   /// should be paused
   pub enable_animated_images: bool,
   /// Whether to auto-collapse bot comments.
-  pub collapse_bot_comments: bool,
-  pub default_comment_sort_type: CommentSortType,
+  pub collapse_bot_proposals: bool,
+  pub default_proposal_sort_type: ProposalSortType,
   /// Whether to automatically mark fetched posts as read.
   pub auto_mark_fetched_posts_as_read: bool,
   /// The last time a donation request was shown to this user. If this is more than a year ago,
@@ -132,9 +132,9 @@ pub struct LocalUserInsertForm {
   #[new(default)]
   pub enable_animated_images: Option<bool>,
   #[new(default)]
-  pub collapse_bot_comments: Option<bool>,
+  pub collapse_bot_proposals: Option<bool>,
   #[new(default)]
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   #[new(default)]
   pub auto_mark_fetched_posts_as_read: Option<bool>,
   #[new(default)]
@@ -184,8 +184,8 @@ pub struct LocalUserUpdateForm {
   pub totp_2fa_enabled: Option<bool>,
   pub enable_keyboard_navigation: Option<bool>,
   pub enable_animated_images: Option<bool>,
-  pub collapse_bot_comments: Option<bool>,
-  pub default_comment_sort_type: Option<CommentSortType>,
+  pub collapse_bot_proposals: Option<bool>,
+  pub default_proposal_sort_type: Option<ProposalSortType>,
   pub auto_mark_fetched_posts_as_read: Option<bool>,
   pub last_donation_notification_at: Option<DateTime<Utc>>,
   pub hide_media: Option<bool>,

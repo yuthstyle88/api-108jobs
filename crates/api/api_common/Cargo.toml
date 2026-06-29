@@ -23,7 +23,7 @@ ts-rs = [
   "app_108jobs_core/ts-rs",
   "app_108jobs_db/ts-rs",
   "app_108jobs_db/ts-rs",
-  "app_108jobs_db_views_comment/ts-rs",
+  "app_108jobs_db_views_proposal/ts-rs",
   "app_108jobs_db_views_category/ts-rs",
   "app_108jobs_db_views_custom_emoji/ts-rs",
   "app_108jobs_db_views_inbox_combined/ts-rs",
@@ -46,7 +46,7 @@ ts-rs = [
 [dependencies]
 app_108jobs_core.workspace = true
 app_108jobs_db.workspace = true
-app_108jobs_db_views_comment.workspace = true
+app_108jobs_db_views_proposal.workspace = true
 app_108jobs_db_views_category.workspace = true
 app_108jobs_db_views_custom_emoji.workspace = true
 app_108jobs_db_views_inbox_combined.workspace = true

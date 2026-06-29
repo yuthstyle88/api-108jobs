@@ -1,24 +1,24 @@
 use crate::{
-  CommentReplyView,
   InboxCombinedView,
   InboxCombinedViewInternal,
-  PersonCommentMentionView,
   PersonPostMentionView,
+  PersonProposalMentionView,
+  ProposalReplyView,
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   aliases::{self},
   newtypes::{InstanceId, PaginationCursor, PersonId},
   schema::{
-    comment,
-    comment_reply,
     inbox_combined,
     instance_actions,
     person,
     person_actions,
-    person_comment_mention,
     person_post_mention,
+    person_proposal_mention,
     post,
+    proposal,
+    proposal_reply,
   },
   source::combined::inbox::{inbox_combined_keys as key, InboxCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
@@ -34,11 +34,11 @@ use app_108jobs_db::{
       creator_local_user_admin_join,
       image_details_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
       my_post_actions_join,
+      my_proposal_actions_join,
     },
     DbPool,
   },
@@ -62,7 +62,7 @@ impl InboxCombinedViewInternal {
     let recipient_person = aliases::person1.field(person::id);
 
     let item_creator_join = person::table.on(
-      comment::creator_id.eq(item_creator).or(
+      proposal::creator_id.eq(item_creator).or(
         inbox_combined::person_post_mention_id
           .is_not_null()
           .and(post::creator_id.eq(item_creator)),
@@ -70,25 +70,25 @@ impl InboxCombinedViewInternal {
     );
 
     let recipient_join = aliases::person1.on(
-      comment_reply::recipient_id
+      proposal_reply::recipient_id
         .eq(recipient_person)
-        .or(person_comment_mention::recipient_id.eq(recipient_person))
+        .or(person_proposal_mention::recipient_id.eq(recipient_person))
         .or(person_post_mention::recipient_id.eq(recipient_person)),
     );
 
-    let comment_join = comment::table.on(
-      comment_reply::comment_id
-        .eq(comment::id)
-        .or(person_comment_mention::comment_id.eq(comment::id))
+    let comment_join = proposal::table.on(
+      proposal_reply::comment_id
+        .eq(proposal::id)
+        .or(person_proposal_mention::comment_id.eq(proposal::id))
         // Filter out the deleted / removed
-        .and(not(comment::deleted))
-        .and(not(comment::removed)),
+        .and(not(proposal::deleted))
+        .and(not(proposal::removed)),
     );
 
     let post_join = post::table.on(
       person_post_mention::post_id
         .eq(post::id)
-        .or(comment::post_id.eq(post::id))
+        .or(proposal::post_id.eq(post::id))
         // Filter out the deleted / removed
         .and(not(post::deleted))
         .and(not(post::removed)),
@@ -97,8 +97,8 @@ impl InboxCombinedViewInternal {
     let my_category_actions_join: my_category_actions_join =
       my_category_actions_join(Some(my_person_id));
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(Some(my_person_id));
-    let my_comment_actions_join: my_comment_actions_join =
-      my_comment_actions_join(Some(my_person_id));
+    let my_proposal_actions_join: my_proposal_actions_join =
+      my_proposal_actions_join(Some(my_person_id));
     let my_local_user_admin_join: my_local_user_admin_join =
       my_local_user_admin_join(Some(my_person_id));
     let my_instance_actions_person_join: my_instance_actions_person_join =
@@ -108,8 +108,8 @@ impl InboxCombinedViewInternal {
       creator_local_instance_actions_join(local_instance_id);
 
     inbox_combined::table
-      .left_join(comment_reply::table)
-      .left_join(person_comment_mention::table)
+      .left_join(proposal_reply::table)
+      .left_join(person_proposal_mention::table)
       .left_join(person_post_mention::table)
       .left_join(comment_join)
       .left_join(post_join)
@@ -126,7 +126,7 @@ impl InboxCombinedViewInternal {
       .left_join(creator_local_instance_actions_join)
       .left_join(my_post_actions_join)
       .left_join(my_person_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
   }
 
   /// Gets the number of unread mentions
@@ -141,9 +141,9 @@ impl InboxCombinedViewInternal {
 
     let recipient_person = aliases::person1.field(person::id);
 
-    let unread_filter = comment_reply::read
+    let unread_filter = proposal_reply::read
       .eq(false)
-      .or(person_comment_mention::read.eq(false))
+      .or(person_proposal_mention::read.eq(false))
       .or(person_post_mention::read.eq(false));
 
     let mut query = Self::joins(my_person_id, local_instance_id)
@@ -174,8 +174,8 @@ impl PaginationCursorBuilder for InboxCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      InboxCombinedView::CommentReply(v) => ('R', v.comment_reply.id.0),
-      InboxCombinedView::CommentMention(v) => ('C', v.person_comment_mention.id.0),
+      InboxCombinedView::ProposalReply(v) => ('R', v.proposal_reply.id.0),
+      InboxCombinedView::ProposalMention(v) => ('C', v.person_proposal_mention.id.0),
       InboxCombinedView::PostMention(v) => ('P', v.person_post_mention.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -197,8 +197,8 @@ impl PaginationCursorBuilder for InboxCombinedView {
       .into_boxed();
 
     query = match prefix {
-      'R' => query.filter(inbox_combined::comment_reply_id.eq(id)),
-      'C' => query.filter(inbox_combined::person_comment_mention_id.eq(id)),
+      'R' => query.filter(inbox_combined::proposal_reply_id.eq(id)),
+      'C' => query.filter(inbox_combined::person_proposal_mention_id.eq(id)),
       'P' => query.filter(inbox_combined::person_post_mention_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -245,20 +245,20 @@ impl InboxCombinedQuery {
         // The recipient filter (IE only show replies to you)
         .filter(recipient_person.eq(my_person_id))
         .filter(
-          comment_reply::read
+          proposal_reply::read
             .eq(false)
-            .or(person_comment_mention::read.eq(false))
+            .or(person_proposal_mention::read.eq(false))
             .or(person_post_mention::read.eq(false)),
         );
     } else {
       // A special case for private messages: show messages FROM you also.
       // Use a not-null checks to catch the others
       query = query.filter(
-        inbox_combined::comment_reply_id
+        inbox_combined::proposal_reply_id
           .is_not_null()
           .and(recipient_person.eq(my_person_id))
           .or(
-            inbox_combined::person_comment_mention_id
+            inbox_combined::person_proposal_mention_id
               .is_not_null()
               .and(recipient_person.eq(my_person_id)),
           )
@@ -282,9 +282,11 @@ impl InboxCombinedQuery {
     if let Some(type_) = self.type_ {
       query = match type_ {
         InboxDataType::All => query,
-        InboxDataType::CommentReply => query.filter(inbox_combined::comment_reply_id.is_not_null()),
-        InboxDataType::CommentMention => {
-          query.filter(inbox_combined::person_comment_mention_id.is_not_null())
+        InboxDataType::ProposalReply => {
+          query.filter(inbox_combined::proposal_reply_id.is_not_null())
+        }
+        InboxDataType::ProposalMention => {
+          query.filter(inbox_combined::person_proposal_mention_id.is_not_null())
         }
         InboxDataType::PostMention => {
           query.filter(inbox_combined::person_post_mention_id.is_not_null())
@@ -325,21 +327,21 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let (Some(comment_reply), Some(comment), Some(post), Some(category)) = (
-      v.comment_reply,
-      v.comment.clone(),
+    if let (Some(proposal_reply), Some(proposal), Some(post), Some(category)) = (
+      v.proposal_reply,
+      v.proposal.clone(),
       v.post.clone(),
       v.category.clone(),
     ) {
-      Some(InboxCombinedView::CommentReply(CommentReplyView {
-        comment_reply,
-        comment,
+      Some(InboxCombinedView::ProposalReply(ProposalReplyView {
+        proposal_reply,
+        proposal,
         recipient: v.item_recipient,
         post,
         category,
         creator: v.item_creator,
         category_actions: v.category_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
         creator_is_admin: v.item_creator_is_admin,
@@ -349,22 +351,22 @@ impl InternalToCombinedView for InboxCombinedViewInternal {
         creator_banned_from_category: v.creator_banned_from_category,
         creator_is_moderator: v.creator_is_moderator,
       }))
-    } else if let (Some(person_comment_mention), Some(comment), Some(post), Some(category)) = (
-      v.person_comment_mention,
-      v.comment,
+    } else if let (Some(person_proposal_mention), Some(proposal), Some(post), Some(category)) = (
+      v.person_proposal_mention,
+      v.proposal,
       v.post.clone(),
       v.category.clone(),
     ) {
-      Some(InboxCombinedView::CommentMention(
-        PersonCommentMentionView {
-          person_comment_mention,
-          comment,
+      Some(InboxCombinedView::ProposalMention(
+        PersonProposalMentionView {
+          person_proposal_mention,
+          proposal,
           recipient: v.item_recipient,
           post,
           category,
           creator: v.item_creator,
           category_actions: v.category_actions,
-          comment_actions: v.comment_actions,
+          proposal_actions: v.proposal_actions,
           person_actions: v.person_actions,
           instance_actions: v.instance_actions,
           creator_is_admin: v.item_creator_is_admin,
@@ -410,13 +412,13 @@ mod tests {
     assert_length,
     source::{
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentInsertForm},
-      comment_reply::{CommentReply, CommentReplyInsertForm, CommentReplyUpdateForm},
       instance::Instance,
       person::{Person, PersonActions, PersonBlockForm, PersonInsertForm, PersonUpdateForm},
-      person_comment_mention::{PersonCommentMention, PersonCommentMentionInsertForm},
       person_post_mention::{PersonPostMention, PersonPostMentionInsertForm},
+      person_proposal_mention::{PersonProposalMention, PersonProposalMentionInsertForm},
       post::{Post, PostInsertForm},
+      proposal::{Proposal, ProposalInsertForm},
+      proposal_reply::{ProposalReply, ProposalReplyInsertForm, ProposalReplyUpdateForm},
     },
     traits::{Blockable, Crud},
     utils::{build_db_pool_for_tests, DbPool},
@@ -432,8 +434,8 @@ mod tests {
     jessica: Person,
     timmy_post: Post,
     jessica_post: Post,
-    timmy_comment: Comment,
-    sara_comment: Comment,
+    timmy_comment: Proposal,
+    sara_comment: Proposal,
   }
 
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
@@ -471,12 +473,12 @@ mod tests {
     let jessica_post = Post::create(pool, &jessica_post_form).await?;
 
     let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
+      ProposalInsertForm::new(timmy.id, timmy_post.id, "timmy proposal prv".into());
+    let timmy_comment = Proposal::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
+      ProposalInsertForm::new(sara.id, timmy_post.id, "sara proposal prv".into());
+    let sara_comment = Proposal::create(pool, &sara_comment_form).await?;
 
     Ok(Data {
       instance,
@@ -503,13 +505,13 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Sara replied to timmys comment, but let create the row now
-    let form = CommentReplyInsertForm {
+    // Sara replied to timmys proposal, but let create the row now
+    let form = ProposalReplyInsertForm {
       recipient_id: data.timmy.id,
       comment_id: data.sara_comment.id,
       read: None,
     };
-    let reply = CommentReply::create(pool, &form).await?;
+    let reply = ProposalReply::create(pool, &form).await?;
 
     let timmy_unread_replies =
       InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
@@ -521,9 +523,9 @@ mod tests {
       .await?;
     assert_length!(1, timmy_inbox);
 
-    if let InboxCombinedView::CommentReply(v) = &timmy_inbox[0] {
-      assert_eq!(data.sara_comment.id, v.comment_reply.comment_id);
-      assert_eq!(data.sara_comment.id, v.comment.id);
+    if let InboxCombinedView::ProposalReply(v) = &timmy_inbox[0] {
+      assert_eq!(data.sara_comment.id, v.proposal_reply.comment_id);
+      assert_eq!(data.sara_comment.id, v.proposal.id);
       assert_eq!(data.timmy_post.id, v.post.id);
       assert_eq!(data.sara.id, v.creator.id);
       assert_eq!(data.timmy.id, v.recipient.id);
@@ -532,8 +534,8 @@ mod tests {
     }
 
     // Mark it as read
-    let form = CommentReplyUpdateForm { read: Some(true) };
-    CommentReply::update(pool, reply.id, &form).await?;
+    let form = ProposalReplyUpdateForm { read: Some(true) };
+    ProposalReply::update(pool, reply.id, &form).await?;
 
     let timmy_unread_replies =
       InboxCombinedViewInternal::get_unread_count(pool, data.timmy.id, data.instance.id, true)
@@ -560,13 +562,13 @@ mod tests {
     let pool = &mut pool.into();
     let data = init_data(pool).await?;
 
-    // Timmy mentions sara in a comment
-    let timmy_mention_sara_comment_form = PersonCommentMentionInsertForm {
+    // Timmy mentions sara in a proposal
+    let timmy_mention_sara_comment_form = PersonProposalMentionInsertForm {
       recipient_id: data.sara.id,
       comment_id: data.timmy_comment.id,
       read: None,
     };
-    PersonCommentMention::create(pool, &timmy_mention_sara_comment_form).await?;
+    PersonProposalMention::create(pool, &timmy_mention_sara_comment_form).await?;
 
     // Jessica mentions sara in a post
     let jessica_mention_sara_post_form = PersonPostMentionInsertForm {
@@ -596,9 +598,9 @@ mod tests {
       panic!("wrong type");
     }
 
-    if let InboxCombinedView::CommentMention(v) = &sara_inbox[1] {
-      assert_eq!(data.timmy_comment.id, v.person_comment_mention.comment_id);
-      assert_eq!(data.timmy_comment.id, v.comment.id);
+    if let InboxCombinedView::ProposalMention(v) = &sara_inbox[1] {
+      assert_eq!(data.timmy_comment.id, v.person_proposal_mention.comment_id);
+      assert_eq!(data.timmy_comment.id, v.proposal.id);
       assert_eq!(data.timmy_post.id, v.post.id);
       assert_eq!(data.timmy.id, v.creator.id);
       assert_eq!(data.sara.id, v.recipient.id);
@@ -620,7 +622,7 @@ mod tests {
       .await?;
     assert_length!(1, sara_inbox_after_block);
 
-    // Make sure the comment mention which timmy made is the hidden one
+    // Make sure the proposal mention which timmy made is the hidden one
     assert!(matches!(
       sara_inbox_after_block[0],
       InboxCombinedView::PostMention(_)
@@ -664,12 +666,12 @@ mod tests {
     // Make sure the post mention which jessica made is the hidden one
     assert!(matches!(
       sara_inbox_after_hide_bots[0],
-      InboxCombinedView::CommentMention(_)
+      InboxCombinedView::ProposalMention(_)
     ));
 
     // Mark them all as read
     PersonPostMention::mark_all_as_read(pool, data.sara.id).await?;
-    PersonCommentMention::mark_all_as_read(pool, data.sara.id).await?;
+    PersonProposalMention::mark_all_as_read(pool, data.sara.id).await?;
 
     // Make sure none come back
     let sara_unread_mentions =

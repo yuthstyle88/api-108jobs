@@ -78,7 +78,7 @@ impl TryFrom<ValidCreateInvoiceRequest> for CreateInvoiceForm {
     Ok(CreateInvoiceForm {
       employer_id: value.0.employer_id,
       post_id: value.0.post_id,
-      comment_id: value.0.comment_id,
+      proposal_id: value.0.proposal_id,
       seq_number: value.0.seq_number,
       amount: value.0.amount,
       proposal: value.0.proposal,

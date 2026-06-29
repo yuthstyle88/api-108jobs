@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json, Query};
 use app_108jobs_api_utils::{
   context::FastJobContext,
-  utils::{check_private_instance, update_read_comments},
+  utils::{check_private_instance, update_read_proposals},
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   source::{
-    comment::Comment,
     post::{Post, PostActions, PostReadForm},
+    proposal::Proposal,
   },
   traits::{Crud, Readable},
 };
@@ -37,8 +37,8 @@ pub async fn get_post(
   // I'd prefer fetching the post_view by a comment join, but it adds a lot of boilerplate
   let post_id = if let Some(id) = data.id {
     id
-  } else if let Some(comment_id) = data.comment_id {
-    Comment::read(&mut context.pool(), comment_id)
+  } else if let Some(comment_id) = data.proposal_id {
+    Proposal::read(&mut context.pool(), comment_id)
       .await?
       .post_id
   } else {
@@ -63,10 +63,10 @@ pub async fn get_post(
     let read_form = PostReadForm::new(post_id, person_id);
     PostActions::mark_as_read(&mut context.pool(), &read_form).await?;
 
-    update_read_comments(
+    update_read_proposals(
       person_id,
       post_id,
-      post_view.post.comments,
+      post_view.post.proposals,
       &mut context.pool(),
     )
     .await?;

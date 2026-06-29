@@ -1,13 +1,13 @@
 use actix_web::web::{Data, Json};
 use app_108jobs_api_utils::{
-  build_response::{build_comment_response, send_local_notifs},
+  build_response::{build_proposal_response, send_local_notifs},
   context::FastJobContext,
   utils::{
     check_post_deleted_or_removed,
     get_url_blocklist,
     process_markdown,
     slur_regex,
-    update_read_comments,
+    update_read_proposals,
   },
 };
 use app_108jobs_core::{
@@ -18,20 +18,20 @@ use app_108jobs_db::{
   enums::PostKind,
   impls::actor_language::{validate_post_language, UNDETERMINED_ID},
   newtypes::{PersonId, PostId},
-  schema::comment::{creator_id, deleted, dsl::comment, post_id, removed},
-  source::comment::{Comment, CommentActions, CommentInsertForm, CommentLikeForm},
+  schema::proposal::{creator_id, deleted, dsl::proposal, post_id, removed},
+  source::proposal::{Proposal, ProposalActions, ProposalInsertForm, ProposalLikeForm},
   traits::{Crud, Likeable},
   utils::DbPool,
 };
-use app_108jobs_db_views_comment::api::{CommentResponse, CreateComment, CreateCommentRequest};
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::PostView;
+use app_108jobs_db_views_proposal::api::{CreateComment, CreateCommentRequest, ProposalResponse};
 
 pub async fn create_comment(
   data: Json<CreateCommentRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<ProposalResponse>> {
   let request_data = data.into_inner();
 
   let data: CreateComment = request_data.try_into()?;
@@ -80,7 +80,7 @@ pub async fn create_comment(
 
   // Check if user is trying to comment on their own post
   if post.creator_id == local_user_view.person.id {
-    return Err(FastJobErrorType::CannotCommentOnOwnPost)?;
+    return Err(FastJobErrorType::CannotProposeOnOwnPost)?;
   }
 
   // Check if user has already commented on this post
@@ -91,32 +91,32 @@ pub async fn create_comment(
   )
   .await?;
 
-  let comment_form = CommentInsertForm {
+  let proposal_form = ProposalInsertForm {
     language_id: Some(language_id),
-    ..CommentInsertForm::new(local_user_view.person.id, data.post_id, content.clone())
+    ..ProposalInsertForm::new(local_user_view.person.id, data.post_id, content.clone())
   };
 
-  // Create the comment
-  let inserted_comment = Comment::create(&mut context.pool(), &comment_form).await?;
+  // Create the proposal
+  let inserted_proposal = Proposal::create(&mut context.pool(), &proposal_form).await?;
 
   send_local_notifs(
     &post,
-    Some(&inserted_comment),
+    Some(&inserted_proposal),
     &local_user_view.person,
     &context,
   )
   .await?;
 
-  // You like your own comment by default
-  let like_form = CommentLikeForm::new(local_user_view.person.id, inserted_comment.id, 1);
+  // You like your own proposal by default
+  let like_form = ProposalLikeForm::new(local_user_view.person.id, inserted_proposal.id, 1);
 
-  CommentActions::like(&mut context.pool(), &like_form).await?;
+  ProposalActions::like(&mut context.pool(), &like_form).await?;
 
-  // Update the read comments, so your own new comment doesn't appear as a +1 unread
-  update_read_comments(
+  // Update the read proposals, so your own new proposal doesn't appear as a +1 unread
+  update_read_proposals(
     local_user_view.person.id,
     data.post_id.clone(),
-    post.comments + 1,
+    post.proposals + 1,
     &mut context.pool(),
   )
   .await?;
@@ -127,9 +127,9 @@ pub async fn create_comment(
   // Then we don't have to do it manually after we respond to a comment.
 
   Ok(Json(
-    build_comment_response(
+    build_proposal_response(
       &context,
-      inserted_comment.id,
+      inserted_proposal.id,
       Some(local_user_view),
       local_instance_id,
     )
@@ -148,18 +148,18 @@ async fn check_user_already_commented(
 
   let conn = &mut get_conn(pool).await?;
 
-  let existing_comment = comment
+  let existing_comment = proposal
     .filter(creator_id.eq(person_id))
     .filter(post_id.eq(current_post_id))
     .filter(deleted.eq(false))
     .filter(removed.eq(false))
-    .first::<Comment>(conn)
+    .first::<Proposal>(conn)
     .await
     .optional()
     .map_err(|_| FastJobError::from(FastJobErrorType::DatabaseError))?;
 
   if existing_comment.is_some() {
-    return Err(FastJobErrorType::AlreadyCommented)?;
+    return Err(FastJobErrorType::AlreadyProposed)?;
   }
 
   Ok(())

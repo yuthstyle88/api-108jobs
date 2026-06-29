@@ -1,11 +1,11 @@
 use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   category_report::CategoryReport,
-  comment::{Comment, CommentActions},
-  comment_report::CommentReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
+  proposal::{Proposal, ProposalActions},
+  proposal_report::ProposalReport,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -20,7 +20,7 @@ use {
 
 pub mod api;
 #[cfg(feature = "full")]
-pub mod comment_report_view;
+pub mod proposal_report_view;
 
 #[cfg(feature = "full")]
 pub mod category_report_view;
@@ -34,13 +34,13 @@ pub mod post_report_view;
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A comment report view.
+/// A proposal report view.
 #[serde(rename_all = "camelCase")]
-pub struct CommentReportView {
+pub struct ProposalReportView {
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_report: CommentReport,
+  pub proposal_report: ProposalReport,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment: Comment,
+  pub proposal: Proposal,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Post,
   #[cfg_attr(feature = "full", diesel(embed))]
@@ -55,7 +55,7 @@ pub struct CommentReportView {
   )]
   pub comment_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]

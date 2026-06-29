@@ -221,7 +221,7 @@ mod tests {
         created_at: Utc::now(),
         updated_at: None,
         post_id: None,
-        current_comment_id: None,
+        current_proposal_id: None,
       },
     )
     .await
@@ -343,7 +343,7 @@ mod tests {
         created_at: Utc::now(),
         updated_at: None,
         post_id: None,
-        current_comment_id: None,
+        current_proposal_id: None,
       },
     )
     .await

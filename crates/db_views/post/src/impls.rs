@@ -477,7 +477,7 @@ impl PostQuery<'_> {
 
     // Filter to show only posts with no comments
     if o.no_proposals_only.unwrap_or_default() {
-      query = query.filter(post::comments.eq(0));
+      query = query.filter(post::proposals.eq(0));
     };
 
     if !o.show_read.unwrap_or(o.local_user.show_read_posts()) {
@@ -585,8 +585,8 @@ impl PostQuery<'_> {
       Scaled => pq.then_order_by(key::scaled_rank),
       Controversial => pq.then_order_by(key::controversy_rank),
       New | Old => pq.then_order_by(key::published_at),
-      NewComments => pq.then_order_by(key::newest_comment_time_at),
-      MostComments => pq.then_order_by(key::comments),
+      NewProposals => pq.then_order_by(key::newest_proposal_time_at),
+      MostProposals => pq.then_order_by(key::proposals),
       Top => pq.then_order_by(key::score),
     };
 
@@ -594,7 +594,7 @@ impl PostQuery<'_> {
     // necessary because old posts can be fetched over federation and inserted with high post id
     pq = match sort {
       // A second time-based sort would not be very useful
-      New | Old | NewComments => pq,
+      New | Old | NewProposals => pq,
       _ => pq.then_order_by(key::published_at),
     };
 
@@ -661,7 +661,6 @@ mod tests {
     source::{
       actor_language::LocalUserLanguage,
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentInsertForm},
       instance::{Instance, InstanceActions, InstanceBanForm, InstanceBlockForm},
       keyword_block::LocalUserKeywordBlock,
       language::Language,
@@ -677,6 +676,7 @@ mod tests {
         PostUpdateForm,
       },
       post_tag::{PostTag, PostTagForm},
+      proposal::{Proposal, ProposalInsertForm},
       site::Site,
       tag::{Tag, TagInsertForm},
     },
@@ -1476,8 +1476,8 @@ mod tests {
 
         for _ in 0..comments {
           let comment_form =
-            CommentInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
-          let inserted_comment = Comment::create(pool, &comment_form).await?;
+            ProposalInsertForm::new(data.tegan.person.id, inserted_post.id, "yes".to_owned());
+          let inserted_comment = Proposal::create(pool, &comment_form).await?;
           inserted_comment_ids.push(inserted_comment.id);
         }
       }
@@ -1485,7 +1485,7 @@ mod tests {
 
     let options = PostQuery {
       category_id: Some(inserted_category.id),
-      sort: Some(PostSortType::MostComments),
+      sort: Some(PostSortType::MostProposals),
       limit: Some(10),
       ..Default::default()
     };

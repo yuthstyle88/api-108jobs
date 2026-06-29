@@ -80,7 +80,7 @@ pub enum CategorySortType {
   Old,
   NameAsc,
   NameDesc,
-  Comments,
+  Proposals,
   Posts,
   Subscribers,
   SubscribersLocal,
@@ -95,7 +95,7 @@ pub enum CategorySortType {
 pub enum SearchType {
   #[default]
   All,
-  Comments,
+  Proposals,
   Posts,
   Categories,
   Users,
@@ -110,7 +110,7 @@ pub enum ModlogActionType {
   ModRemovePost,
   ModLockPost,
   ModFeaturePost,
-  ModRemoveComment,
+  ModRemoveProposal,
   ModRemovecategory,
   ModBanFromcategory,
   ModAddcategory,
@@ -121,7 +121,7 @@ pub enum ModlogActionType {
   AdminPurgePerson,
   AdminPurgecategory,
   AdminPurgePost,
-  AdminPurgeComment,
+  AdminPurgeProposal,
   AdminBlockInstance,
   AdminAllowInstance,
 }
@@ -132,8 +132,8 @@ pub enum ModlogActionType {
 /// A list of possible types for the inbox.
 pub enum InboxDataType {
   All,
-  CommentReply,
-  CommentMention,
+  ProposalReply,
+  ProposalMention,
   PostMention,
 }
 
@@ -143,7 +143,7 @@ pub enum InboxDataType {
 /// A list of possible types for a person's content.
 pub enum PersonContentType {
   All,
-  Comments,
+  Proposals,
   Posts,
 }
 
@@ -154,7 +154,7 @@ pub enum PersonContentType {
 pub enum ReportType {
   All,
   Posts,
-  Comments,
+  Proposals,
   Communities,
 }
 
@@ -214,8 +214,8 @@ pub type Person1AliasAllColumnsTuple = (
   AliasedField<aliases::Person1, person::instance_id>,
   AliasedField<aliases::Person1, person::post_count>,
   AliasedField<aliases::Person1, person::post_score>,
-  AliasedField<aliases::Person1, person::comment_count>,
-  AliasedField<aliases::Person1, person::comment_score>,
+  AliasedField<aliases::Person1, person::proposal_count>,
+  AliasedField<aliases::Person1, person::proposal_score>,
   AliasedField<aliases::Person1, person::wallet_id>,
   AliasedField<aliases::Person1, person::contacts>,
   AliasedField<aliases::Person1, person::skills>,
@@ -245,8 +245,8 @@ pub type Person2AliasAllColumnsTuple = (
   AliasedField<aliases::Person2, person::instance_id>,
   AliasedField<aliases::Person2, person::post_count>,
   AliasedField<aliases::Person2, person::post_score>,
-  AliasedField<aliases::Person2, person::comment_count>,
-  AliasedField<aliases::Person2, person::comment_score>,
+  AliasedField<aliases::Person2, person::proposal_count>,
+  AliasedField<aliases::Person2, person::proposal_score>,
   AliasedField<aliases::Person2, person::wallet_id>,
   AliasedField<aliases::Person2, person::contacts>,
   AliasedField<aliases::Person2, person::skills>,

@@ -1,37 +1,37 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
+use app_108jobs_api_utils::{build_response::build_proposal_response, context::FastJobContext};
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::{
-  source::{comment::CommentActions, person::PersonActions},
+  source::{person::PersonActions, proposal::ProposalActions},
   traits::Likeable,
 };
-use app_108jobs_db_views_comment::{
-  api::{CommentResponse, CreateCommentLikeRequest},
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{CreateCommentLikeRequest, ProposalResponse},
+  ProposalView,
+};
 use std::ops::Deref;
 
 pub async fn like_comment(
   data: Json<CreateCommentLikeRequest>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
+) -> FastJobResult<Json<ProposalResponse>> {
   let local_instance_id = local_user_view.person.instance_id;
-  let comment_id = data.comment_id;
+  let comment_id = data.proposal_id;
   let my_person_id = local_user_view.person.id;
 
-  let orig_comment = CommentView::read(
+  let orig_comment = ProposalView::read(
     &mut context.pool(),
     comment_id,
     Some(&local_user_view.local_user),
     local_instance_id,
   )
   .await?;
-  let previous_score = orig_comment.comment_actions.and_then(|p| p.like_score);
+  let previous_score = orig_comment.proposal_actions.and_then(|p| p.like_score);
 
   // Remove any likes first
-  CommentActions::remove_like(&mut context.pool(), my_person_id, comment_id).await?;
+  ProposalActions::remove_like(&mut context.pool(), my_person_id, comment_id).await?;
   if let Some(previous_score) = previous_score {
     PersonActions::remove_like(
       &mut context.pool(),
@@ -45,7 +45,7 @@ pub async fn like_comment(
   }
 
   Ok(Json(
-    build_comment_response(
+    build_proposal_response(
       context.deref(),
       comment_id,
       Some(local_user_view),

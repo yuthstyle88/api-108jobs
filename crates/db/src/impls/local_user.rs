@@ -206,7 +206,7 @@ impl LocalUser {
     Ok(UserBackupLists {
       followed_communities: vec![],
       saved_posts: vec![],
-      saved_comments: vec![],
+      saved_proposals: vec![],
       blocked_communities: vec![],
       blocked_users: vec![],
       blocked_instances,
@@ -364,7 +364,7 @@ impl LocalUserInsertForm {
 pub struct UserBackupLists {
   pub followed_communities: Vec<DbUrl>,
   pub saved_posts: Vec<DbUrl>,
-  pub saved_comments: Vec<DbUrl>,
+  pub saved_proposals: Vec<DbUrl>,
   pub blocked_communities: Vec<DbUrl>,
   pub blocked_users: Vec<DbUrl>,
   pub blocked_instances: Vec<String>,

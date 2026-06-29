@@ -1,7 +1,7 @@
 -- A trigger is associated with a table instead of a schema, so they can't be in the `r` schema. This is
 -- okay if the function specified after `EXECUTE FUNCTION` is in `r`, since dropping the function drops the trigger.
 --
--- Triggers that update multiple tables should use this order: person_aggregates, comment_aggregates,
+-- Triggers that update multiple tables should use this order: person_aggregates, proposal_aggregates,
 -- post, category_aggregates, site_aggregates
 --   * The order matters because the updated rows are locked until the end of the transaction, and statements
 --     in a trigger don't use separate transactions. This means that updates closer to the beginning cause
@@ -14,8 +14,8 @@
 --     https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-DEADLOCKS
 --
 --
--- Create triggers for both post and comments
-CREATE PROCEDURE r.post_or_comment (table_name text)
+-- Create triggers for both post and proposals
+CREATE PROCEDURE r.post_or_proposal (table_name text)
     LANGUAGE plpgsql
 AS $a$
 BEGIN
@@ -54,24 +54,24 @@ END;
 END;
 $a$;
 
-CALL r.post_or_comment ('post');
+CALL r.post_or_proposal ('post');
 
-CALL r.post_or_comment ('comment');
+CALL r.post_or_proposal ('proposal');
 
 -- Create triggers that update counts in parent aggregates
-CREATE FUNCTION r.parent_comment_ids (path ltree)
+CREATE FUNCTION r.parent_proposal_ids (path ltree)
     RETURNS SETOF int
     LANGUAGE sql
     IMMUTABLE parallel safe
 BEGIN ATOMIC
 SELECT
-    comment_id::int
+    proposal_id::int
 FROM
-    string_to_table (ltree2text (path), '.') AS comment_id
+    string_to_table (ltree2text (path), '.') AS proposal_id
     -- Skip first and last
     LIMIT (nlevel (path) - 2) OFFSET 1;
 END;
-CALL r.create_triggers ('comment', $$
+CALL r.create_triggers ('proposal', $$
 BEGIN
     -- Prevent infinite recursion
     IF (
@@ -83,22 +83,22 @@ END IF;
 UPDATE
     person AS a
 SET
-    comment_count = a.comment_count + diff.comment_count
+    proposal_count = a.proposal_count + diff.proposal_count
 FROM (
     SELECT
-        (comment).creator_id,
-        coalesce(sum(count_diff), 0) AS comment_count
+        (proposal).creator_id,
+        coalesce(sum(count_diff), 0) AS proposal_count
     FROM
         select_old_and_new_rows AS old_and_new_rows
     WHERE
-        r.is_counted (comment)
+        r.is_counted (proposal)
     GROUP BY
-        (comment).creator_id) AS diff
+        (proposal).creator_id) AS diff
 WHERE
     a.id = diff.creator_id
-    AND diff.comment_count != 0;
+    AND diff.proposal_count != 0;
 UPDATE
-    comment AS a
+    proposal AS a
 SET
     child_count = a.child_count + diff.child_count
 FROM (
@@ -106,10 +106,10 @@ FROM (
         parent_id,
         coalesce(sum(count_diff), 0) AS child_count
     FROM (
-        -- For each inserted or deleted comment, this outputs 1 row for each parent comment.
+        -- For each inserted or deleted proposal, this outputs 1 row for each parent proposal.
         -- For example, this:
         --
-        --  count_diff | (comment).path
+        --  count_diff | (proposal).path
         -- ------------+----------------
         --  1          | 0.5.6.7
         --  1          | 0.5.6.7.8
@@ -128,7 +128,7 @@ FROM (
             parent_id
         FROM
             select_old_and_new_rows AS old_and_new_rows,
-            LATERAL r.parent_comment_ids ((comment).path) AS parent_id) AS expanded_old_and_new_rows
+            LATERAL r.parent_proposal_ids ((proposal).path) AS parent_id) AS expanded_old_and_new_rows
     GROUP BY
         parent_id) AS diff
 WHERE
@@ -137,48 +137,48 @@ WHERE
 UPDATE
     post AS a
 SET
-    comments = a.comments + diff.comments,
-    newest_comment_time_at = GREATEST (a.newest_comment_time_at, diff.newest_comment_time_at),
-    newest_comment_time_necro_at = GREATEST (a.newest_comment_time_necro_at, diff.newest_comment_time_necro_at)
+    proposals = a.proposals + diff.proposals,
+    newest_proposal_time_at = GREATEST (a.newest_proposal_time_at, diff.newest_proposal_time_at),
+    newest_proposal_time_necro_at = GREATEST (a.newest_proposal_time_necro_at, diff.newest_proposal_time_necro_at)
 FROM (
     SELECT
         post.id AS post_id,
-        coalesce(sum(count_diff), 0) AS comments,
+        coalesce(sum(count_diff), 0) AS proposals,
         -- Old rows are excluded using `count_diff = 1`
-        max((comment).published_at) FILTER (WHERE count_diff = 1) AS newest_comment_time_at,
-        max((comment).published_at) FILTER (WHERE count_diff = 1
-            -- Ignore comments from the post's creator
-            AND post.creator_id != (comment).creator_id
-        -- Ignore comments on old posts
-        AND post.published_at > ((comment).published_at - '2 days'::interval)) AS newest_comment_time_necro_at
+        max((proposal).published_at) FILTER (WHERE count_diff = 1) AS newest_proposal_time_at,
+        max((proposal).published_at) FILTER (WHERE count_diff = 1
+            -- Ignore proposals from the post's creator
+            AND post.creator_id != (proposal).creator_id
+        -- Ignore proposals on old posts
+        AND post.published_at > ((proposal).published_at - '2 days'::interval)) AS newest_proposal_time_necro_at
 FROM
     select_old_and_new_rows AS old_and_new_rows
-    LEFT JOIN post ON post.id = (comment).post_id
+    LEFT JOIN post ON post.id = (proposal).post_id
 WHERE
-    r.is_counted (comment)
+    r.is_counted (proposal)
 GROUP BY
     post.id) AS diff
 WHERE
     a.id = diff.post_id
-    AND (diff.comments,
-        GREATEST (a.newest_comment_time_at, diff.newest_comment_time_at),
-        GREATEST (a.newest_comment_time_necro_at, diff.newest_comment_time_necro_at)) != (0,
-        a.newest_comment_time_at,
-        a.newest_comment_time_necro_at);
+    AND (diff.proposals,
+        GREATEST (a.newest_proposal_time_at, diff.newest_proposal_time_at),
+        GREATEST (a.newest_proposal_time_necro_at, diff.newest_proposal_time_necro_at)) != (0,
+        a.newest_proposal_time_at,
+        a.newest_proposal_time_necro_at);
 UPDATE
     local_site AS a
 SET
-    comments = a.comments + diff.comments
+    proposals = a.proposals + diff.proposals
 FROM (
     SELECT
-        coalesce(sum(count_diff), 0) AS comments
+        coalesce(sum(count_diff), 0) AS proposals
     FROM
         select_old_and_new_rows AS old_and_new_rows
     WHERE
-        r.is_counted (comment)
+        r.is_counted (proposal)
         ) AS diff
 WHERE
-    diff.comments != 0;
+    diff.proposals != 0;
 RETURN NULL;
 END;
 $$);
@@ -202,12 +202,12 @@ UPDATE
     category AS a
 SET
     posts = a.posts + diff.posts,
-    comments = a.comments + diff.comments
+    proposals = a.proposals + diff.proposals
 FROM (
     SELECT
         (post).category_id,
         coalesce(sum(count_diff), 0) AS posts,
-        coalesce(sum(count_diff * (post).comments), 0) AS comments
+        coalesce(sum(count_diff * (post).proposals), 0) AS proposals
     FROM
         select_old_and_new_rows AS old_and_new_rows
     WHERE
@@ -217,7 +217,7 @@ FROM (
 WHERE
     a.id = diff.category_id
     AND (diff.posts,
-        diff.comments) != (0,
+        diff.proposals) != (0,
         0);
 UPDATE
     local_site AS a
@@ -290,17 +290,17 @@ AND a.id = diff.post_id;
 RETURN NULL;
 END;
 $$);
-CALL r.create_triggers ('comment_report', $$
+CALL r.create_triggers ('proposal_report', $$
 BEGIN
     UPDATE
-        comment AS a
+        proposal AS a
     SET
         report_count = a.report_count + diff.report_count, unresolved_report_count = a.unresolved_report_count + diff.unresolved_report_count
     FROM (
         SELECT
-            (comment_report).comment_id, coalesce(sum(count_diff), 0) AS report_count, coalesce(sum(count_diff) FILTER (WHERE NOT (comment_report).resolved
-                AND NOT (comment_report).violates_instance_rules), 0) AS unresolved_report_count
-FROM select_old_and_new_rows AS old_and_new_rows GROUP BY (comment_report).comment_id) AS diff
+            (proposal_report).comment_id, coalesce(sum(count_diff), 0) AS report_count, coalesce(sum(count_diff) FILTER (WHERE NOT (proposal_report).resolved
+                AND NOT (proposal_report).violates_instance_rules), 0) AS unresolved_report_count
+FROM select_old_and_new_rows AS old_and_new_rows GROUP BY (proposal_report).comment_id) AS diff
 WHERE (diff.report_count, diff.unresolved_report_count) != (0, 0)
 AND a.id = diff.comment_id;
 RETURN NULL;
@@ -337,7 +337,7 @@ CREATE TRIGGER delete_follow
     FOR EACH ROW
     EXECUTE FUNCTION r.delete_follow_before_person ();
 -- Triggers that change values before insert or update
-CREATE FUNCTION r.comment_change_values ()
+CREATE FUNCTION r.proposal_change_values ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -352,17 +352,17 @@ RETURN NEW;
 END
 $$;
 CREATE TRIGGER change_values
-    BEFORE INSERT OR UPDATE ON comment
+    BEFORE INSERT OR UPDATE ON proposal
                          FOR EACH ROW
-                         EXECUTE FUNCTION r.comment_change_values ();
+                         EXECUTE FUNCTION r.proposal_change_values ();
 CREATE FUNCTION r.post_change_values ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     -- Set aggregates
-    NEW.newest_comment_time_at = NEW.published_at;
-    NEW.newest_comment_time_necro_at = NEW.published_at;
+    NEW.newest_proposal_time_at = NEW.published_at;
+    NEW.newest_proposal_time_necro_at = NEW.published_at;
 RETURN NEW;
 END
 $$;
@@ -395,9 +395,9 @@ $b$,
 END;
 $a$;
 CALL r.create_report_combined_trigger ('post_report');
-CALL r.create_report_combined_trigger ('comment_report');
+CALL r.create_report_combined_trigger ('proposal_report');
 CALL r.create_report_combined_trigger ('category_report');
--- person_content (comment, post)
+-- person_content (proposal, post)
 CREATE PROCEDURE r.create_person_content_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -421,8 +421,8 @@ $b$,
 END;
 $a$;
 CALL r.create_person_content_combined_trigger ('post');
-CALL r.create_person_content_combined_trigger ('comment');
--- person_saved (comment, post)
+CALL r.create_person_content_combined_trigger ('proposal');
+-- person_saved (proposal, post)
 -- This one is a little different, because it triggers using x_actions.saved,
 -- Rather than any row insert
 -- TODO a hack because local is not currently on the post_view table
@@ -468,8 +468,8 @@ CREATE TRIGGER person_saved_combined
 END;
 $a$;
 CALL r.create_person_saved_combined_trigger ('post');
-CALL r.create_person_saved_combined_trigger ('comment');
--- person_liked (comment, post)
+CALL r.create_person_saved_combined_trigger ('proposal');
+-- person_liked (proposal, post)
 -- This one is a little different, because it triggers using x_actions.liked,
 -- Rather than any row insert
 -- TODO a hack because local is not currently on the post_view table
@@ -527,11 +527,11 @@ CREATE TRIGGER person_liked_combined
 END;
 $a$;
 CALL r.create_person_liked_combined_trigger ('post');
-CALL r.create_person_liked_combined_trigger ('comment');
+CALL r.create_person_liked_combined_trigger ('proposal');
 -- modlog: (17 tables)
 -- admin_allow_instance
 -- admin_block_instance
--- admin_purge_comment
+-- admin_purge_proposal
 -- admin_purge_category
 -- admin_purge_person
 -- admin_purge_post
@@ -542,7 +542,7 @@ CALL r.create_person_liked_combined_trigger ('comment');
 -- mod_feature_post
 -- mod_change_category_visibility
 -- mod_lock_post
--- mod_remove_comment
+-- mod_remove_proposal
 -- mod_remove_category
 -- mod_remove_post
 -- mod_transfer_category
@@ -570,7 +570,7 @@ END;
 $a$;
 CALL r.create_modlog_combined_trigger ('admin_allow_instance');
 CALL r.create_modlog_combined_trigger ('admin_block_instance');
-CALL r.create_modlog_combined_trigger ('admin_purge_comment');
+CALL r.create_modlog_combined_trigger ('admin_purge_proposal');
 CALL r.create_modlog_combined_trigger ('admin_purge_category');
 CALL r.create_modlog_combined_trigger ('admin_purge_person');
 CALL r.create_modlog_combined_trigger ('admin_purge_post');
@@ -581,11 +581,11 @@ CALL r.create_modlog_combined_trigger ('mod_ban_from_category');
 CALL r.create_modlog_combined_trigger ('mod_feature_post');
 CALL r.create_modlog_combined_trigger ('mod_change_category_visibility');
 CALL r.create_modlog_combined_trigger ('mod_lock_post');
-CALL r.create_modlog_combined_trigger ('mod_remove_comment');
+CALL r.create_modlog_combined_trigger ('mod_remove_proposal');
 CALL r.create_modlog_combined_trigger ('mod_remove_category');
 CALL r.create_modlog_combined_trigger ('mod_remove_post');
 CALL r.create_modlog_combined_trigger ('mod_transfer_category');
--- Inbox: (replies, comment mentions, post mentions, and private_messages)
+-- Inbox: (replies, proposal mentions, post mentions, and private_messages)
 CREATE PROCEDURE r.create_inbox_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -608,8 +608,8 @@ $b$,
         table_name);
 END;
 $a$;
-CALL r.create_inbox_combined_trigger ('comment_reply');
-CALL r.create_inbox_combined_trigger ('person_comment_mention');
+CALL r.create_inbox_combined_trigger ('proposal_reply');
+CALL r.create_inbox_combined_trigger ('person_proposal_mention');
 CALL r.create_inbox_combined_trigger ('person_post_mention');
 -- Prevent using delete instead of uplete on action tables
 CREATE FUNCTION r.require_uplete ()
@@ -624,7 +624,7 @@ RETURN NULL;
 END
 $$;
 CREATE TRIGGER require_uplete
-    BEFORE DELETE ON comment_actions
+    BEFORE DELETE ON proposal_actions
     FOR EACH STATEMENT
     EXECUTE FUNCTION r.require_uplete ();
 CREATE TRIGGER require_uplete
@@ -643,7 +643,7 @@ CREATE TRIGGER require_uplete
     BEFORE DELETE ON post_actions
     FOR EACH STATEMENT
     EXECUTE FUNCTION r.require_uplete ();
--- search: (post, comment, category, person, multi_category)
+-- search: (post, proposal, category, person, multi_category)
 CREATE PROCEDURE r.create_search_combined_trigger (table_name text)
     LANGUAGE plpgsql
 AS $a$
@@ -668,12 +668,12 @@ $b$,
 END;
 $a$;
 CALL r.create_search_combined_trigger ('post');
-CALL r.create_search_combined_trigger ('comment');
+CALL r.create_search_combined_trigger ('proposal');
 CALL r.create_search_combined_trigger ('category');
 CALL r.create_search_combined_trigger ('person');
 -- You also need to triggers to update the `score` column.
 -- post | post::score
--- comment | comment_aggregates::score
+-- proposal | proposal_aggregates::score
 -- category | category_aggregates::users_active_monthly
 -- person | person_aggregates::post_score
 --
@@ -696,8 +696,8 @@ CREATE TRIGGER search_combined_post_score
     AFTER UPDATE OF score ON post
     FOR EACH ROW
     EXECUTE FUNCTION r.search_combined_post_score_update ();
--- Comment score
-CREATE FUNCTION r.search_combined_comment_score_update ()
+-- Proposal score
+CREATE FUNCTION r.search_combined_proposal_score_update ()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -707,14 +707,14 @@ UPDATE
 SET
     score = NEW.score
 WHERE
-    comment_id = NEW.id;
+    proposal_id = NEW.id;
 RETURN NULL;
 END
 $$;
-CREATE TRIGGER search_combined_comment_score
-    AFTER UPDATE OF score ON comment
+CREATE TRIGGER search_combined_proposal_score
+    AFTER UPDATE OF score ON proposal
     FOR EACH ROW
-    EXECUTE FUNCTION r.search_combined_comment_score_update ();
+    EXECUTE FUNCTION r.search_combined_proposal_score_update ();
 -- Person score
 CREATE FUNCTION r.search_combined_person_score_update ()
     RETURNS TRIGGER

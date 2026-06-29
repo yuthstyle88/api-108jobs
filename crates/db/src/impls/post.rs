@@ -8,12 +8,12 @@ use crate::{
     PostHideForm,
     PostInsertForm,
     PostLikeForm,
-    PostReadCommentsForm,
     PostReadForm,
+    PostReadProposalsForm,
     PostSavedForm,
     PostUpdateForm,
   },
-  traits::{Crud, Hideable, Likeable, ReadComments, Readable, Saveable},
+  traits::{Crud, Hideable, Likeable, ReadProposals, Readable, Saveable},
   utils::{
     functions::{coalesce, hot_rank, lower, scaled_rank},
     get_conn,
@@ -255,7 +255,7 @@ impl Post {
     diesel::update(post::table.find(post_id))
       .set((
         post::hot_rank.eq(hot_rank(post::score, post::published_at)),
-        post::hot_rank_active.eq(hot_rank(post::score, post::newest_comment_time_necro_at)),
+        post::hot_rank_active.eq(hot_rank(post::score, post::newest_proposal_time_necro_at)),
         post::scaled_rank.eq(scaled_rank(
           post::score,
           post::published_at,
@@ -447,11 +447,11 @@ impl Hideable for PostActions {
   }
 }
 
-impl ReadComments for PostActions {
-  type Form = PostReadCommentsForm;
+impl ReadProposals for PostActions {
+  type Form = PostReadProposalsForm;
   type IdType = PostId;
 
-  async fn update_read_comments(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
+  async fn update_read_proposals(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     insert_into(post_actions::table)
@@ -461,10 +461,10 @@ impl ReadComments for PostActions {
       .set(form)
       .get_result::<Self>(conn)
       .await
-      .with_fastjob_type(FastJobErrorType::CouldntUpdateReadComments)
+      .with_fastjob_type(FastJobErrorType::CouldntUpdateReadProposals)
   }
 
-  async fn remove_read_comments(
+  async fn remove_read_proposals(
     pool: &mut DbPool<'_>,
     person_id: PersonId,
     post_id: Self::IdType,
@@ -476,11 +476,11 @@ impl ReadComments for PostActions {
         .filter(post_actions::post_id.eq(post_id))
         .filter(post_actions::person_id.eq(person_id)),
     )
-    .set_null(post_actions::read_comments_amount)
-    .set_null(post_actions::read_comments_at)
+    .set_null(post_actions::read_proposals_amount)
+    .set_null(post_actions::read_proposals_at)
     .get_result(conn)
     .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateReadComments)
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateReadProposals)
   }
 }
 
@@ -550,10 +550,10 @@ mod tests {
   use crate::{
     source::{
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentInsertForm, CommentUpdateForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
       post::{Post, PostActions, PostInsertForm, PostLikeForm},
+      proposal::{Proposal, ProposalInsertForm, ProposalUpdateForm},
     },
     traits::{Crud, Likeable},
     utils::build_db_pool_for_tests,
@@ -597,19 +597,19 @@ mod tests {
     let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
     let inserted_post = Post::create(pool, &new_post).await?;
 
-    let comment_form = CommentInsertForm::new(
+    let comment_form = ProposalInsertForm::new(
       inserted_person.id,
       inserted_post.id,
-      "A test comment".into(),
+      "A test proposal".into(),
     );
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Proposal::create(pool, &comment_form).await?;
 
-    let child_comment_form = CommentInsertForm::new(
+    let child_comment_form = ProposalInsertForm::new(
       inserted_person.id,
       inserted_post.id,
-      "A test comment".into(),
+      "A test proposal".into(),
     );
-    let inserted_child_comment = Comment::create(pool, &child_comment_form).await?;
+    let inserted_child_comment = Proposal::create(pool, &child_comment_form).await?;
 
     let post_like = PostLikeForm::new(inserted_post.id, inserted_person.id, 1);
 
@@ -617,7 +617,7 @@ mod tests {
 
     let post_aggs_before_delete = Post::read(pool, inserted_post.id).await?;
 
-    assert_eq!(2, post_aggs_before_delete.comments);
+    assert_eq!(2, post_aggs_before_delete.proposals);
     assert_eq!(1, post_aggs_before_delete.score);
     assert_eq!(1, post_aggs_before_delete.upvotes);
     assert_eq!(0, post_aggs_before_delete.downvotes);
@@ -629,16 +629,16 @@ mod tests {
 
     let post_aggs_after_dislike = Post::read(pool, inserted_post.id).await?;
 
-    assert_eq!(2, post_aggs_after_dislike.comments);
+    assert_eq!(2, post_aggs_after_dislike.proposals);
     assert_eq!(0, post_aggs_after_dislike.score);
     assert_eq!(1, post_aggs_after_dislike.upvotes);
     assert_eq!(1, post_aggs_after_dislike.downvotes);
 
     // Remove the comments
-    Comment::delete(pool, inserted_comment.id).await?;
-    Comment::delete(pool, inserted_child_comment.id).await?;
+    Proposal::delete(pool, inserted_comment.id).await?;
+    Proposal::delete(pool, inserted_child_comment.id).await?;
     let after_comment_delete = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, after_comment_delete.comments);
+    assert_eq!(0, after_comment_delete.proposals);
     assert_eq!(0, after_comment_delete.score);
     assert_eq!(1, after_comment_delete.upvotes);
     assert_eq!(1, after_comment_delete.downvotes);
@@ -646,7 +646,7 @@ mod tests {
     // Remove the first post like
     PostActions::remove_like(pool, inserted_person.id, inserted_post.id).await?;
     let after_like_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, after_like_remove.comments);
+    assert_eq!(0, after_like_remove.proposals);
     assert_eq!(-1, after_like_remove.score);
     assert_eq!(0, after_like_remove.upvotes);
     assert_eq!(1, after_like_remove.downvotes);
@@ -698,21 +698,21 @@ mod tests {
     let new_post = PostInsertForm::new("A test post".into(), inserted_person.id);
     let inserted_post = Post::create(pool, &new_post).await?;
 
-    let comment_form = CommentInsertForm::new(
+    let comment_form = ProposalInsertForm::new(
       inserted_person.id,
       inserted_post.id,
-      "A test comment".into(),
+      "A test proposal".into(),
     );
 
-    let inserted_comment = Comment::create(pool, &comment_form).await?;
+    let inserted_comment = Proposal::create(pool, &comment_form).await?;
 
     let post_aggregates_before = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(1, post_aggregates_before.comments);
+    assert_eq!(1, post_aggregates_before.proposals);
 
-    Comment::update(
+    Proposal::update(
       pool,
       inserted_comment.id,
-      &CommentUpdateForm {
+      &ProposalUpdateForm {
         removed: Some(true),
         ..Default::default()
       },
@@ -720,22 +720,22 @@ mod tests {
     .await?;
 
     let post_aggregates_after_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_remove.comments);
+    assert_eq!(0, post_aggregates_after_remove.proposals);
 
-    Comment::update(
+    Proposal::update(
       pool,
       inserted_comment.id,
-      &CommentUpdateForm {
+      &ProposalUpdateForm {
         removed: Some(false),
         ..Default::default()
       },
     )
     .await?;
 
-    Comment::update(
+    Proposal::update(
       pool,
       inserted_comment.id,
-      &CommentUpdateForm {
+      &ProposalUpdateForm {
         deleted: Some(true),
         ..Default::default()
       },
@@ -743,12 +743,12 @@ mod tests {
     .await?;
 
     let post_aggregates_after_delete = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_delete.comments);
+    assert_eq!(0, post_aggregates_after_delete.proposals);
 
-    Comment::update(
+    Proposal::update(
       pool,
       inserted_comment.id,
-      &CommentUpdateForm {
+      &ProposalUpdateForm {
         removed: Some(true),
         ..Default::default()
       },
@@ -756,9 +756,9 @@ mod tests {
     .await?;
 
     let post_aggregates_after_delete_remove = Post::read(pool, inserted_post.id).await?;
-    assert_eq!(0, post_aggregates_after_delete_remove.comments);
+    assert_eq!(0, post_aggregates_after_delete_remove.proposals);
 
-    Comment::delete(pool, inserted_comment.id).await?;
+    Proposal::delete(pool, inserted_comment.id).await?;
     Post::delete(pool, inserted_post.id).await?;
     Person::delete(pool, inserted_person.id).await?;
     Category::delete(pool, inserted_category.id).await?;

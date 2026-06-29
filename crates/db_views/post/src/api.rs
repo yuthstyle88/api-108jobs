@@ -10,7 +10,7 @@ use app_108jobs_db::{
     PostSortType,
     TripStatus,
   },
-  newtypes::{CategoryId, Coin, CommentId, DbUrl, LanguageId, PaginationCursor, PostId, TagId},
+  newtypes::{CategoryId, Coin, DbUrl, LanguageId, PaginationCursor, PostId, ProposalId, TagId},
   source::delivery_details::DeliveryDetailsPayload,
   PostFeatureType,
 };
@@ -233,11 +233,11 @@ pub struct UpdatePostNotificationsRequest {
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
 // TODO this should be made into a tagged enum
-/// Get a post. Needs either the post id, or comment_id.
+/// Get a post. Needs either the post id, or proposal_id.
 #[serde(rename_all = "camelCase")]
 pub struct GetPost {
   pub id: Option<PostId>,
-  pub comment_id: Option<CommentId>,
+  pub proposal_id: Option<ProposalId>,
 }
 
 #[skip_serializing_none]

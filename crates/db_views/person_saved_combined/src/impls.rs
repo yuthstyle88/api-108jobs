@@ -1,14 +1,14 @@
 use crate::{
-  CommentView,
   LocalUserView,
   PersonSavedCombinedView,
   PersonSavedCombinedViewInternal,
   PostView,
+  ProposalView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   newtypes::{InstanceId, PaginationCursor, PersonId},
-  schema::{comment, delivery_details, person, person_saved_combined, post},
+  schema::{delivery_details, person, person_saved_combined, post, proposal},
   source::combined::person_saved::{person_saved_combined_keys as key, PersonSavedCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
@@ -24,11 +24,11 @@ use app_108jobs_db::{
       creator_local_user_admin_join,
       image_details_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
       my_post_actions_join,
+      my_proposal_actions_join,
     },
     DbPool,
   },
@@ -59,7 +59,7 @@ impl PaginationCursorBuilder for PersonSavedCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      PersonSavedCombinedView::Comment(v) => ('C', v.comment.id.0),
+      PersonSavedCombinedView::Proposal(v) => ('C', v.proposal.id.0),
       PersonSavedCombinedView::Post(v) => ('P', v.post.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -81,7 +81,7 @@ impl PaginationCursorBuilder for PersonSavedCombinedView {
       .into_boxed();
 
     query = match prefix {
-      'C' => query.filter(person_saved_combined::comment_id.eq(id)),
+      'C' => query.filter(person_saved_combined::proposal_id.eq(id)),
       'P' => query.filter(person_saved_combined::post_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -97,16 +97,16 @@ impl PersonSavedCombinedViewInternal {
     let item_creator = person::id;
 
     let comment_join =
-      comment::table.on(person_saved_combined::comment_id.eq(comment::id.nullable()));
+      proposal::table.on(person_saved_combined::proposal_id.eq(proposal::id.nullable()));
 
     let post_join = post::table.on(
       person_saved_combined::post_id
         .eq(post::id.nullable())
-        .or(comment::post_id.eq(post::id)),
+        .or(proposal::post_id.eq(post::id)),
     );
 
     let item_creator_join = person::table.on(
-      comment::creator_id
+      proposal::creator_id
         .eq(item_creator)
         // Need to filter out the post rows where the post_id given is null
         // Otherwise you'll get duped post rows
@@ -120,8 +120,8 @@ impl PersonSavedCombinedViewInternal {
     let my_category_actions_join: my_category_actions_join =
       my_category_actions_join(Some(my_person_id));
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(Some(my_person_id));
-    let my_comment_actions_join: my_comment_actions_join =
-      my_comment_actions_join(Some(my_person_id));
+    let my_proposal_actions_join: my_proposal_actions_join =
+      my_proposal_actions_join(Some(my_person_id));
     let my_local_user_admin_join: my_local_user_admin_join =
       my_local_user_admin_join(Some(my_person_id));
     let my_instance_actions_person_join: my_instance_actions_person_join =
@@ -145,7 +145,7 @@ impl PersonSavedCombinedViewInternal {
       .left_join(creator_local_instance_actions_join)
       .left_join(my_post_actions_join)
       .left_join(my_person_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
       .left_join(image_details_join())
       .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
@@ -175,8 +175,8 @@ impl PersonSavedCombinedQuery {
     if let Some(type_) = self.type_ {
       query = match type_ {
         PersonContentType::All => query,
-        PersonContentType::Comments => {
-          query.filter(person_saved_combined::comment_id.is_not_null())
+        PersonContentType::Proposals => {
+          query.filter(person_saved_combined::proposal_id.is_not_null())
         }
         PersonContentType::Posts => query.filter(person_saved_combined::post_id.is_not_null()),
       }
@@ -215,14 +215,14 @@ impl InternalToCombinedView for PersonSavedCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let Some(comment) = v.comment {
-      Some(PersonSavedCombinedView::Comment(CommentView {
-        comment,
+    if let Some(proposal) = v.proposal {
+      Some(PersonSavedCombinedView::Proposal(ProposalView {
+        proposal,
         post: v.post,
         category: Some(v.category),
         creator: v.item_creator,
         category_actions: v.category_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
         creator_is_admin: v.item_creator_is_admin,
@@ -262,11 +262,11 @@ mod tests {
   use app_108jobs_db::{
     source::{
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentActions, CommentInsertForm, CommentSavedForm},
       instance::Instance,
       local_user::{LocalUser, LocalUserInsertForm},
       person::{Person, PersonInsertForm},
       post::{Post, PostActions, PostInsertForm, PostSavedForm},
+      proposal::{Proposal, ProposalActions, ProposalInsertForm, ProposalSavedForm},
     },
     traits::{Crud, Saveable},
     utils::{build_db_pool_for_tests, DbPool},
@@ -280,8 +280,8 @@ mod tests {
     timmy_view: LocalUserView,
     sara: Person,
     timmy_post: Post,
-    sara_comment: Comment,
-    sara_comment_2: Comment,
+    sara_comment: Proposal,
+    sara_comment_2: Proposal,
   }
 
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
@@ -328,16 +328,16 @@ mod tests {
     let _sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let _timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
+      ProposalInsertForm::new(timmy.id, timmy_post.id, "timmy proposal prv".into());
+    let _timmy_comment = Proposal::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
+      ProposalInsertForm::new(sara.id, timmy_post.id, "sara proposal prv".into());
+    let sara_comment = Proposal::create(pool, &sara_comment_form).await?;
 
     let sara_comment_form_2 =
-      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
+      ProposalInsertForm::new(sara.id, timmy_post_2.id, "sara proposal prv 2".into());
+    let sara_comment_2 = Proposal::create(pool, &sara_comment_form_2).await?;
 
     Ok(Data {
       instance,
@@ -371,11 +371,11 @@ mod tests {
 
     // Save a few things
     let save_sara_comment_2 =
-      CommentSavedForm::new(data.timmy_view.person.id, data.sara_comment_2.id);
-    CommentActions::save(pool, &save_sara_comment_2).await?;
+      ProposalSavedForm::new(data.timmy_view.person.id, data.sara_comment_2.id);
+    ProposalActions::save(pool, &save_sara_comment_2).await?;
 
-    let save_sara_comment = CommentSavedForm::new(data.timmy_view.person.id, data.sara_comment.id);
-    CommentActions::save(pool, &save_sara_comment).await?;
+    let save_sara_comment = ProposalSavedForm::new(data.timmy_view.person.id, data.sara_comment.id);
+    ProposalActions::save(pool, &save_sara_comment).await?;
 
     let post_save_form = PostSavedForm::new(data.timmy_post.id, data.timmy.id);
     PostActions::save(pool, &post_save_form).await?;
@@ -392,21 +392,21 @@ mod tests {
     } else {
       panic!("wrong type");
     }
-    if let PersonSavedCombinedView::Comment(v) = &timmy_saved[1] {
-      assert_eq!(data.sara_comment.id, v.comment.id);
-      assert_eq!(data.sara.id, v.comment.creator_id);
+    if let PersonSavedCombinedView::Proposal(v) = &timmy_saved[1] {
+      assert_eq!(data.sara_comment.id, v.proposal.id);
+      assert_eq!(data.sara.id, v.proposal.creator_id);
     } else {
       panic!("wrong type");
     }
-    if let PersonSavedCombinedView::Comment(v) = &timmy_saved[2] {
-      assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.sara.id, v.comment.creator_id);
+    if let PersonSavedCombinedView::Proposal(v) = &timmy_saved[2] {
+      assert_eq!(data.sara_comment_2.id, v.proposal.id);
+      assert_eq!(data.sara.id, v.proposal.creator_id);
     } else {
       panic!("wrong type");
     }
 
     // Try unsaving 2 things
-    CommentActions::unsave(pool, &save_sara_comment).await?;
+    ProposalActions::unsave(pool, &save_sara_comment).await?;
     PostActions::unsave(pool, &post_save_form).await?;
 
     let timmy_saved = PersonSavedCombinedQuery::default()
@@ -414,9 +414,9 @@ mod tests {
       .await?;
     assert_eq!(1, timmy_saved.len());
 
-    if let PersonSavedCombinedView::Comment(v) = &timmy_saved[0] {
-      assert_eq!(data.sara_comment_2.id, v.comment.id);
-      assert_eq!(data.sara.id, v.comment.creator_id);
+    if let PersonSavedCombinedView::Proposal(v) = &timmy_saved[0] {
+      assert_eq!(data.sara_comment_2.id, v.proposal.id);
+      assert_eq!(data.sara.id, v.proposal.creator_id);
     } else {
       panic!("wrong type");
     }

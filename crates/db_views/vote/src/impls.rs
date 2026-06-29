@@ -2,9 +2,9 @@ use crate::VoteView;
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   aliases::creator_category_actions,
-  newtypes::{CommentId, PaginationCursor, PersonId, PostId},
-  schema::{category_actions, comment, comment_actions, person, post, post_actions},
-  source::{comment::CommentActions, post::PostActions},
+  newtypes::{PaginationCursor, PersonId, PostId, ProposalId},
+  schema::{category_actions, person, post, post_actions, proposal, proposal_actions},
+  source::{post::PostActions, proposal::ProposalActions},
   utils::{get_conn, limit_fetch, paginate, DbPool},
 };
 use diesel::{
@@ -95,17 +95,17 @@ impl VoteView {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub fn to_comment_actions_cursor(&self) -> PaginationCursor {
-    // This needs a person and comment
+  pub fn to_proposal_actions_cursor(&self) -> PaginationCursor {
+    // This needs a person and proposal
     let prefixes_and_ids = [('P', self.creator.id.0)];
 
     PaginationCursor::new(&prefixes_and_ids)
   }
 
-  pub async fn from_comment_actions_cursor(
+  pub async fn from_proposal_actions_cursor(
     cursor: &PaginationCursor,
     pool: &mut DbPool<'_>,
-  ) -> FastJobResult<CommentActions> {
+  ) -> FastJobResult<ProposalActions> {
     let pids = cursor.prefixes_and_ids();
     let (_, person_id) = pids
       .as_slice()
@@ -115,17 +115,17 @@ impl VoteView {
       .get(1)
       .ok_or(FastJobErrorType::CouldntParsePaginationToken)?;
 
-    CommentActions::read(pool, CommentId(*comment_id), PersonId(*person_id)).await
+    ProposalActions::read(pool, ProposalId(*comment_id), PersonId(*person_id)).await
   }
 
-  pub async fn list_for_comment(
+  pub async fn list_for_proposal(
     pool: &mut DbPool<'_>,
-    comment_id: CommentId,
-    cursor_data: Option<CommentActions>,
+    comment_id: ProposalId,
+    cursor_data: Option<ProposalActions>,
     page_back: Option<bool>,
     limit: Option<i64>,
   ) -> FastJobResult<Vec<Self>> {
-    use app_108jobs_db::source::comment::comment_actions_keys as key;
+    use app_108jobs_db::source::proposal::proposal_actions_keys as key;
     let conn = &mut get_conn(pool).await?;
     let limit = limit_fetch(limit)?;
 
@@ -137,23 +137,23 @@ impl VoteView {
         .and(
           creator_category_actions
             .field(category_actions::person_id)
-            .eq(comment_actions::person_id),
+            .eq(proposal_actions::person_id),
         ),
     );
 
-    let query = comment_actions::table
+    let query = proposal_actions::table
       .inner_join(person::table)
-      .inner_join(comment::table.inner_join(post::table))
+      .inner_join(proposal::table.inner_join(post::table))
       .left_join(creator_category_actions_join)
-      .filter(comment_actions::comment_id.eq(comment_id))
-      .filter(comment_actions::like_score.is_not_null())
+      .filter(proposal_actions::comment_id.eq(comment_id))
+      .filter(proposal_actions::like_score.is_not_null())
       .select((
         person::all_columns,
         creator_category_actions
           .field(category_actions::received_ban_at)
           .nullable()
           .is_not_null(),
-        comment_actions::like_score.assume_not_null(),
+        proposal_actions::like_score.assume_not_null(),
       ))
       .limit(limit)
       .into_boxed();

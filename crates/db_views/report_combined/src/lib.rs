@@ -2,13 +2,13 @@ use app_108jobs_db::source::{
   category::{Category, CategoryActions},
   category_report::CategoryReport,
   combined::report::ReportCombined,
-  comment::{Comment, CommentActions},
-  comment_report::CommentReport,
   person::{Person, PersonActions},
   post::{Post, PostActions},
   post_report::PostReport,
+  proposal::{Proposal, ProposalActions},
+  proposal_report::ProposalReport,
 };
-use app_108jobs_db_views_reports::{CategoryReportView, CommentReportView, PostReportView};
+use app_108jobs_db_views_reports::{CategoryReportView, PostReportView, ProposalReportView};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "full")]
 use {
@@ -35,13 +35,13 @@ pub struct ReportCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post_report: Option<PostReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_report: Option<CommentReport>,
+  pub proposal_report: Option<ProposalReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub category_report: Option<CategoryReport>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub report_creator: Person,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment: Option<Comment>,
+  pub proposal: Option<Proposal>,
   #[cfg_attr(feature = "full", diesel(embed))]
   pub post: Option<Post>,
   #[cfg_attr(feature = "full",
@@ -60,7 +60,7 @@ pub struct ReportCombinedViewInternal {
   #[cfg_attr(feature = "full", diesel(embed))]
   pub person_actions: Option<PersonActions>,
   #[cfg_attr(feature = "full", diesel(embed))]
-  pub comment_actions: Option<CommentActions>,
+  pub proposal_actions: Option<ProposalActions>,
   #[cfg_attr(feature = "full",
     diesel(
       select_expression = local_user_is_admin()
@@ -76,6 +76,6 @@ pub struct ReportCombinedViewInternal {
 #[serde(tag = "type_")]
 pub enum ReportCombinedView {
   Post(PostReportView),
-  Comment(CommentReportView),
+  Proposal(ProposalReportView),
   Category(CategoryReportView),
 }

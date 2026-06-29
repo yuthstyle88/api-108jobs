@@ -1,29 +1,29 @@
 use actix_web::web::{Data, Json};
-use app_108jobs_api_utils::{build_response::build_comment_response, context::FastJobContext};
+use app_108jobs_api_utils::{build_response::build_proposal_response, context::FastJobContext};
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   source::{
-    comment::{Comment, CommentUpdateForm},
-    comment_report::CommentReport,
     local_user::LocalUser,
-    mod_log::moderator::{ModRemoveComment, ModRemoveCommentForm},
+    mod_log::moderator::{ModRemoveProposal, ModRemoveProposalForm},
+    proposal::{Proposal, ProposalUpdateForm},
+    proposal_report::ProposalReport,
   },
   traits::{Crud, Reportable},
 };
-use app_108jobs_db_views_comment::{
-  api::{CommentResponse, RemoveComment},
-  CommentView,
-};
 use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_proposal::{
+  api::{ProposalResponse, RemoveComment},
+  ProposalView,
+};
 
 pub async fn remove_comment(
   data: Json<RemoveComment>,
   context: Data<FastJobContext>,
   local_user_view: LocalUserView,
-) -> FastJobResult<Json<CommentResponse>> {
-  let comment_id = data.comment_id;
+) -> FastJobResult<Json<ProposalResponse>> {
+  let comment_id = data.proposal_id;
   let local_instance_id = local_user_view.person.instance_id;
-  let orig_comment = CommentView::read(
+  let orig_comment = ProposalView::read(
     &mut context.pool(),
     comment_id,
     Some(&local_user_view.local_user),
@@ -43,40 +43,44 @@ pub async fn remove_comment(
   )
   .await?;
 
-  // Don't allow removing or restoring comment which was deleted by user, as it would reveal
-  // the comment text in mod log.
-  if orig_comment.comment.deleted {
-    return Err(FastJobErrorType::CouldntUpdateComment.into());
+  // Don't allow removing or restoring proposal which was deleted by user, as it would reveal
+  // the proposal text in mod log.
+  if orig_comment.proposal.deleted {
+    return Err(FastJobErrorType::CouldntUpdateProposal.into());
   }
 
   // Do the remove
   let removed = data.removed;
-  let updated_comment = Comment::update(
+  let updated_proposal = Proposal::update(
     &mut context.pool(),
     comment_id,
-    &CommentUpdateForm {
+    &ProposalUpdateForm {
       removed: Some(removed),
       ..Default::default()
     },
   )
   .await?;
 
-  CommentReport::resolve_all_for_object(&mut context.pool(), comment_id, local_user_view.person.id)
-    .await?;
+  ProposalReport::resolve_all_for_object(
+    &mut context.pool(),
+    comment_id,
+    local_user_view.person.id,
+  )
+  .await?;
 
   // Mod tables
-  let form = ModRemoveCommentForm {
+  let form = ModRemoveProposalForm {
     mod_person_id: local_user_view.person.id,
-    comment_id: data.comment_id,
+    comment_id: data.proposal_id,
     removed: Some(removed),
     reason: data.reason.clone(),
   };
-  ModRemoveComment::create(&mut context.pool(), &form).await?;
+  ModRemoveProposal::create(&mut context.pool(), &form).await?;
 
-  let updated_comment_id = updated_comment.id;
+  let updated_comment_id = updated_proposal.id;
 
   Ok(Json(
-    build_comment_response(
+    build_proposal_response(
       &context,
       updated_comment_id,
       Some(local_user_view),

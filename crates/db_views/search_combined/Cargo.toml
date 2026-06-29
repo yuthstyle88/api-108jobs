@@ -23,14 +23,14 @@ full = [
   "i-love-jesus",
   "app_108jobs_db/full",
   "app_108jobs_db_views_post/full",
-  "app_108jobs_db_views_comment/full",
+  "app_108jobs_db_views_proposal/full",
   "app_108jobs_db_views_category/full",
   "app_108jobs_db_views_person/full",
 ]
 ts-rs = [
   "dep:ts-rs",
   "app_108jobs_db/ts-rs",
-  "app_108jobs_db_views_comment/ts-rs",
+  "app_108jobs_db_views_proposal/ts-rs",
   "app_108jobs_db_views_category/ts-rs",
   "app_108jobs_db_views_person/ts-rs",
   "app_108jobs_db_views_post/ts-rs",
@@ -38,7 +38,7 @@ ts-rs = [
 
 [dependencies]
 app_108jobs_db_views_post = { workspace = true }
-app_108jobs_db_views_comment = { workspace = true }
+app_108jobs_db_views_proposal = { workspace = true }
 app_108jobs_db_views_category = { workspace = true }
 app_108jobs_db_views_person = { workspace = true }
 app_108jobs_db_views_local_user = { workspace = true }

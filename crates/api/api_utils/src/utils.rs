@@ -26,38 +26,38 @@ use app_108jobs_db::{
     BankId,
     CategoryId,
     ChatRoomId,
-    CommentId,
     DbUrl,
     InstanceId,
     LanguageId,
     LocalUserId,
     PersonId,
     PostId,
+    ProposalId,
   },
   source::{
     actor_language::SiteLanguage,
     category::{Category, CategoryActions},
     chat_message::{ChatMessage, ChatMessageInsertForm},
     chat_room::{ChatRoom, ChatRoomUpdateForm},
-    comment::{Comment, CommentActions},
     images::{ImageDetails, RemoteImage},
     language::Language,
     local_site::LocalSite,
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
     mod_log::moderator::{
-      ModRemoveComment,
-      ModRemoveCommentForm,
       ModRemovePost,
       ModRemovePostForm,
+      ModRemoveProposal,
+      ModRemoveProposalForm,
     },
     oauth_account::OAuthAccount,
     person::{Person, PersonUpdateForm},
-    post::{Post, PostActions, PostReadCommentsForm},
+    post::{Post, PostActions, PostReadProposalsForm},
+    proposal::{Proposal, ProposalActions},
     registration_application::RegistrationApplication,
     user_bank_account::BankAccount,
   },
-  traits::{Crud, Likeable, PaginationCursorBuilder, ReadComments},
+  traits::{Crud, Likeable, PaginationCursorBuilder, ReadProposals},
   utils::DbPool,
 };
 use app_108jobs_db_views_local_image::LocalImageView;
@@ -110,15 +110,16 @@ pub fn is_admin(local_user_view: &LocalUserView) -> FastJobResult<()> {
   }
 }
 
-/// Updates the read comment count for a post. Usually done when reading or creating a new comment.
-pub async fn update_read_comments(
+/// Updates the read proposal count for a post. Usually done when reading or creating a new
+/// proposal.
+pub async fn update_read_proposals(
   person_id: PersonId,
   post_id: PostId,
-  read_comments: i64,
+  read_proposals: i64,
   pool: &mut DbPool<'_>,
 ) -> FastJobResult<()> {
-  let person_post_agg_form = PostReadCommentsForm::new(post_id, person_id, read_comments);
-  PostActions::update_read_comments(pool, &person_post_agg_form).await?;
+  let person_post_agg_form = PostReadProposalsForm::new(post_id, person_id, read_proposals);
+  PostActions::update_read_proposals(pool, &person_post_agg_form).await?;
 
   Ok(())
 }
@@ -195,8 +196,8 @@ pub fn check_post_deleted_or_removed(post: &Post) -> FastJobResult<()> {
   }
 }
 
-pub fn check_comment_deleted_or_removed(comment: &Comment) -> FastJobResult<()> {
-  if comment.deleted || comment.removed {
+pub fn check_proposal_deleted_or_removed(proposal: &Proposal) -> FastJobResult<()> {
+  if proposal.deleted || proposal.removed {
     Err(FastJobErrorType::Deleted)?
   } else {
     Ok(())
@@ -245,7 +246,7 @@ pub fn local_site_rate_limit_to_rate_limit_config(
     ActionType::Post => (l.post_max_requests, l.post_interval_seconds),
     ActionType::Register => (l.register_max_requests, l.register_interval_seconds),
     ActionType::Image => (l.image_max_requests, l.image_interval_seconds),
-    ActionType::Comment => (l.comment_max_requests, l.comment_interval_seconds),
+    ActionType::Comment => (l.proposal_max_requests, l.proposal_interval_seconds),
     ActionType::Search => (l.search_max_requests, l.search_interval_seconds),
     ActionType::ImportUserSettings => (l.import_user_settings_max_requests, l.import_user_settings_interval_seconds),
     ActionType::Login => (LOGIN_MAX_REQUESTS, LOGIN_INTERVAL_SECONDS),
@@ -372,9 +373,9 @@ pub async fn remove_or_restore_user_data(
     )
     .await?;
 
-    // Remove post and comment votes
+    // Remove post and proposal votes
     PostActions::remove_all_likes(pool, banned_person_id).await?;
-    CommentActions::remove_all_likes(pool, banned_person_id).await?;
+    ProposalActions::remove_all_likes(pool, banned_person_id).await?;
   }
 
   // Posts
@@ -389,13 +390,13 @@ pub async fn remove_or_restore_user_data(
   )
   .await?;
 
-  // Comments
-  let removed_or_restored_comments =
-    Comment::update_removed_for_creator(pool, banned_person_id, removed).await?;
-  create_modlog_entries_for_removed_or_restored_comments(
+  // Proposals
+  let removed_or_restored_proposals =
+    Proposal::update_removed_for_creator(pool, banned_person_id, removed).await?;
+  create_modlog_entries_for_removed_or_restored_proposals(
     pool,
     mod_person_id,
-    removed_or_restored_comments.iter().map(|r| r.id).collect(),
+    removed_or_restored_proposals.iter().map(|r| r.id).collect(),
     removed,
     reason,
   )
@@ -427,25 +428,25 @@ async fn create_modlog_entries_for_removed_or_restored_posts(
   Ok(())
 }
 
-async fn create_modlog_entries_for_removed_or_restored_comments(
+async fn create_modlog_entries_for_removed_or_restored_proposals(
   pool: &mut DbPool<'_>,
   mod_person_id: PersonId,
-  comment_ids: Vec<CommentId>,
+  proposal_ids: Vec<ProposalId>,
   removed: bool,
   reason: &Option<String>,
 ) -> FastJobResult<()> {
   // Build the forms
-  let forms = comment_ids
+  let forms = proposal_ids
     .iter()
-    .map(|&comment_id| ModRemoveCommentForm {
+    .map(|&proposal_id| ModRemoveProposalForm {
       mod_person_id,
-      comment_id,
+      comment_id: proposal_id,
       removed: Some(removed),
       reason: reason.clone(),
     })
     .collect();
 
-  ModRemoveComment::create_multiple(pool, &forms).await?;
+  ModRemoveProposal::create_multiple(pool, &forms).await?;
 
   Ok(())
 }
@@ -460,9 +461,9 @@ pub async fn remove_or_restore_user_data_in_category(
 ) -> FastJobResult<()> {
   // These actions are only possible when removing, not restoring
   if remove {
-    // Remove post and comment votes
+    // Remove post and proposal votes
     PostActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
-    CommentActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
+    ProposalActions::remove_likes_in_category(pool, banned_person_id, category_id).await?;
   }
 
   // Posts
@@ -479,15 +480,15 @@ pub async fn remove_or_restore_user_data_in_category(
   )
   .await?;
 
-  // Comments
-  let removed_comment_ids =
-    Comment::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
+  // Proposals
+  let removed_proposal_ids =
+    Proposal::update_removed_for_creator_and_category(pool, banned_person_id, category_id, remove)
       .await?;
 
-  create_modlog_entries_for_removed_or_restored_comments(
+  create_modlog_entries_for_removed_or_restored_proposals(
     pool,
     mod_person_id,
-    removed_comment_ids,
+    removed_proposal_ids,
     remove,
     reason,
   )
@@ -507,10 +508,10 @@ pub async fn purge_user_account(
   // No need to update avatar and banner, those are handled in Person::delete_account
   delete_local_user_images(person_id, context).await.ok();
 
-  // Comments
-  Comment::permadelete_for_creator(pool, person_id)
+  // Proposals
+  Proposal::permadelete_for_creator(pool, person_id)
     .await
-    .with_fastjob_type(FastJobErrorType::CouldntUpdateComment)?;
+    .with_fastjob_type(FastJobErrorType::CouldntUpdateProposal)?;
 
   // Posts
   Post::permadelete_for_creator(pool, person_id)
@@ -808,16 +809,16 @@ pub async fn generate_unique_username(
   // Base username is available
   Ok(base_username)
 }
-/// Returns error if new comment exceeds maximum depth.
+/// Returns error if new proposal exceeds maximum depth.
 ///
-/// Top-level comments have a path like `0.123` where 123 is the comment id. At the second level
-/// it is `0.123.456`, containing the parent id and current comment id.
-pub fn check_comment_depth(comment: &Comment) -> FastJobResult<()> {
-  let path = &comment.path.0;
+/// Top-level proposals have a path like `0.123` where 123 is the proposal id. At the second level
+/// it is `0.123.456`, containing the parent id and current proposal id.
+pub fn check_proposal_depth(proposal: &Proposal) -> FastJobResult<()> {
+  let path = &proposal.path.0;
   let length = path.split('.').count();
   // Need to increment by one because the path always starts with 0
   if length > MAX_COMMENT_DEPTH_LIMIT + 1 {
-    Err(FastJobErrorType::MaxCommentDepthReached)?
+    Err(FastJobErrorType::MaxProposalDepthReached)?
   } else {
     Ok(())
   }
@@ -979,29 +980,32 @@ pub async fn verify_post_creator(
   Ok(())
 }
 
-/// Verify that a comment exists and is on the specified post.
+/// Verify that a proposal exists and is on the specified post.
 ///
-/// Returns an error if the comment is not on this post.
-pub async fn verify_comment_on_post(
+/// Returns an error if the proposal is not on this post.
+pub async fn verify_proposal_on_post(
   pool: &mut DbPool<'_>,
-  comment_id: CommentId,
+  proposal_id: ProposalId,
   post_id: PostId,
-) -> FastJobResult<Comment> {
-  let comment = Comment::read(pool, comment_id).await?;
+) -> FastJobResult<Proposal> {
+  let proposal = Proposal::read(pool, proposal_id).await?;
 
-  if comment.post_id != post_id {
-    return Err(FastJobErrorType::CommentNotOnDeliveryPost.into());
+  if proposal.post_id != post_id {
+    return Err(FastJobErrorType::ProposalNotOnDeliveryPost.into());
   }
 
-  Ok(comment)
+  Ok(proposal)
 }
 
-/// Verify that a comment's author matches the expected person_id.
+/// Verify that a proposal's author matches the expected person_id.
 ///
-/// Returns an error if the comment author does not match.
-pub fn verify_comment_author(comment: &Comment, expected_person_id: PersonId) -> FastJobResult<()> {
-  if comment.creator_id != expected_person_id.into() {
-    return Err(FastJobErrorType::CommentAuthorMismatch.into());
+/// Returns an error if the proposal author does not match.
+pub fn verify_proposal_author(
+  proposal: &Proposal,
+  expected_person_id: PersonId,
+) -> FastJobResult<()> {
+  if proposal.creator_id != expected_person_id.into() {
+    return Err(FastJobErrorType::ProposalAuthorMismatch.into());
   }
 
   Ok(())

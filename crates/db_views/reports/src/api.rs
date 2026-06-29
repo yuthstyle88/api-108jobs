@@ -1,11 +1,11 @@
-use crate::{CategoryReportView, CommentReportView, PostReportView};
+use crate::{CategoryReportView, PostReportView, ProposalReportView};
 use app_108jobs_db::newtypes::{
   CategoryId,
   CategoryReportId,
-  CommentId,
-  CommentReportId,
   PostId,
   PostReportId,
+  ProposalId,
+  ProposalReportId,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -13,10 +13,10 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment report response.
+/// The proposal report response.
 #[serde(rename_all = "camelCase")]
-pub struct CommentReportResponse {
-  pub comment_report_view: CommentReportView,
+pub struct ProposalReportResponse {
+  pub proposal_report_view: ProposalReportView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,9 +31,9 @@ pub struct CategoryReportResponse {
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Report a comment.
-pub struct CreateCommentReport {
-  pub comment_id: CommentId,
+/// Report a proposal.
+pub struct CreateProposalReport {
+  pub proposal_id: ProposalId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,
 }
@@ -41,10 +41,10 @@ pub struct CreateCommentReport {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Report a comment.
+/// Report a proposal.
 #[serde(rename_all = "camelCase")]
-pub struct CreateCommentReportRequest {
-  pub comment_id: CommentId,
+pub struct CreateProposalReportRequest {
+  pub proposal_id: ProposalId,
   pub reason: String,
   pub violates_instance_rules: Option<bool>,
 }
@@ -112,10 +112,10 @@ pub struct GetReportCountResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Resolve a comment report (only doable by mods).
+/// Resolve a proposal report (only doable by mods).
 #[serde(rename_all = "camelCase")]
-pub struct ResolveCommentReport {
-  pub report_id: CommentReportId,
+pub struct ResolveProposalReport {
+  pub report_id: ProposalReportId,
   pub resolved: bool,
 }
 

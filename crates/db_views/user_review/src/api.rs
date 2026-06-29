@@ -14,7 +14,7 @@ pub struct SubmitUserReviewForm {
   pub reviewee_id: PersonId,
   pub workflow_id: WorkflowId,
   pub rating: i16,
-  pub comment: Option<String>,
+  pub proposal: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -26,7 +26,7 @@ pub struct SubmitUserReviewRequest {
   pub reviewee_id: PersonId,
   pub workflow_id: WorkflowId,
   pub rating: i16,
-  pub comment: Option<String>,
+  pub proposal: Option<String>,
 }
 
 #[skip_serializing_none]

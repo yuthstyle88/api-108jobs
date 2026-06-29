@@ -1,15 +1,15 @@
 use crate::{
-  CommentView,
   LocalUserView,
   PersonContentCombinedView,
   PersonContentCombinedViewInternal,
   PostView,
+  ProposalView,
 };
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   self,
   newtypes::{InstanceId, PaginationCursor, PersonId},
-  schema::{comment, delivery_details, person, person_content_combined, post},
+  schema::{delivery_details, person, person_content_combined, post, proposal},
   source::combined::person_content::{person_content_combined_keys as key, PersonContentCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
   utils::{
@@ -24,11 +24,11 @@ use app_108jobs_db::{
       creator_local_user_admin_join,
       image_details_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_person_join,
       my_local_user_admin_join,
       my_person_actions_join,
       my_post_actions_join,
+      my_proposal_actions_join,
     },
     DbPool,
   },
@@ -51,16 +51,16 @@ impl PersonContentCombinedViewInternal {
     let item_creator = person::id;
 
     let comment_join =
-      comment::table.on(person_content_combined::comment_id.eq(comment::id.nullable()));
+      proposal::table.on(person_content_combined::proposal_id.eq(proposal::id.nullable()));
 
     let post_join = post::table.on(
       person_content_combined::post_id
         .eq(post::id.nullable())
-        .or(comment::post_id.eq(post::id)),
+        .or(proposal::post_id.eq(post::id)),
     );
 
     let item_creator_join = person::table.on(
-      comment::creator_id
+      proposal::creator_id
         .eq(item_creator)
         // Need to filter out the post rows where the post_id given is null
         // Otherwise you'll get duped post rows
@@ -73,7 +73,7 @@ impl PersonContentCombinedViewInternal {
 
     let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
     let my_post_actions_join: my_post_actions_join = my_post_actions_join(my_person_id);
-    let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
+    let my_proposal_actions_join: my_proposal_actions_join = my_proposal_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
     let my_instance_actions_person_join: my_instance_actions_person_join =
       my_instance_actions_person_join(my_person_id);
@@ -95,7 +95,7 @@ impl PersonContentCombinedViewInternal {
       .left_join(creator_local_instance_actions_join)
       .left_join(my_post_actions_join)
       .left_join(my_person_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
       .left_join(image_details_join())
       .left_join(delivery_details::table.on(delivery_details::post_id.eq(post::id)))
   }
@@ -106,7 +106,7 @@ impl PaginationCursorBuilder for PersonContentCombinedView {
 
   fn to_cursor(&self) -> PaginationCursor {
     let (prefix, id) = match &self {
-      PersonContentCombinedView::Comment(v) => ('C', v.comment.id.0),
+      PersonContentCombinedView::Proposal(v) => ('C', v.proposal.id.0),
       PersonContentCombinedView::Post(v) => ('P', v.post.id.0),
     };
     PaginationCursor::new_single(prefix, id)
@@ -128,7 +128,7 @@ impl PaginationCursorBuilder for PersonContentCombinedView {
       .into_boxed();
 
     query = match prefix {
-      'C' => query.filter(person_content_combined::comment_id.eq(id)),
+      'C' => query.filter(person_content_combined::proposal_id.eq(id)),
       'P' => query.filter(person_content_combined::post_id.eq(id)),
       _ => return Err(FastJobErrorType::CouldntParsePaginationToken.into()),
     };
@@ -180,7 +180,7 @@ impl PersonContentCombinedQuery {
     // many joins must use an OR condition.
     // For example, the creator must be the person table joined to either:
     // - post.creator_id
-    // - comment.creator_id
+    // - proposal.creator_id
     let mut query = PersonContentCombinedViewInternal::joins(my_person_id, local_instance_id)
       // The creator id filter
       .filter(item_creator.eq(self.creator_id))
@@ -195,8 +195,8 @@ impl PersonContentCombinedQuery {
     if let Some(type_) = self.type_ {
       query = match type_ {
         PersonContentType::All => query,
-        PersonContentType::Comments => {
-          query.filter(person_content_combined::comment_id.is_not_null())
+        PersonContentType::Proposals => {
+          query.filter(person_content_combined::proposal_id.is_not_null())
         }
         PersonContentType::Posts => query.filter(person_content_combined::post_id.is_not_null()),
       }
@@ -235,14 +235,14 @@ impl InternalToCombinedView for PersonContentCombinedViewInternal {
     // Use for a short alias
     let v = self;
 
-    if let Some(comment) = v.comment {
-      Some(PersonContentCombinedView::Comment(CommentView {
-        comment,
+    if let Some(proposal) = v.proposal {
+      Some(PersonContentCombinedView::Proposal(ProposalView {
+        proposal,
         post: v.post,
         category: Some(v.category),
         creator: v.item_creator,
         category_actions: v.category_actions,
-        comment_actions: v.comment_actions,
+        proposal_actions: v.proposal_actions,
         person_actions: v.person_actions,
         instance_actions: v.instance_actions,
         creator_is_admin: v.item_creator_is_admin,
@@ -282,10 +282,10 @@ mod tests {
   use app_108jobs_db::{
     source::{
       category::{Category, CategoryInsertForm},
-      comment::{Comment, CommentInsertForm},
       instance::Instance,
       person::{Person, PersonInsertForm},
       post::{Post, PostInsertForm},
+      proposal::{Proposal, ProposalInsertForm},
     },
     traits::Crud,
     utils::{build_db_pool_for_tests, DbPool},
@@ -299,9 +299,9 @@ mod tests {
     timmy_post: Post,
     timmy_post_2: Post,
     sara_post: Post,
-    timmy_comment: Comment,
-    sara_comment: Comment,
-    sara_comment_2: Comment,
+    timmy_comment: Proposal,
+    sara_comment: Proposal,
+    sara_comment_2: Proposal,
   }
 
   async fn init_data(pool: &mut DbPool<'_>) -> FastJobResult<Data> {
@@ -341,16 +341,16 @@ mod tests {
     let sara_post = Post::create(pool, &sara_post_form).await?;
 
     let timmy_comment_form =
-      CommentInsertForm::new(timmy.id, timmy_post.id, "timmy comment prv".into());
-    let timmy_comment = Comment::create(pool, &timmy_comment_form).await?;
+      ProposalInsertForm::new(timmy.id, timmy_post.id, "timmy proposal prv".into());
+    let timmy_comment = Proposal::create(pool, &timmy_comment_form).await?;
 
     let sara_comment_form =
-      CommentInsertForm::new(sara.id, timmy_post.id, "sara comment prv".into());
-    let sara_comment = Comment::create(pool, &sara_comment_form).await?;
+      ProposalInsertForm::new(sara.id, timmy_post.id, "sara proposal prv".into());
+    let sara_comment = Proposal::create(pool, &sara_comment_form).await?;
 
     let sara_comment_form_2 =
-      CommentInsertForm::new(sara.id, timmy_post_2.id, "sara comment prv 2".into());
-    let sara_comment_2 = Comment::create(pool, &sara_comment_form_2).await?;
+      ProposalInsertForm::new(sara.id, timmy_post_2.id, "sara proposal prv 2".into());
+    let sara_comment_2 = Proposal::create(pool, &sara_comment_form_2).await?;
 
     Ok(Data {
       instance,
@@ -385,8 +385,8 @@ mod tests {
     assert_eq!(3, timmy_content.len());
 
     // Make sure the types are correct
-    if let PersonContentCombinedView::Comment(v) = &timmy_content[0] {
-      assert_eq!(data.timmy_comment.id, v.comment.id);
+    if let PersonContentCombinedView::Proposal(v) = &timmy_content[0] {
+      assert_eq!(data.timmy_comment.id, v.proposal.id);
       assert_eq!(data.timmy.id, v.creator.id);
     } else {
       panic!("wrong type");
@@ -411,8 +411,8 @@ mod tests {
     assert_eq!(3, sara_content.len());
 
     // Make sure the report types are correct
-    if let PersonContentCombinedView::Comment(v) = &sara_content[0] {
-      assert_eq!(data.sara_comment_2.id, v.comment.id);
+    if let PersonContentCombinedView::Proposal(v) = &sara_content[0] {
+      assert_eq!(data.sara_comment_2.id, v.proposal.id);
       assert_eq!(data.sara.id, v.creator.id);
       // This one was to timmy_post_2
       assert_eq!(data.timmy_post_2.id, v.post.id);
@@ -420,8 +420,8 @@ mod tests {
     } else {
       panic!("wrong type");
     }
-    if let PersonContentCombinedView::Comment(v) = &sara_content[1] {
-      assert_eq!(data.sara_comment.id, v.comment.id);
+    if let PersonContentCombinedView::Proposal(v) = &sara_content[1] {
+      assert_eq!(data.sara_comment.id, v.proposal.id);
       assert_eq!(data.sara.id, v.creator.id);
       assert_eq!(data.timmy_post.id, v.post.id);
       assert_eq!(data.timmy.id, v.post.creator_id);

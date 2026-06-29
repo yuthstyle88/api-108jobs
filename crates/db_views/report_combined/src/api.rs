@@ -17,7 +17,7 @@ pub struct ListReports {
   pub unresolved_only: Option<bool>,
   /// Filter the type of report.
   pub type_: Option<ReportType>,
-  /// Filter by the post id. Can return either comment or post reports.
+  /// Filter by the post id. Can return either proposal or post reports.
   pub post_id: Option<PostId>,
   /// if no category is given, it returns reports for all communities moderated by the auth user
   pub category_id: Option<CategoryId>,

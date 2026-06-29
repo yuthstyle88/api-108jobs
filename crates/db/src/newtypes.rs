@@ -82,18 +82,18 @@ impl fmt::Display for RiderId {
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment id.
-pub struct CommentId(pub i32);
+/// The proposal id.
+pub struct ProposalId(pub i32);
 
-impl Display for CommentId {
+impl Display for ProposalId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
-pub enum PostOrCommentId {
+pub enum PostOrProposalId {
   Post(PostId),
-  Comment(CommentId),
+  Proposal(ProposalId),
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -463,8 +463,8 @@ pub struct SharedSecret(pub String);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The person comment mention id.
-pub struct PersonCommentMentionId(pub i32);
+/// The person proposal mention id.
+pub struct PersonProposalMentionId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -477,8 +477,8 @@ pub struct PersonPostMentionId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment report id.
-pub struct CommentReportId(pub i32);
+/// The proposal report id.
+pub struct ProposalReportId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -512,8 +512,8 @@ pub struct LanguageId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The comment reply id.
-pub struct CommentReplyId(pub i32);
+/// The proposal reply id.
+pub struct ProposalReplyId(pub i32);
 
 #[derive(
   Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default, Ord, PartialOrd,
@@ -659,7 +659,7 @@ pub struct AdminPurgeCategoryId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct AdminPurgeCommentId(pub i32);
+pub struct AdminPurgeProposalId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -677,7 +677,7 @@ pub struct ModRemovePostId(pub i32);
 #[cfg_attr(feature = "full", derive(DieselNewType))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct ModRemoveCommentId(pub i32);
+pub struct ModRemoveProposalId(pub i32);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]

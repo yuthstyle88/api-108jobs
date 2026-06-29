@@ -1,22 +1,22 @@
 use crate::{
   api::{CreateComment, CreateCommentRequest},
-  CommentSlimView,
-  CommentView,
+  ProposalSlimView,
+  ProposalView,
 };
 use app_108jobs_core::error::{FastJobError, FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db::{
   enums::{
     CategoryFollowerState,
     CategoryVisibility,
-    CommentSortType::{self, *},
     ListingType,
+    ProposalSortType::{self, *},
   },
   impls::local_user::LocalUserOptionHelper,
-  newtypes::{CategoryId, CommentId, InstanceId, PaginationCursor, PersonId, PostId},
-  schema::{category, category_actions, comment, person, post},
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId, ProposalId},
+  schema::{category, category_actions, person, post, proposal},
   source::{
-    comment::{comment_keys as key, Comment},
     local_user::LocalUser,
+    proposal::{proposal_keys as key, Proposal},
     site::Site,
   },
   traits::{Crud, PaginationCursorBuilder},
@@ -31,10 +31,10 @@ use app_108jobs_db::{
       creator_home_instance_actions_join,
       creator_local_instance_actions_join,
       my_category_actions_join,
-      my_comment_actions_join,
       my_instance_actions_category_join,
       my_local_user_admin_join,
       my_person_actions_join,
+      my_proposal_actions_join,
     },
     seconds_to_pg_interval,
     DbPool,
@@ -52,10 +52,10 @@ use diesel_async::RunQueryDsl;
 use diesel_ltree::Ltree;
 use i_love_jesus::asc_if;
 
-impl PaginationCursorBuilder for CommentView {
-  type CursorData = Comment;
+impl PaginationCursorBuilder for ProposalView {
+  type CursorData = Proposal;
   fn to_cursor(&self) -> PaginationCursor {
-    PaginationCursor::new_single('C', self.comment.id.0)
+    PaginationCursor::new_single('C', self.proposal.id.0)
   }
 
   async fn from_cursor(
@@ -63,17 +63,17 @@ impl PaginationCursorBuilder for CommentView {
     pool: &mut DbPool<'_>,
   ) -> FastJobResult<Self::CursorData> {
     let id = cursor.first_id()?;
-    Comment::read(pool, CommentId(id)).await
+    Proposal::read(pool, ProposalId(id)).await
   }
 }
 
-impl CommentView {
+impl ProposalView {
   #[diesel::dsl::auto_type(no_type_alias)]
   fn joins(my_person_id: Option<PersonId>, local_instance_id: InstanceId) -> _ {
     let category_join = category::table.on(category::id.nullable().eq(post::category_id));
 
     let my_category_actions_join: my_category_actions_join = my_category_actions_join(my_person_id);
-    let my_comment_actions_join: my_comment_actions_join = my_comment_actions_join(my_person_id);
+    let my_proposal_actions_join: my_proposal_actions_join = my_proposal_actions_join(my_person_id);
     let my_local_user_admin_join: my_local_user_admin_join = my_local_user_admin_join(my_person_id);
     let my_instance_actions_category_join: my_instance_actions_category_join =
       my_instance_actions_category_join(my_person_id);
@@ -81,12 +81,12 @@ impl CommentView {
     let creator_local_instance_actions_join: creator_local_instance_actions_join =
       creator_local_instance_actions_join(local_instance_id);
 
-    comment::table
+    proposal::table
       .inner_join(person::table)
       .inner_join(post::table)
       .left_join(category_join)
       .left_join(my_category_actions_join)
-      .left_join(my_comment_actions_join)
+      .left_join(my_proposal_actions_join)
       .left_join(my_person_actions_join)
       .left_join(my_local_user_admin_join)
       .left_join(my_instance_actions_category_join)
@@ -98,14 +98,14 @@ impl CommentView {
 
   pub async fn read(
     pool: &mut DbPool<'_>,
-    comment_id: CommentId,
+    comment_id: ProposalId,
     my_local_user: Option<&'_ LocalUser>,
     local_instance_id: InstanceId,
   ) -> FastJobResult<Self> {
     let conn = &mut get_conn(pool).await?;
 
     let mut query = Self::joins(my_local_user.person_id(), local_instance_id)
-      .filter(comment::id.eq(comment_id))
+      .filter(proposal::id.eq(comment_id))
       .select(Self::as_select())
       .into_boxed();
 
@@ -132,11 +132,11 @@ impl CommentView {
       .with_fastjob_type(FastJobErrorType::NotFound)
   }
 
-  pub fn map_to_slim(self) -> CommentSlimView {
-    CommentSlimView {
-      comment: self.comment,
+  pub fn map_to_slim(self) -> ProposalSlimView {
+    ProposalSlimView {
+      proposal: self.proposal,
       creator: self.creator,
-      comment_actions: self.comment_actions,
+      proposal_actions: self.proposal_actions,
       person_actions: self.person_actions,
       instance_actions: self.instance_actions,
       creator_is_admin: self.creator_is_admin,
@@ -160,38 +160,38 @@ impl TryFrom<CreateCommentRequest> for CreateComment {
   }
 }
 #[derive(Default)]
-pub struct CommentQuery<'a> {
+pub struct ProposalQuery<'a> {
   pub listing_type: Option<ListingType>,
-  pub sort: Option<CommentSortType>,
+  pub sort: Option<ProposalSortType>,
   pub time_range_seconds: Option<i32>,
   pub category_id: Option<CategoryId>,
   pub post_id: Option<PostId>,
   pub parent_path: Option<Ltree>,
   pub local_user: Option<&'a LocalUser>,
   pub max_depth: Option<i32>,
-  pub cursor_data: Option<Comment>,
+  pub cursor_data: Option<Proposal>,
   pub page_back: Option<bool>,
   pub limit: Option<i64>,
 }
 
-impl CommentQuery<'_> {
-  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<CommentView>> {
+impl ProposalQuery<'_> {
+  pub async fn list(self, site: &Site, pool: &mut DbPool<'_>) -> FastJobResult<Vec<ProposalView>> {
     let conn = &mut get_conn(pool).await?;
     let o = self;
 
     // Public query - no user-based filtering, only basic joins
-    let mut query = CommentView::joins(None, site.instance_id)
-      .select(CommentView::as_select())
+    let mut query = ProposalView::joins(None, site.instance_id)
+      .select(ProposalView::as_select())
       .into_boxed();
 
     // Filter out deleted and removed comments
     query = query
-      .filter(comment::deleted.eq(false))
-      .filter(comment::removed.eq(false));
+      .filter(proposal::deleted.eq(false))
+      .filter(proposal::removed.eq(false));
 
     // Only filter by post_id if specified - no user-based filtering
     if let Some(post_id) = o.post_id {
-      query = query.filter(comment::post_id.eq(post_id));
+      query = query.filter(proposal::post_id.eq(post_id));
     };
 
     // Category visibility filtering removed - show all comments regardless of category visibility
@@ -199,10 +199,10 @@ impl CommentQuery<'_> {
     // Filter by the time range
     if let Some(time_range_seconds) = o.time_range_seconds {
       query =
-        query.filter(comment::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)));
+        query.filter(proposal::published_at.gt(now() - seconds_to_pg_interval(time_range_seconds)));
     }
 
-    // Comments are now flat, no tree structure
+    // Proposals are now flat, no tree structure
     let limit = limit_fetch(o.limit)?;
     query = query.limit(limit);
 
@@ -225,7 +225,7 @@ impl CommentQuery<'_> {
       Top => pq.then_order_by(key::score),
     };
 
-    let res = pq.load::<CommentView>(conn).await?;
+    let res = pq.load::<ProposalView>(conn).await?;
 
     Ok(res)
   }

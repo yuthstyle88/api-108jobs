@@ -1,6 +1,6 @@
 use crate::{ChatMessageView, ChatRoomView};
 use app_108jobs_db::{
-  newtypes::{ChatRoomId, CommentId, LocalUserId, PaginationCursor, PersonId, PostId},
+  newtypes::{ChatRoomId, LocalUserId, PaginationCursor, PersonId, PostId, ProposalId},
   source::last_read::LastRead,
 };
 use chrono::{DateTime, Utc};
@@ -90,7 +90,7 @@ pub struct CreateChatRoomRequest {
   pub partner_person_id: PersonId,
   pub room_id: Option<ChatRoomId>,
   pub post_id: Option<PostId>,
-  pub current_comment_id: Option<CommentId>,
+  pub current_proposal_id: Option<ProposalId>,
   pub room_name: Option<String>,
 }
 

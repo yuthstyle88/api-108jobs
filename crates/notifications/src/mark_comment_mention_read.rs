@@ -1,0 +1,35 @@
+use actix_web::web::{Data, Json};
+use app_108jobs_api_utils::context::FastJobContext;
+use app_108jobs_core::error::{FastJobErrorType, FastJobResult};
+use app_108jobs_db::{
+  source::person_proposal_mention::{PersonProposalMention, PersonProposalMentionUpdateForm},
+  traits::Crud,
+};
+use app_108jobs_db_views_inbox_combined::api::MarkPersonProposalMentionAsRead;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_site::api::SuccessResponse;
+
+pub async fn mark_comment_mention_as_read(
+  data: Json<MarkPersonProposalMentionAsRead>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<SuccessResponse>> {
+  let person_proposal_mention_id = data.person_proposal_mention_id;
+  let read_person_proposal_mention =
+    PersonProposalMention::read(&mut context.pool(), person_proposal_mention_id).await?;
+
+  if local_user_view.person.id != read_person_proposal_mention.recipient_id {
+    Err(FastJobErrorType::CouldntUpdateProposal)?
+  }
+
+  let person_proposal_mention_id = read_person_proposal_mention.id;
+  let read = Some(data.read);
+  PersonProposalMention::update(
+    &mut context.pool(),
+    person_proposal_mention_id,
+    &PersonProposalMentionUpdateForm { read },
+  )
+  .await?;
+
+  Ok(Json(SuccessResponse::default()))
+}

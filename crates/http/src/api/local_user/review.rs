@@ -7,8 +7,12 @@ use app_108jobs_db::{
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_user_review::{
-  api::SubmitUserReviewRequest, ListUserReviewsQuery, ListUserReviewsResponse,
-  SubmitUserReviewResponse, UserReviewView, ValidSubmitUserReviewRequest,
+  api::SubmitUserReviewRequest,
+  ListUserReviewsQuery,
+  ListUserReviewsResponse,
+  SubmitUserReviewResponse,
+  UserReviewView,
+  ValidSubmitUserReviewRequest,
 };
 
 pub async fn submit_user_review(

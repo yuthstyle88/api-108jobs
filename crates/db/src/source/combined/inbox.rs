@@ -1,5 +1,8 @@
 use crate::newtypes::{
-  InboxCombinedId, PersonPostMentionId, PersonProposalMentionId, ProposalReplyId,
+  InboxCombinedId,
+  PersonPostMentionId,
+  PersonProposalMentionId,
+  ProposalReplyId,
 };
 #[cfg(feature = "full")]
 use crate::schema::inbox_combined;

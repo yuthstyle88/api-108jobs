@@ -11,7 +11,11 @@ use crate::{
   source::{
     coin::CoinModel,
     wallet::{
-      TxKind, Wallet, WalletTransaction, WalletTransactionInsertForm, WalletTransactionUpdateForm,
+      TxKind,
+      Wallet,
+      WalletTransaction,
+      WalletTransactionInsertForm,
+      WalletTransactionUpdateForm,
     },
   },
 };

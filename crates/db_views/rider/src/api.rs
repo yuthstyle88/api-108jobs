@@ -6,7 +6,13 @@ use app_108jobs_core::error::{FastJobError, FastJobResult};
 use app_108jobs_db::{
   enums::{PaymentMethod, TripStatus, VehicleType},
   newtypes::{
-    PaginationCursor, PersonId, PostId, PricingConfigId, ProposalId, RideSessionId, RiderId,
+    PaginationCursor,
+    PersonId,
+    PostId,
+    PricingConfigId,
+    ProposalId,
+    RideSessionId,
+    RiderId,
   },
 };
 use chrono::{DateTime, Utc};

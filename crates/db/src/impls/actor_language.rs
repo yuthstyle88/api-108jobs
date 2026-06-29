@@ -4,8 +4,12 @@ use crate::{
   schema::{category_language, local_site, local_user_language, site, site_language},
   source::{
     actor_language::{
-      CategoryLanguage, CategoryLanguageForm, LocalUserLanguage, LocalUserLanguageForm,
-      SiteLanguage, SiteLanguageForm,
+      CategoryLanguage,
+      CategoryLanguageForm,
+      LocalUserLanguage,
+      LocalUserLanguageForm,
+      SiteLanguage,
+      SiteLanguageForm,
     },
     language::Language,
     site::Site,
@@ -16,7 +20,10 @@ use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   delete,
   dsl::{count, exists},
-  insert_into, select, ExpressionMethods, QueryDsl,
+  insert_into,
+  select,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncPgConnection, RunQueryDsl};
 use tokio::sync::OnceCell;
@@ -204,7 +211,9 @@ impl CategoryLanguage {
     for_instance_id: InstanceId,
   ) -> FastJobResult<()> {
     use crate::schema::{
-      category::dsl as c, category_language::dsl as cl, site_language::dsl as sl,
+      category::dsl as c,
+      category_language::dsl as cl,
+      site_language::dsl as sl,
     };
     let category_languages: Vec<LanguageId> = cl::category_language
       .left_outer_join(sl::site_language.on(cl::language_id.eq(sl::language_id)))
@@ -456,8 +465,7 @@ mod tests {
     // we scope the count to data.site.id to avoid counting other binaries' sites.
     let site_raw_count = {
       use crate::schema::site_language;
-      use diesel::dsl::count;
-      use diesel::QueryDsl;
+      use diesel::{dsl::count, QueryDsl};
       use diesel_async::RunQueryDsl;
       let conn = &mut get_conn(pool).await?;
       site_language::table

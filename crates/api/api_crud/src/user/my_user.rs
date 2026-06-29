@@ -3,8 +3,10 @@ use app_108jobs_api_utils::{context::FastJobContext, utils::check_local_user_val
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::{
   source::{
-    actor_language::LocalUserLanguage, instance::InstanceActions,
-    keyword_block::LocalUserKeywordBlock, person::PersonActions,
+    actor_language::LocalUserLanguage,
+    instance::InstanceActions,
+    keyword_block::LocalUserKeywordBlock,
+    person::PersonActions,
   },
   traits::Blockable,
 };

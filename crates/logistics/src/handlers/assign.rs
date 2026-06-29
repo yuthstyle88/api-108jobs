@@ -2,13 +2,18 @@ use actix_web::web::{Data, Json, Path};
 use app_108jobs_api_utils::{
   context::FastJobContext,
   utils::{
-    get_active_rider_by_person, verify_post_creator, verify_proposal_author,
+    get_active_rider_by_person,
+    verify_post_creator,
+    verify_proposal_author,
     verify_proposal_on_post,
   },
 };
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::{
-  enums::TripStatus, newtypes::PostId, source::delivery_details::DeliveryDetails, utils::get_conn,
+  enums::TripStatus,
+  newtypes::PostId,
+  source::delivery_details::DeliveryDetails,
+  utils::get_conn,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_rider::api::{AssignDeliveryRequest, DeliveryAssignmentEvent};

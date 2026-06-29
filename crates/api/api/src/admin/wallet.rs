@@ -19,8 +19,13 @@ use app_108jobs_db::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_db_views_wallet::api::{
-  AdminTopUpWallet, AdminWalletOperationResponse, AdminWithdrawWallet, ListTopUpRequestQuery,
-  ListTopUpRequestResponse, ListWithdrawRequestQuery, ListWithdrawRequestResponse,
+  AdminTopUpWallet,
+  AdminWalletOperationResponse,
+  AdminWithdrawWallet,
+  ListTopUpRequestQuery,
+  ListTopUpRequestResponse,
+  ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
   RejectWithdrawalRequest,
 };
 use diesel_async::scoped_futures::ScopedFutureExt;

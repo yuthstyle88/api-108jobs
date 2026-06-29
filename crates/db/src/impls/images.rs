@@ -6,7 +6,12 @@ use crate::{
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
-  dsl::exists, insert_into, select, BoolExpressionMethods, ExpressionMethods, QueryDsl,
+  dsl::exists,
+  insert_into,
+  select,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::{scoped_futures::ScopedFutureExt, RunQueryDsl};
 use url::Url;

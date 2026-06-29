@@ -15,13 +15,24 @@ use app_108jobs_core::{
     slurs::remove_slurs,
     validation::{build_and_check_regex, clean_urls_in_text},
   },
-  CacheLock, CACHE_DURATION_FEDERATION, MAX_COMMENT_DEPTH_LIMIT,
+  CacheLock,
+  CACHE_DURATION_FEDERATION,
+  MAX_COMMENT_DEPTH_LIMIT,
 };
 use app_108jobs_db::{
   enums::RegistrationMode,
   newtypes::{
-    BankAccountId, BankId, CategoryId, ChatRoomId, DbUrl, InstanceId, LanguageId, LocalUserId,
-    PersonId, PostId, ProposalId,
+    BankAccountId,
+    BankId,
+    CategoryId,
+    ChatRoomId,
+    DbUrl,
+    InstanceId,
+    LanguageId,
+    LocalUserId,
+    PersonId,
+    PostId,
+    ProposalId,
   },
   source::{
     actor_language::SiteLanguage,
@@ -34,7 +45,10 @@ use app_108jobs_db::{
     local_site_rate_limit::LocalSiteRateLimit,
     local_site_url_blocklist::LocalSiteUrlBlocklist,
     mod_log::moderator::{
-      ModRemovePost, ModRemovePostForm, ModRemoveProposal, ModRemoveProposalForm,
+      ModRemovePost,
+      ModRemovePostForm,
+      ModRemoveProposal,
+      ModRemoveProposalForm,
     },
     oauth_account::OAuthAccount,
     person::{Person, PersonUpdateForm},
@@ -52,10 +66,13 @@ use app_108jobs_db_views_person::PersonView;
 use app_108jobs_db_views_site::SiteView;
 use app_108jobs_db_views_wallet::{
   api::{
-    ListTopUpRequestQuery, ListTopUpRequestResponse, ListWithdrawRequestQuery,
+    ListTopUpRequestQuery,
+    ListTopUpRequestResponse,
+    ListWithdrawRequestQuery,
     ListWithdrawRequestResponse,
   },
-  TopUpRequestView, WithdrawRequestView,
+  TopUpRequestView,
+  WithdrawRequestView,
 };
 use chrono::{DateTime, Days, Local, TimeZone, Utc};
 use diesel_async::AsyncPgConnection;

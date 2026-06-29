@@ -6,7 +6,9 @@ use app_108jobs_db::{
   source::{
     delivery_details::DeliveryDetails,
     trip_location_current::{
-      TripLocationCurrent, TripLocationCurrentInsertForm, TripLocationCurrentUpdateForm,
+      TripLocationCurrent,
+      TripLocationCurrentInsertForm,
+      TripLocationCurrentUpdateForm,
     },
     trip_location_history::{TripLocationHistory, TripLocationHistoryInsertForm},
   },

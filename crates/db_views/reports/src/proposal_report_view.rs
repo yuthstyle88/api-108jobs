@@ -4,13 +4,24 @@ use app_108jobs_db::{
   aliases::{self, creator_category_actions},
   newtypes::{PersonId, ProposalReportId},
   schema::{
-    category, category_actions, local_user, person, person_actions, post, proposal,
-    proposal_actions, proposal_report,
+    category,
+    category_actions,
+    local_user,
+    person,
+    person_actions,
+    post,
+    proposal,
+    proposal_actions,
+    proposal_report,
   },
   utils::{get_conn, DbPool},
 };
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  QueryDsl,
   SelectableHelper,
 };
 use diesel_async::RunQueryDsl;

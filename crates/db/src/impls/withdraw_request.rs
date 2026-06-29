@@ -3,7 +3,9 @@ use crate::schema::withdraw_requests;
 use crate::{
   newtypes::WithdrawRequestId,
   source::withdraw_request::{
-    WithdrawRequest, WithdrawRequestInsertForm, WithdrawRequestUpdateForm,
+    WithdrawRequest,
+    WithdrawRequestInsertForm,
+    WithdrawRequestUpdateForm,
   },
 };
 #[cfg(feature = "full")]

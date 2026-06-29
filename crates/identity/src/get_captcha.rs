@@ -5,7 +5,8 @@ use actix_web::{
     StatusCode,
   },
   web::{Data, Json},
-  HttpResponse, HttpResponseBuilder,
+  HttpResponse,
+  HttpResponseBuilder,
 };
 use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::{FastJobErrorType, FastJobResult};

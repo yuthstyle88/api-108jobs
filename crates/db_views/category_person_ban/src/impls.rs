@@ -7,7 +7,9 @@ use app_108jobs_db::{
 };
 use diesel::{
   dsl::{exists, not},
-  select, ExpressionMethods, QueryDsl,
+  select,
+  ExpressionMethods,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 

@@ -8,7 +8,10 @@ use crate::{
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use diesel::{
   dsl::{exists, insert_into, select, update},
-  ExpressionMethods, OptionalExtension, QueryDsl, SelectableHelper,
+  ExpressionMethods,
+  OptionalExtension,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 

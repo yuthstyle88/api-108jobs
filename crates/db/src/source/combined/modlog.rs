@@ -1,8 +1,22 @@
 use crate::newtypes::{
-  AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgePersonId,
-  AdminPurgePostId, AdminPurgeProposalId, ModAddCategoryId, ModAddId, ModBanFromCategoryId,
-  ModBanId, ModChangeCategoryVisibilityId, ModFeaturePostId, ModLockPostId, ModRemoveCategoryId,
-  ModRemovePostId, ModRemoveProposalId, ModTransferCategoryId, ModlogCombinedId,
+  AdminAllowInstanceId,
+  AdminBlockInstanceId,
+  AdminPurgeCategoryId,
+  AdminPurgePersonId,
+  AdminPurgePostId,
+  AdminPurgeProposalId,
+  ModAddCategoryId,
+  ModAddId,
+  ModBanFromCategoryId,
+  ModBanId,
+  ModChangeCategoryVisibilityId,
+  ModFeaturePostId,
+  ModLockPostId,
+  ModRemoveCategoryId,
+  ModRemovePostId,
+  ModRemoveProposalId,
+  ModTransferCategoryId,
+  ModlogCombinedId,
 };
 #[cfg(feature = "full")]
 use crate::schema::modlog_combined;

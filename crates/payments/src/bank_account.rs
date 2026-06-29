@@ -11,8 +11,12 @@ use app_108jobs_db::{
 };
 use app_108jobs_db_views_bank_account::{
   api::{
-    CreateBankAccountRequest, DeleteBankAccountRequest, GetBankAccounts, ListBankAccountsResponse,
-    SetDefaultBankAccount, UpdateBankAccountRequest,
+    CreateBankAccountRequest,
+    DeleteBankAccountRequest,
+    GetBankAccounts,
+    ListBankAccountsResponse,
+    SetDefaultBankAccount,
+    UpdateBankAccountRequest,
   },
   validator::ValidCreateBankAccountRequest,
   BankAccountView,

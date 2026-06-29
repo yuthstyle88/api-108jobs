@@ -11,7 +11,8 @@ use app_108jobs_db::{
     proposal::{Proposal, ProposalActions},
     tag::TagsView,
   },
-  SearchSortType, SearchType,
+  SearchSortType,
+  SearchType,
 };
 use app_108jobs_db_views_category::CategoryView;
 use app_108jobs_db_views_person::PersonView;
@@ -22,7 +23,10 @@ use serde_with::skip_serializing_none;
 #[cfg(feature = "full")]
 use {
   app_108jobs_db::utils::queries::{
-    category_post_tags_fragment, creator_banned, creator_is_admin, local_user_can_mod,
+    category_post_tags_fragment,
+    creator_banned,
+    creator_is_admin,
+    local_user_can_mod,
     post_tags_fragment,
   },
   app_108jobs_db::utils::queries::{creator_banned_from_category, creator_is_moderator},

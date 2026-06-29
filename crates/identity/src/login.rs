@@ -7,7 +7,9 @@ use app_108jobs_api_utils::{
   claims::Claims,
   context::FastJobContext,
   utils::{
-    check_email_verified, check_local_user_deleted, check_local_user_valid,
+    check_email_verified,
+    check_local_user_deleted,
+    check_local_user_valid,
     check_registration_application,
   },
 };

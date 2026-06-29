@@ -1,11 +1,23 @@
 use crate::newtypes::{
-  AdminAllowInstanceId, AdminBlockInstanceId, AdminPurgeCategoryId, AdminPurgePersonId,
-  AdminPurgePostId, AdminPurgeProposalId, CategoryId, InstanceId, PersonId, PostId,
+  AdminAllowInstanceId,
+  AdminBlockInstanceId,
+  AdminPurgeCategoryId,
+  AdminPurgePersonId,
+  AdminPurgePostId,
+  AdminPurgeProposalId,
+  CategoryId,
+  InstanceId,
+  PersonId,
+  PostId,
 };
 #[cfg(feature = "full")]
 use crate::schema::{
-  admin_allow_instance, admin_block_instance, admin_purge_category, admin_purge_person,
-  admin_purge_post, admin_purge_proposal,
+  admin_allow_instance,
+  admin_block_instance,
+  admin_purge_category,
+  admin_purge_person,
+  admin_purge_post,
+  admin_purge_proposal,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

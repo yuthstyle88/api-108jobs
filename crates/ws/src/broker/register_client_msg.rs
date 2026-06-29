@@ -1,5 +1,7 @@
 use crate::{
-  broker::manager::PhoenixManager, presence::OnlineJoin, protocol::api::RegisterClientMsg,
+  broker::manager::PhoenixManager,
+  presence::OnlineJoin,
+  protocol::api::RegisterClientMsg,
 };
 use actix::{Context, Handler};
 use app_108jobs_db::{

@@ -9,7 +9,8 @@ use diesel::{
   delete,
   dsl::{insert_into, now, IntervalDsl},
   sql_types::Timestamptz,
-  ExpressionMethods, IntoSql,
+  ExpressionMethods,
+  IntoSql,
 };
 use diesel_async::RunQueryDsl;
 

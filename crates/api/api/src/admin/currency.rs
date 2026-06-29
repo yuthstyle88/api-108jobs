@@ -11,11 +11,20 @@ use app_108jobs_db::{
 };
 use app_108jobs_db_views_currency::{
   api::{
-    CreateCurrencyRequest, CreatePricingConfigRequest, CurrencyListResponse, CurrencyResponse,
-    GetCurrency, GetPricingConfig, ListPricingConfigs, PricingConfigListResponse,
-    PricingConfigResponse, UpdateCurrencyRequest, UpdatePricingConfigRequest,
+    CreateCurrencyRequest,
+    CreatePricingConfigRequest,
+    CurrencyListResponse,
+    CurrencyResponse,
+    GetCurrency,
+    GetPricingConfig,
+    ListPricingConfigs,
+    PricingConfigListResponse,
+    PricingConfigResponse,
+    UpdateCurrencyRequest,
+    UpdatePricingConfigRequest,
   },
-  CurrencyView, PricingConfigView,
+  CurrencyView,
+  PricingConfigView,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 use chrono::Utc;

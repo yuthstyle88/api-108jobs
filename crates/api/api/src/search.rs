@@ -9,7 +9,9 @@ use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_post::logistics::LogisticsViewer;
 use app_108jobs_db_views_search_combined::{
   impls::{load_logistics_for_results, SearchCombinedQuery},
-  Search, SearchCombinedView, SearchResponse,
+  Search,
+  SearchCombinedView,
+  SearchResponse,
 };
 
 pub async fn search(

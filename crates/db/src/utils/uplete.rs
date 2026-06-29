@@ -6,7 +6,10 @@ use diesel::{
   query_builder::{AsQuery, AstPass, Query, QueryFragment, QueryId},
   query_dsl::methods::{FilterDsl, SelectDsl},
   result::Error,
-  sql_types, Column, Expression, Table,
+  sql_types,
+  Column,
+  Expression,
+  Table,
 };
 use std::any::TypeId;
 use tuplex::IntoArray;
@@ -237,10 +240,17 @@ mod tests {
   use crate::utils::{build_db_pool_for_tests, get_conn, DbConn};
   use app_108jobs_core::error::FastJobResult;
   use diesel::{
-    debug_query, insert_into,
+    debug_query,
+    insert_into,
     pg::Pg,
     query_builder::{AsQuery, QueryId},
-    select, sql_types, AppearsOnTable, ExpressionMethods, IntoSql, QueryDsl, SelectableExpression,
+    select,
+    sql_types,
+    AppearsOnTable,
+    ExpressionMethods,
+    IntoSql,
+    QueryDsl,
+    SelectableExpression,
   };
   use diesel_async::{RunQueryDsl, SimpleAsyncConnection};
   use pretty_assertions::assert_eq;

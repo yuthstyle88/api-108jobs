@@ -22,7 +22,10 @@ use app_108jobs_db_views_post::{impls::PostQuery, PostView};
 use chrono::{DateTime, Utc};
 use rss::{
   extension::{dublincore::DublinCoreExtension, ExtensionBuilder, ExtensionMap},
-  Channel, EnclosureBuilder, Guid, Item,
+  Channel,
+  EnclosureBuilder,
+  Guid,
+  Item,
 };
 use serde::Deserialize;
 use std::{collections::BTreeMap, str::FromStr, sync::LazyLock};

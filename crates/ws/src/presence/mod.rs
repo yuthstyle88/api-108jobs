@@ -12,7 +12,11 @@ use app_108jobs_core::{
   error::FastJobResult,
   redis::{AsyncCommands, RedisClient},
   utils::keys::{
-    contacts_key, presence_conn_count_key, presence_conn_key, rooms_key, user_events_topic,
+    contacts_key,
+    presence_conn_count_key,
+    presence_conn_key,
+    rooms_key,
+    user_events_topic,
   },
 };
 use app_108jobs_db::{

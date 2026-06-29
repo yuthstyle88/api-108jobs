@@ -1,5 +1,7 @@
 use app_108jobs_db::{
-  enums::WorkFlowStatus, newtypes::WorkflowId, source::workflow::WorkflowUpdateForm,
+  enums::WorkFlowStatus,
+  newtypes::WorkflowId,
+  source::workflow::WorkflowUpdateForm,
 };
 use serde::{Deserialize, Serialize};
 

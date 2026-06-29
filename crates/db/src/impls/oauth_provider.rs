@@ -2,7 +2,10 @@ use crate::{
   newtypes::OAuthProviderId,
   schema::oauth_provider,
   source::oauth_provider::{
-    OAuthProvider, OAuthProviderInsertForm, OAuthProviderUpdateForm, PublicOAuthProvider,
+    OAuthProvider,
+    OAuthProviderInsertForm,
+    OAuthProviderUpdateForm,
+    PublicOAuthProvider,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

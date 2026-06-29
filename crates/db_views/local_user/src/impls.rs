@@ -13,13 +13,20 @@ use app_108jobs_db::{
   traits::{Crud, PaginationCursorBuilder},
   utils::{
     functions::{coalesce, lower},
-    get_conn, limit_fetch, now, paginate,
+    get_conn,
+    limit_fetch,
+    now,
+    paginate,
     queries::creator_home_instance_actions_join,
     DbPool,
   },
 };
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, NullableExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  NullableExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::SortDirection;

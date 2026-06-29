@@ -1,7 +1,12 @@
 //! Validation logic for bank account requests
 use crate::api::{
-  BankAccountForm, CreateBankAccount, CreateBankAccountRequest, DeleteBankAccount,
-  DeleteBankAccountRequest, UpdateBankAccount, UpdateBankAccountRequest,
+  BankAccountForm,
+  CreateBankAccount,
+  CreateBankAccountRequest,
+  DeleteBankAccount,
+  DeleteBankAccountRequest,
+  UpdateBankAccount,
+  UpdateBankAccountRequest,
 };
 use app_108jobs_core::{
   error::{FastJobError, FastJobErrorType, FastJobResult},

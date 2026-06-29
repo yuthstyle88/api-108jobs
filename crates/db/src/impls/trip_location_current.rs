@@ -2,7 +2,9 @@ use crate::{
   newtypes::PostId,
   schema::trip_location_current,
   source::trip_location_current::{
-    TripLocationCurrent, TripLocationCurrentInsertForm, TripLocationCurrentUpdateForm,
+    TripLocationCurrent,
+    TripLocationCurrentInsertForm,
+    TripLocationCurrentUpdateForm,
   },
   traits::Crud,
   utils::{get_conn, DbPool},

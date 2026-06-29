@@ -1,6 +1,8 @@
 use crate::{
   api::{ListTopUpRequestQuery, ListWithdrawRequestQuery},
-  TopUpRequestView, WalletView, WithdrawRequestView,
+  TopUpRequestView,
+  WalletView,
+  WithdrawRequestView,
 };
 use app_108jobs_core::{
   apply_date_filters,

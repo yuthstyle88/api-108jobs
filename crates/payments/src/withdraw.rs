@@ -14,7 +14,9 @@ use app_108jobs_db::{
 use app_108jobs_db_views_local_user::LocalUserView;
 use app_108jobs_db_views_site::api::SuccessResponse;
 use app_108jobs_db_views_wallet::{
-  ListWithdrawRequestQuery, ListWithdrawRequestResponse, SubmitWithdrawRequest,
+  ListWithdrawRequestQuery,
+  ListWithdrawRequestResponse,
+  SubmitWithdrawRequest,
   ValidSubmitWithdrawRequest,
 };
 

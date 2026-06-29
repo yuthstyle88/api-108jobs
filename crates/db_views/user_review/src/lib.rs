@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 pub mod api;
 pub mod validator;
 pub use api::{
-  ListUserReviewsQuery, ListUserReviewsResponse, SubmitUserReviewForm, SubmitUserReviewResponse,
+  ListUserReviewsQuery,
+  ListUserReviewsResponse,
+  SubmitUserReviewForm,
+  SubmitUserReviewResponse,
 };
 pub use validator::ValidSubmitUserReviewRequest;
 

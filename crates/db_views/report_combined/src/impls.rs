@@ -1,5 +1,9 @@
 use crate::{
-  CategoryReportView, LocalUserView, PostReportView, ProposalReportView, ReportCombinedView,
+  CategoryReportView,
+  LocalUserView,
+  PostReportView,
+  ProposalReportView,
+  ReportCombinedView,
   ReportCombinedViewInternal,
 };
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
@@ -7,8 +11,19 @@ use app_108jobs_db::{
   aliases::{self, creator_category_actions},
   newtypes::{CategoryId, PaginationCursor, PersonId, PostId},
   schema::{
-    category, category_actions, category_report, local_user, person, person_actions, post,
-    post_actions, post_report, proposal, proposal_actions, proposal_report, report_combined,
+    category,
+    category_actions,
+    category_report,
+    local_user,
+    person,
+    person_actions,
+    post,
+    post_actions,
+    post_report,
+    proposal,
+    proposal_actions,
+    proposal_report,
+    report_combined,
   },
   source::combined::report::{report_combined_keys as key, ReportCombined},
   traits::{InternalToCombinedView, PaginationCursorBuilder},
@@ -17,8 +32,13 @@ use app_108jobs_db::{
 };
 use chrono::{DateTime, Days, Utc};
 use diesel::{
-  BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-  PgExpressionMethods, QueryDsl, SelectableHelper,
+  BoolExpressionMethods,
+  ExpressionMethods,
+  JoinOnDsl,
+  NullableExpressionMethods,
+  PgExpressionMethods,
+  QueryDsl,
+  SelectableHelper,
 };
 use diesel_async::RunQueryDsl;
 use i_love_jesus::asc_if;

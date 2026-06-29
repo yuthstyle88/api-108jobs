@@ -3,7 +3,10 @@ use app_108jobs_api_utils::context::FastJobContext;
 use app_108jobs_core::error::FastJobResult;
 use app_108jobs_db::traits::PaginationCursorBuilder;
 use app_108jobs_db_views_inbox_combined::{
-  impls::InboxCombinedQuery, InboxCombinedView, ListInbox, ListInboxResponse,
+  impls::InboxCombinedQuery,
+  InboxCombinedView,
+  ListInbox,
+  ListInboxResponse,
 };
 use app_108jobs_db_views_local_user::LocalUserView;
 

@@ -4,7 +4,11 @@ use crate::{
   presence::{IsUserOnline, PresenceManager},
   protocol::{
     api::{
-      ChatEvent, GenericIncomingEvent, IncomingEvent, PresenceSnapshotItem, ReadPayload,
+      ChatEvent,
+      GenericIncomingEvent,
+      IncomingEvent,
+      PresenceSnapshotItem,
+      ReadPayload,
       StoreChatMessage,
     },
     phx_helper::{get_or_create_channel, send_event_to_channel},
@@ -23,7 +27,10 @@ use app_108jobs_db::{
   utils::{ActualDbPool, DbPool},
 };
 use app_108jobs_db_views_chat::api::{
-  ChatMessagesResponse, LastReadResponse, PeerReadResponse, UnreadSnapshotItem,
+  ChatMessagesResponse,
+  LastReadResponse,
+  PeerReadResponse,
+  UnreadSnapshotItem,
 };
 use chrono::{DateTime, Utc};
 use phoenix_channels_client::{url::Url, Channel, ChannelStatus, Event, Payload, Socket};

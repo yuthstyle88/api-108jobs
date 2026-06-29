@@ -2,8 +2,10 @@ use crate::plugins::plugin_metadata;
 use app_108jobs_core::{error::FastJobResult, settings::structs::Settings, VERSION};
 use app_108jobs_db::{
   source::{
-    actor_language::SiteLanguage, language::Language,
-    local_site_url_blocklist::LocalSiteUrlBlocklist, oauth_provider::OAuthProvider,
+    actor_language::SiteLanguage,
+    language::Language,
+    local_site_url_blocklist::LocalSiteUrlBlocklist,
+    oauth_provider::OAuthProvider,
     tagline::Tagline,
   },
   utils::{ActualDbPool, DbPool},

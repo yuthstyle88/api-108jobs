@@ -2,9 +2,12 @@ use aes_gcm::{
   aead::{
     generic_array::GenericArray,
     rand_core::{OsRng, RngCore},
-    Aead, Payload,
+    Aead,
+    Payload,
   },
-  Aes256Gcm, KeyInit, Nonce,
+  Aes256Gcm,
+  KeyInit,
+  Nonce,
 };
 use base64::{engine::general_purpose, Engine};
 use hex;

@@ -1,15 +1,36 @@
 #[cfg(feature = "full")]
 use crate::schema::{
-  mod_add, mod_add_category, mod_ban, mod_ban_from_category, mod_change_category_visibility,
-  mod_feature_post, mod_lock_post, mod_remove_category, mod_remove_post, mod_remove_proposal,
+  mod_add,
+  mod_add_category,
+  mod_ban,
+  mod_ban_from_category,
+  mod_change_category_visibility,
+  mod_feature_post,
+  mod_lock_post,
+  mod_remove_category,
+  mod_remove_post,
+  mod_remove_proposal,
   mod_transfer_category,
 };
 use crate::{
   enums::CategoryVisibility,
   newtypes::{
-    CategoryId, InstanceId, ModAddCategoryId, ModAddId, ModBanFromCategoryId, ModBanId,
-    ModChangeCategoryVisibilityId, ModFeaturePostId, ModLockPostId, ModRemoveCategoryId,
-    ModRemovePostId, ModRemoveProposalId, ModTransferCategoryId, PersonId, PostId, ProposalId,
+    CategoryId,
+    InstanceId,
+    ModAddCategoryId,
+    ModAddId,
+    ModBanFromCategoryId,
+    ModBanId,
+    ModChangeCategoryVisibilityId,
+    ModFeaturePostId,
+    ModLockPostId,
+    ModRemoveCategoryId,
+    ModRemovePostId,
+    ModRemoveProposalId,
+    ModTransferCategoryId,
+    PersonId,
+    PostId,
+    ProposalId,
   },
 };
 use chrono::{DateTime, Utc};

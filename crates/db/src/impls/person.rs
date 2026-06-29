@@ -3,7 +3,12 @@ use crate::{
   newtypes::{CategoryId, InstanceId, LocalUserId, PersonId},
   schema::{instance_actions, local_user, person, person_actions},
   source::person::{
-    Person, PersonActions, PersonBlockForm, PersonFollowerForm, PersonInsertForm, PersonNoteForm,
+    Person,
+    PersonActions,
+    PersonBlockForm,
+    PersonFollowerForm,
+    PersonInsertForm,
+    PersonNoteForm,
     PersonUpdateForm,
   },
   traits::{Blockable, Crud, Followable},
@@ -17,7 +22,9 @@ use chrono::Utc;
 use diesel::{
   dsl::{exists, insert_into, not, select},
   expression::SelectableHelper,
-  ExpressionMethods, JoinOnDsl, QueryDsl,
+  ExpressionMethods,
+  JoinOnDsl,
+  QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use url::Url;

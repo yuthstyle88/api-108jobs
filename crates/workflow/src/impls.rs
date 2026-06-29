@@ -15,7 +15,6 @@ use app_108jobs_db::{
 use app_108jobs_db_views_billing::ValidCreateInvoiceRequest;
 use chrono::Utc;
 use diesel_async::scoped_futures::ScopedFutureExt;
-use tracing;
 
 /// Deterministic idempotency key for the "approve quotation -> reserve escrow"
 /// step. Stable across retries so a duplicate request collides on the

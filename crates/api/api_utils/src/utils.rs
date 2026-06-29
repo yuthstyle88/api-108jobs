@@ -9,7 +9,7 @@ use app_108jobs_core::{
   error::{FastJobError, FastJobErrorExt2, FastJobErrorType, FastJobResult},
   rate_limit::{ActionType, BucketConfig},
   redis::RedisClient,
-  settings::{structs::PictrsImageMode, SETTINGS},
+  settings::structs::PictrsImageMode,
   utils::{
     markdown::{image_links::markdown_rewrite_image_links, markdown_check_for_blocked_urls},
     slurs::remove_slurs,

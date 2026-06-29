@@ -1,6 +1,6 @@
 use crate::{
   enums::PostNotifications,
-  newtypes::{CategoryId, DbUrl, InstanceId, PaginationCursor, PersonId, PostId},
+  newtypes::{CategoryId, InstanceId, PaginationCursor, PersonId, PostId},
   schema::{category, person, post, post_actions},
   source::post::{
     Post,
@@ -33,11 +33,9 @@ use diesel::{
   expression::SelectableHelper,
   pg::Pg,
   BoolExpressionMethods,
-  DecoratableTarget,
   ExpressionMethods,
   JoinOnDsl,
   NullableExpressionMethods,
-  OptionalExtension,
   QueryDsl,
 };
 use diesel_async::RunQueryDsl;

@@ -1199,7 +1199,7 @@ mod workflow_flow_tests {
   use super::*;
   use app_108jobs_db::{
     enums::{BillingStatus, WorkFlowStatus},
-    newtypes::{ChatRoomId, Coin, WalletId},
+    newtypes::{BillingId, ChatRoomId, Coin, WalletId},
     schema::{billing, local_user, post, wallet, wallet_hold as wallet_hold_t, wallet_transaction},
     source::{
       chat_room::{ChatRoom, ChatRoomInsertForm},
@@ -1208,7 +1208,7 @@ mod workflow_flow_tests {
       post::PostInsertForm,
       wallet::{TxKind, Wallet, WalletModel, WalletTransactionInsertForm},
       wallet_hold::hold_status,
-      workflow::{Workflow, WorkflowInsertForm},
+      workflow::{Workflow, WorkflowInsertForm, WorkflowUpdateForm},
     },
     test_data::TestData,
     traits::Crud,
@@ -1370,6 +1370,18 @@ mod workflow_flow_tests {
         .await
         .expect("billing")
     };
+
+    // Link billing to workflow so approve_on can validate the association.
+    Workflow::update(
+      pool,
+      workflow.id,
+      &WorkflowUpdateForm {
+        billing_id: Some(Some(BillingId(billing_id))),
+        ..Default::default()
+      },
+    )
+    .await
+    .expect("link billing to workflow");
 
     Fixture {
       test_data,

@@ -95,7 +95,7 @@ ALTER TABLE ONLY public.chat_unread
     ADD CONSTRAINT chat_unread_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.chat_room(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.proposal_actions
-    ADD CONSTRAINT comment_actions_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.proposal(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT proposal_actions_proposal_id_fkey FOREIGN KEY (proposal_id) REFERENCES public.proposal(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.proposal_actions
     ADD CONSTRAINT comment_actions_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON UPDATE CASCADE ON DELETE CASCADE;

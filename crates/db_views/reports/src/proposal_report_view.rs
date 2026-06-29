@@ -47,7 +47,7 @@ impl ProposalReportView {
     let comment_creator_join = aliases::person1.on(proposal::creator_id.eq(recipient_id));
 
     let proposal_actions_join = proposal_actions::table.on(
-      proposal_actions::comment_id
+      proposal_actions::proposal_id
         .eq(proposal_report::comment_id)
         .and(proposal_actions::person_id.eq(my_person_id)),
     );

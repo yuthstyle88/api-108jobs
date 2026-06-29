@@ -460,14 +460,27 @@ mod tests {
     let pool = &mut pool.into();
 
     let data = TestData::create(pool).await?;
-    let site_languages1 = SiteLanguage::read_local_raw(pool).await?;
-    // site is created with all languages (this deployment seeds four)
-    assert_eq!(4, site_languages1.len());
+    // Count raw site_language rows for this specific site (seed has 4 languages).
+    // Use read_local_raw only in single-site deployments; tests run concurrently so
+    // we scope the count to data.site.id to avoid counting other binaries' sites.
+    let site_raw_count = {
+      use crate::schema::site_language;
+      use diesel::{dsl::count, QueryDsl};
+      use diesel_async::RunQueryDsl;
+      let conn = &mut get_conn(pool).await?;
+      site_language::table
+        .filter(site_language::site_id.eq(data.site.id))
+        .select(count(site_language::language_id))
+        .first::<i64>(conn)
+        .await?
+    };
+    assert_eq!(4, site_raw_count);
 
     let test_langs = test_langs1(pool).await?;
     SiteLanguage::update(pool, test_langs.clone(), &data.site).await?;
 
-    let site_languages2 = SiteLanguage::read_local_raw(pool).await?;
+    // After update, verify via site-scoped read (avoids concurrent site contamination).
+    let site_languages2 = SiteLanguage::read(pool, data.site.id).await?;
     // after update, site only has new languages
     assert_eq!(test_langs, site_languages2);
 
@@ -522,8 +535,8 @@ mod tests {
     let read_site_langs = SiteLanguage::read(pool, data.site.id).await?;
     assert_eq!(test_langs, read_site_langs);
 
-    // Test the local ones are the same
-    let read_local_site_langs = SiteLanguage::read_local_raw(pool).await?;
+    // Test the site-scoped read matches (avoids concurrent site contamination).
+    let read_local_site_langs = SiteLanguage::read(pool, data.site.id).await?;
     assert_eq!(test_langs, read_local_site_langs);
 
     let category_form = CategoryInsertForm::new(

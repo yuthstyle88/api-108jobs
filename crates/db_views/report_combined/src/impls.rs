@@ -113,7 +113,7 @@ impl ReportCombinedViewInternal {
     );
 
     let proposal_actions_join = proposal_actions::table.on(
-      proposal_actions::comment_id
+      proposal_actions::proposal_id
         .eq(proposal::id)
         .and(proposal_actions::person_id.eq(my_person_id)),
     );

@@ -227,7 +227,7 @@ impl Likeable for ProposalActions {
 
     insert_into(proposal_actions::table)
       .values(form)
-      .on_conflict((proposal_actions::comment_id, proposal_actions::person_id))
+      .on_conflict((proposal_actions::proposal_id, proposal_actions::person_id))
       .do_update()
       .set(form)
       .returning(Self::as_select())
@@ -274,7 +274,7 @@ impl Likeable for ProposalActions {
     let conn = &mut get_conn(pool).await?;
 
     uplete::new(
-      proposal_actions::table.filter(proposal_actions::comment_id.eq_any(comment_ids.clone())),
+      proposal_actions::table.filter(proposal_actions::proposal_id.eq_any(comment_ids.clone())),
     )
     .set_null(proposal_actions::like_score)
     .set_null(proposal_actions::liked_at)
@@ -290,7 +290,7 @@ impl Saveable for ProposalActions {
     let conn = &mut get_conn(pool).await?;
     insert_into(proposal_actions::table)
       .values(form)
-      .on_conflict((proposal_actions::comment_id, proposal_actions::person_id))
+      .on_conflict((proposal_actions::proposal_id, proposal_actions::person_id))
       .do_update()
       .set(form)
       .returning(Self::as_select())
@@ -300,7 +300,7 @@ impl Saveable for ProposalActions {
   }
   async fn unsave(pool: &mut DbPool<'_>, form: &Self::Form) -> FastJobResult<uplete::Count> {
     let conn = &mut get_conn(pool).await?;
-    uplete::new(proposal_actions::table.find((form.person_id, form.comment_id)))
+    uplete::new(proposal_actions::table.find((form.person_id, form.proposal_id)))
       .set_null(proposal_actions::saved_at)
       .get_result(conn)
       .await

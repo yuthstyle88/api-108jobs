@@ -107,9 +107,9 @@ pub struct ProposalUpdateForm {
   feature = "full",
   derive(Identifiable, Queryable, Selectable, Associations, CursorKeysModule)
 )]
-#[cfg_attr(feature = "full", diesel(belongs_to(crate::source::proposal::Proposal, foreign_key = comment_id)))]
+#[cfg_attr(feature = "full", diesel(belongs_to(crate::source::proposal::Proposal, foreign_key = proposal_id)))]
 #[cfg_attr(feature = "full", diesel(table_name = proposal_actions))]
-#[cfg_attr(feature = "full", diesel(primary_key(person_id, comment_id)))]
+#[cfg_attr(feature = "full", diesel(primary_key(person_id, proposal_id)))]
 #[cfg_attr(feature = "full", diesel(check_for_backend(diesel::pg::Pg)))]
 #[cfg_attr(feature = "full", cursor_keys_module(name = proposal_actions_keys))]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
@@ -118,7 +118,7 @@ pub struct ProposalActions {
   #[serde(skip)]
   pub person_id: PersonId,
   #[serde(skip)]
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   /// The like / score for the proposal.
   pub like_score: Option<i16>,
   /// When the proposal was liked.
@@ -135,7 +135,7 @@ pub struct ProposalActions {
 #[cfg_attr(feature = "full", diesel(table_name = proposal_actions))]
 pub struct ProposalLikeForm {
   pub person_id: PersonId,
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   pub like_score: i16,
   #[new(value = "Utc::now()")]
   pub liked_at: DateTime<Utc>,
@@ -146,7 +146,7 @@ pub struct ProposalLikeForm {
 #[cfg_attr(feature = "full", diesel(table_name = proposal_actions))]
 pub struct ProposalSavedForm {
   pub person_id: PersonId,
-  pub comment_id: ProposalId,
+  pub proposal_id: ProposalId,
   #[new(value = "Utc::now()")]
   pub saved_at: DateTime<Utc>,
 }

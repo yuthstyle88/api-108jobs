@@ -373,7 +373,7 @@ pub fn my_post_actions_join(my_person_id: Option<PersonId>) -> _ {
 #[diesel::dsl::auto_type]
 pub fn my_proposal_actions_join(my_person_id: Option<PersonId>) -> _ {
   proposal_actions::table.on(
-    proposal_actions::comment_id
+    proposal_actions::proposal_id
       .eq(proposal::id)
       .and(proposal_actions::person_id.nullable().eq(my_person_id)),
   )

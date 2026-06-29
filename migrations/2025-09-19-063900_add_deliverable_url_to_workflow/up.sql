@@ -1,2 +1,0 @@
-ALTER TABLE workflow
-  ADD COLUMN IF NOT EXISTS deliverable_url TEXT NULL;

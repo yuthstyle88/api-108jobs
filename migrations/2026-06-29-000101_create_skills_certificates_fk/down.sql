@@ -1,0 +1,1 @@
+-- FKs dropped with tables

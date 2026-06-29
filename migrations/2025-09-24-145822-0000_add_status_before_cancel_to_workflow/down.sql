@@ -1,1 +1,0 @@
-ALTER TABLE workflow DROP COLUMN IF EXISTS status_before_cancel;

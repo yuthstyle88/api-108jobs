@@ -1,0 +1,1 @@
+-- FKs dropped automatically via CASCADE when tables drop

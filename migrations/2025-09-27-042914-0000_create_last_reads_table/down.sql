@@ -1,1 +1,0 @@
-DROP TABLE last_reads;

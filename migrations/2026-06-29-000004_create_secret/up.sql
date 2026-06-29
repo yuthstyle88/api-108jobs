@@ -17,3 +17,6 @@ ALTER TABLE ONLY public.secret ALTER COLUMN id SET DEFAULT nextval('public.secre
 
 ALTER TABLE ONLY public.secret
     ADD CONSTRAINT secret_pkey PRIMARY KEY (id);
+
+-- Required: Secret::init() calls .first() on this table at startup.
+INSERT INTO public.secret DEFAULT VALUES;

@@ -1,26 +1,41 @@
 use actix_web::{guard, web::*};
-use app_108jobs_api::{
-  admin::{
-    bank_account::{admin_list_bank_accounts, admin_verify_bank_account},
-    currency::{
-      admin_create_currency,
-      admin_create_pricing_config,
-      admin_get_currency,
-      admin_get_pricing_config,
-      admin_list_currencies,
-      admin_list_pricing_configs,
-      admin_update_currency,
-      admin_update_pricing_config,
-    },
-    platform::{admin_get_platform_assets, admin_get_platform_balance},
-    wallet::{
-      admin_list_top_up_requests,
-      admin_list_withdraw_requests,
-      admin_reject_withdraw_request,
-      admin_top_up_wallet,
-      admin_withdraw_wallet,
+use app_108jobs_admin::{
+  bank_account::{admin_list_bank_accounts, admin_verify_bank_account},
+  currency::{
+    admin_create_currency,
+    admin_create_pricing_config,
+    admin_get_currency,
+    admin_get_pricing_config,
+    admin_list_currencies,
+    admin_list_pricing_configs,
+    admin_update_currency,
+    admin_update_pricing_config,
+  },
+  platform::{admin_get_platform_assets, admin_get_platform_balance},
+  site::{
+    admin_allow_instance::admin_allow_instance,
+    admin_block_instance::admin_block_instance,
+    admin_list_users::admin_list_users,
+    leave_admin::leave_admin,
+    list_all_media::list_all_media,
+    mod_log::get_mod_log,
+    purge::{comment::purge_comment, person::purge_person, post::purge_post},
+    registration_applications::{
+      approve::approve_registration_application,
+      get::get_registration_application,
+      list::list_registration_applications,
+      unread_count::get_unread_registration_application_count,
     },
   },
+  wallet::{
+    admin_list_top_up_requests,
+    admin_list_withdraw_requests,
+    admin_reject_withdraw_request,
+    admin_top_up_wallet,
+    admin_withdraw_wallet,
+  },
+};
+use app_108jobs_api::{
   category::{
     random::get_random_category,
     tag::{create_category_tag, delete_category_tag, update_category_tag},
@@ -50,21 +65,6 @@ use app_108jobs_api::{
     report_combined::list::list_reports,
   },
   search::search,
-  site::{
-    admin_allow_instance::admin_allow_instance,
-    admin_block_instance::admin_block_instance,
-    admin_list_users::admin_list_users,
-    leave_admin::leave_admin,
-    list_all_media::list_all_media,
-    mod_log::get_mod_log,
-    purge::{comment::purge_comment, person::purge_person, post::purge_post},
-    registration_applications::{
-      approve::approve_registration_application,
-      get::get_registration_application,
-      list::list_registration_applications,
-      unread_count::get_unread_registration_application_count,
-    },
-  },
 };
 use app_108jobs_api_crud::{
   category::{list::list_categories, update::update_category},

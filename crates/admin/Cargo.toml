@@ -1,0 +1,52 @@
+[package]
+name = "app_108jobs_admin"
+publish = false
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "app_108jobs_admin"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[features]
+default = []
+full = []
+
+[dependencies]
+app_108jobs_core = { workspace = true }
+app_108jobs_db = { workspace = true, features = ["full", "test-utils"] }
+app_108jobs_api_utils = { workspace = true }
+app_108jobs_db_views_local_user = { workspace = true, features = ["full"] }
+app_108jobs_db_views_site = { workspace = true, features = ["full"] }
+app_108jobs_db_views_person = { workspace = true, features = ["full"] }
+app_108jobs_db_views_post = { workspace = true, features = ["full"] }
+app_108jobs_db_views_proposal = { workspace = true, features = ["full"] }
+app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
+app_108jobs_db_views_bank_account = { workspace = true, features = ["full"] }
+app_108jobs_db_views_currency = { workspace = true, features = ["full"] }
+app_108jobs_db_views_inbox_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_local_image = { workspace = true, features = ["full"] }
+app_108jobs_db_views_modlog_combined = { workspace = true, features = ["full"] }
+app_108jobs_db_views_registration_applications = { workspace = true, features = ["full"] }
+actix-web = { workspace = true }
+tracing = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }

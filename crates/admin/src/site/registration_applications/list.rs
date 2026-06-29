@@ -1,0 +1,52 @@
+use actix_web::web::{Data, Json, Query};
+use app_108jobs_api_utils::{context::FastJobContext, utils::is_admin};
+use app_108jobs_core::error::FastJobResult;
+use app_108jobs_db::traits::PaginationCursorBuilder;
+use app_108jobs_db_views_local_user::LocalUserView;
+use app_108jobs_db_views_registration_applications::{
+  api::{ListRegistrationApplications, ListRegistrationApplicationsResponse},
+  impls::RegistrationApplicationQuery,
+  RegistrationApplicationView,
+};
+
+/// Lists registration applications, filterable by undenied only.
+pub async fn list_registration_applications(
+  data: Query<ListRegistrationApplications>,
+  context: Data<FastJobContext>,
+  local_user_view: LocalUserView,
+) -> FastJobResult<Json<ListRegistrationApplicationsResponse>> {
+  let local_site = context.site_config().get().await?.site_view.local_site;
+
+  // Make sure user is an admin
+  is_admin(&local_user_view)?;
+
+  let cursor_data = if let Some(cursor) = &data.page_cursor {
+    Some(RegistrationApplicationView::from_cursor(cursor, &mut context.pool()).await?)
+  } else {
+    None
+  };
+
+  let registration_applications = RegistrationApplicationQuery {
+    unread_only: data.unread_only,
+    verified_email_only: Some(local_site.require_email_verification),
+    cursor_data,
+    page_back: data.page_back,
+    limit: data.limit,
+  }
+  .list(&mut context.pool())
+  .await?;
+
+  let next_page = registration_applications
+    .last()
+    .map(PaginationCursorBuilder::to_cursor);
+
+  let prev_page = registration_applications
+    .first()
+    .map(PaginationCursorBuilder::to_cursor);
+
+  Ok(Json(ListRegistrationApplicationsResponse {
+    registration_applications,
+    next_page,
+    prev_page,
+  }))
+}

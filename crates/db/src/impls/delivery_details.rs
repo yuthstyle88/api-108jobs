@@ -1176,6 +1176,12 @@ mod tests {
     let pool = pool_for_tests();
     let pool = &mut (&pool).into();
 
+    // Ensure platform wallet exists — needed by cancel_and_refund_escrow →
+    // refund_from_platform_on_conn → platform_wallet_id().
+    WalletModel::ensure_platform_wallet(pool)
+      .await
+      .expect("platform wallet");
+
     // Employer + post + delivery (Pending, unassigned)
     let (instance_id, post_id, _) = fixture_with_status(pool, TripStatus::Pending).await;
 

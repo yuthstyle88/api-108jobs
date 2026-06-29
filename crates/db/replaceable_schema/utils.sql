@@ -201,7 +201,7 @@ BEGIN
             p.category_id
         FROM
             proposal_actions ca
-            INNER JOIN proposal c ON ca.comment_id = c.id
+            INNER JOIN proposal c ON ca.proposal_id = c.id
             INNER JOIN post p ON c.post_id = p.id
             INNER JOIN person pe ON ca.person_id = pe.id
         WHERE

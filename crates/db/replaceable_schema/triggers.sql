@@ -488,24 +488,12 @@ EXECUTE replace($b$ CREATE FUNCTION r.person_liked_combined_change_values_thing 
                     WHERE p.person_id = OLD.person_id
                         AND p.thing_id = OLD.thing_id;
 ELSIF (TG_OP = 'INSERT') THEN
-                    IF NEW.liked_at IS NOT NULL AND (
-                        SELECT
-                            local
-                        FROM
-                            person
-                        WHERE
-                            id = NEW.person_id) = TRUE THEN
+                    IF NEW.liked_at IS NOT NULL THEN
                         INSERT INTO person_liked_combined (liked_at, like_score, person_id, thing_id)
                             VALUES (NEW.liked_at, NEW.like_score, NEW.person_id, NEW.thing_id);
 END IF;
                 ELSIF (TG_OP = 'UPDATE') THEN
-                    IF NEW.liked_at IS NOT NULL AND (
-                        SELECT
-                            local
-                        FROM
-                            person
-                        WHERE
-                            id = NEW.person_id) = TRUE THEN
+                    IF NEW.liked_at IS NOT NULL THEN
                         INSERT INTO person_liked_combined (liked_at, like_score, person_id, thing_id)
                             VALUES (NEW.liked_at, NEW.like_score, NEW.person_id, NEW.thing_id);
                         -- If liked gets set as null, delete the row

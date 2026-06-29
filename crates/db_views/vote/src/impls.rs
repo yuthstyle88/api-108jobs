@@ -145,7 +145,7 @@ impl VoteView {
       .inner_join(person::table)
       .inner_join(proposal::table.inner_join(post::table))
       .left_join(creator_category_actions_join)
-      .filter(proposal_actions::comment_id.eq(comment_id))
+      .filter(proposal_actions::proposal_id.eq(comment_id))
       .filter(proposal_actions::like_score.is_not_null())
       .select((
         person::all_columns,

@@ -815,7 +815,7 @@ mod tests {
 
       // A sample post
       let new_post = PostInsertForm {
-        language_id: Some(LanguageId(66)),
+        language_id: Some(LanguageId(2)), // Thai (th) — seeded in migration 102
         category_id: Some(category.id),
         ..PostInsertForm::new(POST.to_string(), inserted_tegan_person.id)
       };
@@ -830,7 +830,7 @@ mod tests {
 
       // A sample post with tags
       let new_post = PostInsertForm {
-        language_id: Some(LanguageId(66)),
+        language_id: Some(LanguageId(2)), // Thai (th) — seeded in migration 102
         category_id: Some(category.id),
         ..PostInsertForm::new(POST_WITH_TAGS.to_string(), inserted_tegan_person.id)
       };

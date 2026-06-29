@@ -224,9 +224,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    proposal_actions (person_id, comment_id) {
+    proposal_actions (person_id, proposal_id) {
         person_id -> Int4,
-        comment_id -> Int4,
+        proposal_id -> Int4,
         like_score -> Nullable<Int2>,
         liked_at -> Nullable<Timestamptz>,
         saved_at -> Nullable<Timestamptz>,
@@ -1529,7 +1529,7 @@ diesel::joinable!(billing -> post (post_id));
 diesel::joinable!(proposal -> language (language_id));
 diesel::joinable!(proposal -> person (creator_id));
 diesel::joinable!(proposal -> post (post_id));
-diesel::joinable!(proposal_actions -> proposal (comment_id));
+diesel::joinable!(proposal_actions -> proposal (proposal_id));
 diesel::joinable!(proposal_actions -> person (person_id));
 diesel::joinable!(proposal_reply -> proposal (comment_id));
 diesel::joinable!(proposal_reply -> person (recipient_id));

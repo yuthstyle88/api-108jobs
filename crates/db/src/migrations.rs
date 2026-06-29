@@ -41,7 +41,7 @@ fn migrations() -> diesel_migrations::EmbeddedMigrations {
   // time. Adding a migration directory does not change any source file, so an
   // incremental/cached build can otherwise keep a stale embedded list. Bump the
   // marker below whenever a migration is added to force this crate to rebuild.
-  // Migrations marker: 2026-06-29-c (secret seed row).
+  // Migrations marker: 2026-06-29-e (proposal_actions.comment_id → proposal_id).
   const MIGRATIONS: diesel_migrations::EmbeddedMigrations = diesel_migrations::embed_migrations!();
   MIGRATIONS
 }

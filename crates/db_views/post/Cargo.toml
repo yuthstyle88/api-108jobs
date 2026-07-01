@@ -50,7 +50,6 @@ i-love-jesus = { workspace = true, optional = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true, optional = true }
-slug = { workspace = true }
 
 [dev-dependencies]
 app_108jobs_db_views_local_user = { workspace = true }

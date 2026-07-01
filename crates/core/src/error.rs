@@ -161,7 +161,6 @@ pub enum FastJobErrorType {
   CategoryHasNoFollowers,
   PostScheduleTimeMustBeInFuture,
   TooManyScheduledPosts,
-  CannotCombineFederationBlocklistAndAllowlist,
   CouldntParsePaginationToken,
   PluginError(String),
   InvalidFetchLimit,
@@ -233,7 +232,6 @@ pub enum FastJobErrorType {
   CouldntCreateCategory,
   AlreadyDeleted,
   UrlWithoutDomain,
-  FederationDisabledByStrictAllowList,
   RedisConnectionFailed,
   SerializationFailed,
   RedisSetFailed,
@@ -245,7 +243,6 @@ pub enum FastJobErrorType {
   CantDeleteSite,
   PageDoesNotSpecifyCreator,
   ObjectIsNotPublic,
-  FederationDisabled,
   InvalidField(String),
   // Wallet related errors
   WalletAlreadyExists,

@@ -61,7 +61,6 @@ actix-web-httpauth = { version = "0.8.2" }
 enum-map = { workspace = true }
 url = { workspace = true }
 moka = { workspace = true }
-webmention = { version = "0.6.0" }
 urlencoding = { workspace = true }
 webpage = { version = "2.0", default-features = false, features = ["serde"] }
 regex = { workspace = true }

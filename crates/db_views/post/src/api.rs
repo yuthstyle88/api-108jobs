@@ -37,7 +37,6 @@ pub struct CreatePost {
   /// A honeypot to catch bots. Should be None.
   pub honeypot: Option<String>,
   pub self_promotion: Option<bool>,
-  pub ap_id: Option<DbUrl>,
   pub language_id: Option<LanguageId>,
   /// Instead of fetching a thumbnail, use a custom one.
   pub custom_thumbnail: Option<String>,

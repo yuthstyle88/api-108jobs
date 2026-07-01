@@ -17,12 +17,6 @@ use app_108jobs_admin::{
     leave_admin::leave_admin,
     list_all_media::list_all_media,
     purge::{comment::purge_comment, person::purge_person, post::purge_post},
-    registration_applications::{
-      approve::approve_registration_application,
-      get::get_registration_application,
-      list::list_registration_applications,
-      unread_count::get_unread_registration_application_count,
-    },
   },
   wallet::{
     admin_list_top_up_requests,
@@ -497,22 +491,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/admin")
             .route("/add", post().to(add_admin))
-            .route(
-              "/registration-application/count",
-              get().to(get_unread_registration_application_count),
-            )
-            .route(
-              "/registration-application/list",
-              get().to(list_registration_applications),
-            )
-            .route(
-              "/registration-application/approve",
-              put().to(approve_registration_application),
-            )
-            .route(
-              "/registration-application",
-              get().to(get_registration_application),
-            )
             .service(
               scope("/purge")
                 .route("/person", post().to(purge_person))

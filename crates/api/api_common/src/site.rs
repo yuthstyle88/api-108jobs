@@ -17,10 +17,5 @@ pub mod administration {
   pub use app_108jobs_db_views_inbox_combined::api::GetUnreadRegistrationApplicationCountResponse;
   pub use app_108jobs_db_views_local_user::api::{AdminListUsers, AdminListUsersResponse};
   pub use app_108jobs_db_views_person::api::{AddAdminRequest, AddAdminResponse};
-  pub use app_108jobs_db_views_registration_applications::api::{
-    ApproveRegistrationApplication,
-    ListRegistrationApplications,
-    ListRegistrationApplicationsResponse,
-  };
   pub use app_108jobs_db_views_site::api::{CreateSite, EditSite};
 }

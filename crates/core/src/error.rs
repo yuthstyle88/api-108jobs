@@ -12,8 +12,6 @@ pub enum FastJobErrorType {
   BlockKeywordTooShort,
   BlockKeywordTooLong,
   CouldntUpdateKeywords,
-  ReportReasonRequired,
-  ReportTooLong,
   NotAModerator,
   EmailNotFound,
   NotAnAdmin,

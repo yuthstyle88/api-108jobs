@@ -61,11 +61,6 @@ use app_108jobs_http::{
       save_settings::save_user_settings,
       update_term::update_term,
     },
-    reports::{
-      category_report::{create::create_category_report, resolve::resolve_category_report},
-      comment_report::{create::create_comment_report, resolve::resolve_comment_report},
-      report_combined::list::list_reports,
-    },
     search::search,
   },
   crud::{
@@ -279,8 +274,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_category))
             .route("/random", get().to(get_random_category))
             .route("/list", get().to(list_categories))
-            .route("/report", post().to(create_category_report))
-            .route("/report/resolve", put().to(resolve_category_report))
             // Mod Actions
             .route("/icon", post().to(upload_category_icon))
             .route("/icon", delete().to(delete_category_icon))
@@ -371,15 +364,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/distinguish", post().to(distinguish_comment))
             .route("/like", post().to(like_comment))
             .route("/like/list", get().to(list_comment_likes))
-            .route("/list", get().to(list_comments))
-            .route("/report", post().to(create_comment_report))
-            .route("/report/resolve", put().to(resolve_comment_report)),
-        )
-        // Reports
-        .service(
-          scope("/report")
-            .wrap(rate_limit.message())
-            .route("/list", get().to(list_reports)),
+            .route("/list", get().to(list_comments)),
         )
         // User
         .service(

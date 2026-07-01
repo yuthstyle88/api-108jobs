@@ -550,7 +550,6 @@ dependencies = [
  "app_108jobs_db_views_inbox_combined",
  "app_108jobs_db_views_local_image",
  "app_108jobs_db_views_local_user",
- "app_108jobs_db_views_modlog_combined",
  "app_108jobs_db_views_person",
  "app_108jobs_db_views_post",
  "app_108jobs_db_views_proposal",

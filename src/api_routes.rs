@@ -13,12 +13,9 @@ use app_108jobs_admin::{
   },
   platform::{admin_get_platform_assets, admin_get_platform_balance},
   site::{
-    admin_allow_instance::admin_allow_instance,
-    admin_block_instance::admin_block_instance,
     admin_list_users::admin_list_users,
     leave_admin::leave_admin,
     list_all_media::list_all_media,
-    mod_log::get_mod_log,
     purge::{comment::purge_comment, person::purge_person, post::purge_post},
     registration_applications::{
       approve::approve_registration_application,
@@ -257,7 +254,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", post().to(upload_site_banner))
             .route("/banner", delete().to(delete_site_banner)),
         )
-        .route("/modlog", get().to(get_mod_log))
         .service(
           resource("/search")
             // .wrap(rate_limit.search())
@@ -526,11 +522,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/ban", post().to(ban_from_site))
             .route("/users", get().to(admin_list_users))
             .route("/leave", post().to(leave_admin))
-            .service(
-              scope("/instance")
-                .route("/block", post().to(admin_block_instance))
-                .route("/allow", post().to(admin_allow_instance)),
-            )
             .service(
               // manage wallet by admin (can reject)
               scope("/wallet")

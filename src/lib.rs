@@ -25,12 +25,10 @@ use app_108jobs_core::{
 };
 use app_108jobs_db::{source::secret::Secret, utils::build_db_pool};
 use app_108jobs_routes::{
-  feeds,
   middleware::{
     idempotency::{IdempotencyMiddleware, IdempotencySet},
     session::SessionMiddleware,
   },
-  nodeinfo,
   utils::{
     cors_config,
     prometheus_metrics::{new_prometheus_metrics, serve_prometheus},
@@ -331,8 +329,6 @@ fn create_http_server(
 
     app
       .configure(|cfg| api_routes::config(cfg, &rate_limit))
-      .configure(feeds::config)
-      .configure(nodeinfo::config)
       .service(scope("/sitemap.xml").wrap(rate_limit.message()))
   })
   // Use number of available CPU cores for optimal performance

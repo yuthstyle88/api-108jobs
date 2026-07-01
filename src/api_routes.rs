@@ -13,19 +13,10 @@ use app_108jobs_admin::{
   },
   platform::{admin_get_platform_assets, admin_get_platform_balance},
   site::{
-    admin_allow_instance::admin_allow_instance,
-    admin_block_instance::admin_block_instance,
     admin_list_users::admin_list_users,
     leave_admin::leave_admin,
     list_all_media::list_all_media,
-    mod_log::get_mod_log,
     purge::{comment::purge_comment, person::purge_person, post::purge_post},
-    registration_applications::{
-      approve::approve_registration_application,
-      get::get_registration_application,
-      list::list_registration_applications,
-      unread_count::get_unread_registration_application_count,
-    },
   },
   wallet::{
     admin_list_top_up_requests,
@@ -53,11 +44,7 @@ use app_108jobs_http::{
       exchange::exchange_key,
       export_data::export_data,
       list_created::list_person_created,
-      list_hidden::list_person_hidden,
-      list_liked::list_person_liked,
       list_media::list_media,
-      list_read::list_person_read,
-      list_saved::list_person_saved,
       note_person::user_note_person,
       profile::visit_profile,
       report_count::report_count,
@@ -65,21 +52,10 @@ use app_108jobs_http::{
       save_settings::save_user_settings,
       update_term::update_term,
     },
-    reports::{
-      category_report::{create::create_category_report, resolve::resolve_category_report},
-      comment_report::{create::create_comment_report, resolve::resolve_comment_report},
-      report_combined::list::list_reports,
-    },
     search::search,
   },
   crud::{
     category::{list::list_categories, update::update_category},
-    custom_emoji::{
-      create::create_custom_emoji,
-      delete::delete_custom_emoji,
-      list::list_custom_emojis,
-      update::update_custom_emoji,
-    },
     oauth_provider::{
       create::create_oauth_provider,
       delete::delete_oauth_provider,
@@ -89,12 +65,6 @@ use app_108jobs_http::{
       create::create_site,
       read::{get_site, health},
       update::update_site,
-    },
-    tagline::{
-      create::create_tagline,
-      delete::delete_tagline,
-      list::list_taglines,
-      update::update_tagline,
     },
     user::{
       create::{authenticate_with_oauth, register},
@@ -107,7 +77,6 @@ use app_108jobs_identity::{
   change_password::change_password,
   change_password_after_reset::change_password_after_reset,
   generate_totp_secret::generate_totp_secret,
-  get_captcha::get_captcha,
   list_logins::list_logins,
   login::login,
   logout::logout,
@@ -129,14 +98,8 @@ use app_108jobs_jobs::{
   handlers::{
     feature::feature_post,
     get_link_metadata::get_link_metadata,
-    hide::hide_post,
-    like::like_post,
     list::list_posts,
-    list_post_likes::list_post_likes,
     lock::lock_post,
-    mark_many_read::mark_posts_as_read,
-    mark_read::mark_post_as_read,
-    save::save_post,
     update_notifications::update_post_notifications,
   },
 };
@@ -178,14 +141,6 @@ use app_108jobs_logistics::{
     status::update_delivery_status,
   },
 };
-use app_108jobs_notifications::{
-  list_inbox::list_inbox,
-  mark_all_read::mark_all_notifications_read,
-  mark_comment_mention_read::mark_comment_mention_as_read,
-  mark_post_mention_read::mark_post_mention_as_read,
-  mark_reply_read::mark_reply_as_read,
-  unread_count::unread_count,
-};
 use app_108jobs_payments::{
   bank_account::{
     create_bank_account,
@@ -207,13 +162,7 @@ use app_108jobs_proposals::{
     remove::remove_comment,
     update::update_comment,
   },
-  handlers::{
-    distinguish::distinguish_comment,
-    like::like_comment,
-    list::list_comments,
-    list_comment_likes::list_comment_likes,
-    save::save_comment,
-  },
+  handlers::{distinguish::distinguish_comment, list::list_comments},
 };
 use app_108jobs_routes::{
   files::{delete::delete_file, download::get_file, upload::upload_file},
@@ -284,7 +233,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/banner", post().to(upload_site_banner))
             .route("/banner", delete().to(delete_site_banner)),
         )
-        .route("/modlog", get().to(get_mod_log))
         .service(
           resource("/search")
             // .wrap(rate_limit.search())
@@ -301,8 +249,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_category))
             .route("/random", get().to(get_random_category))
             .route("/list", get().to(list_categories))
-            .route("/report", post().to(create_category_report))
-            .route("/report/resolve", put().to(resolve_category_report))
             // Mod Actions
             .route("/icon", post().to(upload_category_icon))
             .route("/icon", delete().to(delete_category_icon))
@@ -331,15 +277,9 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_post))
             .route("/delete", post().to(delete_post))
             .route("/remove", post().to(remove_post))
-            .route("/mark-as-read", post().to(mark_post_as_read))
-            .route("/mark-as-read/many", post().to(mark_posts_as_read))
-            .route("/hide", post().to(hide_post))
             .route("/lock", post().to(lock_post))
             .route("/feature", post().to(feature_post))
             .route("/list", get().to(list_posts))
-            .route("/like", post().to(like_post))
-            .route("/like/list", get().to(list_post_likes))
-            .route("/save", put().to(save_post))
             .route(
               "/disable-notifications",
               post().to(update_post_notifications),
@@ -393,20 +333,8 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_comment))
             .route("/delete", post().to(delete_comment))
             .route("/remove", post().to(remove_comment))
-            .route("/mark-as-read", post().to(mark_reply_as_read))
             .route("/distinguish", post().to(distinguish_comment))
-            .route("/like", post().to(like_comment))
-            .route("/like/list", get().to(list_comment_likes))
-            .route("/list", get().to(list_comments))
-            .route("/save", put().to(save_comment))
-            .route("/report", post().to(create_comment_report))
-            .route("/report/resolve", put().to(resolve_comment_report)),
-        )
-        // Reports
-        .service(
-          scope("/report")
-            .wrap(rate_limit.message())
-            .route("/list", get().to(list_reports)),
+            .route("/list", get().to(list_comments)),
         )
         // User
         .service(
@@ -431,7 +359,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/verify-email", post().to(verify_email))
             .route("/exchange-public-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
-            .route("/get-captcha", get().to(get_captcha))
             .route(
               "/resend-verification-email",
               post().to(resend_verification_email),
@@ -450,7 +377,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", delete().to(delete_image))
                 .route("/list", get().to(list_media)),
             )
-            .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
             // upload file
             .service(
@@ -466,17 +392,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
             )
-            .service(
-              scope("/mention")
-                .route(
-                  "/proposal/mark-as-read",
-                  post().to(mark_comment_mention_as_read),
-                )
-                .route("/post/mark-as-read", post().to(mark_post_mention_as_read)),
-            )
-            .route("/mark-as-read/all", post().to(mark_all_notifications_read))
             .route("/report_count", get().to(report_count))
-            .route("/unread-count", get().to(unread_count))
             .route("/list-logins", get().to(list_logins))
             .route("/validate-auth", get().to(validate_auth))
             .route("/donation-dialog-shown", post().to(donation_dialog_shown))
@@ -484,11 +400,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/avatar", delete().to(delete_user_avatar))
             .route("/banner", post().to(upload_user_banner))
             .route("/banner", delete().to(delete_user_banner))
-            .route("/saved", get().to(list_person_saved))
             .route("/created", get().to(list_person_created))
-            .route("/read", get().to(list_person_read))
-            .route("/hidden", get().to(list_person_hidden))
-            .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
             .service(
@@ -548,43 +460,15 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
         .service(
           scope("/admin")
             .route("/add", post().to(add_admin))
-            .route(
-              "/registration-application/count",
-              get().to(get_unread_registration_application_count),
-            )
-            .route(
-              "/registration-application/list",
-              get().to(list_registration_applications),
-            )
-            .route(
-              "/registration-application/approve",
-              put().to(approve_registration_application),
-            )
-            .route(
-              "/registration-application",
-              get().to(get_registration_application),
-            )
             .service(
               scope("/purge")
                 .route("/person", post().to(purge_person))
                 .route("/post", post().to(purge_post))
                 .route("/proposal", post().to(purge_comment)),
             )
-            .service(
-              scope("/tagline")
-                .route("", post().to(create_tagline))
-                .route("", put().to(update_tagline))
-                .route("/delete", post().to(delete_tagline))
-                .route("/list", get().to(list_taglines)),
-            )
             .route("/ban", post().to(ban_from_site))
             .route("/users", get().to(admin_list_users))
             .route("/leave", post().to(leave_admin))
-            .service(
-              scope("/instance")
-                .route("/block", post().to(admin_block_instance))
-                .route("/allow", post().to(admin_allow_instance)),
-            )
             .service(
               // manage wallet by admin (can reject)
               scope("/wallet")
@@ -654,13 +538,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/profile/{id}", get().to(get_rider))
             .route("/rate", post().to(rate_rider))
             .route("/{riderId}/ratings", get().to(get_rider_ratings)),
-        )
-        .service(
-          scope("/custom-emoji")
-            .route("", post().to(create_custom_emoji))
-            .route("", put().to(update_custom_emoji))
-            .route("/delete", post().to(delete_custom_emoji))
-            .route("/list", get().to(list_custom_emojis)),
         )
         .service(
           scope("/oauth-provider")

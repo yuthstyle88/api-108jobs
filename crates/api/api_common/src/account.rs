@@ -22,10 +22,8 @@ pub mod auth {
   pub use app_108jobs_db::source::login_token::LoginToken;
   pub use app_108jobs_db_views_registration_applications::api::Register;
   pub use app_108jobs_db_views_site::api::{
-    CaptchaResponse,
     ChangePassword,
     GenerateTotpSecretResponse,
-    GetCaptchaResponse,
     ListLoginsResponse,
     Login,
     LoginResponse,

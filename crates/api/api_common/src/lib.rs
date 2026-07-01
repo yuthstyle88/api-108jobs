@@ -15,9 +15,7 @@ pub mod proposal;
 pub mod report;
 pub mod search;
 pub mod site;
-pub mod tagline;
 pub mod wallet;
 
 pub use app_108jobs_db::{enums::VoteShow, newtypes::DbUrl, sensitive::SensitiveString};
 pub use app_108jobs_db_views_site::api::SuccessResponse;
-pub use app_108jobs_db_views_vote::VoteView;

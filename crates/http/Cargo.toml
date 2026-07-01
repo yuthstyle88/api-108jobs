@@ -34,12 +34,9 @@ app_108jobs_db_views_post = { workspace = true, features = ["full"] }
 app_108jobs_db_views_proposal = { workspace = true, features = ["full"] }
 app_108jobs_db_views_wallet = { workspace = true, features = ["full"] }
 app_108jobs_db_views_category = { workspace = true, features = ["full"] }
-app_108jobs_db_views_custom_emoji = { workspace = true, features = ["full"] }
 app_108jobs_db_views_local_image = { workspace = true, features = ["full"] }
 app_108jobs_db_views_inbox_combined = { workspace = true, features = ["full"] }
 app_108jobs_db_views_person_content_combined = { workspace = true, features = ["full"] }
-app_108jobs_db_views_person_liked_combined = { workspace = true, features = ["full"] }
-app_108jobs_db_views_person_saved_combined = { workspace = true, features = ["full"] }
 app_108jobs_db_views_registration_applications = { workspace = true, features = ["full"] }
 app_108jobs_db_views_report_combined = { workspace = true, features = ["full"] }
 app_108jobs_db_views_reports = { workspace = true, features = ["full"] }

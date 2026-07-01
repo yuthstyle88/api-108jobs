@@ -23,7 +23,6 @@ full = [
     "i-love-jesus",
     "app_108jobs_db/full",
     "app_108jobs_db_views_category/full",
-    "app_108jobs_db_views_vote/full",
     "app_108jobs_db_views_rider/full",
     "url",
 ]
@@ -31,7 +30,6 @@ ts-rs = [
     "dep:ts-rs",
     "app_108jobs_db/ts-rs",
     "app_108jobs_db_views_category/ts-rs",
-    "app_108jobs_db_views_vote/ts-rs",
     "app_108jobs_db_views_rider/ts-rs",
 ]
 
@@ -39,7 +37,6 @@ ts-rs = [
 app_108jobs_db = { workspace = true }
 app_108jobs_core = { workspace = true, optional = true }
 app_108jobs_db_views_category = { workspace = true }
-app_108jobs_db_views_vote = { workspace = true }
 app_108jobs_db_views_rider = { workspace = true }
 diesel = { workspace = true, optional = true }
 diesel-async = { workspace = true, optional = true }
@@ -50,7 +47,6 @@ i-love-jesus = { workspace = true, optional = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true, optional = true }
-slug = { workspace = true }
 
 [dev-dependencies]
 app_108jobs_db_views_local_user = { workspace = true }

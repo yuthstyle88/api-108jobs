@@ -40,7 +40,6 @@ ts-rs = [
   "app_108jobs_db_views_reports/ts-rs",
   "app_108jobs_db_views_search_combined/ts-rs",
   "app_108jobs_db_views_site/ts-rs",
-  "app_108jobs_db_views_vote/ts-rs",
 ]
 
 [dependencies]
@@ -63,7 +62,6 @@ app_108jobs_db_views_report_combined.workspace = true
 app_108jobs_db_views_reports.workspace = true
 app_108jobs_db_views_search_combined.workspace = true
 app_108jobs_db_views_site.workspace = true
-app_108jobs_db_views_vote.workspace = true
 app_108jobs_db_views_bank_account.workspace = true
 app_108jobs_db_views_wallet.workspace = true
 serde = { version = "1.0.219", features = ["derive"] }

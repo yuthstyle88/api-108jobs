@@ -20,16 +20,4 @@ pub mod actions {
     ListPersonContentResponse,
     PersonContentCombinedView,
   };
-
-  pub mod moderation {
-    pub use app_108jobs_db::{
-      newtypes::RegistrationApplicationId,
-      source::registration_application::RegistrationApplication,
-    };
-    pub use app_108jobs_db_views_person::api::{BanPerson, BanPersonResponse, PurgePerson};
-    pub use app_108jobs_db_views_registration_applications::{
-      api::{GetRegistrationApplication, RegistrationApplicationResponse},
-      RegistrationApplicationView,
-    };
-  }
 }

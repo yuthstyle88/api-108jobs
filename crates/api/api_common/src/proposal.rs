@@ -11,19 +11,12 @@ pub use app_108jobs_db_views_proposal::{
 pub mod actions {
   pub use app_108jobs_db_views_proposal::api::{
     CreateComment,
-    CreateCommentLike,
     DeleteComment,
     EditComment,
     SaveComment,
   };
 
   pub mod moderation {
-    pub use app_108jobs_db_views_proposal::api::{
-      DistinguishComment,
-      ListCommentLikes,
-      ListCommentLikesResponse,
-      PurgeComment,
-      RemoveComment,
-    };
+    pub use app_108jobs_db_views_proposal::api::{DistinguishComment, PurgeComment, RemoveComment};
   }
 }

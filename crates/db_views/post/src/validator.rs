@@ -1,12 +1,8 @@
 //! Validation logic for post requests
 use crate::api::{CreatePost, CreatePostRequest, EditPost, EditPostRequest};
-use app_108jobs_core::{
-  error::{FastJobError, FastJobErrorType, FastJobResult},
-  settings::SETTINGS,
-};
+use app_108jobs_core::error::{FastJobError, FastJobErrorType, FastJobResult};
 use app_108jobs_db::enums::PostKind;
 use chrono::Utc;
-use slug::slugify;
 use url::Url;
 
 fn is_valid_post_title(title: &str) -> FastJobResult<()> {
@@ -142,10 +138,6 @@ impl TryFrom<CreatePostRequest> for CreatePost {
       Url::parse(thumb_url).map_err(|_| FastJobErrorType::InvalidUrl)?;
     }
 
-    let domain = SETTINGS.get_protocol_and_hostname();
-    let raw_url = format!("{}/post/{}", domain, slugify(data.name.clone()));
-    let url = Url::parse(&raw_url)?;
-
     // Determine post kind, defaulting to Normal for backward compatibility
     let post_kind = data.post_kind.unwrap_or(PostKind::Normal);
 
@@ -166,7 +158,6 @@ impl TryFrom<CreatePostRequest> for CreatePost {
       intended_use: data.intended_use,
       job_type: data.job_type,
       is_english_required: data.is_english_required,
-      ap_id: Some(url.into()),
       post_kind,
       delivery_details: data.delivery_details,
       ride_payload: data.ride_payload,

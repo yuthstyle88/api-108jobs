@@ -11,7 +11,7 @@ use app_108jobs_db::{
     TripStatus,
     VoteShow,
   },
-  newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor, TaglineId},
+  newtypes::{InstanceId, LanguageId, OAuthProviderId, PaginationCursor},
   sensitive::SensitiveString,
   source::{
     category::Category,
@@ -540,20 +540,6 @@ pub struct SiteResponse {
   pub site_view: SiteView,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A captcha response.
-#[serde(rename_all = "camelCase")]
-pub struct CaptchaResponse {
-  /// A Base64 encoded png
-  pub png: String,
-  /// A Base64 encoded wav audio
-  pub wav: String,
-  /// The UUID for the captcha item.
-  pub uuid: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
 #[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
@@ -582,16 +568,6 @@ pub struct DeleteAccount {
 pub struct DeleteAccountRequest {
   pub password: SensitiveString,
   pub delete_content: bool,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A wrapper for the captcha response.
-pub struct GetCaptchaResponse {
-  /// Will be None if captchas are disabled.
-  pub ok: Option<CaptchaResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -949,82 +925,6 @@ pub struct ListPersonCreatedResponse {
   /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Create a tagline
-pub struct CreateTagline {
-  pub content: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Create a tagline
-pub struct CreateTaglineRequest {
-  pub content: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Delete a tagline
-pub struct DeleteTaglineRequest {
-  pub id: TaglineId,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Fetches a list of taglines.
-#[serde(rename_all = "camelCase")]
-pub struct ListTaglines {
-  pub page_cursor: Option<PaginationCursor>,
-  pub page_back: Option<bool>,
-  pub limit: Option<i64>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// A response for taglines.
-#[serde(rename_all = "camelCase")]
-pub struct ListTaglinesResponse {
-  pub taglines: Vec<Tagline>,
-  /// the pagination cursor to use to fetch the next page
-  pub next_page: Option<PaginationCursor>,
-  pub prev_page: Option<PaginationCursor>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-pub struct TaglineResponse {
-  pub tagline: Tagline,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Update a tagline
-pub struct UpdateTagline {
-  pub id: TaglineId,
-  pub content: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Update a tagline
-pub struct UpdateTaglineRequest {
-  pub id: TaglineId,
-  pub content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

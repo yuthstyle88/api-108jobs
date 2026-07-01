@@ -1317,8 +1317,6 @@ dependencies = [
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_person",
  "app_108jobs_db_views_person_content_combined",
- "app_108jobs_db_views_person_liked_combined",
- "app_108jobs_db_views_person_saved_combined",
  "app_108jobs_db_views_post",
  "app_108jobs_db_views_proposal",
  "app_108jobs_db_views_registration_applications",

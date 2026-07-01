@@ -53,11 +53,7 @@ use app_108jobs_http::{
       exchange::exchange_key,
       export_data::export_data,
       list_created::list_person_created,
-      list_hidden::list_person_hidden,
-      list_liked::list_person_liked,
       list_media::list_media,
-      list_read::list_person_read,
-      list_saved::list_person_saved,
       note_person::user_note_person,
       profile::visit_profile,
       report_count::report_count,
@@ -116,14 +112,10 @@ use app_108jobs_jobs::{
   handlers::{
     feature::feature_post,
     get_link_metadata::get_link_metadata,
-    hide::hide_post,
     like::like_post,
     list::list_posts,
     list_post_likes::list_post_likes,
     lock::lock_post,
-    mark_many_read::mark_posts_as_read,
-    mark_read::mark_post_as_read,
-    save::save_post,
     update_notifications::update_post_notifications,
   },
 };
@@ -199,7 +191,6 @@ use app_108jobs_proposals::{
     like::like_comment,
     list::list_comments,
     list_comment_likes::list_comment_likes,
-    save::save_comment,
   },
 };
 use app_108jobs_routes::{
@@ -318,15 +309,11 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_post))
             .route("/delete", post().to(delete_post))
             .route("/remove", post().to(remove_post))
-            .route("/mark-as-read", post().to(mark_post_as_read))
-            .route("/mark-as-read/many", post().to(mark_posts_as_read))
-            .route("/hide", post().to(hide_post))
             .route("/lock", post().to(lock_post))
             .route("/feature", post().to(feature_post))
             .route("/list", get().to(list_posts))
             .route("/like", post().to(like_post))
             .route("/like/list", get().to(list_post_likes))
-            .route("/save", put().to(save_post))
             .route(
               "/disable-notifications",
               post().to(update_post_notifications),
@@ -385,7 +372,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/like", post().to(like_comment))
             .route("/like/list", get().to(list_comment_likes))
             .route("/list", get().to(list_comments))
-            .route("/save", put().to(save_comment))
             .route("/report", post().to(create_comment_report))
             .route("/report/resolve", put().to(resolve_comment_report)),
         )
@@ -470,11 +456,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/avatar", delete().to(delete_user_avatar))
             .route("/banner", post().to(upload_user_banner))
             .route("/banner", delete().to(delete_user_banner))
-            .route("/saved", get().to(list_person_saved))
             .route("/created", get().to(list_person_created))
-            .route("/read", get().to(list_person_read))
-            .route("/hidden", get().to(list_person_hidden))
-            .route("/liked", get().to(list_person_liked))
             .route("/settings/save", put().to(save_user_settings))
             // Wallet service scope
             .service(

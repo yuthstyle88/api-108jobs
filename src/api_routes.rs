@@ -74,12 +74,6 @@ use app_108jobs_http::{
   },
   crud::{
     category::{list::list_categories, update::update_category},
-    custom_emoji::{
-      create::create_custom_emoji,
-      delete::delete_custom_emoji,
-      list::list_custom_emojis,
-      update::update_custom_emoji,
-    },
     oauth_provider::{
       create::create_oauth_provider,
       delete::delete_oauth_provider,
@@ -89,12 +83,6 @@ use app_108jobs_http::{
       create::create_site,
       read::{get_site, health},
       update::update_site,
-    },
-    tagline::{
-      create::create_tagline,
-      delete::delete_tagline,
-      list::list_taglines,
-      update::update_tagline,
     },
     user::{
       create::{authenticate_with_oauth, register},
@@ -107,7 +95,6 @@ use app_108jobs_identity::{
   change_password::change_password,
   change_password_after_reset::change_password_after_reset,
   generate_totp_secret::generate_totp_secret,
-  get_captcha::get_captcha,
   list_logins::list_logins,
   login::login,
   logout::logout,
@@ -431,7 +418,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/verify-email", post().to(verify_email))
             .route("/exchange-public-key", post().to(exchange_key))
             .route("/update-term", post().to(update_term))
-            .route("/get-captcha", get().to(get_captcha))
             .route(
               "/resend-verification-email",
               post().to(resend_verification_email),
@@ -570,13 +556,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/post", post().to(purge_post))
                 .route("/proposal", post().to(purge_comment)),
             )
-            .service(
-              scope("/tagline")
-                .route("", post().to(create_tagline))
-                .route("", put().to(update_tagline))
-                .route("/delete", post().to(delete_tagline))
-                .route("/list", get().to(list_taglines)),
-            )
             .route("/ban", post().to(ban_from_site))
             .route("/users", get().to(admin_list_users))
             .route("/leave", post().to(leave_admin))
@@ -654,13 +633,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/profile/{id}", get().to(get_rider))
             .route("/rate", post().to(rate_rider))
             .route("/{riderId}/ratings", get().to(get_rider_ratings)),
-        )
-        .service(
-          scope("/custom-emoji")
-            .route("", post().to(create_custom_emoji))
-            .route("", put().to(update_custom_emoji))
-            .route("/delete", post().to(delete_custom_emoji))
-            .route("/list", get().to(list_custom_emojis)),
         )
         .service(
           scope("/oauth-provider")

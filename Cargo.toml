@@ -193,7 +193,6 @@ app_108jobs_chat = { version = "=1.0.0-alpha.5", path = "./crates/chat" }
 app_108jobs_notifications = { version = "=1.0.0-alpha.5", path = "./crates/notifications" }
 app_108jobs_admin = { version = "=1.0.0-alpha.5", path = "./crates/admin" }
 app_108jobs_http = { version = "=1.0.0-alpha.5", path = "./crates/http" }
-hound = "3.5.1"
 totp-rs = { version = "5.7.0", features = ["gen_secret", "otpauth"] }
 diesel = { version = "2.2.10", features = [
     "chrono",
@@ -237,7 +236,6 @@ chrono = { version = "0.4.41", features = [
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
 base64 = "0.22.1"
 uuid = { version = "1.17.0", features = ["serde"] }
-captcha = "1.0.0"
 anyhow = { version = "1.0.98", features = ["backtrace"] }
 thiserror = "2.0.17"
 diesel_ltree = "0.4.0"

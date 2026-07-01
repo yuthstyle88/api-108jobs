@@ -1,14 +1,10 @@
 use app_108jobs_core::error::{FastJobErrorExt, FastJobErrorType, FastJobResult};
 use app_108jobs_db_views_local_user::LocalUserView;
-use base64::{engine::general_purpose::STANDARD_NO_PAD as base64, Engine};
-use captcha::Captcha;
-use std::io::Cursor;
 use totp_rs::{Secret, TOTP};
 
 pub mod change_password;
 pub mod change_password_after_reset;
 pub mod generate_totp_secret;
-pub mod get_captcha;
 pub mod identity_card;
 pub mod list_logins;
 pub mod login;
@@ -19,46 +15,6 @@ pub mod reset_password;
 pub mod update_totp;
 pub mod validate_auth;
 pub mod verify_email;
-
-/// Converts the captcha to a base64 encoded wav audio file
-pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> FastJobResult<String> {
-  let letters = captcha.as_wav();
-
-  // Decode each wav file, concatenate the samples
-  let mut concat_samples: Vec<i16> = Vec::new();
-  let mut any_header: Option<hound::WavSpec> = None;
-  for letter in letters {
-    let mut cursor = Cursor::new(letter.unwrap_or_default());
-    let reader = hound::WavReader::new(&mut cursor)?;
-    any_header = Some(reader.spec());
-    let samples16 = reader
-      .into_samples::<i16>()
-      .collect::<Result<Vec<_>, _>>()
-      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
-    concat_samples.extend(samples16);
-  }
-
-  // Encode the concatenated result as a wav file
-  let mut output_buffer = Cursor::new(vec![]);
-  if let Some(header) = any_header {
-    let mut writer = hound::WavWriter::new(&mut output_buffer, header)
-      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
-    let mut writer16 = writer.get_i16_writer(concat_samples.len().try_into()?);
-    for sample in concat_samples {
-      writer16.write_sample(sample);
-    }
-    writer16
-      .flush()
-      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
-    writer
-      .finalize()
-      .with_fastjob_type(FastJobErrorType::CouldntCreateAudioCaptcha)?;
-
-    Ok(base64.encode(output_buffer.into_inner()))
-  } else {
-    Err(FastJobErrorType::CouldntCreateAudioCaptcha)?
-  }
-}
 
 pub(crate) fn check_totp_2fa_valid(
   local_user_view: &LocalUserView,

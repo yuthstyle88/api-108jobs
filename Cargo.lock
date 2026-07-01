@@ -591,7 +591,6 @@ dependencies = [
  "app_108jobs_db_views_reports",
  "app_108jobs_db_views_search_combined",
  "app_108jobs_db_views_site",
- "app_108jobs_db_views_vote",
  "app_108jobs_db_views_wallet",
  "serde",
  "serde_with",
@@ -1079,7 +1078,6 @@ dependencies = [
  "app_108jobs_db_views_category",
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_rider",
- "app_108jobs_db_views_vote",
  "chrono",
  "diesel",
  "diesel-async",
@@ -1102,7 +1100,6 @@ dependencies = [
  "app_108jobs_core",
  "app_108jobs_db",
  "app_108jobs_db_views_local_user",
- "app_108jobs_db_views_vote",
  "diesel",
  "diesel-async",
  "diesel_ltree",
@@ -1252,23 +1249,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "app_108jobs_db_views_vote"
-version = "1.0.0-alpha.5"
-dependencies = [
- "app_108jobs_core",
- "app_108jobs_db",
- "diesel",
- "diesel-async",
- "i-love-jesus",
- "pretty_assertions",
- "serde",
- "serde_with",
- "serial_test",
- "tokio",
- "ts-rs",
-]
-
-[[package]]
 name = "app_108jobs_db_views_wallet"
 version = "1.0.0-alpha.5"
 dependencies = [
@@ -1375,7 +1355,6 @@ dependencies = [
  "app_108jobs_db_views_post",
  "app_108jobs_db_views_search_combined",
  "app_108jobs_db_views_site",
- "app_108jobs_db_views_vote",
  "chrono",
  "tracing",
  "url",
@@ -1440,7 +1419,6 @@ dependencies = [
  "app_108jobs_db_views_local_user",
  "app_108jobs_db_views_post",
  "app_108jobs_db_views_proposal",
- "app_108jobs_db_views_vote",
  "chrono",
  "diesel",
  "diesel-async",

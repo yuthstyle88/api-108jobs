@@ -23,7 +23,6 @@ pub use app_108jobs_db_views_post::{
 pub mod actions {
   pub use app_108jobs_db_views_post::api::{
     CreatePost,
-    CreatePostLikeRequest,
     DeletePost,
     EditPost,
     HidePost,
@@ -33,13 +32,6 @@ pub mod actions {
   };
 
   pub mod moderation {
-    pub use app_108jobs_db_views_post::api::{
-      FeaturePost,
-      ListPostLikes,
-      ListPostLikesResponse,
-      LockPost,
-      PurgePost,
-      RemovePost,
-    };
+    pub use app_108jobs_db_views_post::api::{FeaturePost, LockPost, PurgePost, RemovePost};
   }
 }

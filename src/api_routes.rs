@@ -98,9 +98,7 @@ use app_108jobs_jobs::{
   handlers::{
     feature::feature_post,
     get_link_metadata::get_link_metadata,
-    like::like_post,
     list::list_posts,
-    list_post_likes::list_post_likes,
     lock::lock_post,
     update_notifications::update_post_notifications,
   },
@@ -172,12 +170,7 @@ use app_108jobs_proposals::{
     remove::remove_comment,
     update::update_comment,
   },
-  handlers::{
-    distinguish::distinguish_comment,
-    like::like_comment,
-    list::list_comments,
-    list_comment_likes::list_comment_likes,
-  },
+  handlers::{distinguish::distinguish_comment, list::list_comments},
 };
 use app_108jobs_routes::{
   files::{delete::delete_file, download::get_file, upload::upload_file},
@@ -295,8 +288,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/lock", post().to(lock_post))
             .route("/feature", post().to(feature_post))
             .route("/list", get().to(list_posts))
-            .route("/like", post().to(like_post))
-            .route("/like/list", get().to(list_post_likes))
             .route(
               "/disable-notifications",
               post().to(update_post_notifications),
@@ -352,8 +343,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("/remove", post().to(remove_comment))
             .route("/mark-as-read", post().to(mark_reply_as_read))
             .route("/distinguish", post().to(distinguish_comment))
-            .route("/like", post().to(like_comment))
-            .route("/like/list", get().to(list_comment_likes))
             .route("/list", get().to(list_comments)),
         )
         // User

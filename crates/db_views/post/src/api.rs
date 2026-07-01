@@ -15,7 +15,6 @@ use app_108jobs_db::{
   PostFeatureType,
 };
 use app_108jobs_db_views_category::CategoryView;
-use app_108jobs_db_views_vote::VoteView;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -104,17 +103,6 @@ pub struct RideSessionCreatePayload {
   pub passenger_name: Option<String>,
   pub passenger_phone: Option<String>,
   pub payment_method: PaymentMethod,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Like a post.
-#[serde(rename_all = "camelCase")]
-pub struct CreatePostLikeRequest {
-  pub post_id: PostId,
-  /// Score must be -1, 0, or 1.
-  pub score: i16,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -345,31 +333,6 @@ pub struct LinkMetadata {
 pub struct HidePost {
   pub post_id: PostId,
   pub hide: bool,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// List post likes. Admins-only.
-#[serde(rename_all = "camelCase")]
-pub struct ListPostLikes {
-  pub post_id: PostId,
-  pub page_cursor: Option<PaginationCursor>,
-  pub page_back: Option<bool>,
-  pub limit: Option<i64>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// The post likes response
-#[serde(rename_all = "camelCase")]
-pub struct ListPostLikesResponse {
-  pub post_likes: Vec<VoteView>,
-  /// the pagination cursor to use to fetch the next page
-  pub next_page: Option<PaginationCursor>,
-  pub prev_page: Option<PaginationCursor>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]

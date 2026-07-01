@@ -3,7 +3,6 @@ use app_108jobs_db::{
   enums::{ListingType, ProposalSortType},
   newtypes::{CategoryId, LanguageId, PaginationCursor, PostId, ProposalId},
 };
-use app_108jobs_db_views_vote::VoteView;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -40,27 +39,6 @@ pub struct CreateCommentRequest {
   pub post_id: PostId,
   pub parent_id: Option<ProposalId>,
   pub language_id: LanguageId,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-/// Like a proposal.
-pub struct CreateCommentLike {
-  pub proposal_id: ProposalId,
-  /// Must be -1, 0, or 1 .
-  pub score: i16,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// Like a proposal.
-pub struct CreateCommentLikeRequest {
-  pub proposal_id: ProposalId,
-  /// Must be -1, 0, or 1 .
-  pub score: i16,
 }
 
 #[skip_serializing_none]
@@ -145,31 +123,6 @@ pub struct GetCommentsResponse {
 /// A slimmer proposal list response, without the post or category.
 pub struct GetCommentsSlimResponse {
   pub proposals: Vec<ProposalSlimView>,
-  pub next_page: Option<PaginationCursor>,
-  pub prev_page: Option<PaginationCursor>,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// List proposal likes. Admins-only.
-pub struct ListCommentLikes {
-  pub proposal_id: ProposalId,
-  pub page_cursor: Option<PaginationCursor>,
-  pub page_back: Option<bool>,
-  pub limit: Option<i64>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
-#[cfg_attr(feature = "ts-rs", ts(optional_fields, export))]
-#[serde(rename_all = "camelCase")]
-/// The proposal likes response
-pub struct ListCommentLikesResponse {
-  pub comment_likes: Vec<VoteView>,
-  /// the pagination cursor to use to fetch the next page
   pub next_page: Option<PaginationCursor>,
   pub prev_page: Option<PaginationCursor>,
 }

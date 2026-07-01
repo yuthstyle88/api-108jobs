@@ -611,7 +611,6 @@ dependencies = [
  "app_108jobs_identity",
  "app_108jobs_jobs",
  "app_108jobs_logistics",
- "app_108jobs_notifications",
  "app_108jobs_payments",
  "app_108jobs_proposals",
  "app_108jobs_routes",
@@ -1377,19 +1376,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
-]
-
-[[package]]
-name = "app_108jobs_notifications"
-version = "1.0.0-alpha.5"
-dependencies = [
- "actix-web",
- "app_108jobs_api_utils",
- "app_108jobs_core",
- "app_108jobs_db",
- "app_108jobs_db_views_inbox_combined",
- "app_108jobs_db_views_local_user",
- "app_108jobs_db_views_site",
 ]
 
 [[package]]

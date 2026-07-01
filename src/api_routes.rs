@@ -141,14 +141,6 @@ use app_108jobs_logistics::{
     status::update_delivery_status,
   },
 };
-use app_108jobs_notifications::{
-  list_inbox::list_inbox,
-  mark_all_read::mark_all_notifications_read,
-  mark_comment_mention_read::mark_comment_mention_as_read,
-  mark_post_mention_read::mark_post_mention_as_read,
-  mark_reply_read::mark_reply_as_read,
-  unread_count::unread_count,
-};
 use app_108jobs_payments::{
   bank_account::{
     create_bank_account,
@@ -341,7 +333,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
             .route("", put().to(update_comment))
             .route("/delete", post().to(delete_comment))
             .route("/remove", post().to(remove_comment))
-            .route("/mark-as-read", post().to(mark_reply_as_read))
             .route("/distinguish", post().to(distinguish_comment))
             .route("/list", get().to(list_comments)),
         )
@@ -386,7 +377,6 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("", delete().to(delete_image))
                 .route("/list", get().to(list_media)),
             )
-            .route("/inbox", get().to(list_inbox))
             .route("/delete", post().to(delete_account))
             // upload file
             .service(
@@ -402,17 +392,7 @@ pub fn config(cfg: &mut ServiceConfig, rate_limit: &RateLimit) {
                 .route("/default", put().to(set_default_bank_account))
                 .route("/delete", post().to(delete_bank_account)),
             )
-            .service(
-              scope("/mention")
-                .route(
-                  "/proposal/mark-as-read",
-                  post().to(mark_comment_mention_as_read),
-                )
-                .route("/post/mark-as-read", post().to(mark_post_mention_as_read)),
-            )
-            .route("/mark-as-read/all", post().to(mark_all_notifications_read))
             .route("/report_count", get().to(report_count))
-            .route("/unread-count", get().to(unread_count))
             .route("/list-logins", get().to(list_logins))
             .route("/validate-auth", get().to(validate_auth))
             .route("/donation-dialog-shown", post().to(donation_dialog_shown))
